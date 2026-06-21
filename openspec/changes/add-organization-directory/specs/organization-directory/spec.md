@@ -6,6 +6,8 @@ de todas las organizaciones activas de la plataforma, junto con la ficha
 pública de cada una, funcionando como las "páginas amarillas" del sector
 — un punto de descubrimiento y contacto directo independiente de tener
 o no coincidencia de inventario en una búsqueda concreta.
+Esta capability es la propietaria única de las pantallas MSG-04 y MSG-05;
+ningún otro spec del proyecto debe redefinir su comportamiento.
 
 ---
 

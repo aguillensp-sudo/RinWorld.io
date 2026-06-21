@@ -229,32 +229,7 @@ de tipo de elemento y estado de tarjeta, sin requerir descifrado de contenido.
 
 ---
 
-### Requirement: organization-profile-and-directory
-El sistema SHALL ofrecer una ficha pública de organización (MSG-04) con datos
-generales, contacto público y botón "Contactar" sin requisitos, y un Directorio
-de Organizaciones (MSG-05) accesible desde el menú principal con tabla de
-organizaciones ACTIVE filtrable por nombre y país.
-[Origen: Módulo 04 v1.5, secciones 8.3 y 8.5]
 
-#### Scenario: acceso a ficha desde resultado de búsqueda
-- GIVEN un miembro visualizando resultados de búsqueda o un hilo existente
-- WHEN pulsa el nombre de la organización
-- THEN se abre la ficha pública MSG-04 con datos generales, contacto público,
-  indicador de favoritos y botón "Contactar"
-
-#### Scenario: contacto libre desde la ficha
-- GIVEN un miembro en la ficha pública de una organización
-- WHEN pulsa "Contactar"
-- THEN se abre o reutiliza el hilo único con esa organización
-- AND no se requiere cantidad ni referencia
-
-#### Scenario: filtro combinado en el directorio
-- GIVEN un miembro en el Directorio de Organizaciones (MSG-05)
-- WHEN aplica un filtro de país y una búsqueda parcial por nombre simultáneamente
-- THEN la tabla muestra solo las organizaciones ACTIVE que cumplen ambos
-  criterios
-- AND las columnas mostradas son: Nombre (enlace a MSG-04), País, Teléfono
-  de contacto público, Email de contacto público, Favoritos
 
 ---
 

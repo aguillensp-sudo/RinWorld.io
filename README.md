@@ -1,2 +1,2 @@
-# BearingWorld.io
-Web app for indutrial bearing distributors
+# RinWorld.io
+Web app for isuper distributors

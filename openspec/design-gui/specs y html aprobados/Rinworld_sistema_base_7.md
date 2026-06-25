@@ -9,13 +9,13 @@
 
 | Elemento | Valor |
 |---|---|
-| Brand bar | Deep Steel Dark `#111827` · 24px · Inter 400 · 10px · uppercase · letter-spacing 0.08em · no interactiva |
-| Nav bar | Deep Steel `#1B2537` · 46px · siempre visible |
+| Brand bar | `#07111F` · 24px · Inter 400 · 10px · uppercase · letter-spacing 0.08em · no interactiva |
+| Nav bar | `#07111F` · 46px · siempre visible · logo imagen corporativa |
 | Sidebar | Deep Steel `#1B2537` · **oculta por defecto** · se abre con hamburguesa · overlay (no empuja el layout) · 200ms ease |
 | Panel contenido | Blanco `#FFFFFF` · **67% del viewport** (VERA al 33%, sin grises a los lados — el contenido llena su panel completo) · se expande cuando VERA colapsa. La sidebar es overlay puro: se superpone sin mover ni encoger el contenido |
 | Panel VERA | Warm Cream `#FAF8F4` · **33% del viewport** (fijo) · arrastrable · colapsable a 32px · expandible hasta 50% |
 | Acción primaria | Calibration Blue `#2563EB` |
-| Acento confianza | Brass `#B8924A` (favoritos, logo, avatar, bordes VERA) |
+| Acento confianza | Brass `#B8924A` (favoritos, avatar, bordes VERA) |
 | Texto secundario / bordes | Steel Mist `#6B7A99` |
 
 ### Tipografía global
@@ -64,8 +64,8 @@
 
 | Nombre | Hex | Uso |
 |---|---|---|
-| Deep Steel Dark | `#111827` | Brand bar |
-| Deep Steel | `#1B2537` | Nav · sidebar · burbujas usuario VERA |
+| Header Dark | `#07111F` | Brand bar · Nav bar |
+| Deep Steel | `#1B2537` | Sidebar · burbujas usuario VERA |
 | Blanco | `#FFFFFF` | Panel contenido · inputs · burbujas VERA |
 | Warm Cream | `#FAF8F4` | Panel VERA · fondo file-upload · checkbox |
 | Cold White | `#F1F3F6` | Chips · cabecera tabla |

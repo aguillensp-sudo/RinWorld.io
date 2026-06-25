@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bearingworld.io — Solicita acceso</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,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">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/1.119.0/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100vh; font-family: 'Inter', sans-serif; }
+
+    .bwshell {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* BRAND BAR */
+    .bwbrand {
+      height: 24px;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      flex-shrink: 0;
+    }
+
+    /* MINIMAL HEADER */
+    .bwminhdr {
+      height: 46px;
+      background: #1B2537;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+
+    .bwnavlogo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: white;
+      letter-spacing: 0.02em;
+    }
+
+    .bwnavlogo span { color: #B8924A; }
+
+    /* MAIN AREA */
+    .bwmain {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* CONTENT PANEL */
+    .bwcnt {
+      flex: 1;
+      background: #1B2537;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .bwcntb {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 24px 48px;
+    }
+
+    /* CARD */
+    .regcard {
+      background: #ffffff;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 560px;
+      padding: 40px 44px 36px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.28);
+    }
+
+    .regcard-eyebrow {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #B8924A;
+      margin-bottom: 10px;
+    }
+
+    .regcard-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: #1B2537;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .regcard-sub {
+      font-size: 13px;
+      color: #6B7A99;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* FORM */
+    .regform {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .rfield {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .rfield label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: #1B2537;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .rfield label .req {
+      color: #2563EB;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .rfield label .opt {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6B7A99;
+      margin-left: 2px;
+    }
+
+    .rfield input,
+    .rfield select {
+      padding: 10px 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 3px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: #1B2537;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+
+    .rfield input::placeholder { color: #9BA4B0; }
+
+    .rfield input:focus,
+    .rfield select:focus {
+      border-color: #2563EB;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    }
+
+    .rfield select {
+      color: #9BA4B0;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239BA4B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    .rfield select.has-value { color: #1B2537; }
+
+    .rfield input.err,
+    .rfield select.err {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.07);
+    }
+
+    .rfield .errmsg {
+      font-size: 11px;
+      color: #dc2626;
+      font-family: 'Inter', sans-serif;
+      display: none;
+      margin-top: 1px;
+    }
+
+    .rfield .errmsg.show { display: block; }
+
+    /* SUBMIT BUTTON */
+    .regbtn {
+      margin-top: 6px;
+      padding: 12px 20px;
+      background: rgba(37,99,235,0.32);
+      border: none;
+      border-radius: 3px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      cursor: not-allowed;
+      width: 100%;
+      transition: background 0.15s, color 0.15s, cursor 0.15s;
+    }
+
+    .regbtn.enabled {
+      background: #2563EB;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .regbtn.enabled:hover { background: #1d4ed8; }
+
+    /* SECONDARY LINK */
+    .regseclink {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: #6B7A99;
+    }
+
+    .regseclink a {
+      color: #B8924A;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.12s;
+    }
+
+    .regseclink a:hover { color: #9a7a3e; }
+
+    /* VERA PANEL */
+    .bwvera {
+      width: calc(33.333% - 0.5px);
+      min-width: 32px;
+      background: #FAF8F4;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      border-left: 0.5px solid rgba(184,146,74,0.18);
+      transition: width 0.2s ease;
+    }
+
+    .bwvera.col { width: 32px; }
+
+    .bwvera-resize {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      cursor: col-resize;
+      z-index: 1;
+    }
+
+    .bwveratg {
+      position: absolute;
+      left: -11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 36px;
+      background: #FAF8F4;
+      border: 0.5px solid rgba(184,146,74,0.22);
+      border-radius: 5px 0 0 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6B7A99;
+      font-size: 13px;
+      z-index: 2;
+      transition: color 0.12s;
+    }
+
+    .bwveratg:hover { color: #1B2537; }
+
+    .bwveralbl {
+      display: none;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      color: #6B7A99;
+      letter-spacing: 0.05em;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+
+    .bwvera.col .bwveralbl { display: flex; }
+    .bwvera.col .bwveralbl:hover { color: #1B2537; }
+    .bwvera.col .bwvh,
+    .bwvera.col .bwchat,
+    .bwvera.col .bwia { display: none; }
+
+    .bwvh {
+      padding: 12px;
+      border-bottom: 0.5px solid rgba(184,146,74,0.18);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+
+    .bwvico {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #1B2537;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .bwvname {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: #1B2537;
+      letter-spacing: 0.02em;
+    }
+
+    .bwvsub { font-size: 13px; color: #6B7A99; }
+
+    .bwvdot {
+      margin-left: auto;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+      flex-shrink: 0;
+    }
+
+    .bwchat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bwmsg { display: flex; flex-direction: column; gap: 3px; }
+    .bwmsg.u { align-items: flex-end; }
+    .bwmsg.v { align-items: flex-start; }
+
+    .bwbub {
+      padding: 9px 11px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 92%;
+    }
+
+    .bwmsg.u .bwbub {
+      background: #1B2537;
+      color: white;
+      border-bottom-right-radius: 3px;
+    }
+
+    .bwmsg.v .bwbub {
+      background: white;
+      color: #1B2537;
+      border-bottom-left-radius: 3px;
+      border: 0.5px solid rgba(184,146,74,0.2);
+      border-left: 2px solid #B8924A;
+    }
+
+    .bwts { font-size: 12px; color: #6B7A99; padding: 0 3px; }
+
+    .bwia {
+      padding: 10px;
+      border-top: 0.5px solid rgba(184,146,74,0.18);
+      flex-shrink: 0;
+    }
+
+    .bwir { display: flex; gap: 6px; align-items: flex-end; }
+
+    .bwinpa {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 0.5px solid rgba(184,146,74,0.3);
+      background: white;
+      font-family: inherit;
+      font-size: 14px;
+      color: #1B2537;
+      resize: none;
+      outline: none;
+      min-height: 34px;
+      max-height: 72px;
+      transition: border-color 0.12s;
+    }
+
+    .bwinpa:focus { border-color: #2563EB; }
+    .bwinpa::placeholder { color: #6B7A99; }
+
+    .bwsnd {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      background: #2563EB;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 14px;
+      transition: opacity 0.12s;
+    }
+
+    .bwsnd:hover { opacity: 0.85; }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(107,122,153,0.2); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="bwshell">
+
+  <!-- BRAND BAR -->
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <!-- MINIMAL HEADER -->
+  <div class="bwminhdr">
+    <div class="bwnavlogo">BEARING<span>WORLD</span></div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="bwmain">
+
+    <!-- CONTENT PANEL -->
+    <main class="bwcnt">
+      <div class="bwcntb">
+        <div class="regcard">
+
+          <div class="regcard-eyebrow">Módulo 01 · Onboarding</div>
+          <div class="regcard-title">Solicita acceso a Bearingworld.io</div>
+          <div class="regcard-sub">Nuestro equipo revisará tu solicitud y te contactará en un plazo máximo de 48 horas.</div>
+
+          <form class="regform" id="regform" novalidate onsubmit="return false;">
+
+            <!-- 1. Email -->
+            <div class="rfield">
+              <label for="f-email">Email del solicitante <span class="req">*</span></label>
+              <input
+                type="email"
+                id="f-email"
+                name="email"
+                placeholder="tu@empresa.com"
+                maxlength="254"
+                autocomplete="email"
+                oninput="onFieldInput()"
+                onblur="validateEmail()"
+              >
+              <span class="errmsg" id="err-email">Introduce un email válido</span>
+            </div>
+
+            <!-- 2. Nombre y apellidos -->
+            <div class="rfield">
+              <label for="f-nombre">Nombre y apellidos <span class="req">*</span></label>
+              <input
+                type="text"
+                id="f-nombre"
+                name="nombre"
+                placeholder="Nombre y apellidos"
+                maxlength="120"
+                autocomplete="name"
+                oninput="onFieldInput()"
+                onblur="validateNombre()"
+              >
+              <span class="errmsg" id="err-nombre">Introduce tu nombre y apellidos (mín. 2 caracteres)</span>
+            </div>
+
+            <!-- 3. Nombre de la organización -->
+            <div class="rfield">
+              <label for="f-org">Nombre de la organización <span class="req">*</span></label>
+              <input
+                type="text"
+                id="f-org"
+                name="organizacion"
+                placeholder="Nombre legal de la empresa"
+                maxlength="120"
+                autocomplete="organization"
+                oninput="onFieldInput()"
+                onblur="validateOrg()"
+              >
+              <span class="errmsg" id="err-org">Introduce el nombre de la organización (mín. 2 / máx. 120 caracteres)</span>
+            </div>
+
+            <!-- 4. País -->
+            <div class="rfield">
+              <label for="f-pais">País de la organización <span class="req">*</span></label>
+              <select
+                id="f-pais"
+                name="pais"
+                oninput="onFieldInput(); this.classList.add('has-value')"
+                onblur="validatePais()"
+              >
+                <option value="" disabled selected>Selecciona un país</option>
+                <option value="AF">Afghanistan (AF)</option>
+                <option value="AL">Albania (AL)</option>
+                <option value="DZ">Algeria (DZ)</option>
+                <option value="AD">Andorra (AD)</option>
+                <option value="AO">Angola (AO)</option>
+                <option value="AG">Antigua and Barbuda (AG)</option>
+                <option value="AR">Argentina (AR)</option>
+                <option value="AM">Armenia (AM)</option>
+                <option value="AU">Australia (AU)</option>
+                <option value="AT">Austria (AT)</option>
+                <option value="AZ">Azerbaijan (AZ)</option>
+                <option value="BS">Bahamas (BS)</option>
+                <option value="BH">Bahrain (BH)</option>
+                <option value="BD">Bangladesh (BD)</option>
+                <option value="BB">Barbados (BB)</option>
+                <option value="BY">Belarus (BY)</option>
+                <option value="BE">Belgium (BE)</option>
+                <option value="BZ">Belize (BZ)</option>
+                <option value="BJ">Benin (BJ)</option>
+                <option value="BT">Bhutan (BT)</option>
+                <option value="BO">Bolivia (BO)</option>
+                <option value="BA">Bosnia and Herzegovina (BA)</option>
+                <option value="BW">Botswana (BW)</option>
+                <option value="BR">Brazil (BR)</option>
+                <option value="BN">Brunei Darussalam (BN)</option>
+                <option value="BG">Bulgaria (BG)</option>
+                <option value="BF">Burkina Faso (BF)</option>
+                <option value="BI">Burundi (BI)</option>
+                <option value="CV">Cabo Verde (CV)</option>
+                <option value="KH">Cambodia (KH)</option>
+                <option value="CM">Cameroon (CM)</option>
+                <option value="CA">Canada (CA)</option>
+                <option value="CF">Central African Republic (CF)</option>
+                <option value="TD">Chad (TD)</option>
+                <option value="CL">Chile (CL)</option>
+                <option value="CN">China (CN)</option>
+                <option value="CO">Colombia (CO)</option>
+                <option value="KM">Comoros (KM)</option>
+                <option value="CG">Congo (CG)</option>
+                <option value="CD">Congo, Democratic Republic (CD)</option>
+                <option value="CR">Costa Rica (CR)</option>
+                <option value="CI">Côte d'Ivoire (CI)</option>
+                <option value="HR">Croatia (HR)</option>
+                <option value="CU">Cuba (CU)</option>
+                <option value="CY">Cyprus (CY)</option>
+                <option value="CZ">Czechia (CZ)</option>
+                <option value="DK">Denmark (DK)</option>
+                <option value="DJ">Djibouti (DJ)</option>
+                <option value="DM">Dominica (DM)</option>
+                <option value="DO">Dominican Republic (DO)</option>
+                <option value="EC">Ecuador (EC)</option>
+                <option value="EG">Egypt (EG)</option>
+                <option value="SV">El Salvador (SV)</option>
+                <option value="GQ">Equatorial Guinea (GQ)</option>
+                <option value="ER">Eritrea (ER)</option>
+                <option value="EE">Estonia (EE)</option>
+                <option value="SZ">Eswatini (SZ)</option>
+                <option value="ET">Ethiopia (ET)</option>
+                <option value="FJ">Fiji (FJ)</option>
+                <option value="FI">Finland (FI)</option>
+                <option value="FR">France (FR)</option>
+                <option value="GA">Gabon (GA)</option>
+                <option value="GM">Gambia (GM)</option>
+                <option value="GE">Georgia (GE)</option>
+                <option value="DE">Germany (DE)</option>
+                <option value="GH">Ghana (GH)</option>
+                <option value="GR">Greece (GR)</option>
+                <option value="GD">Grenada (GD)</option>
+                <option value="GT">Guatemala (GT)</option>
+                <option value="GN">Guinea (GN)</option>
+                <option value="GW">Guinea-Bissau (GW)</option>
+                <option value="GY">Guyana (GY)</option>
+                <option value="HT">Haiti (HT)</option>
+                <option value="HN">Honduras (HN)</option>
+                <option value="HU">Hungary (HU)</option>
+                <option value="IS">Iceland (IS)</option>
+                <option value="IN">India (IN)</option>
+                <option value="ID">Indonesia (ID)</option>
+                <option value="IR">Iran (IR)</option>
+                <option value="IQ">Iraq (IQ)</option>
+                <option value="IE">Ireland (IE)</option>
+                <option value="IL">Israel (IL)</option>
+                <option value="IT">Italy (IT)</option>
+                <option value="JM">Jamaica (JM)</option>
+                <option value="JP">Japan (JP)</option>
+                <option value="JO">Jordan (JO)</option>
+                <option value="KZ">Kazakhstan (KZ)</option>
+                <option value="KE">Kenya (KE)</option>
+                <option value="KI">Kiribati (KI)</option>
+                <option value="KP">Korea, Democratic People's Republic (KP)</option>
+                <option value="KR">Korea, Republic of (KR)</option>
+                <option value="KW">Kuwait (KW)</option>
+                <option value="KG">Kyrgyzstan (KG)</option>
+                <option value="LA">Lao PDR (LA)</option>
+                <option value="LV">Latvia (LV)</option>
+                <option value="LB">Lebanon (LB)</option>
+                <option value="LS">Lesotho (LS)</option>
+                <option value="LR">Liberia (LR)</option>
+                <option value="LY">Libya (LY)</option>
+                <option value="LI">Liechtenstein (LI)</option>
+                <option value="LT">Lithuania (LT)</option>
+                <option value="LU">Luxembourg (LU)</option>
+                <option value="MG">Madagascar (MG)</option>
+                <option value="MW">Malawi (MW)</option>
+                <option value="MY">Malaysia (MY)</option>
+                <option value="MV">Maldives (MV)</option>
+                <option value="ML">Mali (ML)</option>
+                <option value="MT">Malta (MT)</option>
+                <option value="MH">Marshall Islands (MH)</option>
+                <option value="MR">Mauritania (MR)</option>
+                <option value="MU">Mauritius (MU)</option>
+                <option value="MX">Mexico (MX)</option>
+                <option value="FM">Micronesia (FM)</option>
+                <option value="MD">Moldova (MD)</option>
+                <option value="MC">Monaco (MC)</option>
+                <option value="MN">Mongolia (MN)</option>
+                <option value="ME">Montenegro (ME)</option>
+                <option value="MA">Morocco (MA)</option>
+                <option value="MZ">Mozambique (MZ)</option>
+                <option value="MM">Myanmar (MM)</option>
+                <option value="NA">Namibia (NA)</option>
+                <option value="NR">Nauru (NR)</option>
+                <option value="NP">Nepal (NP)</option>
+                <option value="NL">Netherlands (NL)</option>
+                <option value="NZ">New Zealand (NZ)</option>
+                <option value="NI">Nicaragua (NI)</option>
+                <option value="NE">Niger (NE)</option>
+                <option value="NG">Nigeria (NG)</option>
+                <option value="MK">North Macedonia (MK)</option>
+                <option value="NO">Norway (NO)</option>
+                <option value="OM">Oman (OM)</option>
+                <option value="PK">Pakistan (PK)</option>
+                <option value="PW">Palau (PW)</option>
+                <option value="PA">Panama (PA)</option>
+                <option value="PG">Papua New Guinea (PG)</option>
+                <option value="PY">Paraguay (PY)</option>
+                <option value="PE">Peru (PE)</option>
+                <option value="PH">Philippines (PH)</option>
+                <option value="PL">Poland (PL)</option>
+                <option value="PT">Portugal (PT)</option>
+                <option value="QA">Qatar (QA)</option>
+                <option value="RO">Romania (RO)</option>
+                <option value="RU">Russian Federation (RU)</option>
+                <option value="RW">Rwanda (RW)</option>
+                <option value="KN">Saint Kitts and Nevis (KN)</option>
+                <option value="LC">Saint Lucia (LC)</option>
+                <option value="VC">Saint Vincent and the Grenadines (VC)</option>
+                <option value="WS">Samoa (WS)</option>
+                <option value="SM">San Marino (SM)</option>
+                <option value="ST">Sao Tome and Principe (ST)</option>
+                <option value="SA">Saudi Arabia (SA)</option>
+                <option value="SN">Senegal (SN)</option>
+                <option value="RS">Serbia (RS)</option>
+                <option value="SC">Seychelles (SC)</option>
+                <option value="SL">Sierra Leone (SL)</option>
+                <option value="SG">Singapore (SG)</option>
+                <option value="SK">Slovakia (SK)</option>
+                <option value="SI">Slovenia (SI)</option>
+                <option value="SB">Solomon Islands (SB)</option>
+                <option value="SO">Somalia (SO)</option>
+                <option value="ZA">South Africa (ZA)</option>
+                <option value="SS">South Sudan (SS)</option>
+                <option value="ES">Spain (ES)</option>
+                <option value="LK">Sri Lanka (LK)</option>
+                <option value="SD">Sudan (SD)</option>
+                <option value="SR">Suriname (SR)</option>
+                <option value="SE">Sweden (SE)</option>
+                <option value="CH">Switzerland (CH)</option>
+                <option value="SY">Syrian Arab Republic (SY)</option>
+                <option value="TW">Taiwan (TW)</option>
+                <option value="TJ">Tajikistan (TJ)</option>
+                <option value="TZ">Tanzania (TZ)</option>
+                <option value="TH">Thailand (TH)</option>
+                <option value="TL">Timor-Leste (TL)</option>
+                <option value="TG">Togo (TG)</option>
+                <option value="TO">Tonga (TO)</option>
+                <option value="TT">Trinidad and Tobago (TT)</option>
+                <option value="TN">Tunisia (TN)</option>
+                <option value="TR">Türkiye (TR)</option>
+                <option value="TM">Turkmenistan (TM)</option>
+                <option value="TV">Tuvalu (TV)</option>
+                <option value="UG">Uganda (UG)</option>
+                <option value="UA">Ukraine (UA)</option>
+                <option value="AE">United Arab Emirates (AE)</option>
+                <option value="GB">United Kingdom (GB)</option>
+                <option value="US">United States of America (US)</option>
+                <option value="UY">Uruguay (UY)</option>
+                <option value="UZ">Uzbekistan (UZ)</option>
+                <option value="VU">Vanuatu (VU)</option>
+                <option value="VE">Venezuela (VE)</option>
+                <option value="VN">Viet Nam (VN)</option>
+                <option value="YE">Yemen (YE)</option>
+                <option value="ZM">Zambia (ZM)</option>
+                <option value="ZW">Zimbabwe (ZW)</option>
+              </select>
+              <span class="errmsg" id="err-pais">Selecciona el país de la organización</span>
+            </div>
+
+            <!-- 5. Teléfono -->
+            <div class="rfield">
+              <label for="f-tel">Teléfono de contacto <span class="req">*</span></label>
+              <input
+                type="text"
+                id="f-tel"
+                name="telefono"
+                placeholder="+34 963 456 789"
+                maxlength="30"
+                autocomplete="tel"
+                required
+                oninput="onFieldInput()"
+                onblur="validateTel()"
+              >
+              <span class="errmsg" id="err-tel">Introduce un teléfono de contacto</span>
+            </div>
+
+            <!-- 6. Sitio web -->
+            <div class="rfield">
+              <label for="f-web">Sitio web <span class="req">*</span></label>
+              <input
+                type="url"
+                id="f-web"
+                name="web"
+                placeholder="https://www.empresa.com"
+                maxlength="200"
+                autocomplete="url"
+                required
+                oninput="onFieldInput()"
+                onblur="validateWeb()"
+              >
+              <span class="errmsg" id="err-web">La URL debe comenzar por https://</span>
+            </div>
+
+            <!-- SUBMIT -->
+            <button type="submit" class="regbtn" id="regbtn" disabled onclick="handleSubmit()">
+              Enviar solicitud
+            </button>
+
+          </form>
+
+          <div class="regseclink">
+            <a href="#">¿Tienes un enlace de invitación? Accede directamente →</a>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- VERA PANEL -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()" aria-label="Colapsar VERA">
+        <i class="ti ti-chevron-right" id="vtgi"></i>
+      </button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          </svg>
+        </div>
+        <div>
+          <div class="bwvname">VERA</div>
+          <div class="bwvsub">Asistente de acceso</div>
+        </div>
+        <div class="bwvdot"></div>
+      </div>
+
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v">
+          <div class="bwbub">Hola. Si tu empresa distribuye rodamientos industriales y quieres acceder a Bearingworld.io, completa este formulario. Nuestro equipo revisará la solicitud y te avisaremos por email.</div>
+          <div class="bwts">10:31</div>
+        </div>
+        <div class="bwmsg u">
+          <div class="bwbub">¿Cuánto tarda la aprobación?</div>
+          <div class="bwts">10:32</div>
+        </div>
+        <div class="bwmsg v">
+          <div class="bwbub">El plazo habitual es de 24 a 48 horas en días laborables. Recibirás un email con el resultado en la dirección que indiques en el formulario.</div>
+          <div class="bwts">10:32</div>
+        </div>
+      </div>
+
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()" aria-label="Enviar">→</button>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  /* ── VERA COLLAPSE / RESIZE ── */
+  let vc = false;
+  function tgVera() {
+    vc = !vc;
+    document.getElementById('vera').classList.toggle('col', vc);
+    document.getElementById('vtgi').className = vc ? 'ti ti-chevron-left' : 'ti ti-chevron-right';
+  }
+
+  let isResizing = false;
+  const veraPanel = document.getElementById('vera');
+  const veraResize = document.getElementById('veraResize');
+
+  veraResize.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    vc = false;
+    veraPanel.classList.remove('col');
+    document.getElementById('vtgi').className = 'ti ti-chevron-right';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    const mainWidth = document.querySelector('.bwmain').clientWidth;
+    const newWidth = mainWidth - e.clientX;
+    const minWidth = 32;
+    const maxWidth = mainWidth * 0.5;
+    if (newWidth >= minWidth && newWidth <= maxWidth) {
+      veraPanel.style.width = newWidth + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', () => { isResizing = false; });
+
+  /* ── VERA CHAT ── */
+  function vkey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); vsend(); }
+  }
+
+  function vrsz(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 72) + 'px';
+  }
+
+  function vsend() {
+    const inp = document.getElementById('bwinpa');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    const chat = document.getElementById('bwchat');
+    const t = new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0');
+    chat.innerHTML += `<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;
+    inp.value = '';
+    inp.style.height = 'auto';
+    chat.scrollTop = chat.scrollHeight;
+    setTimeout(() => {
+      chat.innerHTML += `<div class="bwmsg v"><div class="bwbub">Entendido. ¿Algo más en lo que pueda ayudarte?</div><div class="bwts">${t}</div></div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }, 800);
+  }
+
+  /* ── FORM VALIDATION ── */
+  function showErr(id, show) {
+    const el = document.getElementById('err-' + id);
+    if (!el) return;
+    el.classList.toggle('show', show);
+    const input = document.getElementById('f-' + id);
+    if (input) input.classList.toggle('err', show);
+  }
+
+  function validateEmail() {
+    const v = document.getElementById('f-email').value.trim();
+    const ok = v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    showErr('email', v !== '' && !ok);
+    return v !== '' && ok;
+  }
+
+  function validateNombre() {
+    const v = document.getElementById('f-nombre').value.trim();
+    const ok = v.length >= 2;
+    showErr('nombre', v !== '' && !ok);
+    return v !== '' && ok;
+  }
+
+  function validateOrg() {
+    const v = document.getElementById('f-org').value.trim();
+    const ok = v.length >= 2 && v.length <= 120;
+    showErr('org', v !== '' && !ok);
+    return v !== '' && ok;
+  }
+
+  function validatePais() {
+    const v = document.getElementById('f-pais').value;
+    showErr('pais', v === '');
+    return v !== '';
+  }
+
+  function validateTel() {
+    const v = document.getElementById('f-tel').value.trim();
+    showErr('tel', v === '');
+    return v !== '';
+  }
+
+  function validateWeb() {
+    const v = document.getElementById('f-web').value.trim();
+    if (v === '') { showErr('web', true); return false; }
+    const ok = v.startsWith('https://');
+    showErr('web', !ok);
+    return ok;
+  }
+
+  function onFieldInput() {
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('f-email').value.trim());
+    const nombreOk = document.getElementById('f-nombre').value.trim().length >= 2;
+    const orgOk = document.getElementById('f-org').value.trim().length >= 2;
+    const paisOk = document.getElementById('f-pais').value !== '';
+    const telOk = document.getElementById('f-tel').value.trim() !== '';
+    const webOk = document.getElementById('f-web').value.trim().startsWith('https://');
+    const allOk = emailOk && nombreOk && orgOk && paisOk && telOk && webOk;
+    const btn = document.getElementById('regbtn');
+    btn.disabled = !allOk;
+    btn.classList.toggle('enabled', allOk);
+  }
+
+  function handleSubmit() {
+    const btn = document.getElementById('regbtn');
+    if (btn.disabled) return;
+
+    let valid = true;
+    if (!validateEmail()) valid = false;
+    if (!validateNombre()) valid = false;
+    if (!validateOrg()) valid = false;
+    if (!validatePais()) valid = false;
+    if (!validateWeb()) valid = false;
+
+    if (valid) {
+      // Redirect to REG-00-WAIT
+      console.log('Formulario válido — redirigiendo a REG-00-WAIT');
+    }
+  }
+</script>
+
+</body>
+</html>

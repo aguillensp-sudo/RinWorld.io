@@ -1,0 +1,317 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+.bwapp{display:flex;flex-direction:column;height:680px;overflow:hidden;position:relative;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);}
+.bwnav{background:#1B2537;display:flex;align-items:center;height:46px;padding:0 10px;flex-shrink:0;gap:0;z-index:10;}
+.bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;}
+.bwhbg:hover{background:rgba(255,255,255,0.08);}
+.bwhbg span{display:block;width:14px;height:1.5px;background:white;}
+.bwnavlogo{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:white;letter-spacing:0.05em;white-space:nowrap;margin:0 8px;flex-shrink:0;}
+.bwnavlogo span{color:#B8924A;}
+.bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,0.14);margin:0 8px;flex-shrink:0;}
+.bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden;}
+.bwnavitem{padding:0 8px;height:46px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,0.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.12s;flex-shrink:0;}
+.bwnavitem:hover{color:rgba(255,255,255,0.9);}
+.bwnavitem.act{color:white;border-bottom-color:#2563EB;}
+.bwnavright{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px;}
+.bwnavuser{text-align:right;}
+.bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap;}
+.bwnavun{font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap;}
+.bwnavsout{padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.bwnavsout:hover{background:rgba(255,255,255,0.13);color:white;}
+.bwbody{display:flex;flex:1;overflow:hidden;position:relative;}
+.bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background 0.2s;}
+.bwsbo.open{background:rgba(0,0,0,0.38);pointer-events:auto;}
+.bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform 0.2s ease;}
+.bwsb.open{transform:translateX(0);}
+.bwsbh{padding:13px 14px 11px;border-bottom:0.5px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;}
+.bwsblogo{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:white;letter-spacing:0.04em;}
+.bwsblogo span{color:#B8924A;}
+.bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;}
+.bwsbx:hover{background:rgba(255,255,255,0.08);color:white;}
+.bwsbnav{flex:1;padding:6px 0;}
+.bwsbitem{display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,0.5);cursor:pointer;border-left:2px solid transparent;transition:all 0.12s;}
+.bwsbitem i{font-size:16px;}
+.bwsbitem:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.05);}
+.bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,0.12);}
+.bwsbft{padding:11px 14px;border-top:0.5px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:9px;}
+.bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,0.4);cursor:pointer;padding:4px 0;}
+.bwsbset i{font-size:16px;}
+.bwsbset:hover{color:rgba(255,255,255,0.8);}
+.bwsbusr{display:flex;align-items:center;gap:8px;}
+.bwav{width:26px;height:26px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0;}
+.bwsbn{font-size:12px;font-weight:500;color:white;}
+.bwsbo2{font-size:11px;color:rgba(255,255,255,0.38);}
+.bwcnt{flex:1;background:#ffffff;display:flex;flex-direction:column;overflow:hidden;border-right:0.5px solid rgba(27,37,55,0.1);min-width:0;}
+.bwch{padding:13px 14px 0;}
+.bwptit{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;color:#1B2537;letter-spacing:0.01em;margin-bottom:9px;}
+.bwchips{display:flex;gap:4px;flex-wrap:wrap;padding-bottom:9px;border-bottom:0.5px solid rgba(27,37,55,0.08);}
+.bwchip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:100px;font-size:12px;font-weight:500;background:#F1F3F6;border:0.5px solid rgba(27,37,55,0.14);color:#1B2537;cursor:pointer;}
+.bwchip-l{color:#6B7A99;font-size:11px;}
+.bwchip-add{color:#6B7A99;border-style:dashed;}
+.bwmeta{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:#6B7A99;}
+.bwmeta strong{color:#1B2537;font-weight:500;}
+.bwmacts{display:flex;gap:5px;align-items:center;}
+.bwbtn{padding:4px 9px;border-radius:4px;background:#2563EB;color:white;font-size:11px;font-weight:500;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity 0.12s;}
+.bwbtn:hover{opacity:0.85;}
+.bwbtn.ghost{background:#F1F3F6;color:#1B2537;border:0.5px solid rgba(27,37,55,0.16);}
+.bwbtn.ghost:hover{background:#e8eaed;opacity:1;}
+.bwbtn.dis{opacity:0.35;pointer-events:none;}
+.bwtw{flex:1;overflow:auto;}
+.bwtbl{width:100%;border-collapse:collapse;font-size:12px;min-width:360px;}
+.bwtbl thead th{position:sticky;top:0;background:#fff;padding:6px 7px;text-align:left;font-size:11px;font-weight:500;color:#6B7A99;text-transform:uppercase;letter-spacing:0.05em;border-bottom:0.5px solid rgba(27,37,55,0.1);white-space:nowrap;z-index:1;}
+.bwtbl tbody tr{border-bottom:0.5px solid rgba(27,37,55,0.06);transition:background 0.1s;}
+.bwtbl tbody tr:hover{background:rgba(37,99,235,0.04);}
+.bwtbl tbody td{padding:8px 7px;color:#1B2537;vertical-align:middle;}
+.bwpn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:#1B2537;}
+.bwbrd{display:inline-flex;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:500;background:rgba(27,37,55,0.07);color:#1B2537;}
+.bwqty{font-weight:500;}
+.bwqty.hi{color:#16a34a;}
+.bwqty.lo{color:#6B7A99;}
+.bwlt{color:#6B7A99;font-size:11px;}
+.bwcc{display:inline-flex;padding:1px 5px;background:rgba(27,37,55,0.06);border-radius:3px;font-size:11px;font-weight:500;color:#6B7A99;font-family:'IBM Plex Mono',monospace;}
+.bwfav{color:#B8924A;font-size:11px;font-weight:500;}
+.bwacts{display:flex;gap:3px;}
+.bwcb{width:13px;height:13px;cursor:pointer;accent-color:#2563EB;}
+.bwvera{width:33%;min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width 0.2s ease;position:relative;flex-shrink:0;}
+.bwvera.col{width:32px;min-width:32px;}
+.bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:0.5px solid rgba(184,146,74,0.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;}
+.bwveratg:hover{color:#1B2537;}
+.bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:0.05em;align-items:center;justify-content:center;flex:1;cursor:pointer;}
+.bwvera.col .bwveralbl{display:flex;}
+.bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none;}
+.bwvh{padding:11px 11px 9px;border-bottom:0.5px solid rgba(184,146,74,0.18);display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.bwvico{width:26px;height:26px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.bwvname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:#1B2537;letter-spacing:0.02em;}
+.bwvsub{font-size:11px;color:#6B7A99;}
+.bwvdot{margin-left:auto;width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0;}
+.bwchat{flex:1;overflow-y:auto;padding:10px 9px;display:flex;flex-direction:column;gap:10px;}
+.bwmsg{display:flex;flex-direction:column;gap:3px;}
+.bwmsg.u{align-items:flex-end;}
+.bwmsg.v{align-items:flex-start;}
+.bwbub{padding:8px 10px;border-radius:10px;font-size:12px;line-height:1.5;max-width:92%;}
+.bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px;}
+.bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:0.5px solid rgba(184,146,74,0.2);}
+.bwts{font-size:11px;color:#6B7A99;padding:0 3px;}
+.bwhi{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.bwhii{display:flex;align-items:center;gap:5px;background:rgba(37,99,235,0.06);border:0.5px solid rgba(37,99,235,0.15);border-radius:6px;padding:5px 7px;}
+.bwhir{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#2563EB;}
+.bwhid{color:#6B7A99;font-size:11px;}
+.bwhiq{margin-left:auto;font-weight:500;font-size:11px;color:#16a34a;}
+.bwia{padding:9px;border-top:0.5px solid rgba(184,146,74,0.18);flex-shrink:0;}
+.bwir{display:flex;gap:5px;align-items:flex-end;}
+.bwinp{flex:1;padding:6px 9px;border-radius:7px;border:0.5px solid rgba(184,146,74,0.3);background:white;font-family:inherit;font-size:12px;color:#1B2537;resize:none;outline:none;min-height:32px;max-height:70px;}
+.bwinp:focus{border-color:#2563EB;}
+.bwinp::placeholder{color:#6B7A99;}
+.bwsnd{width:30px;height:30px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;}
+.bwsnd:hover{opacity:0.85;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(107,122,153,0.2);border-radius:3px;}
+</style>
+
+<h2 class="sr-only">Bearingworld.io — pantalla de búsqueda SRCH-01 con top nav, tabla de resultados y panel VERA</h2>
+
+<div class="bwapp">
+
+<nav class="bwnav" aria-label="Navegación principal">
+  <button class="bwhbg" onclick="toggleSb()" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+  <div class="bwnavlogo">BEARING<span>WORLD</span></div>
+  <div class="bwnavdiv"></div>
+  <div class="bwnavitems">
+    <div class="bwnavitem" onclick="setAct(this)">Panel</div>
+    <div class="bwnavitem" onclick="setAct(this)">Vendiendo</div>
+    <div class="bwnavitem act" onclick="setAct(this)">Comprando</div>
+    <div class="bwnavitem" onclick="setAct(this)">Hilos</div>
+    <div class="bwnavitem" onclick="setAct(this)">Empresas</div>
+    <div class="bwnavitem" onclick="setAct(this)">Foros</div>
+    <div class="bwnavitem" onclick="setAct(this)">Contacto</div>
+  </div>
+  <div class="bwnavright">
+    <div class="bwnavuser">
+      <div class="bwnavco">Rodamientos del Sur SL</div>
+      <div class="bwnavun">Juan Martínez</div>
+    </div>
+    <button class="bwnavsout">Cerrar sesión</button>
+  </div>
+</nav>
+
+<div class="bwbody">
+
+  <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+  <aside class="bwsb" id="sb">
+    <div class="bwsbh">
+      <div class="bwsblogo">BEARING<span>WORLD</span></div>
+      <button class="bwsbx" onclick="toggleSb()" aria-label="Cerrar menú">×</button>
+    </div>
+    <nav class="bwsbnav">
+      <div class="bwsbitem"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Panel</div>
+      <div class="bwsbitem"><i class="ti ti-tag" aria-hidden="true"></i>Vendiendo</div>
+      <div class="bwsbitem act"><i class="ti ti-shopping-cart" aria-hidden="true"></i>Comprando</div>
+      <div class="bwsbitem"><i class="ti ti-messages" aria-hidden="true"></i>Hilos</div>
+      <div class="bwsbitem"><i class="ti ti-building" aria-hidden="true"></i>Empresas</div>
+      <div class="bwsbitem"><i class="ti ti-notes" aria-hidden="true"></i>Foros</div>
+      <div class="bwsbitem"><i class="ti ti-headset" aria-hidden="true"></i>Contacto</div>
+    </nav>
+    <div class="bwsbft">
+      <div class="bwsbset"><i class="ti ti-settings" aria-hidden="true"></i>Configuración</div>
+      <div class="bwsbusr">
+        <div class="bwav">JM</div>
+        <div><div class="bwsbn">Juan Martínez</div><div class="bwsbo2">Rodamientos del Sur SL</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="bwcnt">
+    <div class="bwch">
+      <div class="bwptit">Resultados de búsqueda</div>
+      <div class="bwchips">
+        <div class="bwchip"><span class="bwchip-l">Ref</span> 6205-2RS <span style="color:#6B7A99;font-size:13px;line-height:1;">×</span></div>
+        <div class="bwchip"><span class="bwchip-l">Qty mín</span> 500 u <span style="color:#6B7A99;font-size:13px;line-height:1;">×</span></div>
+        <div class="bwchip"><span class="bwchip-l">Zona</span> Europa <span style="color:#6B7A99;font-size:13px;line-height:1;">×</span></div>
+        <div class="bwchip bwchip-add">+ Filtro</div>
+      </div>
+    </div>
+    <div class="bwmeta">
+      <span><strong>5 resultados</strong> · 4 con stock ≥ 500 u</span>
+      <div class="bwmacts">
+        <button class="bwbtn ghost" onclick="selAll(this)">Seleccionar todos</button>
+        <button class="bwbtn dis" id="bwbulk">Consultar seleccionados</button>
+      </div>
+    </div>
+    <div class="bwtw">
+      <table class="bwtbl">
+        <thead>
+          <tr>
+            <th style="width:20px;"></th>
+            <th>Referencia</th>
+            <th>Marca</th>
+            <th>Qty</th>
+            <th>Plazo</th>
+            <th>País</th>
+            <th>Fav</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" class="bwcb" onchange="updSel()"></td>
+            <td><span class="bwpn">6205-2RS/C3</span></td>
+            <td><span class="bwbrd">SKF</span></td>
+            <td><span class="bwqty hi">850</span></td>
+            <td><span class="bwlt">3 días</span></td>
+            <td><span class="bwcc">SE</span></td>
+            <td><span class="bwfav">★ 12</span></td>
+            <td><div class="bwacts"><button class="bwbtn">Consultar</button><button class="bwbtn">Contactar</button></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="bwcb" onchange="updSel()"></td>
+            <td><span class="bwpn">6205-2RS1</span></td>
+            <td><span class="bwbrd">FAG</span></td>
+            <td><span class="bwqty lo">350</span></td>
+            <td><span class="bwlt">5 días</span></td>
+            <td><span class="bwcc">ES</span></td>
+            <td><span class="bwfav">★ 8</span></td>
+            <td><div class="bwacts"><button class="bwbtn">Consultar</button><button class="bwbtn">Contactar</button></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="bwcb" onchange="updSel()"></td>
+            <td><span class="bwpn">6205-2RSC3E</span></td>
+            <td><span class="bwbrd">NSK</span></td>
+            <td><span class="bwqty hi">1 200</span></td>
+            <td><span class="bwlt">7 días</span></td>
+            <td><span class="bwcc">DE</span></td>
+            <td><span class="bwfav">★ 21</span></td>
+            <td><div class="bwacts"><button class="bwbtn">Consultar</button><button class="bwbtn">Contactar</button></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="bwcb" onchange="updSel()"></td>
+            <td><span class="bwpn">6205LLB/5K</span></td>
+            <td><span class="bwbrd">NTN</span></td>
+            <td><span class="bwqty lo">200</span></td>
+            <td><span class="bwlt">2 días</span></td>
+            <td><span class="bwcc">FR</span></td>
+            <td><span class="bwfav">★ 5</span></td>
+            <td><div class="bwacts"><button class="bwbtn">Consultar</button><button class="bwbtn">Contactar</button></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="bwcb" onchange="updSel()"></td>
+            <td><span class="bwpn">6205-2RS-JEM</span></td>
+            <td><span class="bwbrd">Timken</span></td>
+            <td><span class="bwqty hi">600</span></td>
+            <td><span class="bwlt">10 días</span></td>
+            <td><span class="bwcc">DE</span></td>
+            <td><span class="bwfav">★ 9</span></td>
+            <td><div class="bwacts"><button class="bwbtn">Consultar</button><button class="bwbtn">Contactar</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <aside class="bwvera" id="vera">
+    <button class="bwveratg" onclick="toggleVera()" aria-label="Colapsar VERA">
+      <i class="ti ti-chevron-right" id="vtgi" aria-hidden="true"></i>
+    </button>
+    <div class="bwveralbl" onclick="toggleVera()">VERA</div>
+    <div class="bwvh">
+      <div class="bwvico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          <circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/>
+          <circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+        </svg>
+      </div>
+      <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de búsqueda</div></div>
+      <div class="bwvdot"></div>
+    </div>
+    <div class="bwchat" id="bwchat">
+      <div class="bwmsg u">
+        <div class="bwbub">busco 6205 2RS, mínimo 500 unidades, Europa</div>
+        <div class="bwts">10:42</div>
+      </div>
+      <div class="bwmsg v">
+        <div class="bwbub">Encontré <strong>5 proveedores</strong> con stock en Europa. Cuatro superan las 500 unidades.
+          <div class="bwhi">
+            <div class="bwhii"><span class="bwhir">SKF 6205-2RS/C3</span><span class="bwhid">SE · 3d</span><span class="bwhiq">850 u</span></div>
+            <div class="bwhii"><span class="bwhir">NSK 6205-2RSC3E</span><span class="bwhid">DE · 7d</span><span class="bwhiq">1 200 u</span></div>
+          </div>
+        </div>
+        <div class="bwts">10:42</div>
+      </div>
+      <div class="bwmsg u">
+        <div class="bwbub">¿alguno en España o Portugal?</div>
+        <div class="bwts">10:44</div>
+      </div>
+      <div class="bwmsg v">
+        <div class="bwbub">Solo Schaeffler Iberia (ES) con 350 unidades — por debajo de tu mínimo. ¿Les incluyo igualmente en la consulta?</div>
+        <div class="bwts">10:44</div>
+      </div>
+    </div>
+    <div class="bwia">
+      <div class="bwir">
+        <textarea class="bwinp" id="bwinp" placeholder="Escribe a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+        <button class="bwsnd" onclick="vsend()" aria-label="Enviar"><i class="ti ti-send" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+</div>
+
+<script>
+function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');}
+function setAct(el){document.querySelectorAll('.bwnavitem').forEach(i=>i.classList.remove('act'));el.classList.add('act');const idx=[...el.parentElement.children].indexOf(el);const si=document.querySelectorAll('.bwsbitem');if(si[idx])si[idx].classList.add('act');}
+let vc=false;
+function toggleVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right';}
+function updSel(){const n=document.querySelectorAll('.bwcb:checked').length;const b=document.getElementById('bwbulk');if(n>0){b.classList.remove('dis');b.textContent='Consultar ('+n+')';}else{b.classList.add('dis');b.textContent='Consultar seleccionados';}}
+function selAll(btn){const cbs=document.querySelectorAll('.bwcb');const all=[...cbs].every(c=>c.checked);cbs.forEach(c=>{c.checked=!all;});btn.textContent=all?'Seleccionar todos':'Deseleccionar todos';updSel();}
+function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend();}}
+function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,70)+'px';}
+function vsend(){const inp=document.getElementById('bwinp');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;const tid='ty'+Date.now();chat.innerHTML+=`<div class="bwmsg v" id="${tid}"><div class="bwbub" style="color:#6B7A99;font-style:italic;">VERA está escribiendo…</div></div>`;chat.scrollTop=chat.scrollHeight;const rs=['¿Quieres ampliar la búsqueda a más referencias?','Puedo crear un watcher para avisarte si aparece stock ibérico.','Selecciona filas en la tabla y te envío las consultas a la vez.'];setTimeout(()=>{document.getElementById(tid)?.remove();chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">${rs[Math.floor(Math.random()*rs.length)]}</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight;},1100);}
+</script>

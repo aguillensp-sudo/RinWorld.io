@@ -1,0 +1,328 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+.bwapp{display:flex;flex-direction:column;height:680px;overflow:hidden;position:relative;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);}
+.bwnav{background:#1B2537;display:flex;align-items:center;height:46px;padding:0 14px;flex-shrink:0;}
+.bwnavlogo{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:white;letter-spacing:0.05em;}
+.bwnavlogo span{color:#B8924A;}
+.bwnavsub{font-size:11px;color:rgba(255,255,255,0.35);margin-left:10px;letter-spacing:0.04em;}
+.bwbody{display:flex;flex:1;overflow:hidden;}
+.bwform-wrap{flex:1;background:#ffffff;overflow-y:auto;padding:28px 32px;}
+.bwform-head{margin-bottom:22px;}
+.bwform-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;color:#1B2537;letter-spacing:0.01em;margin-bottom:5px;}
+.bwform-sub{font-size:12px;color:#6B7A99;line-height:1.5;}
+.bwnotice{display:flex;align-items:flex-start;gap:8px;background:rgba(184,146,74,0.07);border-left:3px solid #B8924A;border-radius:0 5px 5px 0;padding:9px 12px;margin-bottom:20px;}
+.bwnotice i{color:#B8924A;font-size:15px;flex-shrink:0;margin-top:1px;}
+.bwnotice-txt{font-size:11px;color:#6B7A99;line-height:1.5;}
+.bwsec-div{display:flex;align-items:center;gap:10px;margin:20px 0 16px;}
+.bwsec-line{flex:1;height:0.5px;background:rgba(27,37,55,0.1);}
+.bwsec-lbl{font-size:11px;font-weight:500;color:#6B7A99;letter-spacing:0.04em;white-space:nowrap;}
+.bwgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.bwgrid.full{grid-template-columns:1fr;}
+.bwfield{display:flex;flex-direction:column;gap:4px;}
+.bwfield.span2{grid-column:span 2;}
+.bwlbl{font-size:11px;font-weight:500;color:#1B2537;letter-spacing:0.01em;}
+.bwlbl .req{color:#2563EB;}
+.bwlbl .priv{display:inline-flex;align-items:center;gap:3px;color:#6B7A99;font-size:10px;font-weight:400;margin-left:4px;}
+.bwlbl .priv i{font-size:11px;}
+.bwinp{height:34px;padding:0 10px;border:0.5px solid rgba(27,37,55,0.2);border-radius:5px;font-size:12px;color:#1B2537;font-family:inherit;outline:none;background:white;width:100%;}
+.bwinp:focus{border-color:#2563EB;}
+.bwinp::placeholder{color:#6B7A99;}
+.bwinp.error{border-color:#e53e3e;}
+.bwerr{font-size:11px;color:#e53e3e;}
+.bwtel{display:flex;gap:6px;}
+.bwtel select{height:34px;padding:0 6px;border:0.5px solid rgba(27,37,55,0.2);border-radius:5px;font-size:12px;color:#1B2537;font-family:inherit;outline:none;background:white;flex-shrink:0;width:72px;}
+.bwtel select:focus{border-color:#2563EB;}
+.bwtel input{flex:1;}
+.bwselect{height:34px;padding:0 10px;border:0.5px solid rgba(27,37,55,0.2);border-radius:5px;font-size:12px;color:#1B2537;font-family:inherit;outline:none;background:white;width:100%;}
+.bwselect:focus{border-color:#2563EB;}
+.bwtags{min-height:34px;padding:4px 8px;border:0.5px solid rgba(27,37,55,0.2);border-radius:5px;font-size:12px;color:#1B2537;font-family:inherit;outline:none;background:white;width:100%;display:flex;flex-wrap:wrap;gap:4px;align-items:center;cursor:text;}
+.bwtags:focus-within{border-color:#2563EB;}
+.bwtag{display:inline-flex;align-items:center;gap:4px;background:rgba(37,99,235,0.08);border:0.5px solid rgba(37,99,235,0.2);border-radius:100px;padding:2px 7px;font-size:11px;color:#2563EB;}
+.bwtag span{cursor:pointer;color:#6B7A99;font-size:13px;line-height:1;}
+.bwtag span:hover{color:#e53e3e;}
+.bwtags-inp{border:none;outline:none;font-size:12px;font-family:inherit;color:#1B2537;flex:1;min-width:80px;padding:2px 0;background:transparent;}
+.bwtags-inp::placeholder{color:#6B7A99;}
+.bwupload{display:flex;align-items:center;gap:8px;}
+.bwupload-area{flex:1;height:34px;border:0.5px dashed rgba(27,37,55,0.25);border-radius:5px;display:flex;align-items:center;padding:0 10px;gap:7px;cursor:pointer;font-size:12px;color:#6B7A99;}
+.bwupload-area:hover{border-color:#2563EB;color:#2563EB;}
+.bwupload-area i{font-size:15px;}
+.bwupload-file{font-size:11px;color:#16a34a;display:flex;align-items:center;gap:4px;}
+.bwupload-file i{font-size:13px;}
+.bwradio-group{display:flex;flex-direction:column;gap:6px;padding-top:2px;}
+.bwradio{display:flex;align-items:center;gap:7px;cursor:pointer;}
+.bwradio input[type=radio]{accent-color:#2563EB;width:14px;height:14px;cursor:pointer;}
+.bwradio-lbl{font-size:12px;color:#1B2537;}
+.bwradio-sub{font-size:11px;color:#6B7A99;margin-left:21px;margin-top:-3px;}
+.bwcheck{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.bwcheck input[type=checkbox]{accent-color:#2563EB;width:14px;height:14px;cursor:pointer;flex-shrink:0;}
+.bwcheck-lbl{font-size:12px;color:#1B2537;}
+.bwcheck-lbl a{color:#2563EB;}
+.bwdivider{height:0.5px;background:rgba(27,37,55,0.08);margin:18px 0;}
+.bwgoogle{width:100%;height:38px;background:white;border:0.5px solid #dadce0;border-radius:5px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;font-size:13px;font-weight:500;color:#1B2537;font-family:inherit;margin-bottom:10px;}
+.bwgoogle:hover{background:#f8f8f8;}
+.bwgoogle-icon{width:18px;height:18px;flex-shrink:0;}
+.bwor{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.bwor-line{flex:1;height:0.5px;background:rgba(27,37,55,0.1);}
+.bwor-txt{font-size:11px;color:#6B7A99;}
+.bwsubmit{width:100%;height:40px;background:#2563EB;color:white;border:none;border-radius:5px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;transition:opacity 0.12s;}
+.bwsubmit:hover{opacity:0.88;}
+.bwsubmit.dis{opacity:0.35;pointer-events:none;}
+.bwvera{width:33%;min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width 0.2s ease;position:relative;flex-shrink:0;border-left:0.5px solid rgba(184,146,74,0.18);}
+.bwvera.col{width:32px;min-width:32px;}
+.bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:0.5px solid rgba(184,146,74,0.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;}
+.bwveratg:hover{color:#1B2537;}
+.bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:0.05em;align-items:center;justify-content:center;flex:1;cursor:pointer;}
+.bwvera.col .bwveralbl{display:flex;}
+.bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none;}
+.bwvh{padding:11px 11px 9px;border-bottom:0.5px solid rgba(184,146,74,0.18);display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.bwvico{width:26px;height:26px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.bwvname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:#1B2537;letter-spacing:0.02em;}
+.bwvsub{font-size:11px;color:#6B7A99;}
+.bwvdot{margin-left:auto;width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0;}
+.bwchat{flex:1;overflow-y:auto;padding:10px 9px;display:flex;flex-direction:column;gap:10px;}
+.bwmsg{display:flex;flex-direction:column;gap:3px;}
+.bwmsg.u{align-items:flex-end;}
+.bwmsg.v{align-items:flex-start;}
+.bwbub{padding:8px 10px;border-radius:10px;font-size:12px;line-height:1.5;max-width:92%;}
+.bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px;}
+.bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:0.5px solid rgba(184,146,74,0.2);}
+.bwts{font-size:11px;color:#6B7A99;padding:0 3px;}
+.bwia{padding:9px;border-top:0.5px solid rgba(184,146,74,0.18);flex-shrink:0;}
+.bwir{display:flex;gap:5px;align-items:flex-end;}
+.bwinpa{flex:1;padding:6px 9px;border-radius:7px;border:0.5px solid rgba(184,146,74,0.3);background:white;font-family:inherit;font-size:12px;color:#1B2537;resize:none;outline:none;min-height:32px;max-height:70px;}
+.bwinpa:focus{border-color:#2563EB;}
+.bwinpa::placeholder{color:#6B7A99;}
+.bwsnd{width:30px;height:30px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;}
+.bwsnd:hover{opacity:0.85;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(107,122,153,0.2);border-radius:3px;}
+</style>
+
+<h2 class="sr-only">Bearingworld.io — REG-01 Formulario de Registro de Organización y Administrador (FRO)</h2>
+
+<div class="bwapp">
+
+<nav class="bwnav">
+  <div class="bwnavlogo">BEARING<span>WORLD</span></div>
+  <div class="bwnavsub">REGISTRO DE ORGANIZACIÓN</div>
+</nav>
+
+<div class="bwbody">
+
+  <div class="bwform-wrap">
+    <div class="bwform-head">
+      <div class="bwform-title">Crear tu cuenta en Bearingworld.io</div>
+      <div class="bwform-sub">Completa los datos de tu organización y de tu usuario administrador.<br>Tu rol de Administrador se asignará automáticamente al completar el registro.</div>
+    </div>
+
+    <div class="bwnotice">
+      <i class="ti ti-shield-lock" aria-hidden="true"></i>
+      <div class="bwnotice-txt">El primer usuario que completa este formulario queda registrado automáticamente como <strong>Administrador</strong> de la organización. No existe selector de rol.</div>
+    </div>
+
+    <div class="bwsec-div">
+      <div class="bwsec-line"></div>
+      <div class="bwsec-lbl">Sección 1 de 2 — Datos de la organización</div>
+      <div class="bwsec-line"></div>
+    </div>
+
+    <div class="bwgrid">
+
+      <div class="bwfield span2">
+        <label class="bwlbl">Nombre legal de la empresa <span class="req">*</span></label>
+        <input class="bwinp" type="text" placeholder="Rodamientos del Sur SL" value="Rodamientos del Sur SL">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">NIF / CIF <span class="req">*</span> <span class="priv"><i class="ti ti-lock" aria-hidden="true"></i>dato interno, no publicado</span></label>
+        <input class="bwinp" type="text" placeholder="B-12345678" value="B-12345678">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">País de sede <span class="req">*</span></label>
+        <select class="bwselect">
+          <option value="">Selecciona un país</option>
+          <option selected>España (ES)</option>
+          <option>Alemania (DE)</option>
+          <option>Francia (FR)</option>
+          <option>Italia (IT)</option>
+          <option>Portugal (PT)</option>
+        </select>
+      </div>
+
+      <div class="bwfield span2">
+        <label class="bwlbl">Dirección <span class="req">*</span></label>
+        <input class="bwinp" type="text" placeholder="Calle, número, piso..." value="Calle Industria, 47, Nave 3">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Código postal <span class="req">*</span></label>
+        <input class="bwinp" type="text" placeholder="41900" value="41900">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Email de contacto público <span class="req">*</span></label>
+        <input class="bwinp" type="email" placeholder="info@empresa.com" value="info@rodamientosdelsur.es">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Teléfono de contacto público <span class="req">*</span></label>
+        <div class="bwtel">
+          <select><option>+34</option><option>+49</option><option>+33</option><option>+351</option></select>
+          <input class="bwinp" type="text" placeholder="954 123 456" value="954 123 456">
+        </div>
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Sitio web corporativo</label>
+        <input class="bwinp" type="url" placeholder="https://www.empresa.com" value="https://www.rodamientosdelsur.es">
+      </div>
+
+      <div class="bwfield span2">
+        <label class="bwlbl">Países de operación <span class="req">*</span></label>
+        <div class="bwtags" onclick="this.querySelector('.bwtags-inp').focus()">
+          <span class="bwtag">España <span onclick="removeTag(this)">×</span></span>
+          <span class="bwtag">Portugal <span onclick="removeTag(this)">×</span></span>
+          <input class="bwtags-inp" placeholder="Añadir país..." onkeydown="addTag(event,this)">
+        </div>
+      </div>
+
+      <div class="bwfield span2">
+        <label class="bwlbl">Marcas principales que distribuye</label>
+        <div class="bwtags" onclick="this.querySelector('.bwtags-inp').focus()">
+          <span class="bwtag">SKF <span onclick="removeTag(this)">×</span></span>
+          <span class="bwtag">FAG <span onclick="removeTag(this)">×</span></span>
+          <span class="bwtag">NSK <span onclick="removeTag(this)">×</span></span>
+          <input class="bwtags-inp" placeholder="Escribe una marca..." onkeydown="addTag(event,this)">
+        </div>
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Logo de la empresa</label>
+        <div class="bwupload">
+          <div class="bwupload-area"><i class="ti ti-upload" aria-hidden="true"></i>PNG, JPG o WEBP · máx. 2 MB</div>
+          <span class="bwupload-file"><i class="ti ti-circle-check" aria-hidden="true"></i>logo_rds.png</span>
+        </div>
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Visibilidad del inventario <span class="req">*</span></label>
+        <div class="bwradio-group">
+          <label class="bwradio"><input type="radio" name="vis" checked><span class="bwradio-lbl">Visible para todos los miembros</span></label>
+          <label class="bwradio"><input type="radio" name="vis"><span class="bwradio-lbl">Visibilidad restringida</span></label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bwsec-div" style="margin-top:24px;">
+      <div class="bwsec-line"></div>
+      <div class="bwsec-lbl">Sección 2 de 2 — Usuario administrador</div>
+      <div class="bwsec-line"></div>
+    </div>
+
+    <button class="bwgoogle" onclick="">
+      <svg class="bwgoogle-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Continuar con Google
+    </button>
+
+    <div class="bwor"><div class="bwor-line"></div><div class="bwor-txt">o</div><div class="bwor-line"></div></div>
+
+    <div class="bwgrid">
+
+      <div class="bwfield span2">
+        <label class="bwlbl">Nombre completo del administrador <span class="req">*</span></label>
+        <input class="bwinp" type="text" placeholder="Nombre y apellidos" value="Juan Martínez Herrera">
+      </div>
+
+      <div class="bwfield span2">
+        <label class="bwlbl">Email del administrador <span class="req">*</span></label>
+        <input class="bwinp" type="email" placeholder="tu@empresa.com" value="juan.martinez@rodamientosdelsur.es">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Contraseña <span class="req">*</span></label>
+        <input class="bwinp" type="password" placeholder="Mín. 10 caracteres" value="Secreto123!">
+      </div>
+
+      <div class="bwfield">
+        <label class="bwlbl">Repetir contraseña <span class="req">*</span></label>
+        <input class="bwinp" type="password" placeholder="Repite la contraseña" value="Secreto123!">
+      </div>
+
+      <div class="bwfield span2">
+        <label class="bwcheck">
+          <input type="checkbox" id="tcc" onchange="updBtn()">
+          <span class="bwcheck-lbl">Acepto los <a href="#">Términos y Condiciones</a> y la <a href="#">Política de Privacidad</a></span>
+        </label>
+      </div>
+
+    </div>
+
+    <button class="bwsubmit dis" id="bwsubmit">Crear mi cuenta</button>
+
+  </div>
+
+  <aside class="bwvera" id="vera">
+    <button class="bwveratg" onclick="toggleVera()" aria-label="Colapsar VERA">
+      <i class="ti ti-chevron-right" id="vtgi" aria-hidden="true"></i>
+    </button>
+    <div class="bwveralbl" onclick="toggleVera()">VERA</div>
+    <div class="bwvh">
+      <div class="bwvico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          <circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/>
+          <circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+        </svg>
+      </div>
+      <div><div class="bwvname">VERA</div><div class="bwvsub">Asistente de registro</div></div>
+      <div class="bwvdot"></div>
+    </div>
+    <div class="bwchat" id="bwchat">
+      <div class="bwmsg v">
+        <div class="bwbub">Hola, soy VERA. Estoy aquí para ayudarte a completar tu registro en Bearingworld.io. Si tienes dudas sobre algún campo, pregúntame.</div>
+        <div class="bwts">10:31</div>
+      </div>
+      <div class="bwmsg u">
+        <div class="bwbub">¿Qué pongo en países de operación?</div>
+        <div class="bwts">10:33</div>
+      </div>
+      <div class="bwmsg v">
+        <div class="bwbub">Indica los países donde tu organización distribuye o compra rodamientos. El país de sede ya está preseleccionado — añade más si operas en otros mercados.</div>
+        <div class="bwts">10:33</div>
+      </div>
+    </div>
+    <div class="bwia">
+      <div class="bwir">
+        <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+        <button class="bwsnd" onclick="vsend()" aria-label="Enviar"><i class="ti ti-send" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+</div>
+
+<script>
+let vc=false;
+function toggleVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right';}
+function updBtn(){const ok=document.getElementById('tcc').checked;document.getElementById('bwsubmit').classList.toggle('dis',!ok);}
+function removeTag(el){el.parentElement.remove();}
+function addTag(e,inp){if(e.key==='Enter'&&inp.value.trim()){e.preventDefault();const tag=document.createElement('span');tag.className='bwtag';tag.innerHTML=inp.value.trim()+' <span onclick="removeTag(this)">×</span>';inp.parentElement.insertBefore(tag,inp);inp.value='';}}
+function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend();}}
+function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,70)+'px';}
+function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;const tid='ty'+Date.now();chat.innerHTML+=`<div class="bwmsg v" id="${tid}"><div class="bwbub" style="color:#6B7A99;font-style:italic;">VERA está escribiendo…</div></div>`;chat.scrollTop=chat.scrollHeight;const rs=['El NIF/CIF es un dato interno de verificación — no se publicará en tu ficha ni en el directorio.','Las marcas que añadas aparecerán en tu perfil público para que otros distribuidores puedan encontrarte.','La visibilidad del inventario controla si otros miembros ven tu stock. Puedes cambiarlo después desde ajustes.','El email de contacto público es el que aparecerá en tu ficha de empresa — puede ser distinto al de tu usuario.'];setTimeout(()=>{document.getElementById(tid)?.remove();chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">${rs[Math.floor(Math.random()*rs.length)]}</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight;},1100);}
+</script>

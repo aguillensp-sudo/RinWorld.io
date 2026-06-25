@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bearingworld.io — App Shell v1.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/1.119.0/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      height: 100vh;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* SHELL STRUCTURE */
+    .bwshell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* BRAND BAR — 24px */
+    .bwbrand {
+      height: 24px;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.45);
+      flex-shrink: 0;
+    }
+    
+    /* NAV BAR — 46px */
+    .bwnav {
+      height: 46px;
+      background: #1B2537;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 14px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    
+    .bwhbg {
+      width: 30px;
+      height: 30px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      border-radius: 4px;
+      padding: 6px;
+      flex-shrink: 0;
+      transition: background 0.12s;
+    }
+    
+    .bwhbg:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .bwhbg span {
+      display: block;
+      width: 14px;
+      height: 1.5px;
+      background: white;
+    }
+    
+    .bwnavlogo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: white;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      margin: 0 8px;
+      flex-shrink: 0;
+    }
+    
+    .bwnavlogo span {
+      color: #B8924A;
+    }
+    
+    .bwnavdiv {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 8px;
+      flex-shrink: 0;
+    }
+    
+    .bwnavitems {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 0;
+      overflow: hidden;
+    }
+    
+    .bwnavitem {
+      padding: 0 12px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.55);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.12s;
+      flex-shrink: 0;
+    }
+    
+    .bwnavitem:hover {
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .bwnavitem.act {
+      color: white;
+      border-bottom-color: #2563EB;
+    }
+    
+    .bwnavright {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    
+    .bwnavuser {
+      text-align: right;
+    }
+    
+    .bwnavco {
+      font-size: 11px;
+      font-weight: 500;
+      color: white;
+      white-space: nowrap;
+    }
+    
+    .bwnavun {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.45);
+      white-space: nowrap;
+    }
+    
+    .bwnavsout {
+      padding: 5px 12px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 0.5px solid rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    
+    .bwnavsout:hover {
+      background: rgba(255, 255, 255, 0.13);
+      color: white;
+    }
+    
+    /* MAIN CONTENT AREA */
+    .bwmain {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* SIDEBAR OVERLAY */
+    .bwsbo {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0);
+      z-index: 20;
+      pointer-events: none;
+      transition: background 0.2s;
+    }
+    
+    .bwsbo.open {
+      background: rgba(0, 0, 0, 0.38);
+      pointer-events: auto;
+    }
+    
+    .bwsb {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 210px;
+      background: #1B2537;
+      z-index: 21;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+    }
+    
+    .bwsb.open {
+      transform: translateX(0);
+    }
+    
+    .bwsbh {
+      padding: 12px 14px;
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    
+    .bwsblogo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+      letter-spacing: 0.02em;
+    }
+    
+    .bwsblogo span {
+      color: #B8924A;
+    }
+    
+    .bwsbx {
+      width: 24px;
+      height: 24px;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    
+    .bwsbx:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+    
+    .bwsbnav {
+      flex: 1;
+      padding: 8px 0;
+      overflow-y: auto;
+    }
+    
+    .bwsbitem {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+    
+    .bwsbitem i {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    .bwsbitem:hover {
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .bwsbitem.act {
+      color: white;
+      border-left-color: #2563EB;
+      background: rgba(37, 99, 235, 0.12);
+    }
+    
+    .bwsbft {
+      padding: 12px 14px;
+      border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    
+    .bwsbset {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+    
+    .bwsbset i {
+      font-size: 16px;
+    }
+    
+    .bwsbset:hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .bwsbusr {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    
+    .bwav {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #B8924A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: white;
+      flex-shrink: 0;
+    }
+    
+    .bwsbusrn {
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+    }
+    
+    .bwsbusro {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.38);
+    }
+    
+    /* CONTENT PANEL */
+    .bwcnt {
+      flex: 1;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+      transition: flex 0.2s ease;
+    }
+    
+    .bwcnth {
+      padding: 20px;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+    }
+    
+    .bwcntt {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      color: #1A1A1A;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .bwcnts {
+      font-size: 16px;
+      color: #6B7A99;
+      line-height: 1.6;
+    }
+    
+    .bwcntb {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .bwcntb p {
+      font-size: 16px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    
+    /* VERA PANEL */
+    .bwvera {
+      width: calc(33.333% - 0.5px);
+      min-width: 32px;
+      background: #FAF8F4;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.2s ease;
+      position: relative;
+      flex-shrink: 0;
+      border-left: 0.5px solid rgba(184, 146, 74, 0.18);
+    }
+    
+    .bwvera.col {
+      width: 32px;
+    }
+    
+    .bwveratg {
+      position: absolute;
+      left: -11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 36px;
+      background: #FAF8F4;
+      border: 0.5px solid rgba(184, 146, 74, 0.22);
+      border-radius: 5px 0 0 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6B7A99;
+      font-size: 13px;
+      z-index: 2;
+      transition: color 0.12s;
+    }
+    
+    .bwveratg:hover {
+      color: #1B2537;
+    }
+    
+    .bwveralbl {
+      display: none;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      color: #6B7A99;
+      letter-spacing: 0.05em;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+    
+    .bwvera.col .bwveralbl {
+      display: flex;
+    }
+    
+    .bwvera.col .bwveralbl:hover {
+      color: #1B2537;
+    }
+    
+    .bwvera.col .bwvh,
+    .bwvera.col .bwchat,
+    .bwvera.col .bwia {
+      display: none;
+    }
+    
+    .bwvh {
+      padding: 12px;
+      border-bottom: 0.5px solid rgba(184, 146, 74, 0.18);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+    
+    .bwvico {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #1B2537;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .bwvname {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: #1B2537;
+      letter-spacing: 0.02em;
+    }
+    
+    .bwvsub {
+      font-size: 13px;
+      color: #6B7A99;
+    }
+    
+    .bwvdot {
+      margin-left: auto;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+      flex-shrink: 0;
+    }
+    
+    .bwchat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .bwmsg {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    
+    .bwmsg.u {
+      align-items: flex-end;
+    }
+    
+    .bwmsg.v {
+      align-items: flex-start;
+    }
+    
+    .bwbub {
+      padding: 9px 11px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 92%;
+    }
+    
+    .bwmsg.u .bwbub {
+      background: #1B2537;
+      color: white;
+      border-bottom-right-radius: 3px;
+    }
+    
+    .bwmsg.v .bwbub {
+      background: white;
+      color: #1B2537;
+      border-bottom-left-radius: 3px;
+      border: 0.5px solid rgba(184, 146, 74, 0.2);
+    }
+    
+    .bwts {
+      font-size: 12px;
+      color: #6B7A99;
+      padding: 0 3px;
+    }
+    
+    .bwia {
+      padding: 10px;
+      border-top: 0.5px solid rgba(184, 146, 74, 0.18);
+      flex-shrink: 0;
+    }
+    
+    .bwir {
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    
+    .bwinpa {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 0.5px solid rgba(184, 146, 74, 0.3);
+      background: white;
+      font-family: inherit;
+      font-size: 14px;
+      color: #1B2537;
+      resize: none;
+      outline: none;
+      min-height: 34px;
+      max-height: 72px;
+      transition: border-color 0.12s;
+    }
+    
+    .bwinpa:focus {
+      border-color: #2563EB;
+    }
+    
+    .bwinpa::placeholder {
+      color: #6B7A99;
+    }
+    
+    .bwsnd {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      background: #2563EB;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 14px;
+      transition: opacity 0.12s;
+    }
+    
+    .bwsnd:hover {
+      opacity: 0.85;
+    }
+    
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(107, 122, 153, 0.2);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="bwshell">
+
+  <!-- BRAND BAR -->
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <!-- NAV BAR -->
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()" aria-label="Abrir menú">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="bwnavlogo">BEARING<span>WORLD</span></div>
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem act" onclick="setAct(this)">Panel</div>
+      <div class="bwnavitem" onclick="setAct(this)">Vendiendo</div>
+      <div class="bwnavitem" onclick="setAct(this)">Comprando</div>
+      <div class="bwnavitem" onclick="setAct(this)">Hilos</div>
+      <div class="bwnavitem" onclick="setAct(this)">Empresas</div>
+      <div class="bwnavitem" onclick="setAct(this)">Foros</div>
+      <div class="bwnavitem" onclick="setAct(this)">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div class="bwnavuser">
+        <div class="bwnavco">Rodamientos del Sur SL</div>
+        <div class="bwnavun">Juan Martínez</div>
+      </div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="bwmain">
+
+    <!-- SIDEBAR OVERLAY -->
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    
+    <!-- SIDEBAR -->
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh">
+        <div class="bwsblogo">BEARING<span>WORLD</span></div>
+        <button class="bwsbx" onclick="toggleSb()" aria-label="Cerrar menú">×</button>
+      </div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem act"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-settings"></i>Configuración</div>
+        <div class="bwsbusr">
+          <div class="bwav">JM</div>
+          <div>
+            <div class="bwsbusrn">Juan Martínez</div>
+            <div class="bwsbusro">Rodamientos del Sur SL</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT PANEL -->
+    <main class="bwcnt">
+      <div class="bwcnth">
+        <div class="bwcntt">Panel de Control</div>
+        <div class="bwcnts">Bienvenido a tu panel de administración. El contenido se renderiza aquí.</div>
+      </div>
+      <div class="bwcntb">
+        <p>Este es el área de contenido principal. Aquí se inyectarán las diferentes pantallas de la aplicación (SRCH-01, INV-01, MSG-01, etc.). El shell proporciona la estructura fija: brand bar, nav bar, sidebar y panel VERA.</p>
+        <p><strong>Estructura del Shell — v1.0:</strong></p>
+        <p>✓ Brand bar (24px): ZERO KNOWLEDGE ARCHITECTURE · CONNECT · TRADE · SECURE · INDUSTRIAL INTELLIGENCE NETWORK</p>
+        <p>✓ Nav bar (46px): Hamburguesa + Logo + 7 ítems (Panel activo) + Empresa + Usuario + Cerrar sesión</p>
+        <p>✓ Sidebar overlay: Se abre con hamburguesa, 7 ítems + Configuración + Usuario, sincronizado con nav</p>
+        <p>✓ Panel VERA: 33% inicial, expandible hasta 50%, colapsable a 32px con etiqueta vertical</p>
+        <p>✓ Tipografía: Montserrat 700 28px títulos · Inter 400 16px body · Z.ai system</p>
+        <p>✓ Restricción: max-width 520px en formularios (implementado en CSS)</p>
+        <p>✓ Colores: Paleta completa · Deep Steel Dark para brand bar</p>
+      </div>
+    </main>
+
+    <!-- VERA PANEL -->
+    <aside class="bwvera" id="vera">
+      <button class="bwveratg" onclick="tgVera()" aria-label="Colapsar VERA">
+        <i class="ti ti-chevron-right" id="vtgi"></i>
+      </button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          </svg>
+        </div>
+        <div>
+          <div class="bwvname">VERA</div>
+          <div class="bwvsub">Agente de búsqueda</div>
+        </div>
+        <div class="bwvdot"></div>
+      </div>
+
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v">
+          <div class="bwbub">Hola. Soy VERA, tu asistente. ¿En qué puedo ayudarte?</div>
+          <div class="bwts">10:31</div>
+        </div>
+      </div>
+
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()" aria-label="Enviar">→</button>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+</div>
+
+<script>
+  function toggleSb() {
+    document.getElementById('sb').classList.toggle('open');
+    document.getElementById('sbo').classList.toggle('open');
+  }
+
+  function setAct(el) {
+    document.querySelectorAll('.bwnavitem').forEach(i => i.classList.remove('act'));
+    el.classList.add('act');
+    const idx = [...el.parentElement.children].indexOf(el);
+    const si = document.querySelectorAll('.bwsbitem');
+    if (si[idx]) {
+      document.querySelectorAll('.bwsbitem').forEach(i => i.classList.remove('act'));
+      si[idx].classList.add('act');
+    }
+  }
+
+  let vc = false;
+  function tgVera() {
+    vc = !vc;
+    document.getElementById('vera').classList.toggle('col', vc);
+    document.getElementById('vtgi').className = vc ? 'ti ti-chevron-left' : 'ti ti-chevron-right';
+  }
+
+  function vkey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      vsend();
+    }
+  }
+
+  function vrsz(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 72) + 'px';
+  }
+
+  function vsend() {
+    const inp = document.getElementById('bwinpa');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    
+    const chat = document.getElementById('bwchat');
+    const t = new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0');
+    
+    chat.innerHTML += `<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;
+    inp.value = '';
+    inp.style.height = 'auto';
+    chat.scrollTop = chat.scrollHeight;
+    
+    setTimeout(() => {
+      chat.innerHTML += `<div class="bwmsg v"><div class="bwbub">Entendido. ¿Algo más?</div><div class="bwts">${t}</div></div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }, 800);
+  }
+</script>
+
+</body>
+</html>

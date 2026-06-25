@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rinworld.io — Prototipos</title>
+  <link rel="icon" type="image/png" href="openspec/design-gui/specs y html aprobados/favicon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #111827; color: #dde2ea; min-height: 100vh; }
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+    header {
+      background: #1B2537;
+      border-bottom: 1px solid rgba(184,146,74,0.3);
+      padding: 24px 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: white;
+    }
+
+    .logo span { color: #B8924A; }
+
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6B7A99;
+      border: 1px solid rgba(107,122,153,0.3);
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+
+    main { max-width: 900px; margin: 0 auto; padding: 48px; }
+
+    h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #B8924A;
+      margin-bottom: 16px;
+      margin-top: 40px;
+    }
+
+    h2:first-of-type { margin-top: 0; }
+
+    .screens { display: flex; flex-direction: column; gap: 8px; }
+
+    a.screen {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      background: #1B2537;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    a.screen:hover {
+      border-color: rgba(184,146,74,0.4);
+      background: rgba(184,146,74,0.05);
+    }
+
+    .code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #B8924A;
+      min-width: 100px;
+    }
+
+    .name { font-size: 14px; color: #dde2ea; }
+
+    .pending {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .tag {
+      margin-left: auto;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: 2px;
+    }
+
+    .tag.ok { background: rgba(22,163,74,0.12); color: #16a34a; border: 1px solid rgba(22,163,74,0.25); }
+    .tag.wip { background: rgba(184,146,74,0.1); color: #B8924A; border: 1px solid rgba(184,146,74,0.25); }
+    .tag.pen { background: rgba(107,122,153,0.1); color: #6B7A99; border: 1px solid rgba(107,122,153,0.2); }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+  <div class="logo">Rin<span>world</span>.io</div>
+  <div class="badge">Prototipos HTML · Design System v1.2</div>
+</header>
+
+<main>
+
+  <h2>Módulo 01 — Onboarding</h2>
+  <div class="screens">
+    <a class="screen" href="openspec/design-gui/specs y html aprobados/REG-00 · FSR v1.0.html">
+      <span class="code">REG-00</span>
+      <span class="name">Formulario de Solicitud de Registro</span>
+      <span class="tag ok">Aprobado</span>
+    </a>
+    <a class="screen pending" href="#">
+      <span class="code">REG-00-WAIT</span>
+      <span class="name">Espera de Aprobación del Operador</span>
+      <span class="tag pen">Pendiente</span>
+    </a>
+    <a class="screen" href="openspec/design-gui/specs y html aprobados/REG-01 · FRO v1.4.html">
+      <span class="code">REG-01</span>
+      <span class="name">Formulario de Registro de Organización</span>
+      <span class="tag ok">Aprobado</span>
+    </a>
+    <a class="screen pending" href="#">
+      <span class="code">REG-05</span>
+      <span class="name">Introducción E2EE</span>
+      <span class="tag pen">Pendiente</span>
+    </a>
+    <a class="screen pending" href="#">
+      <span class="code">REG-06</span>
+      <span class="name">Establecer Backup Passphrase</span>
+      <span class="tag pen">Pendiente</span>
+    </a>
+    <a class="screen pending" href="#">
+      <span class="code">REG-07</span>
+      <span class="name">Generación de Claves</span>
+      <span class="tag pen">Pendiente</span>
+    </a>
+    <a class="screen pending" href="#">
+      <span class="code">REG-09</span>
+      <span class="name">Bienvenida y Usuarios Adicionales</span>
+      <span class="tag pen">Pendiente</span>
+    </a>
+  </div>
+
+  <h2>Módulo 03 — Búsqueda</h2>
+  <div class="screens">
+    <a class="screen pending" href="#">
+      <span class="code">SRCH-01</span>
+      <span class="name">Resultados de Búsqueda</span>
+      <span class="tag wip">En revisión</span>
+    </a>
+  </div>
+
+</main>
+
+</body>
+</html>

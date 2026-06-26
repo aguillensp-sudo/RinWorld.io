@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bearingworld.io — Gestión de Invitaciones</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,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">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:"Inter",sans-serif}
+    .bwshell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+    .bwminhdr{height:72px;background:#07111F;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-bottom:.5px solid rgba(255,255,255,.08)}
+    .bwmain{display:flex;flex:1;overflow:hidden}
+    .bwcnt{flex:1;background:#fff;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .bwcntb{flex:1;overflow-y:auto;padding:40px 48px 56px}
+    .bwcnti{width:100%;max-width:760px;margin:0 auto}
+
+    /* Page header */
+    .pg-eyebrow{font-family:"Montserrat",sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#B8924A;margin-bottom:8px}
+    .pg-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:22px;color:#1B2537;letter-spacing:.3px;line-height:1.25;margin-bottom:4px}
+    .pg-sub{font-size:14px;color:#6B7A99;line-height:1.5;margin-bottom:28px}
+
+    /* Invite form */
+    .inv-card{background:#F8F9FB;border:1px solid #E5E7EB;border-radius:6px;padding:20px 22px;margin-bottom:28px}
+    .inv-card-title{font-family:"Montserrat",sans-serif;font-weight:600;font-size:13px;color:#1B2537;margin-bottom:12px}
+    .inv-row{display:flex;gap:10px;align-items:flex-start}
+    .inv-input{flex:1;padding:10px 12px;border:1px solid #D1D5DB;border-radius:3px;font-family:"Inter",sans-serif;font-size:14px;color:#1B2537;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff}
+    .inv-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+    .inv-input.err{border-color:#ef4444}
+    .inv-input:disabled{background:#F1F3F6;color:#9BA4B0;cursor:not-allowed}
+    .inv-btn{padding:10px 18px;background:#2563EB;color:#fff;border:none;border-radius:3px;font-family:"Inter",sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+    .inv-btn:hover:not(:disabled){opacity:.9}
+    .inv-btn:disabled{opacity:.35;cursor:not-allowed}
+    .inv-errlbl{font-size:12px;color:#DC2626;margin-top:4px;display:none}
+    .inv-errlbl.visible{display:block}
+    .inv-ok{font-size:12px;color:#16a34a;margin-top:4px;display:none}
+    .inv-ok.visible{display:block}
+
+    /* Limit notice */
+    .limit-notice{display:none;align-items:flex-start;gap:9px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:4px;padding:12px 14px;font-size:13px;color:#991B1B;line-height:1.6;margin-bottom:28px}
+    .limit-notice.visible{display:flex}
+
+    /* Capacity bar */
+    .cap-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:10px 0}
+    .cap-dots{display:flex;gap:5px}
+    .cap-dot{width:12px;height:12px;border-radius:50%;background:#E5E7EB;transition:background .2s}
+    .cap-dot.used{background:#1B2537}
+    .cap-dot.inv{background:#B8924A}
+    .cap-lbl{font-size:12px;color:#6B7A99}
+    .cap-num{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#1B2537;font-weight:600}
+
+    /* Section titles */
+    .sec-title{font-family:"Montserrat",sans-serif;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6B7A99;margin-bottom:10px;margin-top:28px}
+
+    /* Tables */
+    .tbl-wrap{overflow-x:auto;border:1px solid #E5E7EB;border-radius:5px;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{background:#F8F9FB;padding:9px 14px;text-align:left;font-family:"Montserrat",sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#6B7A99;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    td{padding:11px 14px;border-bottom:1px solid #F3F4F6;color:#374151;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(184,146,74,.03)}
+
+    /* Status badges */
+    .badge{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:2px;white-space:nowrap}
+    .badge.pen{background:rgba(37,99,235,.08);color:#1d4ed8;border:1px solid rgba(37,99,235,.18)}
+    .badge.acc{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.2)}
+    .badge.exp{background:rgba(107,122,153,.08);color:#4B5563;border:1px solid rgba(107,122,153,.2)}
+    .badge.act{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.2)}
+    .badge.sus{background:rgba(239,68,68,.07);color:#991B1B;border:1px solid rgba(239,68,68,.18)}
+    .badge.adm{background:rgba(184,146,74,.1);color:#92702e;border:1px solid rgba(184,146,74,.25)}
+    .badge.edi{background:rgba(107,122,153,.08);color:#4B5563;border:1px solid rgba(107,122,153,.2)}
+
+    /* Action buttons */
+    .act-btn{font-size:12px;font-family:"Inter",sans-serif;padding:4px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151;transition:border-color .15s,color .15s}
+    .act-btn:hover{border-color:#B8924A;color:#92702e}
+    .act-btn.danger{border-color:rgba(239,68,68,.3);color:#DC2626;background:rgba(239,68,68,.03)}
+    .act-btn.danger:hover{border-color:#ef4444;background:rgba(239,68,68,.07)}
+    .act-none{font-size:12px;color:#D1D5DB}
+
+    /* VERA */
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18);transition:width .2s ease}
+    .bwvera.col{width:32px}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;z-index:2;transition:color .12s}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:"Montserrat",sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer;transition:color .12s}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwveralbl:hover{color:#1B2537}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:"Montserrat",sans-serif;font-weight:700;font-size:16px;color:#1B2537;letter-spacing:.02em}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:#fff;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:#fff;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2);border-left:2px solid #B8924A}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:#fff;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#2563EB}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+
+    /* Delete modal */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(7,17,31,.55);z-index:100;align-items:center;justify-content:center}
+    .modal-bg.visible{display:flex}
+    .modal{background:#fff;border-radius:6px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .modal-icon{width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.08);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+    .modal-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:17px;color:#1B2537;margin-bottom:8px}
+    .modal-body{font-size:13px;color:#6B7A99;line-height:1.6;margin-bottom:20px}
+    .modal-target{font-weight:600;color:#374151}
+    .modal-warn{background:rgba(239,68,68,.05);border-left:3px solid #ef4444;padding:10px 12px;border-radius:0 4px 4px 0;font-size:12px;color:#991B1B;line-height:1.5;margin-bottom:20px}
+    .modal-btns{display:flex;gap:10px}
+    .modal-cancel{flex:1;padding:10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;font-family:"Inter",sans-serif;font-size:14px;font-weight:500;cursor:pointer;color:#374151}
+    .modal-cancel:hover{background:#F1F3F6}
+    .modal-del{flex:1;padding:10px;border:none;border-radius:3px;background:#ef4444;font-family:"Inter",sans-serif;font-size:14px;font-weight:600;cursor:pointer;color:#fff}
+    .modal-del:hover{background:#dc2626}
+
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+  <div class="bwminhdr">
+    <div style="height:46px;width:200px;" aria-label="Logo Bearingworld.io"></div>
+  </div>
+  <div class="bwmain">
+    <main class="bwcnt">
+      <div class="bwcntb"><div class="bwcnti">
+
+        <div class="pg-eyebrow">Módulo 01 · Onboarding</div>
+        <div class="pg-title">Gestión de invitaciones</div>
+        <div class="pg-sub">Invita a los usuarios de tu organización. Cada nuevo usuario se incorporará con rol <strong>Editor</strong>. Límite: 5 usuarios por organización.</div>
+
+        <!-- Capacity indicator -->
+        <div class="cap-row">
+          <div class="cap-dots" id="capDots">
+            <div class="cap-dot used" title="Usuario activo"></div>
+            <div class="cap-dot used" title="Usuario activo"></div>
+            <div class="cap-dot inv" title="Invitación pendiente"></div>
+            <div class="cap-dot" title="Plaza libre"></div>
+            <div class="cap-dot" title="Plaza libre"></div>
+          </div>
+          <span class="cap-num" id="capNum">2/5</span>
+          <span class="cap-lbl" id="capLbl">· 1 invitación pendiente · 2 plazas libres</span>
+        </div>
+
+        <!-- Limit notice (hidden by default) -->
+        <div class="limit-notice" id="limitNotice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Tu organización ha alcanzado el límite de 5 usuarios. Para añadir uno nuevo, debes eliminar uno existente.
+        </div>
+
+        <!-- Invite form -->
+        <div class="inv-card">
+          <div class="inv-card-title">Invitar nuevo usuario</div>
+          <div class="inv-row">
+            <div style="flex:1">
+              <input class="inv-input" type="email" id="invEmail" placeholder="email@empresa.com" oninput="onInvInput()" autocomplete="email">
+              <div class="inv-errlbl" id="invErr">Este email ya tiene cuenta en Bearingworld.io.</div>
+              <div class="inv-ok" id="invOk">Invitación enviada. El usuario recibirá un email con el enlace de registro.</div>
+            </div>
+            <button class="inv-btn" id="invBtn" onclick="sendInvite()" disabled>Enviar invitación</button>
+          </div>
+        </div>
+
+        <!-- Invitations table -->
+        <div class="sec-title">Invitaciones enviadas</div>
+        <div class="tbl-wrap">
+          <table id="tblInv">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Estado</th>
+                <th>Fecha de envío</th>
+                <th>Expira en</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>carlos.m@aceroindustrial.com</td>
+                <td><span class="badge pen">Pendiente</span></td>
+                <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">24 jun 2026 · 11:42</td>
+                <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#B8924A">5 días</td>
+                <td><span class="act-none">—</span></td>
+              </tr>
+              <tr>
+                <td>l.perez@aceroindustrial.com</td>
+                <td><span class="badge acc">Aceptada</span></td>
+                <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">18 jun 2026 · 09:10</td>
+                <td><span class="act-none">—</span></td>
+                <td><span class="act-none">—</span></td>
+              </tr>
+              <tr>
+                <td>m.sanchez@aceroindustrial.com</td>
+                <td><span class="badge exp">Expirada</span></td>
+                <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">01 jun 2026 · 14:30</td>
+                <td><span class="act-none">—</span></td>
+                <td><button class="act-btn" onclick="resend('m.sanchez@aceroindustrial.com')">Reenviar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Users table -->
+        <div class="sec-title" style="margin-top:32px">Usuarios activos</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:500;color:#1B2537">Ana García Ruiz</td>
+                <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">ana.garcia@aceroindustrial.com</td>
+                <td><span class="badge adm">Admin</span></td>
+                <td><span class="badge act">Activo</span></td>
+                <td><span class="act-none" title="No se puede eliminar al propio administrador">—</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:500;color:#1B2537">Luis Pérez Molina</td>
+                <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">l.perez@aceroindustrial.com</td>
+                <td><span class="badge edi">Editor</span></td>
+                <td><span class="badge act">Activo</span></td>
+                <td><button class="act-btn danger" onclick="openDeleteModal('Luis Pérez Molina','l.perez@aceroindustrial.com')">Eliminar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Demo -->
+        <div style="margin-top:36px;padding-top:20px;border-top:1px dashed #E5E7EB;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#9BA4B0;text-transform:uppercase;letter-spacing:.05em">Demo:</span>
+          <button onclick="demoEmailExistente()" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Email ya registrado</button>
+          <button onclick="demoLimite()" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Límite alcanzado</button>
+          <button onclick="demoReset()" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Resetear</button>
+        </div>
+
+      </div></div>
+    </main>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()" id="vtgbtn" aria-label="Colapsar VERA">
+        <span id="vtgi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+      </button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg></div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Asistente de gestión</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Puedes tener hasta 5 usuarios en total en tu organización. Ahora tienes 2 activos y 1 invitación pendiente, así que puedes invitar a 2 más.</div><div class="bwts">11:42</div></div>
+        <div class="bwmsg u"><div class="bwbub">¿cuántas invitaciones puedo enviar?</div><div class="bwts">11:44</div></div>
+        <div class="bwmsg v"><div class="bwbub">Con 2 activos y 1 pendiente ya tienes 3 plazas ocupadas. Te quedan 2 plazas disponibles para nuevas invitaciones.</div><div class="bwts">11:44</div></div>
+      </div>
+      <div class="bwia"><div class="bwir">
+        <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+        <button class="bwsnd" onclick="vSend()" aria-label="Enviar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div></div>
+    </aside>
+  </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <div class="modal-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+    <div class="modal-title">Eliminar usuario</div>
+    <div class="modal-body">Vas a eliminar a <span class="modal-target" id="delName">—</span> (<span id="delEmail" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">—</span>).</div>
+    <div class="modal-warn">Esta acción es irreversible. El usuario perderá el acceso inmediatamente y sus claves criptográficas serán eliminadas.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-del" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* VERA toggle + resize */
+  var vc=false,CHR='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',CHL='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+  function tgVera(){vc=!vc;document.getElementById("vera").classList.toggle("col",vc);document.getElementById("vtgi").innerHTML=vc?CHL:CHR;}
+  var isR=false,vp=document.getElementById("vera"),vr=document.getElementById("veraResize");
+  vr.addEventListener("mousedown",function(e){isR=true;vc=false;vp.classList.remove("col");document.getElementById("vtgi").innerHTML=CHR;e.preventDefault();});
+  document.addEventListener("mousemove",function(e){if(!isR)return;var mw=document.querySelector(".bwmain").clientWidth,nw=mw-e.clientX;if(nw>=32&&nw<=mw*0.5)vp.style.width=nw+"px";});
+  document.addEventListener("mouseup",function(){isR=false;});
+
+  /* VERA chat */
+  function vkey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();vSend();}}
+  function vrsz(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,72)+"px";}
+  var vR=["Solo el Administrador puede enviar invitaciones y eliminar usuarios. Los Editores no ven esta pantalla.","La invitación caduca a los 7 días. Puedes reenviarla si el destinatario no la aceptó a tiempo.","Al eliminar un usuario, sus claves criptográficas se borran permanentemente. Los mensajes cifrados quedan sin poder descifrarse en su nombre."],vri=0;
+  function vSend(){var inp=document.getElementById("bwinpa"),txt=inp.value.trim();if(!txt)return;var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});chat.insertAdjacentHTML("beforeend",'<div class="bwmsg u"><div class="bwbub">'+txt+'</div><div class="bwts">'+now+'</div></div>');inp.value="";inp.style.height="auto";setTimeout(function(){chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">'+vR[vri%vR.length]+'</div><div class="bwts">'+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+'</div></div>');vri++;chat.scrollTop=chat.scrollHeight;},600);chat.scrollTop=chat.scrollHeight;}
+
+  /* Invite form */
+  var LIMIT=false;
+  function onInvInput(){
+    var v=document.getElementById("invEmail").value.trim(),valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    document.getElementById("invBtn").disabled=!valid||LIMIT;
+    if(!valid){document.getElementById("invEmail").classList.remove("err");document.getElementById("invErr").classList.remove("visible");}
+  }
+
+  function sendInvite(){
+    var email=document.getElementById("invEmail").value.trim();
+    document.getElementById("invErr").classList.remove("visible");
+    document.getElementById("invOk").classList.remove("visible");
+    document.getElementById("invOk").textContent="Invitación enviada. El usuario recibirá un email con el enlace de registro.";
+    document.getElementById("invEmail").classList.remove("err");
+    document.getElementById("invOk").classList.add("visible");
+    document.getElementById("invEmail").value="";
+    document.getElementById("invBtn").disabled=true;
+    var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+    chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Invitación enviada a '+email+'. Caduca en 7 días.</div><div class="bwts">'+now+'</div></div>');
+    chat.scrollTop=chat.scrollHeight;
+  }
+
+  function resend(email){
+    var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+    chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Invitación reenviada a '+email+'. El enlace anterior quedó invalidado.</div><div class="bwts">'+now+'</div></div>');
+    chat.scrollTop=chat.scrollHeight;
+  }
+
+  /* Delete modal */
+  var pendingDel=null;
+  function openDeleteModal(name,email){pendingDel={name:name,email:email};document.getElementById("delName").textContent=name;document.getElementById("delEmail").textContent=email;document.getElementById("delModal").classList.add("visible");}
+  function closeModal(){document.getElementById("delModal").classList.remove("visible");pendingDel=null;}
+  function confirmDelete(){
+    if(!pendingDel)return;
+    var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+    chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Usuario '+pendingDel.name+' eliminado. Sus claves han sido borradas del sistema.</div><div class="bwts">'+now+'</div></div>');
+    chat.scrollTop=chat.scrollHeight;
+    closeModal();
+  }
+  document.getElementById("delModal").addEventListener("click",function(e){if(e.target===this)closeModal();});
+
+  /* Demo states */
+  function demoEmailExistente(){
+    document.getElementById("invEmail").value="l.perez@aceroindustrial.com";
+    document.getElementById("invEmail").classList.add("err");
+    document.getElementById("invErr").classList.add("visible");
+    document.getElementById("invOk").classList.remove("visible");
+    document.getElementById("invBtn").disabled=true;
+  }
+  function demoLimite(){
+    LIMIT=true;
+    document.getElementById("limitNotice").classList.add("visible");
+    document.getElementById("invEmail").disabled=true;
+    document.getElementById("invBtn").disabled=true;
+    var dots=document.querySelectorAll(".cap-dot");
+    ["used","used","used","inv","used"].forEach(function(cls,i){dots[i].className="cap-dot "+cls;});
+    document.getElementById("capNum").textContent="5/5";
+    document.getElementById("capLbl").textContent="· límite alcanzado";
+  }
+  function demoReset(){
+    LIMIT=false;
+    document.getElementById("limitNotice").classList.remove("visible");
+    document.getElementById("invEmail").disabled=false;
+    document.getElementById("invEmail").value="";
+    document.getElementById("invEmail").classList.remove("err");
+    document.getElementById("invErr").classList.remove("visible");
+    document.getElementById("invOk").classList.remove("visible");
+    document.getElementById("invBtn").disabled=true;
+    var dots=document.querySelectorAll(".cap-dot");
+    ["used","used","inv","",""].forEach(function(cls,i){dots[i].className="cap-dot"+(cls?" "+cls:"");});
+    document.getElementById("capNum").textContent="2/5";
+    document.getElementById("capLbl").textContent="· 1 invitación pendiente · 2 plazas libres";
+  }
+</script>
+</body>
+</html>

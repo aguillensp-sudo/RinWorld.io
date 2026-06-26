@@ -3,209 +3,278 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rinworld.io — Prototipos</title>
+  <title>Bearingworld.io — Prototipos</title>
   <link rel="icon" type="image/png" href="openspec/design-gui/specs y html aprobados/favicon.png">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #111827; color: #dde2ea; min-height: 100vh; }
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
-    header {
-      background: #1B2537;
-      border-bottom: 1px solid rgba(184,146,74,0.3);
-      padding: 24px 48px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .logo {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 700;
-      font-size: 20px;
-      color: white;
-    }
-
-    .logo span { color: #B8924A; }
-
-    .badge {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #6B7A99;
-      border: 1px solid rgba(107,122,153,0.3);
-      padding: 3px 8px;
-      border-radius: 2px;
-    }
-
-    main { max-width: 900px; margin: 0 auto; padding: 48px; }
-
-    h2 {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #B8924A;
-      margin-bottom: 16px;
-      margin-top: 40px;
-    }
-
-    h2:first-of-type { margin-top: 0; }
-
-    .screens { display: flex; flex-direction: column; gap: 8px; }
-
-    a.screen {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 20px;
-      background: #1B2537;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 4px;
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.15s, background 0.15s;
-    }
-
-    a.screen:hover {
-      border-color: rgba(184,146,74,0.4);
-      background: rgba(184,146,74,0.05);
-    }
-
-    .code {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      color: #B8924A;
-      min-width: 100px;
-    }
-
-    .name { font-size: 14px; color: #dde2ea; }
-
-    .pending {
-      opacity: 0.4;
-      cursor: default;
-      pointer-events: none;
-    }
-
-    .tag {
-      margin-left: auto;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 2px 7px;
-      border-radius: 2px;
-    }
-
-    .tag.ok { background: rgba(22,163,74,0.12); color: #16a34a; border: 1px solid rgba(22,163,74,0.25); }
-    .tag.wip { background: rgba(184,146,74,0.1); color: #B8924A; border: 1px solid rgba(184,146,74,0.25); }
-    .tag.pen { background: rgba(107,122,153,0.1); color: #6B7A99; border: 1px solid rgba(107,122,153,0.2); }
-  </style>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:"Inter",sans-serif;background:#0D1521;color:#dde2ea;min-height:100vh}
+
+    header{background:#1B2537;border-bottom:1px solid rgba(184,146,74,.3);padding:20px 48px;display:flex;align-items:center;gap:16px}
+    .logo{font-family:"Montserrat",sans-serif;font-weight:700;font-size:20px;color:#fff}
+    .logo span{color:#B8924A}
+    .badge{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6B7A99;border:1px solid rgba(107,122,153,.3);padding:3px 8px;border-radius:2px}
+    .header-stats{margin-left:auto;display:flex;gap:20px;align-items:center}
+    .stat{text-align:right}
+    .stat-val{font-family:"IBM Plex Mono",monospace;font-size:16px;font-weight:700;color:#B8924A}
+    .stat-lbl{font-size:10px;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em}
+
+    main{max-width:960px;margin:0 auto;padding:40px 48px 80px}
+
+    .module{margin-bottom:40px}
+    .module-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+    h2{font-family:"Montserrat",sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#B8924A}
+    .module-count{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#4B5563}
+
+    .screens{display:flex;flex-direction:column;gap:5px}
+
+    a.screen{display:flex;align-items:center;gap:16px;padding:12px 18px;background:#1B2537;border:1px solid rgba(255,255,255,.05);border-radius:4px;text-decoration:none;color:inherit;transition:border-color .15s,background .15s}
+    a.screen:hover{border-color:rgba(184,146,74,.35);background:rgba(184,146,74,.04)}
+    a.screen.pending{opacity:.38;cursor:default;pointer-events:none}
+
+    .code{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#B8924A;min-width:108px;flex-shrink:0}
+    .name{font-size:13px;color:#dde2ea;flex:1}
+
+    .tag{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:2px;flex-shrink:0}
+    .tag.ok{background:rgba(22,163,74,.12);color:#16a34a;border:1px solid rgba(22,163,74,.25)}
+    .tag.wip{background:rgba(184,146,74,.1);color:#B8924A;border:1px solid rgba(184,146,74,.25)}
+    .tag.pen{background:rgba(107,122,153,.08);color:#4B5563;border:1px solid rgba(107,122,153,.15)}
+  </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Rin<span>world</span>.io</div>
+  <div class="logo">Bearing<span>world</span>.io</div>
   <div class="badge">Prototipos HTML · Design System v1.2</div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-val" id="statAprobados">—</div><div class="stat-lbl">Aprobados</div></div>
+    <div class="stat"><div class="stat-val" id="statRevision">—</div><div class="stat-lbl">En revisión</div></div>
+    <div class="stat"><div class="stat-val" id="statTotal">—</div><div class="stat-lbl">Total</div></div>
+  </div>
 </header>
 
 <main>
 
-  <h2>Sistema Base</h2>
-  <div class="screens">
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/Rinworld_app_shell.html">
-      <span class="code">APP-SHELL</span>
-      <span class="name">Shell de Aplicación — Brand bar · Nav · VERA · Sidebar overlay</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
+  <!-- ─── SISTEMA BASE ─────────────────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Sistema Base</h2></div>
+    <div class="screens">
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/Rinworld_app_shell.html">
+        <span class="code">APP-SHELL</span>
+        <span class="name">Shell de Aplicación — Brand bar · Nav · VERA · Sidebar overlay</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+    </div>
   </div>
 
-  <h2>Módulo 01 — Onboarding</h2>
-  <div class="screens">
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-00%20%C2%B7%20FSR%20v1.0.html">
-      <span class="code">REG-00</span>
-      <span class="name">Formulario de Solicitud de Registro</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-00-WAIT%20%C2%B7%20WAS%20v1.0.html">
-      <span class="code">REG-00-WAIT</span>
-      <span class="name">Espera de Aprobación del Operador</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-01%20%C2%B7%20FRO%20v1.4.html">
-      <span class="code">REG-01</span>
-      <span class="name">Formulario de Registro de Organización</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-05%20%C2%B7%20E2EE%20v1.0.html">
-      <span class="code">REG-05</span>
-      <span class="name">Introducción E2EE</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-06%20%C2%B7%20EBP%20v1.0.html">
-      <span class="code">REG-06</span>
-      <span class="name">Establecer Backup Passphrase</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-07%20%C2%B7%20GKB%20v1.0.html">
-      <span class="code">REG-07</span>
-      <span class="name">Generación de Claves</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-09%20%C2%B7%20ACT%20v1.0.html">
-      <span class="code">REG-09</span>
-      <span class="name">Bienvenida y Usuarios Adicionales</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/FRU%20%C2%B7%20FRU%20v1.0.html">
-      <span class="code">FRU</span>
-      <span class="name">Formulario de Registro de Usuario Adicional</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
-    <a class="screen pending" href="#">
-      <span class="code">INVT-01</span>
-      <span class="name">Gestión de Invitaciones</span>
-      <span class="tag pen">Pendiente</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REC-01%20%C2%B7%20REC%20v1.0.html">
-      <span class="code">REC-01</span>
-      <span class="name">Recuperación de Clave Privada</span>
-      <span class="tag ok">Aprobado</span>
-    </a>
+  <!-- ─── MÓDULO 01 — ONBOARDING ───────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 01 — Onboarding</h2></div>
+    <div class="screens">
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-00%20%C2%B7%20FSR%20v1.0.html">
+        <span class="code">REG-00</span>
+        <span class="name">Formulario de Solicitud de Registro</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-00-WAIT%20%C2%B7%20WAS%20v1.0.html">
+        <span class="code">REG-00-WAIT</span>
+        <span class="name">Espera de Aprobación del Operador</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-01%20%C2%B7%20FRO%20v1.4.html">
+        <span class="code">REG-01</span>
+        <span class="name">Formulario de Registro de Organización</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-05%20%C2%B7%20E2EE%20v1.0.html">
+        <span class="code">REG-05</span>
+        <span class="name">Introducción E2EE</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-06%20%C2%B7%20EBP%20v1.0.html">
+        <span class="code">REG-06</span>
+        <span class="name">Establecer Backup Passphrase</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-07%20%C2%B7%20GKB%20v1.0.html">
+        <span class="code">REG-07</span>
+        <span class="name">Generación de Claves</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REG-09%20%C2%B7%20ACT%20v1.0.html">
+        <span class="code">REG-09</span>
+        <span class="name">Bienvenida y Usuarios Adicionales</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/FRU%20%C2%B7%20FRU%20v1.0.html">
+        <span class="code">FRU</span>
+        <span class="name">Formulario de Registro de Usuario Adicional</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">INVT-01</span>
+        <span class="name">Panel de Gestión de Invitaciones</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/REC-01%20%C2%B7%20REC%20v1.0.html">
+        <span class="code">REC-01</span>
+        <span class="name">Recuperación de Clave Privada</span>
+        <span class="tag ok">Aprobado</span>
+      </a>
+    </div>
   </div>
 
-  <h2>Módulo 03 — Búsqueda</h2>
-  <div class="screens">
-    <a class="screen pending" href="#">
-      <span class="code">SRCH-01</span>
-      <span class="name">Resultados de Búsqueda</span>
-      <span class="tag pen">Pendiente</span>
-    </a>
+  <!-- ─── MÓDULO 02 — INVENTARIO ───────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 02 — Inventario</h2></div>
+    <div class="screens">
+      <a class="screen pending" href="#">
+        <span class="code">INV-01</span>
+        <span class="name">Lista de Inventario</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">INV-02</span>
+        <span class="name">Detalle de Producto</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">INV-03</span>
+        <span class="name">Añadir Producto</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">INV-04</span>
+        <span class="name">Editar Producto</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">INV-05</span>
+        <span class="name">Importación de Inventario</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">INV-07</span>
+        <span class="name">Historial de Cambios de Inventario</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+    </div>
   </div>
 
-  <h2>Módulo 07 — Admin / Settings</h2>
-  <div class="screens">
-    <a class="screen pending" href="#">
-      <span class="code">SET-01</span>
-      <span class="name">Panel de Configuración</span>
-      <span class="tag pen">Pendiente</span>
-    </a>
-    <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/SET-SEC-01%20%C2%B7%20SSC%20v1.0.html">
-      <span class="code">SET-SEC-01</span>
-      <span class="name">Cambiar Backup Passphrase</span>
-      <span class="tag wip">En revisión</span>
-    </a>
-    <a class="screen pending" href="#">
-      <span class="code">SET-USERS-01</span>
-      <span class="name">Gestión de Usuarios</span>
-      <span class="tag pen">Pendiente</span>
-    </a>
+  <!-- ─── MÓDULO 03 — BÚSQUEDA ─────────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 03 — Búsqueda</h2></div>
+    <div class="screens">
+      <a class="screen pending" href="#">
+        <span class="code">SRCH-01</span>
+        <span class="name">Resultados de Búsqueda</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">SRCH-02</span>
+        <span class="name">Búsqueda Avanzada / Filtros</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── MÓDULO 04 — MENSAJERÍA ───────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 04 — Mensajería</h2></div>
+    <div class="screens">
+      <a class="screen pending" href="#">
+        <span class="code">MSG-01</span>
+        <span class="name">Lista de Conversaciones</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">MSG-02</span>
+        <span class="name">Conversación / Negociación</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">MSG-03</span>
+        <span class="name">Nueva Propuesta de Negociación</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">MSG-04</span>
+        <span class="name">Detalle de Oferta / Contraoferta</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── MÓDULO 05 — DIRECTORIO ───────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 05 — Directorio</h2></div>
+    <div class="screens">
+      <a class="screen pending" href="#">
+        <span class="code">DIR-01</span>
+        <span class="name">Directorio de Organizaciones</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">DIR-02</span>
+        <span class="name">Perfil de Organización</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── MÓDULO 06 — FOROS ────────────────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 06 — Foros</h2></div>
+    <div class="screens">
+      <a class="screen pending" href="#">
+        <span class="code">FORO-01</span>
+        <span class="name">Lista de Hilos / Topics</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">FORO-02</span>
+        <span class="name">Hilo de Foro</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">FORO-03</span>
+        <span class="name">Nuevo Post / Respuesta</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── MÓDULO 07 — ADMIN / SETTINGS ─────────────────────── -->
+  <div class="module">
+    <div class="module-head"><h2>Módulo 07 — Admin / Settings</h2></div>
+    <div class="screens">
+      <a class="screen pending" href="#">
+        <span class="code">SET-01</span>
+        <span class="name">Panel de Configuración</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+      <a class="screen" href="openspec/design-gui/specs%20y%20html%20aprobados/SET-SEC-01%20%C2%B7%20SSC%20v1.0.html">
+        <span class="code">SET-SEC-01</span>
+        <span class="name">Cambiar Backup Passphrase</span>
+        <span class="tag wip">En revisión</span>
+      </a>
+      <a class="screen pending" href="#">
+        <span class="code">SET-USERS-01</span>
+        <span name="name">Gestión de Usuarios</span>
+        <span class="tag pen">Pendiente</span>
+      </a>
+    </div>
   </div>
 
 </main>
 
+<script>
+  var ok=document.querySelectorAll(".tag.ok").length;
+  var wip=document.querySelectorAll(".tag.wip").length;
+  var total=document.querySelectorAll(".screen").length;
+  document.getElementById("statAprobados").textContent=ok;
+  document.getElementById("statRevision").textContent=wip;
+  document.getElementById("statTotal").textContent=total;
+</script>
 </body>
 </html>

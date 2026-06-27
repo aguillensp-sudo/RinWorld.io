@@ -97,7 +97,8 @@
     .chip.act{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.3);color:#1d4ed8}
     .tbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
     .srch-wrap{position:relative}
-    .srch-wrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#9BA4B0;font-size:15px}
+    .srch-wrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#9BA4B0;font-size:15px;cursor:pointer;transition:color .12s}
+    .srch-wrap i:hover{color:#374151}
     .srch-inp{padding:7px 10px 7px 30px;border:1px solid #D1D5DB;border-radius:3px;font-family:"Inter",sans-serif;font-size:13px;color:#1B2537;background:#fff;outline:none;width:200px;transition:border-color .15s}
     .srch-inp:focus{border-color:#2563EB}
     .srch-inp::placeholder{color:#9BA4B0}
@@ -299,8 +300,8 @@
           </div>
           <div class="tbar-right">
             <div class="srch-wrap">
-              <i class="ti ti-search"></i>
-              <input class="srch-inp" type="text" placeholder="Buscar por referencia o marca...">
+              <i class="ti ti-search" onclick="doSearch()" title="Buscar"></i>
+              <input class="srch-inp" type="text" id="srchInp" placeholder="Buscar por referencia o marca..." onkeydown="if(event.key==='Enter')doSearch()">
             </div>
             <button class="btn-upload" onclick="document.getElementById('fileInp').click()">
               <i class="ti ti-upload" style="font-size:15px"></i>
@@ -425,6 +426,9 @@
 </div><!-- /bwshell -->
 
 <script>
+  /* Search — server-side, triggered on Enter or icon click */
+  function doSearch(){var q=document.getElementById("srchInp").value.trim();if(!q)return;var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Buscando «'+q+'» en el inventario…</div><div class="bwts">'+now+'</div></div>');chat.scrollTop=chat.scrollHeight;}
+
   /* Sidebar */
   function toggleSidebar(){document.getElementById("sb").classList.toggle("open");document.getElementById("sbo").classList.toggle("open");}
 

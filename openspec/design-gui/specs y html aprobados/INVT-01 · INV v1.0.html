@@ -4,15 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bearingworld.io — Gestión de Invitaciones</title>
-  <link rel="icon" type="image/png" href="data:image/png;base64,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">
+  <link rel="icon" type="image/png" href="data:image/png;base64,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">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100vh;font-family:"Inter",sans-serif}
-    .bwshell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
-    .bwbrand{height:24px;background:#07111F;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45)}
-    .bwminhdr{height:72px;background:#07111F;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-bottom:.5px solid rgba(255,255,255,.08)}
-    .bwmain{display:flex;flex:1;overflow:hidden}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+    /* BRAND BAR */
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+
+    /* NAV BAR */
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;gap:0;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavlogo{display:block}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;gap:0;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavuser{text-align:right}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+
+    /* MAIN */
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+
+    /* SIDEBAR OVERLAY */
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+
+    /* CONTENT */
     .bwcnt{flex:1;background:#fff;display:flex;flex-direction:column;overflow:hidden;min-width:0}
     .bwcntb{flex:1;overflow-y:auto;padding:40px 48px 56px}
     .bwcnti{width:100%;max-width:760px;margin:0 auto}
@@ -80,10 +126,10 @@
     .act-none{font-size:12px;color:#D1D5DB}
 
     /* VERA */
-    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18);transition:width .2s ease}
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
     .bwvera.col{width:32px}
     .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
-    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;z-index:2;transition:color .12s}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
     .bwveratg:hover{color:#1B2537}
     .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:"Montserrat",sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer;transition:color .12s}
     .bwvera.col .bwveralbl{display:flex}
@@ -100,18 +146,18 @@
     .bwmsg.v{align-items:flex-start}
     .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
     .bwmsg.u .bwbub{background:#1B2537;color:#fff;border-bottom-right-radius:3px}
-    .bwmsg.v .bwbub{background:#fff;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2);border-left:2px solid #B8924A}
+    .bwmsg.v .bwbub{background:#fff;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
     .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
     .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
     .bwir{display:flex;gap:6px;align-items:flex-end}
     .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:#fff;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
     .bwinpa:focus{border-color:#2563EB}
     .bwinpa::placeholder{color:#6B7A99}
-    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
     .bwsnd:hover{opacity:.85}
 
     /* Delete modal */
-    .modal-bg{display:none;position:fixed;inset:0;background:rgba(7,17,31,.55);z-index:100;align-items:center;justify-content:center}
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(7,17,31,.55);z-index:200;align-items:center;justify-content:center}
     .modal-bg.visible{display:flex}
     .modal{background:#fff;border-radius:6px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
     .modal-icon{width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.08);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
@@ -130,15 +176,74 @@
 </head>
 <body>
 <div class="bwshell">
+
+  <!-- BRAND BAR -->
   <div class="bwbrand">
     <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
     <div>CONNECT · TRADE · SECURE</div>
     <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
   </div>
-  <div class="bwminhdr">
-    <img class="bwnavlogo" src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto;">
+
+  <!-- NAV BAR -->
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <img class="bwnavlogo" src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem" onclick="setAct(this)">Panel</div>
+      <div class="bwnavitem" onclick="setAct(this)">Vendiendo</div>
+      <div class="bwnavitem" onclick="setAct(this)">Comprando</div>
+      <div class="bwnavitem" onclick="setAct(this)">Hilos</div>
+      <div class="bwnavitem" onclick="setAct(this)">Inventario</div>
+      <div class="bwnavitem" onclick="setAct(this)">Empresas</div>
+      <div class="bwnavitem" onclick="setAct(this)">Foros</div>
+      <div class="bwnavitem" onclick="setAct(this)">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div class="bwnavuser">
+        <div class="bwnavco">Rodamientos del Sur SL</div>
+        <div class="bwnavun">Juan Martínez</div>
+      </div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
   </div>
+
+  <!-- MAIN AREA -->
   <div class="bwmain">
+
+    <!-- SIDEBAR OVERLAY -->
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh">
+        <button class="bwsbx" onclick="toggleSb()" aria-label="Cerrar menú">×</button>
+      </div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr">
+          <div class="bwav">JM</div>
+          <div>
+            <div class="bwsbusrn">Juan Martínez</div>
+            <div class="bwsbusro">Rodamientos del Sur SL</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
     <main class="bwcnt">
       <div class="bwcntb"><div class="bwcnti">
 
@@ -146,7 +251,6 @@
         <div class="pg-title">Gestión de invitaciones</div>
         <div class="pg-sub">Invita a los usuarios de tu organización. Cada nuevo usuario se incorporará con rol <strong>Editor</strong>. Límite: 5 usuarios por organización.</div>
 
-        <!-- Capacity indicator -->
         <div class="cap-row">
           <div class="cap-dots" id="capDots">
             <div class="cap-dot used" title="Usuario activo"></div>
@@ -159,13 +263,11 @@
           <span class="cap-lbl" id="capLbl">· 1 invitación pendiente · 2 plazas libres</span>
         </div>
 
-        <!-- Limit notice (hidden by default) -->
         <div class="limit-notice" id="limitNotice">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Tu organización ha alcanzado el límite de 5 usuarios. Para añadir uno nuevo, debes eliminar uno existente.
         </div>
 
-        <!-- Invite form -->
         <div class="inv-card">
           <div class="inv-card-title">Invitar nuevo usuario</div>
           <div class="inv-row">
@@ -178,7 +280,6 @@
           </div>
         </div>
 
-        <!-- Invitations table -->
         <div class="sec-title">Invitaciones enviadas</div>
         <div class="tbl-wrap">
           <table id="tblInv">
@@ -217,7 +318,6 @@
           </table>
         </div>
 
-        <!-- Users table -->
         <div class="sec-title" style="margin-top:32px">Usuarios activos</div>
         <div class="tbl-wrap">
           <table>
@@ -249,7 +349,6 @@
           </table>
         </div>
 
-        <!-- Demo -->
         <div style="margin-top:36px;padding-top:20px;border-top:1px dashed #E5E7EB;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#9BA4B0;text-transform:uppercase;letter-spacing:.05em">Demo:</span>
           <button onclick="demoEmailExistente()" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Email ya registrado</button>
@@ -263,12 +362,22 @@
     <!-- VERA -->
     <aside class="bwvera" id="vera">
       <div class="bwvera-resize" id="veraResize"></div>
-      <button class="bwveratg" onclick="tgVera()" id="vtgbtn" aria-label="Colapsar VERA">
-        <span id="vtgi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+      <button class="bwveratg" onclick="tgVera()" aria-label="Colapsar VERA">
+        <i class="ti ti-chevron-right" id="vtgi"></i>
       </button>
       <div class="bwveralbl" onclick="tgVera()">VERA</div>
       <div class="bwvh">
-        <div class="bwvico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg></div>
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          </svg>
+        </div>
         <div><div class="bwvname">VERA</div><div class="bwvsub">Asistente de gestión</div></div>
         <div class="bwvdot"></div>
       </div>
@@ -279,9 +388,10 @@
       </div>
       <div class="bwia"><div class="bwir">
         <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
-        <button class="bwsnd" onclick="vSend()" aria-label="Enviar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="bwsnd" onclick="vSend()" aria-label="Enviar">→</button>
       </div></div>
     </aside>
+
   </div>
 </div>
 
@@ -300,92 +410,114 @@
 </div>
 
 <script>
-  /* VERA toggle + resize */
-  var vc=false,CHR='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',CHL='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
-  function tgVera(){vc=!vc;document.getElementById("vera").classList.toggle("col",vc);document.getElementById("vtgi").innerHTML=vc?CHL:CHR;}
-  var isR=false,vp=document.getElementById("vera"),vr=document.getElementById("veraResize");
-  vr.addEventListener("mousedown",function(e){isR=true;vc=false;vp.classList.remove("col");document.getElementById("vtgi").innerHTML=CHR;e.preventDefault();});
-  document.addEventListener("mousemove",function(e){if(!isR)return;var mw=document.querySelector(".bwmain").clientWidth,nw=mw-e.clientX;if(nw>=32&&nw<=mw*0.5)vp.style.width=nw+"px";});
-  document.addEventListener("mouseup",function(){isR=false;});
+  /* SIDEBAR */
+  function toggleSb(){
+    document.getElementById('sb').classList.toggle('open');
+    document.getElementById('sbo').classList.toggle('open');
+  }
+  function setAct(el){
+    document.querySelectorAll('.bwnavitem').forEach(function(i){i.classList.remove('act');});
+    el.classList.add('act');
+    var idx=[...el.parentElement.children].indexOf(el);
+    var si=document.querySelectorAll('.bwsbitem');
+    if(si[idx]){document.querySelectorAll('.bwsbitem').forEach(function(i){i.classList.remove('act');});si[idx].classList.add('act');}
+  }
+
+  /* VERA collapse/resize */
+  var vc=false;
+  function tgVera(){
+    vc=!vc;
+    document.getElementById('vera').classList.toggle('col',vc);
+    document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right';
+  }
+  var isR=false,vp=document.getElementById('vera'),vr=document.getElementById('veraResize');
+  vr.addEventListener('mousedown',function(e){isR=true;vc=false;vp.classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault();});
+  document.addEventListener('mousemove',function(e){if(!isR)return;var mw=document.querySelector('.bwmain').clientWidth,nw=mw-e.clientX;if(nw>=32&&nw<=mw*0.5)vp.style.width=nw+'px';});
+  document.addEventListener('mouseup',function(){isR=false;});
 
   /* VERA chat */
-  function vkey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();vSend();}}
-  function vrsz(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,72)+"px";}
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vSend();}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px';}
   var vR=["Solo el Administrador puede enviar invitaciones y eliminar usuarios. Los Editores no ven esta pantalla.","La invitación caduca a los 7 días. Puedes reenviarla si el destinatario no la aceptó a tiempo.","Al eliminar un usuario, sus claves criptográficas se borran permanentemente. Los mensajes cifrados quedan sin poder descifrarse en su nombre."],vri=0;
-  function vSend(){var inp=document.getElementById("bwinpa"),txt=inp.value.trim();if(!txt)return;var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});chat.insertAdjacentHTML("beforeend",'<div class="bwmsg u"><div class="bwbub">'+txt+'</div><div class="bwts">'+now+'</div></div>');inp.value="";inp.style.height="auto";setTimeout(function(){chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">'+vR[vri%vR.length]+'</div><div class="bwts">'+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+'</div></div>');vri++;chat.scrollTop=chat.scrollHeight;},600);chat.scrollTop=chat.scrollHeight;}
+  function vSend(){
+    var inp=document.getElementById('bwinpa'),txt=inp.value.trim();
+    if(!txt)return;
+    var chat=document.getElementById('bwchat'),now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    chat.insertAdjacentHTML('beforeend','<div class="bwmsg u"><div class="bwbub">'+txt+'</div><div class="bwts">'+now+'</div></div>');
+    inp.value='';inp.style.height='auto';
+    setTimeout(function(){chat.insertAdjacentHTML('beforeend','<div class="bwmsg v"><div class="bwbub">'+vR[vri%vR.length]+'</div><div class="bwts">'+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'</div></div>');vri++;chat.scrollTop=chat.scrollHeight;},600);
+    chat.scrollTop=chat.scrollHeight;
+  }
 
   /* Invite form */
   var LIMIT=false;
   function onInvInput(){
-    var v=document.getElementById("invEmail").value.trim(),valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-    document.getElementById("invBtn").disabled=!valid||LIMIT;
-    if(!valid){document.getElementById("invEmail").classList.remove("err");document.getElementById("invErr").classList.remove("visible");}
+    var v=document.getElementById('invEmail').value.trim(),valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    document.getElementById('invBtn').disabled=!valid||LIMIT;
+    if(!valid){document.getElementById('invEmail').classList.remove('err');document.getElementById('invErr').classList.remove('visible');}
   }
-
   function sendInvite(){
-    var email=document.getElementById("invEmail").value.trim();
-    document.getElementById("invErr").classList.remove("visible");
-    document.getElementById("invOk").classList.remove("visible");
-    document.getElementById("invOk").textContent="Invitación enviada. El usuario recibirá un email con el enlace de registro.";
-    document.getElementById("invEmail").classList.remove("err");
-    document.getElementById("invOk").classList.add("visible");
-    document.getElementById("invEmail").value="";
-    document.getElementById("invBtn").disabled=true;
-    var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
-    chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Invitación enviada a '+email+'. Caduca en 7 días.</div><div class="bwts">'+now+'</div></div>');
+    var email=document.getElementById('invEmail').value.trim();
+    document.getElementById('invErr').classList.remove('visible');
+    document.getElementById('invOk').classList.remove('visible');
+    document.getElementById('invEmail').classList.remove('err');
+    document.getElementById('invOk').classList.add('visible');
+    document.getElementById('invEmail').value='';
+    document.getElementById('invBtn').disabled=true;
+    var chat=document.getElementById('bwchat'),now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    chat.insertAdjacentHTML('beforeend','<div class="bwmsg v"><div class="bwbub">Invitación enviada a '+email+'. Caduca en 7 días.</div><div class="bwts">'+now+'</div></div>');
     chat.scrollTop=chat.scrollHeight;
   }
-
   function resend(email){
-    var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
-    chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Invitación reenviada a '+email+'. El enlace anterior quedó invalidado.</div><div class="bwts">'+now+'</div></div>');
+    var chat=document.getElementById('bwchat'),now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    chat.insertAdjacentHTML('beforeend','<div class="bwmsg v"><div class="bwbub">Invitación reenviada a '+email+'. El enlace anterior quedó invalidado.</div><div class="bwts">'+now+'</div></div>');
     chat.scrollTop=chat.scrollHeight;
   }
 
   /* Delete modal */
   var pendingDel=null;
-  function openDeleteModal(name,email){pendingDel={name:name,email:email};document.getElementById("delName").textContent=name;document.getElementById("delEmail").textContent=email;document.getElementById("delModal").classList.add("visible");}
-  function closeModal(){document.getElementById("delModal").classList.remove("visible");pendingDel=null;}
+  function openDeleteModal(name,email){pendingDel={name:name,email:email};document.getElementById('delName').textContent=name;document.getElementById('delEmail').textContent=email;document.getElementById('delModal').classList.add('visible');}
+  function closeModal(){document.getElementById('delModal').classList.remove('visible');pendingDel=null;}
   function confirmDelete(){
     if(!pendingDel)return;
-    var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
-    chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Usuario '+pendingDel.name+' eliminado. Sus claves han sido borradas del sistema.</div><div class="bwts">'+now+'</div></div>');
+    var chat=document.getElementById('bwchat'),now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    chat.insertAdjacentHTML('beforeend','<div class="bwmsg v"><div class="bwbub">Usuario '+pendingDel.name+' eliminado. Sus claves han sido borradas del sistema.</div><div class="bwts">'+now+'</div></div>');
     chat.scrollTop=chat.scrollHeight;
     closeModal();
   }
-  document.getElementById("delModal").addEventListener("click",function(e){if(e.target===this)closeModal();});
+  document.getElementById('delModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
   /* Demo states */
   function demoEmailExistente(){
-    document.getElementById("invEmail").value="l.perez@aceroindustrial.com";
-    document.getElementById("invEmail").classList.add("err");
-    document.getElementById("invErr").classList.add("visible");
-    document.getElementById("invOk").classList.remove("visible");
-    document.getElementById("invBtn").disabled=true;
+    document.getElementById('invEmail').value='l.perez@aceroindustrial.com';
+    document.getElementById('invEmail').classList.add('err');
+    document.getElementById('invErr').classList.add('visible');
+    document.getElementById('invOk').classList.remove('visible');
+    document.getElementById('invBtn').disabled=true;
   }
   function demoLimite(){
     LIMIT=true;
-    document.getElementById("limitNotice").classList.add("visible");
-    document.getElementById("invEmail").disabled=true;
-    document.getElementById("invBtn").disabled=true;
-    var dots=document.querySelectorAll(".cap-dot");
-    ["used","used","used","inv","used"].forEach(function(cls,i){dots[i].className="cap-dot "+cls;});
-    document.getElementById("capNum").textContent="5/5";
-    document.getElementById("capLbl").textContent="· límite alcanzado";
+    document.getElementById('limitNotice').classList.add('visible');
+    document.getElementById('invEmail').disabled=true;
+    document.getElementById('invBtn').disabled=true;
+    var dots=document.querySelectorAll('.cap-dot');
+    ['used','used','used','inv','used'].forEach(function(cls,i){dots[i].className='cap-dot '+cls;});
+    document.getElementById('capNum').textContent='5/5';
+    document.getElementById('capLbl').textContent='· límite alcanzado';
   }
   function demoReset(){
     LIMIT=false;
-    document.getElementById("limitNotice").classList.remove("visible");
-    document.getElementById("invEmail").disabled=false;
-    document.getElementById("invEmail").value="";
-    document.getElementById("invEmail").classList.remove("err");
-    document.getElementById("invErr").classList.remove("visible");
-    document.getElementById("invOk").classList.remove("visible");
-    document.getElementById("invBtn").disabled=true;
-    var dots=document.querySelectorAll(".cap-dot");
-    ["used","used","inv","",""].forEach(function(cls,i){dots[i].className="cap-dot"+(cls?" "+cls:"");});
-    document.getElementById("capNum").textContent="2/5";
-    document.getElementById("capLbl").textContent="· 1 invitación pendiente · 2 plazas libres";
+    document.getElementById('limitNotice').classList.remove('visible');
+    document.getElementById('invEmail').disabled=false;
+    document.getElementById('invEmail').value='';
+    document.getElementById('invEmail').classList.remove('err');
+    document.getElementById('invErr').classList.remove('visible');
+    document.getElementById('invOk').classList.remove('visible');
+    document.getElementById('invBtn').disabled=true;
+    var dots=document.querySelectorAll('.cap-dot');
+    ['used','used','inv','',''].forEach(function(cls,i){dots[i].className='cap-dot'+(cls?' '+cls:'');});
+    document.getElementById('capNum').textContent='2/5';
+    document.getElementById('capLbl').textContent='· 1 invitación pendiente · 2 plazas libres';
   }
 </script>
 </body>

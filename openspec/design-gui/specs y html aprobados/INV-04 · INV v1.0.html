@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INV-04 · Canal de ingestión por email — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/1.119.0/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:"Inter",sans-serif;background:#07111F;color:#dde2ea;min-height:100vh;display:flex;flex-direction:column}
+
+    /* ── Brand bar ── */
+    .bwbrand{height:24px;background:#B8924A;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwbrand span{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#07111F;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+
+    /* ── Nav bar ── */
+    .bwnav{height:72px;background:#07111F;border-bottom:1px solid rgba(184,146,74,.2);display:flex;align-items:center;padding:0 32px;gap:32px;flex-shrink:0}
+    .bwnav-logo{font-family:"Montserrat",sans-serif;font-weight:700;font-size:18px;color:#fff;white-space:nowrap;margin-right:8px}
+    .bwnav-logo span{color:#B8924A}
+    .bwnav-links{display:flex;gap:4px;flex:1}
+    .navlink{font-size:13px;color:#6B7A99;text-decoration:none;padding:6px 12px;border-radius:4px;transition:color .15s,background .15s;white-space:nowrap}
+    .navlink:hover{color:#dde2ea;background:rgba(255,255,255,.05)}
+    .navlink.act{color:#B8924A;background:rgba(184,146,74,.08);font-weight:500}
+    .bwnav-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .nav-avatar{width:34px;height:34px;border-radius:50%;background:#1B2537;border:1px solid rgba(184,146,74,.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#B8924A;cursor:pointer}
+    .nav-icon-btn{width:34px;height:34px;border-radius:6px;background:transparent;border:none;color:#6B7A99;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:color .15s,background .15s}
+    .nav-icon-btn:hover{color:#dde2ea;background:rgba(255,255,255,.06)}
+
+    /* ── Main layout ── */
+    .bwmain{flex:1;display:flex;overflow:hidden;position:relative;background:#F1F3F6}
+
+    /* ── Sidebar overlay ── */
+    .bwsb{width:220px;background:#1B2537;border-right:1px solid rgba(255,255,255,.06);flex-shrink:0;padding:16px 8px;display:flex;flex-direction:column;gap:2px}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:5px;font-size:13px;color:#6B7A99;cursor:pointer;transition:color .15s,background .15s;white-space:nowrap}
+    .bwsbitem:hover{color:#dde2ea;background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:#B8924A;background:rgba(184,146,74,.08);font-weight:500}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+
+    /* ── Content ── */
+    .bwcnt{flex:1;overflow-y:auto;padding:32px 36px}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#6B7A99;margin-bottom:6px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:22px;font-weight:700;color:#1B2537;margin-bottom:4px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:28px;max-width:600px}
+
+    /* ── Section card ── */
+    .sec-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:24px;margin-bottom:20px}
+    .sec-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#6B7A99;margin-bottom:16px}
+
+    /* ── Ingest address block ── */
+    .addr-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .addr-field{flex:1;background:#F8F9FB;border:1px solid #E5E7EB;border-radius:4px;padding:10px 14px;font-family:"IBM Plex Mono",monospace;font-size:13px;color:#1B2537;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .btn-copy{height:38px;padding:0 14px;background:#fff;border:1px solid #D1D5DB;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;transition:all .12s;flex-shrink:0}
+    .btn-copy:hover{border-color:#B8924A;color:#B8924A}
+    .btn-copy i{font-size:15px}
+
+    /* Brass info block */
+    .brass-block{background:rgba(184,146,74,.07);border:1px solid rgba(184,146,74,.25);border-radius:6px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+    .brass-block i{font-size:16px;color:#B8924A;flex-shrink:0;margin-top:1px}
+    .brass-block p{font-size:13px;color:#6B7A99;line-height:1.5}
+
+    /* Rotate button */
+    .btn-rotate{background:transparent;border:1px solid rgba(220,38,38,.25);border-radius:4px;padding:7px 14px;font-size:13px;font-weight:500;color:#DC2626;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+    .btn-rotate:hover{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.4)}
+    .btn-rotate i{font-size:15px}
+
+    /* ── Whitelist ── */
+    .wl-table{width:100%;border-collapse:collapse;margin-bottom:14px}
+    .wl-table th{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9BA4B0;padding:0 12px 10px;text-align:left;border-bottom:1px solid #F1F3F6}
+    .wl-table td{padding:11px 12px;font-size:13px;color:#374151;border-bottom:1px solid #F8F9FB;vertical-align:middle}
+    .wl-table tr:last-child td{border-bottom:none}
+    .badge-admin{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(184,146,74,.1);color:#B8924A;border:1px solid rgba(184,146,74,.25);text-transform:uppercase;letter-spacing:.05em}
+    .btn-del{background:transparent;border:none;cursor:pointer;color:#9BA4B0;font-size:15px;padding:2px 4px;border-radius:3px;transition:color .12s}
+    .btn-del:hover{color:#DC2626}
+    .btn-del:disabled{opacity:.3;cursor:not-allowed}
+
+    /* Add sender inline */
+    .add-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .add-inp{flex:1;border:1px solid #D1D5DB;border-radius:4px;padding:8px 12px;font-size:13px;color:#1B2537;outline:none;transition:border-color .15s;background:#fff}
+    .add-inp:focus{border-color:#2563EB}
+    .add-inp.err{border-color:#DC2626}
+    .btn-add-ok{height:34px;padding:0 14px;background:#2563EB;border:none;border-radius:4px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .12s;flex-shrink:0}
+    .btn-add-ok:hover{opacity:.85}
+    .btn-add-cancel{height:34px;padding:0 10px;background:transparent;border:1px solid #D1D5DB;border-radius:4px;color:#6B7A99;font-size:13px;cursor:pointer;transition:all .12s;flex-shrink:0}
+    .btn-add-cancel:hover{border-color:#9BA4B0;color:#374151}
+    .add-err{font-size:12px;color:#DC2626;margin-top:4px;display:none}
+    .add-err.vis{display:block}
+    .btn-add-sender{background:transparent;border:none;cursor:pointer;color:#2563EB;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:5px;padding:4px 0;transition:opacity .12s}
+    .btn-add-sender:hover{opacity:.7}
+
+    .wl-hint{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;text-transform:uppercase;letter-spacing:.07em;padding:4px 0}
+
+    /* ── History table ── */
+    .hist-table{width:100%;border-collapse:collapse}
+    .hist-table th{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9BA4B0;padding:0 12px 10px;text-align:left;border-bottom:1px solid #F1F3F6}
+    .hist-table td{padding:11px 12px;font-size:12px;color:#374151;border-bottom:1px solid #F8F9FB;vertical-align:middle}
+    .hist-table tr:last-child td{border-bottom:none}
+    .hist-table .mono{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#6B7A99}
+    .res-ok{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.2);text-transform:uppercase;letter-spacing:.05em}
+    .res-rej{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(220,38,38,.07);color:#DC2626;border:1px solid rgba(220,38,38,.2);text-transform:uppercase;letter-spacing:.05em}
+    .res-err{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2);text-transform:uppercase;letter-spacing:.05em}
+
+    /* ── Rotation modal ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .15s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:#fff;border-radius:8px;padding:28px;width:440px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .modal-icon{width:42px;height:42px;border-radius:50%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);display:flex;align-items:center;justify-content:center;color:#DC2626;font-size:20px;margin-bottom:14px}
+    .modal-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:16px;color:#1B2537;margin-bottom:8px}
+    .modal-body{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:22px}
+    .modal-body strong{color:#DC2626}
+    .modal-btns{display:flex;gap:10px;justify-content:flex-end}
+    .btn-modal-cancel{padding:8px 18px;background:#fff;border:1px solid #D1D5DB;border-radius:4px;font-size:13px;font-weight:500;color:#374151;cursor:pointer;transition:all .12s}
+    .btn-modal-cancel:hover{border-color:#9BA4B0}
+    .btn-modal-ok{padding:8px 18px;background:#DC2626;border:none;border-radius:4px;font-size:13px;font-weight:500;color:#fff;cursor:pointer;transition:opacity .12s}
+    .btn-modal-ok:hover{opacity:.85}
+
+    /* Rotated notice */
+    .notice{display:none;align-items:center;gap:8px;background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.2);border-radius:4px;padding:10px 14px;font-size:13px;color:#15803d;margin-top:12px}
+    .notice.vis{display:flex}
+    .notice i{font-size:16px;flex-shrink:0}
+
+    /* ── VERA ── */
+    .bwvera{width:300px;flex-shrink:0;background:#1B2537;border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:relative;transition:width .2s}
+    .bwvera.col{width:32px}
+    .vera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:10}
+    .vera-resize:hover{background:rgba(184,146,74,.3)}
+    .vera-header{padding:16px 12px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;min-width:0}
+    .vera-logo{font-family:"Montserrat",sans-serif;font-weight:700;font-size:13px;color:#B8924A;white-space:nowrap;overflow:hidden;flex:1}
+    .vera-sub{font-size:11px;color:#4B5563;white-space:nowrap;overflow:hidden}
+    .vera-toggle{background:transparent;border:none;cursor:pointer;color:#6B7A99;font-size:16px;padding:2px;flex-shrink:0;display:flex;align-items:center}
+    .vera-toggle:hover{color:#B8924A}
+    .vera-body{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:12px;min-width:0}
+    .bwvera.col .vera-body,.bwvera.col .vera-header .vera-logo,.bwvera.col .vera-header .vera-sub{display:none}
+    .bwvera.col .vera-header{justify-content:center;padding:10px 0}
+    .vmsg{font-size:13px;line-height:1.6;padding:10px 12px;border-radius:6px;max-width:100%}
+    .vmsg.vera{background:rgba(184,146,74,.08);border:1px solid rgba(184,146,74,.15);color:#dde2ea}
+    .vmsg.user{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#9BA4B0;align-self:flex-end}
+    .vmsg strong{color:#B8924A;font-size:10px;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px;font-family:"Montserrat",sans-serif}
+  </style>
+</head>
+<body>
+
+<!-- Brand bar -->
+<div class="bwbrand"><span>Bearingworld.io · Plataforma industrial verificada</span></div>
+
+<!-- Nav bar -->
+<nav class="bwnav">
+  <div class="bwnav-logo">Bearing<span>world</span>.io</div>
+  <div class="bwnav-links">
+    <a href="#" class="navlink">Panel</a>
+    <a href="#" class="navlink">Vendiendo</a>
+    <a href="#" class="navlink">Comprando</a>
+    <a href="#" class="navlink">Hilos</a>
+    <a href="INV-01%20%C2%B7%20INV%20v1.0.html" class="navlink act">Inventario</a>
+    <a href="#" class="navlink">Empresas</a>
+    <a href="#" class="navlink">Foros</a>
+    <a href="#" class="navlink">Contacto</a>
+  </div>
+  <div class="bwnav-right">
+    <button class="nav-icon-btn" title="Notificaciones"><i class="ti ti-bell"></i></button>
+    <button class="nav-icon-btn" title="Configuración"><i class="ti ti-settings"></i></button>
+    <div class="nav-avatar" title="Mi cuenta">JM</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="bwmain">
+
+  <!-- Sidebar -->
+  <div class="bwsb">
+    <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+    <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+    <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+    <div class="bwsbitem"><i class="ti ti-messages"></i>Hilos</div>
+    <div class="bwsbitem act"><i class="ti ti-package"></i>Inventario</div>
+    <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+    <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+    <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+  </div>
+
+  <!-- Content -->
+  <div class="bwcnt">
+    <div class="eyebrow">Módulo 02 · Gestión de Inventario</div>
+    <div class="page-title">Canal de ingestión por email</div>
+    <div class="page-sub">Envía tu archivo de inventario directamente por email a tu dirección única de ingestión. El sistema lo procesará automáticamente.</div>
+
+    <!-- Dirección de ingestión -->
+    <div class="sec-card">
+      <div class="sec-title">Dirección de ingestión</div>
+      <div class="addr-row">
+        <div class="addr-field" id="addrVal">ingest-a3f7k9@ingest.bearingworld.io</div>
+        <button class="btn-copy" onclick="copyAddr()" id="copyBtn">
+          <i class="ti ti-copy" id="copyIcon"></i> Copiar
+        </button>
+      </div>
+      <div class="brass-block">
+        <i class="ti ti-info-circle"></i>
+        <p>Esta dirección acepta archivos <strong>CSV, XLSX, XLS, TSV y TXT</strong> adjuntos. Tamaño máximo 50 MB. Solo los remitentes autorizados en la whitelist pueden usarla — el resto se rechaza silenciosamente.</p>
+      </div>
+      <button class="btn-rotate" onclick="openModal()">
+        <i class="ti ti-refresh"></i> Rotar dirección
+      </button>
+      <div class="notice" id="rotateNotice">
+        <i class="ti ti-circle-check"></i>
+        Dirección rotada. La anterior ya no es válida — actualiza cualquier sistema que la estuviera usando.
+      </div>
+    </div>
+
+    <!-- Whitelist de remitentes -->
+    <div class="sec-card">
+      <div class="sec-title">Remitentes autorizados</div>
+      <table class="wl-table" id="wlTable">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Rol</th>
+            <th style="width:48px"></th>
+          </tr>
+        </thead>
+        <tbody id="wlBody">
+          <tr id="wl-admin">
+            <td>juan.martinez@rodamientosdelsur.es</td>
+            <td><span class="badge-admin">Administrador</span></td>
+            <td><button class="btn-del" disabled title="El administrador no puede eliminarse"><i class="ti ti-trash"></i></button></td>
+          </tr>
+          <tr id="wl-erp">
+            <td class="mono">erp@rodamientosdelsur.es</td>
+            <td>—</td>
+            <td><button class="btn-del" onclick="delSender('wl-erp')" title="Eliminar remitente"><i class="ti ti-trash"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Add sender inline form (hidden by default) -->
+      <div id="addForm" style="display:none">
+        <div class="add-row">
+          <input class="add-inp" type="email" id="addInp" placeholder="email@empresa.com" onkeydown="if(event.key==='Enter')confirmAdd();if(event.key==='Escape')cancelAdd()">
+          <button class="btn-add-ok" onclick="confirmAdd()">Añadir</button>
+          <button class="btn-add-cancel" onclick="cancelAdd()">Cancelar</button>
+        </div>
+        <div class="add-err" id="addErr">Introduce un email válido</div>
+      </div>
+
+      <button class="btn-add-sender" id="btnAddSender" onclick="showAddForm()">
+        <i class="ti ti-plus" style="font-size:14px"></i> Añadir remitente
+      </button>
+      <div class="wl-hint">Emails no en whitelist se rechazan silenciosamente</div>
+    </div>
+
+    <!-- Historial de ingestiones -->
+    <div class="sec-card">
+      <div class="sec-title">Historial de ingestiones</div>
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>Fecha y hora</th>
+            <th>Remitente</th>
+            <th>Archivo</th>
+            <th>Resultado</th>
+            <th style="text-align:right">Filas importadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">Hace 2 días · 08:14</td>
+            <td class="mono">erp@rodamientosdelsur.es</td>
+            <td>inventario_jun.xlsx</td>
+            <td><span class="res-ok">Procesado</span></td>
+            <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px">1.247</td>
+          </tr>
+          <tr>
+            <td class="mono">Hace 9 días · 07:58</td>
+            <td class="mono">erp@rodamientosdelsur.es</td>
+            <td>inventario_may.xlsx</td>
+            <td><span class="res-ok">Procesado</span></td>
+            <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px">1.201</td>
+          </tr>
+          <tr>
+            <td class="mono">Hace 16 días · 03:22</td>
+            <td class="mono">unknown@spam.com</td>
+            <td>—</td>
+            <td><span class="res-rej">Rechazado</span></td>
+            <td style="text-align:right;color:#C4CAD6">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div><!-- /bwcnt -->
+
+  <!-- VERA -->
+  <div class="bwvera" id="vera">
+    <div class="vera-resize" id="veraResize"></div>
+    <div class="vera-header">
+      <div style="flex:1;min-width:0">
+        <div class="vera-logo">VERA</div>
+        <div class="vera-sub">Agente de inventario</div>
+      </div>
+      <button class="vera-toggle" onclick="tgVera()" title="Colapsar"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+    </div>
+    <div class="vera-body">
+      <div class="vmsg vera">
+        <strong>VERA</strong>
+        Tu dirección de ingestión acepta archivos de inventario enviados por email. Solo los remitentes de tu whitelist pueden usarla — el resto se rechaza sin aviso.
+      </div>
+      <div class="vmsg user">
+        <strong>Tú</strong>
+        ¿Puedo añadir el email de mi ERP?
+      </div>
+      <div class="vmsg vera">
+        <strong>VERA</strong>
+        Sí, añádelo a la whitelist. Una vez añadido, tu ERP podrá enviar archivos directamente a la dirección de ingestión y se procesarán automáticamente sin intervención manual.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /bwmain -->
+
+<!-- Modal: confirmación de rotación -->
+<div class="modal-overlay" id="rotModal">
+  <div class="modal">
+    <div class="modal-icon"><i class="ti ti-refresh-alert"></i></div>
+    <div class="modal-title">¿Seguro que quieres rotar la dirección?</div>
+    <div class="modal-body">La dirección actual quedará <strong>anulada de forma inmediata</strong>. Cualquier sistema que la use deberá actualizarse con la nueva dirección.</div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-modal-ok" onclick="execRotate()">Sí, rotar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* VERA collapse + resize */
+  var vc=false;
+  function tgVera(){vc=!vc;document.getElementById("vera").classList.toggle("col",vc);document.getElementById("vtgi").className=vc?"ti ti-chevron-left":"ti ti-chevron-right";}
+  var isR=false,vp=document.getElementById("vera"),vr=document.getElementById("veraResize");
+  vr.addEventListener("mousedown",function(e){isR=true;vc=false;vp.classList.remove("col");document.getElementById("vtgi").className="ti ti-chevron-right";e.preventDefault();});
+  document.addEventListener("mousemove",function(e){if(!isR)return;var mw=document.querySelector(".bwmain").clientWidth,nw=mw-e.clientX;if(nw>=32&&nw<=mw*0.5)vp.style.width=nw+"px";});
+  document.addEventListener("mouseup",function(){isR=false;});
+
+  /* Copy address */
+  function copyAddr(){
+    navigator.clipboard.writeText(document.getElementById("addrVal").textContent.trim()).then(function(){
+      var btn=document.getElementById("copyBtn");
+      btn.innerHTML='<i class="ti ti-check" style="color:#16a34a"></i> Copiado';
+      setTimeout(function(){btn.innerHTML='<i class="ti ti-copy" id="copyIcon"></i> Copiar';},1600);
+    });
+  }
+
+  /* Rotation modal */
+  function openModal(){document.getElementById("rotModal").classList.add("open");}
+  function closeModal(){document.getElementById("rotModal").classList.remove("open");}
+  function execRotate(){
+    closeModal();
+    document.getElementById("addrVal").textContent="ingest-b9x2m4@ingest.bearingworld.io";
+    document.getElementById("rotateNotice").classList.add("vis");
+  }
+  document.getElementById("rotModal").addEventListener("click",function(e){if(e.target===this)closeModal();});
+
+  /* Whitelist */
+  function delSender(rowId){
+    var row=document.getElementById(rowId);
+    if(row)row.remove();
+  }
+  function showAddForm(){
+    document.getElementById("addForm").style.display="block";
+    document.getElementById("btnAddSender").style.display="none";
+    document.getElementById("addInp").focus();
+  }
+  function cancelAdd(){
+    document.getElementById("addForm").style.display="none";
+    document.getElementById("btnAddSender").style.display="";
+    document.getElementById("addInp").value="";
+    document.getElementById("addInp").classList.remove("err");
+    document.getElementById("addErr").classList.remove("vis");
+  }
+  function confirmAdd(){
+    var val=document.getElementById("addInp").value.trim();
+    var ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+    document.getElementById("addInp").classList.toggle("err",!ok);
+    document.getElementById("addErr").classList.toggle("vis",!ok);
+    if(!ok)return;
+    var tbody=document.getElementById("wlBody");
+    var uid="wl-"+Date.now();
+    var tr=document.createElement("tr");
+    tr.id=uid;
+    tr.innerHTML='<td class="mono">'+val+'</td><td>—</td><td><button class="btn-del" onclick="delSender(\''+uid+'\')" title="Eliminar remitente"><i class="ti ti-trash"></i></button></td>';
+    tbody.appendChild(tr);
+    cancelAdd();
+  }
+</script>
+</body>
+</html>

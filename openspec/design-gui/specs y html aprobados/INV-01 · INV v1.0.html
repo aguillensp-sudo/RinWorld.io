@@ -79,17 +79,45 @@
     .stat-card-val.warn{color:#d97706}
     .stat-card-sub{font-size:11px;color:#9BA4B0;margin-top:4px}
 
-    /* Drag & drop */
-    .dropzone{background:#fff;border:1.5px dashed rgba(184,146,74,.4);border-radius:6px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:24px}
-    .dropzone:hover,.dropzone.drag{border-color:#B8924A;background:rgba(184,146,74,.04)}
-    .dropzone-icon{width:40px;height:40px;border-radius:50%;background:rgba(184,146,74,.1);display:flex;align-items:center;justify-content:center;color:#B8924A;margin-bottom:4px}
-    .dropzone-main{font-size:14px;font-weight:500;color:#374151}
-    .dropzone-sec{font-size:13px;color:#9BA4B0}
-    .dropzone-hint{font-size:11px;color:#C4CAD6;font-family:"IBM Plex Mono",monospace}
-    .dropzone-err{display:none;font-size:12px;color:#DC2626;margin-top:4px}
+    /* Canales de actualización */
+    .channels-section{margin-bottom:24px}
+    .channels-hdr{margin-bottom:14px}
+    .channels-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#6B7A99;margin-bottom:2px}
+    .channels-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px}
+    .ch-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:14px;transition:box-shadow .15s}
+    .ch-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+    .ch-head{display:flex;align-items:center;gap:12px}
+    .ch-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .ch-icon-manual{background:rgba(184,146,74,.1);color:#B8924A}
+    .ch-icon-email{background:rgba(37,99,235,.08);color:#2563EB}
+    .ch-name{font-family:"Montserrat",sans-serif;font-weight:700;font-size:14px;color:#1B2537;margin-bottom:4px}
+    .ch-badge{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:2px;display:inline-block}
+    .ch-badge.ok{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.2)}
+    .ch-desc{font-size:13px;color:#6B7A99;line-height:1.6}
+    /* Mini dropzone inside manual card */
+    .mini-dz{border:1.5px dashed rgba(184,146,74,.35);border-radius:6px;padding:18px 12px;cursor:pointer;transition:border-color .15s,background .15s;text-align:center}
+    .mini-dz:hover,.mini-dz.drag{border-color:#B8924A;background:rgba(184,146,74,.04)}
+    .mini-dz.loading{border-color:#2563EB;background:rgba(37,99,235,.04);cursor:default;pointer-events:none}
+    .mini-dz-main{font-size:13px;font-weight:500;color:#374151;margin-top:7px;margin-bottom:2px}
+    .mini-dz-sec{font-size:12px;color:#9BA4B0}
+    .mini-dz-hint{font-size:11px;color:#C4CAD6;font-family:"IBM Plex Mono",monospace;margin-top:3px}
+    .dropzone-err{display:none;font-size:12px;color:#DC2626;margin-top:8px}
     .dropzone-err.visible{display:block}
-    .dropzone.loading{border-color:#2563EB;background:rgba(37,99,235,.04);cursor:default;pointer-events:none}
-    .dropzone.loading .dropzone-icon{background:rgba(37,99,235,.1);color:#2563EB}
+    /* Email channel */
+    .ingest-lbl{font-size:11px;font-weight:600;color:#6B7A99;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:"Montserrat",sans-serif}
+    .ingest-addr{display:flex;align-items:center;gap:8px;background:#F8F9FB;border:1px solid #E5E7EB;border-radius:4px;padding:8px 10px}
+    .ingest-val{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#1B2537;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .copy-btn{width:28px;height:28px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;flex-shrink:0;transition:all .12s}
+    .copy-btn:hover{border-color:#B8924A;color:#B8924A}
+    .ch-link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:500;color:#2563EB;text-decoration:none;transition:opacity .12s;margin-top:auto}
+    .ch-link:hover{opacity:.7}
+    /* Visibility row */
+    .vis-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:10px 16px}
+    .vis-icon{color:#9BA4B0;font-size:15px;flex-shrink:0}
+    .vis-lbl{font-size:12px;color:#6B7A99;white-space:nowrap;flex-shrink:0}
+    .vis-val{font-size:12px;font-weight:500;color:#374151;flex:1}
+    .vis-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#2563EB;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:opacity .12s}
+    .vis-link:hover{opacity:.7}
     @keyframes spin{to{transform:rotate(360deg)}}
     .spin{animation:spin .8s linear infinite;display:inline-block}
 
@@ -284,14 +312,63 @@
           </div>
         </div>
 
-        <!-- Drag & drop -->
-        <div class="dropzone" id="dz" onclick="document.getElementById('fileInp').click()" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
-          <div class="dropzone-icon"><i class="ti ti-upload" style="font-size:20px"></i></div>
-          <div class="dropzone-main">Arrastra tu archivo de inventario aquí</div>
-          <div class="dropzone-sec">o haz clic para seleccionar</div>
-          <div class="dropzone-hint">CSV, XLSX, XLS, TSV o TXT · máx. 50 MB</div>
-          <div class="dropzone-err" id="dzErr">Formato no admitido. Sube un archivo CSV, XLSX, XLS, TSV o TXT de máximo 50 MB.</div>
+        <!-- Canales de actualización -->
+        <div class="channels-section">
+          <div class="channels-hdr">
+            <div class="channels-title">Canales de actualización</div>
+          </div>
+          <div class="channels-row">
+
+            <!-- Canal 1: Subida manual -->
+            <div class="ch-card">
+              <div class="ch-head">
+                <div class="ch-icon ch-icon-manual"><i class="ti ti-upload"></i></div>
+                <div>
+                  <div class="ch-name">Subida manual</div>
+                  <span class="ch-badge ok">Siempre disponible</span>
+                </div>
+              </div>
+              <div class="ch-desc">Sube un archivo puntualmente desde tu ordenador. Ideal para actualizaciones periódicas o correcciones de stock.</div>
+              <div class="mini-dz" id="dz" onclick="document.getElementById('fileInp').click()" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+                <i class="ti ti-cloud-upload" style="font-size:22px;color:#B8924A"></i>
+                <div class="mini-dz-main">Arrastra tu archivo aquí</div>
+                <div class="mini-dz-sec">o haz clic para seleccionar</div>
+                <div class="mini-dz-hint">CSV · XLSX · XLS · TSV · TXT · máx. 50 MB</div>
+                <div class="dropzone-err" id="dzErr">Formato no admitido. Sube un CSV, XLSX, XLS, TSV o TXT de máx. 50 MB.</div>
+              </div>
+            </div>
+
+            <!-- Canal 2: Email -->
+            <div class="ch-card">
+              <div class="ch-head">
+                <div class="ch-icon ch-icon-email"><i class="ti ti-mail-forward"></i></div>
+                <div>
+                  <div class="ch-name">Canal email</div>
+                  <span class="ch-badge ok">Activo</span>
+                </div>
+              </div>
+              <div class="ch-desc">Tu ERP o sistema externo envía el archivo adjunto a tu dirección única. Se procesa automáticamente sin intervención manual.</div>
+              <div>
+                <div class="ingest-lbl">Dirección de ingestión</div>
+                <div class="ingest-addr">
+                  <span class="ingest-val" id="ingestAddr">ingest-a3f7k9@ingest.bearingworld.io</span>
+                  <button class="copy-btn" onclick="copyAddr()" title="Copiar dirección"><i class="ti ti-copy" style="font-size:14px"></i></button>
+                </div>
+              </div>
+              <a href="INV-04%20%C2%B7%20INV%20v1.0.html" class="ch-link">Gestionar canal <i class="ti ti-arrow-right" style="font-size:13px"></i></a>
+            </div>
+
+          </div>
+
+          <!-- Visibilidad -->
+          <div class="vis-row">
+            <i class="ti ti-eye vis-icon"></i>
+            <span class="vis-lbl">Visibilidad del inventario:</span>
+            <span class="vis-val">Visible para todos los miembros verificados</span>
+            <a href="INV-07%20%C2%B7%20INV%20v1.0.html" class="vis-link">Configurar <i class="ti ti-arrow-right" style="font-size:12px"></i></a>
+          </div>
         </div>
+
         <input type="file" id="fileInp" accept=".csv,.xlsx,.xls,.tsv,.txt" style="display:none" onchange="onFile(this)">
 
         <!-- Toolbar -->
@@ -460,16 +537,24 @@
     var ok=ALLOWED.includes(f.type)||/\.(csv|xlsx|xls|tsv|txt)$/i.test(f.name);
     document.getElementById("dzErr").classList.toggle("visible",!ok);
     if(!ok)return;
-    /* Archivo válido — mostrar estado de carga y navegar a INV-02 */
+    /* Archivo válido — estado de carga en la mini-dz → navega a INV-02 */
     var dz=document.getElementById("dz");
     dz.classList.remove("drag");dz.classList.add("loading");
-    dz.innerHTML='<div class="dropzone-icon"><i class="ti ti-loader spin" style="font-size:20px"></i></div>'
-      +'<div class="dropzone-main" style="color:#2563EB">Analizando archivo…</div>'
-      +'<div class="dropzone-sec">'+f.name+'</div>'
-      +'<div class="dropzone-hint">El sistema está detectando columnas y preparando el mapeo</div>';
-    setTimeout(function(){
-      window.location.href="INV-02%20%C2%B7%20INV%20v1.0.html";
-    },1800);
+    dz.innerHTML='<i class="ti ti-loader spin" style="font-size:20px;color:#2563EB"></i>'
+      +'<div class="mini-dz-main" style="color:#2563EB">Analizando archivo…</div>'
+      +'<div class="mini-dz-sec">'+f.name+'</div>'
+      +'<div class="mini-dz-hint">Detectando columnas y preparando el mapeo</div>';
+    setTimeout(function(){window.location.href="INV-02%20%C2%B7%20INV%20v1.0.html";},1800);
+  }
+
+  /* Copy ingest address */
+  function copyAddr(){
+    var val=document.getElementById("ingestAddr").textContent;
+    navigator.clipboard.writeText(val).then(function(){
+      var btn=document.querySelector(".copy-btn");
+      btn.innerHTML='<i class="ti ti-check" style="font-size:14px;color:#16a34a"></i>';
+      setTimeout(function(){btn.innerHTML='<i class="ti ti-copy" style="font-size:14px"></i>';},1500);
+    });
   }
 
   /* VERA chat */

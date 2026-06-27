@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bearingworld.io — Resultado de la Importación</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/1.119.0/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:"Inter",sans-serif;overflow:hidden}
+
+    /* SHELL */
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;gap:0;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;gap:0;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavuser{text-align:right}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+
+    /* SIDEBAR */
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsblogo{font-family:"Montserrat",sans-serif;font-weight:700;font-size:14px;color:white;letter-spacing:.02em}
+    .bwsblogo span{color:#B8924A}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+
+    /* CONTENT */
+    .bwcnt{flex:1;background:#F1F3F6;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .bwcntb{flex:1;overflow-y:auto;padding:40px 48px 56px}
+    .bwcnti{width:100%;max-width:860px;margin:0 auto}
+
+    /* Result header */
+    .result-hdr{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px}
+    .result-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px}
+    .result-icon.ok{background:rgba(22,163,74,.1);color:#15803d}
+    .result-icon.warn{background:rgba(234,179,8,.1);color:#854d0e}
+    .result-icon.fail{background:rgba(239,68,68,.1);color:#991B1B}
+    .pg-eyebrow{font-family:"Montserrat",sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#B8924A;margin-bottom:6px}
+    .pg-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:24px;letter-spacing:.3px;line-height:1.2;margin-bottom:4px}
+    .pg-title.ok{color:#15803d}
+    .pg-title.warn{color:#92400e}
+    .pg-title.fail{color:#991B1B}
+    .pg-sub{font-size:14px;color:#6B7A99;line-height:1.5}
+
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px}
+    .stat-card{background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:14px 16px}
+    .stat-card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#6B7A99;font-family:"Montserrat",sans-serif;font-weight:600;margin-bottom:5px}
+    .stat-card-val{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;color:#1B2537;line-height:1}
+    .stat-card-val.ok{color:#15803d}
+    .stat-card-val.warn{color:#d97706}
+    .stat-card-val.err{color:#ef4444}
+    .stat-card-sub{font-size:11px;color:#9BA4B0;margin-top:3px}
+
+    /* Section title */
+    .sec-title{font-family:"Montserrat",sans-serif;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6B7A99;margin-bottom:8px}
+    .sec-hint{font-size:12px;color:#9BA4B0;font-style:italic;margin-bottom:10px}
+
+    /* Tables */
+    .tbl-card{background:#fff;border:1px solid #E5E7EB;border-radius:6px;overflow:hidden;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{background:#F8F9FB;padding:9px 14px;text-align:left;font-family:"Montserrat",sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#6B7A99;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    td{padding:10px 14px;border-bottom:1px solid #F3F4F6;color:#374151;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    .ref-code{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#1B2537;font-weight:500}
+    .badge{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;white-space:nowrap}
+    .badge.pub{background:rgba(22,163,74,.08);color:#15803d;border:1px solid rgba(22,163,74,.2)}
+    .badge.brand{background:#1B2537;color:rgba(255,255,255,.8)}
+    .badge.iso{background:rgba(107,122,153,.08);color:#4B5563;border:1px solid rgba(107,122,153,.15)}
+    .err-type{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#991B1B;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);padding:2px 7px;border-radius:2px;white-space:nowrap}
+
+    /* Error panel */
+    .err-panel{background:#fff;border:1px solid rgba(239,68,68,.25);border-radius:6px;overflow:hidden;margin-bottom:20px}
+    .err-panel-hdr{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;transition:background .12s}
+    .err-panel-hdr:hover{background:rgba(239,68,68,.03)}
+    .err-panel-icon{color:#ef4444;font-size:16px;flex-shrink:0}
+    .err-panel-lbl{font-size:13px;font-weight:500;color:#991B1B;flex:1}
+    .err-panel-chev{font-size:16px;color:#9BA4B0;transition:transform .2s}
+    .err-panel-chev.open{transform:rotate(90deg)}
+    .err-panel-body{display:none;border-top:1px solid rgba(239,68,68,.15)}
+    .err-panel-body.open{display:block}
+    .err-dl-row{padding:12px 16px;border-top:1px solid #F3F4F6;display:flex;justify-content:flex-end}
+    .btn-dl{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;font-family:"Inter",sans-serif;font-size:13px;font-weight:500;color:#374151;cursor:pointer;transition:border-color .12s,color .12s}
+    .btn-dl:hover{border-color:#B8924A;color:#92702e}
+
+    /* Fail block */
+    .fail-block{display:none;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:18px 20px;margin-bottom:20px}
+    .fail-block.visible{display:block}
+    .fail-block-title{font-size:14px;font-weight:600;color:#991B1B;margin-bottom:4px}
+    .fail-block-desc{font-size:13px;color:#6B7A99;line-height:1.6}
+
+    /* Action buttons */
+    .btn-row{display:flex;align-items:center;gap:12px}
+    .btn-primary{padding:11px 22px;background:#2563EB;color:#fff;border:none;border-radius:3px;font-family:"Inter",sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .btn-primary:hover{opacity:.9}
+    .btn-text{padding:11px 12px;background:none;border:none;font-family:"Inter",sans-serif;font-size:14px;color:#6B7A99;cursor:pointer;transition:color .12s}
+    .btn-text:hover{color:#374151}
+
+    /* VERA */
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18);transition:width .2s ease}
+    .bwvera.col{width:32px}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;z-index:2;transition:color .12s;font-size:13px}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:"Montserrat",sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer;transition:color .12s}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwveralbl:hover{color:#1B2537}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:"Montserrat",sans-serif;font-weight:700;font-size:16px;color:#1B2537;letter-spacing:.02em}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:#fff;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:#fff;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2);border-left:2px solid #B8924A}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:#fff;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#2563EB}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <nav class="bwnav">
+    <button class="bwhbg" onclick="toggleSidebar()" aria-label="Menú"><span></span><span></span><span></span></button>
+    <div class="bwnavdiv"></div>
+    <div style="height:46px;width:180px;" aria-label="Logo Bearingworld.io"></div>
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem" onclick="setAct(this)">Panel</div>
+      <div class="bwnavitem" onclick="setAct(this)">Vendiendo</div>
+      <div class="bwnavitem" onclick="setAct(this)">Comprando</div>
+      <div class="bwnavitem" onclick="setAct(this)">Hilos</div>
+      <div class="bwnavitem act" onclick="setAct(this)">Inventario</div>
+      <div class="bwnavitem" onclick="setAct(this)">Empresas</div>
+      <div class="bwnavitem" onclick="setAct(this)">Foros</div>
+      <div class="bwnavitem" onclick="setAct(this)">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div class="bwnavuser">
+        <div class="bwnavco">Acero Industrial S.L.</div>
+        <div class="bwnavun">ana.garcia@aceroindustrial.com</div>
+      </div>
+      <button class="bwnavsout">Salir</button>
+    </div>
+  </nav>
+
+  <div class="bwmain">
+
+    <div class="bwsbo" id="sbo" onclick="toggleSidebar()"></div>
+    <div class="bwsb" id="sb">
+      <div class="bwsbh">
+        <span class="bwsblogo">Bearing<span>world</span>.io</span>
+        <button class="bwsbx" onclick="toggleSidebar()">✕</button>
+      </div>
+      <div class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem act"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </div>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-settings"></i>Configuración</div>
+        <div class="bwsbusr">
+          <div class="bwav">AG</div>
+          <div><div class="bwsbusrn">Ana García</div><div class="bwsbusro">Administrador</div></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="bwcnt">
+      <div class="bwcntb"><div class="bwcnti">
+
+        <!-- Result header -->
+        <div class="result-hdr">
+          <div class="result-icon warn" id="resIcon"><i class="ti ti-alert-triangle"></i></div>
+          <div>
+            <div class="pg-eyebrow">Módulo 02 · Gestión de Inventario</div>
+            <div class="pg-title warn" id="resTitle">Importación completada con advertencias</div>
+            <div class="pg-sub" id="resSub">Tu inventario ha sido actualizado. Revisa las líneas que no pudieron importarse y corrígelas.</div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row" id="statsRow">
+          <div class="stat-card">
+            <div class="stat-card-lbl">Procesadas</div>
+            <div class="stat-card-val" id="sProc">1.247</div>
+            <div class="stat-card-sub">líneas totales</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-lbl">Publicadas</div>
+            <div class="stat-card-val ok" id="sPub">1.213</div>
+            <div class="stat-card-sub">importadas OK</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-lbl">Con error</div>
+            <div class="stat-card-val err" id="sErr">34</div>
+            <div class="stat-card-sub">no importadas</div>
+          </div>
+          <div class="stat-card" id="cardElim">
+            <div class="stat-card-lbl">Eliminadas</div>
+            <div class="stat-card-val warn" id="sElim">127</div>
+            <div class="stat-card-sub">reemplazo total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-lbl">Tiempo</div>
+            <div class="stat-card-val" style="font-size:18px;padding-top:3px" id="sTime">4,2 s</div>
+            <div class="stat-card-sub">procesamiento</div>
+          </div>
+        </div>
+
+        <!-- Fail block (hidden by default) -->
+        <div class="fail-block" id="failBlock">
+          <div class="fail-block-title">El archivo no pudo procesarse</div>
+          <div class="fail-block-desc">El sistema no ha podido leer el archivo subido. Puede deberse a un formato no compatible, a que el archivo esté corrupto, o a que supere el límite de 500.000 líneas totales en plataforma. Descarga el informe de error o vuelve al panel de inventario para intentarlo de nuevo.</div>
+        </div>
+
+        <!-- Sample table -->
+        <div id="sampleSection">
+          <div class="sec-title">Muestra de líneas importadas</div>
+          <div class="sec-hint">Mostrando las primeras 10 líneas importadas como muestra — el inventario completo ya está publicado.</div>
+          <div class="tbl-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Referencia</th>
+                  <th>Marca</th>
+                  <th>Cantidad</th>
+                  <th>País</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="ref-code">6205-2RS/C3</span></td><td><span class="badge brand">SKF</span></td><td>850</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">NU2210-E-TVP2</span></td><td><span class="badge brand">FAG</span></td><td>120</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">6305-ZZ</span></td><td><span class="badge brand">NSK</span></td><td>340</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">22316-E</span></td><td><span class="badge brand">FAG</span></td><td>75</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">6206-2RS</span></td><td><span class="badge brand">SKF</span></td><td>200</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">7210-BECBP</span></td><td><span class="badge brand">SKF</span></td><td>45</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">23026-E1</span></td><td><span class="badge brand">FAG</span></td><td>12</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">NU318-E-M1</span></td><td><span class="badge brand">FAG</span></td><td>8</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">6004-RSH</span></td><td><span class="badge brand">SKF</span></td><td>560</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+                <tr><td><span class="ref-code">7311-BECBP</span></td><td><span class="badge brand">SKF</span></td><td>33</td><td><span class="badge iso">ES</span></td><td><span class="badge pub">Published</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Error panel (collapsible) -->
+        <div class="err-panel" id="errPanel">
+          <div class="err-panel-hdr" onclick="toggleErrPanel()">
+            <i class="ti ti-alert-circle err-panel-icon"></i>
+            <span class="err-panel-lbl">34 líneas no importadas — ver detalle</span>
+            <i class="ti ti-chevron-right err-panel-chev" id="errChev"></i>
+          </div>
+          <div class="err-panel-body" id="errBody">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fila del archivo</th>
+                  <th>Columna</th>
+                  <th>Tipo de error</th>
+                  <th>Valor recibido</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">Fila 15</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">quantity</td><td><span class="err-type">Cantidad negativa</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#991B1B">-5</td></tr>
+                <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">Fila 23</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">quantity</td><td><span class="err-type">Cantidad negativa</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#991B1B">-12</td></tr>
+                <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">Fila 88</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">location_country</td><td><span class="err-type">País inválido</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#991B1B">ESP</td></tr>
+                <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99">Fila 142</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">part_number</td><td><span class="err-type">Referencia vacía</span></td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#991B1B">—</td></tr>
+                <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B7A99" colspan="4" style="text-align:center;color:#9BA4B0;font-style:italic">… y 30 líneas más en el CSV descargable</td></tr>
+              </tbody>
+            </table>
+            <div class="err-dl-row">
+              <button class="btn-dl"><i class="ti ti-download" style="font-size:14px"></i> Descargar CSV de errores</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="btn-row" id="btnRow">
+          <button class="btn-primary">Volver al panel de inventario</button>
+          <button class="btn-text" id="btnCorrect">Subir correcciones</button>
+        </div>
+
+        <!-- Demo -->
+        <div style="margin-top:36px;padding-top:20px;border-top:1px dashed #D1D5DB;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#9BA4B0;text-transform:uppercase;letter-spacing:.05em">Demo:</span>
+          <button onclick="setState('warn')" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Con advertencias</button>
+          <button onclick="setState('ok')" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Sin errores</button>
+          <button onclick="setState('fail')" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid #D1D5DB;border-radius:3px;background:#fff;cursor:pointer;color:#374151">Fallo total</button>
+        </div>
+
+      </div></div>
+    </main>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()" id="vtgbtn" aria-label="Colapsar VERA">
+        <i id="vtgi" class="ti ti-chevron-right"></i>
+      </button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg></div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de inventario</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v">
+          <div class="bwbub">La importación ha ido bien en general. Se han publicado 1.213 líneas. Las 34 líneas con error no se han importado — descarga el CSV para ver qué ha fallado y re-súbelas corregidas.</div>
+          <div class="bwts">11:08</div>
+        </div>
+        <div class="bwmsg u">
+          <div class="bwbub">¿Cuál es el error más común?</div>
+          <div class="bwts">11:09</div>
+        </div>
+        <div class="bwmsg v">
+          <div class="bwbub">La mayoría de errores son de cantidad negativa (28 líneas) y 6 con código de país inválido — usa el código ISO de 2 letras, por ejemplo "ES" en lugar de "ESP". Descarga el CSV, corrígelas y re-súbelas en modo acumulativo.</div>
+          <div class="bwts">11:09</div>
+        </div>
+      </div>
+      <div class="bwia"><div class="bwir">
+        <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+        <button class="bwsnd" onclick="vSend()" aria-label="Enviar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div></div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  function toggleSidebar(){document.getElementById("sb").classList.toggle("open");document.getElementById("sbo").classList.toggle("open");}
+  function setAct(el){document.querySelectorAll(".bwnavitem").forEach(function(i){i.classList.remove("act");});el.classList.add("act");}
+
+  /* VERA */
+  var vc=false;
+  function tgVera(){vc=!vc;document.getElementById("vera").classList.toggle("col",vc);document.getElementById("vtgi").className=vc?"ti ti-chevron-left":"ti ti-chevron-right";}
+  var isR=false,vp=document.getElementById("vera"),vr=document.getElementById("veraResize");
+  vr.addEventListener("mousedown",function(e){isR=true;vc=false;vp.classList.remove("col");document.getElementById("vtgi").className="ti ti-chevron-right";e.preventDefault();});
+  document.addEventListener("mousemove",function(e){if(!isR)return;var mw=document.querySelector(".bwmain").clientWidth,nw=mw-e.clientX;if(nw>=32&&nw<=mw*0.5)vp.style.width=nw+"px";});
+  document.addEventListener("mouseup",function(){isR=false;});
+  function vkey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();vSend();}}
+  function vrsz(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,72)+"px";}
+  var vR=["Si re-subes solo las líneas fallidas, hazlo en modo Acumulativo para no sobrescribir el inventario correcto que ya está publicado.","Las líneas eliminadas solo aparecen cuando la política elegida fue Reemplazo total. En modo Acumulativo, nunca se borran líneas existentes.","El CSV de errores incluye todas las columnas originales de tu archivo, con una columna adicional que explica el motivo del fallo en cada fila."],vri=0;
+  function vSend(){var inp=document.getElementById("bwinpa"),txt=inp.value.trim();if(!txt)return;var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});chat.insertAdjacentHTML("beforeend",'<div class="bwmsg u"><div class="bwbub">'+txt+'</div><div class="bwts">'+now+'</div></div>');inp.value="";inp.style.height="auto";setTimeout(function(){chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">'+vR[vri%vR.length]+'</div><div class="bwts">'+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+'</div></div>');vri++;chat.scrollTop=chat.scrollHeight;},600);chat.scrollTop=chat.scrollHeight;}
+
+  /* Error panel toggle */
+  function toggleErrPanel(){
+    var body=document.getElementById("errBody"),chev=document.getElementById("errChev");
+    body.classList.toggle("open");chev.classList.toggle("open");
+  }
+
+  /* Demo states */
+  function setState(s){
+    var icon=document.getElementById("resIcon"),title=document.getElementById("resTitle"),sub=document.getElementById("resSub");
+    var errPanel=document.getElementById("errPanel"),sample=document.getElementById("sampleSection");
+    var failBlock=document.getElementById("failBlock"),btnCorrect=document.getElementById("btnCorrect");
+    var cardElim=document.getElementById("cardElim");
+
+    // reset
+    icon.className="result-icon "+s;title.className="pg-title "+s;
+    errPanel.style.display="";sample.style.display="";failBlock.classList.remove("visible");
+    btnCorrect.style.display="";cardElim.style.display="";
+    document.getElementById("sErr").parentElement.style.display="";
+
+    if(s==="ok"){
+      icon.innerHTML='<i class="ti ti-circle-check"></i>';
+      title.textContent="Importación completada";
+      sub.textContent="1.247 líneas publicadas correctamente. No se han detectado errores.";
+      document.getElementById("sProc").textContent="1.247";
+      document.getElementById("sPub").textContent="1.247";
+      document.getElementById("sErr").textContent="0";document.getElementById("sErr").className="stat-card-val";
+      document.getElementById("sTime").textContent="3,8 s";
+      errPanel.style.display="none";
+      btnCorrect.style.display="none";
+      var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+      chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">Todo perfecto — 1.247 líneas publicadas correctamente. Tu inventario está al día.</div><div class="bwts">'+now+'</div></div>');
+      chat.scrollTop=9999;
+    } else if(s==="warn"){
+      icon.innerHTML='<i class="ti ti-alert-triangle"></i>';
+      title.textContent="Importación completada con advertencias";
+      sub.textContent="Tu inventario ha sido actualizado. Revisa las líneas que no pudieron importarse y corrígelas.";
+      document.getElementById("sProc").textContent="1.247";
+      document.getElementById("sPub").textContent="1.213";
+      document.getElementById("sErr").textContent="34";document.getElementById("sErr").className="stat-card-val err";
+      document.getElementById("sTime").textContent="4,2 s";
+      errPanel.style.display="";
+    } else if(s==="fail"){
+      icon.innerHTML='<i class="ti ti-x"></i>';
+      title.textContent="La importación no ha podido completarse";
+      sub.textContent="El sistema no ha podido procesar el archivo. Ninguna línea ha sido publicada.";
+      document.getElementById("sProc").textContent="0";
+      document.getElementById("sPub").textContent="0";
+      document.getElementById("sErr").parentElement.style.display="none";
+      cardElim.style.display="none";
+      document.getElementById("sTime").textContent="—";
+      failBlock.classList.add("visible");
+      sample.style.display="none";
+      errPanel.style.display="none";
+      btnCorrect.style.display="none";
+      var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+      chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">El archivo no pudo procesarse. Comprueba que sea un CSV, XLSX o TXT válido y que no supere el límite de líneas permitido. Vuelve al panel de inventario para intentarlo de nuevo.</div><div class="bwts">'+now+'</div></div>');
+      chat.scrollTop=9999;
+    }
+  }
+</script>
+</body>
+</html>

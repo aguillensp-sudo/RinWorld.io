@@ -87,9 +87,10 @@ Orden fijo inamovible:
 | 2 | Vendiendo | /selling |
 | 3 | Comprando | /buying |
 | 4 | Hilos | /threads |
-| 5 | Empresas | /directory |
-| 6 | Foros | /forum |
-| 7 | Contacto | /contact |
+| 5 | Inventario | /inventory |
+| 6 | Empresas | /directory |
+| 7 | Foros | /forum |
+| 8 | Contacto | /contact |
 
 **Estado activo:** subrayado azul `#2563EB` en el borde inferior del ítem · texto blanco · sin cambio de fondo.
 **Estado inactivo:** texto `rgba(255,255,255,0.55)` · sin subrayado.
@@ -118,7 +119,7 @@ Orden fijo inamovible:
 ### 5.2 Estructura interna
 
 - **Cabecera:** logo (mismo que nav bar) + botón ✕ de cierre.
-- **Navegación:** mismos 7 ítems que el nav bar en formato vertical con icono Tabler + texto.
+- **Navegación:** mismos 8 ítems que el nav bar en formato vertical con icono Tabler + texto.
 - **Ítem activo:** sincronizado con el ítem activo del nav bar. Border-left 2px azul `#2563EB` · fondo `rgba(37,99,235,0.12)`.
 - **Separador:** entre navegación y footer.
 - **Icono de Configuración** (al pie, antes del usuario): icono `ti-settings` + texto `Configuración`. Redirige a la sección de ajustes de organización y usuarios.
@@ -132,6 +133,7 @@ Orden fijo inamovible:
 | Vendiendo | `ti-tag` |
 | Comprando | `ti-shopping-cart` |
 | Hilos | `ti-messages` |
+| Inventario | `ti-package` |
 | Empresas | `ti-building` |
 | Foros | `ti-notes` |
 | Contacto | `ti-headset` |

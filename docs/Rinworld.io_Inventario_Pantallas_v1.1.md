@@ -698,6 +698,8 @@ Sí
 
 Ignorar si hash MD5 idéntico / Procesar siempre\. Defecto: ignorar duplicados\.
 
+> **⚠️ DIFERIDO A V2 — Junio 2026\.** INV\-05 \(Configuración de Carpeta Monitorizada, canal CAN\-03\) no se construye en V1\. Confirmado en el spec funcional de inventory\-management \(Out of Scope: "Desktop agent CAN\-03 / carpeta monitorizada \(diferido a V2\)"\)\. El código INV\-05 queda reservado para esta pantalla en V2\. Ver también nota de inconsistencia al final del documento\.
+
 ## __3\.6  INV\-07 — Configuración de Visibilidad \(REDISEÑADO v1\.1\)__
 
 Sustituye por completo el modelo anterior de cinco modos \(Público/Whitelist/Blacklist/Bilateral/Tiered\) por un modelo de dos modos, aplicado siempre al inventario completo de la organización — ver Módulo 02 v1\.3, sección 6, para la discusión completa de este rediseño\.
@@ -1425,6 +1427,19 @@ Junio 2026
 Equipo de Producto
 
 Incorporados los cambios derivados de la revisión por comentarios del usuario sobre la v1\.0: \(1\) Aclarado que REG\-00\-WAIT es una pantalla de un solo uso, sin acceso posterior\. \(2\) Añadido NIF/CIF obligatorio al FRO, con sus campos reordenados según un criterio de relleno lógico\. \(3\) Rediseñado por completo el sistema de visibilidad de inventario \(INV\-07, nueva sección 3\.6\): de cinco modos a dos \(Visible para todos / Visibilidad restringida\), descartando Bilateral y manteniendo Tiered diferido a V2\. \(4\) Rol de usuario no editable en ningún formulario — corregido en REG\-09 e INVT\-01, y documentado el FRU como pantalla propia \(sección 2\.8B\)\. \(5\) Eliminados tres residuos del campo condition en el Módulo 02\. \(6\) Traducida la terminología STALE a "desactualizado"\. \(7\) Aclarado el significado de "Guardar como perfil"\. \(8\) INV\-03 ahora muestra solo un ejemplo de 10 líneas\. \(9\) Nuevo orden fijo de columnas en toda tabla de resultados de búsqueda \(Referencia, Marca, Cantidad, Plazo, Empresa, País\) y nuevo checkbox \+ botón "Consultar Seleccionados" en SRCH\-01/SRCH\-02\. \(10\) Watcher: Referencia y Cantidad ahora obligatorias\. \(11\) Aclarado en MSG\-01 el concepto de "un único hilo por par de organizaciones"\. \(12\) Eliminada la columna Dirección de la tabla del Directorio de Organizaciones \(MSG\-05\)\.
+
+---
+
+## __NOTA DE INCONSISTENCIA DETECTADA — Junio 2026__
+
+Durante la fase de diseño de prototipos HTML \(post OpenSpec\) se detectó que el spec de pantalla generado para INV\-05 usaba ese código para una funcionalidad distinta: "Perfiles de Mapeo Guardados" \(gestión de plantillas de mapeo de columnas reutilizables\)\. Dicha funcionalidad sí tiene base funcional real — el requirement `ai-column-mapping` del spec funcional exige que el sistema permita guardar mapeos como perfiles reutilizables, y hay un campo "Guardar como perfil" en INV\-02 y un selector "Perfil de mapeo por defecto" en INV\-04 y en esta misma INV\-05 — pero el código INV\-05 estaba ya reservado en este inventario para "Configuración de Carpeta Monitorizada"\.
+
+**Resolución aplicada:**
+- El spec de diseño incorrecto \(`Rinworld_spec_INV-05.md`\) ha sido retirado\.
+- El código INV\-05 permanece reservado para "Configuración de Carpeta Monitorizada" \(V2\)\.
+- La gestión de perfiles de mapeo se integra como sección dentro de INV\-04 en V1\. Si en el futuro se decide darle pantalla propia, se le asignará el código INV\-06 \(actualmente libre\) y se actualizará este inventario\.
+
+---
 
 __📄  DOCUMENTOS DE REFERENCIA__
 

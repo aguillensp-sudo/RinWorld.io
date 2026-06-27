@@ -88,6 +88,10 @@
     .dropzone-hint{font-size:11px;color:#C4CAD6;font-family:"IBM Plex Mono",monospace}
     .dropzone-err{display:none;font-size:12px;color:#DC2626;margin-top:4px}
     .dropzone-err.visible{display:block}
+    .dropzone.loading{border-color:#2563EB;background:rgba(37,99,235,.04);cursor:default;pointer-events:none}
+    .dropzone.loading .dropzone-icon{background:rgba(37,99,235,.1);color:#2563EB}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{animation:spin .8s linear infinite;display:inline-block}
 
     /* Filter chips + action bar */
     .table-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
@@ -452,7 +456,21 @@
   function dzDrop(e){e.preventDefault();document.getElementById("dz").classList.remove("drag");var f=e.dataTransfer.files[0];if(f)validateFile(f);}
   function onFile(inp){if(inp.files[0])validateFile(inp.files[0]);}
   var ALLOWED=["text/csv","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","text/tab-separated-values","text/plain"];
-  function validateFile(f){var ok=ALLOWED.includes(f.type)||/\.(csv|xlsx|xls|tsv|txt)$/i.test(f.name);document.getElementById("dzErr").classList.toggle("visible",!ok);}
+  function validateFile(f){
+    var ok=ALLOWED.includes(f.type)||/\.(csv|xlsx|xls|tsv|txt)$/i.test(f.name);
+    document.getElementById("dzErr").classList.toggle("visible",!ok);
+    if(!ok)return;
+    /* Archivo válido — mostrar estado de carga y navegar a INV-02 */
+    var dz=document.getElementById("dz");
+    dz.classList.remove("drag");dz.classList.add("loading");
+    dz.innerHTML='<div class="dropzone-icon"><i class="ti ti-loader spin" style="font-size:20px"></i></div>'
+      +'<div class="dropzone-main" style="color:#2563EB">Analizando archivo…</div>'
+      +'<div class="dropzone-sec">'+f.name+'</div>'
+      +'<div class="dropzone-hint">El sistema está detectando columnas y preparando el mapeo</div>';
+    setTimeout(function(){
+      window.location.href="INV-02%20%C2%B7%20INV%20v1.0.html";
+    },1800);
+  }
 
   /* VERA chat */
   function vkey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();vSend();}}

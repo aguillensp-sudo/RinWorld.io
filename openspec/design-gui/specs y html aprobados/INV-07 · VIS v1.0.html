@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INV-07 · Configuración de Visibilidad del Inventario — Bearingworld.io</title>
+  <link rel="icon" type="image/png"
+    href="data:image/png;base64,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">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100vh; font-family: 'Inter', sans-serif; }
+
+    /* SHELL */
+    .bwshell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* BRAND BAR */
+    .bwbrand { height: 24px; background: #07111F; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 10px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.45); flex-shrink: 0; }
+
+    /* NAV BAR */
+    .bwnav { height: 72px; background: #07111F; display: flex; align-items: center; gap: 0; padding: 0 14px; flex-shrink: 0; z-index: 100; }
+    .bwhbg { width: 30px; height: 30px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; border-radius: 4px; padding: 6px; flex-shrink: 0; transition: background 0.12s; }
+    .bwhbg:hover { background: rgba(255,255,255,0.08); }
+    .bwhbg span { display: block; width: 14px; height: 1.5px; background: white; }
+    .bwnavlogo { display: block; }
+    .bwnavdiv { width: 1px; height: 18px; background: rgba(255,255,255,0.15); margin: 0 8px; flex-shrink: 0; }
+    .bwnavitems { display: flex; align-items: center; flex: 1; gap: 0; overflow: hidden; }
+    .bwnavitem { padding: 0 12px; height: 72px; display: flex; align-items: center; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.55); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.12s; flex-shrink: 0; }
+    .bwnavitem:hover { color: rgba(255,255,255,0.9); }
+    .bwnavitem.act { color: white; border-bottom-color: #2563EB; }
+    .bwnavright { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-left: auto; }
+    .bwnavuser { text-align: right; }
+    .bwnavco { font-size: 11px; font-weight: 500; color: white; white-space: nowrap; }
+    .bwnavun { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; }
+    .bwnavsout { padding: 5px 12px; border-radius: 4px; background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.12s; }
+    .bwnavsout:hover { background: rgba(255,255,255,0.13); color: white; }
+
+    /* MAIN */
+    .bwmain { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+    /* SIDEBAR */
+    .bwsbo { position: absolute; inset: 0; background: rgba(0,0,0,0); z-index: 20; pointer-events: none; transition: background 0.2s; }
+    .bwsbo.open { background: rgba(0,0,0,0.38); pointer-events: auto; }
+    .bwsb { position: absolute; left: 0; top: 0; bottom: 0; width: 210px; background: #1B2537; z-index: 21; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.2s ease; }
+    .bwsb.open { transform: translateX(0); }
+    .bwsbh { padding: 12px 14px; border-bottom: 0.5px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .bwsbx { width: 24px; height: 24px; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-family: inherit; transition: all 0.12s; }
+    .bwsbx:hover { background: rgba(255,255,255,0.08); color: white; }
+    .bwsbnav { flex: 1; padding: 8px 0; overflow-y: auto; }
+    .bwsbitem { display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5); cursor: pointer; border-left: 2px solid transparent; transition: all 0.12s; }
+    .bwsbitem i { font-size: 16px; flex-shrink: 0; }
+    .bwsbitem:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.05); }
+    .bwsbitem.act { color: white; border-left-color: #2563EB; background: rgba(37,99,235,0.12); }
+    .bwsbft { padding: 12px 14px; border-top: 0.5px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .bwsbset { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.4); cursor: pointer; transition: color 0.12s; }
+    .bwsbset i { font-size: 16px; }
+    .bwsbset:hover { color: rgba(255,255,255,0.8); }
+    .bwsbusr { display: flex; align-items: center; gap: 9px; }
+    .bwav { width: 28px; height: 28px; border-radius: 50%; background: #B8924A; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: white; flex-shrink: 0; }
+    .bwsbusrn { font-size: 12px; font-weight: 500; color: white; }
+    .bwsbusro { font-size: 11px; color: rgba(255,255,255,0.38); }
+
+    /* VERA PANEL */
+    .bwvera { width: calc(33.333% - 0.5px); min-width: 32px; background: #FAF8F4; display: flex; flex-direction: column; overflow: hidden; transition: width 0.2s ease; position: relative; flex-shrink: 0; border-left: 0.5px solid rgba(184,146,74,0.18); }
+    .bwvera.col { width: 32px; }
+    .bwveratg { position: absolute; left: -11px; top: 50%; transform: translateY(-50%); width: 22px; height: 36px; background: #FAF8F4; border: 0.5px solid rgba(184,146,74,0.22); border-radius: 5px 0 0 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6B7A99; font-size: 13px; z-index: 2; transition: color 0.12s; }
+    .bwvera-resize { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; cursor: col-resize; z-index: 1; }
+    .bwveratg:hover { color: #1B2537; }
+    .bwveralbl { display: none; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; color: #6B7A99; letter-spacing: 0.05em; align-items: center; justify-content: center; flex: 1; cursor: pointer; transition: color 0.12s; }
+    .bwvera.col .bwveralbl { display: flex; }
+    .bwvera.col .bwveralbl:hover { color: #1B2537; }
+    .bwvera.col .bwvh, .bwvera.col .bwchat, .bwvera.col .bwia { display: none; }
+    .bwvh { padding: 12px; border-bottom: 0.5px solid rgba(184,146,74,0.18); display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+    .bwvico { width: 28px; height: 28px; border-radius: 50%; background: #1B2537; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .bwvname { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px; color: #1B2537; letter-spacing: 0.02em; }
+    .bwvsub { font-size: 13px; color: #6B7A99; }
+    .bwvdot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+    .bwchat { flex: 1; overflow-y: auto; padding: 12px 10px; display: flex; flex-direction: column; gap: 10px; }
+    .bwmsg { display: flex; flex-direction: column; gap: 3px; }
+    .bwmsg.u { align-items: flex-end; }
+    .bwmsg.v { align-items: flex-start; }
+    .bwbub { padding: 9px 11px; border-radius: 10px; font-size: 14px; line-height: 1.5; max-width: 92%; }
+    .bwmsg.u .bwbub { background: #1B2537; color: white; border-bottom-right-radius: 3px; }
+    .bwmsg.v .bwbub { background: white; color: #1B2537; border-bottom-left-radius: 3px; border: 0.5px solid rgba(184,146,74,0.2); }
+    .bwts { font-size: 12px; color: #6B7A99; padding: 0 3px; }
+    .bwia { padding: 10px; border-top: 0.5px solid rgba(184,146,74,0.18); flex-shrink: 0; }
+    .bwir { display: flex; gap: 6px; align-items: flex-end; }
+    .bwinpa { flex: 1; padding: 8px 10px; border-radius: 7px; border: 0.5px solid rgba(184,146,74,0.3); background: white; font-family: inherit; font-size: 14px; color: #1B2537; resize: none; outline: none; min-height: 34px; max-height: 72px; transition: border-color 0.12s; }
+    .bwinpa:focus { border-color: #2563EB; }
+    .bwinpa::placeholder { color: #6B7A99; }
+    .bwsnd { width: 32px; height: 32px; border-radius: 7px; background: #2563EB; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 14px; transition: opacity 0.12s; }
+    .bwsnd:hover { opacity: 0.85; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(107,122,153,0.2); border-radius: 3px; }
+
+    /* CONTENT */
+    .bwcnt { flex: 1; overflow-y: auto; padding: 32px 36px; background: #F1F3F6; min-width: 0; }
+    .eyebrow { font-family: "Montserrat", sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #6B7A99; margin-bottom: 6px; }
+    .page-title { font-family: "Montserrat", sans-serif; font-size: 22px; font-weight: 700; color: #1B2537; margin-bottom: 4px; }
+    .page-sub { font-size: 14px; color: #6B7A99; line-height: 1.6; margin-bottom: 28px; max-width: 600px; }
+    .sec-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+    .sec-title { font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: #6B7A99; margin-bottom: 16px; }
+
+    /* RADIO GROUP */
+    .radio-group { display: flex; flex-direction: column; gap: 12px; }
+    .radio-option { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid #E5E7EB; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .radio-option:hover { border-color: #2563EB; background: rgba(37,99,235,0.02); }
+    .radio-option.selected { border-color: #2563EB; background: rgba(37,99,235,0.04); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #D1D5DB; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .radio-option.selected .radio-circle { border-color: #2563EB; background: #2563EB; }
+    .radio-dot { width: 7px; height: 7px; border-radius: 50%; background: white; display: none; }
+    .radio-option.selected .radio-dot { display: block; }
+    .radio-label { font-size: 14px; font-weight: 600; color: #1B2537; margin-bottom: 3px; }
+    .radio-desc { font-size: 13px; color: #6B7A99; line-height: 1.5; }
+
+    /* EXCLUSION PANEL */
+    .excl-panel { transition: opacity 0.2s, filter 0.2s; }
+    .excl-panel.disabled { opacity: 0.4; pointer-events: none; filter: grayscale(0.3); }
+    .excl-subsection { margin-bottom: 20px; }
+    .excl-sub-title { font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    .search-inp { width: 100%; border: 1px solid #D1D5DB; border-radius: 6px; padding: 9px 12px; font-size: 13px; color: #1B2537; outline: none; transition: border-color 0.15s; background: #fff; font-family: inherit; }
+    .search-inp:focus { border-color: #2563EB; }
+    .search-inp::placeholder { color: #9BA4B0; }
+    .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 20px; font-size: 12px; font-weight: 500; color: #1B2537; }
+    .tag-x { background: none; border: none; cursor: pointer; color: #6B7A99; font-size: 14px; line-height: 1; padding: 0; display: flex; align-items: center; transition: color 0.12s; }
+    .tag-x:hover { color: #DC2626; }
+    .field-hint { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: #9BA4B0; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 6px; }
+    .geo-row { display: flex; gap: 8px; align-items: center; }
+    .geo-select { flex: 1; border: 1px solid #D1D5DB; border-radius: 6px; padding: 9px 12px; font-size: 13px; color: #1B2537; outline: none; background: #fff; font-family: inherit; cursor: pointer; transition: border-color 0.15s; }
+    .geo-select:focus { border-color: #2563EB; }
+    .geo-select option[value=""] { color: #9BA4B0; }
+    .btn-add-geo { height: 36px; padding: 0 14px; background: #1B2537; border: none; border-radius: 6px; color: white; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.12s; flex-shrink: 0; }
+    .btn-add-geo:hover { opacity: 0.82; }
+    .geo-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .tag-geo { background: rgba(184,146,74,0.1); border-color: rgba(184,146,74,0.3); color: #7a5c1e; }
+
+    /* BRASS BLOCK */
+    .brass-block { background: rgba(184,146,74,.07); border: 1px solid rgba(184,146,74,.25); border-radius: 6px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; }
+    .brass-block i { font-size: 16px; color: #B8924A; flex-shrink: 0; margin-top: 1px; }
+    .brass-block p { font-size: 13px; color: #6B7A99; line-height: 1.5; }
+
+    /* BRASS NOTICE (estado: visible para todos con lista guardada) */
+    .brass-notice { background: rgba(184,146,74,.06); border: 1px solid rgba(184,146,74,.2); border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 9px; font-size: 13px; color: #7a5c1e; margin-top: 12px; display: none; }
+    .brass-notice.vis { display: flex; }
+    .brass-notice i { font-size: 15px; color: #B8924A; flex-shrink: 0; }
+
+    /* SAVE BUTTON */
+    .btn-save { height: 40px; padding: 0 22px; background: #2563EB; border: none; border-radius: 6px; color: white; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.12s; margin-top: 4px; }
+    .btn-save:hover { opacity: 0.87; }
+
+    /* SUCCESS BANNER */
+    .save-banner { display: none; align-items: center; gap: 8px; background: rgba(22,163,74,.07); border: 1px solid rgba(22,163,74,.2); border-radius: 4px; padding: 10px 14px; font-size: 13px; color: #15803d; margin-top: 14px; }
+    .save-banner.vis { display: flex; }
+    .save-banner i { font-size: 16px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div class="bwshell">
+
+  <!-- BRAND BAR -->
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <!-- NAV BAR -->
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+    <img class="bwnavlogo" src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem" onclick="setAct(this)">Panel</div>
+      <div class="bwnavitem act" onclick="setAct(this)">Vendiendo</div>
+      <div class="bwnavitem" onclick="setAct(this)">Comprando</div>
+      <div class="bwnavitem" onclick="setAct(this)">Hilos</div>
+      <div class="bwnavitem" onclick="setAct(this)">Inventario</div>
+      <div class="bwnavitem" onclick="setAct(this)">Empresas</div>
+      <div class="bwnavitem" onclick="setAct(this)">Foros</div>
+      <div class="bwnavitem" onclick="setAct(this)">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div class="bwnavuser">
+        <div class="bwnavco">Rodamientos del Sur SL</div>
+        <div class="bwnavun">Juan Martínez</div>
+      </div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="bwmain">
+
+    <!-- SIDEBAR OVERLAY -->
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh">
+        <button class="bwsbx" onclick="toggleSb()" aria-label="Cerrar menú">×</button>
+      </div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem act"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr">
+          <div class="bwav">JM</div>
+          <div>
+            <div class="bwsbusrn">Juan Martínez</div>
+            <div class="bwsbusro">Rodamientos del Sur SL</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="bwcnt">
+      <div class="eyebrow">Módulo 02 · Gestión de Inventario</div>
+      <div class="page-title">Visibilidad del inventario</div>
+      <div class="page-sub">Controla quién puede ver tu stock en Bearingworld.io. El modo se aplica a todo tu inventario de forma inmediata.</div>
+
+      <!-- SELECTOR DE MODO -->
+      <div class="sec-card">
+        <div class="sec-title">Modo de visibilidad</div>
+        <div class="radio-group">
+
+          <div class="radio-option" id="opt-todos" onclick="setMode('todos')">
+            <div class="radio-circle"><div class="radio-dot"></div></div>
+            <div>
+              <div class="radio-label">Visible para todos los miembros</div>
+              <div class="radio-desc">Cualquier distribuidor verificado en la plataforma puede consultar tu stock</div>
+            </div>
+          </div>
+
+          <div class="radio-option selected" id="opt-restringido" onclick="setMode('restringido')">
+            <div class="radio-circle"><div class="radio-dot"></div></div>
+            <div>
+              <div class="radio-label">Visibilidad restringida</div>
+              <div class="radio-desc">Solo miembros no excluidos explícitamente pueden ver tu inventario</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Aviso cuando se cambia a "Visible para todos" y hay lista guardada -->
+        <div class="brass-notice" id="noticeTodos">
+          <i class="ti ti-info-circle"></i>
+          Tu lista de exclusión se conserva — si vuelves al modo restringido, se reactivará automáticamente.
+        </div>
+      </div>
+
+      <!-- PANEL DE EXCLUSIÓN -->
+      <div class="sec-card">
+        <div class="sec-title">Lista de exclusión</div>
+
+        <div class="excl-panel" id="exclPanel">
+
+          <!-- Por organización -->
+          <div class="excl-subsection">
+            <div class="excl-sub-title">Exclusión por organización</div>
+            <input class="search-inp" type="text" id="orgInp" placeholder="Buscar organización por nombre..." onkeydown="addOrgTag(event)">
+            <div class="field-hint">Efecto inmediato al añadir</div>
+            <div class="tags-row" id="orgTags">
+              <span class="tag">Rodamientos Express SL <button class="tag-x" onclick="removeTag(this)">×</button></span>
+              <span class="tag">Nordic Bearings AB <button class="tag-x" onclick="removeTag(this)">×</button></span>
+            </div>
+          </div>
+
+          <!-- Por geografía -->
+          <div class="excl-subsection">
+            <div class="excl-sub-title">Exclusión por geografía</div>
+            <div class="geo-row">
+              <select class="geo-select" id="continentSel" onchange="updateCountries()">
+                <option value="">Selecciona un continente</option>
+                <option value="Europa">Europa</option>
+                <option value="Asia">Asia</option>
+                <option value="América del Norte">América del Norte</option>
+                <option value="América del Sur">América del Sur</option>
+                <option value="África">África</option>
+                <option value="Oceanía">Oceanía</option>
+              </select>
+              <select class="geo-select" id="countrySel" style="display:none">
+                <option value="">Todos los países del continente</option>
+              </select>
+              <button class="btn-add-geo" onclick="addGeoTag()">Añadir</button>
+            </div>
+            <div class="field-hint">Excluye todas las organizaciones con sede en esa geografía</div>
+            <div class="geo-tags tags-row" id="geoTags">
+              <span class="tag tag-geo">Asia <button class="tag-x" onclick="removeTag(this)">×</button></span>
+              <span class="tag tag-geo">Rusia <button class="tag-x" onclick="removeTag(this)">×</button></span>
+            </div>
+          </div>
+
+          <!-- Brass info -->
+          <div class="brass-block">
+            <i class="ti ti-alert-circle"></i>
+            <p>Los cambios en la visibilidad tienen <strong>efecto inmediato</strong> — las organizaciones excluidas dejarán de ver tu stock en su próxima búsqueda.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTÓN Y BANNER -->
+      <button class="btn-save" onclick="saveConfig()">Guardar configuración</button>
+      <div class="save-banner" id="saveBanner">
+        <i class="ti ti-circle-check"></i>
+        Configuración guardada. Los cambios tienen efecto inmediato.
+      </div>
+
+    </div>
+
+    <!-- VERA PANEL -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()" aria-label="Colapsar VERA">
+        <i class="ti ti-chevron-right" id="vtgi"></i>
+      </button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/>
+            <circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/>
+          </svg>
+        </div>
+        <div>
+          <div class="bwvname">VERA</div>
+          <div class="bwvsub">Agente de inventario</div>
+        </div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v">
+          <div class="bwbub">Ahora mismo tu inventario está en modo <strong>Visibilidad restringida</strong>. Las organizaciones y regiones que ves en la lista de exclusión no pueden ver tu stock.</div>
+          <div class="bwts">11:04</div>
+        </div>
+        <div class="bwmsg u">
+          <div class="bwbub">¿Puedo excluir a toda Asia menos Japón?</div>
+          <div class="bwts">11:05</div>
+        </div>
+        <div class="bwmsg v">
+          <div class="bwbub">Sí. Primero añade "Asia" en exclusiones geográficas y luego, dentro del mismo continente, selecciona todos los países excepto Japón. Cada exclusión geográfica tiene efecto inmediato.</div>
+          <div class="bwts">11:05</div>
+        </div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()" aria-label="Enviar">→</button>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  /* Shell */
+  function toggleSb() {
+    document.getElementById('sb').classList.toggle('open');
+    document.getElementById('sbo').classList.toggle('open');
+  }
+  function setAct(el) {
+    document.querySelectorAll('.bwnavitem').forEach(i => i.classList.remove('act'));
+    el.classList.add('act');
+    const idx = [...el.parentElement.children].indexOf(el);
+    const si = document.querySelectorAll('.bwsbitem');
+    document.querySelectorAll('.bwsbitem').forEach(i => i.classList.remove('act'));
+    if (si[idx]) si[idx].classList.add('act');
+  }
+  let vc = false;
+  function tgVera() {
+    vc = !vc;
+    document.getElementById('vera').classList.toggle('col', vc);
+    document.getElementById('vtgi').className = vc ? 'ti ti-chevron-left' : 'ti ti-chevron-right';
+  }
+  let isResizing = false;
+  const veraPanel = document.getElementById('vera');
+  const veraResize = document.getElementById('veraResize');
+  veraResize.addEventListener('mousedown', (e) => { isResizing = true; vc = false; veraPanel.classList.remove('col'); document.getElementById('vtgi').className = 'ti ti-chevron-right'; e.preventDefault(); });
+  document.addEventListener('mousemove', (e) => { if (!isResizing) return; const mw = document.querySelector('.bwmain').clientWidth; const nw = mw - e.clientX; if (nw >= 32 && nw <= mw * 0.5) veraPanel.style.width = nw + 'px'; });
+  document.addEventListener('mouseup', () => { isResizing = false; });
+  function vkey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); vsend(); } }
+  function vrsz(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 72) + 'px'; }
+  function vsend() {
+    const inp = document.getElementById('bwinpa');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    const chat = document.getElementById('bwchat');
+    const t = new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0');
+    chat.innerHTML += `<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;
+    inp.value = ''; inp.style.height = 'auto'; chat.scrollTop = chat.scrollHeight;
+    setTimeout(() => { chat.innerHTML += `<div class="bwmsg v"><div class="bwbub">Entendido. ¿Algo más en lo que pueda ayudarte?</div><div class="bwts">${t}</div></div>`; chat.scrollTop = chat.scrollHeight; }, 800);
+  }
+
+  /* Mode selector */
+  let currentMode = 'restringido';
+  const hasListItems = () => document.getElementById('orgTags').children.length > 0 || document.getElementById('geoTags').children.length > 0;
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('opt-todos').classList.toggle('selected', mode === 'todos');
+    document.getElementById('opt-restringido').classList.toggle('selected', mode === 'restringido');
+    const panel = document.getElementById('exclPanel');
+    const notice = document.getElementById('noticeTodos');
+    if (mode === 'todos') {
+      panel.classList.add('disabled');
+      notice.classList.toggle('vis', hasListItems());
+      veraMsg('Ahora todos los distribuidores verificados pueden ver tu stock. Tu lista de exclusión queda guardada — si cambias a modo restringido, se reactivará automáticamente.');
+    } else {
+      panel.classList.remove('disabled');
+      notice.classList.remove('vis');
+      veraMsg('Modo restringido activado. La lista de exclusión está de nuevo operativa con los mismos criterios que tenías configurados.');
+    }
+  }
+
+  function veraMsg(txt) {
+    const chat = document.getElementById('bwchat');
+    const t = new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0');
+    chat.innerHTML += `<div class="bwmsg v"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  /* Tags — org */
+  function addOrgTag(e) {
+    if (e.key !== 'Enter') return;
+    const inp = document.getElementById('orgInp');
+    const val = inp.value.trim();
+    if (!val) return;
+    const container = document.getElementById('orgTags');
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${val} <button class="tag-x" onclick="removeTag(this)">×</button>`;
+    container.appendChild(tag);
+    inp.value = '';
+  }
+
+  function removeTag(btn) {
+    btn.closest('.tag').remove();
+  }
+
+  /* Tags — geo */
+  const countries = {
+    'Europa': ['Alemania','España','Francia','Italia','Reino Unido','Polonia','Holanda','Bélgica','Portugal','Suecia','Noruega','Finlandia','Rusia','Ucrania','Turquía'],
+    'Asia': ['China','Japón','India','Corea del Sur','Taiwan','Vietnam','Indonesia','Tailandia','Malasia','Singapur','Pakistán','Bangladesh'],
+    'América del Norte': ['Estados Unidos','Canadá','México'],
+    'América del Sur': ['Brasil','Argentina','Chile','Colombia','Perú','Venezuela','Ecuador'],
+    'África': ['Sudáfrica','Nigeria','Egipto','Kenia','Marruecos','Etiopía'],
+    'Oceanía': ['Australia','Nueva Zelanda']
+  };
+
+  function updateCountries() {
+    const cont = document.getElementById('continentSel').value;
+    const sel = document.getElementById('countrySel');
+    if (!cont) { sel.style.display = 'none'; return; }
+    sel.innerHTML = '<option value="">Todos los países del continente</option>';
+    (countries[cont] || []).forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+    sel.style.display = '';
+  }
+
+  function addGeoTag() {
+    const cont = document.getElementById('continentSel').value;
+    const country = document.getElementById('countrySel').value;
+    if (!cont) return;
+    const label = country || cont;
+    const container = document.getElementById('geoTags');
+    const existing = [...container.querySelectorAll('.tag')].find(t => t.textContent.trim().replace('×','').trim() === label);
+    if (existing) return;
+    const tag = document.createElement('span');
+    tag.className = 'tag tag-geo';
+    tag.innerHTML = `${label} <button class="tag-x" onclick="removeTag(this)">×</button>`;
+    container.appendChild(tag);
+    document.getElementById('continentSel').value = '';
+    document.getElementById('countrySel').style.display = 'none';
+  }
+
+  /* Save */
+  function saveConfig() {
+    const banner = document.getElementById('saveBanner');
+    banner.classList.add('vis');
+    veraMsg('Configuración de visibilidad guardada correctamente. Los cambios ya están activos.');
+    setTimeout(() => banner.classList.remove('vis'), 3500);
+  }
+</script>
+</body>
+</html>

@@ -28,6 +28,8 @@ por cantidad disponible descendente.
 - AND las columnas aparecen en orden fijo: Referencia, Marca, Cantidad disponible,
   Plazo, Empresa, País, Antigüedad (días transcurridos desde la última actualización
   del inventario por el distribuidor), Favoritos, Acciones
+- AND la columna País muestra el nombre completo del país en el idioma de sesión
+  del usuario (nunca código ISO)
 - AND los resultados están ordenados por cantidad disponible descendente
 - AND ninguna línea de un distribuidor que ha excluido al usuario aparece
   en los resultados

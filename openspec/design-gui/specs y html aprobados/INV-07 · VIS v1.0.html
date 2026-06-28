@@ -179,10 +179,10 @@
     <div class="bwnavdiv"></div>
     <div class="bwnavitems">
       <div class="bwnavitem" onclick="setAct(this)">Panel</div>
-      <div class="bwnavitem act" onclick="setAct(this)">Vendiendo</div>
+      <div class="bwnavitem" onclick="setAct(this)">Vendiendo</div>
       <div class="bwnavitem" onclick="setAct(this)">Comprando</div>
       <div class="bwnavitem" onclick="setAct(this)">Hilos</div>
-      <div class="bwnavitem" onclick="setAct(this)">Inventario</div>
+      <div class="bwnavitem act" onclick="setAct(this)">Inventario</div>
       <div class="bwnavitem" onclick="setAct(this)">Empresas</div>
       <div class="bwnavitem" onclick="setAct(this)">Foros</div>
       <div class="bwnavitem" onclick="setAct(this)">Contacto</div>
@@ -209,10 +209,10 @@
       </div>
       <nav class="bwsbnav">
         <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
-        <div class="bwsbitem act"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
         <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
         <div class="bwsbitem"><i class="ti ti-messages"></i>Hilos</div>
-        <div class="bwsbitem"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem act"><i class="ti ti-package"></i>Inventario</div>
         <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
         <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
         <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
@@ -261,7 +261,7 @@
         <!-- Aviso cuando se cambia a "Visible para todos" y hay lista guardada -->
         <div class="brass-notice" id="noticeTodos">
           <i class="ti ti-info-circle"></i>
-          Tu lista de exclusión se conserva — si vuelves al modo restringido, se reactivará automáticamente.
+          Tu lista de exclusión se conserva. Si vuelves al modo restringido, se reactivará automáticamente.
         </div>
       </div>
 
@@ -462,12 +462,12 @@
 
   /* Tags — geo */
   const countries = {
-    'Europa': ['Alemania','España','Francia','Italia','Reino Unido','Polonia','Holanda','Bélgica','Portugal','Suecia','Noruega','Finlandia','Rusia','Ucrania','Turquía'],
-    'Asia': ['China','Japón','India','Corea del Sur','Taiwan','Vietnam','Indonesia','Tailandia','Malasia','Singapur','Pakistán','Bangladesh'],
-    'América del Norte': ['Estados Unidos','Canadá','México'],
-    'América del Sur': ['Brasil','Argentina','Chile','Colombia','Perú','Venezuela','Ecuador'],
-    'África': ['Sudáfrica','Nigeria','Egipto','Kenia','Marruecos','Etiopía'],
-    'Oceanía': ['Australia','Nueva Zelanda']
+    'Europa': ['Albania','Alemania','Andorra','Armenia','Austria','Azerbaiyán','Bélgica','Bielorrusia','Bosnia y Herzegovina','Bulgaria','Chipre','Croacia','Dinamarca','Eslovaquia','Eslovenia','España','Estonia','Finlandia','Francia','Georgia','Grecia','Hungría','Irlanda','Islandia','Italia','Kazajistán','Kosovo','Letonia','Liechtenstein','Lituania','Luxemburgo','Macedonia del Norte','Malta','Moldavia','Mónaco','Montenegro','Noruega','Países Bajos','Polonia','Portugal','Reino Unido','República Checa','Rumanía','Rusia','San Marino','Serbia','Suecia','Suiza','Turquía','Ucrania','Vaticano'],
+    'Asia': ['Afganistán','Arabia Saudí','Bahréin','Bangladés','Bután','Brunéi','Camboya','China','Corea del Norte','Corea del Sur','Emiratos Árabes Unidos','Filipinas','India','Indonesia','Irak','Irán','Israel','Japón','Jordania','Kazajistán','Kuwait','Kirguistán','Laos','Líbano','Malasia','Maldivas','Mongolia','Myanmar','Nepal','Omán','Pakistán','Qatar','Singapur','Siria','Sri Lanka','Tailandia','Taiwán','Tayikistán','Timor Oriental','Turkmenistán','Uzbekistán','Vietnam','Yemen'],
+    'América del Norte': ['Antigua y Barbuda','Bahamas','Barbados','Belice','Canadá','Costa Rica','Cuba','Dominica','El Salvador','Estados Unidos','Granada','Guatemala','Haití','Honduras','Jamaica','México','Nicaragua','Panamá','República Dominicana','Saint Kitts y Nevis','San Vicente y las Granadinas','Santa Lucía','Trinidad y Tobago'],
+    'América del Sur': ['Argentina','Bolivia','Brasil','Chile','Colombia','Ecuador','Guyana','Paraguay','Perú','Surinam','Uruguay','Venezuela'],
+    'África': ['Algeria','Angola','Benín','Botsuana','Burkina Faso','Burundi','Cabo Verde','Camerún','Chad','Comoras','Congo','Costa de Marfil','Djibouti','Egipto','Eritrea','Etiopía','Gabón','Gambia','Ghana','Guinea','Guinea-Bisáu','Guinea Ecuatorial','Kenia','Lesoto','Liberia','Libia','Madagascar','Malaui','Malí','Marruecos','Mauricio','Mauritania','Mozambique','Namibia','Níger','Nigeria','República Centroafricana','República Democrática del Congo','Ruanda','Santo Tomé y Príncipe','Senegal','Seychelles','Sierra Leona','Somalia','Sudáfrica','Sudán','Sudán del Sur','Suazilandia','Tanzania','Togo','Túnez','Uganda','Zambia','Zimbabue'],
+    'Oceanía': ['Australia','Fiji','Islas Marshall','Islas Salomón','Kiribati','Micronesia','Nauru','Nueva Zelanda','Palaos','Papúa Nueva Guinea','Samoa','Timor Oriental','Tonga','Tuvalu','Vanuatu']
   };
 
   function updateCountries() {

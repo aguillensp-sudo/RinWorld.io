@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADMIN-02 · Gestión de Cobros — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#B8924A}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .op-badge{padding:3px 8px;background:rgba(184,146,74,.18);border:.5px solid rgba(184,146,74,.4);border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#B8924A;white-space:nowrap;flex-shrink:0}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#B8924A;background:rgba(184,146,74,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+
+    /* VERA */
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#B8924A}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#B8924A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#B8924A;margin-bottom:4px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:16px;max-width:640px}
+    .spec-note{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(107,122,153,.06);border:1px solid rgba(107,122,153,.15);border-radius:4px;width:fit-content}
+
+    /* FILTER CHIPS */
+    .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .chip{height:28px;padding:0 14px;border-radius:14px;border:1px solid #D1D5DB;background:white;font-size:12px;font-weight:500;color:#6B7A99;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+    .chip:hover:not(.act){border-color:#9BA4B0;color:#374151}
+    .chip.act{background:#1B2537;border-color:#1B2537;color:white}
+    .chip-count{font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px}
+    .chip.act .chip-count{background:rgba(255,255,255,.18);color:white}
+    .chip:not(.act) .chip-count{background:#F1F3F6;color:#6B7A99}
+
+    /* CANDIDATAS A BORRADO ALERT */
+    .del-alert{background:white;border:1px solid rgba(220,38,38,.3);border-left:3px solid #DC2626;border-radius:6px;padding:12px 16px;margin-bottom:16px}
+    .del-alert-hdr{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#DC2626;margin-bottom:8px}
+    .del-alert-hdr i{font-size:15px}
+    .del-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:.5px solid #F1F3F6;font-size:12px;color:#374151}
+    .del-row:last-child{border-bottom:none;padding-bottom:0}
+    .del-orgname{font-weight:500;flex:1}
+    .del-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#9BA4B0}
+    .btn-delete{height:26px;padding:0 12px;background:none;border:1px solid rgba(220,38,38,.35);border-radius:4px;color:#DC2626;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-delete:hover{background:rgba(220,38,38,.06)}
+
+    /* TABLE */
+    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow-x:auto}
+    .tbl{width:100%;border-collapse:collapse;min-width:max-content}
+    .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    .tbl td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #F1F3F6;vertical-align:middle;white-space:nowrap}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tbl tbody tr{cursor:pointer;transition:background .1s}
+    .tbl tbody tr:hover td{background:#F5F7FF}
+    .tbl tbody tr.row-active td{background:#EFF6FF}
+    .org-link{font-size:13px;font-weight:500;color:#2563EB}
+    .country-badge{display:inline-flex;align-items:center;padding:2px 7px;background:#F1F3F6;border:1px solid #E5E7EB;border-radius:3px;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;color:#374151}
+    .ts{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#9BA4B0}
+    .ts-red{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#DC2626;font-weight:500}
+    .ts-orange{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#d97706;font-weight:500}
+    .days-ok{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#16a34a}
+    .days-blue{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#2563EB}
+    .days-warn{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#d97706}
+    .days-danger{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:700;color:#DC2626}
+    .st-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;display:inline-block}
+    .st-active{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .st-suspended{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .st-trial{background:rgba(37,99,235,.08);color:#2563EB;border:1px solid rgba(37,99,235,.2)}
+    .st-candidate{background:rgba(220,38,38,.08);color:#DC2626;border:1px solid rgba(220,38,38,.2)}
+    .tbl-actions{display:flex;gap:6px}
+    .btn-pay{height:26px;padding:0 11px;background:#16a34a;border:none;border-radius:4px;color:white;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s;white-space:nowrap}
+    .btn-pay:hover{opacity:.87}
+    .btn-reactivate{height:26px;padding:0 11px;background:#2563EB;border:none;border-radius:4px;color:white;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s;white-space:nowrap}
+    .btn-reactivate:hover{opacity:.87}
+    .btn-del-inline{height:26px;padding:0 11px;background:none;border:1px solid rgba(220,38,38,.35);border-radius:4px;color:#DC2626;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+    .btn-del-inline:hover{background:rgba(220,38,38,.06)}
+
+    /* DETAIL PANEL */
+    .detail-panel{position:absolute;top:0;right:calc(33.333% - .5px);bottom:0;width:340px;background:white;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;box-shadow:-6px 0 28px rgba(0,0,0,.1);z-index:5;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;overflow:hidden}
+    .detail-panel.open{transform:translateX(0)}
+    .dp-hdr{padding:14px 16px;border-bottom:1px solid #F1F3F6;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;background:#F8F9FB}
+    .dp-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#B8924A;margin-bottom:3px}
+    .dp-title{font-family:"Montserrat",sans-serif;font-size:13px;font-weight:700;color:#1B2537;line-height:1.3}
+    .dp-close{width:28px;height:28px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9BA4B0;font-size:18px;border-radius:4px;flex-shrink:0;margin-left:8px;margin-top:-2px;transition:all .12s;font-family:inherit}
+    .dp-close:hover{background:#F1F3F6;color:#1B2537}
+    .dp-body{flex:1;overflow-y:auto;padding:16px}
+    .dp-section{margin-bottom:16px}
+    .dp-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9BA4B0;margin-bottom:8px}
+    .dp-row{display:flex;gap:8px;margin-bottom:7px;align-items:flex-start}
+    .dp-label{font-size:11px;color:#9BA4B0;min-width:110px;flex-shrink:0;padding-top:1px}
+    .dp-val{font-size:12px;color:#374151;font-weight:500;word-break:break-all}
+    .dp-val.mono{font-family:"IBM Plex Mono",monospace;font-size:11px}
+    .hist-item{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:.5px solid #F1F3F6}
+    .hist-item:last-child{border-bottom:none}
+    .hist-ts{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;margin-top:2px}
+    .hist-desc{font-size:11px;color:#6B7A99;margin-top:2px}
+    .dp-footer{padding:14px 16px;border-top:1px solid #F1F3F6;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+    .dp-btn-primary{height:34px;padding:0 16px;background:#16a34a;border:none;border-radius:5px;color:white;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:5px}
+    .dp-btn-primary:hover{opacity:.87}
+    .dp-btn-secondary{height:34px;padding:0 14px;background:none;border:1px solid #D1D5DB;border-radius:5px;color:#374151;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s}
+    .dp-btn-secondary:hover{border-color:#9BA4B0}
+    .dp-btn-danger{height:34px;padding:0 14px;background:none;border:1px solid rgba(220,38,38,.35);border-radius:5px;color:#DC2626;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s}
+    .dp-btn-danger:hover{background:rgba(220,38,38,.05)}
+    .feedback-note{padding:8px 11px;border-radius:5px;font-size:12px;display:none;align-items:center;gap:7px}
+    .feedback-note.open{display:flex}
+    .fn-ok{background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);color:#16a34a}
+    .fn-warn{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#DC2626}
+
+    /* MODAL OVERLAY */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:center;justify-content:center}
+    .modal-bg.open{display:flex}
+    .modal{background:white;border-radius:8px;width:420px;max-width:calc(100vw - 40px);box-shadow:0 16px 48px rgba(0,0,0,.2);overflow:hidden}
+    .modal-hdr{padding:18px 20px 14px;border-bottom:1px solid #F1F3F6}
+    .modal-title{font-family:"Montserrat",sans-serif;font-size:14px;font-weight:700;color:#1B2537}
+    .modal-sub{font-size:12px;color:#6B7A99;margin-top:2px}
+    .modal-body{padding:20px}
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:12px;font-weight:500;color:#374151;margin-bottom:5px;display:block}
+    .form-input{width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:5px;font-size:13px;font-family:inherit;color:#1B2537;outline:none;transition:border-color .12s}
+    .form-input:focus{border-color:#16a34a}
+    .form-hint{font-size:11px;color:#9BA4B0;margin-top:4px}
+    .form-ta{width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:5px;font-size:13px;font-family:inherit;color:#1B2537;outline:none;resize:vertical;min-height:70px;transition:border-color .12s}
+    .form-ta:focus{border-color:#16a34a}
+    .form-ta::placeholder{color:#9BA4B0}
+    .modal-footer{padding:14px 20px;border-top:1px solid #F1F3F6;display:flex;gap:8px;justify-content:flex-end}
+    .btn-modal-primary{height:36px;padding:0 18px;background:#16a34a;border:none;border-radius:5px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-modal-primary:hover{opacity:.87}
+    .btn-modal-cancel{height:36px;padding:0 14px;background:none;border:none;color:#6B7A99;font-size:13px;cursor:pointer;font-family:inherit;transition:color .12s}
+    .btn-modal-cancel:hover{color:#1B2537}
+
+    /* DELETE CONFIRM MODAL */
+    .del-modal-warn{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.2);border-radius:5px;padding:11px 13px;font-size:12px;color:#DC2626;line-height:1.6;margin-bottom:14px}
+    .del-confirm-cb{display:flex;align-items:flex-start;gap:9px;margin-bottom:14px;cursor:pointer}
+    .del-confirm-cb input{width:16px;height:16px;margin-top:1px;accent-color:#DC2626;cursor:pointer;flex-shrink:0}
+    .del-confirm-cb span{font-size:12px;color:#374151;line-height:1.5}
+    .btn-modal-danger{height:36px;padding:0 18px;background:#DC2626;border:none;border-radius:5px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-modal-danger:disabled{opacity:.35;cursor:not-allowed}
+    .btn-modal-danger:not(:disabled):hover{opacity:.87}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem">Panel</div>
+      <div class="bwnavitem">Solicitudes</div>
+      <div class="bwnavitem act">Cobros</div>
+      <div class="bwnavitem">Organizaciones</div>
+      <div class="bwnavitem">Log de auditoría</div>
+      <div class="bwnavitem">Sistema</div>
+    </div>
+    <div class="bwnavright">
+      <span class="op-badge">Operador</span>
+      <div><div class="bwnavco">Admin Principal</div><div class="bwnavun">Bearingworld.io</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-clipboard-list"></i>Solicitudes</div>
+        <div class="bwsbitem act"><i class="ti ti-credit-card"></i>Cobros</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Organizaciones</div>
+        <div class="bwsbitem"><i class="ti ti-file-description"></i>Log de auditoría</div>
+        <div class="bwsbitem"><i class="ti ti-settings-2"></i>Sistema</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">AP</div><div><div class="bwsbusrn">Admin Principal</div><div class="bwsbusro">Operador · Bearingworld.io</div></div></div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="bwcnt">
+      <div class="eyebrow">Operador de Plataforma · Módulo 07</div>
+      <div class="page-title">Gestión de cobros</div>
+      <div class="page-sub">Suscripciones anuales de todas las organizaciones miembro. Sin pasarela de pago — cobro por transferencia bancaria confirmada manualmente.</div>
+      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>ADMIN-02 · v1.0 · Acceso exclusivo del Operador de Plataforma</div>
+
+      <div class="chip-row">
+        <button class="chip act" onclick="switchFilter(this)">Todos <span class="chip-count">5</span></button>
+        <button class="chip" onclick="switchFilter(this)">Próximos a vencer <span class="chip-count">2</span></button>
+        <button class="chip" onclick="switchFilter(this)">Suspendidos <span class="chip-count">1</span></button>
+        <button class="chip" onclick="switchFilter(this)">Candidatas a borrado <span class="chip-count">1</span></button>
+        <button class="chip" onclick="switchFilter(this)">En periodo de prueba <span class="chip-count">1</span></button>
+      </div>
+
+      <!-- Candidatas a borrado alert -->
+      <div class="del-alert">
+        <div class="del-alert-hdr"><i class="ti ti-alert-triangle"></i>1 organización candidata a borrado permanente</div>
+        <div class="del-row">
+          <span class="del-orgname">Timken Europe GmbH</span>
+          <span class="country-badge">DE</span>
+          <span class="del-meta">Suspendida desde 28 Dic 2025 · 6 meses en SUSPENDED</span>
+          <button class="btn-delete" onclick="openDeleteModal('Timken Europe GmbH')">Iniciar borrado</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Organización</th>
+              <th>País</th>
+              <th>Estado</th>
+              <th>Último pago</th>
+              <th>Vencimiento</th>
+              <th>Días restantes</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="openPanel(0)">
+              <td><span class="org-link">Distribuciones Ruiz SL</span></td>
+              <td><span class="country-badge">ES</span></td>
+              <td><span class="st-badge st-suspended">SUSPENDED</span></td>
+              <td><span class="ts">—</span></td>
+              <td><span class="ts-red">15 Feb 2026</span></td>
+              <td><span class="days-danger">−133</span></td>
+              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-reactivate" onclick="event.stopPropagation();openPayModal('Distribuciones Ruiz SL')">Reactivar</button></div></td>
+            </tr>
+            <tr class="row-active" onclick="openPanel(1)">
+              <td><span class="org-link">Nordic Bearings AB</span></td>
+              <td><span class="country-badge">SE</span></td>
+              <td><span class="st-badge st-active">ACTIVE</span></td>
+              <td><span class="ts">30 Jun 2025</span></td>
+              <td><span class="ts-orange">30 Jun 2026</span></td>
+              <td><span class="days-warn">2</span></td>
+              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-pay" onclick="event.stopPropagation();openPayModal('Nordic Bearings AB')">Marcar pago recibido</button></div></td>
+            </tr>
+            <tr onclick="openPanel(2)">
+              <td><span class="org-link">Rodamientos del Sur SL</span></td>
+              <td><span class="country-badge">ES</span></td>
+              <td><span class="st-badge st-trial">EN PRUEBA</span></td>
+              <td><span class="ts">—</span></td>
+              <td><span class="ts">27 Sep 2026</span></td>
+              <td><span class="days-blue">91</span></td>
+              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-pay" onclick="event.stopPropagation();openPayModal('Rodamientos del Sur SL')">Marcar pago recibido</button></div></td>
+            </tr>
+            <tr onclick="openPanel(3)">
+              <td><span class="org-link">NSK Europe Ltd</span></td>
+              <td><span class="country-badge">DE</span></td>
+              <td><span class="st-badge st-active">ACTIVE</span></td>
+              <td><span class="ts">1 Mar 2026</span></td>
+              <td><span class="ts">1 Mar 2027</span></td>
+              <td><span class="days-ok">246</span></td>
+              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-pay" onclick="event.stopPropagation();openPayModal('NSK Europe Ltd')">Marcar pago recibido</button></div></td>
+            </tr>
+            <tr onclick="openPanel(4)">
+              <td><span class="org-link">Timken Europe GmbH</span></td>
+              <td><span class="country-badge">DE</span></td>
+              <td><span class="st-badge st-candidate">CANDIDATA A BORRADO</span></td>
+              <td><span class="ts">—</span></td>
+              <td><span class="ts-red">28 Dic 2025</span></td>
+              <td><span class="days-danger">−182</span></td>
+              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-del-inline" onclick="event.stopPropagation();openDeleteModal('Timken Europe GmbH')">Iniciar borrado</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel open" id="detailPanel">
+      <div class="dp-hdr">
+        <div>
+          <div class="dp-eyebrow">Detalle de organización</div>
+          <div class="dp-title" id="dpTitle">Nordic Bearings AB</div>
+        </div>
+        <button class="dp-close" onclick="closePanel()">×</button>
+      </div>
+      <div class="dp-body">
+        <div class="dp-section">
+          <div class="dp-section-label">Datos de la organización</div>
+          <div class="dp-row"><span class="dp-label">Empresa</span><span class="dp-val" id="dpOrg">Nordic Bearings AB</span></div>
+          <div class="dp-row"><span class="dp-label">País</span><span class="dp-val" id="dpCountry">Suecia · SE</span></div>
+          <div class="dp-row"><span class="dp-label">Email contacto</span><span class="dp-val mono" id="dpEmail">info@nordicbearings.se</span></div>
+          <div class="dp-row"><span class="dp-label">Incorporación</span><span class="dp-val mono" id="dpJoined">30 Jun 2025</span></div>
+        </div>
+        <div class="dp-section">
+          <div class="dp-section-label">Estado de suscripción</div>
+          <div class="dp-row"><span class="dp-label">Estado actual</span><span class="dp-val" id="dpStatus"><span class="st-badge st-active">ACTIVE</span></span></div>
+          <div class="dp-row"><span class="dp-label">Desde</span><span class="dp-val mono" id="dpStateSince">30 Jun 2025</span></div>
+          <div class="dp-row"><span class="dp-label">Vencimiento</span><span class="dp-val mono" id="dpExpiry" style="color:#d97706;font-weight:600">30 Jun 2026 · 2 días</span></div>
+        </div>
+        <div class="dp-section">
+          <div class="dp-section-label">Historial de pagos</div>
+          <div class="hist-item">
+            <span class="st-badge st-active" style="flex-shrink:0">PAGO</span>
+            <div>
+              <div class="hist-ts">30 Jun 2025</div>
+              <div class="hist-desc">Primer pago anual — Admin Principal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dp-footer">
+        <div class="feedback-note fn-ok" id="dpFeedback"></div>
+        <button class="dp-btn-primary" id="dpBtnPay" onclick="openPayModal(document.getElementById('dpTitle').textContent)"><i class="ti ti-check" style="font-size:13px"></i>Marcar pago recibido</button>
+        <button class="dp-btn-secondary" id="dpBtnSuspend">Suspender manualmente</button>
+      </div>
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Asistente del operador</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Hay 2 organizaciones con vencimiento en los próximos 15 días: Nordic Bearings AB (2 días) y Acme Bearings Ltd (8 días). También hay 1 candidata a borrado: Timken Europe GmbH lleva 6 meses suspendida.</div><div class="bwts">09:00</div></div>
+        <div class="bwmsg u"><div class="bwbub">¿Cuándo se suspendió Distribuciones Ruiz?</div><div class="bwts">09:02</div></div>
+        <div class="bwmsg v"><div class="bwbub">Distribuciones Ruiz SL fue suspendida el 15 de febrero de 2026 — lleva 133 días en SUSPENDED. Todavía no alcanza los 6 meses para ser candidata a borrado.</div><div class="bwts">09:02</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- MODAL: Marcar pago recibido -->
+<div class="modal-bg" id="payModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Marcar pago recibido</div>
+      <div class="modal-sub" id="payModalSub">Registrar pago de Nordic Bearings AB</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Fecha del pago *</label>
+        <input type="date" class="form-input" id="payDate" value="2026-06-29">
+        <div class="form-hint">Fecha en que se recibió la transferencia · no puede ser futura</div>
+      </div>
+      <div class="form-group">
+        <textarea class="form-ta" placeholder="Nota interna — referencia de transferencia, banco emisor… (opcional, máx 300 caracteres)" maxlength="300"></textarea>
+        <div class="form-hint">Este texto no se envía al cliente — es solo para el registro interno</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closePayModal()">Cancelar</button>
+      <button class="btn-modal-primary" onclick="confirmPay()">Confirmar pago recibido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Iniciar borrado (doble confirmación) -->
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" style="color:#DC2626">Iniciar borrado permanente</div>
+      <div class="modal-sub" id="deleteModalSub">Timken Europe GmbH</div>
+    </div>
+    <div class="modal-body">
+      <div class="del-modal-warn">
+        ¿Iniciar borrado de <strong id="deleteOrgName">Timken Europe GmbH</strong>? Esta acción eliminará permanentemente todos los datos de la organización y no se puede deshacer.
+      </div>
+      <label class="del-confirm-cb">
+        <input type="checkbox" id="deleteCheck" onchange="chkDelete()">
+        <span>Confirmo que he leído la advertencia y quiero proceder con el borrado permanente de esta organización y todos sus datos.</span>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="btn-modal-danger" id="btnConfirmDelete" disabled onclick="confirmDelete()">Confirmar borrado</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const orgs = [
+    {org:'Distribuciones Ruiz SL', country:'España · ES', email:'ruiz@distribruiz.com', joined:'15 Feb 2026', status:'st-suspended', statusLabel:'SUSPENDED', stateSince:'15 Feb 2026', expiry:'15 Feb 2026 · −133 días', expiryStyle:'color:#DC2626;font-weight:600', pays:[], dpBtnPay:true, dpBtnSuspend:false, dpBtnReactivate:true},
+    {org:'Nordic Bearings AB', country:'Suecia · SE', email:'info@nordicbearings.se', joined:'30 Jun 2025', status:'st-active', statusLabel:'ACTIVE', stateSince:'30 Jun 2025', expiry:'30 Jun 2026 · 2 días', expiryStyle:'color:#d97706;font-weight:600', pays:['30 Jun 2025 — Primer pago anual · Admin Principal'], dpBtnPay:true, dpBtnSuspend:true, dpBtnReactivate:false},
+    {org:'Rodamientos del Sur SL', country:'España · ES', email:'info@rodamintosdelsur.com', joined:'28 Mar 2026', status:'st-trial', statusLabel:'EN PRUEBA', stateSince:'28 Mar 2026', expiry:'27 Sep 2026 · 91 días', expiryStyle:'color:#2563EB;font-weight:600', pays:[], dpBtnPay:true, dpBtnSuspend:false, dpBtnReactivate:false},
+    {org:'NSK Europe Ltd', country:'Alemania · DE', email:'europe@nsk.com', joined:'1 Mar 2026', status:'st-active', statusLabel:'ACTIVE', stateSince:'1 Mar 2026', expiry:'1 Mar 2027 · 246 días', expiryStyle:'color:#16a34a;font-weight:600', pays:['1 Mar 2026 — Pago anual · Admin Principal'], dpBtnPay:true, dpBtnSuspend:true, dpBtnReactivate:false},
+    {org:'Timken Europe GmbH', country:'Alemania · DE', email:'europe@timken.com', joined:'28 Dic 2024', status:'st-candidate', statusLabel:'CANDIDATA A BORRADO', stateSince:'28 Dic 2025', expiry:'28 Dic 2025 · −182 días', expiryStyle:'color:#DC2626;font-weight:600', pays:[], dpBtnPay:false, dpBtnSuspend:false, dpBtnReactivate:false},
+  ];
+
+  let currentPayOrg = '';
+  let currentDeleteOrg = '';
+
+  function openPanel(i) {
+    document.querySelectorAll('.tbl tbody tr').forEach((r,j)=>r.classList.toggle('row-active',j===i));
+    const d = orgs[i];
+    document.getElementById('dpTitle').textContent = d.org;
+    document.getElementById('dpOrg').textContent = d.org;
+    document.getElementById('dpCountry').textContent = d.country;
+    document.getElementById('dpEmail').textContent = d.email;
+    document.getElementById('dpJoined').textContent = d.joined;
+    document.getElementById('dpStatus').innerHTML = `<span class="st-badge ${d.status}">${d.statusLabel}</span>`;
+    document.getElementById('dpStateSince').textContent = d.stateSince;
+    const exEl = document.getElementById('dpExpiry');
+    exEl.textContent = d.expiry;
+    exEl.style.cssText = d.expiryStyle;
+    document.getElementById('dpFeedback').classList.remove('open');
+    document.getElementById('dpFeedback').textContent = '';
+    const btnPay = document.getElementById('dpBtnPay');
+    const btnSuspend = document.getElementById('dpBtnSuspend');
+    btnPay.style.display = d.dpBtnPay ? 'flex' : 'none';
+    btnSuspend.style.display = d.dpBtnSuspend ? 'block' : 'none';
+    if (!d.dpBtnPay && !d.dpBtnSuspend && !d.dpBtnReactivate) {
+      btnPay.style.display = 'none';
+      btnSuspend.style.display = 'none';
+    }
+    document.getElementById('detailPanel').classList.add('open');
+  }
+
+  function closePanel() {
+    document.getElementById('detailPanel').classList.remove('open');
+    document.querySelectorAll('.tbl tbody tr').forEach(r=>r.classList.remove('row-active'));
+  }
+
+  function openPayModal(orgName) {
+    currentPayOrg = orgName;
+    document.getElementById('payModalSub').textContent = 'Registrar pago de ' + orgName;
+    document.getElementById('payDate').value = '2026-06-29';
+    document.getElementById('payModal').classList.add('open');
+  }
+
+  function closePayModal() {
+    document.getElementById('payModal').classList.remove('open');
+  }
+
+  function confirmPay() {
+    closePayModal();
+    const fb = document.getElementById('dpFeedback');
+    fb.className = 'feedback-note fn-ok open';
+    fb.innerHTML = '<i class="ti ti-circle-check" style="font-size:14px;flex-shrink:0"></i>Pago confirmado. Nuevo vencimiento: 28 Jun 2027.';
+  }
+
+  function openDeleteModal(orgName) {
+    currentDeleteOrg = orgName;
+    document.getElementById('deleteModalSub').textContent = orgName;
+    document.getElementById('deleteOrgName').textContent = orgName;
+    document.getElementById('deleteCheck').checked = false;
+    document.getElementById('btnConfirmDelete').disabled = true;
+    document.getElementById('deleteModal').classList.add('open');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('open');
+  }
+
+  function chkDelete() {
+    document.getElementById('btnConfirmDelete').disabled = !document.getElementById('deleteCheck').checked;
+  }
+
+  function confirmDelete() {
+    closeDeleteModal();
+    const fb = document.getElementById('dpFeedback');
+    fb.className = 'feedback-note fn-warn open';
+    fb.innerHTML = '<i class="ti ti-trash" style="font-size:14px;flex-shrink:0"></i>Borrado de ' + currentDeleteOrg + ' iniciado. Esta acción es irreversible.';
+  }
+
+  function switchFilter(btn) {
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('act'));
+    btn.classList.add('act');
+  }
+
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePayModal();closeDeleteModal()}});
+
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
+</script>
+</body>
+</html>

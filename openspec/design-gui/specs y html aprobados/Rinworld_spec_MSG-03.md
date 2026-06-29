@@ -30,7 +30,7 @@ El formulario de creación se abre como panel lateral o modal dentro de MSG-02, 
 La tarjeta de consulta se distingue del mensaje libre por un diseño de tarjeta estructurada:
 
 - **Cabecera de la tarjeta:** badge `CONSULTA` (azul) + referencia del rodamiento en IBM Plex Mono · 13px
-- **Organización autora** (nombre completo, clickable → navega a la ficha de la organización en DIR-01/DIR-02) + timestamp
+- **Organización autora** (nombre completo, clickable → navega directamente a la ficha de esa organización en DIR-02) + timestamp
 - **Contenido (cifrado E2EE — visible solo con passphrase activa):**
   - Referencia: `part_number · brand` (IBM Plex Mono)
   - País del distribuidor consultado: badge ISO
@@ -66,7 +66,7 @@ Se abre automáticamente cuando el usuario pulsa `Consultar` en SRCH-01 o `Crear
 ### 4.1 Diseño visual de la tarjeta (en el historial de MSG-02)
 
 - **Cabecera:** badge `OFERTA` (verde) + referencia en IBM Plex Mono · 13px
-- **Organización autora** (nombre completo, clickable → navega a la ficha de la organización en DIR-01/DIR-02) + timestamp
+- **Organización autora** (nombre completo, clickable → navega directamente a la ficha de esa organización en DIR-02) + timestamp
 - **Contenido (cifrado E2EE — visible solo con passphrase activa):**
   - Referencia: `part_number · brand` (IBM Plex Mono)
   - Precio unitario: número destacado + divisa (ej. `2,10 EUR`)

@@ -139,6 +139,13 @@
     .results-table{width:100%;border-collapse:collapse;min-width:760px}
     .results-table th{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;padding:8px 10px;text-align:left;border-bottom:1px solid #F1F3F6;white-space:nowrap;background:white}
     .results-table th.th-chk{width:36px;padding:8px 8px 8px 14px}
+    .results-table th.sortable{cursor:pointer;user-select:none}
+    .results-table th.sortable:hover{color:#6B7A99}
+    .results-table th.sort-asc{color:#2563EB}
+    .results-table th.sort-asc::after{content:' ↑'}
+    .results-table th.sort-desc{color:#2563EB}
+    .results-table th.sort-desc::after{content:' ↓'}
+    .results-table th.sortable:not(.sort-asc):not(.sort-desc)::after{content:' ·';opacity:.3}
     .results-table td{padding:9px 10px;border-bottom:1px solid #F8F9FB;vertical-align:middle}
     .results-table td.td-chk{padding:9px 8px 9px 14px}
     .results-table tr:last-child td{border-bottom:none}
@@ -260,14 +267,22 @@ NU2210-E-TVP2
             <table class="results-table">
               <thead><tr>
                 <th class="th-chk"><input type="checkbox"></th>
-                <th>Referencia</th><th>Marca</th><th>Cantidad</th><th>Plazo</th><th>Empresa</th><th>País</th><th>Antigüedad</th><th>Favoritos</th><th>Acciones</th>
+                <th>Referencia</th>
+                <th class="sortable" data-col="marca" onclick="sortByTable('marca',this)">Marca</th>
+                <th class="sortable" data-col="cantidad" onclick="sortByTable('cantidad',this)">Cantidad</th>
+                <th class="sortable" data-col="plazo" onclick="sortByTable('plazo',this)">Plazo</th>
+                <th>Empresa</th>
+                <th class="sortable" data-col="pais" onclick="sortByTable('pais',this)">País</th>
+                <th class="sortable" data-col="antiguedad" onclick="sortByTable('antiguedad',this)">Antigüedad</th>
+                <th class="sortable" data-col="favoritos" onclick="sortByTable('favoritos',this)">Favoritos</th>
+                <th>Acciones</th>
               </tr></thead>
               <tbody>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RS/C3</span></td><td><span class="badge-marca">SKF</span></td><td><span class="cell-qty ok">850</span></td><td><span class="cell-plazo">3 días</span></td><td><span class="cell-empresa">SKF Nordic AB</span></td><td><span class="badge-pais">Suecia</span></td><td><span class="cell-antiguedad">Hoy</span></td><td><button class="cell-fav">★ 12</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RS1</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty low">350</span></td><td><span class="cell-plazo">5 días</span></td><td><span class="cell-empresa">Schaeffler Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Ayer</span></td><td><button class="cell-fav">★ 8</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RSC3E</span></td><td><span class="badge-marca">NSK</span></td><td><span class="cell-qty ok">1.200</span></td><td><span class="cell-plazo">7 días</span></td><td><span class="cell-empresa">NSK Europe Ltd</span></td><td><span class="badge-pais">Alemania</span></td><td><span class="cell-antiguedad">Hace 2 días</span></td><td><button class="cell-fav">★ 21</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205LLB/5K</span></td><td><span class="badge-marca">NTN</span></td><td><span class="cell-qty low">200</span></td><td><span class="cell-plazo">2 días</span></td><td><span class="cell-empresa">NTN-SNR Roulements</span></td><td><span class="badge-pais">Francia</span></td><td><span class="cell-antiguedad stale">Hace 8 días</span></td><td><button class="cell-fav">★ 5</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr class="consulted"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RS-JEM</span></td><td><span class="badge-marca">TIMKEN</span></td><td><span class="cell-qty ok">600</span></td><td><span class="cell-plazo">10 días</span></td><td><span class="cell-empresa">Timken Europe GmbH</span></td><td><span class="badge-pais">Alemania</span></td><td><span class="cell-antiguedad">Hace 3 días</span></td><td><button class="cell-fav">★ 9</button></td><td><div class="actions-cell"><button class="btn-consultar" disabled title="Ya consultada">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="SKF" data-cantidad="850" data-plazo="3" data-pais="Suecia" data-antiguedad="0" data-favoritos="12"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RS/C3</span></td><td><span class="badge-marca">SKF</span></td><td><span class="cell-qty ok">850</span></td><td><span class="cell-plazo">3 días</span></td><td><span class="cell-empresa">SKF Nordic AB</span></td><td><span class="badge-pais">Suecia</span></td><td><span class="cell-antiguedad">Hoy</span></td><td><button class="cell-fav">★ 12</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="FAG" data-cantidad="350" data-plazo="5" data-pais="España" data-antiguedad="1" data-favoritos="8"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RS1</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty low">350</span></td><td><span class="cell-plazo">5 días</span></td><td><span class="cell-empresa">Schaeffler Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Ayer</span></td><td><button class="cell-fav">★ 8</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="NSK" data-cantidad="1200" data-plazo="7" data-pais="Alemania" data-antiguedad="2" data-favoritos="21"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RSC3E</span></td><td><span class="badge-marca">NSK</span></td><td><span class="cell-qty ok">1.200</span></td><td><span class="cell-plazo">7 días</span></td><td><span class="cell-empresa">NSK Europe Ltd</span></td><td><span class="badge-pais">Alemania</span></td><td><span class="cell-antiguedad">Hace 2 días</span></td><td><button class="cell-fav">★ 21</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="NTN" data-cantidad="200" data-plazo="2" data-pais="Francia" data-antiguedad="8" data-favoritos="5"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205LLB/5K</span></td><td><span class="badge-marca">NTN</span></td><td><span class="cell-qty low">200</span></td><td><span class="cell-plazo">2 días</span></td><td><span class="cell-empresa">NTN-SNR Roulements</span></td><td><span class="badge-pais">Francia</span></td><td><span class="cell-antiguedad stale">Hace 8 días</span></td><td><button class="cell-fav">★ 5</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr class="consulted" data-marca="TIMKEN" data-cantidad="600" data-plazo="10" data-pais="Alemania" data-antiguedad="3" data-favoritos="9"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">6205-2RS-JEM</span></td><td><span class="badge-marca">TIMKEN</span></td><td><span class="cell-qty ok">600</span></td><td><span class="cell-plazo">10 días</span></td><td><span class="cell-empresa">Timken Europe GmbH</span></td><td><span class="badge-pais">Alemania</span></td><td><span class="cell-antiguedad">Hace 3 días</span></td><td><button class="cell-fav">★ 9</button></td><td><div class="actions-cell"><button class="btn-consultar" disabled title="Ya consultada">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -287,11 +302,11 @@ NU2210-E-TVP2
           </div>
           <div class="ref-card-body">
             <table class="results-table">
-              <thead><tr><th class="th-chk"><input type="checkbox"></th><th>Referencia</th><th>Marca</th><th>Cantidad</th><th>Plazo</th><th>Empresa</th><th>País</th><th>Antigüedad</th><th>Favoritos</th><th>Acciones</th></tr></thead>
+              <thead><tr><th class="th-chk"><input type="checkbox"></th><th>Referencia</th><th class="sortable" data-col="marca" onclick="sortByTable('marca',this)">Marca</th><th class="sortable" data-col="cantidad" onclick="sortByTable('cantidad',this)">Cantidad</th><th class="sortable" data-col="plazo" onclick="sortByTable('plazo',this)">Plazo</th><th>Empresa</th><th class="sortable" data-col="pais" onclick="sortByTable('pais',this)">País</th><th class="sortable" data-col="antiguedad" onclick="sortByTable('antiguedad',this)">Antigüedad</th><th class="sortable" data-col="favoritos" onclick="sortByTable('favoritos',this)">Favoritos</th><th>Acciones</th></tr></thead>
               <tbody>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">NU2210-E-TVP2</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty ok">450</span></td><td><span class="cell-plazo">4 días</span></td><td><span class="cell-empresa">Schaeffler Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Hace 1 día</span></td><td><button class="cell-fav">★ 3</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">NU2210-E-TVP2</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty ok">210</span></td><td><span class="cell-plazo">6 días</span></td><td><span class="cell-empresa">Rodamientos Europa SL</span></td><td><span class="badge-pais">Francia</span></td><td><span class="cell-antiguedad">Hace 3 días</span></td><td><button class="cell-fav">★ 1</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">NU2210-E-TVP2/C3</span></td><td><span class="badge-marca">SKF</span></td><td><span class="cell-qty ok">80</span></td><td><span class="cell-plazo">8 días</span></td><td><span class="cell-empresa">SKF Nordic AB</span></td><td><span class="badge-pais">Suecia</span></td><td><span class="cell-antiguedad">Hoy</span></td><td><button class="cell-fav">★ 7</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="FAG" data-cantidad="450" data-plazo="4" data-pais="España" data-antiguedad="1" data-favoritos="3"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">NU2210-E-TVP2</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty ok">450</span></td><td><span class="cell-plazo">4 días</span></td><td><span class="cell-empresa">Schaeffler Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Hace 1 día</span></td><td><button class="cell-fav">★ 3</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="FAG" data-cantidad="210" data-plazo="6" data-pais="Francia" data-antiguedad="3" data-favoritos="1"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">NU2210-E-TVP2</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty ok">210</span></td><td><span class="cell-plazo">6 días</span></td><td><span class="cell-empresa">Rodamientos Europa SL</span></td><td><span class="badge-pais">Francia</span></td><td><span class="cell-antiguedad">Hace 3 días</span></td><td><button class="cell-fav">★ 1</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="SKF" data-cantidad="80" data-plazo="8" data-pais="Suecia" data-antiguedad="0" data-favoritos="7"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">NU2210-E-TVP2/C3</span></td><td><span class="badge-marca">SKF</span></td><td><span class="cell-qty ok">80</span></td><td><span class="cell-plazo">8 días</span></td><td><span class="cell-empresa">SKF Nordic AB</span></td><td><span class="badge-pais">Suecia</span></td><td><span class="cell-antiguedad">Hoy</span></td><td><button class="cell-fav">★ 7</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -311,10 +326,10 @@ NU2210-E-TVP2
           </div>
           <div class="ref-card-body">
             <table class="results-table">
-              <thead><tr><th class="th-chk"><input type="checkbox"></th><th>Referencia</th><th>Marca</th><th>Cantidad</th><th>Plazo</th><th>Empresa</th><th>País</th><th>Antigüedad</th><th>Favoritos</th><th>Acciones</th></tr></thead>
+              <thead><tr><th class="th-chk"><input type="checkbox"></th><th>Referencia</th><th class="sortable" data-col="marca" onclick="sortByTable('marca',this)">Marca</th><th class="sortable" data-col="cantidad" onclick="sortByTable('cantidad',this)">Cantidad</th><th class="sortable" data-col="plazo" onclick="sortByTable('plazo',this)">Plazo</th><th>Empresa</th><th class="sortable" data-col="pais" onclick="sortByTable('pais',this)">País</th><th class="sortable" data-col="antiguedad" onclick="sortByTable('antiguedad',this)">Antigüedad</th><th class="sortable" data-col="favoritos" onclick="sortByTable('favoritos',this)">Favoritos</th><th>Acciones</th></tr></thead>
               <tbody>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">22316-E</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty ok">75</span></td><td><span class="cell-plazo">5 días</span></td><td><span class="cell-empresa">Schaeffler Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Hace 2 días</span></td><td><button class="cell-fav">★ 2</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">22316-EK</span></td><td><span class="badge-marca">NSK</span></td><td><span class="cell-qty ok">30</span></td><td><span class="cell-plazo">9 días</span></td><td><span class="cell-empresa">NSK Europe Ltd</span></td><td><span class="badge-pais">Alemania</span></td><td><span class="cell-antiguedad stale">Hace 10 días</span></td><td><button class="cell-fav">★ 0</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="FAG" data-cantidad="75" data-plazo="5" data-pais="España" data-antiguedad="2" data-favoritos="2"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">22316-E</span></td><td><span class="badge-marca">FAG</span></td><td><span class="cell-qty ok">75</span></td><td><span class="cell-plazo">5 días</span></td><td><span class="cell-empresa">Schaeffler Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Hace 2 días</span></td><td><button class="cell-fav">★ 2</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="NSK" data-cantidad="30" data-plazo="9" data-pais="Alemania" data-antiguedad="10" data-favoritos="0"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">22316-EK</span></td><td><span class="badge-marca">NSK</span></td><td><span class="cell-qty ok">30</span></td><td><span class="cell-plazo">9 días</span></td><td><span class="cell-empresa">NSK Europe Ltd</span></td><td><span class="badge-pais">Alemania</span></td><td><span class="cell-antiguedad stale">Hace 10 días</span></td><td><button class="cell-fav">★ 0</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -347,9 +362,9 @@ NU2210-E-TVP2
           </div>
           <div class="ref-card-body">
             <table class="results-table">
-              <thead><tr><th class="th-chk"><input type="checkbox"></th><th>Referencia</th><th>Marca</th><th>Cantidad</th><th>Plazo</th><th>Empresa</th><th>País</th><th>Antigüedad</th><th>Favoritos</th><th>Acciones</th></tr></thead>
+              <thead><tr><th class="th-chk"><input type="checkbox"></th><th>Referencia</th><th class="sortable" data-col="marca" onclick="sortByTable('marca',this)">Marca</th><th class="sortable" data-col="cantidad" onclick="sortByTable('cantidad',this)">Cantidad</th><th class="sortable" data-col="plazo" onclick="sortByTable('plazo',this)">Plazo</th><th>Empresa</th><th class="sortable" data-col="pais" onclick="sortByTable('pais',this)">País</th><th class="sortable" data-col="antiguedad" onclick="sortByTable('antiguedad',this)">Antigüedad</th><th class="sortable" data-col="favoritos" onclick="sortByTable('favoritos',this)">Favoritos</th><th>Acciones</th></tr></thead>
               <tbody>
-                <tr><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">7210-BECBP</span></td><td><span class="badge-marca">SKF</span></td><td><span class="cell-qty low">45</span></td><td><span class="cell-plazo">7 días</span></td><td><span class="cell-empresa">SKF Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Hace 1 día</span></td><td><button class="cell-fav">★ 4</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
+                <tr data-marca="SKF" data-cantidad="45" data-plazo="7" data-pais="España" data-antiguedad="1" data-favoritos="4"><td class="td-chk"><input type="checkbox"></td><td><span class="cell-ref">7210-BECBP</span></td><td><span class="badge-marca">SKF</span></td><td><span class="cell-qty low">45</span></td><td><span class="cell-plazo">7 días</span></td><td><span class="cell-empresa">SKF Iberia SL</span></td><td><span class="badge-pais">España</span></td><td><span class="cell-antiguedad">Hace 1 día</span></td><td><button class="cell-fav">★ 4</button></td><td><div class="actions-cell"><button class="btn-consultar">Consultar</button><button class="btn-contactar">Contactar</button></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -398,7 +413,58 @@ NU2210-E-TVP2
   document.addEventListener('mouseup',()=>{isResizing=false});
   function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
   function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
-  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
+  /* Sort per-table */
+  const sortNumCols2=['cantidad','plazo','antiguedad','favoritos'];
+  const sortLabels2={marca:'marca',cantidad:'cantidad',plazo:'plazo',pais:'país',antiguedad:'antigüedad',favoritos:'favoritos'};
+
+  function sortByTable(col, thEl, dir) {
+    const table=thEl.closest('table');
+    const tbody=table.querySelector('tbody');
+    const wasAsc=thEl.classList.contains('sort-asc');
+    const wasDesc=thEl.classList.contains('sort-desc');
+    table.querySelectorAll('th.sortable').forEach(th=>th.classList.remove('sort-asc','sort-desc'));
+    if(!dir){dir=wasAsc?'desc':(wasDesc?'default':'asc');}
+    if(dir==='default'){applySortTbody(tbody,'cantidad','desc');return;}
+    thEl.classList.add(dir==='asc'?'sort-asc':'sort-desc');
+    applySortTbody(tbody,col,dir);
+  }
+  function applySortTbody(tbody,col,dir){
+    const rows=Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a,b)=>{
+      let va=a.dataset[col]||'',vb=b.dataset[col]||'';
+      if(sortNumCols2.includes(col)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;return dir==='asc'?va-vb:vb-va;}
+      return dir==='asc'?va.localeCompare(vb,'es'):vb.localeCompare(va,'es');
+    });
+    rows.forEach(r=>tbody.appendChild(r));
+  }
+
+  /* Sort keyword detection */
+  const sortKw2={plazo:'plazo',entrega:'plazo',días:'plazo',dias:'plazo',cantidad:'cantidad',stock:'cantidad',unidades:'cantidad',país:'pais',pais:'pais',zona:'pais',origen:'pais',antigüedad:'antiguedad',antiguedad:'antiguedad',reciente:'antiguedad',actualiz:'antiguedad',favorito:'favoritos',popularidad:'favoritos',marca:'marca',fabricante:'marca'};
+  const ascKw2=['menor','mínimo','minimo','ascendente','más rápido','reciente'];
+  const descKw2=['mayor','máximo','maximo','descendente','más stock','más cantidad','más popular'];
+  function detectSort2(txt){const l=txt.toLowerCase();if(!/(orden|sort|clasifica|muestra|primero|menor|mayor)/.test(l))return null;let col=null;for(const[k,c]of Object.entries(sortKw2)){if(l.includes(k)){col=c;break;}}if(!col)return null;const dir=ascKw2.some(k=>l.includes(k))?'asc':'desc';return{col,dir};}
+
+  function vsend(){
+    const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;
+    const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');
+    chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;
+    inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;
+    const si=detectSort2(txt);
+    setTimeout(()=>{
+      let reply;
+      if(si){
+        // sort all open card tables
+        document.querySelectorAll('.ref-card.open .results-table').forEach(tbl=>{
+          const th=tbl.querySelector(`th[data-col="${si.col}"]`);
+          if(th)sortByTable(si.col,th,si.dir);
+        });
+        const dl=si.dir==='asc'?'de menor a mayor':'de mayor a menor';
+        reply=`Resultados ordenados por <strong>${sortLabels2[si.col]}</strong> ${dl} en las referencias expandidas.`;
+      }else{reply='Entendido.';}
+      chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">${reply}</div><div class="bwts">${t}</div></div>`;
+      chat.scrollTop=chat.scrollHeight;
+    },800);
+  }
 
   function onTaInput(ta){const lines=ta.value.split(/[\n,\t]/).map(s=>s.trim()).filter(Boolean);const n=lines.length;const el=document.getElementById('refCounter');el.textContent=n+' / 50 referencias';el.className='ref-counter'+(n>50?' warn':'');document.getElementById('btnBuscar').disabled=n===0}
   function ejecutarBusqueda(){showToast('Búsqueda ejecutada. Procesando referencias...')}

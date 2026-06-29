@@ -60,7 +60,7 @@ Consulta hasta 50 referencias a la vez. Pega la lista desde tu ERP, Excel o cual
 Una tarjeta colapsable por referencia procesada:
 
 - **Cabecera de la tarjeta:** Referencia (IBM Plex Mono) + número de distribuidores con stock + cantidad máxima disponible + país con mayor stock
-- **Al expandir:** tabla de resultados idéntica a SRCH-01 (mismo orden fijo de columnas, checkbox, botón `Consultar`, botón `Contactar`)
+- **Al expandir:** tabla de resultados idéntica a SRCH-01 (mismas columnas, mismo comportamiento de ordenación por cabecera y por VERA, checkbox, botón `Consultar`, botón `Contactar`)
 - **Primera tarjeta:** expandida por defecto · el resto colapsadas
 
 **Metabarra global (encima de todas las tarjetas):**
@@ -159,7 +159,7 @@ Tarjeta 5 — 7210-BECBP [COLAPSADA]
 ## 7. Notas y excepciones al sistema base
 
 - El tiempo total de respuesta para 50 referencias no supera los 5 segundos (búsquedas en paralelo server-side).
-- Las tarjetas de referencia dentro de SRCH-02 reutilizan exactamente la misma tabla y el mismo orden de columnas que SRCH-01 — no hay columnas diferentes.
+- Las tarjetas de referencia dentro de SRCH-02 reutilizan exactamente la misma tabla que SRCH-01 — mismas columnas, mismas columnas ordenables (Marca, Cantidad, Plazo, País, Antigüedad, Favoritos), mismo comportamiento de toggle asc/desc/default por cabecera.
 - VERA siempre pide confirmación explícita antes de crear watchers en lote.
 - Si la lista supera 50 referencias, el sistema procesa las primeras 50 y ofrece continuar con el resto en una segunda tanda — nunca trunca silenciosamente.
 
@@ -171,4 +171,4 @@ Tarjeta 5 — 7210-BECBP [COLAPSADA]
 
 ---
 
-*Spec SRCH-02 · v1.0 · Bearingworld.io · Junio 2026*
+*Spec SRCH-02 · v1.1 · Bearingworld.io · Junio 2026*

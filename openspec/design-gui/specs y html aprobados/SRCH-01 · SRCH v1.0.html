@@ -139,6 +139,13 @@
     .filter-sb.open + .tbl-outer { border-radius: 0 8px 8px 0; border-left: none; }
     .results-table { width: 100%; border-collapse: collapse; min-width: 860px; }
     .results-table th { font-family: "Montserrat", sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #9BA4B0; padding: 10px 10px; text-align: left; border-bottom: 1px solid #F1F3F6; white-space: nowrap; position: sticky; top: 0; background: white; z-index: 1; }
+    .results-table th.sortable { cursor: pointer; user-select: none; }
+    .results-table th.sortable:hover { color: #6B7A99; }
+    .results-table th.sort-asc { color: #2563EB; }
+    .results-table th.sort-asc::after { content: ' ↑'; }
+    .results-table th.sort-desc { color: #2563EB; }
+    .results-table th.sort-desc::after { content: ' ↓'; }
+    .results-table th.sortable:not(.sort-asc):not(.sort-desc)::after { content: ' ·'; opacity: 0.3; }
     .results-table th.th-chk { width: 36px; padding: 10px 8px 10px 14px; }
     .results-table td { padding: 10px 10px; border-bottom: 1px solid #F8F9FB; vertical-align: middle; }
     .results-table td.td-chk { padding: 10px 8px 10px 14px; }
@@ -293,19 +300,19 @@
               <tr>
                 <th class="th-chk"><input type="checkbox" id="chkAll" onchange="toggleAllChk(this)"></th>
                 <th>Referencia</th>
-                <th>Marca</th>
-                <th>Cantidad</th>
-                <th>Plazo</th>
+                <th class="sortable" data-col="marca" onclick="sortBy('marca', this)">Marca</th>
+                <th class="sortable" data-col="cantidad" onclick="sortBy('cantidad', this)">Cantidad</th>
+                <th class="sortable" data-col="plazo" onclick="sortBy('plazo', this)">Plazo</th>
                 <th>Empresa</th>
-                <th>País</th>
-                <th>Antigüedad</th>
-                <th>Favoritos</th>
+                <th class="sortable" data-col="pais" onclick="sortBy('pais', this)">País</th>
+                <th class="sortable" data-col="antiguedad" onclick="sortBy('antiguedad', this)">Antigüedad</th>
+                <th class="sortable" data-col="favoritos" onclick="sortBy('favoritos', this)">Favoritos</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="tblBody">
               <!-- Fila 1: ok qty, no consultada -->
-              <tr>
+              <tr data-marca="SKF" data-cantidad="850" data-plazo="3" data-pais="Suecia" data-antiguedad="0" data-favoritos="12">
                 <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
                 <td><span class="cell-ref">6205-2RS/C3</span></td>
                 <td><span class="badge-marca">SKF</span></td>
@@ -318,7 +325,7 @@
                 <td><div class="actions-cell"><button class="btn-consultar" onclick="consultar(this)">Consultar</button><button class="btn-contactar">Contactar</button></div></td>
               </tr>
               <!-- Fila 2: qty baja, no consultada -->
-              <tr>
+              <tr data-marca="FAG" data-cantidad="350" data-plazo="5" data-pais="España" data-antiguedad="1" data-favoritos="8">
                 <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
                 <td><span class="cell-ref">6205-2RS1</span></td>
                 <td><span class="badge-marca">FAG</span></td>
@@ -331,7 +338,7 @@
                 <td><div class="actions-cell"><button class="btn-consultar" onclick="consultar(this)">Consultar</button><button class="btn-contactar">Contactar</button></div></td>
               </tr>
               <!-- Fila 3: ok qty, no consultada -->
-              <tr>
+              <tr data-marca="NSK" data-cantidad="1200" data-plazo="7" data-pais="Alemania" data-antiguedad="2" data-favoritos="21">
                 <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
                 <td><span class="cell-ref">6205-2RSC3E</span></td>
                 <td><span class="badge-marca">NSK</span></td>
@@ -344,7 +351,7 @@
                 <td><div class="actions-cell"><button class="btn-consultar" onclick="consultar(this)">Consultar</button><button class="btn-contactar">Contactar</button></div></td>
               </tr>
               <!-- Fila 4: qty baja, antigüedad alta -->
-              <tr>
+              <tr data-marca="NTN" data-cantidad="200" data-plazo="2" data-pais="Francia" data-antiguedad="8" data-favoritos="5">
                 <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
                 <td><span class="cell-ref">6205LLB/5K</span></td>
                 <td><span class="badge-marca">NTN</span></td>
@@ -357,7 +364,7 @@
                 <td><div class="actions-cell"><button class="btn-consultar" onclick="consultar(this)">Consultar</button><button class="btn-contactar">Contactar</button></div></td>
               </tr>
               <!-- Fila 5: ok qty, ya consultada -->
-              <tr class="consulted">
+              <tr class="consulted" data-marca="TIMKEN" data-cantidad="600" data-plazo="10" data-pais="Alemania" data-antiguedad="3" data-favoritos="9">
                 <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
                 <td><span class="cell-ref">6205-2RS-JEM</span></td>
                 <td><span class="badge-marca">TIMKEN</span></td>
@@ -439,7 +446,19 @@
     const chat = document.getElementById('bwchat'); const t = new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2,'0');
     chat.innerHTML += `<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;
     inp.value = ''; inp.style.height = 'auto'; chat.scrollTop = chat.scrollHeight;
-    setTimeout(() => { chat.innerHTML += `<div class="bwmsg v"><div class="bwbub">Entendido, actualizando los resultados.</div><div class="bwts">${t}</div></div>`; chat.scrollTop = chat.scrollHeight; }, 800);
+    const sortIntent = detectSortIntent(txt);
+    setTimeout(() => {
+      let reply;
+      if (sortIntent) {
+        sortBy(sortIntent.col, null, sortIntent.dir);
+        const dirLabel = sortIntent.dir === 'asc' ? 'de menor a mayor' : 'de mayor a menor';
+        reply = `Resultados ordenados por <strong>${sortLabels[sortIntent.col]}</strong> ${dirLabel}.`;
+      } else {
+        reply = 'Entendido, actualizando los resultados.';
+      }
+      chat.innerHTML += `<div class="bwmsg v"><div class="bwbub">${reply}</div><div class="bwts">${t}</div></div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }, 800);
   }
 
   /* Chips */
@@ -512,6 +531,86 @@
     const isActive = btn.dataset.active === '1';
     if (isActive) { countEl.textContent = parseInt(countEl.textContent) - 1; btn.style.opacity = '1'; btn.dataset.active = '0'; star.style.color = '#B8924A'; }
     else { countEl.textContent = parseInt(countEl.textContent) + 1; btn.dataset.active = '1'; star.style.color = '#d97706'; }
+  }
+
+  /* Sort */
+  let sortState = { col: 'cantidad', dir: 'desc' }; // default
+  const sortNumCols = ['cantidad', 'plazo', 'antiguedad', 'favoritos'];
+  const sortLabels = { marca: 'marca', cantidad: 'cantidad', plazo: 'plazo', pais: 'país', antiguedad: 'antigüedad', favoritos: 'favoritos' };
+
+  function sortBy(col, thEl, dir) {
+    // toggle: asc → desc → default(cantidad desc)
+    if (!dir) {
+      if (sortState.col === col) {
+        dir = sortState.dir === 'asc' ? 'desc' : (sortState.dir === 'desc' ? 'default' : 'asc');
+      } else {
+        dir = 'asc';
+      }
+    }
+    // clear all headers
+    document.querySelectorAll('.results-table th.sortable').forEach(th => {
+      th.classList.remove('sort-asc', 'sort-desc');
+    });
+    if (dir === 'default') {
+      sortState = { col: 'cantidad', dir: 'desc' };
+      applySortDOM('cantidad', 'desc');
+      return;
+    }
+    sortState = { col, dir };
+    if (thEl) {
+      thEl.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+    } else {
+      const th = document.querySelector(`.results-table th[data-col="${col}"]`);
+      if (th) th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+    applySortDOM(col, dir);
+  }
+
+  function applySortDOM(col, dir) {
+    const tbody = document.getElementById('tblBody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      let va = a.dataset[col] || '';
+      let vb = b.dataset[col] || '';
+      if (sortNumCols.includes(col)) {
+        va = parseFloat(va) || 0;
+        vb = parseFloat(vb) || 0;
+        return dir === 'asc' ? va - vb : vb - va;
+      } else {
+        return dir === 'asc' ? va.localeCompare(vb, 'es') : vb.localeCompare(va, 'es');
+      }
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  // Init default sort indicator
+  document.addEventListener('DOMContentLoaded', () => {
+    const th = document.querySelector('.results-table th[data-col="cantidad"]');
+    if (th) th.classList.add('sort-desc');
+  });
+
+  /* VERA sort command */
+  const sortKeywords = {
+    'plazo': 'plazo', 'entrega': 'plazo', 'días': 'plazo', 'dias': 'plazo',
+    'cantidad': 'cantidad', 'stock': 'cantidad', 'unidades': 'cantidad',
+    'país': 'pais', 'pais': 'pais', 'zona': 'pais', 'origen': 'pais',
+    'antigüedad': 'antiguedad', 'antiguedad': 'antiguedad', 'reciente': 'antiguedad', 'actualiz': 'antiguedad',
+    'favorito': 'favoritos', 'popularidad': 'favoritos', 'valoración': 'favoritos',
+    'marca': 'marca', 'fabricante': 'marca'
+  };
+  const ascKeywords = ['menor', 'mínimo', 'minimo', 'ascendente', 'más barato', 'más rápido', 'primero', 'reciente'];
+  const descKeywords = ['mayor', 'máximo', 'maximo', 'descendente', 'más stock', 'más cantidad', 'más popular'];
+
+  function detectSortIntent(txt) {
+    const lower = txt.toLowerCase();
+    if (!/(orden|sort|clasifica|muestra|primero|menor|mayor)/.test(lower)) return null;
+    let col = null;
+    for (const [kw, c] of Object.entries(sortKeywords)) {
+      if (lower.includes(kw)) { col = c; break; }
+    }
+    if (!col) return null;
+    const dir = ascKeywords.some(k => lower.includes(k)) ? 'asc' : 'desc';
+    return { col, dir };
   }
 
   /* Watcher */

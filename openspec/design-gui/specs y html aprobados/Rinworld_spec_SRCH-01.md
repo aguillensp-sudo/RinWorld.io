@@ -77,7 +77,13 @@ Columnas en **orden fijo inamovible** (v1.1). No reordenables por el usuario:
 | 9 | Favoritos | Brass · ★ + recuento | Solo modificable por acción explícita del usuario. Nunca automático |
 | 10 | Acciones | Dos botones | `Consultar` · `Contactar` |
 
-**Ordenación por defecto:** cantidad disponible descendente.
+**Ordenación:**
+
+- **Por defecto:** cantidad disponible descendente.
+- **Columnas ordenables por el usuario** (clic en cabecera): Marca, Cantidad, Plazo, País, Antigüedad, Favoritos.
+- **Columnas no ordenables:** Checkbox, Referencia, Empresa, Acciones.
+- **Comportamiento del toggle:** primer clic → ascendente, segundo clic → descendente, tercer clic → restaura orden por defecto. Indicador visual en la cabecera activa (↑ / ↓).
+- **VERA puede reordenar la tabla** a través de instrucción en lenguaje natural (ej: "ordena por plazo de menor a mayor"). La tabla se reordena visualmente de inmediato. VERA confirma la acción en el chat.
 
 **Filtro de visibilidad:** aplicado server-side. Filas de distribuidores que han excluido al usuario no aparecen en ningún caso.
 
@@ -137,6 +143,8 @@ No aplica — todos los inputs son chips editables o la entrada de texto de VERA
 > **VERA responde:**
 > Solo Schaeffler Iberia (España) con 350 unidades — por debajo de tu mínimo. ¿Les incluyo igualmente en la consulta?
 
+**Ordenación por VERA:** cuando el usuario pide ordenar ("ordena por plazo", "muéstrame el de mayor stock primero"), VERA reordena la tabla visualmente y confirma: `Resultados ordenados por [columna] de [menor a mayor / mayor a menor].`
+
 **Ante cero resultados:** VERA nunca responde solo con la ausencia. Ofrece siempre: ampliar región / relajar filtros / crear watcher.
 
 ---
@@ -165,7 +173,7 @@ No aplica — todos los inputs son chips editables o la entrada de texto de VERA
 
 ## 7. Notas y excepciones al sistema base
 
-- Orden de columnas **fijo e inamovible** (v1.1). Sin reordenación por cabecera.
+- Orden de **columnas fijo e inamovible** (posición de las columnas no cambia). Las filas sí son reordenables por el usuario clicando en la cabecera de columna o por instrucción a VERA.
 - `Contactar` siempre habilitado en todas las filas sin excepción.
 - Favoritos **estrictamente manuales** — ningún evento del sistema los modifica.
 - La columna **Empresa** es obligatoria — fue el error del prototipo HTML v1 (omisión corregida en v1.1).
@@ -178,4 +186,4 @@ No aplica — todos los inputs son chips editables o la entrada de texto de VERA
 
 ---
 
-*Spec SRCH-01 · v1.1 · Bearingworld.io · Junio 2026*
+*Spec SRCH-01 · v1.2 · Bearingworld.io · Junio 2026*

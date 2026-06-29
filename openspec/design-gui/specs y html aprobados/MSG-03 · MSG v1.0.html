@@ -158,9 +158,9 @@
     .blocked-banner{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);border-radius:5px;padding:9px 12px;font-size:12px;color:#d97706;display:flex;align-items:center;gap:8px}
 
     /* TABLES */
-    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin-bottom:28px}
-    .tbl{width:100%;border-collapse:collapse}
-    .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:auto;max-height:360px;margin-bottom:28px}
+    .tbl{width:100%;border-collapse:collapse;min-width:max-content}
+    .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap;position:sticky;top:0;z-index:1}
     .tbl td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #F1F3F6;vertical-align:middle}
     .tbl tbody tr:last-child td{border-bottom:none}
     .tbl tbody tr:hover td{background:#F8F9FB}

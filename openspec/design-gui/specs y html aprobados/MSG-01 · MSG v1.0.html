@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSG-01 · Lista de Hilos — Bearingworld.io</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOwwAADsMBx29kZAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZxjeCM4AAABASURBVHic7cEBDQAAAMKg909tDjdhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADeABdfAAEAAAAAAAAAAAAAAAAAAAAA">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#2563EB}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#6B7A99;margin-bottom:4px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:16px;max-width:560px}
+
+    /* E2EE STATUS */
+    .e2ee-bar{display:flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#16a34a;margin-bottom:14px;padding:6px 10px;background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.15);border-radius:5px;width:fit-content}
+    .e2ee-bar i{font-size:12px}
+
+    /* ACTIONS BAR */
+    .actions-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .search-wrap{position:relative;flex:1;max-width:300px}
+    .search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9BA4B0;font-size:15px}
+    .search-input{width:100%;height:36px;padding:0 10px 0 32px;border:1px solid #D1D5DB;border-radius:5px;font-size:13px;color:#1B2537;outline:none;font-family:inherit;background:white;transition:border-color .15s}
+    .search-input:focus{border-color:#2563EB}
+    .search-input::placeholder{color:#9BA4B0}
+    .btn-primary{height:36px;padding:0 18px;background:#2563EB;border:none;border-radius:5px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .12s}
+    .btn-primary:hover{opacity:.88}
+    .thread-count{font-size:12px;color:#9BA4B0;margin-left:auto}
+
+    /* THREAD LIST */
+    .thread-list{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden}
+    .thread-row{padding:14px 18px;border-bottom:1px solid #F8F9FB;cursor:pointer;transition:background .1s;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:4px 10px}
+    .thread-row:last-child{border-bottom:none}
+    .thread-row:hover{background:#FAFBFF}
+    .thread-row.unread-row{background:#FAFBFF}
+    .thread-top{display:flex;align-items:center;gap:8px}
+    .thread-org{font-size:14px;font-weight:500;color:#1B2537}
+    .badge-pais-sm{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:1px 6px;border-radius:2px;background:#F1F3F6;color:#6B7A99;border:1px solid #E5E7EB;white-space:nowrap}
+    .thread-ts-row{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+    .thread-ts{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;white-space:nowrap}
+    .unread-badge{background:#2563EB;color:white;font-size:9px;font-weight:600;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center}
+    .thread-bot{display:flex;align-items:center;gap:8px}
+    .thread-preview{font-size:12px;color:#6B7A99;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .state-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;white-space:nowrap;flex-shrink:0}
+    .sb-abierto{background:rgba(107,122,153,.1);color:#6B7A99;border:1px solid rgba(107,122,153,.2)}
+    .sb-consulta{background:rgba(37,99,235,.08);color:#2563EB;border:1px solid rgba(37,99,235,.2)}
+    .sb-oferta{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .sb-acuerdo{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .sb-cerrado{background:rgba(107,122,153,.08);color:#9BA4B0;border:1px solid rgba(107,122,153,.15);text-decoration:line-through}
+
+    /* PAGINATION */
+    .pagination{display:flex;align-items:center;gap:4px;margin-top:14px}
+    .ppage{min-width:30px;height:30px;padding:0 8px;border:1px solid #D1D5DB;border-radius:4px;background:white;font-size:12px;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .12s}
+    .ppage:hover{border-color:#B8924A;color:#B8924A}
+    .ppage.act{background:#1B2537;border-color:#1B2537;color:white;cursor:default}
+    .ppage.ctrl{color:#9BA4B0}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem">Panel</div>
+      <div class="bwnavitem">Vendiendo</div>
+      <div class="bwnavitem">Comprando</div>
+      <div class="bwnavitem act">Hilos</div>
+      <div class="bwnavitem">Inventario</div>
+      <div class="bwnavitem">Empresas</div>
+      <div class="bwnavitem">Foros</div>
+      <div class="bwnavitem">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div><div class="bwnavco">Rodamientos del Sur SL</div><div class="bwnavun">Juan Martínez</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem act"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">JM</div><div><div class="bwsbusrn">Juan Martínez</div><div class="bwsbusro">Rodamientos del Sur SL</div></div></div>
+      </div>
+    </aside>
+
+    <div class="bwcnt">
+      <div class="eyebrow">Módulo 04 · Mensajería E2EE</div>
+      <div class="page-title">Hilos</div>
+      <div class="page-sub">Tus conversaciones con otros distribuidores. Todo el contenido está cifrado de extremo a extremo.</div>
+
+      <div class="e2ee-bar"><i class="ti ti-lock"></i>E2EE activo · frase de seguridad en sesión · contenido descifrado localmente</div>
+
+      <div class="actions-bar">
+        <div class="search-wrap">
+          <i class="ti ti-search"></i>
+          <input class="search-input" type="text" placeholder="Buscar por nombre de organización...">
+        </div>
+        <button class="btn-primary" onclick="irDir01()"><i class="ti ti-address-book"></i>Nuevo contacto</button>
+        <span class="thread-count">5 hilos · Página 1 de 1</span>
+      </div>
+
+      <div class="thread-list">
+
+        <!-- Hilo 1: NSK — CON OFERTA PENDIENTE, 1 no leído -->
+        <div class="thread-row unread-row" onclick="irMsg02()">
+          <div class="thread-top">
+            <span class="thread-org">NSK Europe Ltd</span>
+            <span class="badge-pais-sm">Alemania</span>
+          </div>
+          <div class="thread-ts-row">
+            <span class="unread-badge">1</span>
+            <span class="thread-ts">hace 2h</span>
+          </div>
+          <div class="thread-bot">
+            <span class="thread-preview">Tarjeta de oferta · 6205-2RS</span>
+            <span class="state-badge sb-oferta">CON OFERTA PENDIENTE</span>
+          </div>
+          <div></div>
+        </div>
+
+        <!-- Hilo 2: Schaeffler — CON CONSULTA PENDIENTE -->
+        <div class="thread-row" onclick="irMsg02()">
+          <div class="thread-top">
+            <span class="thread-org">Schaeffler Iberia SL</span>
+            <span class="badge-pais-sm">España</span>
+          </div>
+          <div class="thread-ts-row">
+            <span class="thread-ts">hace 5h</span>
+          </div>
+          <div class="thread-bot">
+            <span class="thread-preview">Tarjeta de consulta · NU2210-E-TVP2</span>
+            <span class="state-badge sb-consulta">CON CONSULTA PENDIENTE</span>
+          </div>
+          <div></div>
+        </div>
+
+        <!-- Hilo 3: SKF — ABIERTO -->
+        <div class="thread-row" onclick="irMsg02()">
+          <div class="thread-top">
+            <span class="thread-org">SKF Nordic AB</span>
+            <span class="badge-pais-sm">Suecia</span>
+          </div>
+          <div class="thread-ts-row">
+            <span class="thread-ts">hace 1d</span>
+          </div>
+          <div class="thread-bot">
+            <span class="thread-preview">Mensaje libre</span>
+            <span class="state-badge sb-abierto">ABIERTO</span>
+          </div>
+          <div></div>
+        </div>
+
+        <!-- Hilo 4: Timken — ACUERDO ALCANZADO -->
+        <div class="thread-row" onclick="irMsg02()">
+          <div class="thread-top">
+            <span class="thread-org">Timken Europe GmbH</span>
+            <span class="badge-pais-sm">Alemania</span>
+          </div>
+          <div class="thread-ts-row">
+            <span class="thread-ts">hace 3d</span>
+          </div>
+          <div class="thread-bot">
+            <span class="thread-preview">Tarjeta de oferta · 22316-E</span>
+            <span class="state-badge sb-acuerdo">ACUERDO ALCANZADO</span>
+          </div>
+          <div></div>
+        </div>
+
+        <!-- Hilo 5: NTN-SNR — CERRADO SIN ACUERDO -->
+        <div class="thread-row" onclick="irMsg02()">
+          <div class="thread-top">
+            <span class="thread-org">NTN-SNR Roulements</span>
+            <span class="badge-pais-sm">Francia</span>
+          </div>
+          <div class="thread-ts-row">
+            <span class="thread-ts">hace 7d</span>
+          </div>
+          <div class="thread-bot">
+            <span class="thread-preview">Mensaje libre</span>
+            <span class="state-badge sb-cerrado">CERRADO SIN ACUERDO</span>
+          </div>
+          <div></div>
+        </div>
+
+      </div>
+
+      <div class="pagination">
+        <button class="ppage ctrl" disabled>‹</button>
+        <button class="ppage act">1</button>
+        <button class="ppage ctrl" disabled>›</button>
+      </div>
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de mensajería</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Tienes 2 hilos con actividad reciente. <strong>NSK Europe Ltd</strong> te ha enviado una oferta para el 6205-2RS y <strong>Schaeffler Iberia</strong> tiene una consulta pendiente de respuesta. ¿Quieres que te lleve a alguno?</div><div class="bwts">10:14</div></div>
+        <div class="bwmsg u"><div class="bwbub">Abre el hilo con NSK</div><div class="bwts">10:15</div></div>
+        <div class="bwmsg v"><div class="bwbub">Abriendo el hilo con NSK Europe Ltd.</div><div class="bwts">10:15</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
+  function irMsg02(){window.location.href='MSG-02%20%C2%B7%20MSG%20v1.0.html'}
+  function irDir01(){window.location.href='DIR-01%20%C2%B7%20DIR%20v1.0.html'}
+</script>
+</body>
+</html>

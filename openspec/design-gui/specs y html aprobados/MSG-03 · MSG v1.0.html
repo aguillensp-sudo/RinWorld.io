@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSG-03 · Tarjetas de Consulta y Oferta — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#2563EB}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#6B7A99;margin-bottom:4px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:4px;max-width:600px}
+    .spec-note{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(107,122,153,.06);border:1px solid rgba(107,122,153,.15);border-radius:4px;width:fit-content}
+
+    /* SECTIONS */
+    .section-title{font-family:"Montserrat",sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6B7A99;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .section-title::after{content:'';flex:1;height:1px;background:#E5E7EB}
+    .cards-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+
+    /* CARD COMPONENT */
+    .msg-card{border-radius:8px;overflow:hidden;border:1px solid #E5E7EB;background:white;width:350px}
+    .card-hdr{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #F1F3F6}
+    .card-hdr.consulta{background:rgba(37,99,235,.05);border-left:3px solid #2563EB}
+    .card-hdr.oferta{background:rgba(22,163,74,.05);border-left:3px solid #16a34a}
+    .card-type-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:2px}
+    .ctb-consulta{background:#EFF6FF;color:#2563EB;border:1px solid rgba(37,99,235,.2)}
+    .ctb-oferta{background:#F0FDF4;color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .card-ref{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;color:#1B2537}
+    .card-meta{font-size:11px;color:#9BA4B0;margin-left:auto}
+    .card-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+    .card-row{display:flex;gap:8px;font-size:12px}
+    .card-label{color:#9BA4B0;min-width:110px;flex-shrink:0}
+    .card-val{color:#374151;font-weight:500}
+    .card-val.mono{font-family:"IBM Plex Mono",monospace;font-size:11px}
+    .card-val.highlight{font-size:15px;color:#1B2537;font-weight:600}
+    .card-note{font-size:12px;color:#9BA4B0;font-style:italic;border-top:1px solid #F1F3F6;padding-top:8px;margin-top:4px}
+    .card-footer{padding:10px 14px;border-top:1px solid #F1F3F6;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .card-state{font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px}
+    .cs-pendiente{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .cs-respondida{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .cs-sin-stock{background:rgba(107,122,153,.08);color:#6B7A99;border:1px solid rgba(107,122,153,.2)}
+    .cs-aceptada{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .cs-rechazada{background:rgba(220,38,38,.08);color:#DC2626;border:1px solid rgba(220,38,38,.2)}
+    .cs-expirada{background:rgba(107,122,153,.08);color:#6B7A99;border:1px solid rgba(107,122,153,.2)}
+    .card-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .btn-card-prim{height:26px;padding:0 11px;background:#2563EB;border:none;border-radius:4px;color:white;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-card-prim:hover{opacity:.87}
+    .btn-card-sec{height:26px;padding:0 9px;background:none;border:1px solid #D1D5DB;border-radius:4px;color:#6B7A99;font-size:11px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-card-sec:hover{border-color:#9BA4B0;color:#374151}
+    .btn-card-danger{height:26px;padding:0 9px;background:none;border:1px solid rgba(220,38,38,.25);border-radius:4px;color:#DC2626;font-size:11px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-card-danger:hover{background:rgba(220,38,38,.06)}
+    .expire-warn{font-size:11px;color:#d97706;background:rgba(217,119,6,.06);border-top:1px solid rgba(217,119,6,.15);padding:7px 14px}
+
+    /* FORM */
+    .form-card{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin-bottom:24px}
+    .form-card-hdr{padding:14px 20px;border-bottom:1px solid #F1F3F6;display:flex;align-items:center;gap:10px}
+    .form-card-hdr.consulta-hdr{border-left:3px solid #2563EB}
+    .form-card-hdr.oferta-hdr{border-left:3px solid #16a34a}
+    .form-card-title{font-family:"Montserrat",sans-serif;font-size:13px;font-weight:700;color:#1B2537}
+    .form-card-sub{font-size:12px;color:#9BA4B0}
+    .form-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-row.full{grid-template-columns:1fr}
+    .form-group{display:flex;flex-direction:column;gap:4px}
+    .form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99}
+    .form-label span{color:#DC2626;margin-left:2px}
+    .form-input{height:36px;padding:0 10px;border:1px solid #D1D5DB;border-radius:5px;font-size:13px;color:#1B2537;font-family:inherit;outline:none;background:white;transition:border-color .15s}
+    .form-input:focus{border-color:#2563EB}
+    .form-input::placeholder{color:#9BA4B0}
+    .form-input[readonly]{background:#F8F9FB;color:#9BA4B0;cursor:not-allowed}
+    .form-select{height:36px;padding:0 10px;border:1px solid #D1D5DB;border-radius:5px;font-size:13px;color:#1B2537;font-family:inherit;outline:none;background:white;cursor:pointer;transition:border-color .15s}
+    .form-select:focus{border-color:#2563EB}
+    .form-textarea{padding:8px 10px;border:1px solid #D1D5DB;border-radius:5px;font-size:13px;color:#1B2537;font-family:inherit;outline:none;resize:vertical;min-height:70px;transition:border-color .15s}
+    .form-textarea:focus{border-color:#2563EB}
+    .form-textarea::placeholder{color:#9BA4B0}
+    .form-hint{font-size:11px;color:#9BA4B0}
+    .form-footer{padding:14px 20px;border-top:1px solid #F1F3F6;display:flex;align-items:center;gap:10px}
+    .encrypt-hint{font-family:"IBM Plex Mono",monospace;font-size:9px;color:#9BA4B0;text-transform:uppercase;letter-spacing:.06em;margin-left:auto;display:flex;align-items:center;gap:4px}
+    .btn-primary-form{height:36px;padding:0 20px;background:#2563EB;border:none;border-radius:5px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-primary-form:hover{opacity:.87}
+    .btn-text{height:36px;padding:0 16px;background:none;border:none;color:#6B7A99;font-size:13px;cursor:pointer;font-family:inherit;transition:color .12s}
+    .btn-text:hover{color:#1B2537}
+    .blocked-banner{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);border-radius:5px;padding:9px 12px;font-size:12px;color:#d97706;display:flex;align-items:center;gap:8px}
+
+    /* TABS */
+    .tab-row{display:flex;gap:2px;margin-bottom:16px;background:#E5E7EB;border-radius:7px;padding:2px}
+    .tab{flex:1;height:32px;border:none;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:none;color:#6B7A99;transition:all .12s}
+    .tab.act{background:white;color:#1B2537;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem">Panel</div>
+      <div class="bwnavitem">Vendiendo</div>
+      <div class="bwnavitem">Comprando</div>
+      <div class="bwnavitem act">Hilos</div>
+      <div class="bwnavitem">Inventario</div>
+      <div class="bwnavitem">Empresas</div>
+      <div class="bwnavitem">Foros</div>
+      <div class="bwnavitem">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div><div class="bwnavco">Rodamientos del Sur SL</div><div class="bwnavun">Juan Martínez</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem act"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">JM</div><div><div class="bwsbusrn">Juan Martínez</div><div class="bwsbusro">Rodamientos del Sur SL</div></div></div>
+      </div>
+    </aside>
+
+    <div class="bwcnt">
+      <div class="eyebrow">Módulo 04 · Mensajería E2EE</div>
+      <div class="page-title">Tarjetas de Consulta y Oferta</div>
+      <div class="page-sub">Componente visual renderizado dentro de MSG-02. Documenta el diseño de tarjetas y los formularios de creación.</div>
+      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>Componente MSG-03 · Galería de diseño · Se renderiza embebido dentro de MSG-02</div>
+
+      <!-- ── TARJETAS: CONSULTA ── -->
+      <div class="section-title">Tarjeta de Consulta — Estados</div>
+      <div class="cards-row">
+
+        <!-- CONSULTA: PENDIENTE con acciones (receptor ve las acciones) -->
+        <div class="msg-card">
+          <div class="card-hdr consulta">
+            <span class="card-type-badge ctb-consulta">Consulta</span>
+            <span class="card-ref">6205-2RS</span>
+            <span class="card-meta">hace 5h</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · FAG</span></div>
+            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Alemania</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">500 ud.</span></div>
+            <div class="card-note">Necesitamos confirmación de plazo de entrega</div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-pendiente">PENDIENTE</span>
+            <div class="card-actions">
+              <button class="btn-card-prim">Responder con oferta</button>
+              <button class="btn-card-sec">Sin stock</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONSULTA: RESPONDIDA -->
+        <div class="msg-card">
+          <div class="card-hdr consulta">
+            <span class="card-type-badge ctb-consulta">Consulta</span>
+            <span class="card-ref">22316-E</span>
+            <span class="card-meta">hace 2d</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">22316-E · SKF</span></div>
+            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Suecia</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">200 ud.</span></div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-respondida">RESPONDIDA</span>
+          </div>
+        </div>
+
+        <!-- CONSULTA: SIN STOCK -->
+        <div class="msg-card">
+          <div class="card-hdr consulta">
+            <span class="card-type-badge ctb-consulta">Consulta</span>
+            <span class="card-ref">NU2210-E-TVP2</span>
+            <span class="card-meta">hace 3d</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">NU2210-E-TVP2 · FAG</span></div>
+            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Polonia</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">50 ud.</span></div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-sin-stock">SIN STOCK</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── TARJETAS: OFERTA ── -->
+      <div class="section-title">Tarjeta de Oferta — Estados</div>
+      <div class="cards-row">
+
+        <!-- OFERTA: PENDIENTE con acciones (comprador puede aceptar/rechazar/contraofertar) -->
+        <div class="msg-card">
+          <div class="card-hdr oferta">
+            <span class="card-type-badge ctb-oferta">Oferta</span>
+            <span class="card-ref">6205-2RS</span>
+            <span class="card-meta">hace 2h</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · NSK</span></div>
+            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">2,10 EUR/ud.</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">500 ud.</span></div>
+            <div class="card-row"><span class="card-label">Plazo</span><span class="card-val">14 días</span></div>
+            <div class="card-row"><span class="card-label">Transporte</span><span class="card-val">45,00 EUR</span></div>
+            <div class="card-row"><span class="card-label">Válida hasta</span><span class="card-val">15 jul 2026</span></div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-pendiente">PENDIENTE</span>
+            <div class="card-actions">
+              <button class="btn-card-prim">Aceptar</button>
+              <button class="btn-card-sec">Contra-ofertar</button>
+              <button class="btn-card-danger">Rechazar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OFERTA: ACEPTADA -->
+        <div class="msg-card">
+          <div class="card-hdr oferta">
+            <span class="card-type-badge ctb-oferta">Oferta</span>
+            <span class="card-ref">22316-E</span>
+            <span class="card-meta">hace 3d</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">22316-E · Timken</span></div>
+            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">18,50 EUR/ud.</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">200 ud.</span></div>
+            <div class="card-row"><span class="card-label">Plazo</span><span class="card-val">7 días</span></div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-aceptada">ACEPTADA</span>
+          </div>
+        </div>
+
+        <!-- OFERTA: EXPIRADA (aceptable igualmente) -->
+        <div class="msg-card">
+          <div class="card-hdr oferta">
+            <span class="card-type-badge ctb-oferta">Oferta</span>
+            <span class="card-ref">7210-BECBP</span>
+            <span class="card-meta">hace 8d</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">7210-BECBP · SKF</span></div>
+            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">31,00 EUR/ud.</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">100 ud.</span></div>
+            <div class="card-row"><span class="card-label">Válida hasta</span><span class="card-val" style="color:#DC2626">20 jun 2026 (expirada)</span></div>
+          </div>
+          <div class="expire-warn"><i class="ti ti-alert-triangle" style="font-size:13px"></i>Esta oferta ha expirado. Puedes aceptarla igualmente — la fecha es orientativa.</div>
+          <div class="card-footer">
+            <span class="card-state cs-expirada">EXPIRADA</span>
+            <div class="card-actions">
+              <button class="btn-card-prim">Aceptar igualmente</button>
+              <button class="btn-card-danger">Rechazar</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── FORMULARIOS ── -->
+      <div class="section-title">Formularios de Creación</div>
+
+      <div class="tab-row">
+        <button class="tab act" onclick="showForm('consulta',this)">Formulario de Consulta</button>
+        <button class="tab" onclick="showForm('oferta',this)">Formulario de Oferta</button>
+      </div>
+
+      <!-- FORM CONSULTA -->
+      <div id="formConsulta">
+        <div class="form-card">
+          <div class="form-card-hdr consulta-hdr">
+            <div>
+              <div class="form-card-title">Nueva tarjeta de consulta</div>
+              <div class="form-card-sub">Creada desde SRCH-01 · campos de referencia heredados del resultado de búsqueda</div>
+            </div>
+          </div>
+          <div class="form-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Referencia (part_number)<span>*</span></label>
+                <input class="form-input" type="text" value="6205-2RS" readonly>
+                <span class="form-hint">Heredado de la búsqueda · no editable</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Marca (brand)<span>*</span></label>
+                <input class="form-input" type="text" value="FAG" readonly>
+                <span class="form-hint">Heredado de la búsqueda · no editable</span>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-group">
+                <label class="form-label">País del distribuidor<span>*</span></label>
+                <input class="form-input" type="text" value="Alemania" readonly>
+                <span class="form-hint">País de stock del distribuidor · no editable</span>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-group">
+                <label class="form-label">Cantidad solicitada (quantity)<span>*</span></label>
+                <input class="form-input" id="cQty" type="number" placeholder="" oninput="checkCForm()">
+                <span class="form-hint">Número de unidades que necesitas</span>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-group">
+                <label class="form-label">Notas adicionales</label>
+                <textarea class="form-textarea" placeholder="Máx 300 caracteres · condiciones, plazos, preguntas adicionales" maxlength="300"></textarea>
+              </div>
+            </div>
+            <div class="blocked-banner" id="dupWarn" style="display:none"><i class="ti ti-alert-circle" style="font-size:14px"></i>Ya tienes una consulta pendiente para esta referencia con este distribuidor.</div>
+          </div>
+          <div class="form-footer">
+            <button class="btn-primary-form" id="btnConsulta" disabled>Enviar consulta</button>
+            <button class="btn-text" onclick="document.getElementById('dupWarn').style.display='flex'">Simular duplicado</button>
+            <span class="encrypt-hint"><i class="ti ti-lock" style="font-size:11px"></i>Cifrado E2EE antes del envío</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORM OFERTA -->
+      <div id="formOferta" style="display:none">
+        <div class="form-card">
+          <div class="form-card-hdr oferta-hdr">
+            <div>
+              <div class="form-card-title">Nueva tarjeta de oferta</div>
+              <div class="form-card-sub">Todo el contenido se cifra E2EE antes del envío · el precio nunca es sugerido por VERA</div>
+            </div>
+          </div>
+          <div class="form-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Referencia (part_number)<span>*</span></label>
+                <input class="form-input" type="text" value="6205-2RS" placeholder="Código de rodamiento">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Marca (brand)<span>*</span></label>
+                <input class="form-input" type="text" value="NSK" placeholder="Fabricante">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Precio unitario<span>*</span></label>
+                <input class="form-input" id="oPrice" type="number" step="0.01" placeholder="" oninput="checkOForm()">
+                <span class="form-hint">Precio por unidad · cifrado E2EE · nunca pre-rellenado</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Divisa<span>*</span></label>
+                <select class="form-select"><option>EUR</option><option>USD</option><option>GBP</option><option>PLN</option><option>SEK</option><option>DKK</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Cantidad<span>*</span></label>
+                <input class="form-input" id="oQty" type="number" value="500" oninput="checkOForm()">
+                <span class="form-hint">Unidades disponibles</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Plazo de entrega (días)</label>
+                <input class="form-input" type="number" placeholder="">
+                <span class="form-hint">Días desde confirmación del pedido</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Coste de transporte</label>
+                <input class="form-input" type="number" step="0.01" placeholder="">
+                <span class="form-hint">Sin cálculo automático — introduce manualmente</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Válida hasta</label>
+                <input class="form-input" type="date">
+                <span class="form-hint">Si no se informa, la oferta no expira</span>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-group">
+                <label class="form-label">Notas</label>
+                <textarea class="form-textarea" placeholder="Máx 500 caracteres · incoterm, forma de pago, condiciones adicionales" maxlength="500"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="form-footer">
+            <button class="btn-primary-form" id="btnOferta" disabled>Enviar oferta</button>
+            <button class="btn-text">Cancelar</button>
+            <span class="encrypt-hint"><i class="ti ti-lock" style="font-size:11px"></i>Cifrado E2EE antes del envío</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de mensajería</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Voy a rellenar el formulario de consulta con 300 unidades. El resto de campos vienen del contexto de búsqueda. Revísalo antes de enviar.</div><div class="bwts">10:18</div></div>
+        <div class="bwmsg u"><div class="bwbub">Ofrécele 2,10€ por unidad para 500 piezas con entrega en dos semanas</div><div class="bwts">10:19</div></div>
+        <div class="bwmsg v"><div class="bwbub">Propongo esta oferta — revísala antes de cifrar y enviar:<br><br>· Precio: <strong>2,10 EUR/unidad</strong><br>· Cantidad: <strong>500</strong><br>· Plazo: <strong>14 días</strong><br><br>El precio debe ser introducido por ti manualmente. ¿La enviamos tal cual?</div><div class="bwts">10:20</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
+  function showForm(which,btn){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('act'));
+    btn.classList.add('act');
+    document.getElementById('formConsulta').style.display=which==='consulta'?'':'none';
+    document.getElementById('formOferta').style.display=which==='oferta'?'':'none';
+  }
+  function checkCForm(){const q=document.getElementById('cQty').value;document.getElementById('btnConsulta').disabled=!q||parseInt(q)<=0}
+  function checkOForm(){const p=document.getElementById('oPrice').value;const q=document.getElementById('oQty').value;document.getElementById('btnOferta').disabled=!p||parseFloat(p)<=0||!q||parseInt(q)<=0}
+</script>
+</body>
+</html>

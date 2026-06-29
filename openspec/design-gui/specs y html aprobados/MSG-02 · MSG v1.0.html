@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSG-02 · Vista de Hilo — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#2563EB}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#2563EB;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#6B7A99}
+    .breadcrumb{font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;margin:12px 22px 0}
+    .breadcrumb a{color:#6B7A99;text-decoration:none;cursor:pointer;transition:color .12s}
+    .breadcrumb a:hover{color:#B8924A}
+    .breadcrumb span{color:#9BA4B0}
+
+    /* THREAD HEADER */
+    .thread-hdr{display:flex;align-items:center;gap:10px;padding:10px 22px 12px;background:#F1F3F6;border-bottom:1px solid #E5E7EB;flex-shrink:0;flex-wrap:wrap}
+    .org-link{font-family:"Montserrat",sans-serif;font-size:18px;font-weight:700;color:#2563EB;text-decoration:none;cursor:pointer;transition:color .12s}
+    .org-link:hover{color:#1d4ed8}
+    .state-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;white-space:nowrap}
+    .sb-oferta{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .badge-pais{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 7px;border-radius:2px;background:#F1F3F6;color:#6B7A99;border:1px solid #E5E7EB;white-space:nowrap}
+    .hdr-actions{margin-left:auto;position:relative}
+    .btn-actions{height:32px;padding:0 12px;background:white;border:1px solid #D1D5DB;border-radius:5px;color:#374151;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+    .btn-actions:hover{border-color:#6B7A99;color:#1B2537}
+    .dropdown{display:none;position:absolute;right:0;top:38px;background:white;border:1px solid #E5E7EB;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.1);min-width:210px;z-index:30;overflow:hidden}
+    .dropdown.open{display:block}
+    .dd-item{padding:10px 14px;font-size:13px;cursor:pointer;color:#374151;transition:background .1s;display:flex;align-items:center;gap:8px}
+    .dd-item:hover{background:#F8F9FB}
+    .dd-item.danger{color:#DC2626}
+    .dd-item.danger:hover{background:#FEF2F2}
+
+    /* HISTORY */
+    .history-area{flex:1;overflow-y:auto;padding:16px 22px;display:flex;flex-direction:column;gap:14px}
+    .date-sep{display:flex;align-items:center;gap:10px;margin:6px 0}
+    .date-sep::before,.date-sep::after{content:'';flex:1;height:1px;background:#E5E7EB}
+    .date-sep span{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;text-transform:uppercase;white-space:nowrap}
+
+    /* CARDS */
+    .msg-card{border-radius:8px;overflow:hidden;border:1px solid #E5E7EB;background:white;max-width:92%}
+    .msg-card.own{margin-left:auto}
+    .msg-card.other{margin-right:auto}
+    .card-hdr{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #F1F3F6}
+    .card-hdr.consulta{background:rgba(37,99,235,.05);border-left:3px solid #2563EB}
+    .card-hdr.oferta{background:rgba(22,163,74,.05);border-left:3px solid #16a34a}
+    .card-type-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:2px}
+    .ctb-consulta{background:#EFF6FF;color:#2563EB;border:1px solid rgba(37,99,235,.2)}
+    .ctb-oferta{background:#F0FDF4;color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .card-ref{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;color:#1B2537}
+    .card-meta{font-size:11px;color:#9BA4B0;margin-left:auto}
+    .card-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+    .card-row{display:flex;gap:8px;font-size:12px}
+    .card-label{color:#9BA4B0;min-width:100px;flex-shrink:0}
+    .card-val{color:#374151;font-weight:500}
+    .card-val.mono{font-family:"IBM Plex Mono",monospace;font-size:11px}
+    .card-val.highlight{font-size:15px;color:#1B2537;font-weight:600}
+    .card-note{font-size:12px;color:#9BA4B0;font-style:italic;border-top:1px solid #F1F3F6;padding-top:8px;margin-top:4px}
+    .card-footer{padding:10px 14px;border-top:1px solid #F1F3F6;display:flex;align-items:center;justify-content:space-between}
+    .card-state{font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px}
+    .cs-pendiente{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .card-actions{display:flex;gap:8px}
+    .btn-card-prim{height:28px;padding:0 12px;background:#2563EB;border:none;border-radius:4px;color:white;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-card-prim:hover{opacity:.87}
+    .btn-card-sec{height:28px;padding:0 10px;background:none;border:1px solid #D1D5DB;border-radius:4px;color:#6B7A99;font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-card-sec:hover{border-color:#9BA4B0;color:#374151}
+    .btn-card-danger{height:28px;padding:0 10px;background:none;border:1px solid rgba(220,38,38,.25);border-radius:4px;color:#DC2626;font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-card-danger:hover{background:rgba(220,38,38,.06)}
+
+    /* BUBBLES */
+    .bubble{max-width:68%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.6;position:relative}
+    .bubble.own{background:#1B2537;color:white;margin-left:auto;border-bottom-right-radius:3px}
+    .bubble.other{background:white;color:#1B2537;margin-right:auto;border-bottom-left-radius:3px;border:1px solid #E5E7EB}
+    .bubble-wrap{display:flex;flex-direction:column;gap:4px}
+    .bubble-wrap.own{align-items:flex-end}
+    .bubble-wrap.other{align-items:flex-start}
+    .bubble-author{font-size:11px;color:#9BA4B0}
+    .bubble-ts{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0}
+
+    /* INPUT AREA */
+    .input-area{padding:12px 22px;border-top:1px solid #E5E7EB;background:#F1F3F6;flex-shrink:0}
+    .input-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px}
+    .msg-textarea{flex:1;padding:10px 12px;border-radius:7px;border:1px solid #D1D5DB;background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:38px;max-height:90px;transition:border-color .15s}
+    .msg-textarea:focus{border-color:#2563EB}
+    .msg-textarea::placeholder{color:#9BA4B0}
+    .btn-send{width:36px;height:36px;background:#2563EB;border:none;border-radius:7px;color:white;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:opacity .12s}
+    .btn-send:hover{opacity:.87}
+    .input-sub{display:flex;align-items:center;gap:8px}
+    .btn-oferta{height:30px;padding:0 14px;background:none;border:1px solid #D1D5DB;border-radius:5px;color:#374151;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+    .btn-oferta:hover{border-color:#B8924A;color:#B8924A}
+    .encrypt-hint{font-family:"IBM Plex Mono",monospace;font-size:9px;color:#9BA4B0;text-transform:uppercase;letter-spacing:.06em;margin-left:auto;display:flex;align-items:center;gap:4px}
+
+    /* CONFIRM MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:white;border-radius:10px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .modal-title{font-family:"Montserrat",sans-serif;font-weight:700;font-size:16px;color:#1B2537;margin-bottom:8px}
+    .modal-body{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:22px}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+    .btn-modal-cancel{padding:8px 18px;background:none;border:1px solid #D1D5DB;border-radius:5px;color:#6B7A99;font-size:13px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-modal-cancel:hover{border-color:#9BA4B0;color:#374151}
+    .btn-modal-confirm{padding:8px 18px;background:#DC2626;border:none;border-radius:5px;color:white;font-size:13px;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-modal-confirm:hover{opacity:.88}
+    .btn-modal-ok{padding:8px 18px;background:#16a34a;border:none;border-radius:5px;color:white;font-size:13px;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-modal-ok:hover{opacity:.88}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem">Panel</div>
+      <div class="bwnavitem">Vendiendo</div>
+      <div class="bwnavitem">Comprando</div>
+      <div class="bwnavitem act">Hilos</div>
+      <div class="bwnavitem">Inventario</div>
+      <div class="bwnavitem">Empresas</div>
+      <div class="bwnavitem">Foros</div>
+      <div class="bwnavitem">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div><div class="bwnavco">Rodamientos del Sur SL</div><div class="bwnavun">Juan Martínez</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem act"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">JM</div><div><div class="bwsbusrn">Juan Martínez</div><div class="bwsbusro">Rodamientos del Sur SL</div></div></div>
+      </div>
+    </aside>
+
+    <div class="bwcnt">
+      <div class="breadcrumb"><a onclick="irMsg01()">Hilos</a> <span>›</span> NSK Europe Ltd</div>
+
+      <div class="thread-hdr">
+        <div>
+          <div style="margin-bottom:2px"><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:#9BA4B0">Módulo 04 · Mensajería E2EE</span></div>
+          <a class="org-link" onclick="irDir02()">NSK Europe Ltd</a>
+        </div>
+        <span class="state-badge sb-oferta">CON OFERTA PENDIENTE</span>
+        <span class="badge-pais">Alemania</span>
+        <div class="hdr-actions">
+          <button class="btn-actions" onclick="tgDd()"><i class="ti ti-settings"></i>Acciones del hilo <i class="ti ti-chevron-down" style="font-size:11px"></i></button>
+          <div class="dropdown" id="dd">
+            <div class="dd-item" onclick="showModal('acuerdo')"><i class="ti ti-check"></i>Marcar acuerdo alcanzado</div>
+            <div class="dd-item danger" onclick="showModal('cerrar')"><i class="ti ti-x"></i>Cerrar sin acuerdo</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-area" id="histArea">
+
+        <div class="date-sep"><span>Hace 3 días</span></div>
+
+        <!-- TARJETA DE CONSULTA (enviada por nosotros) -->
+        <div class="msg-card own" style="width:340px">
+          <div class="card-hdr consulta">
+            <span class="card-type-badge ctb-consulta">Consulta</span>
+            <span class="card-ref">6205-2RS</span>
+            <span class="card-meta">hace 3 días</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · FAG</span></div>
+            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Alemania</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">500 ud.</span></div>
+            <div class="card-note">Necesitamos confirmación de plazo de entrega</div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-pendiente">PENDIENTE</span>
+          </div>
+        </div>
+
+        <div style="font-size:11px;color:#9BA4B0;text-align:right">Rodamientos del Sur SL · hace 3 días</div>
+
+        <div class="date-sep"><span>Hace 2 horas</span></div>
+
+        <!-- TARJETA DE OFERTA (recibida de NSK) -->
+        <div class="msg-card other" style="width:360px">
+          <div class="card-hdr oferta">
+            <span class="card-type-badge ctb-oferta">Oferta</span>
+            <span class="card-ref">6205-2RS</span>
+            <span class="card-meta">hace 2h</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · NSK</span></div>
+            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">2,10 EUR/ud.</span></div>
+            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">500 ud.</span></div>
+            <div class="card-row"><span class="card-label">Plazo de entrega</span><span class="card-val">14 días</span></div>
+            <div class="card-row"><span class="card-label">Coste transporte</span><span class="card-val">45,00 EUR</span></div>
+            <div class="card-row"><span class="card-label">Válida hasta</span><span class="card-val">15 jul 2026</span></div>
+          </div>
+          <div class="card-footer">
+            <span class="card-state cs-pendiente">PENDIENTE</span>
+            <div class="card-actions">
+              <button class="btn-card-prim" onclick="showModal('aceptar')">Aceptar oferta</button>
+              <button class="btn-card-sec" onclick="showModal('contraofertar')">Contra-ofertar</button>
+              <button class="btn-card-danger" onclick="showModal('rechazar')">Rechazar</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;color:#9BA4B0;">NSK Europe Ltd · hace 2h</div>
+
+        <!-- MENSAJE LIBRE (enviado por nosotros) -->
+        <div class="bubble-wrap own">
+          <div class="bubble own">Gracias por la oferta. ¿Podríais bajar el precio de envío?</div>
+          <div class="bubble-ts">hace 1h · Rodamientos del Sur SL</div>
+        </div>
+
+      </div>
+
+      <!-- INPUT AREA -->
+      <div class="input-area">
+        <div class="input-row">
+          <textarea class="msg-textarea" id="msgTa" placeholder="Escribe un mensaje..." rows="1" oninput="taRsz(this)" onkeydown="taKey(event)"></textarea>
+          <button class="btn-send" onclick="sendMsg()"><i class="ti ti-send"></i></button>
+        </div>
+        <div class="input-sub">
+          <button class="btn-oferta" onclick="irMsg03()"><i class="ti ti-file-invoice"></i>Crear oferta</button>
+          <span class="encrypt-hint"><i class="ti ti-lock" style="font-size:11px"></i>Cifrado E2EE antes del envío</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de mensajería</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">NSK Europe Ltd te ha enviado una oferta para el 6205-2RS hace 2 horas. Tienes la tarjeta PENDIENTE de aceptar, rechazar o contra-ofertar. ¿Quieres que te ayude a responder?</div><div class="bwts">10:15</div></div>
+        <div class="bwmsg u"><div class="bwbub">Ayúdame a responder aceptando con condición de reducir el envío</div><div class="bwts">10:16</div></div>
+        <div class="bwmsg v"><div class="bwbub">Te propongo este mensaje — revísalo antes de enviarlo:<br><br><em>"Hola, muchas gracias por la oferta. Estaríamos interesados en proceder si podéis reducir el coste de envío. ¿Es posible?"</em><br><br>¿Lo enviamos tal cual o quieres modificar algo?</div><div class="bwts">10:16</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script>
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
+  let ddOpen=false;
+  function tgDd(){ddOpen=!ddOpen;document.getElementById('dd').classList.toggle('open',ddOpen)}
+  document.addEventListener('click',e=>{if(!e.target.closest('.hdr-actions'))closeDropdown()});
+  function closeDropdown(){ddOpen=false;document.getElementById('dd').classList.remove('open')}
+  function taRsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px'}
+  function taKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}}
+  function sendMsg(){const ta=document.getElementById('msgTa');const txt=ta.value.trim();if(!txt)return;const h=document.getElementById('histArea');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');h.innerHTML+=`<div class="bubble-wrap own"><div class="bubble own">${txt}</div><div class="bubble-ts">ahora · Rodamientos del Sur SL</div></div>`;ta.value='';ta.style.height='auto';h.scrollTop=h.scrollHeight}
+  const modals={
+    acuerdo:{t:'Marcar acuerdo alcanzado',b:'El estado del hilo cambiará a ACUERDO ALCANZADO. Podrás revertirlo si necesitas continuar la negociación.',ok:'ok'},
+    cerrar:{t:'¿Cerrar sin acuerdo?',b:'Esta acción es irreversible. El hilo quedará en solo lectura y no podrás enviar más mensajes ni ofertas.',ok:'danger'},
+    aceptar:{t:'Aceptar oferta',b:'Al aceptar esta oferta, el estado del hilo pasará a ACUERDO ALCANZADO.',ok:'ok'},
+    rechazar:{t:'Rechazar oferta',b:'La tarjeta quedará marcada como RECHAZADA. El hilo seguirá abierto.',ok:'danger'},
+    contraofertar:{t:'Contra-oferta',b:'Se abrirá el formulario de oferta con los datos de la oferta original pre-rellenos para que puedas modificarlos.',ok:'ok'}
+  };
+  function showModal(type){closeDropdown();const m=modals[type];document.getElementById('modalTitle').textContent=m.t;document.getElementById('modalBody').textContent=m.b;document.getElementById('modalActions').innerHTML=`<button class="btn-modal-cancel" onclick="closeModal()">Cancelar</button><button class="${m.ok==='ok'?'btn-modal-ok':'btn-modal-confirm'}" onclick="closeModal()">Confirmar</button>`;document.getElementById('modal').classList.add('open')}
+  function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open')}
+  function irMsg01(){window.location.href='MSG-01%20%C2%B7%20MSG%20v1.0.html'}
+  function irMsg03(){window.location.href='MSG-03%20%C2%B7%20MSG%20v1.0.html'}
+  function irDir02(){window.location.href='DIR-02%20%C2%B7%20DIR%20v1.0.html'}
+  document.getElementById('histArea').scrollTop=99999;
+</script>
+</body>
+</html>

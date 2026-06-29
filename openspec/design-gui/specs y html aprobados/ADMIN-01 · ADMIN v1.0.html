@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADMIN-01 · Cola de Solicitudes de Registro — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#B8924A}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .op-badge{padding:3px 8px;background:rgba(184,146,74,.18);border:.5px solid rgba(184,146,74,.4);border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#B8924A;white-space:nowrap;flex-shrink:0}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#B8924A;background:rgba(184,146,74,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#B8924A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+
+    /* VERA */
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#B8924A}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#B8924A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#B8924A;margin-bottom:4px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:16px;max-width:600px}
+    .spec-note{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(107,122,153,.06);border:1px solid rgba(107,122,153,.15);border-radius:4px;width:fit-content}
+
+    /* FILTER CHIPS */
+    .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .chip{height:28px;padding:0 14px;border-radius:14px;border:1px solid #D1D5DB;background:white;font-size:12px;font-weight:500;color:#6B7A99;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+    .chip:hover:not(.act){border-color:#9BA4B0;color:#374151}
+    .chip.act{background:#1B2537;border-color:#1B2537;color:white}
+    .chip-count{font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px}
+    .chip.act .chip-count{background:rgba(255,255,255,.18);color:white}
+    .chip:not(.act) .chip-count{background:#F1F3F6;color:#6B7A99}
+
+    /* SUMMARY BAR */
+    .summary-bar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:white;border:1px solid #E5E7EB;border-radius:8px;margin-bottom:16px;font-size:12px;color:#6B7A99}
+    .sum-num{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:700;margin-right:3px}
+    .sum-sep{width:1px;height:20px;background:#E5E7EB;flex-shrink:0}
+
+    /* TABLE */
+    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow-x:auto}
+    .tbl{width:100%;border-collapse:collapse;min-width:max-content}
+    .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    .tbl td{padding:11px 14px;font-size:13px;color:#374151;border-bottom:1px solid #F1F3F6;vertical-align:middle;white-space:nowrap}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tbl tbody tr{cursor:pointer;transition:background .1s}
+    .tbl tbody tr:hover td{background:#F5F7FF}
+    .tbl tbody tr.row-active td{background:#EFF6FF}
+    .org-link{font-size:13px;font-weight:500;color:#2563EB}
+    .country-badge{display:inline-flex;align-items:center;padding:2px 7px;background:#F1F3F6;border:1px solid #E5E7EB;border-radius:3px;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;color:#374151}
+    .ext-link{font-size:12px;color:#6B7A99;display:inline-flex;align-items:center;gap:3px;text-decoration:none;transition:color .12s}
+    .ext-link:hover{color:#2563EB}
+    .ts{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#9BA4B0}
+    .age-ok{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#374151}
+    .age-warn{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#d97706;font-weight:500}
+    .age-danger{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#DC2626;font-weight:600}
+    .st-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;display:inline-block}
+    .st-pending{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .st-approved{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .st-rejected{background:rgba(220,38,38,.08);color:#DC2626;border:1px solid rgba(220,38,38,.2)}
+    .st-cancelled{background:rgba(107,122,153,.08);color:#6B7A99;border:1px solid rgba(107,122,153,.2)}
+
+    /* DETAIL PANEL */
+    .detail-panel{position:absolute;top:0;right:calc(33.333% - .5px);bottom:0;width:340px;background:white;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;box-shadow:-6px 0 28px rgba(0,0,0,.1);z-index:5;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;overflow:hidden}
+    .detail-panel.open{transform:translateX(0)}
+    .dp-hdr{padding:14px 16px;border-bottom:1px solid #F1F3F6;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;background:#F8F9FB}
+    .dp-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#B8924A;margin-bottom:3px}
+    .dp-title{font-family:"Montserrat",sans-serif;font-size:13px;font-weight:700;color:#1B2537;line-height:1.3}
+    .dp-close{width:28px;height:28px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9BA4B0;font-size:18px;border-radius:4px;flex-shrink:0;margin-left:8px;margin-top:-2px;transition:all .12s;font-family:inherit}
+    .dp-close:hover{background:#F1F3F6;color:#1B2537}
+    .dp-body{flex:1;overflow-y:auto;padding:16px}
+    .dp-section{margin-bottom:18px}
+    .dp-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9BA4B0;margin-bottom:9px}
+    .dp-row{display:flex;gap:8px;margin-bottom:7px;align-items:flex-start}
+    .dp-label{font-size:11px;color:#9BA4B0;min-width:108px;flex-shrink:0;padding-top:1px}
+    .dp-val{font-size:12px;color:#374151;font-weight:500;word-break:break-all}
+    .dp-val.mono{font-family:"IBM Plex Mono",monospace;font-size:11px}
+    .hist-item{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:.5px solid #F1F3F6}
+    .hist-item:last-child{border-bottom:none}
+    .hist-ts{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;margin-top:2px}
+    .hist-desc{font-size:11px;color:#6B7A99;margin-top:2px}
+    .dp-footer{padding:14px 16px;border-top:1px solid #F1F3F6;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+    .dp-actions{display:flex;gap:8px}
+    .btn-approve{flex:1;height:36px;background:#16a34a;border:none;border-radius:5px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:5px}
+    .btn-approve:hover{opacity:.87}
+    .btn-reject-open{flex:1;height:36px;background:none;border:1px solid rgba(220,38,38,.35);border-radius:5px;color:#DC2626;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-reject-open:hover{background:rgba(220,38,38,.05)}
+    .btn-revert{height:32px;padding:0 14px;background:none;border:1px solid #D1D5DB;border-radius:5px;color:#6B7A99;font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .btn-revert:hover{border-color:#9BA4B0;color:#374151}
+    .reject-form{display:none;flex-direction:column;gap:8px}
+    .reject-form.open{display:flex}
+    .reject-ta{padding:8px 10px;border:1px solid #D1D5DB;border-radius:5px;font-size:12px;font-family:inherit;color:#1B2537;resize:vertical;min-height:80px;outline:none;transition:border-color .12s}
+    .reject-ta:focus{border-color:#DC2626}
+    .reject-ta::placeholder{color:#9BA4B0}
+    .reject-hint{font-size:11px;color:#9BA4B0}
+    .reject-btns{display:flex;gap:6px;align-items:center}
+    .btn-confirm-reject{height:34px;padding:0 16px;background:#DC2626;border:none;border-radius:5px;color:white;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .12s}
+    .btn-confirm-reject:disabled{opacity:.4;cursor:not-allowed}
+    .btn-confirm-reject:not(:disabled):hover{opacity:.87}
+    .btn-cancel-reject{height:34px;padding:0 12px;background:none;border:none;color:#6B7A99;font-size:12px;cursor:pointer;font-family:inherit;transition:color .12s}
+    .btn-cancel-reject:hover{color:#1B2537}
+    .feedback-note{padding:8px 11px;border-radius:5px;font-size:12px;display:none;align-items:center;gap:7px}
+    .feedback-note.open{display:flex}
+    .fn-approve{background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);color:#16a34a}
+    .fn-reject{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#DC2626}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem">Panel</div>
+      <div class="bwnavitem act">Solicitudes</div>
+      <div class="bwnavitem">Organizaciones</div>
+      <div class="bwnavitem">Log de auditoría</div>
+      <div class="bwnavitem">Sistema</div>
+    </div>
+    <div class="bwnavright">
+      <span class="op-badge">Operador</span>
+      <div><div class="bwnavco">Admin Principal</div><div class="bwnavun">Bearingworld.io</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem act"><i class="ti ti-clipboard-list"></i>Solicitudes</div>
+        <div class="bwsbitem"><i class="ti ti-building"></i>Organizaciones</div>
+        <div class="bwsbitem"><i class="ti ti-file-description"></i>Log de auditoría</div>
+        <div class="bwsbitem"><i class="ti ti-settings-2"></i>Sistema</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">AP</div><div><div class="bwsbusrn">Admin Principal</div><div class="bwsbusro">Operador · Bearingworld.io</div></div></div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="bwcnt">
+      <div class="eyebrow">Operador de Plataforma · Módulo 01</div>
+      <div class="page-title">Cola de solicitudes de registro</div>
+      <div class="page-sub">Solicitudes de organizaciones que han completado el FSR y esperan aprobación manual. Ordenadas de más antigua a más reciente.</div>
+      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>ADMIN-01 · v1.0 · Acceso exclusivo del Operador de Plataforma</div>
+
+      <div class="chip-row">
+        <button class="chip act" onclick="switchFilter(this)">Pendientes <span class="chip-count">3</span></button>
+        <button class="chip" onclick="switchFilter(this)">Aprobadas <span class="chip-count">47</span></button>
+        <button class="chip" onclick="switchFilter(this)">Rechazadas <span class="chip-count">8</span></button>
+        <button class="chip" onclick="switchFilter(this)">Canceladas <span class="chip-count">2</span></button>
+        <button class="chip" onclick="switchFilter(this)">Todas <span class="chip-count">60</span></button>
+      </div>
+
+      <div class="summary-bar">
+        <div><span class="sum-num" style="color:#1B2537">3</span> solicitudes pendientes</div>
+        <div class="sum-sep"></div>
+        <div><span class="sum-num" style="color:#DC2626">1</span> con antigüedad &gt; 48h</div>
+        <div class="sum-sep"></div>
+        <div><span class="sum-num" style="color:#d97706">1</span> con antigüedad &gt; 24h</div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Organización</th>
+              <th>País</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Sitio web</th>
+              <th>Fecha solicitud</th>
+              <th>Antigüedad</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-active" onclick="openPanel(0)">
+              <td><span class="org-link">Distribuciones Álvarez SL</span></td>
+              <td><span class="country-badge">ES</span></td>
+              <td>jalvarez@distribalvarez.com</td>
+              <td>+34 91 234 56 78</td>
+              <td><span style="color:#9BA4B0">—</span></td>
+              <td><span class="ts">28 Jun 2026 · 08:14</span></td>
+              <td><span class="age-danger"><i class="ti ti-clock" style="font-size:10px;vertical-align:middle"></i> 52h</span></td>
+              <td><span class="st-badge st-pending">PENDING_REVIEW</span></td>
+            </tr>
+            <tr onclick="openPanel(1)">
+              <td><span class="org-link">Nordic Bearings AB</span></td>
+              <td><span class="country-badge">SE</span></td>
+              <td>info@nordicbearings.se</td>
+              <td>+46 8 123 456</td>
+              <td><a class="ext-link" href="#" onclick="return false"><i class="ti ti-external-link" style="font-size:10px"></i>nordicbearings.se</a></td>
+              <td><span class="ts">28 Jun 2026 · 18:00</span></td>
+              <td><span class="age-warn"><i class="ti ti-clock" style="font-size:10px;vertical-align:middle"></i> 18h</span></td>
+              <td><span class="st-badge st-pending">PENDING_REVIEW</span></td>
+            </tr>
+            <tr onclick="openPanel(2)">
+              <td><span class="org-link">Roulements France SAS</span></td>
+              <td><span class="country-badge">FR</span></td>
+              <td>contact@roulementsfrance.fr</td>
+              <td>+33 1 23 45 67</td>
+              <td><a class="ext-link" href="#" onclick="return false"><i class="ti ti-external-link" style="font-size:10px"></i>roulementsfrance.fr</a></td>
+              <td><span class="ts">29 Jun 2026 · 05:00</span></td>
+              <td><span class="age-ok">3h</span></td>
+              <td><span class="st-badge st-pending">PENDING_REVIEW</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel open" id="detailPanel">
+      <div class="dp-hdr">
+        <div>
+          <div class="dp-eyebrow">Detalle de solicitud</div>
+          <div class="dp-title" id="dpTitle">Distribuciones Álvarez SL</div>
+        </div>
+        <button class="dp-close" onclick="closePanel()">×</button>
+      </div>
+      <div class="dp-body">
+        <div class="dp-section">
+          <div class="dp-section-label">Datos FSR</div>
+          <div class="dp-row"><span class="dp-label">Empresa</span><span class="dp-val" id="dpOrg">Distribuciones Álvarez SL</span></div>
+          <div class="dp-row"><span class="dp-label">País</span><span class="dp-val" id="dpCountry">España · ES</span></div>
+          <div class="dp-row"><span class="dp-label">Nombre solicitante</span><span class="dp-val" id="dpContact">Juan Álvarez García</span></div>
+          <div class="dp-row"><span class="dp-label">Email</span><span class="dp-val mono" id="dpEmail">jalvarez@distribalvarez.com</span></div>
+          <div class="dp-row"><span class="dp-label">Teléfono</span><span class="dp-val mono" id="dpPhone">+34 91 234 56 78</span></div>
+          <div class="dp-row"><span class="dp-label">Sitio web</span><span class="dp-val" id="dpWeb">—</span></div>
+          <div class="dp-row"><span class="dp-label">Enviado</span><span class="dp-val mono" id="dpDate">28 Jun 2026 · 08:14</span></div>
+        </div>
+        <div class="dp-section">
+          <div class="dp-section-label">Historial de estado</div>
+          <div class="hist-item">
+            <span class="st-badge st-pending" style="flex-shrink:0">PENDING_REVIEW</span>
+            <div>
+              <div class="hist-ts" id="dpHistDate">28 Jun 2026 · 08:14</div>
+              <div class="hist-desc">Envío FSR</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dp-footer">
+        <div class="feedback-note fn-approve" id="noteApprove"><i class="ti ti-circle-check" style="font-size:14px;flex-shrink:0"></i>Aprobación registrada. Email EML-07 enviado al solicitante.</div>
+        <div class="feedback-note fn-reject" id="noteReject"><i class="ti ti-circle-x" style="font-size:14px;flex-shrink:0"></i>Solicitud rechazada. Email EML-08 enviado con el motivo.</div>
+        <div class="dp-actions" id="dpActions">
+          <button class="btn-approve" onclick="doApprove()"><i class="ti ti-check" style="font-size:13px"></i>Aprobar</button>
+          <button class="btn-reject-open" onclick="showRejectForm()">Rechazar</button>
+        </div>
+        <div class="reject-form" id="rejectForm">
+          <textarea class="reject-ta" id="rejectReason" placeholder="Explica el motivo del rechazo — se enviará al solicitante" maxlength="500" oninput="chkReject()"></textarea>
+          <div class="reject-hint">Este texto se incluirá en el email EML-08 · Mín 10 / máx 500 caracteres</div>
+          <div class="reject-btns">
+            <button class="btn-confirm-reject" id="btnConfirm" disabled onclick="doReject()">Confirmar rechazo</button>
+            <button class="btn-cancel-reject" onclick="hideRejectForm()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Asistente del operador</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Tienes 3 solicitudes pendientes. La más antigua lleva 52 horas en cola — Distribuciones Álvarez SL (ES). ¿Quieres que te lleve a esa solicitud?</div><div class="bwts">08:30</div></div>
+        <div class="bwmsg u"><div class="bwbub">¿Cuántas solicitudes llevan más de 24 horas?</div><div class="bwts">08:31</div></div>
+        <div class="bwmsg v"><div class="bwbub">Dos: Distribuciones Álvarez SL (52h) y Nordic Bearings AB (18h). La tercera, Roulements France, lleva solo 3 horas.</div><div class="bwts">08:31</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA..." rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  const rows = [
+    {org:'Distribuciones Álvarez SL', country:'España · ES', contact:'Juan Álvarez García', email:'jalvarez@distribalvarez.com', phone:'+34 91 234 56 78', web:'—', date:'28 Jun 2026 · 08:14'},
+    {org:'Nordic Bearings AB', country:'Suecia · SE', contact:'Erik Lindqvist', email:'info@nordicbearings.se', phone:'+46 8 123 456', web:'nordicbearings.se', date:'28 Jun 2026 · 18:00'},
+    {org:'Roulements France SAS', country:'Francia · FR', contact:'Pierre Dubois', email:'contact@roulementsfrance.fr', phone:'+33 1 23 45 67', web:'roulementsfrance.fr', date:'29 Jun 2026 · 05:00'},
+  ];
+
+  function openPanel(i) {
+    document.querySelectorAll('.tbl tbody tr').forEach((r,j)=>r.classList.toggle('row-active',j===i));
+    const d = rows[i];
+    document.getElementById('dpTitle').textContent = d.org;
+    document.getElementById('dpOrg').textContent = d.org;
+    document.getElementById('dpCountry').textContent = d.country;
+    document.getElementById('dpContact').textContent = d.contact;
+    document.getElementById('dpEmail').textContent = d.email;
+    document.getElementById('dpPhone').textContent = d.phone;
+    document.getElementById('dpWeb').textContent = d.web;
+    document.getElementById('dpDate').textContent = d.date;
+    document.getElementById('dpHistDate').textContent = d.date;
+    document.getElementById('dpActions').style.display = 'flex';
+    document.getElementById('rejectForm').classList.remove('open');
+    document.getElementById('noteApprove').classList.remove('open');
+    document.getElementById('noteReject').classList.remove('open');
+    document.getElementById('rejectReason').value = '';
+    document.getElementById('btnConfirm').disabled = true;
+    document.getElementById('detailPanel').classList.add('open');
+  }
+
+  function closePanel() {
+    document.getElementById('detailPanel').classList.remove('open');
+    document.querySelectorAll('.tbl tbody tr').forEach(r=>r.classList.remove('row-active'));
+  }
+
+  function doApprove() {
+    document.getElementById('dpActions').style.display = 'none';
+    document.getElementById('rejectForm').classList.remove('open');
+    document.getElementById('noteApprove').classList.add('open');
+  }
+
+  function showRejectForm() {
+    document.getElementById('rejectForm').classList.add('open');
+  }
+
+  function hideRejectForm() {
+    document.getElementById('rejectForm').classList.remove('open');
+    document.getElementById('rejectReason').value = '';
+    document.getElementById('btnConfirm').disabled = true;
+  }
+
+  function chkReject() {
+    document.getElementById('btnConfirm').disabled = document.getElementById('rejectReason').value.trim().length < 10;
+  }
+
+  function doReject() {
+    document.getElementById('dpActions').style.display = 'none';
+    document.getElementById('rejectForm').classList.remove('open');
+    document.getElementById('noteReject').classList.add('open');
+  }
+
+  function switchFilter(btn) {
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('act'));
+    btn.classList.add('act');
+  }
+
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
+</script>
+</body>
+</html>

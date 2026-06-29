@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MSG-03 · Tarjetas de Consulta y Oferta — Bearingworld.io</title>
+  <title>MSG-03 · Consultas y Ofertas (tabla) — Bearingworld.io</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
   <style>
@@ -157,6 +157,21 @@
     .btn-text:hover{color:#1B2537}
     .blocked-banner{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);border-radius:5px;padding:9px 12px;font-size:12px;color:#d97706;display:flex;align-items:center;gap:8px}
 
+    /* TABLES */
+    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin-bottom:28px}
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    .tbl td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #F1F3F6;vertical-align:middle}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tbl tbody tr:hover td{background:#F8F9FB}
+    .tbl-ref{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;color:#1B2537}
+    .tbl-org{font-size:12px;font-weight:500;color:#2563EB;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:opacity .12s;white-space:nowrap}
+    .tbl-org i{font-size:12px;flex-shrink:0}
+    .tbl-org:hover{opacity:.72}
+    .tbl-price{font-size:13px;font-weight:600;color:#1B2537}
+    .tbl-meta{font-size:12px;color:#9BA4B0}
+    .row-expired td{background:rgba(107,122,153,.025)}
+
     /* TABS */
     .tab-row{display:flex;gap:2px;margin-bottom:16px;background:#E5E7EB;border-radius:7px;padding:2px}
     .tab{flex:1;height:32px;border:none;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:none;color:#6B7A99;transition:all .12s}
@@ -212,160 +227,118 @@
 
     <div class="bwcnt">
       <div class="eyebrow">Módulo 04 · Mensajería E2EE</div>
-      <div class="page-title">Tarjetas de Consulta y Oferta</div>
-      <div class="page-sub">Componente visual renderizado dentro de MSG-02. Documenta el diseño de tarjetas y los formularios de creación.</div>
-      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>Componente MSG-03 · Galería de diseño · Se renderiza embebido dentro de MSG-02</div>
+      <div class="page-title">Consultas y Ofertas</div>
+      <div class="page-sub">Vista de tabla de las consultas y ofertas activas del hilo. Una tabla por tipo, con la misma información que contenían las tarjetas. Se renderiza dentro de MSG-02.</div>
+      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>Componente MSG-03 · Vista tabla · Se renderiza embebido dentro de MSG-02</div>
 
-      <!-- ── TARJETAS: CONSULTA ── -->
-      <div class="section-title">Tarjeta de Consulta — Estados</div>
-      <div class="cards-row">
-
-        <!-- CONSULTA: PENDIENTE con acciones (receptor ve las acciones) -->
-        <div class="msg-card">
-          <div class="card-hdr consulta">
-            <div class="card-hdr-top">
-              <span class="card-type-badge ctb-consulta">Consulta</span>
-              <span class="card-ref">6205-2RS</span>
-              <span class="card-meta">hace 5h</span>
-            </div>
-            <a class="card-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a>
-          </div>
-          <div class="card-body">
-            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · FAG</span></div>
-            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Alemania</span></div>
-            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">500 ud.</span></div>
-            <div class="card-note">Necesitamos confirmación de plazo de entrega</div>
-          </div>
-          <div class="card-footer">
-            <span class="card-state cs-pendiente">PENDIENTE</span>
-            <div class="card-actions">
-              <button class="btn-card-prim">Responder con oferta</button>
-              <button class="btn-card-sec">Sin stock</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CONSULTA: RESPONDIDA -->
-        <div class="msg-card">
-          <div class="card-hdr consulta">
-            <div class="card-hdr-top">
-              <span class="card-type-badge ctb-consulta">Consulta</span>
-              <span class="card-ref">22316-E</span>
-              <span class="card-meta">hace 2d</span>
-            </div>
-            <a class="card-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a>
-          </div>
-          <div class="card-body">
-            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">22316-E · SKF</span></div>
-            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Suecia</span></div>
-            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">200 ud.</span></div>
-          </div>
-          <div class="card-footer">
-            <span class="card-state cs-respondida">RESPONDIDA</span>
-          </div>
-        </div>
-
-        <!-- CONSULTA: SIN STOCK -->
-        <div class="msg-card">
-          <div class="card-hdr consulta">
-            <div class="card-hdr-top">
-              <span class="card-type-badge ctb-consulta">Consulta</span>
-              <span class="card-ref">NU2210-E-TVP2</span>
-              <span class="card-meta">hace 3d</span>
-            </div>
-            <a class="card-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a>
-          </div>
-          <div class="card-body">
-            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">NU2210-E-TVP2 · FAG</span></div>
-            <div class="card-row"><span class="card-label">País distribuidor</span><span class="card-val">Polonia</span></div>
-            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val highlight">50 ud.</span></div>
-          </div>
-          <div class="card-footer">
-            <span class="card-state cs-sin-stock">SIN STOCK</span>
-          </div>
-        </div>
-
+      <!-- ── TABLA: CONSULTAS ── -->
+      <div class="section-title">Consultas</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Referencia</th>
+              <th>Organización</th>
+              <th>País</th>
+              <th>Cantidad</th>
+              <th>Notas</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tbl-ref">6205-2RS · FAG</span></td>
+              <td><a class="tbl-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a></td>
+              <td>DE</td>
+              <td>500 ud.</td>
+              <td><span class="tbl-meta">Confirmación plazo de entrega</span></td>
+              <td><span class="card-state cs-pendiente">PENDIENTE</span></td>
+              <td><span class="tbl-meta">hace 5h</span></td>
+              <td><div class="card-actions"><button class="btn-card-prim">Responder con oferta</button><button class="btn-card-sec">Sin stock</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="tbl-ref">22316-E · SKF</span></td>
+              <td><a class="tbl-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a></td>
+              <td>SE</td>
+              <td>200 ud.</td>
+              <td>—</td>
+              <td><span class="card-state cs-respondida">RESPONDIDA</span></td>
+              <td><span class="tbl-meta">hace 2d</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><span class="tbl-ref">NU2210-E-TVP2 · FAG</span></td>
+              <td><a class="tbl-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a></td>
+              <td>PL</td>
+              <td>50 ud.</td>
+              <td>—</td>
+              <td><span class="card-state cs-sin-stock">SIN STOCK</span></td>
+              <td><span class="tbl-meta">hace 3d</span></td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- ── TARJETAS: OFERTA ── -->
-      <div class="section-title">Tarjeta de Oferta — Estados</div>
-      <div class="cards-row">
-
-        <!-- OFERTA: PENDIENTE con acciones (comprador puede aceptar/rechazar/contraofertar) -->
-        <div class="msg-card">
-          <div class="card-hdr oferta">
-            <div class="card-hdr-top">
-              <span class="card-type-badge ctb-oferta">Oferta</span>
-              <span class="card-ref">6205-2RS</span>
-              <span class="card-meta">hace 2h</span>
-            </div>
-            <a class="card-org" href="#" onclick="irOrg(event,'NSK Europe Ltd')"><i class="ti ti-building"></i>NSK Europe Ltd</a>
-          </div>
-          <div class="card-body">
-            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · NSK</span></div>
-            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">2,10 EUR/ud.</span></div>
-            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">500 ud.</span></div>
-            <div class="card-row"><span class="card-label">Plazo</span><span class="card-val">14 días</span></div>
-            <div class="card-row"><span class="card-label">Transporte</span><span class="card-val">45,00 EUR</span></div>
-            <div class="card-row"><span class="card-label">Válida hasta</span><span class="card-val">15 jul 2026</span></div>
-          </div>
-          <div class="card-footer">
-            <span class="card-state cs-pendiente">PENDIENTE</span>
-            <div class="card-actions">
-              <button class="btn-card-prim">Aceptar</button>
-              <button class="btn-card-sec">Contra-ofertar</button>
-              <button class="btn-card-danger">Rechazar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- OFERTA: ACEPTADA -->
-        <div class="msg-card">
-          <div class="card-hdr oferta">
-            <div class="card-hdr-top">
-              <span class="card-type-badge ctb-oferta">Oferta</span>
-              <span class="card-ref">22316-E</span>
-              <span class="card-meta">hace 3d</span>
-            </div>
-            <a class="card-org" href="#" onclick="irOrg(event,'Timken Europe GmbH')"><i class="ti ti-building"></i>Timken Europe GmbH</a>
-          </div>
-          <div class="card-body">
-            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">22316-E · Timken</span></div>
-            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">18,50 EUR/ud.</span></div>
-            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">200 ud.</span></div>
-            <div class="card-row"><span class="card-label">Plazo</span><span class="card-val">7 días</span></div>
-          </div>
-          <div class="card-footer">
-            <span class="card-state cs-aceptada">ACEPTADA</span>
-          </div>
-        </div>
-
-        <!-- OFERTA: EXPIRADA (aceptable igualmente) -->
-        <div class="msg-card">
-          <div class="card-hdr oferta">
-            <div class="card-hdr-top">
-              <span class="card-type-badge ctb-oferta">Oferta</span>
-              <span class="card-ref">7210-BECBP</span>
-              <span class="card-meta">hace 8d</span>
-            </div>
-            <a class="card-org" href="#" onclick="irOrg(event,'SKF Nordic AB')"><i class="ti ti-building"></i>SKF Nordic AB</a>
-          </div>
-          <div class="card-body">
-            <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">7210-BECBP · SKF</span></div>
-            <div class="card-row"><span class="card-label">Precio unitario</span><span class="card-val highlight">31,00 EUR/ud.</span></div>
-            <div class="card-row"><span class="card-label">Cantidad</span><span class="card-val">100 ud.</span></div>
-            <div class="card-row"><span class="card-label">Válida hasta</span><span class="card-val" style="color:#DC2626">20 jun 2026 (expirada)</span></div>
-          </div>
-          <div class="expire-warn"><i class="ti ti-alert-triangle" style="font-size:13px"></i>Esta oferta ha expirado. Puedes aceptarla igualmente — la fecha es orientativa.</div>
-          <div class="card-footer">
-            <span class="card-state cs-expirada">EXPIRADA</span>
-            <div class="card-actions">
-              <button class="btn-card-prim">Aceptar igualmente</button>
-              <button class="btn-card-danger">Rechazar</button>
-            </div>
-          </div>
-        </div>
-
+      <!-- ── TABLA: OFERTAS ── -->
+      <div class="section-title">Ofertas</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Referencia</th>
+              <th>Organización</th>
+              <th>Precio/ud.</th>
+              <th>Cantidad</th>
+              <th>Plazo</th>
+              <th>Transporte</th>
+              <th>Válida hasta</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tbl-ref">6205-2RS · NSK</span></td>
+              <td><a class="tbl-org" href="#" onclick="irOrg(event,'NSK Europe Ltd')"><i class="ti ti-building"></i>NSK Europe Ltd</a></td>
+              <td><span class="tbl-price">2,10 EUR</span></td>
+              <td>500 ud.</td>
+              <td>14 días</td>
+              <td>45,00 EUR</td>
+              <td>15 jul 2026</td>
+              <td><span class="card-state cs-pendiente">PENDIENTE</span></td>
+              <td><span class="tbl-meta">hace 2h</span></td>
+              <td><div class="card-actions"><button class="btn-card-prim">Aceptar</button><button class="btn-card-sec">Contra-ofertar</button><button class="btn-card-danger">Rechazar</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="tbl-ref">22316-E · Timken</span></td>
+              <td><a class="tbl-org" href="#" onclick="irOrg(event,'Timken Europe GmbH')"><i class="ti ti-building"></i>Timken Europe GmbH</a></td>
+              <td><span class="tbl-price">18,50 EUR</span></td>
+              <td>200 ud.</td>
+              <td>7 días</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="card-state cs-aceptada">ACEPTADA</span></td>
+              <td><span class="tbl-meta">hace 3d</span></td>
+              <td>—</td>
+            </tr>
+            <tr class="row-expired">
+              <td><span class="tbl-ref">7210-BECBP · SKF</span></td>
+              <td><a class="tbl-org" href="#" onclick="irOrg(event,'SKF Nordic AB')"><i class="ti ti-building"></i>SKF Nordic AB</a></td>
+              <td><span class="tbl-price">31,00 EUR</span></td>
+              <td>100 ud.</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span style="color:#DC2626;font-size:12px">20 jun 2026</span></td>
+              <td><span class="card-state cs-expirada">EXPIRADA</span> <i class="ti ti-alert-triangle" style="color:#d97706;font-size:11px;vertical-align:middle" title="Oferta expirada — aceptable igualmente en V1"></i></td>
+              <td><span class="tbl-meta">hace 8d</span></td>
+              <td><div class="card-actions"><button class="btn-card-prim">Aceptar igualmente</button><button class="btn-card-danger">Rechazar</button></div></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- ── FORMULARIOS ── -->

@@ -1,6 +1,8 @@
-# Spec de Pantalla — `MSG-03` · Tarjetas de Consulta y Oferta
+# Spec de Pantalla — `MSG-03` · Consultas y Ofertas (vista tabla)
 
 > **Nota:** MSG-03 no es una pantalla independiente — es un **componente visual** que se renderiza dentro de MSG-02. Los formularios de creación de consulta y oferta también se abren como panels o modales dentro de MSG-02. Se documenta como spec propio por la complejidad de sus campos y sus reglas de negocio.
+
+> **v1.2 — Cambio de diseño:** El diseño original de tarjetas (cards) queda reemplazado por **dos tablas** — una para consultas, otra para ofertas. La misma información se presenta en formato tabular, más práctico cuando el volumen de items activos es elevado (30–40 típicos en un hilo activo).
 
 ---
 
@@ -23,24 +25,22 @@ El formulario de creación se abre como panel lateral o modal dentro de MSG-02, 
 
 ---
 
-## 3. Tarjeta de Consulta
+## 3. Tabla de Consultas
 
-### 3.1 Diseño visual de la tarjeta (en el historial de MSG-02)
+### 3.1 Diseño visual de la tabla (renderizada dentro de MSG-02)
 
-La tarjeta de consulta se distingue del mensaje libre por un diseño de tarjeta estructurada:
+Una tabla con una fila por consulta. Columnas:
 
-- **Cabecera de la tarjeta:** badge `CONSULTA` (azul) + referencia del rodamiento en IBM Plex Mono · 13px
-- **Organización autora** (nombre completo, clickable → navega directamente a la ficha de esa organización en DIR-02) + timestamp
-- **Contenido (cifrado E2EE — visible solo con passphrase activa):**
-  - Referencia: `part_number · brand` (IBM Plex Mono)
-  - País del distribuidor consultado: badge ISO
-  - Cantidad solicitada: número destacado
-  - Nota opcional: texto libre en cursiva · Steel Mist
-- **Estado de la tarjeta:** badge de color
-  - `PENDIENTE` — naranja — sin respuesta
-  - `RESPONDIDA` — verde — se ha enviado una oferta en respuesta
-  - `SIN STOCK` — Steel Mist — el distribuidor comunicó que no tiene
-- **Acciones (solo para el receptor distribuidor):** `Responder con oferta` · `Comunicar sin stock`
+| Columna | Contenido |
+|---|---|
+| **Referencia** | `part_number · brand` en IBM Plex Mono |
+| **Organización** | Nombre completo, clickable → navega directamente a la ficha de esa organización en DIR-02 |
+| **País** | Código ISO del país del distribuidor consultado |
+| **Cantidad** | Unidades solicitadas (cifrado E2EE — visible con passphrase activa) |
+| **Notas** | Texto libre opcional, en gris · Steel Mist (cifrado E2EE) |
+| **Estado** | Badge de color: `PENDIENTE` (naranja) · `RESPONDIDA` (verde) · `SIN STOCK` (Steel Mist) |
+| **Fecha** | Timestamp relativo |
+| **Acciones** | Solo para fila PENDIENTE (receptor distribuidor): `Responder con oferta` + `Sin stock` |
 
 ### 3.2 Formulario de creación de tarjeta de consulta
 
@@ -61,29 +61,24 @@ Se abre automáticamente cuando el usuario pulsa `Consultar` en SRCH-01 o `Crear
 
 ---
 
-## 4. Tarjeta de Oferta
+## 4. Tabla de Ofertas
 
-### 4.1 Diseño visual de la tarjeta (en el historial de MSG-02)
+### 4.1 Diseño visual de la tabla (renderizada dentro de MSG-02)
 
-- **Cabecera:** badge `OFERTA` (verde) + referencia en IBM Plex Mono · 13px
-- **Organización autora** (nombre completo, clickable → navega directamente a la ficha de esa organización en DIR-02) + timestamp
-- **Contenido (cifrado E2EE — visible solo con passphrase activa):**
-  - Referencia: `part_number · brand` (IBM Plex Mono)
-  - Precio unitario: número destacado + divisa (ej. `2,10 EUR`)
-  - Cantidad: número
-  - Plazo de entrega: `X días` (si informado)
-  - Coste de transporte: `X,XX EUR` (si informado) — si no informado, la línea no aparece
-  - Válida hasta: fecha (si informada) — aviso visual si ha expirado
-  - Notas: texto libre en cursiva · Steel Mist
-- **Estado de la tarjeta:** badge de color
-  - `PENDIENTE` — naranja — sin aceptar ni rechazar
-  - `ACEPTADA` — verde
-  - `RECHAZADA` — rojo
-  - `EXPIRADA` — Steel Mist — válida hasta pasada (el receptor puede aceptarla igualmente — es orientativa en V1)
-- **Acciones (solo para el receptor comprador):**
-  - `Aceptar oferta` → estado hilo ACUERDO ALCANZADO
-  - `Rechazar` → estado de la tarjeta RECHAZADA (el hilo sigue abierto)
-  - `Contra-ofertar` → abre nuevo formulario de oferta con los campos pre-rellenos
+Una tabla con una fila por oferta. Columnas:
+
+| Columna | Contenido |
+|---|---|
+| **Referencia** | `part_number · brand` en IBM Plex Mono |
+| **Organización** | Nombre completo, clickable → navega directamente a la ficha de esa organización en DIR-02 |
+| **Precio/ud.** | Precio unitario + divisa en negrita (cifrado E2EE — visible con passphrase activa) |
+| **Cantidad** | Unidades (cifrado E2EE) |
+| **Plazo** | Días de entrega (si informado, si no: `—`) |
+| **Transporte** | Coste de transporte (si informado, si no: `—`) |
+| **Válida hasta** | Fecha límite (si informada, si no: `—`) — en rojo si expirada + icono `⚠` |
+| **Estado** | Badge: `PENDIENTE` (naranja) · `ACEPTADA` (verde) · `RECHAZADA` (rojo) · `EXPIRADA` (Steel Mist) |
+| **Fecha** | Timestamp relativo |
+| **Acciones** | Solo para receptor (comprador): `Aceptar` + `Contra-ofertar` + `Rechazar` (PENDIENTE) · `Aceptar igualmente` + `Rechazar` (EXPIRADA) |
 
 ### 4.2 Formulario de creación de tarjeta de oferta
 
@@ -171,4 +166,4 @@ Se abre al pulsar `Crear oferta` dentro de MSG-02 o `Responder con oferta` en un
 
 ---
 
-*Spec MSG-03 · v1.1 · Bearingworld.io · Junio 2026*
+*Spec MSG-03 · v1.2 · Bearingworld.io · Junio 2026*

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -224,5 +224,6 @@
   function vrsz(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,72)+"px";}
   function vsend(){var inp=document.getElementById("bwinpa"),txt=inp.value.trim();if(!txt)return;var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});chat.insertAdjacentHTML("beforeend","<div class=\"bwmsg u\"><div class=\"bwbub\">"+txt+"</div><div class=\"bwts\">"+now+"</div></div>");inp.value="";inp.style.height="auto";chat.scrollTop=chat.scrollHeight;}
 </script>
+<script src="nav.js"></script>
 </body>
 </html>

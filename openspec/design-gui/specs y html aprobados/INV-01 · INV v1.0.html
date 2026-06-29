@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -562,5 +562,6 @@
   var vR=["La paginación carga 50 líneas por página desde el servidor. Tu inventario completo no se carga en memoria de golpe.","Las líneas en estado Draft no son visibles para los compradores hasta que las publiques manualmente o subas un nuevo archivo.","Puedes subir un archivo CSV, XLSX o TXT. El sistema detectará automáticamente las columnas si sigues el formato estándar de Bearingworld.io."],vri=0;
   function vSend(){var inp=document.getElementById("bwinpa"),txt=inp.value.trim();if(!txt)return;var chat=document.getElementById("bwchat"),now=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});chat.insertAdjacentHTML("beforeend",'<div class="bwmsg u"><div class="bwbub">'+txt+'</div><div class="bwts">'+now+'</div></div>');inp.value="";inp.style.height="auto";setTimeout(function(){chat.insertAdjacentHTML("beforeend",'<div class="bwmsg v"><div class="bwbub">'+vR[vri%vR.length]+'</div><div class="bwts">'+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+'</div></div>');vri++;chat.scrollTop=chat.scrollHeight;},600);chat.scrollTop=chat.scrollHeight;}
 </script>
+<script src="nav.js"></script>
 </body>
 </html>

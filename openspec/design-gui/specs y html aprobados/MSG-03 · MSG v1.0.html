@@ -90,7 +90,11 @@
 
     /* CARD COMPONENT */
     .msg-card{border-radius:8px;overflow:hidden;border:1px solid #E5E7EB;background:white;width:350px}
-    .card-hdr{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #F1F3F6}
+    .card-hdr{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:9px 14px;border-bottom:1px solid #F1F3F6}
+    .card-hdr-top{display:flex;align-items:center;gap:8px}
+    .card-org{font-size:11px;font-weight:500;color:#2563EB;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:opacity .12s;padding-left:1px}
+    .card-org i{font-size:11px;flex-shrink:0}
+    .card-org:hover{opacity:.72}
     .card-hdr.consulta{background:rgba(37,99,235,.05);border-left:3px solid #2563EB}
     .card-hdr.oferta{background:rgba(22,163,74,.05);border-left:3px solid #16a34a}
     .card-type-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:2px}
@@ -219,9 +223,12 @@
         <!-- CONSULTA: PENDIENTE con acciones (receptor ve las acciones) -->
         <div class="msg-card">
           <div class="card-hdr consulta">
-            <span class="card-type-badge ctb-consulta">Consulta</span>
-            <span class="card-ref">6205-2RS</span>
-            <span class="card-meta">hace 5h</span>
+            <div class="card-hdr-top">
+              <span class="card-type-badge ctb-consulta">Consulta</span>
+              <span class="card-ref">6205-2RS</span>
+              <span class="card-meta">hace 5h</span>
+            </div>
+            <a class="card-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a>
           </div>
           <div class="card-body">
             <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · FAG</span></div>
@@ -241,9 +248,12 @@
         <!-- CONSULTA: RESPONDIDA -->
         <div class="msg-card">
           <div class="card-hdr consulta">
-            <span class="card-type-badge ctb-consulta">Consulta</span>
-            <span class="card-ref">22316-E</span>
-            <span class="card-meta">hace 2d</span>
+            <div class="card-hdr-top">
+              <span class="card-type-badge ctb-consulta">Consulta</span>
+              <span class="card-ref">22316-E</span>
+              <span class="card-meta">hace 2d</span>
+            </div>
+            <a class="card-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a>
           </div>
           <div class="card-body">
             <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">22316-E · SKF</span></div>
@@ -258,9 +268,12 @@
         <!-- CONSULTA: SIN STOCK -->
         <div class="msg-card">
           <div class="card-hdr consulta">
-            <span class="card-type-badge ctb-consulta">Consulta</span>
-            <span class="card-ref">NU2210-E-TVP2</span>
-            <span class="card-meta">hace 3d</span>
+            <div class="card-hdr-top">
+              <span class="card-type-badge ctb-consulta">Consulta</span>
+              <span class="card-ref">NU2210-E-TVP2</span>
+              <span class="card-meta">hace 3d</span>
+            </div>
+            <a class="card-org" href="#" onclick="irOrg(event,'Rodamientos del Sur SL')"><i class="ti ti-building"></i>Rodamientos del Sur SL</a>
           </div>
           <div class="card-body">
             <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">NU2210-E-TVP2 · FAG</span></div>
@@ -281,9 +294,12 @@
         <!-- OFERTA: PENDIENTE con acciones (comprador puede aceptar/rechazar/contraofertar) -->
         <div class="msg-card">
           <div class="card-hdr oferta">
-            <span class="card-type-badge ctb-oferta">Oferta</span>
-            <span class="card-ref">6205-2RS</span>
-            <span class="card-meta">hace 2h</span>
+            <div class="card-hdr-top">
+              <span class="card-type-badge ctb-oferta">Oferta</span>
+              <span class="card-ref">6205-2RS</span>
+              <span class="card-meta">hace 2h</span>
+            </div>
+            <a class="card-org" href="#" onclick="irOrg(event,'NSK Europe Ltd')"><i class="ti ti-building"></i>NSK Europe Ltd</a>
           </div>
           <div class="card-body">
             <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">6205-2RS · NSK</span></div>
@@ -306,9 +322,12 @@
         <!-- OFERTA: ACEPTADA -->
         <div class="msg-card">
           <div class="card-hdr oferta">
-            <span class="card-type-badge ctb-oferta">Oferta</span>
-            <span class="card-ref">22316-E</span>
-            <span class="card-meta">hace 3d</span>
+            <div class="card-hdr-top">
+              <span class="card-type-badge ctb-oferta">Oferta</span>
+              <span class="card-ref">22316-E</span>
+              <span class="card-meta">hace 3d</span>
+            </div>
+            <a class="card-org" href="#" onclick="irOrg(event,'Timken Europe GmbH')"><i class="ti ti-building"></i>Timken Europe GmbH</a>
           </div>
           <div class="card-body">
             <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">22316-E · Timken</span></div>
@@ -324,9 +343,12 @@
         <!-- OFERTA: EXPIRADA (aceptable igualmente) -->
         <div class="msg-card">
           <div class="card-hdr oferta">
-            <span class="card-type-badge ctb-oferta">Oferta</span>
-            <span class="card-ref">7210-BECBP</span>
-            <span class="card-meta">hace 8d</span>
+            <div class="card-hdr-top">
+              <span class="card-type-badge ctb-oferta">Oferta</span>
+              <span class="card-ref">7210-BECBP</span>
+              <span class="card-meta">hace 8d</span>
+            </div>
+            <a class="card-org" href="#" onclick="irOrg(event,'SKF Nordic AB')"><i class="ti ti-building"></i>SKF Nordic AB</a>
           </div>
           <div class="card-body">
             <div class="card-row"><span class="card-label">Referencia</span><span class="card-val mono">7210-BECBP · SKF</span></div>
@@ -522,6 +544,7 @@
     document.getElementById('formConsulta').style.display=which==='consulta'?'':'none';
     document.getElementById('formOferta').style.display=which==='oferta'?'':'none';
   }
+  function irOrg(e,org){e.preventDefault();window.location.href='DIR-01%20%C2%B7%20DIR%20v1.0.html'}
   function checkCForm(){const q=document.getElementById('cQty').value;document.getElementById('btnConsulta').disabled=!q||parseInt(q)<=0}
   function checkOForm(){const p=document.getElementById('oPrice').value;const q=document.getElementById('oQty').value;document.getElementById('btnOferta').disabled=!p||parseFloat(p)<=0||!q||parseInt(q)<=0}
 </script>

@@ -362,46 +362,59 @@
     /* CONTENT PANEL */
     .bwcnt {
       flex: 1;
-      background: #FFFFFF;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       min-width: 0;
-      transition: flex 0.2s ease;
     }
 
-    .bwcnth {
-      padding: 20px;
-      border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-      flex-shrink: 0;
-    }
-
-    .bwcntt {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 700;
-      font-size: 28px;
-      color: #1A1A1A;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .bwcnts {
-      font-size: 16px;
-      color: #6B7A99;
-      line-height: 1.6;
-    }
-
-    .bwcntb {
+    .welcome-bg {
       flex: 1;
-      overflow-y: auto;
-      padding: 20px;
+      background-image: url('Fondo_negro.png');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .bwcntb p {
-      font-size: 16px;
-      color: #333;
-      line-height: 1.6;
-      margin-bottom: 16px;
+    .welcome-center {
+      text-align: center;
+      padding: 48px 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .wc-greeting {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(40px, 5vw, 72px);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #8A9BAC 0%, #C8D6E4 35%, #E4ECF4 55%, #A8B8C8 75%, #7A8C9E 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .wc-date {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(18px, 2.2vw, 28px);
+      font-weight: 600;
+      color: #9AAABA;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .wc-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(16px, 1.9vw, 24px);
+      font-weight: 400;
+      color: #7A8C9E;
+      letter-spacing: 0.01em;
+      line-height: 1.5;
     }
 
     /* VERA PANEL */
@@ -724,23 +737,12 @@
 
       <!-- CONTENT PANEL -->
       <main class="bwcnt">
-        <div class="bwcnth">
-          <div class="bwcntt">Panel de Control</div>
-          <div class="bwcnts">Bienvenido a tu panel de administración. El contenido se renderiza aquí.</div>
-        </div>
-        <div class="bwcntb">
-          <p>Este es el área de contenido principal. Aquí se inyectarán las diferentes pantallas de la aplicación
-            (SRCH-01, INV-01, MSG-01, etc.). El shell proporciona la estructura fija: brand bar, nav bar, sidebar y
-            panel VERA.</p>
-          <p><strong>Estructura del Shell — v1.0:</strong></p>
-          <p>✓ Brand bar (24px): ZERO KNOWLEDGE ARCHITECTURE · CONNECT · TRADE · SECURE · INDUSTRIAL INTELLIGENCE
-            NETWORK</p>
-          <p>✓ Nav bar (46px): Hamburguesa + Logo + 7 ítems (Panel activo) + Empresa + Usuario + Cerrar sesión</p>
-          <p>✓ Sidebar overlay: Se abre con hamburguesa, 7 ítems + Configuración + Usuario, sincronizado con nav</p>
-          <p>✓ Panel VERA: 33% inicial, expandible hasta 50%, colapsable a 32px con etiqueta vertical</p>
-          <p>✓ Tipografía: Montserrat 700 28px títulos · Inter 400 16px body · Z.ai system</p>
-          <p>✓ Restricción: max-width 520px en formularios (implementado en CSS)</p>
-          <p>✓ Colores: Paleta completa · Deep Steel Dark para brand bar</p>
+        <div class="welcome-bg">
+          <div class="welcome-center">
+            <div class="wc-greeting">¡Bienvenido Walter!</div>
+            <div class="wc-date" id="wcDate"></div>
+            <div class="wc-tagline">Esta es tu nueva empresa (lo quieras o no)&nbsp;&nbsp;🥲</div>
+          </div>
         </div>
       </main>
 
@@ -792,6 +794,12 @@
   </div>
 
   <script>
+    (function() {
+      const d = new Date();
+      const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+      document.getElementById('wcDate').textContent = 'Hoy es ' + d.toLocaleDateString('es-ES', opts);
+    })();
+
     function toggleSb() {
       document.getElementById('sb').classList.toggle('open');
       document.getElementById('sbo').classList.toggle('open');

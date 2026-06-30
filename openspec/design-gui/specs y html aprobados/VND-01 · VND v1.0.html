@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VND-01 · Mis Ofertas — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+
+    /* VERA */
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#B8924A}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#B8924A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#2563EB;margin-bottom:4px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:16px;max-width:600px}
+    .spec-note{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(107,122,153,.06);border:1px solid rgba(107,122,153,.15);border-radius:4px;width:fit-content}
+
+    /* SEARCH BAR */
+    .search-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .search-wrap{position:relative;flex:1;max-width:400px}
+    .search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9BA4B0;font-size:15px;pointer-events:none}
+    .search-input{width:100%;height:36px;padding:0 12px 0 34px;border:1px solid #D1D5DB;border-radius:6px;background:white;font-size:13px;font-family:inherit;color:#1B2537;outline:none;transition:border-color .12s}
+    .search-input:focus{border-color:#2563EB}
+    .search-input::placeholder{color:#9BA4B0}
+    .search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9BA4B0;cursor:pointer;font-size:14px;padding:2px;display:none}
+    .search-clear.vis{display:block}
+    .result-count{font-size:12px;color:#9BA4B0;white-space:nowrap}
+
+    /* TABLE */
+    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:auto;max-height:calc(100vh - 290px)}
+    .tbl{width:100%;border-collapse:collapse;min-width:max-content}
+    .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap;position:sticky;top:0;z-index:1;user-select:none}
+    .tbl th.sortable{cursor:pointer;transition:color .12s}
+    .tbl th.sortable:hover{color:#1B2537}
+    .tbl th.sort-asc .sort-ico::after{content:'↑';color:#2563EB}
+    .tbl th.sort-desc .sort-ico::after{content:'↓';color:#2563EB}
+    .tbl th:not(.sort-asc):not(.sort-desc) .sort-ico::after{content:'↕';opacity:.3}
+    .sort-ico{margin-left:4px;font-style:normal;font-size:10px}
+    .tbl td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #F1F3F6;vertical-align:middle;white-space:nowrap}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tbl tbody tr:hover td{background:#F5F7FF}
+    .tbl-ref{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;color:#1B2537}
+    .tbl-brand{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;display:block;margin-top:1px}
+    .tbl-org{font-size:12px;font-weight:500;color:#2563EB;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:opacity .12s;white-space:nowrap}
+    .tbl-org:hover{opacity:.72}
+    .tbl-price{font-size:13px;font-weight:600;color:#1B2537}
+    .tbl-meta{font-size:12px;color:#9BA4B0}
+    .tbl-dash{color:#D1D5DB}
+    .valid-ok{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#374151}
+    .valid-warn{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#d97706;font-weight:500}
+    .valid-expired{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#DC2626;font-weight:600}
+    .ts{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#9BA4B0}
+    .st-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;display:inline-block}
+    .st-pend{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
+    .st-acep{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+    .st-rech{background:rgba(220,38,38,.08);color:#DC2626;border:1px solid rgba(220,38,38,.2)}
+    .st-expi{background:rgba(107,122,153,.08);color:#6B7A99;border:1px solid rgba(107,122,153,.2)}
+    .row-expired td{background:rgba(107,122,153,.025)}
+    .row-hidden{display:none}
+    .act-btn{height:26px;padding:0 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .12s}
+    .act-primary{background:#2563EB;color:white;border:none}
+    .act-primary:hover{opacity:.87}
+    .act-ghost{background:none;color:#6B7A99;border:1px solid #D1D5DB}
+    .act-ghost:hover{border-color:#9BA4B0;color:#374151}
+    .act-danger{background:none;color:#DC2626;border:1px solid rgba(220,38,38,.3)}
+    .act-danger:hover{background:rgba(220,38,38,.05)}
+    .tbl-acts{display:flex;gap:5px}
+    .empty-state{text-align:center;padding:48px 20px;color:#9BA4B0}
+    .empty-state i{font-size:36px;margin-bottom:10px;display:block;color:#D1D5DB}
+    .empty-state p{font-size:13px}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem" onclick="nav('Panel')">Panel</div>
+      <div class="bwnavitem act">Vendiendo</div>
+      <div class="bwnavitem" onclick="nav('Comprando')">Comprando</div>
+      <div class="bwnavitem" onclick="nav('Hilos')">Hilos</div>
+      <div class="bwnavitem" onclick="nav('Inventario')">Inventario</div>
+      <div class="bwnavitem" onclick="nav('Empresas')">Empresas</div>
+      <div class="bwnavitem" onclick="nav('Foros')">Foros</div>
+      <div class="bwnavitem" onclick="nav('Contacto')">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div><div class="bwnavco">Rodamientos del Sur SL</div><div class="bwnavun">Juan Martínez</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem" onclick="nav('Panel')"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem act"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem" onclick="nav('Comprando')"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem" onclick="nav('Hilos')"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem" onclick="nav('Inventario')"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem" onclick="nav('Empresas')"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem" onclick="nav('Foros')"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem" onclick="nav('Contacto')"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">JM</div><div><div class="bwsbusrn">Juan Martínez</div><div class="bwsbusro">Rodamientos del Sur SL</div></div></div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="bwcnt">
+      <div class="eyebrow">Vendiendo · VND-01</div>
+      <div class="page-title">Mis ofertas</div>
+      <div class="page-sub">Ofertas enviadas a compradores. Ordenadas por fecha de más reciente a más antigua.</div>
+      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>VND-01 · v1.0 · Contenido cifrado E2EE — visible con passphrase activa</div>
+
+      <!-- Search bar -->
+      <div class="search-bar">
+        <div class="search-wrap">
+          <i class="ti ti-search search-ico"></i>
+          <input type="text" class="search-input" id="searchInput" placeholder="Buscar por referencia u organización…" oninput="onSearch(this)">
+          <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
+        </div>
+        <span class="result-count" id="resultCount">5 ofertas</span>
+      </div>
+
+      <!-- Table -->
+      <div class="tbl-wrap">
+        <table class="tbl" id="ofertasTbl">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="0" onclick="sortTbl(0)">Referencia <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="1" onclick="sortTbl(1)">Organización <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="2" onclick="sortTbl(2)">Precio/ud. <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="3" onclick="sortTbl(3)">Cantidad <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="4" onclick="sortTbl(4)">Plazo <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="5" onclick="sortTbl(5)">Transporte <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="6" onclick="sortTbl(6)">Válida hasta <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="7" onclick="sortTbl(7)">Estado <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="8" onclick="sortTbl(8)">Fecha <i class="sort-ico sort-desc-init"></i></th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ofertasTbody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none">
+          <i class="ti ti-inbox"></i>
+          <p>No hay ofertas que coincidan con la búsqueda.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de búsqueda</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Tienes 5 ofertas en total: 2 pendientes de respuesta, 1 aceptada, 1 rechazada y 1 expirada. La oferta más reciente es la de SKF 6205-2RS para Distribuciones Álvarez SL (29 Jun). ¿Quieres filtrar por algún estado?</div><div class="bwts">10:15</div></div>
+        <div class="bwmsg u"><div class="bwbub">Muéstrame solo las pendientes</div><div class="bwts">10:16</div></div>
+        <div class="bwmsg v"><div class="bwbub">Filtrando por estado PENDIENTE — 2 ofertas: SKF 6205-2RS (Distribuciones Álvarez SL, 4,20 €) y SKF NJ205 ECP (NSK Europe Ltd, 8,75 €).</div><div class="bwts">10:16</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA…" rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  /* ─── Datos de la tabla ─────────────────────────────────────── */
+  var DATA = [
+    {ref:'SKF 6205-2RS', brand:'SKF', org:'Distribuciones Álvarez SL', precio:4.20, precioStr:'4,20 €', qty:500, plazo:14, transporte:45, transporteStr:'45 €', valida:'2026-07-15', validaStr:'15 Jul 2026', validaClass:'valid-ok', estado:'PENDIENTE', stClass:'st-pend', fecha:'2026-06-29', fechaStr:'29 Jun 2026', expired:false},
+    {ref:'NSK 6206 ZZ', brand:'NSK', org:'Nordic Bearings AB', precio:3.85, precioStr:'3,85 €', qty:200, plazo:7, transporte:null, transporteStr:'—', valida:'2026-06-30', validaStr:'30 Jun 2026', validaClass:'valid-warn', estado:'EXPIRADA', stClass:'st-expi', fecha:'2026-06-27', fechaStr:'27 Jun 2026', expired:true},
+    {ref:'FAG 6204 RS', brand:'FAG', org:'Roulements France SAS', precio:5.10, precioStr:'5,10 €', qty:100, plazo:21, transporte:30, transporteStr:'30 €', valida:'2026-07-31', validaStr:'31 Jul 2026', validaClass:'valid-ok', estado:'ACEPTADA', stClass:'st-acep', fecha:'2026-06-25', fechaStr:'25 Jun 2026', expired:false},
+    {ref:'SKF NJ205 ECP', brand:'SKF', org:'NSK Europe Ltd', precio:8.75, precioStr:'8,75 €', qty:50, plazo:10, transporte:null, transporteStr:'—', valida:'2026-07-20', validaStr:'20 Jul 2026', validaClass:'valid-ok', estado:'PENDIENTE', stClass:'st-pend', fecha:'2026-06-24', fechaStr:'24 Jun 2026', expired:false},
+    {ref:'FAG 6001 2Z', brand:'FAG', org:'Rodamientos del Sur SL', precio:1.95, precioStr:'1,95 €', qty:1000, plazo:5, transporte:80, transporteStr:'80 €', valida:null, validaStr:'—', validaClass:'', estado:'RECHAZADA', stClass:'st-rech', fecha:'2026-06-22', fechaStr:'22 Jun 2026', expired:false},
+  ];
+
+  var currentData = DATA.slice();
+  var sortCol = 8;
+  var sortDir = -1; // -1 = desc, 1 = asc
+
+  /* ─── Render ────────────────────────────────────────────────── */
+  function render(rows) {
+    var tbody = document.getElementById('ofertasTbody');
+    var empty = document.getElementById('emptyState');
+    if (!rows.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      document.getElementById('resultCount').textContent = '0 ofertas';
+      return;
+    }
+    empty.style.display = 'none';
+    document.getElementById('resultCount').textContent = rows.length + (rows.length === 1 ? ' oferta' : ' ofertas');
+    tbody.innerHTML = rows.map(function(r) {
+      var acts = '';
+      if (r.estado === 'PENDIENTE') {
+        acts = '<button class="act-btn act-ghost">Ver detalle</button><button class="act-btn act-danger">Retirar</button>';
+      } else if (r.estado === 'EXPIRADA') {
+        acts = '<button class="act-btn act-ghost">Renovar</button>';
+      } else if (r.estado === 'ACEPTADA') {
+        acts = '<button class="act-btn act-primary">Ver acuerdo</button>';
+      } else {
+        acts = '<button class="act-btn act-ghost">Ver detalle</button>';
+      }
+      return '<tr class="'+(r.expired?'row-expired':'')+'">'+
+        '<td><span class="tbl-ref">'+r.ref+'</span><span class="tbl-brand">'+r.brand+'</span></td>'+
+        '<td><a class="tbl-org" href="DIR-02%20%C2%B7%20DIR%20v1.0.html" onclick="return true"><i class="ti ti-building" style="font-size:11px"></i>'+r.org+'</a></td>'+
+        '<td><span class="tbl-price">'+r.precioStr+'</span></td>'+
+        '<td><span class="tbl-meta">'+r.qty+' ud.</span></td>'+
+        '<td><span class="tbl-meta">'+(r.plazo ? r.plazo+' días' : '<span class="tbl-dash">—</span>')+'</span></td>'+
+        '<td><span class="tbl-meta">'+(r.transporte ? r.transporteStr : '<span class="tbl-dash">—</span>')+'</span></td>'+
+        '<td><span class="'+r.validaClass+'">'+r.validaStr+'</span></td>'+
+        '<td><span class="st-badge '+r.stClass+'">'+r.estado+'</span></td>'+
+        '<td><span class="ts">'+r.fechaStr+'</span></td>'+
+        '<td><div class="tbl-acts">'+acts+'</div></td>'+
+        '</tr>';
+    }).join('');
+  }
+
+  /* ─── Sort ──────────────────────────────────────────────────── */
+  var sortKeys = ['ref','org','precio','qty','plazo','transporte','valida','estado','fecha'];
+
+  function sortTbl(col) {
+    if (sortCol === col) {
+      sortDir = -sortDir;
+    } else {
+      sortCol = col;
+      sortDir = 1;
+    }
+    var ths = document.querySelectorAll('.tbl th.sortable');
+    ths.forEach(function(th, i) {
+      th.classList.remove('sort-asc', 'sort-desc');
+      if (i === col) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    });
+    doSort();
+  }
+
+  function doSort() {
+    var key = sortKeys[sortCol];
+    currentData.sort(function(a, b) {
+      var va = a[key] == null ? '' : a[key];
+      var vb = b[key] == null ? '' : b[key];
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
+      return String(va).localeCompare(String(vb), 'es') * sortDir;
+    });
+    render(currentData);
+  }
+
+  /* ─── Search ────────────────────────────────────────────────── */
+  var searchTerm = '';
+  function onSearch(inp) {
+    searchTerm = inp.value.trim().toLowerCase();
+    document.getElementById('searchClear').classList.toggle('vis', searchTerm.length > 0);
+    applyFilter();
+  }
+
+  function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    searchTerm = '';
+    document.getElementById('searchClear').classList.remove('vis');
+    applyFilter();
+  }
+
+  function applyFilter() {
+    if (!searchTerm) {
+      currentData = DATA.slice();
+    } else {
+      currentData = DATA.filter(function(r) {
+        return r.ref.toLowerCase().includes(searchTerm) ||
+               r.brand.toLowerCase().includes(searchTerm) ||
+               r.org.toLowerCase().includes(searchTerm);
+      });
+    }
+    doSort();
+  }
+
+  /* ─── Nav ───────────────────────────────────────────────────── */
+  var NAV_MAP = {
+    'Panel':'Rinworld_app_shell.html','Comprando':'SRCH-01 · SRCH v1.0.html',
+    'Hilos':'MSG-01 · MSG v1.0.html','Inventario':'INV-01 · INV v1.0.html',
+    'Empresas':'DIR-01 · DIR v1.0.html','Foros':'FORO-01 · FORO v1.0.html',
+    'Contacto':'../../../index.html'
+  };
+  function nav(k){if(NAV_MAP[k])window.location.href=NAV_MAP[k];}
+
+  /* ─── Sidebar / VERA ────────────────────────────────────────── */
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido. Aplicando filtro sobre las ofertas…</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},700)}
+
+  /* ─── Init ──────────────────────────────────────────────────── */
+  // Set default sort indicator on Fecha (col 8) DESC
+  document.querySelectorAll('.tbl th.sortable')[8].classList.add('sort-desc');
+  doSort();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

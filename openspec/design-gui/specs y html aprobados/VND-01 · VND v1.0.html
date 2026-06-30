@@ -82,8 +82,7 @@
     .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
     .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#2563EB;margin-bottom:4px}
     .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
-    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:16px;max-width:600px}
-    .spec-note{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;margin-bottom:20px;display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(107,122,153,.06);border:1px solid rgba(107,122,153,.15);border-radius:4px;width:fit-content}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:20px;max-width:600px}
 
     /* SEARCH BAR */
     .search-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -97,8 +96,8 @@
     .result-count{font-size:12px;color:#9BA4B0;white-space:nowrap}
 
     /* TABLE */
-    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:auto;max-height:calc(100vh - 290px)}
-    .tbl{width:100%;border-collapse:collapse;min-width:max-content}
+    .tbl-wrap{background:white;border:1px solid #E5E7EB;border-radius:8px;overflow:auto;max-height:calc(100vh - 270px)}
+    .tbl{width:100%;border-collapse:collapse}
     .tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6B7A99;background:#F8F9FB;border-bottom:1px solid #E5E7EB;white-space:nowrap;position:sticky;top:0;z-index:1;user-select:none}
     .tbl th.sortable{cursor:pointer;transition:color .12s}
     .tbl th.sortable:hover{color:#1B2537}
@@ -113,19 +112,12 @@
     .tbl-brand{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9BA4B0;display:block;margin-top:1px}
     .tbl-org{font-size:12px;font-weight:500;color:#2563EB;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:opacity .12s;white-space:nowrap}
     .tbl-org:hover{opacity:.72}
-    .tbl-price{font-size:13px;font-weight:600;color:#1B2537}
-    .tbl-meta{font-size:12px;color:#9BA4B0}
-    .tbl-dash{color:#D1D5DB}
-    .valid-ok{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#374151}
-    .valid-warn{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#d97706;font-weight:500}
-    .valid-expired{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#DC2626;font-weight:600}
     .ts{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#9BA4B0}
     .st-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:2px;display:inline-block}
     .st-pend{background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.2)}
     .st-acep{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
     .st-rech{background:rgba(220,38,38,.08);color:#DC2626;border:1px solid rgba(220,38,38,.2)}
     .st-expi{background:rgba(107,122,153,.08);color:#6B7A99;border:1px solid rgba(107,122,153,.2)}
-    .row-expired td{background:rgba(107,122,153,.025)}
     .row-hidden{display:none}
     .act-btn{height:26px;padding:0 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .12s}
     .act-primary{background:#2563EB;color:white;border:none}
@@ -192,8 +184,7 @@
     <div class="bwcnt">
       <div class="eyebrow">Vendiendo · VND-01</div>
       <div class="page-title">Mis ofertas</div>
-      <div class="page-sub">Ofertas enviadas a compradores. Ordenadas por fecha de más reciente a más antigua.</div>
-      <div class="spec-note"><i class="ti ti-info-circle" style="font-size:13px"></i>VND-01 · v1.0 · Contenido cifrado E2EE — visible con passphrase activa</div>
+      <div class="page-sub">Resumen de las ofertas enviadas a compradores. Para ver precio y condiciones de una oferta, abre el hilo correspondiente.</div>
 
       <!-- Search bar -->
       <div class="search-bar">
@@ -212,13 +203,8 @@
             <tr>
               <th class="sortable" data-col="0" onclick="sortTbl(0)">Referencia <i class="sort-ico"></i></th>
               <th class="sortable" data-col="1" onclick="sortTbl(1)">Organización <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="2" onclick="sortTbl(2)">Precio/ud. <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="3" onclick="sortTbl(3)">Cantidad <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="4" onclick="sortTbl(4)">Plazo <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="5" onclick="sortTbl(5)">Transporte <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="6" onclick="sortTbl(6)">Válida hasta <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="7" onclick="sortTbl(7)">Estado <i class="sort-ico"></i></th>
-              <th class="sortable" data-col="8" onclick="sortTbl(8)">Fecha <i class="sort-ico sort-desc-init"></i></th>
+              <th class="sortable" data-col="2" onclick="sortTbl(2)">Estado <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="3" onclick="sortTbl(3)">Fecha <i class="sort-ico"></i></th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -246,9 +232,9 @@
         <div class="bwvdot"></div>
       </div>
       <div class="bwchat" id="bwchat">
-        <div class="bwmsg v"><div class="bwbub">Tienes 5 ofertas en total: 2 pendientes de respuesta, 1 aceptada, 1 rechazada y 1 expirada. La oferta más reciente es la de SKF 6205-2RS para Distribuciones Álvarez SL (29 Jun). ¿Quieres filtrar por algún estado?</div><div class="bwts">10:15</div></div>
+        <div class="bwmsg v"><div class="bwbub">Tienes 5 ofertas en total: 2 pendientes de respuesta, 1 aceptada, 1 rechazada y 1 expirada. La más reciente es para Distribuciones Álvarez SL (29 Jun). ¿Quieres filtrar por algún estado?</div><div class="bwts">10:15</div></div>
         <div class="bwmsg u"><div class="bwbub">Muéstrame solo las pendientes</div><div class="bwts">10:16</div></div>
-        <div class="bwmsg v"><div class="bwbub">Filtrando por estado PENDIENTE — 2 ofertas: SKF 6205-2RS (Distribuciones Álvarez SL, 4,20 €) y SKF NJ205 ECP (NSK Europe Ltd, 8,75 €).</div><div class="bwts">10:16</div></div>
+        <div class="bwmsg v"><div class="bwbub">Filtrando por estado PENDIENTE — 2 ofertas: SKF 6205-2RS para Distribuciones Álvarez SL y SKF NJ205 ECP para NSK Europe Ltd. Para ver precio y condiciones, abre el hilo correspondiente.</div><div class="bwts">10:16</div></div>
       </div>
       <div class="bwia">
         <div class="bwir">
@@ -263,15 +249,15 @@
 <script>
   /* ─── Datos de la tabla ─────────────────────────────────────── */
   var DATA = [
-    {ref:'SKF 6205-2RS', brand:'SKF', org:'Distribuciones Álvarez SL', precio:4.20, precioStr:'4,20 €', qty:500, plazo:14, transporte:45, transporteStr:'45 €', valida:'2026-07-15', validaStr:'15 Jul 2026', validaClass:'valid-ok', estado:'PENDIENTE', stClass:'st-pend', fecha:'2026-06-29', fechaStr:'29 Jun 2026', expired:false},
-    {ref:'NSK 6206 ZZ', brand:'NSK', org:'Nordic Bearings AB', precio:3.85, precioStr:'3,85 €', qty:200, plazo:7, transporte:null, transporteStr:'—', valida:'2026-06-30', validaStr:'30 Jun 2026', validaClass:'valid-warn', estado:'EXPIRADA', stClass:'st-expi', fecha:'2026-06-27', fechaStr:'27 Jun 2026', expired:true},
-    {ref:'FAG 6204 RS', brand:'FAG', org:'Roulements France SAS', precio:5.10, precioStr:'5,10 €', qty:100, plazo:21, transporte:30, transporteStr:'30 €', valida:'2026-07-31', validaStr:'31 Jul 2026', validaClass:'valid-ok', estado:'ACEPTADA', stClass:'st-acep', fecha:'2026-06-25', fechaStr:'25 Jun 2026', expired:false},
-    {ref:'SKF NJ205 ECP', brand:'SKF', org:'NSK Europe Ltd', precio:8.75, precioStr:'8,75 €', qty:50, plazo:10, transporte:null, transporteStr:'—', valida:'2026-07-20', validaStr:'20 Jul 2026', validaClass:'valid-ok', estado:'PENDIENTE', stClass:'st-pend', fecha:'2026-06-24', fechaStr:'24 Jun 2026', expired:false},
-    {ref:'FAG 6001 2Z', brand:'FAG', org:'Rodamientos del Sur SL', precio:1.95, precioStr:'1,95 €', qty:1000, plazo:5, transporte:80, transporteStr:'80 €', valida:null, validaStr:'—', validaClass:'', estado:'RECHAZADA', stClass:'st-rech', fecha:'2026-06-22', fechaStr:'22 Jun 2026', expired:false},
+    {ref:'SKF 6205-2RS', brand:'SKF', org:'Distribuciones Álvarez SL', orgId:'dir-02', threadId:'t001', estado:'PENDIENTE', stClass:'st-pend', fecha:'2026-06-29', fechaStr:'29 Jun 2026'},
+    {ref:'NSK 6206 ZZ',  brand:'NSK', org:'Nordic Bearings AB',        orgId:'dir-02', threadId:'t002', estado:'EXPIRADA',  stClass:'st-expi', fecha:'2026-06-27', fechaStr:'27 Jun 2026'},
+    {ref:'FAG 6204 RS',  brand:'FAG', org:'Roulements France SAS',     orgId:'dir-02', threadId:'t003', estado:'ACEPTADA',  stClass:'st-acep', fecha:'2026-06-25', fechaStr:'25 Jun 2026'},
+    {ref:'SKF NJ205 ECP',brand:'SKF', org:'NSK Europe Ltd',            orgId:'dir-02', threadId:'t004', estado:'PENDIENTE', stClass:'st-pend', fecha:'2026-06-24', fechaStr:'24 Jun 2026'},
+    {ref:'FAG 6001 2Z',  brand:'FAG', org:'Rodamientos del Sur SL',    orgId:'dir-02', threadId:'t005', estado:'RECHAZADA', stClass:'st-rech', fecha:'2026-06-22', fechaStr:'22 Jun 2026'},
   ];
 
   var currentData = DATA.slice();
-  var sortCol = 8;
+  var sortCol = 3;
   var sortDir = -1; // -1 = desc, 1 = asc
 
   /* ─── Render ────────────────────────────────────────────────── */
@@ -289,22 +275,17 @@
     tbody.innerHTML = rows.map(function(r) {
       var acts = '';
       if (r.estado === 'PENDIENTE') {
-        acts = '<button class="act-btn act-ghost">Ver detalle</button><button class="act-btn act-danger">Retirar</button>';
+        acts = '<button class="act-btn act-ghost">Ver hilo</button><button class="act-btn act-danger">Retirar oferta</button>';
       } else if (r.estado === 'EXPIRADA') {
         acts = '<button class="act-btn act-ghost">Renovar</button>';
       } else if (r.estado === 'ACEPTADA') {
         acts = '<button class="act-btn act-primary">Ver acuerdo</button>';
       } else {
-        acts = '<button class="act-btn act-ghost">Ver detalle</button>';
+        acts = '<button class="act-btn act-ghost">Ver hilo</button>';
       }
-      return '<tr class="'+(r.expired?'row-expired':'')+'">'+
+      return '<tr>'+
         '<td><span class="tbl-ref">'+r.ref+'</span><span class="tbl-brand">'+r.brand+'</span></td>'+
-        '<td><a class="tbl-org" href="DIR-02%20%C2%B7%20DIR%20v1.0.html" onclick="return true"><i class="ti ti-building" style="font-size:11px"></i>'+r.org+'</a></td>'+
-        '<td><span class="tbl-price">'+r.precioStr+'</span></td>'+
-        '<td><span class="tbl-meta">'+r.qty+' ud.</span></td>'+
-        '<td><span class="tbl-meta">'+(r.plazo ? r.plazo+' días' : '<span class="tbl-dash">—</span>')+'</span></td>'+
-        '<td><span class="tbl-meta">'+(r.transporte ? r.transporteStr : '<span class="tbl-dash">—</span>')+'</span></td>'+
-        '<td><span class="'+r.validaClass+'">'+r.validaStr+'</span></td>'+
+        '<td><a class="tbl-org" href="DIR-02%20%C2%B7%20DIR%20v1.0.html"><i class="ti ti-building" style="font-size:11px"></i>'+r.org+'</a></td>'+
         '<td><span class="st-badge '+r.stClass+'">'+r.estado+'</span></td>'+
         '<td><span class="ts">'+r.fechaStr+'</span></td>'+
         '<td><div class="tbl-acts">'+acts+'</div></td>'+
@@ -313,7 +294,7 @@
   }
 
   /* ─── Sort ──────────────────────────────────────────────────── */
-  var sortKeys = ['ref','org','precio','qty','plazo','transporte','valida','estado','fecha'];
+  var sortKeys = ['ref', 'org', 'estado', 'fecha'];
 
   function sortTbl(col) {
     if (sortCol === col) {
@@ -335,7 +316,6 @@
     currentData.sort(function(a, b) {
       var va = a[key] == null ? '' : a[key];
       var vb = b[key] == null ? '' : b[key];
-      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
       return String(va).localeCompare(String(vb), 'es') * sortDir;
     });
     render(currentData);
@@ -391,8 +371,7 @@
   function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido. Aplicando filtro sobre las ofertas…</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},700)}
 
   /* ─── Init ──────────────────────────────────────────────────── */
-  // Set default sort indicator on Fecha (col 8) DESC
-  document.querySelectorAll('.tbl th.sortable')[8].classList.add('sort-desc');
+  document.querySelectorAll('.tbl th.sortable')[3].classList.add('sort-desc');
   doSort();
 </script>
 <script src="nav.js"></script>

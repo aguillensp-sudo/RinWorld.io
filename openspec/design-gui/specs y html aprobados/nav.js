@@ -8,7 +8,7 @@
   var NAV = {
     // Nav estándar de usuario
     'Panel'        : 'Rinworld_app_shell.html',
-    'Vendiendo'    : 'INV-07 · VIS v1.0.html',
+    'Vendiendo'    : 'MSG-03 · MSG v1.0.html',
     'Comprando'    : 'SRCH-01 · SRCH v1.0.html',
     'Hilos'        : 'MSG-01 · MSG v1.0.html',
     'Inventario'   : 'INV-01 · INV v1.0.html',

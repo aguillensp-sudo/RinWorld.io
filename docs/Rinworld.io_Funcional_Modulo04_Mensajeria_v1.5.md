@@ -381,3 +381,18 @@ Esta sección detalla cómo VERA participa en cada vía de contacto, respetando 
 |  |
 | --- |
 | **📄 DOCUMENTOS DE REFERENCIA**  PRD v1.0 | Tech Stack & AI Cost Estimation v1.1 | Módulo 00 — Arquitectura IA v1.1 | Módulo 01 — Onboarding v1.5 | Módulo 02 — Gestión de Inventario v1.3 | Módulo 03 — Búsqueda Conversacional v1.6 | Módulo 05 — Calculadora Logística v2.0 |
+
+---
+
+## Nota de implementación — Equivalencias de nomenclatura (añadida Junio 2026)
+
+Durante la fase de prototipado HTML se adoptaron códigos de pantalla distintos para las pantallas del Directorio de Organizaciones y la Ficha de Organización, para evitar confusión con las pantallas de mensajería. Las equivalencias son:
+
+| Código en este spec (Módulo 04) | Código en prototipos HTML y specs de diseño |
+|---|---|
+| `MSG-04` — Ficha Pública de Organización (sección 8.3) | `DIR-02 · DIR v1.0.html` + `Rinworld_spec_DIR-02.md` (pendiente de crear) |
+| `MSG-05` — Directorio de Organizaciones (sección 8.5) | `DIR-01 · DIR v1.0.html` + `Rinworld_spec_DIR-01.md` |
+
+Cuando este documento referencie MSG-04 o MSG-05, el agente de implementación debe apuntar a los prototipos y specs DIR-02 y DIR-01 respectivamente.
+
+Adicionalmente, existe una vista agregada de ofertas desde la perspectiva del vendedor (`VND-01 · VND v1.0.html`), accesible desde el ítem de nav "Vendiendo". Esta pantalla es una vista de solo metadatos — no expone campos E2EE (precio, cantidad, condiciones). Ver `Rinworld_spec_VND-01.md` para la spec completa.

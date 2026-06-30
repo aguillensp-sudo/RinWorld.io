@@ -1,6 +1,12 @@
 # Spec de Pantalla — `DIR-01` · Directorio de Organizaciones
 
 > **Nota de codificación:** Esta pantalla corresponde a `MSG-05` en el Inventario Maestro de Pantallas v1.1. Se usa el código `DIR-01` en los specs de diseño para evitar confusión con las pantallas de mensajería MSG-01 a MSG-04.
+>
+> **Equivalencias de nomenclatura para agentes de implementación:**
+> - `DIR-01` (este spec) = `MSG-05` (Directorio de Organizaciones, tabla)
+> - `DIR-02` (ficha individual) = `MSG-04` (Ficha Pública de Organización, sección 8.3 del Módulo 04 v1.5)
+>
+> Cuando el Módulo 04 v1.5 haga referencia a MSG-04 o MSG-05, corresponden a los prototipos y specs `DIR-02` y `DIR-01` respectivamente. No son pantallas distintas.
 
 ---
 

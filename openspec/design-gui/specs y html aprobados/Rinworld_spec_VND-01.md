@@ -146,7 +146,7 @@ VERA tiene visibilidad sobre los **metadatos** de todas las ofertas listadas —
 | RNG-VND-01 | VND-01 muestra únicamente metadatos de las tarjetas de oferta enviadas por la organización activa. Ningún campo de contenido E2EE (unit_price, quantity, currency, lead_time_days, shipping_cost, valid_until, notes) es devuelto ni mostrado en esta vista. |
 | RNG-VND-02 | Solo se muestran ofertas en las que la organización activa es la **emisora** (vendedor). Las ofertas recibidas como comprador no aparecen en esta vista. |
 | RNG-VND-03 | El botón "Renovar" (estado EXPIRADA) navega a MSG-02 con el formulario de nueva oferta pre-cargado con la misma referencia y organización. No crea automáticamente una nueva oferta. |
-| RNG-VND-04 | El botón "Retirar oferta" (estado PENDIENTE) requiere confirmación del usuario — VERA clasifica esta acción como REVERSIBLE con confirmación ligera (no es una acción de alto impacto, ya que el acuerdo no tiene valor contractual en la plataforma). |
+| RNG-VND-04 | El botón "Retirar oferta" (estado PENDIENTE) requiere confirmación del usuario — VERA clasifica esta acción como REVERSIBLE con confirmación ligera. La confirmación es **inline en la fila**: al pulsar "Retirar oferta", la celda de Acciones se transforma mostrando el texto "¿Retirar esta oferta?" seguido de dos botones [Cancelar] [Retirar]. Cancelar restaura los botones originales sin ningún efecto. Confirmar retira la oferta (llamada al backend) y elimina la fila con una transición de opacidad. **No se usa modal ni overlay.** |
 
 ---
 

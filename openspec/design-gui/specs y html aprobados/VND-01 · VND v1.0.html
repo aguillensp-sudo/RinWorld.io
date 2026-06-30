@@ -127,6 +127,10 @@
     .act-danger{background:none;color:#DC2626;border:1px solid rgba(220,38,38,.3)}
     .act-danger:hover{background:rgba(220,38,38,.05)}
     .tbl-acts{display:flex;gap:5px}
+    .confirm-inline{display:flex;align-items:center;gap:6px;white-space:nowrap}
+    .confirm-txt{font-size:11px;color:#374151}
+    .act-confirm{height:26px;padding:0 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;background:#DC2626;color:white;border:none;transition:opacity .12s}
+    .act-confirm:hover{opacity:.85}
     .empty-state{text-align:center;padding:48px 20px;color:#9BA4B0}
     .empty-state i{font-size:36px;margin-bottom:10px;display:block;color:#D1D5DB}
     .empty-state p{font-size:13px}
@@ -275,7 +279,7 @@
     tbody.innerHTML = rows.map(function(r) {
       var acts = '';
       if (r.estado === 'PENDIENTE') {
-        acts = '<button class="act-btn act-ghost">Ver hilo</button><button class="act-btn act-danger">Retirar oferta</button>';
+        acts = '<button class="act-btn act-ghost">Ver hilo</button><button class="act-btn act-danger" onclick="showRetireConfirm(this)">Retirar oferta</button>';
       } else if (r.estado === 'EXPIRADA') {
         acts = '<button class="act-btn act-ghost">Renovar</button>';
       } else if (r.estado === 'ACEPTADA') {
@@ -283,7 +287,7 @@
       } else {
         acts = '<button class="act-btn act-ghost">Ver hilo</button>';
       }
-      return '<tr>'+
+      return '<tr data-thread="'+r.threadId+'">'+
         '<td><span class="tbl-ref">'+r.ref+'</span><span class="tbl-brand">'+r.brand+'</span></td>'+
         '<td><a class="tbl-org" href="DIR-02%20%C2%B7%20DIR%20v1.0.html"><i class="ti ti-building" style="font-size:11px"></i>'+r.org+'</a></td>'+
         '<td><span class="st-badge '+r.stClass+'">'+r.estado+'</span></td>'+
@@ -347,6 +351,37 @@
       });
     }
     doSort();
+  }
+
+  /* ─── Retirar oferta — confirmación inline ─────────────────── */
+  function showRetireConfirm(btn) {
+    var td = btn.closest('td');
+    td.innerHTML = '<div class="confirm-inline">'+
+      '<span class="confirm-txt">¿Retirar esta oferta?</span>'+
+      '<button class="act-btn act-cancel" onclick="cancelRetire(this)">Cancelar</button>'+
+      '<button class="act-confirm" onclick="confirmRetire(this)">Retirar</button>'+
+      '</div>';
+  }
+
+  function cancelRetire(btn) {
+    var td = btn.closest('td');
+    td.innerHTML = '<div class="tbl-acts">'+
+      '<button class="act-btn act-ghost">Ver hilo</button>'+
+      '<button class="act-btn act-danger" onclick="showRetireConfirm(this)">Retirar oferta</button>'+
+      '</div>';
+  }
+
+  function confirmRetire(btn) {
+    var tr = btn.closest('tr');
+    var threadId = tr.dataset.thread;
+    DATA.splice(DATA.findIndex(function(d){return d.threadId===threadId;}),1);
+    tr.style.transition='opacity .2s';
+    tr.style.opacity='0';
+    setTimeout(function(){
+      tr.remove();
+      var count=document.querySelectorAll('#ofertasTbody tr').length;
+      document.getElementById('resultCount').textContent=count+(count===1?' oferta':' ofertas');
+    },200);
   }
 
   /* ─── Nav ───────────────────────────────────────────────────── */

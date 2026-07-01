@@ -35,7 +35,7 @@ Todas en `openspec/design-gui/specs y html aprobados/` (HTML en la raíz de esa 
 | FRU | Onboarding | `FRU · FRU v1.0.html` | `specs/Rinworld_spec_FRU.md` | Formulario usuario adicional |
 | INVT-01 / REC-01 / SET-SEC-01 | Onboarding / seguridad | `INVT-01 · INV v1.0.html`, `REC-01 · REC v1.0.html`, `SET-SEC-01 · SSC v1.0.html` | `specs/Rigworld_spec_INVT-01_REC-01_SET-SEC-01.md` | Gestión invitaciones, recuperación de clave, cambiar passphrase — spec combinada |
 | INV-01 a INV-04 | Inventario | `INV-01`…`INV-04 · INV v1.0.html` | `specs/Rinworld_spec_INV-01.md`…`INV-04.md` | |
-| INV-07 | Inventario | `INV-07 · VIS v1.0.html` | `specs/Rinworld_spec_INV-07.md` | Nota: `INV-05`/`INV-06` no tienen HTML — ver §8 pendientes |
+| INV-07 | Inventario | `INV-07 · VIS v1.0.html` | `specs/Rinworld_spec_INV-07.md` | Vigente para V1 (DEC-001 revertida, ver §6). `INV-05` diferido a V2, `INV-06` reservado sin uso — ver §8 |
 | SRCH-01 a SRCH-03 | Búsqueda conversacional | `SRCH-01`…`SRCH-03 · SRCH v1.0.html` | `specs/Rinworld_spec_SRCH-01.md`…`SRCH-03.md` | SRCH-01 tuvo un bug de navegación corregido — ver §9 |
 | MSG-01 a MSG-03 | Mensajería E2EE | `MSG-01`…`MSG-03 · MSG v1.0.html` | `specs/Rinworld_spec_MSG-01.md`…`MSG-03.md` | |
 | VND-01 | Mensajería / vendedor | `VND-01 · VND v1.0.html` | `specs/Rinworld_spec_VND-01.md` | Decisión de producto: solo metadatos, ver §7 |
@@ -144,9 +144,7 @@ Ninguno es bloqueante para arrancar la construcción del arnés, pero **GAP-001,
 
 ## 6. Decisiones de producto registradas (`openspec/product-decisions.md`)
 
-- **DEC-001:** Eliminación del botón "Simular visibilidad" y de la pantalla INV-07 asociada — el funcional original (Módulo 02 v1.3 §6.4) lo documentaba pero no se identificó utilidad real; descartado para V1.
-
-> Nota de inconsistencia detectada: **INV-07 sí tiene HTML aprobado** (`INV-07 · VIS v1.0.html`) en la carpeta de trabajo, pese a DEC-001. Verificar con el Product Owner si ese HTML debe eliminarse/archivarse o si DEC-001 quedó parcialmente revertido — no se ha tocado en esta sesión por no tener contexto suficiente para decidir unilateralmente.
+- **DEC-001 — REVERTIDA (Julio 2026):** originalmente eliminaba el botón "Simular visibilidad" y la pantalla INV-07. Resuelto por el PO: **manda el HTML ya aprobado** — INV-07 (`INV-07 · VIS v1.0.html`) queda vigente para V1. `product-decisions.md` actualizado en consecuencia (tachado + nota de reversión, no se borra el histórico).
 
 ---
 
@@ -164,7 +162,10 @@ Ninguno es bloqueante para arrancar la construcción del arnés, pero **GAP-001,
 
 ## 8. Pendientes conocidos de la fase de prototipado (no gaps de producto, huecos de prototipo)
 
-- **INV-05, INV-06:** referenciados en el inventario de pantallas pero sin HTML generado. Confirmar con el PO si siguen vigentes o fueron descartados junto con INV-07 en DEC-001.
+- **INV-05, INV-06 — resuelto (Julio 2026):** ambos códigos están correctamente **reservados y sin construir a propósito**, no son un hueco accidental (confirmado por `docs/Rinworld.io_Inventario_Pantallas_v1.1.md`, nota de inconsistencia junio 2026 + confirmación del PO):
+  - **INV-05** = "Configuración de Carpeta Monitorizada" — **diferido a V2**, no se construye en esta fase.
+  - **INV-06** = código **libre/sin asignar** en el inventario maestro; reservado por si en el futuro se decide dar pantalla propia a "Perfiles de Mapeo Guardados" (esa funcionalidad vive integrada como sección dentro de INV-04 en V1).
+  - Se eliminó `specs/Rinworld_spec_INV-05.md` de la carpeta de trabajo: era la spec de diseño **incorrecta** de una versión previa (usaba el código INV-05 para "Perfiles de Mapeo Guardados" por error), que el propio inventario maestro ya declaraba retirada pero que seguía presente físicamente como basura documental.
 - **`Rinworld_handoff_claude_code.md`** (el handoff anterior, de junio 2026): quedó parcialmente desactualizado por este documento — sigue siendo útil como referencia histórica del sistema de diseño, pero su sección "Specs de pantalla escritas (pendientes de HTML)" ya no refleja el estado real (todas esas pantallas se completaron después). No se ha borrado ni tocado.
 - **`nav.js`** es un script compartido por todas las pantallas que simula la navegación del prototipo (mapea nav bar/sidebar a ficheros, y engancha flujos de click específicos por pantalla — filas de tabla, botones de acción). El agente de implementación React deberá sustituir esta navegación simulada por routing real; `nav.js` es *solo* andamiaje de prototipo, no debe traducirse literalmente a producción.
 

@@ -45,7 +45,8 @@
   if (page === 'SRCH-01') {
     document.querySelectorAll('tr[onclick], .srch-row, tbody tr').forEach(function (row) {
       row.style.cursor = 'pointer';
-      row.addEventListener('click', function () {
+      row.addEventListener('click', function (e) {
+        if (e.target.closest('input, button, .td-chk, .actions-cell, .cell-fav')) return;
         window.location.href = 'MSG-02 · MSG v1.0.html';
       });
     });

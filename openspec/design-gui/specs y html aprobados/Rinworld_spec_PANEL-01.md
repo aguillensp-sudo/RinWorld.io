@@ -58,6 +58,7 @@ Grid responsive de tarjetas (2 columnas en desktop, 1 en mobile). Cada tarjeta e
 | Título | `Ofertas` |
 | Número grande | Count de ofertas con `offer_status = PENDIENTE` emitidas por la organización (mismo criterio que VND-01, RNG-VND-02) |
 | Etiqueta bajo el número | `pendientes de respuesta` |
+| Línea de detalle | `Más reciente: {referencia} · {organización} ({fecha})` — de la oferta PENDIENTE con `sent_at` más reciente |
 | Click → | Navega a **VND-01** (Vendiendo) |
 
 ### 4.2 Resumen de Consultas
@@ -68,6 +69,7 @@ Grid responsive de tarjetas (2 columnas en desktop, 1 en mobile). Cada tarjeta e
 | Título | `Consultas` |
 | Número grande | Count de consultas enviadas a proveedores (acción "Consultar" / "Consultar seleccionados" en SRCH-01) que aún no tienen respuesta registrada |
 | Etiqueta bajo el número | `sin respuesta` |
+| Línea de detalle | `Última consulta: {referencia} · {organización}` — de la consulta más reciente sin respuesta |
 | Click → | Navega a **SRCH-01** (Comprando) |
 
 ### 4.3 Resumen de Inventario
@@ -89,18 +91,19 @@ Grid responsive de tarjetas (2 columnas en desktop, 1 en mobile). Cada tarjeta e
 | Título | `Hilos` |
 | Número grande | Count de hilos con al menos un mensaje no leído (mismo criterio de "no leído" que MSG-01) |
 | Etiqueta bajo el número | `con mensajes sin leer` |
+| Línea de detalle | `Más reciente: {organización} — {estatus del hilo}` — del hilo no leído más reciente |
 | Click → | Navega a **MSG-01** (Hilos) |
 
-### 4.5 Cajas adicionales (propuesta, sujeta a validación PO)
+### 4.5 Cajas adicionales
 
-El origen funcional autoriza explícitamente añadir cajas adicionales sin necesidad de aprobación previa. Se proponen dos, marcadas como **NO BLOQUEANTE** para no retrasar la construcción de las 4 cajas obligatorias:
+Implementadas junto con las 4 obligatorias, según autorización explícita del origen funcional para añadir cajas sin aprobación previa:
 
-| Caja | Contenido propuesto | Click → |
+| Caja | Contenido | Click → |
 |---|---|---|
 | Cierres del mes | Nº de ofertas ACEPTADAS + consultas resueltas en los últimos 30 días | VND-01 |
-| Favoritos recibidos | Nº de veces que la organización fue añadida a favoritos por otros miembros durante el mes | DIR-02 (perfil propio) |
+| Favoritos recibidos | Nº de veces que la organización fue añadida a favoritos por otros miembros durante el mes | DIR-01/DIR-02 (perfil propio) |
 
-> Estado: **ABIERTO** — GAP-007 (ver § 8). Se implementan las 4 cajas obligatorias primero; estas dos quedan para una segunda iteración si el PO las confirma.
+> Estado: **CERRADO** — GAP-007 resuelto, cajas implementadas en el HTML. Pendiente de confirmación del PO sobre la fuente de datos definitiva de "favoritos recibidos" (hoy no existe endpoint específico).
 
 ---
 
@@ -147,7 +150,7 @@ El origen funcional autoriza explícitamente añadir cajas adicionales sin neces
 
 | ID | Gap |
 |---|---|
-| GAP-007 | Cajas adicionales propuestas en § 4.5 (cierres del mes, favoritos recibidos) no están confirmadas por el Product Owner — quedan como backlog de segunda iteración. |
+| GAP-007 | Cajas adicionales de § 4.5 (cierres del mes, favoritos recibidos) implementadas en el prototipo HTML. "Favoritos recibidos" no tiene endpoint de backend definido todavía — pendiente de confirmación del PO sobre su fuente de datos real. |
 
 ---
 

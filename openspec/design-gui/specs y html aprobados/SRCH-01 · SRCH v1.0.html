@@ -244,13 +244,10 @@
     <!-- CONTENT -->
     <div class="bwcnt">
       <div class="eyebrow">Módulo 03 · Búsqueda Conversacional</div>
-      <div class="page-title">Resultados de búsqueda</div>
+      <div class="page-title">Mis consultas</div>
 
       <!-- CHIPS -->
       <div class="chips-row" id="chipsRow">
-        <div class="chip"><span class="chip-label">Ref</span>6205-2RS<button class="chip-x" onclick="removeChip(this)" title="Quitar filtro">×</button></div>
-        <div class="chip"><span class="chip-label">Qty mín</span>500 u<button class="chip-x" onclick="removeChip(this)" title="Quitar filtro">×</button></div>
-        <div class="chip"><span class="chip-label">Zona</span>Europa<button class="chip-x" onclick="removeChip(this)" title="Quitar filtro">×</button></div>
         <button class="chip-add" onclick="addFilterChip()"><i class="ti ti-plus" style="font-size:13px"></i> Filtro</button>
       </div>
 
@@ -271,7 +268,7 @@
             <div class="filter-title">Filtros</div>
             <div class="filter-group">
               <div class="filter-lbl">País / Región</div>
-              <input class="filter-inp" type="text" placeholder="País o zona..." value="Europa">
+              <input class="filter-inp" type="text" placeholder="País o zona...">
             </div>
             <div class="filter-group">
               <div class="filter-lbl">Marca</div>
@@ -279,7 +276,7 @@
             </div>
             <div class="filter-group">
               <div class="filter-lbl">Cantidad mín.</div>
-              <input class="filter-inp" type="number" placeholder="500" value="500">
+              <input class="filter-inp" type="number" placeholder="500">
             </div>
             <div class="filter-group">
               <div class="filter-lbl">Lead time máx.</div>
@@ -313,7 +310,7 @@
             <tbody id="tblBody">
               <!-- Fila 1: ok qty, no consultada -->
               <tr data-marca="SKF" data-cantidad="850" data-plazo="3" data-pais="Suecia" data-antiguedad="0" data-favoritos="12">
-                <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
+                <td class="td-chk"><input type="checkbox" class="row-chk"></td>
                 <td><span class="cell-ref">6205-2RS/C3</span></td>
                 <td><span class="badge-marca">SKF</span></td>
                 <td><span class="cell-qty ok">850</span></td>
@@ -326,7 +323,7 @@
               </tr>
               <!-- Fila 2: qty baja, no consultada -->
               <tr data-marca="FAG" data-cantidad="350" data-plazo="5" data-pais="España" data-antiguedad="1" data-favoritos="8">
-                <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
+                <td class="td-chk"><input type="checkbox" class="row-chk"></td>
                 <td><span class="cell-ref">6205-2RS1</span></td>
                 <td><span class="badge-marca">FAG</span></td>
                 <td><span class="cell-qty low">350</span></td>
@@ -339,7 +336,7 @@
               </tr>
               <!-- Fila 3: ok qty, no consultada -->
               <tr data-marca="NSK" data-cantidad="1200" data-plazo="7" data-pais="Alemania" data-antiguedad="2" data-favoritos="21">
-                <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
+                <td class="td-chk"><input type="checkbox" class="row-chk"></td>
                 <td><span class="cell-ref">6205-2RSC3E</span></td>
                 <td><span class="badge-marca">NSK</span></td>
                 <td><span class="cell-qty ok">1.200</span></td>
@@ -352,7 +349,7 @@
               </tr>
               <!-- Fila 4: qty baja, antigüedad alta -->
               <tr data-marca="NTN" data-cantidad="200" data-plazo="2" data-pais="Francia" data-antiguedad="8" data-favoritos="5">
-                <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
+                <td class="td-chk"><input type="checkbox" class="row-chk"></td>
                 <td><span class="cell-ref">6205LLB/5K</span></td>
                 <td><span class="badge-marca">NTN</span></td>
                 <td><span class="cell-qty low">200</span></td>
@@ -365,7 +362,7 @@
               </tr>
               <!-- Fila 5: ok qty, ya consultada -->
               <tr class="consulted" data-marca="TIMKEN" data-cantidad="600" data-plazo="10" data-pais="Alemania" data-antiguedad="3" data-favoritos="9">
-                <td class="td-chk"><input type="checkbox" class="row-chk" onchange="onChkChange()"></td>
+                <td class="td-chk"><input type="checkbox" class="row-chk"></td>
                 <td><span class="cell-ref">6205-2RS-JEM</span></td>
                 <td><span class="badge-marca">TIMKEN</span></td>
                 <td><span class="cell-qty ok">600</span></td>
@@ -534,7 +531,7 @@
   }
 
   /* Sort */
-  let sortState = { col: 'cantidad', dir: 'desc' }; // default
+  let sortState = { col: 'antiguedad', dir: 'asc' }; // default: más reciente primero
   const sortNumCols = ['cantidad', 'plazo', 'antiguedad', 'favoritos'];
   const sortLabels = { marca: 'marca', cantidad: 'cantidad', plazo: 'plazo', pais: 'país', antiguedad: 'antigüedad', favoritos: 'favoritos' };
 
@@ -583,10 +580,11 @@
     rows.forEach(r => tbody.appendChild(r));
   }
 
-  // Init default sort indicator
+  // Init default sort: antigüedad asc (más reciente primero)
   document.addEventListener('DOMContentLoaded', () => {
-    const th = document.querySelector('.results-table th[data-col="cantidad"]');
-    if (th) th.classList.add('sort-desc');
+    const th = document.querySelector('.results-table th[data-col="antiguedad"]');
+    if (th) th.classList.add('sort-asc');
+    applySortDOM('antiguedad', 'asc');
   });
 
   /* VERA sort command */

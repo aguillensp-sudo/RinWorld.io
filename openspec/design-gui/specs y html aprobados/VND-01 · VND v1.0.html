@@ -206,6 +206,7 @@
           <thead>
             <tr>
               <th class="sortable" data-col="0" onclick="sortTbl(0)">Referencia <i class="sort-ico"></i></th>
+              <th class="sortable" data-col="4" onclick="sortTbl(4)">Marca <i class="sort-ico"></i></th>
               <th class="sortable" data-col="1" onclick="sortTbl(1)">Organización <i class="sort-ico"></i></th>
               <th class="sortable" data-col="2" onclick="sortTbl(2)">Estado <i class="sort-ico"></i></th>
               <th class="sortable" data-col="3" onclick="sortTbl(3)">Fecha <i class="sort-ico"></i></th>
@@ -278,17 +279,19 @@
     document.getElementById('resultCount').textContent = rows.length + (rows.length === 1 ? ' oferta' : ' ofertas');
     tbody.innerHTML = rows.map(function(r) {
       var acts = '';
+      var msgUrl = 'MSG-02%20%C2%B7%20MSG%20v1.0.html#'+r.threadId;
       if (r.estado === 'PENDIENTE') {
-        acts = '<button class="act-btn act-ghost">Ver hilo</button><button class="act-btn act-danger" onclick="showRetireConfirm(this)">Retirar oferta</button>';
+        acts = '<button class="act-btn act-ghost" onclick="window.location.href=\''+msgUrl+'\'">Ver hilo</button><button class="act-btn act-danger" onclick="showRetireConfirm(this)">Retirar oferta</button>';
       } else if (r.estado === 'EXPIRADA') {
-        acts = '<button class="act-btn act-ghost">Renovar</button>';
+        acts = '<button class="act-btn act-ghost" onclick="window.location.href=\''+msgUrl+'\'">Renovar</button>';
       } else if (r.estado === 'ACEPTADA') {
-        acts = '<button class="act-btn act-primary">Ver acuerdo</button>';
+        acts = '<button class="act-btn act-primary" onclick="window.location.href=\''+msgUrl+'\'">Ver acuerdo</button>';
       } else {
-        acts = '<button class="act-btn act-ghost">Ver hilo</button>';
+        acts = '<button class="act-btn act-ghost" onclick="window.location.href=\''+msgUrl+'\'">Ver hilo</button>';
       }
       return '<tr data-thread="'+r.threadId+'">'+
-        '<td><span class="tbl-ref">'+r.ref+'</span><span class="tbl-brand">'+r.brand+'</span></td>'+
+        '<td><span class="tbl-ref">'+r.ref+'</span></td>'+
+        '<td><span class="tbl-ref" style="font-size:11px">'+r.brand+'</span></td>'+
         '<td><a class="tbl-org" href="DIR-02%20%C2%B7%20DIR%20v1.0.html"><i class="ti ti-building" style="font-size:11px"></i>'+r.org+'</a></td>'+
         '<td><span class="st-badge '+r.stClass+'">'+r.estado+'</span></td>'+
         '<td><span class="ts">'+r.fechaStr+'</span></td>'+
@@ -298,7 +301,7 @@
   }
 
   /* ─── Sort ──────────────────────────────────────────────────── */
-  var sortKeys = ['ref', 'org', 'estado', 'fecha'];
+  var sortKeys = ['ref', 'org', 'estado', 'fecha', 'brand'];
 
   function sortTbl(col) {
     if (sortCol === col) {
@@ -365,8 +368,10 @@
 
   function cancelRetire(btn) {
     var td = btn.closest('td');
+    var threadId = btn.closest('tr').dataset.thread;
+    var msgUrl = 'MSG-02%20%C2%B7%20MSG%20v1.0.html#'+threadId;
     td.innerHTML = '<div class="tbl-acts">'+
-      '<button class="act-btn act-ghost">Ver hilo</button>'+
+      '<button class="act-btn act-ghost" onclick="window.location.href=\''+msgUrl+'\'">Ver hilo</button>'+
       '<button class="act-btn act-danger" onclick="showRetireConfirm(this)">Retirar oferta</button>'+
       '</div>';
   }

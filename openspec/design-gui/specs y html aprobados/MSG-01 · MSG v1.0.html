@@ -184,16 +184,20 @@
       <div class="actions-bar">
         <div class="search-wrap">
           <i class="ti ti-search"></i>
-          <input class="search-input" type="text" placeholder="Buscar por nombre de organización...">
+          <input class="search-input" type="text" id="threadSearch" placeholder="Buscar por nombre de organización..." oninput="searchThreads(this.value)">
         </div>
         <button class="btn-primary" onclick="irDir01()"><i class="ti ti-address-book"></i>Nuevo contacto</button>
         <span class="thread-count">5 hilos · Página 1 de 1</span>
       </div>
 
-      <div class="thread-list">
+      <div style="display:grid;grid-template-columns:1fr auto;padding:6px 18px;background:white;border:1px solid #E5E7EB;border-radius:8px 8px 0 0;border-bottom:none">
+        <span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;cursor:pointer" onclick="sortThreads('empresa')">Empresa <span id="sortEmpresa"></span></span>
+        <span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9BA4B0;cursor:pointer" onclick="sortThreads('estatus')">Estatus <span id="sortEstatus"></span></span>
+      </div>
+      <div class="thread-list" style="border-radius:0 0 8px 8px">
 
         <!-- Hilo 1: NSK — CON OFERTA PENDIENTE, 1 no leído -->
-        <div class="thread-row unread-row" onclick="irMsg02()">
+        <div class="thread-row unread-row" onclick="irMsg02()" data-empresa="NSK Europe Ltd" data-estatus="CON OFERTA PENDIENTE">
           <div class="thread-top">
             <span class="thread-org">NSK Europe Ltd</span>
             <span class="badge-pais-sm">Alemania</span>
@@ -210,7 +214,7 @@
         </div>
 
         <!-- Hilo 2: Schaeffler — CON CONSULTA PENDIENTE -->
-        <div class="thread-row" onclick="irMsg02()">
+        <div class="thread-row" onclick="irMsg02()" data-empresa="Schaeffler Iberia SL" data-estatus="CON CONSULTA PENDIENTE">
           <div class="thread-top">
             <span class="thread-org">Schaeffler Iberia SL</span>
             <span class="badge-pais-sm">España</span>
@@ -226,7 +230,7 @@
         </div>
 
         <!-- Hilo 3: SKF — ABIERTO -->
-        <div class="thread-row" onclick="irMsg02()">
+        <div class="thread-row" onclick="irMsg02()" data-empresa="SKF Nordic AB" data-estatus="ABIERTO">
           <div class="thread-top">
             <span class="thread-org">SKF Nordic AB</span>
             <span class="badge-pais-sm">Suecia</span>
@@ -242,7 +246,7 @@
         </div>
 
         <!-- Hilo 4: Timken — ACUERDO ALCANZADO -->
-        <div class="thread-row" onclick="irMsg02()">
+        <div class="thread-row" onclick="irMsg02()" data-empresa="Timken Europe GmbH" data-estatus="ACUERDO ALCANZADO">
           <div class="thread-top">
             <span class="thread-org">Timken Europe GmbH</span>
             <span class="badge-pais-sm">Alemania</span>
@@ -258,7 +262,7 @@
         </div>
 
         <!-- Hilo 5: NTN-SNR — CERRADO SIN ACUERDO -->
-        <div class="thread-row" onclick="irMsg02()">
+        <div class="thread-row" onclick="irMsg02()" data-empresa="NTN-SNR Roulements" data-estatus="CERRADO SIN ACUERDO">
           <div class="thread-top">
             <span class="thread-org">NTN-SNR Roulements</span>
             <span class="badge-pais-sm">Francia</span>
@@ -322,6 +326,28 @@
   function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido.</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},800)}
   function irMsg02(){window.location.href='MSG-02%20%C2%B7%20MSG%20v1.0.html'}
   function irDir01(){window.location.href='DIR-01%20%C2%B7%20DIR%20v1.0.html'}
+
+  function searchThreads(q){
+    const term=q.toLowerCase().trim();
+    document.querySelectorAll('.thread-row').forEach(r=>{
+      r.style.display=(!term||r.dataset.empresa.toLowerCase().includes(term))?'':'none';
+    });
+  }
+
+  let threadSort={col:null,dir:'asc'};
+  function sortThreads(col){
+    const list=document.querySelector('.thread-list');
+    const rows=[...list.querySelectorAll('.thread-row')];
+    if(threadSort.col===col) threadSort.dir=threadSort.dir==='asc'?'desc':'asc';
+    else{threadSort.col=col;threadSort.dir='asc';}
+    rows.sort((a,b)=>{
+      const va=a.dataset[col]||'';const vb=b.dataset[col]||'';
+      return threadSort.dir==='asc'?va.localeCompare(vb,'es'):vb.localeCompare(va,'es');
+    });
+    rows.forEach(r=>list.appendChild(r));
+    document.getElementById('sortEmpresa').textContent=col==='empresa'?(threadSort.dir==='asc'?' ↑':' ↓'):'';
+    document.getElementById('sortEstatus').textContent=col==='estatus'?(threadSort.dir==='asc'?' ↑':' ↓'):'';
+  }
 </script>
 <script src="nav.js"></script>
 </body>

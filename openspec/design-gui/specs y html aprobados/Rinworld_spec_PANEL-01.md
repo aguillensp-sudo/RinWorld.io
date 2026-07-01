@@ -94,16 +94,30 @@ Grid responsive de tarjetas (2 columnas en desktop, 1 en mobile). Cada tarjeta e
 | Línea de detalle | `Más reciente: {organización} — {estatus del hilo}` — del hilo no leído más reciente |
 | Click → | Navega a **MSG-01** (Hilos) |
 
-### 4.5 Cajas adicionales
+### 4.5 Caja "Resumen mes" (ancho completo)
 
-Implementadas junto con las 4 obligatorias, según autorización explícita del origen funcional para añadir cajas sin aprobación previa:
+Caja adicional a lo ancho de las 2 columnas del grid (spans full row), con 3 métricas en línea, cada una con número grande + etiqueta:
 
-| Caja | Contenido | Click → |
-|---|---|---|
-| Cierres del mes | Nº de ofertas ACEPTADAS + consultas resueltas en los últimos 30 días | VND-01 |
-| Favoritos recibidos | Nº de veces que la organización fue añadida a favoritos por otros miembros durante el mes | DIR-01/DIR-02 (perfil propio) |
+| Métrica | Número grande | Etiqueta | Definición |
+|---|---|---|---|
+| 1 | Nº de ofertas ACEPTADAS en el mes corriente | `Ofertas Aceptadas` | Igual que la métrica ya existente |
+| 2 | `X` | `Ofertas Realizadas` | Nº de ofertas que la organización ha hecho a otros usuarios en el mes corriente |
+| 3 | `Y` | `Consultas Realizadas` | Nº de consultas que la organización ha **recibido** de otros usuarios (como proveedor) en el mes corriente |
 
-> Estado: **CERRADO** — GAP-007 resuelto, cajas implementadas en el HTML. Pendiente de confirmación del PO sobre la fuente de datos definitiva de "favoritos recibidos" (hoy no existe endpoint específico).
+- Icono: `ti-circle-check`
+- Título de la caja: `Resumen mes`
+- Click → Navega a **VND-01** (Vendiendo)
+
+### 4.6 Caja "Favoritos recibidos"
+
+| Atributo | Valor |
+|---|---|
+| Icono | `ti-star` |
+| Título | `Favoritos recibidos` |
+| Número grande | Nº de veces que la organización fue añadida a favoritos por otros miembros durante el mes |
+| Click → | Navega a DIR-01/DIR-02 (perfil propio) |
+
+> Estado: **CERRADO** — GAP-007 resuelto, cajas implementadas en el HTML. Pendiente de confirmación del PO sobre la fuente de datos definitiva de "favoritos recibidos" y "consultas realizadas (recibidas)" — hoy no existe endpoint específico para ninguna de las dos.
 
 ---
 

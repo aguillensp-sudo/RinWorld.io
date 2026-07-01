@@ -96,6 +96,10 @@
     .dash-label{font-size:12px;color:#6B7A99}
     .dash-inv-line{font-size:13px;color:#374151}
     .dash-inv-line b{color:#1B2537;font-weight:600}
+    .dash-card-wide{grid-column:1 / -1}
+    .dash-metrics-row{display:flex;gap:32px}
+    .dash-metric{display:flex;flex-direction:column;gap:6px}
+    @media (max-width:520px){.dash-metrics-row{flex-direction:column;gap:14px}}
   </style>
 </head>
 <body>
@@ -197,14 +201,26 @@
           <div class="dash-inv-line">Más reciente: <b>NSK Europe Ltd</b> — con oferta pendiente</div>
         </div>
 
-        <!-- Cierres del mes -->
-        <div class="dash-card" onclick="nav('Vendiendo')">
+        <!-- Resumen mes (ancho completo) -->
+        <div class="dash-card dash-card-wide" onclick="nav('Vendiendo')">
           <div class="dash-card-hd">
             <div class="dash-ico"><i class="ti ti-circle-check"></i></div>
-            <div class="dash-title">Cierres del mes</div>
+            <div class="dash-title">Resumen mes</div>
           </div>
-          <div class="dash-num">3</div>
-          <div class="dash-label">ofertas aceptadas + consultas resueltas (últimos 30 días)</div>
+          <div class="dash-metrics-row">
+            <div class="dash-metric">
+              <div class="dash-num">3</div>
+              <div class="dash-label">Ofertas Aceptadas</div>
+            </div>
+            <div class="dash-metric">
+              <div class="dash-num">7</div>
+              <div class="dash-label">Ofertas Realizadas</div>
+            </div>
+            <div class="dash-metric">
+              <div class="dash-num">12</div>
+              <div class="dash-label">Consultas Realizadas</div>
+            </div>
+          </div>
         </div>
 
         <!-- Favoritos recibidos -->

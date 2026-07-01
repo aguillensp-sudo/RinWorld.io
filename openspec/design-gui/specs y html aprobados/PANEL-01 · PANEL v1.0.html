@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PANEL-01 · Mi Panel — Bearingworld.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100vh;font-family:'Inter',sans-serif}
+    .bwshell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .bwbrand{height:24px;background:#07111F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);flex-shrink:0}
+    .bwnav{height:72px;background:#07111F;display:flex;align-items:center;padding:0 14px;flex-shrink:0;z-index:100}
+    .bwhbg{width:30px;height:30px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:4px;padding:6px;flex-shrink:0;transition:background .12s}
+    .bwhbg:hover{background:rgba(255,255,255,.08)}
+    .bwhbg span{display:block;width:14px;height:1.5px;background:white}
+    .bwnavdiv{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+    .bwnavitems{display:flex;align-items:center;flex:1;overflow:hidden}
+    .bwnavitem{padding:0 12px;height:72px;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s;flex-shrink:0}
+    .bwnavitem:hover{color:rgba(255,255,255,.9)}
+    .bwnavitem.act{color:white;border-bottom-color:#2563EB}
+    .bwnavright{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:auto}
+    .bwnavco{font-size:11px;font-weight:500;color:white;white-space:nowrap}
+    .bwnavun{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+    .bwnavsout{padding:5px 12px;border-radius:4px;background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+    .bwnavsout:hover{background:rgba(255,255,255,.13);color:white}
+    .bwmain{display:flex;flex:1;overflow:hidden;position:relative}
+    .bwsbo{position:absolute;inset:0;background:rgba(0,0,0,0);z-index:20;pointer-events:none;transition:background .2s}
+    .bwsbo.open{background:rgba(0,0,0,.38);pointer-events:auto}
+    .bwsb{position:absolute;left:0;top:0;bottom:0;width:210px;background:#1B2537;z-index:21;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease}
+    .bwsb.open{transform:translateX(0)}
+    .bwsbh{padding:12px 14px;border-bottom:.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .bwsbx{width:24px;height:24px;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:inherit;transition:all .12s}
+    .bwsbx:hover{background:rgba(255,255,255,.08);color:white}
+    .bwsbnav{flex:1;padding:8px 0;overflow-y:auto}
+    .bwsbitem{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+    .bwsbitem i{font-size:16px;flex-shrink:0}
+    .bwsbitem:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .bwsbitem.act{color:white;border-left-color:#2563EB;background:rgba(37,99,235,.12)}
+    .bwsbft{padding:12px 14px;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .bwsbset{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:color .12s}
+    .bwsbset i{font-size:16px}
+    .bwsbset:hover{color:rgba(255,255,255,.8)}
+    .bwsbusr{display:flex;align-items:center;gap:9px}
+    .bwav{width:28px;height:28px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;flex-shrink:0}
+    .bwsbusrn{font-size:12px;font-weight:500;color:white}
+    .bwsbusro{font-size:11px;color:rgba(255,255,255,.38)}
+
+    /* VERA */
+    .bwvera{width:calc(33.333% - .5px);min-width:32px;background:#FAF8F4;display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease;position:relative;flex-shrink:0;border-left:.5px solid rgba(184,146,74,.18)}
+    .bwvera.col{width:32px}
+    .bwveratg{position:absolute;left:-11px;top:50%;transform:translateY(-50%);width:22px;height:36px;background:#FAF8F4;border:.5px solid rgba(184,146,74,.22);border-radius:5px 0 0 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7A99;font-size:13px;z-index:2;transition:color .12s}
+    .bwvera-resize{position:absolute;left:0;top:0;bottom:0;width:4px;cursor:col-resize;z-index:1}
+    .bwveratg:hover{color:#1B2537}
+    .bwveralbl{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;color:#6B7A99;letter-spacing:.05em;align-items:center;justify-content:center;flex:1;cursor:pointer}
+    .bwvera.col .bwveralbl{display:flex}
+    .bwvera.col .bwvh,.bwvera.col .bwchat,.bwvera.col .bwia{display:none}
+    .bwvh{padding:12px;border-bottom:.5px solid rgba(184,146,74,.18);display:flex;align-items:center;gap:9px;flex-shrink:0}
+    .bwvico{width:28px;height:28px;border-radius:50%;background:#1B2537;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bwvname{font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#1B2537}
+    .bwvsub{font-size:13px;color:#6B7A99}
+    .bwvdot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+    .bwchat{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+    .bwmsg{display:flex;flex-direction:column;gap:3px}
+    .bwmsg.u{align-items:flex-end}
+    .bwmsg.v{align-items:flex-start}
+    .bwbub{padding:9px 11px;border-radius:10px;font-size:14px;line-height:1.5;max-width:92%}
+    .bwmsg.u .bwbub{background:#1B2537;color:white;border-bottom-right-radius:3px}
+    .bwmsg.v .bwbub{background:white;color:#1B2537;border-bottom-left-radius:3px;border:.5px solid rgba(184,146,74,.2)}
+    .bwts{font-size:12px;color:#6B7A99;padding:0 3px}
+    .bwia{padding:10px;border-top:.5px solid rgba(184,146,74,.18);flex-shrink:0}
+    .bwir{display:flex;gap:6px;align-items:flex-end}
+    .bwinpa{flex:1;padding:8px 10px;border-radius:7px;border:.5px solid rgba(184,146,74,.3);background:white;font-family:inherit;font-size:14px;color:#1B2537;resize:none;outline:none;min-height:34px;max-height:72px;transition:border-color .12s}
+    .bwinpa:focus{border-color:#B8924A}
+    .bwinpa::placeholder{color:#6B7A99}
+    .bwsnd{width:32px;height:32px;border-radius:7px;background:#B8924A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:14px;transition:opacity .12s}
+    .bwsnd:hover{opacity:.85}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(107,122,153,.2);border-radius:3px}
+
+    /* CONTENT */
+    .bwcnt{flex:1;overflow-y:auto;padding:24px 28px 40px;background:#F1F3F6;min-width:0}
+    .eyebrow{font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#2563EB;margin-bottom:4px}
+    .page-title{font-family:"Montserrat",sans-serif;font-size:20px;font-weight:700;color:#1B2537;margin-bottom:3px}
+    .page-sub{font-size:14px;color:#6B7A99;line-height:1.6;margin-bottom:24px;max-width:600px}
+
+    /* DASHBOARD GRID */
+    .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:820px}
+    @media (max-width:720px){.dash-grid{grid-template-columns:1fr}}
+    .dash-card{background:white;border:1px solid #E5E7EB;border-radius:10px;padding:18px 20px;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column;gap:6px}
+    .dash-card:hover{box-shadow:0 4px 14px rgba(27,37,55,.08);border-color:#D1D5DB}
+    .dash-card-hd{display:flex;align-items:center;gap:9px}
+    .dash-ico{width:32px;height:32px;border-radius:7px;background:rgba(37,99,235,.08);color:#2563EB;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .dash-title{font-family:"Montserrat",sans-serif;font-size:13px;font-weight:700;color:#1B2537;text-transform:uppercase;letter-spacing:.04em}
+    .dash-num{font-family:"Montserrat",sans-serif;font-size:32px;font-weight:700;color:#1B2537;line-height:1}
+    .dash-label{font-size:12px;color:#6B7A99}
+    .dash-inv-line{font-size:13px;color:#374151}
+    .dash-inv-line b{color:#1B2537;font-weight:600}
+  </style>
+</head>
+<body>
+<div class="bwshell">
+  <div class="bwbrand">
+    <div>ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY</div>
+    <div>CONNECT · TRADE · SECURE</div>
+    <div>INDUSTRIAL INTELLIGENCE NETWORK</div>
+  </div>
+
+  <div class="bwnav">
+    <button class="bwhbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+    <img src="intentologo.png" alt="Bearingworld.io" style="height:46px;width:auto">
+    <div class="bwnavdiv"></div>
+    <div class="bwnavitems">
+      <div class="bwnavitem act">Panel</div>
+      <div class="bwnavitem" onclick="nav('Vendiendo')">Vendiendo</div>
+      <div class="bwnavitem" onclick="nav('Comprando')">Comprando</div>
+      <div class="bwnavitem" onclick="nav('Hilos')">Hilos</div>
+      <div class="bwnavitem" onclick="nav('Inventario')">Inventario</div>
+      <div class="bwnavitem" onclick="nav('Empresas')">Empresas</div>
+      <div class="bwnavitem" onclick="nav('Foros')">Foros</div>
+      <div class="bwnavitem" onclick="nav('Contacto')">Contacto</div>
+    </div>
+    <div class="bwnavright">
+      <div><div class="bwnavco">Rodamientos del Sur SL</div><div class="bwnavun">Juan Martínez</div></div>
+      <button class="bwnavsout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="bwmain">
+    <div class="bwsbo" id="sbo" onclick="toggleSb()"></div>
+    <aside class="bwsb" id="sb">
+      <div class="bwsbh"><button class="bwsbx" onclick="toggleSb()">×</button></div>
+      <nav class="bwsbnav">
+        <div class="bwsbitem act"><i class="ti ti-layout-dashboard"></i>Panel</div>
+        <div class="bwsbitem" onclick="nav('Vendiendo')"><i class="ti ti-tag"></i>Vendiendo</div>
+        <div class="bwsbitem" onclick="nav('Comprando')"><i class="ti ti-shopping-cart"></i>Comprando</div>
+        <div class="bwsbitem" onclick="nav('Hilos')"><i class="ti ti-messages"></i>Hilos</div>
+        <div class="bwsbitem" onclick="nav('Inventario')"><i class="ti ti-package"></i>Inventario</div>
+        <div class="bwsbitem" onclick="nav('Empresas')"><i class="ti ti-building"></i>Empresas</div>
+        <div class="bwsbitem" onclick="nav('Foros')"><i class="ti ti-notes"></i>Foros</div>
+        <div class="bwsbitem" onclick="nav('Contacto')"><i class="ti ti-headset"></i>Contacto</div>
+      </nav>
+      <div class="bwsbft">
+        <div class="bwsbset"><i class="ti ti-adjustments-horizontal"></i>Configuración</div>
+        <div class="bwsbusr"><div class="bwav">JM</div><div><div class="bwsbusrn">Juan Martínez</div><div class="bwsbusro">Rodamientos del Sur SL</div></div></div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="bwcnt">
+      <div class="eyebrow">Panel · PANEL-01</div>
+      <div class="page-title">Mi Panel</div>
+      <div class="page-sub" id="pageSub">Bienvenido, Juan Martínez. Hoy es …</div>
+
+      <div class="dash-grid">
+        <!-- Ofertas -->
+        <div class="dash-card" onclick="nav('Vendiendo')">
+          <div class="dash-card-hd">
+            <div class="dash-ico"><i class="ti ti-tag"></i></div>
+            <div class="dash-title">Ofertas</div>
+          </div>
+          <div class="dash-num">2</div>
+          <div class="dash-label">pendientes de respuesta</div>
+        </div>
+
+        <!-- Consultas -->
+        <div class="dash-card" onclick="nav('Comprando')">
+          <div class="dash-card-hd">
+            <div class="dash-ico"><i class="ti ti-search"></i></div>
+            <div class="dash-title">Consultas</div>
+          </div>
+          <div class="dash-num">4</div>
+          <div class="dash-label">sin respuesta</div>
+        </div>
+
+        <!-- Inventario -->
+        <div class="dash-card" onclick="nav('Inventario')">
+          <div class="dash-card-hd">
+            <div class="dash-ico"><i class="ti ti-package"></i></div>
+            <div class="dash-title">Inventario</div>
+          </div>
+          <div class="dash-inv-line"><b>1.247</b> líneas publicadas</div>
+          <div class="dash-inv-line">Última publicación: 28 Jun 2026</div>
+          <div class="dash-inv-line"><b>892</b> visitas (30d)</div>
+        </div>
+
+        <!-- Hilos -->
+        <div class="dash-card" onclick="nav('Hilos')">
+          <div class="dash-card-hd">
+            <div class="dash-ico"><i class="ti ti-messages"></i></div>
+            <div class="dash-title">Hilos</div>
+          </div>
+          <div class="dash-num">3</div>
+          <div class="dash-label">con mensajes sin leer</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERA -->
+    <aside class="bwvera" id="vera">
+      <div class="bwvera-resize" id="veraResize"></div>
+      <button class="bwveratg" onclick="tgVera()"><i class="ti ti-chevron-right" id="vtgi"></i></button>
+      <div class="bwveralbl" onclick="tgVera()">VERA</div>
+      <div class="bwvh">
+        <div class="bwvico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="12" cy="12" r="2.5" stroke="#B8924A" stroke-width="1.5"/><circle cx="12" cy="6" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="12" cy="18" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="6" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/><circle cx="18" cy="12" r="1.3" fill="rgba(255,255,255,0.5)"/></svg>
+        </div>
+        <div><div class="bwvname">VERA</div><div class="bwvsub">Agente de búsqueda</div></div>
+        <div class="bwvdot"></div>
+      </div>
+      <div class="bwchat" id="bwchat">
+        <div class="bwmsg v"><div class="bwbub">Buenos días, Juan. Tienes 2 ofertas pendientes de respuesta, 4 consultas sin respuesta y 3 hilos con mensajes sin leer. Tu inventario recibió 892 visitas en los últimos 30 días. ¿Por dónde quieres empezar?</div><div class="bwts">09:02</div></div>
+        <div class="bwmsg u"><div class="bwbub">Llévame a mis ofertas pendientes</div><div class="bwts">09:03</div></div>
+        <div class="bwmsg v"><div class="bwbub">Abriendo Mis Ofertas, filtrado por PENDIENTE.</div><div class="bwts">09:03</div></div>
+      </div>
+      <div class="bwia">
+        <div class="bwir">
+          <textarea class="bwinpa" id="bwinpa" placeholder="Pregunta a VERA…" rows="1" onkeydown="vkey(event)" oninput="vrsz(this)"></textarea>
+          <button class="bwsnd" onclick="vsend()">→</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  /* ─── Fecha/saludo dinámicos ────────────────────────────────── */
+  (function() {
+    var USER_NAME = 'Juan Martínez';
+    var dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    var now = new Date();
+    var dia = dias[now.getDay()];
+    var fecha = String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear();
+    document.getElementById('pageSub').textContent = 'Bienvenido, ' + USER_NAME + '. Hoy es ' + dia + ' ' + fecha + '.';
+  })();
+
+  /* ─── Nav ───────────────────────────────────────────────────── */
+  var NAV_MAP = {
+    'Vendiendo':'VND-01 · VND v1.0.html','Comprando':'SRCH-01 · SRCH v1.0.html',
+    'Hilos':'MSG-01 · MSG v1.0.html','Inventario':'INV-01 · INV v1.0.html',
+    'Empresas':'DIR-01 · DIR v1.0.html','Foros':'FORO-01 · FORO v1.0.html',
+    'Contacto':'../../../index.html'
+  };
+  function nav(k){if(NAV_MAP[k])window.location.href=NAV_MAP[k];}
+
+  /* ─── Sidebar / VERA ────────────────────────────────────────── */
+  function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open')}
+  let vc=false;
+  function tgVera(){vc=!vc;document.getElementById('vera').classList.toggle('col',vc);document.getElementById('vtgi').className=vc?'ti ti-chevron-left':'ti ti-chevron-right'}
+  let isResizing=false;
+  document.getElementById('veraResize').addEventListener('mousedown',e=>{isResizing=true;vc=false;document.getElementById('vera').classList.remove('col');document.getElementById('vtgi').className='ti ti-chevron-right';e.preventDefault()});
+  document.addEventListener('mousemove',e=>{if(!isResizing)return;const mw=document.querySelector('.bwmain').clientWidth;const nw=mw-e.clientX;if(nw>=32&&nw<=mw*.5)document.getElementById('vera').style.width=nw+'px'});
+  document.addEventListener('mouseup',()=>{isResizing=false});
+  function vkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();vsend()}}
+  function vrsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,72)+'px'}
+  function vsend(){const inp=document.getElementById('bwinpa');const txt=inp.value.trim();if(!txt)return;const chat=document.getElementById('bwchat');const t=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');chat.innerHTML+=`<div class="bwmsg u"><div class="bwbub">${txt}</div><div class="bwts">${t}</div></div>`;inp.value='';inp.style.height='auto';chat.scrollTop=chat.scrollHeight;setTimeout(()=>{chat.innerHTML+=`<div class="bwmsg v"><div class="bwbub">Entendido, revisando tu panel…</div><div class="bwts">${t}</div></div>`;chat.scrollTop=chat.scrollHeight},700)}
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

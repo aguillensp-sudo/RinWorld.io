@@ -7,7 +7,7 @@
   /* ── Mapeo nav label → fichero HTML ─────────────────────────── */
   var NAV = {
     // Nav estándar de usuario
-    'Panel'        : 'Rinworld_app_shell.html',
+    'Panel'        : 'PANEL-01 · PANEL v1.0.html',
     'Vendiendo'    : 'VND-01 · VND v1.0.html',
     'Comprando'    : 'SRCH-01 · SRCH v1.0.html',
     'Hilos'        : 'MSG-01 · MSG v1.0.html',

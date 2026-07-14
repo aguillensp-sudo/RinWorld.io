@@ -296,6 +296,17 @@ por VERA en nombre de un usuario, anotando explícitamente que fue
 
 ---
 
+## Restricciones a tener en cuenta
+
+- Testing: toda la suite de tests unitarios del agente VERA debe mockear el cliente LLM (unittest.mock.patch sobre el cliente Anthropic o el wrapper que se use). Ninguna llamada real a la API en el ciclo de desarrollo automático. Las llamadas reales solo se permiten en tests marcados explícitamente como @pytest.mark.integration, ejecutados manualmente y de forma controlada — nunca en CI por defecto. Configurar el marcador en pytest.ini/pyproject.toml desde el primer commit de código, no después.
+- Prompt caching: el system prompt de VERA debe diseñarse desde el inicio separando el bloque estático (instrucciones, límites no negociables, protocolo de confirmación) del bloque dinámico (contexto de conversación, estado). El bloque estático se cachea con cache_control desde la primera implementación — no se deja para una fase posterior de optimización.
+- Modelo: Claude Sonnet 4.6, fijo por contrato (QA-A00-06). Ninguna decisión de testing o caching debe requerir cambiar esto.
+
+---
+
+---
+
+
 ## Open Questions
 - ¿Dónde debe documentarse la sección 4 del Módulo 00 (layout de
   interfaz de tres zonas)? No es comportamiento de ninguna capability

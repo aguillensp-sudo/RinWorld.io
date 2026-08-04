@@ -1,0 +1,11 @@
+# Normalización de finales de línea: LF en el repositorio,
+# conversión automática al checkout según plataforma.
+* text=auto
+
+# Binarios — nunca normalizar
+*.docx  binary
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff2 binary

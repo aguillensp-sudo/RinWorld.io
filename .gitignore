@@ -1,3 +1,15 @@
+# Secretos y configuración local
 .env
+.env.*
+**/.claude/settings.local.json
+
+# Artefactos de Python
 __pycache__/
 *.pyc
+
+# Ficheros temporales de Office
+~$*
+
+# Logs de servidor de desarrollo local
+serve.log
+*.log

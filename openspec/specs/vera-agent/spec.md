@@ -304,9 +304,6 @@ por VERA en nombre de un usuario, anotando explícitamente que fue
 
 ---
 
----
-
-
 ## Open Questions
 - ¿Dónde debe documentarse la sección 4 del Módulo 00 (layout de
   interfaz de tres zonas)? No es comportamiento de ninguna capability

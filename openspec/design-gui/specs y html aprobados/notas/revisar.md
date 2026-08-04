@@ -7,27 +7,19 @@
 
 ## 🔴 CRÍTICO — Violación potencial de E2EE
 
-**Problema:** VND-01 muestra columnas `Precio/ud.`, `Cantidad`, `Plazo` y `Transporte` para todas las ofertas de todos los hilos. Según `Módulo 04 v1.5`, sección 3.3, esos campos son **contenido E2EE**, no metadata:
+~~**RESUELTO (Julio 2026, commit 1b691d5):** Adoptada Opción B (VND-01 metadata-only). VND-01 muestra solo Referencia, Organización, Estado, Fecha sin precios ni cantidades. Detalles se ven en MSG-02. Elevado a principio RNG-VND-01 en `Status_bearingworld.io a 1 de Julio de 2026.md`.~~
 
-> *"Cifras de una tarjeta de oferta (unit_price, quantity, currency, condiciones) → NO — cifrado E2EE"*
-> RNG-MSG-01 (CRÍTICA): *"El servidor nunca almacena ni procesa en texto plano el contenido de ningún elemento del hilo"*
-
-Si el backend implementa un endpoint que sirve esos datos como un listado, **viola la arquitectura zero-knowledge** — el diferenciador central del producto.
-
-**Decisión requerida — dos opciones:**
-
-- **Opción A (E2EE puro):** VND-01 se renderiza completamente en cliente — el cliente pide todos los ciphertext de ofertas enviadas, los descifra localmente con su clave privada, y construye la tabla. El servidor nunca ve los datos en claro. Implica algo más de complejidad en frontend.
-- **Opción B (simplificación V1):** VND-01 solo muestra metadata — Referencia, Organización, Estado, Fecha — sin precios ni cantidades. Para ver el detalle hay que entrar en MSG-02. Mucho más simple de implementar.
-
-**→ DECISIÓN PENDIENTE DE PRODUCT OWNER**
+**Histórico:** VND-01 mostraba columnas `Precio/ud.`, `Cantidad`, `Plazo` y `Transporte` para todas las ofertas, violando la arquitectura zero-knowledge. Decisión requerida entre Opción A (E2EE puro en cliente) u Opción B (simplificación V1). → DECIDIDO: Opción B.
 
 ---
 
 ## 🟠 IMPORTANTE — Tres gaps de spec
 
-### 1. No existe `Rinworld_spec_VND-01.md`
+### 1. ~~No existe `Rinworld_spec_VND-01.md`~~
 
-Hay HTML aprobado (`VND-01 · VND v1.0.html`) pero ningún documento funcional que describa esta pantalla. El agente de implementación implementará lo que ve en el HTML sin entender las reglas E2EE. Hay que crear el spec **después de tomar la decisión E2EE**.
+~~**RESUELTO (Julio 2026, commit bc70b0e):** El spec funcional existe en `openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_VND-01.md`.~~
+
+**Histórico:** Faltaba documento funcional que describa VND-01 más allá del HTML aprobado.
 
 ### 2. `Módulo04_Mensajeria_v1.5.md` no contempla una vista cross-thread de ofertas
 
@@ -42,11 +34,11 @@ La idea de agregar todas las ofertas de todos los hilos en un solo panel ("mis o
 
 **Acción:** Añadir sección en `Módulo04_Mensajeria_v1.5.md` — "Vista agregada de ofertas del vendedor (VND-01)" con reglas E2EE y referencia al spec de pantalla.
 
-### 3. Número de módulo incorrecto en `index.html`
+### 3. ~~Número de módulo incorrecto en `index.html`~~
 
-`index.html` muestra "Módulo 04 — Vendiendo" pero Módulo 04 ya es Mensajería en todos los specs funcionales. VND-01 no es un módulo nuevo — es una vista dentro del Módulo 04 (Mensajería / Negociación).
+~~**RESUELTO (Agosto 2026, TAREA 6):** `index.html` ahora muestra "Vendiendo · vista de Módulo 04" reflejando que VND-01 es una vista dentro del Módulo 04 (Mensajería / Negociación), no un módulo independiente.~~
 
-**Acción:** Cambiar la etiqueta del index de "Módulo 04 — Vendiendo" a simplemente "Vendiendo" o "Vendiendo · vista de Módulo 04".
+**Histórico:** `index.html` mostraba erróneamente "Módulo 04 — Vendiendo".
 
 ---
 

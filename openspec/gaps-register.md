@@ -11,9 +11,3 @@ Documento transversal a todas las capabilities. Actualizado a medida que se dete
 | GAP-005 | INV-01: el chip "Desactualizados" filtra por el indicador visual de antigüedad (clase CSS `.age.warn`/`.age.danger`) porque no existe un valor "Desactualizado" en el campo Estado (Published/Draft/Archived). En React deberá usarse un campo de backend específico que combine estado y antigüedad. | Revisión HTML prototipo, junio 2026 | inventory-management | NO BLOQUEANTE | ABIERTO |
 | GAP-006 | SRCH-01: al acceder sin filtros (según spec), la conversación de VERA mostrada en el panel derecho es contenido de demo fijo que referencia una búsqueda concreta ("6205 2RS, mínimo 500 u, Europa"), quedando incongruente con la tabla de resultados vacía. En React la conversación de VERA será real y este desajuste no se dará. | Revisión HTML prototipo, junio 2026 | conversational-search | NO BLOQUEANTE | ABIERTO |
 | GAP-007 | PANEL-01: las cajas "Favoritos recibidos" y "Consultas Realizadas" (dentro de "Resumen mes") no tienen endpoint de backend definido. "Favoritos recibidos" requiere un evento/tabla de quién añadió a favoritos a la organización y cuándo; "Consultas Realizadas" requiere registrar consultas recibidas como proveedor (hoy SRCH-01 solo modela consultas enviadas como comprador, no recibidas). | Rinworld_spec_PANEL-01.md §4.5-4.6, revisión HTML prototipo, junio 2026 | conversational-search, messaging-and-negotiation, directory | NO BLOQUEANTE | ABIERTO |
-
----
-
-## Entradas cerradas
-
-_Ninguna por ahora._

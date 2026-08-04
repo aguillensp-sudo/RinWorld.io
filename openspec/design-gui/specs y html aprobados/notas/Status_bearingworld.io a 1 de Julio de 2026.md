@@ -192,4 +192,37 @@ Ninguno es bloqueante para arrancar la construcción del arnés, pero **GAP-001,
 
 ---
 
+## ⚠️ ADENDA — 4 de Agosto de 2026
+
+Correcciones y cambios posteriores a la publicación del Status de 1 de julio:
+
+### Corrección a §9 — Claves API rotadas y .gitignore reforzado
+
+La afirmación original ("el archivo está en `.gitignore` global y nunca llegó a GitHub") era **parcialmente incorrecta en su primera mitad**. El fichero `.claude/settings.local.json` **no estaba ignorado** por ninguna regla activa del `.gitignore`. Es cierto que nunca llegó a GitHub (verificado: `git log --all -- .claude/settings.local.json` vacío).
+
+**Acciones completadas:**
+- Claves Anthropic (sk-ant-api...) y LangSmith (lsv2_pt...) **rotadas** el 4 de agosto de 2026 por el Product Owner.
+- `.gitignore` reforzado: nuevo patrón `**/.claude/settings.local.json` que cubre tanto `.claude/settings.local.json` como `openspec/.claude/settings.local.json`.
+- Commit `9962ece`: gitignore revocado, secretos y logs removidos de riesgo.
+
+### Cambios posteriores a julio — Commit d5c89a9 (14 julio, fusionado a main agosto 2026)
+
+Rama `docs/vera-testing-caching-spec` (ahora fusionada a `main`):
+- **Testing:** política de mockeo obligatorio — todos los tests unitarios mockean el cliente LLM; solo tests `@pytest.mark.integration` hacen llamadas reales, nunca en CI automático.
+- **Prompt caching:** system prompt de VERA diseñado desde el inicio separando bloque estático (caché_control) de bloque dinámico, implementado desde el primer commit de código, no como optimización posterior.
+- **Modelo:** Claude Sonnet 4.6 **fijo** por contrato (QA-A00-06) — no cambia con decisiones de testing/caching.
+
+### Higiene de repositorio aplicada — TAREA 0-8 (agosto 2026)
+
+Commits aplicados para dejar el repo en condiciones:
+- `81d8f4d`: `.gitattributes` + renormalización de finales de línea CRLF/LF.
+- `ef91ce2`: `docs/Stack_Tech_V1.2.docx` y complemento incorporados al control de versiones. `deployment.docx` retirado.
+- `8ca552e`: `vera-agent/spec.md` — separadores duplicados eliminados.
+- `95b9fc1`: `index.html` — "Vendiendo · vista de Módulo 04" corrige la etiqueta de VND-01.
+- `6f65799`: `revisar.md` y `gaps-register.md` — puntos resueltos marcados, sección "Entradas cerradas" eliminada de gaps-register para mantener estado único en tabla.
+
+### §10 sigue abierto
+
+La decisión de arranque del arnés — reutilizar `generate_screen.py` o construir desde cero el pipeline de dos modelos (Opus 4.8 orquestador / GLM-5.2 ejecutor) — **continúa sin tomar** y es lo siguiente que requiere consulta al Product Owner.
+
 *Status Bearingworld.io · 1 de Julio de 2026 · Escrito por Claude Code (Sonnet 5) para handoff al siguiente agente.*

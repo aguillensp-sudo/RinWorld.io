@@ -225,4 +225,26 @@ Commits aplicados para dejar el repo en condiciones:
 
 La decisión de arranque del arnés — reutilizar `generate_screen.py` o construir desde cero el pipeline de dos modelos (Opus 4.8 orquestador / GLM-5.2 ejecutor) — **continúa sin tomar** y es lo siguiente que requiere consulta al Product Owner.
 
+## ⚠️ ADENDA — 5 de Agosto de 2026
+
+### Cambio de proveedor del Coder del arnés — DeepInfra/GLM-5.2 → DeepSeek
+
+Durante el arranque del MVP (spike SP-1) se cambió el proveedor del nodo **Coder**:
+
+- El Stack Tech v1.2 (Capa 6) preveía **GLM-5.2 (Z.AI) vía DeepInfra**. En el arranque: DeepInfra
+  no llegó a usarse (la variable `DEEPINFRA_API_KEY` contenía en realidad una clave de z.ai);
+  z.ai directo se probó pero **sin saldo**; y finalmente se adoptó **DeepSeek oficial**
+  (`deepseek-v4-flash`, vía `DEEPSEEK_API_KEY`) por coste.
+- **SP-1** validó `deepseek-v4-flash` convirtiendo el HTML aprobado de INV-01 a React: puerta
+  superada 3/5 (compila, render reconocible, React idiomático), coste ≈ $0.0036/pantalla.
+- La variable muerta `DEEPINFRA_API_KEY` se eliminó del entorno de usuario.
+- Trazabilidad en `openspec/mvp/findings-register.md` (F-001) y `openspec/mvp/harness-metrics.csv`.
+- Documentos actualizados: `CLAUDE.md`, `Plan_MVP_Bearingworld_v1.0.(md|docx)`,
+  `Dia-01_Spikes_y_arranque.md`, `docs/Stack_Tech_V1.2.docx` (Capa 6).
+
+**VERA en producción sigue siendo Claude Sonnet 4.6 (QA-A00-06).** Este cambio afecta solo al
+nodo Coder del pipeline de desarrollo, no a VERA.
+
+---
+
 *Status Bearingworld.io · 1 de Julio de 2026 · Escrito por Claude Code (Sonnet 5) para handoff al siguiente agente.*

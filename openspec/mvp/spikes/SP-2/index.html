@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SP-2 · ¿Cifra el navegador? — Bearingworld.io</title>
+  <style>
+    :root {
+      --brand: #07111F;
+      --azul: #2563EB;
+      --texto: #1B2537;
+      --texto-sec: #6B7A99;
+      --fondo: #F1F3F6;
+      --borde: #d8dee9;
+      --ok: #15803d;
+      --ok-bg: #e7f6ec;
+      --warn: #b45309;
+      --warn-bg: #fdf3e7;
+      --err: #dc2626;
+      --err-bg: #fdeaea;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--texto);
+      background: var(--fondo);
+    }
+    header {
+      background: var(--brand);
+      color: #fff;
+      padding: 16px 24px;
+    }
+    header .marca { font-weight: 700; font-size: 18px; letter-spacing: .2px; }
+    header .sub { color: #9fb0c8; font-size: 13px; margin-top: 2px; }
+    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .banner {
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+    }
+    .banner.ok   { background: var(--ok-bg);   color: var(--ok);   border-color: #bfe3cc; }
+    .banner.warn { background: var(--warn-bg); color: var(--warn); border-color: #f3d9b0; }
+    .banner.err  { background: var(--err-bg);  color: var(--err);  border-color: #f3c2c2; }
+    .banner b { font-weight: 700; }
+    .cols {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+    .col {
+      background: #fff;
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .col h2 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--borde);
+      color: var(--texto-sec);
+    }
+    .col.claro h2   { color: var(--azul); }
+    .col.cifrado h2 { color: var(--warn); }
+    .col.claro2 h2  { color: var(--ok); }
+    .col .body {
+      padding: 16px;
+      font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-all;
+      overflow-x: auto;
+      flex: 1;
+    }
+    .col .nota { padding: 0 16px 14px; font-size: 12px; color: var(--texto-sec); }
+    .meta {
+      margin-top: 20px;
+      background: #fff;
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+    }
+    .meta table { border-collapse: collapse; width: 100%; }
+    .meta td { padding: 5px 8px; border-bottom: 1px solid #eef1f5; }
+    .meta td:first-child { color: var(--texto-sec); width: 42%; }
+    .meta td.v { font-family: "SF Mono", Consolas, monospace; }
+    .aviso {
+      margin-top: 20px;
+      font-size: 12.5px;
+      color: var(--texto-sec);
+      border-left: 3px solid var(--borde);
+      padding: 4px 0 4px 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="marca">Bearingworld.io</div>
+    <div class="sub">SP-2 · Spike de cifrado en navegador · material de evaluación, no código del MVP</div>
+  </header>
+  <main>
+    <div id="banner" class="banner warn">Ejecutando…</div>
+    <div class="cols">
+      <div class="col claro">
+        <h2>Claro</h2>
+        <div class="body" id="claro">—</div>
+        <div class="nota">Oferta que introduce el comprador.</div>
+      </div>
+      <div class="col cifrado">
+        <h2>Cifrado · lo que iría a Postgres</h2>
+        <div class="body" id="cifrado">—</div>
+        <div class="nota">Ni el servidor ni la BD ven el contenido.</div>
+      </div>
+      <div class="col claro2">
+        <h2>Descifrado por la otra parte</h2>
+        <div class="body" id="descifrado">—</div>
+        <div class="nota">El vendedor deriva la misma clave por ECDH.</div>
+      </div>
+    </div>
+    <div class="meta"><table id="meta"></table></div>
+    <div class="aviso">
+      Las claves viven solo en memoria de sesión y se pierden al recargar. El spike no implementa —ni
+      debe— passphrase, backup, recuperación ni rotación de claves. No confundir con una implementación
+      de ADR-001.
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+    // Oferta realista (spec del plan Día 1 §5)
+    const OFERTA = { precio_ud: 4.20, cantidad: 1250, moneda: "EUR", plazo_dias: 14, transporte: "DAP" };
+
+    async function soportaX25519() {
+      try {
+        await crypto.subtle.generateKey({ name: "X25519" }, true, ["deriveKey"]);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    // Genera par de claves + params de derivación para la curva elegida.
+    function algoDe(curva) {
+      if (curva === "X25519") {
+        return {
+          gen: { name: "X25519" },
+          derivar: (pubOtro) => ({ name: "X25519", public: pubOtro }),
+        };
+      }
+      return {
+        gen: { name: "ECDH", namedCurve: "P-256" },
+        derivar: (pubOtro) => ({ name: "ECDH", public: pubOtro }),
+      };
+    }
+
+    async function run() {
+      const secure = window.isSecureContext && !!(crypto && crypto.subtle);
+      if (!secure) {
+        $("banner").className = "banner err";
+        $("banner").innerHTML = "<b>Sin contexto seguro:</b> crypto.subtle no está disponible. Servir por https:// o localhost.";
+        window.__SP2_RESULT__ = { ok: false, motivo: "no-secure-context" };
+        return;
+      }
+
+      const x25519 = await soportaX25519();
+      const curva = x25519 ? "X25519" : "P-256";
+      const A = algoDe(curva);
+
+      // Dos pares de claves = dos partes independientes
+      const comprador = await crypto.subtle.generateKey(A.gen, true, ["deriveKey"]);
+      const vendedor  = await crypto.subtle.generateKey(A.gen, true, ["deriveKey"]);
+
+      // Cada parte deriva la MISMA clave AES-256-GCM desde su privada + la pública del otro
+      const claveComprador = await crypto.subtle.deriveKey(
+        A.derivar(vendedor.publicKey), comprador.privateKey,
+        { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+      const claveVendedor = await crypto.subtle.deriveKey(
+        A.derivar(comprador.publicKey), vendedor.privateKey,
+        { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+
+      // Comprobar que ambas claves derivadas coinciden (prueba del acuerdo ECDH)
+      const rawC = await crypto.subtle.exportKey("raw", claveComprador);
+      const rawV = await crypto.subtle.exportKey("raw", claveVendedor);
+      const clavesCoinciden = b64(rawC) === b64(rawV);
+
+      // Cifrar la oferta con la clave del comprador
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const claro = new TextEncoder().encode(JSON.stringify(OFERTA));
+      const cifrado = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, claveComprador, claro);
+
+      // Descifrar con la clave derivada independientemente por el vendedor
+      let descifradoObj = null, descifraOk = false;
+      try {
+        const plano = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, claveVendedor, cifrado);
+        descifradoObj = JSON.parse(new TextDecoder().decode(plano));
+        descifraOk = true;
+      } catch (e) {
+        descifraOk = false;
+      }
+
+      // Payload que iría a Postgres: iv + ciphertext (ambos base64)
+      const postgres = { alg: "AES-256-GCM", iv_b64: b64(iv), ciphertext_b64: b64(cifrado) };
+
+      // Pintar las tres columnas
+      $("claro").textContent = JSON.stringify(OFERTA, null, 2);
+      $("cifrado").textContent = JSON.stringify(postgres, null, 2);
+      $("descifrado").textContent = descifradoObj ? JSON.stringify(descifradoObj, null, 2) : "(fallo al descifrar)";
+
+      const pass = clavesCoinciden && descifraOk;
+      if (pass && x25519) {
+        $("banner").className = "banner ok";
+        $("banner").innerHTML = "<b>X25519 nativo disponible.</b> Cifrado extremo a extremo alineado con ADR-001.";
+      } else if (pass) {
+        $("banner").className = "banner warn";
+        $("banner").innerHTML = "<b>X25519 NO disponible</b> en este navegador → se usa <b>ECDH P-256</b> (soporte universal). Registrar como SPEC-GAP (evidencia para GAP-001).";
+      } else {
+        $("banner").className = "banner err";
+        $("banner").innerHTML = "<b>Fallo:</b> el descifrado o el acuerdo de clave no funcionó.";
+      }
+
+      // Tabla de metadatos
+      const filas = [
+        ["Contexto seguro (crypto.subtle)", "sí"],
+        ["X25519 nativo (ADR-001)", x25519 ? "sí" : "NO"],
+        ["Curva usada", curva],
+        ["Clave simétrica", "AES-256-GCM"],
+        ["Claves derivadas coinciden (ECDH)", clavesCoinciden ? "sí" : "NO"],
+        ["Descifrado por la otra parte", descifraOk ? "sí" : "NO"],
+        ["Navegador (userAgent)", navigator.userAgent],
+        ["Veredicto", pass ? "PASA" : "REVISAR"],
+      ];
+      $("meta").innerHTML = filas.map(([k, v]) => `<tr><td>${k}</td><td class="v">${v}</td></tr>`).join("");
+
+      // Expuesto para verificación por texto (sin screenshots repetidos)
+      window.__SP2_RESULT__ = {
+        ok: pass, x25519Soportado: x25519, curva,
+        clavesCoinciden, descifraOk,
+        oferta: OFERTA, descifrado: descifradoObj,
+        postgresPayload: postgres, userAgent: navigator.userAgent,
+      };
+    }
+
+    run().catch((e) => {
+      $("banner").className = "banner err";
+      $("banner").innerHTML = "<b>Error:</b> " + (e && e.message ? e.message : e);
+      window.__SP2_RESULT__ = { ok: false, error: String(e) };
+    });
+  </script>
+</body>
+</html>

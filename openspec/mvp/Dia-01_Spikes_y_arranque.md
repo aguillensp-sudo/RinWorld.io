@@ -207,9 +207,13 @@ Clasificaciones: `SPEC-GAP` · `HARNESS` · `MODEL` · `INFRA` · `DESIGN`
 
 | Spike | Resultado | Consecuencia |
 |---|---|---|
-| SP-1 GLM | ☐ pasa ☐ falla | camino crítico / pista paralela |
-| SP-2 WebCrypto | ☐ X25519 ☐ P-256 ☐ falla | ADR-001 alineado / desviación registrada / cae S3 parcial |
-| SP-3 Realtime | ☐ pasa ☐ falla | tiempo real / polling |
+| SP-1 Coder (DeepSeek-V4-Flash) | ☑ **pasa** (5/5) ☐ falla | **camino crítico** |
+| SP-2 WebCrypto | ☑ **X25519** ☐ P-256 ☐ falla | **ADR-001 alineado** (informa GAP-001, F-008) |
+| SP-3 Realtime | ☑ **pasa** ☐ falla | **tiempo real** |
+
+> Cerrada el 5-ago. **Los tres pasan.** SP-1 nota: el spike se corrió con DeepSeek-V4-Flash, no
+> GLM (ver F-001). SP-2 mejor que lo esperado: X25519 nativo disponible, no hizo falta caer a
+> P-256 (F-008). Detalle completo en `findings-register.md`.
 
 **Si los tres pasan:** el plan de 15 días sigue tal cual. Día 2 arranca con esquema Supabase y scaffold React.
 

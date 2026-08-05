@@ -13,7 +13,7 @@ Este fichero es el contrato de trabajo del MVP (plan de 15 días,
 
 1. **Ninguna API key en ningún fichero, nunca.** Todas viven en variables de entorno
    de usuario y se leen con `os.environ` / `process.env`:
-   `ANTHROPIC_API_KEY` · `LANGSMITH_API_KEY` · `DEEPINFRA_API_KEY` ·
+   `ANTHROPIC_API_KEY` · `LANGSMITH_API_KEY` · `DEEPSEEK_API_KEY` ·
    `SUPABASE_URL` · `SUPABASE_ANON_KEY` · `SUPABASE_SERVICE_KEY`.
    El repo es público/compartido: ni en código, ni en configs, ni en `.env` versionado.
 
@@ -65,9 +65,11 @@ Se reparte por **coste del fallo**, no por dificultad.
 - **Claude Opus 4.8 / Claude Code** → arquitectura y piezas donde el fallo es caro o
   silencioso: esquema de datos, RLS y políticas Supabase, wiring de Realtime, rebanada
   E2EE, máquina de estados de la oferta, herramientas de VERA y su orquestación.
-- **GLM-5.2** (Z.AI vía DeepInfra) → nodos Coder y Test-runner: alto volumen y mecánico
-  con verdad de referencia visible (HTML aprobado → React, GIVEN/WHEN/THEN → Playwright,
-  siembra de catálogo).
+- **DeepSeek-V4-Flash** (`deepseek-v4-flash`, DeepSeek oficial vía `DEEPSEEK_API_KEY`) →
+  nodos Coder y Test-runner: alto volumen y mecánico con verdad de referencia visible
+  (HTML aprobado → React, GIVEN/WHEN/THEN → Playwright, siembra de catálogo). Sustituye a
+  GLM-5.2/DeepInfra del plan original (cambio por coste, decidido en SP-1 el 5-ago-2026;
+  ver `openspec/mvp/findings-register.md` F-001).
 - **VERA en producción** → **Claude Sonnet 4.6, fijo por contrato (QA-A00-06)**. No se
   cambia por decisiones de testing/caching.
 

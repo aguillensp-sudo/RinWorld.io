@@ -1,3 +1,3 @@
 fecha,tarea,pantalla,modelo,tokens_in,tokens_out,coste_usd,intentos,minutos,resultado
 2026-08-05,SP-1,INV-01,deepseek-v4-flash,18767,8192,0.004921,0,0.9,trunc-maxtokens (bug de arnes: max_tokens 8192 bajo para modelo de razonamiento; no cuenta como intento del modelo)
-2026-08-05,SP-1,INV-01,deepseek-v4-flash,18767,12563,0.003581,1,1.1,artefacto valido a la primera; C1 pass / C3 parcial / C4 pass; C2 y C5 pendientes del PO
+2026-08-05,SP-1,INV-01,deepseek-v4-flash,18767,12563,0.003581,1,1.1,PASA 3/5 (C1 pass / C2 pass PO / C4 pass; C3 parcial; C5 pendiente PO)

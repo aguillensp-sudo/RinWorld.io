@@ -4,6 +4,11 @@
 **Ejecuta:** Claude Code · **Supervisa:** Álvaro
 **Plan maestro:** `openspec/mvp/Plan_MVP_Bearingworld_v1.0.md`
 
+> **Actualización · 5-ago-2026 (SP-1).** El **Coder** del arnés es **DeepSeek-V4-Flash**
+> (`deepseek-v4-flash`, DeepSeek oficial, `DEEPSEEK_API_KEY`), no GLM-5.2/DeepInfra. Cambio por
+> coste, validado en SP-1. Donde el documento diga GLM/DeepInfra, léase DeepSeek. Ver
+> `findings-register.md` F-001.
+
 > **Hoy no se construye producto.** Hoy se responden tres preguntas que ahora mismo son suposiciones y que, si se responden mal el día 12, hunden el plan. El único entregable de código es el documento de sistema de diseño, que es prerrequisito de todo lo demás.
 
 ---
@@ -15,7 +20,7 @@ Sin esto, el día 1 se bloquea. Son unos 20 minutos.
 | # | Acción | Necesario para |
 |---|---|---|
 | P1 | Crear proyecto **Supabase** (región europea, plan Free basta para el MVP). Guardar URL del proyecto, `anon key` y `service_role key`. | SP-3 |
-| P2 | Crear cuenta **DeepInfra** y generar API key con acceso a GLM-5.2. Cargar saldo mínimo. | SP-1 |
+| P2 | Crear/usar cuenta **DeepSeek oficial** y generar API key (`DEEPSEEK_API_KEY`) con acceso a `deepseek-v4-flash`. Cargar saldo mínimo. | SP-1 |
 | P3 | Confirmar que las claves rotadas (Anthropic, LangSmith) están como variables de entorno de usuario, **no en ficheros del repo**. | SP-1, trazado |
 
 Verificación rápida en PowerShell:
@@ -23,7 +28,7 @@ Verificación rápida en PowerShell:
 ```powershell
 $env:ANTHROPIC_API_KEY.Substring(0,12)
 $env:LANGSMITH_API_KEY.Substring(0,12)
-$env:DEEPINFRA_API_KEY.Substring(0,8)
+$env:DEEPSEEK_API_KEY.Substring(0,8)
 $env:SUPABASE_URL
 ```
 
@@ -70,7 +75,7 @@ Añadir al final una sección **"Traducción a React"** vacía, con un encabezad
 
 ---
 
-## 3. Bloque 2 · 10:00-13:00 — SP-1 · ¿Sirve GLM-5.2?
+## 3. Bloque 2 · 10:00-13:00 — SP-1 · ¿Sirve DeepSeek-V4-Flash?
 
 El spike más largo y el más consecuente: toda la economía del stack v1.2 depende de que GLM sea utilizable como Coder.
 
@@ -103,7 +108,7 @@ Registrar en `openspec/mvp/harness-metrics.csv` (crear hoy):
 
 ```csv
 fecha,tarea,pantalla,modelo,tokens_in,tokens_out,coste_usd,intentos,minutos,resultado
-2026-08-05,SP-1,INV-01,glm-5.2,,,,,,
+2026-08-05,SP-1,INV-01,deepseek-v4-flash,,,,,,
 ```
 
 Si falla a la primera, reintentar hasta 3 veces pasándole el error como feedback, y **registrar cada intento como fila propia**. La distribución de intentos hasta verde es una de las tres métricas que importan.

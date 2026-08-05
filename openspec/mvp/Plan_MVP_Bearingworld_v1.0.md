@@ -3,7 +3,13 @@
 **Versión:** 1.0
 **Fecha:** 4 de agosto de 2026
 **Plazo:** 15 días
-**Propósito:** demo funcional para socio potencial + piloto real del arnés de implementación (LangGraph · Opus 4.8 / GLM-5.2)
+**Propósito:** demo funcional para socio potencial + piloto real del arnés de implementación (LangGraph · Opus 4.8 / DeepSeek-V4-Flash)
+
+> **Actualización · 5-ago-2026 (SP-1).** El nodo **Coder** del arnés es **DeepSeek-V4-Flash**
+> (`deepseek-v4-flash`, DeepSeek oficial, vía `DEEPSEEK_API_KEY`), no GLM-5.2/DeepInfra como se
+> escribió el 4-ago. Cambio por coste (≈ $0.0036/pantalla en SP-1). **En todo el documento,
+> donde diga "GLM-5.2" / "GLM" / "DeepInfra" como Coder, léase DeepSeek-V4-Flash.** Ver
+> `findings-register.md` F-001.
 
 ---
 
@@ -23,11 +29,11 @@ Confirmar o corregir antes de arrancar. Cambian el plan, no el detalle.
 
 ---
 
-## 1. Principio de reparto: qué hace GLM y qué no
+## 1. Principio de reparto: qué hace el Coder (DeepSeek) y qué no
 
 El objetivo 1 exige aplicar el arnés de verdad. El objetivo de la demo exige que funcione el día 15. Ambos se satisfacen con un reparto por **coste del fallo**, no por dificultad.
 
-**GLM-5.2 (nodo Coder del arnés) — trabajo de alto volumen, mecánico, con verdad de referencia visible:**
+**DeepSeek-V4-Flash (nodo Coder del arnés) — trabajo de alto volumen, mecánico, con verdad de referencia visible:**
 
 - Conversión de los HTML aprobados a componentes React. Hay 32 HTML aprobados: el resultado correcto es *visible*, un fallo se detecta en segundos y se reintenta barato.
 - Traducción de escenarios GIVEN/WHEN/THEN de OpenSpec a tests Playwright.
@@ -87,7 +93,7 @@ Hay tres incógnitas que hoy son suposiciones y que, si fallan, invalidan el pla
 - Proyecto **Supabase**: Postgres, Auth (email+password), RLS, Realtime habilitado sobre `threads`, `messages`, `offers`
 - **Cloudflare Pages** — hosting del frontend (alineado con la capa edge del v1.2)
 - **GitHub Actions** — Vitest + Playwright en cada PR
-- **Runner del arnés** — Python local, LangGraph, trazas a **LangSmith**, GLM-5.2 vía **DeepInfra**, Opus/Sonnet vía **API de Anthropic**
+- **Runner del arnés** — Python local, LangGraph, trazas a **LangSmith**, DeepSeek-V4-Flash vía **DeepSeek oficial**, Opus/Sonnet vía **API de Anthropic**
 
 > **Desviación registrada del stack v1.2:** no se despliegan contenedores gestionados (Fly.io/Fargate), Terraform, k6, Snyk ni Grafana. Disparador para incorporarlos: fin del MVP y arranque de V1. Registrar en `product-decisions.md` como DEC-002 para que no se convierta en deuda silenciosa.
 

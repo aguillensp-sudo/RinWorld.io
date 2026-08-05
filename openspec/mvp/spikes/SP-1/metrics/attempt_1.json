@@ -1,0 +1,28 @@
+{
+  "attempt": "1",
+  "model": "deepseek-v4-flash",
+  "finish_reason": "stop",
+  "tokens_in": 18767,
+  "tokens_out": 12563,
+  "cache_hit": 18688,
+  "cache_miss": 79,
+  "usage_raw": {
+    "prompt_tokens": 18767,
+    "completion_tokens": 12563,
+    "total_tokens": 31330,
+    "prompt_tokens_details": {
+      "cached_tokens": 18688
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 9343
+    },
+    "prompt_cache_hit_tokens": 18688,
+    "prompt_cache_miss_tokens": 79
+  },
+  "seconds": 67.7,
+  "cost_usd": 0.0,
+  "files": [
+    "InventoryTable.tsx",
+    "InventoryTable.module.css"
+  ]
+}

@@ -3,13 +3,7 @@
 **Versión:** 1.0
 **Fecha:** 4 de agosto de 2026
 **Plazo:** 15 días
-**Propósito:** demo funcional para socio potencial + piloto real del arnés de implementación (LangGraph · Opus 4.8 / DeepSeek-V4-Flash)
-
-> **Actualización · 5-ago-2026 (SP-1).** El nodo **Coder** del arnés es **DeepSeek-V4-Flash**
-> (`deepseek-v4-flash`, DeepSeek oficial, vía `DEEPSEEK_API_KEY`), no GLM-5.2/DeepInfra como se
-> escribió el 4-ago. Cambio por coste (≈ $0.0036/pantalla en SP-1). **En todo el documento,
-> donde diga "GLM-5.2" / "GLM" / "DeepInfra" como Coder, léase DeepSeek-V4-Flash.** Ver
-> `findings-register.md` F-001.
+**Propósito:** demo funcional para socio potencial + piloto real del arnés de implementación (LangGraph · Opus 4.8 orquestación + Coder ejecución)
 
 ---
 
@@ -29,11 +23,11 @@ Confirmar o corregir antes de arrancar. Cambian el plan, no el detalle.
 
 ---
 
-## 1. Principio de reparto: qué hace el Coder (DeepSeek) y qué no
+## 1. Principio de reparto: qué hace el Coder y qué no
 
 El objetivo 1 exige aplicar el arnés de verdad. El objetivo de la demo exige que funcione el día 15. Ambos se satisfacen con un reparto por **coste del fallo**, no por dificultad.
 
-**DeepSeek-V4-Flash (nodo Coder del arnés) — trabajo de alto volumen, mecánico, con verdad de referencia visible:**
+**El Coder (nodo del arnés) — trabajo de alto volumen, mecánico, con verdad de referencia visible:**
 
 - Conversión de los HTML aprobados a componentes React. Hay 32 HTML aprobados: el resultado correcto es *visible*, un fallo se detecta en segundos y se reintenta barato.
 - Traducción de escenarios GIVEN/WHEN/THEN de OpenSpec a tests Playwright.
@@ -47,7 +41,7 @@ El objetivo 1 exige aplicar el arnés de verdad. El objetivo de la demo exige qu
 - Máquina de estados de la oferta.
 - Herramientas de VERA y su orquestación.
 
-Este reparto **es** el criterio del stack v1.2 ("Opus para orquestación y decisiones de alto valor, GLM para ejecución de código de alto volumen"), no una excepción a él.
+Este reparto **es** el criterio del stack v1.2 ("Opus para orquestación y decisiones de alto valor, el Coder para ejecución de código de alto volumen"), no una excepción a él.
 
 ---
 
@@ -57,11 +51,11 @@ Hay tres incógnitas que hoy son suposiciones y que, si fallan, invalidan el pla
 
 | Spike | Pregunta que responde | Criterio de éxito |
 |---|---|---|
-| **SP-1 · GLM** | ¿GLM-5.2 convierte un HTML aprobado a React con calidad utilizable? | Toma `INV-01 · INV v1.0.html` + su spec y produce un componente que renderiza reconocible. Se mide: intentos hasta verde, tokens, coste. |
+| **SP-1 · Coder** | ¿El Coder convierte un HTML aprobado a React con calidad utilizable? | Toma `INV-01 · INV v1.0.html` + su spec y produce un componente que renderiza reconocible. Se mide: intentos hasta verde, tokens, coste. |
 | **SP-2 · WebCrypto** | ¿X25519 + AES-256-GCM en navegador, sin librería externa? | Cifrar y descifrar un objeto de oferta entre dos pares de claves generadas en dos pestañas. |
 | **SP-3 · Realtime** | ¿Supabase Realtime propaga entre dos sesiones sin refrescar? | Insertar fila en una pestaña, verla aparecer en la otra en <1s. |
 
-**Si SP-1 falla:** GLM sale del camino crítico y pasa a pista paralela de experimentación. El MVP lo construye Claude Code. Los objetivos 2 y 4 se cumplen igual — con datos de fallo, que también son datos.
+**Si SP-1 falla:** el Coder sale del camino crítico y pasa a pista paralela de experimentación. El MVP lo construye Claude Code. Los objetivos 2 y 4 se cumplen igual — con datos de fallo, que también son datos.
 
 **Si SP-2 falla:** cae S3 parcialmente. Se sustituye por cifrado simétrico simple, suficiente para el panel de vista-servidor.
 
@@ -79,12 +73,12 @@ Hay tres incógnitas que hoy son suposiciones y que, si fallan, invalidan el pla
 | 1 | Extraer `DESIGN_RULES` y `VERIFICATION_PROTOCOL` de `generate_screen.py` a `openspec/architecture/design-system.md` | Claude Code |
 | 2 | Esquema Supabase + RLS + auth de dos organizaciones | Claude Code |
 | 2 | Scaffold React+TS+Vite, shell de la app desde `Rinworld_app_shell.html`, Vitest + Playwright en CI | Claude Code |
-| 3 | Catálogo sembrado: 200+ líneas curadas (§8) | GLM |
+| 3 | Catálogo sembrado: 200+ líneas curadas (§8) | Coder |
 | 3 | **Pantalla de referencia a mano:** INV-01 completa con sus tests | Claude Code |
-| 4 | **Arnés v0:** grafo LangGraph de 2 nodos — Coder (GLM) + Test-runner | Claude Code |
+| 4 | **Arnés v0:** grafo LangGraph de 2 nodos — Coder + Test-runner | Claude Code |
 | 5 | Primera pantalla producida por el arnés: **MSG-01**. Registro de métricas. | Arnés |
 
-> **Por qué MSG-01 es la primera del arnés y no SRCH-01.** La primera salida de GLM debe ser una pantalla representativa pero no crítica: MSG-01 es una lista, con estructura clara y fallo barato. SRCH-01 es la pantalla núcleo y la más delicada — entra en S2, con revisión a mano.
+> **Por qué MSG-01 es la primera del arnés y no SRCH-01.** La primera salida del Coder debe ser una pantalla representativa pero no crítica: MSG-01 es una lista, con estructura clara y fallo barato. SRCH-01 es la pantalla núcleo y la más delicada — entra en S2, con revisión a mano.
 
 **Puerta de salida S1:** dos navegadores, dos cuentas, cada una ve su inventario. CI en verde. Una pantalla nacida del arnés, con su coste medido.
 
@@ -93,7 +87,7 @@ Hay tres incógnitas que hoy son suposiciones y que, si fallan, invalidan el pla
 - Proyecto **Supabase**: Postgres, Auth (email+password), RLS, Realtime habilitado sobre `threads`, `messages`, `offers`
 - **Cloudflare Pages** — hosting del frontend (alineado con la capa edge del v1.2)
 - **GitHub Actions** — Vitest + Playwright en cada PR
-- **Runner del arnés** — Python local, LangGraph, trazas a **LangSmith**, DeepSeek-V4-Flash vía **DeepSeek oficial**, Opus/Sonnet vía **API de Anthropic**
+- **Runner del arnés** — Python local, LangGraph, trazas a **LangSmith**, el Coder vía su proveedor, Opus/Sonnet vía **API de Anthropic**
 
 > **Desviación registrada del stack v1.2:** no se despliegan contenedores gestionados (Fly.io/Fargate), Terraform, k6, Snyk ni Grafana. Disparador para incorporarlos: fin del MVP y arranque de V1. Registrar en `product-decisions.md` como DEC-002 para que no se convierta en deuda silenciosa.
 
@@ -157,7 +151,7 @@ Esta es la parte que da valor al objetivo 1, y depende de una regla de integrida
 Spec OpenSpec (GIVEN/WHEN/THEN, ya escrita)
         ↓  Opus 4.8
 Test de aceptación Playwright  ←── contrato, escrito ANTES del código
-        ↓  GLM-5.2 (Coder)
+        ↓  Coder
 Implementación
         ↓  Test-runner
 Verde / rojo → feedback → reintento
@@ -167,11 +161,11 @@ Verde / rojo → feedback → reintento
 
 **Regla de integridad, innegociable:**
 
-> **GLM nunca escribe los tests que lo evalúan.** El test es el contrato entre Planner y Coder. Si el mismo modelo escribe la prueba y el código, la prueba se convierte en descripción de lo que hizo, no en verificación de lo que debía hacer. Ese es exactamente el fallo de `generate_screen.py`, donde un LLM revisaba la salida de otro LLM sin verdad de referencia.
+> **El Coder nunca escribe los tests que lo evalúan.** El test es el contrato entre Planner y Coder. Si el mismo modelo escribe la prueba y el código, la prueba se convierte en descripción de lo que hizo, no en verificación de lo que debía hacer. Ese es exactamente el fallo de `generate_screen.py`, donde un LLM revisaba la salida de otro LLM sin verdad de referencia.
 
 **Qué nodos se construyen y cuáles no:**
 
-- **En el MVP:** Coder (GLM) + Test-runner. Es donde hay verdad ejecutable.
+- **En el MVP:** Coder + Test-runner. Es donde hay verdad ejecutable.
 - **Fuera del MVP:** Planner, Evaluator, Reviewer y Escalation. Sus umbrales se calibran con datos de fallo reales, que es justamente lo que este MVP va a generar. Construirlos ahora sería inventárselos.
 
 En el MVP, la tarea la escribe Claude Code a mano en un formato fijo — que además es el borrador del contrato Planner→Coder de V1. Al final de los 15 días tendrás 10-15 tareas reales en ese formato: el mejor material posible para diseñar el Planner.
@@ -266,7 +260,7 @@ Todo lo que salga de las tres sesiones va a `openspec/mvp/findings-register.md`,
 |---|---|
 | `SPEC-GAP` | Se traslada a la spec OpenSpec correspondiente, aunque esa capability no se haya implementado en el MVP |
 | `HARNESS` | Va a `openspec/mvp/harness-backlog.md` → corrección del arnés antes de V1 |
-| `MODEL` | Límite observado de GLM o Sonnet → afecta a la asignación de modelos del v1.2 |
+| `MODEL` | Límite observado del Coder o de Sonnet → afecta a la asignación de modelos del v1.2 |
 | `INFRA` | Supabase, Realtime, Cloudflare |
 | `DESIGN` | Divergencia respecto al HTML aprobado |
 
@@ -294,7 +288,7 @@ Extrapolar de aquí a V1 con prudencia: el MVP no tiene E2EE completo, ni roles,
 
 | Riesgo | Probabilidad | Mitigación |
 |---|---|---|
-| GLM no da calidad utilizable | Media | SP-1 el día 1. Plan B: GLM a pista paralela, Claude Code construye. |
+| El Coder no da calidad utilizable | Media | SP-1 el día 1. Plan B: el Coder a pista paralela, Claude Code construye. |
 | VERA responde con seguridad datos inventados | **Alta** | Regla dura en system prompt + las 15 preguntas de la sesión 2. Ver abajo. |
 | MSG-02 se come dos días | Media | Es la pantalla más compleja. Si el día 7 no está, se simplifica el hilo. |
 | El día 15 llega sin ensayo | Media | El día 14 es congelación. Nada nuevo entra después. |

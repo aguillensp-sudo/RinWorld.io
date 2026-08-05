@@ -4,11 +4,6 @@
 **Ejecuta:** Claude Code · **Supervisa:** Álvaro
 **Plan maestro:** `openspec/mvp/Plan_MVP_Bearingworld_v1.0.md`
 
-> **Actualización · 5-ago-2026 (SP-1).** El **Coder** del arnés es **DeepSeek-V4-Flash**
-> (`deepseek-v4-flash`, DeepSeek oficial, `DEEPSEEK_API_KEY`), no GLM-5.2/DeepInfra. Cambio por
-> coste, validado en SP-1. Donde el documento diga GLM/DeepInfra, léase DeepSeek. Ver
-> `findings-register.md` F-001.
-
 > **Hoy no se construye producto.** Hoy se responden tres preguntas que ahora mismo son suposiciones y que, si se responden mal el día 12, hunden el plan. El único entregable de código es el documento de sistema de diseño, que es prerrequisito de todo lo demás.
 
 ---
@@ -20,7 +15,7 @@ Sin esto, el día 1 se bloquea. Son unos 20 minutos.
 | # | Acción | Necesario para |
 |---|---|---|
 | P1 | Crear proyecto **Supabase** (región europea, plan Free basta para el MVP). Guardar URL del proyecto, `anon key` y `service_role key`. | SP-3 |
-| P2 | Crear/usar cuenta **DeepSeek oficial** y generar API key (`DEEPSEEK_API_KEY`) con acceso a `deepseek-v4-flash`. Cargar saldo mínimo. | SP-1 |
+| P2 | Crear/usar la cuenta del proveedor del **Coder** y generar su API key (`DEEPSEEK_API_KEY`) con saldo mínimo. | SP-1 |
 | P3 | Confirmar que las claves rotadas (Anthropic, LangSmith) están como variables de entorno de usuario, **no en ficheros del repo**. | SP-1, trazado |
 
 Verificación rápida en PowerShell:
@@ -57,7 +52,7 @@ BearingWorld.io/
 
 ## 2. Bloque 1 · 09:00-10:00 — Extracción del sistema de diseño
 
-**Es prerrequisito de SP-1:** GLM no puede producir un componente coherente sin las reglas de diseño, y hoy esas reglas viven atrapadas dentro de un string de Python en un script que además está roto.
+**Es prerrequisito de SP-1:** el Coder no puede producir un componente coherente sin las reglas de diseño, y hoy esas reglas viven atrapadas dentro de un string de Python en un script que además está roto.
 
 Crear `openspec/architecture/design-system.md` con el contenido de las constantes `DESIGN_RULES` y `VERIFICATION_PROTOCOL` de `openspec/design-gui/generator/generate_screen.py`, reestructurado como documento:
 
@@ -75,13 +70,13 @@ Añadir al final una sección **"Traducción a React"** vacía, con un encabezad
 
 ---
 
-## 3. Bloque 2 · 10:00-13:00 — SP-1 · ¿Sirve DeepSeek-V4-Flash?
+## 3. Bloque 2 · 10:00-13:00 — SP-1 · ¿Sirve el Coder?
 
-El spike más largo y el más consecuente: toda la economía del stack v1.2 depende de que GLM sea utilizable como Coder.
+El spike más largo y el más consecuente: toda la economía del stack v1.2 depende de que el Coder sea utilizable.
 
 ### Montaje
 
-Script Python mínimo — **sin LangGraph todavía**, una llamada directa a DeepInfra. Hoy se mide al modelo, no al grafo.
+Script Python mínimo — **sin LangGraph todavía**, una llamada directa a la API del Coder. Hoy se mide al modelo, no al grafo.
 
 **Entrada que se le entrega:**
 
@@ -108,15 +103,15 @@ Registrar en `openspec/mvp/harness-metrics.csv` (crear hoy):
 
 ```csv
 fecha,tarea,pantalla,modelo,tokens_in,tokens_out,coste_usd,intentos,minutos,resultado
-2026-08-05,SP-1,INV-01,deepseek-v4-flash,,,,,,
+2026-08-05,SP-1,INV-01,<coder>,,,,,,
 ```
 
 Si falla a la primera, reintentar hasta 3 veces pasándole el error como feedback, y **registrar cada intento como fila propia**. La distribución de intentos hasta verde es una de las tres métricas que importan.
 
 ### Desenlaces
 
-- **≥3 criterios** → GLM entra al camino crítico como estaba planeado.
-- **<3 criterios** → GLM pasa a pista paralela de experimentación, Claude Code construye el MVP. Los objetivos 2 y 4 se cumplen igual: un fallo medido también es un dato, y evita construir V1 sobre un supuesto falso.
+- **≥3 criterios** → el Coder entra al camino crítico como estaba planeado.
+- **<3 criterios** → el Coder pasa a pista paralela de experimentación, Claude Code construye el MVP. Los objetivos 2 y 4 se cumplen igual: un fallo medido también es un dato, y evita construir V1 sobre un supuesto falso.
 - **En cualquier caso** → el resultado se escribe en `findings-register.md`, clasificado como `MODEL`.
 
 ---
@@ -207,17 +202,17 @@ Clasificaciones: `SPEC-GAP` · `HARNESS` · `MODEL` · `INFRA` · `DESIGN`
 
 | Spike | Resultado | Consecuencia |
 |---|---|---|
-| SP-1 Coder (DeepSeek-V4-Flash) | ☑ **pasa** (5/5) ☐ falla | **camino crítico** |
+| SP-1 · Coder | ☑ **pasa** (5/5) ☐ falla | **camino crítico** |
 | SP-2 WebCrypto | ☑ **X25519** ☐ P-256 ☐ falla | **ADR-001 alineado** (informa GAP-001, F-008) |
 | SP-3 Realtime | ☑ **pasa** ☐ falla | **tiempo real** |
 
-> Cerrada el 5-ago. **Los tres pasan.** SP-1 nota: el spike se corrió con DeepSeek-V4-Flash, no
-> GLM (ver F-001). SP-2 mejor que lo esperado: X25519 nativo disponible, no hizo falta caer a
-> P-256 (F-008). Detalle completo en `findings-register.md`.
+> Cerrada el 5-ago. **Los tres pasan.** SP-1 nota: el Coder cambió respecto al plan original
+> (ver F-001). SP-2 mejor que lo esperado: X25519 nativo disponible, no hizo falta caer a P-256
+> (F-008). Detalle completo en `findings-register.md`.
 
 **Si los tres pasan:** el plan de 15 días sigue tal cual. Día 2 arranca con esquema Supabase y scaffold React.
 
-**Si SP-1 falla:** replanificar el día 2 por la mañana. El calendario aguanta —Claude Code absorbe el trabajo de GLM— pero los objetivos 1 y 4 cambian de forma: pasan de medir un arnés en producción a medir por qué no lo fue.
+**Si SP-1 falla:** replanificar el día 2 por la mañana. El calendario aguanta —Claude Code absorbe el trabajo del Coder— pero los objetivos 1 y 4 cambian de forma: pasan de medir un arnés en producción a medir por qué no lo fue.
 
 **Si falla SP-3:** parar y replanificar antes de escribir nada más.
 

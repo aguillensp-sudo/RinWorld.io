@@ -120,7 +120,7 @@ create index inventory_lines_search_idx
   on public.inventory_lines (part_number, brand)
   where status = 'PUBLISHED';
 create index inventory_lines_part_trgm
-  on public.inventory_lines using gin (part_number gin_trgm_ops);
+  on public.inventory_lines using gin (part_number extensions.gin_trgm_ops);
 create index inventory_lines_org_status_idx on public.inventory_lines (org_id, status);
 create index inventory_lines_country_idx on public.inventory_lines (location_country) where status = 'PUBLISHED';
 create index inventory_lines_family_idx  on public.inventory_lines (product_family) where status = 'PUBLISHED';
@@ -129,6 +129,7 @@ create index inventory_lines_freshness_idx on public.inventory_lines (last_uploa
 create or replace function app.touch_updated_at()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   new.updated_at := now();

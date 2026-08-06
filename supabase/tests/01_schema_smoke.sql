@@ -48,28 +48,35 @@ begin
 end
 $$;
 
--- schema-desde-dia-uno / member-state-machine: no se llega a KEY_ACTIVE sin
--- backup de clave en servidor.
-select public.expect_fail(
-  $$update public.members set state = 'KEY_ACTIVE'
-    where id = '0a000001-0000-0000-0000-000000000001'$$,
-  'KEY_ACTIVE sin encrypted_key_blob');
-
 -- El backup es atómico: los cuatro campos o ninguno.
 select public.expect_fail(
   $$update public.members set encrypted_key_blob = '\x00'::bytea
     where id = '0a000001-0000-0000-0000-000000000001'$$,
   'backup de clave parcial (solo encrypted_key_blob)');
 
--- Ahora sí: backup completo → KEY_ACTIVE → ACTIVE.
+-- EL CASO DEL MVP, y es un test positivo a propósito: un miembro llega a ACTIVE
+-- SIN material de clave en servidor. El plan del MVP excluye el backup de clave
+-- (§9 "Fuera") y CLAUDE.md §4 fija claves en memoria de sesión, así que
+-- encrypted_key_blob es NULL siempre en el MVP. Si esto se rompe, ningún miembro
+-- puede estar ACTIVE y SRCH-01 se queda sin lectura cruzada el día 6.
+update public.members set state = 'ACTIVE';
+
+do $$
+begin
+  assert (select count(*) from public.members
+          where state = 'ACTIVE' and encrypted_key_blob is null) = 4,
+    'MVP: se llega a ACTIVE sin backup de clave en servidor';
+  raise notice 'OK · MVP: ACTIVE sin material de clave (el backup es de V1, no del MVP)';
+end
+$$;
+
+-- Cuando V1 traiga ADR-001 completo, los cuatro campos ya están y validan.
 update public.members set
   public_key         = decode(repeat('ab', 32), 'hex'),
   encrypted_key_blob = decode(repeat('cd', 48), 'hex'),
   key_iv             = decode(repeat('01', 12), 'hex'),
   argon2_salt        = decode(repeat('02', 32), 'hex'),
   kdf_params         = '{"m":65536,"t":3,"p":4}'::jsonb;
-
-update public.members set state = 'ACTIVE';
 
 -- key-wrapping: IV de 12 bytes, salt de 32.
 select public.expect_fail(

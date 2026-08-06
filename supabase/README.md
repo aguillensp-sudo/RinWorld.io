@@ -1,14 +1,33 @@
 # Esquema Supabase — MVP Bearingworld.io
 
 Escrito el 6-ago-2026 (día 2) contra `openspec/mvp/Dia-02_decisiones_esquema.md`, aprobado por
-el PO. Las tres migraciones se aplican en orden y **no** se han aplicado todavía al proyecto
-remoto (`troxminloxkjwihwfevs`, eu-west-1).
+el PO. **Aplicado al proyecto remoto `troxminloxkjwihwfevs` (MVP_RinWorld.io, eu-west-1,
+Postgres 17) el 6-ago-2026**, con las dos cuentas de desarrollo sembradas y el login verificado
+contra la API real.
 
 | Fichero | Contenido |
 |---|---|
 | `migrations/0001_organizations_and_members.sql` | Organizaciones, miembros, roles, máquina de estados del miembro, los cuatro campos de backup E2EE, helpers de sesión y RLS base |
 | `migrations/0002_inventory.sql` | Líneas de inventario con la frontera de cifrado, índices de búsqueda, INV-07 (modo + exclusiones) y lectura cruzada entre organizaciones |
 | `migrations/0003_threads_and_items.sql` | Hilos, tarjetas, las tres máquinas de estados, claves de contenido envueltas y RLS de mensajería |
+| `migrations/0004_lint_fixes.sql` | Correcciones del linter de Supabase: `search_path` en dos funciones y `pg_trgm` fuera de `public` |
+| `seed/dev_accounts.sql` | Las dos organizaciones y las dos cuentas. Idempotente. Las contraseñas entran por variable, nunca en el fichero |
+
+## Estado en el remoto
+
+Verificado por API (`/auth/v1/token` + PostgREST), no por inspección de la base:
+
+| Cuenta | Organización | Rol | Estado | Ve |
+|---|---|---|---|---|
+| `alpha@bearingworld.test` | Rodamientos Ibéricos (ES) | ADMIN | ACTIVE | sus 3 líneas + las 2 PUBLISHED de Beta |
+| `beta@bearingworld.test` | Nordwälz Lager (DE) | ADMIN | ACTIVE | sus 3 líneas + las 2 PUBLISHED de Alpha |
+
+Ninguna ve el `DRAFT` de la otra ni su `ARCHIVED`, ni a los miembros de la otra. Las dos ven
+las dos organizaciones (directorio, `status = APPROVED`).
+
+`get_advisors` queda con **un solo aviso**: `auth_leaked_password_protection` desactivado. Es
+configuración de Auth del proyecto, no del esquema — decisión del PO, no se toca desde una
+migración.
 
 ## Verificación
 
@@ -82,6 +101,8 @@ Ninguna contradice un spec cerrado, pero todas son revisables:
 
 ## Lo que falta del día 2
 
-- Aplicar las migraciones al proyecto remoto y crear las dos cuentas de prueba.
 - Scaffold React+TS+Vite con el shell, y Vitest + Playwright en CI.
 - Meter `supabase/tests/run.sh` en el pipeline junto a Vitest.
+- Habilitar Realtime. Ojo con el plan §3, que lo pide "sobre `threads`, `messages`, `offers`":
+  esas dos últimas tablas no existen. El spec cerrado tiene **un** hilo con elementos de tipo
+  mezclado, así que Realtime va sobre `threads` y `thread_items`.

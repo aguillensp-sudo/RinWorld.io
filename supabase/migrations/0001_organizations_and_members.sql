@@ -16,7 +16,11 @@
 create schema if not exists app;
 
 -- Búsqueda por nombre parcial de organización (lista de exclusión de INV-07).
-create extension if not exists pg_trgm;
+-- En `extensions`, no en `public`: es la convención de Supabase y el linter marca
+-- `extension_in_public` como aviso de seguridad. El opclass se referencia
+-- cualificado para no depender del search_path.
+create schema if not exists extensions;
+create extension if not exists pg_trgm with schema extensions;
 
 -- -----------------------------------------------------------------------------
 -- organizations
@@ -43,7 +47,7 @@ create table public.organizations (
 
 -- El nombre se busca por parcial en la lista de exclusión de INV-07.
 create unique index organizations_name_key on public.organizations (lower(name));
-create index organizations_name_trgm on public.organizations using gin (name gin_trgm_ops);
+create index organizations_name_trgm on public.organizations using gin (name extensions.gin_trgm_ops);
 create index organizations_geo_idx on public.organizations (continent, country);
 
 -- -----------------------------------------------------------------------------
@@ -94,13 +98,21 @@ create table public.members (
     or
     (encrypted_key_blob is not null and key_iv is not null
        and argon2_salt is not null and kdf_params is not null)
-  ),
-  -- KEY_ACTIVE y posteriores exigen backup en servidor (transición a KEY_ACTIVE
-  -- ocurre "cuando el sistema confirma el backup de clave almacenado en servidor").
-  constraint members_key_active_needs_backup_chk check (
-    state not in ('KEY_ACTIVE','ACTIVE','SUSPENDED')
-    or (encrypted_key_blob is not null and public_key is not null)
   )
+
+  -- NO hay constraint que ate el estado del miembro al backup de clave, y es
+  -- deliberado. `member-state-machine` describe KEY_ACTIVE como "cuando el sistema
+  -- confirma el backup de clave almacenado en servidor", pero eso es V1: el plan
+  -- del MVP excluye explícitamente "recuperación de clave y passphrase · ADR-001
+  -- completo (backup, rotación, Argon2id)" (§9 "Fuera"), y CLAUDE.md §4 fija que
+  -- en el MVP las claves viven en memoria de sesión y se pierden al recargar.
+  -- Es decir: en el MVP `encrypted_key_blob` es NULL siempre.
+  --
+  -- Exigir backup para llegar a ACTIVE dejaría a todos los miembros por debajo de
+  -- ACTIVE, y como app.is_active_member() es la puerta de la lectura cruzada de
+  -- inventario, SRCH-01 devolvería cero filas el día 6. Los cuatro campos existen
+  -- y son nullable, que es lo único que exige schema-desde-dia-uno. La restricción
+  -- entra cuando entre ADR-001 completo, no antes.
 );
 
 create unique index members_email_key on public.members (lower(email));

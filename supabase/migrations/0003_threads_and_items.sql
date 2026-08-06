@@ -219,6 +219,7 @@ create trigger thread_items_validate
 create or replace function app.guard_offer_terminal_state()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   if old.item_type = 'OFERTA'

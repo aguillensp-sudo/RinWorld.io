@@ -3,95 +3,92 @@
 > **Fichero de relevo.** Lo primero que lee cualquier sesión nueva. Se sobrescribe al
 > cierre de cada día — no se acumula histórico aquí (el histórico vive en git,
 > `findings-register.md` y `harness-metrics.csv`).
+>
+> **Regla de este fichero, aprendida a base de golpes (F-012).** Cita, no parafrasea. Los
+> valores de estado, los nombres de columna y las asignaciones de modelo se copian del spec
+> cerrado o del plan **con el puntero al lado**. Un enum o un nombre de campo sin puntero se
+> considera no verificado: tres paráfrasis mal hechas llegaron a un DDL a punto de escribirse.
 
-**Día 1 de 15 · cerrado 5-ago-2026 · Estado: VERDE**
+**Día 2 de 15 · cerrado 6-ago-2026 · Estado: VERDE**
 
 ---
 
 ## Dónde estamos
 
-Día 1 cerrado con los tres spikes en verde. El plan de 15 días sigue sin cambios.
+Día 2 cerrado. Es el día más irreversible del sprint y sale entero: esquema, RLS, auth de dos
+organizaciones y el shell de la app. La puerta de salida está pasada de punta a punta.
 
-| Spike | Resultado |
+| Bloque | Resultado |
 |---|---|
-| SP-1 · Coder | **PASA 5/5.** `deepseek-v4-flash` convierte INV-01 a React con calidad utilizable. Entra al camino crítico. |
-| SP-2 · WebCrypto | **PASA.** X25519 nativo disponible — alineado con ADR-001, sin caer a P-256. |
-| SP-3 · Realtime | **PASA.** 20/20 inserciones, <1s, reconecta solo. |
+| Atribución y métricas | **Hecho.** Regla de autoría en `CLAUDE.md` §1.6; coste unificado en $0.003581; columna `ficheros` en el CSV. El trailer de `0623451` **no** se reescribe (F-009). |
+| Las tres decisiones de esquema | **Aprobadas por el PO.** Detalle en `Dia-02_decisiones_esquema.md`, que es el documento contra el que se escribió el DDL. |
+| Esquema + RLS | **Aplicado** al proyecto remoto (`troxminloxkjwihwfevs`, eu-west-1, PG 17). Migraciones 0001–0004. |
+| Dos cuentas | **Creadas y verificadas por API**, no por `SELECT`. Login real contra `/auth/v1/token`. |
+| Shell de la app | **Hecho.** React 18 + TS + Vite. Es **una de las 8 pantallas** del alcance (Plan §9). |
+| CI | Tres trabajos: esquema, app, e2e. **Necesita secrets — ver abajo.** |
 
-También cerrado: `design-system.md` extraído, `CLAUDE.md` creado, los tres registros del
-proyecto en marcha.
+**Puerta de salida del día 2: PASADA.** Dos contextos de navegador, dos cuentas, cada una entra
+y ve su propia sesión, y ninguna ve la organización de la otra. Es un test, no una comprobación
+a ojo: `app/e2e/session.spec.ts`.
+
+| Verificación | Estado |
+|---|---|
+| `bash supabase/tests/run.sh` | **30/30** — el esquema dice "no" donde los specs exigen que diga no |
+| `cd app && npm run typecheck` | limpio |
+| `cd app && npm test` | **21/21** |
+| `cd app && npx playwright test` | **9/9** contra el Supabase real, tres corridas sin flakiness |
+
+`get_advisors` del proyecto: **un solo aviso**, y no es del esquema.
+
+**Métricas del arnés: cero filas nuevas hoy, y es correcto.** El día 2 lo ejecutó Claude Code
+completo; el arnés no existe hasta el día 4 y el Coder no interviene hasta el día 3. Las
+primeras filas de `harness-metrics.csv` desde SP-1 son las de mañana.
 
 ---
 
-## Hoy toca — Día 2
+## Hoy toca — Día 3
 
-**Objetivo:** esquema Supabase + RLS + auth de dos organizaciones · scaffold React+TS+Vite
-con el shell · Vitest + Playwright en CI.
+**Objetivo:** catálogo sembrado de 200+ líneas · INV-01 completa a mano con sus tests.
 
-**Puerta de salida:** dos navegadores, dos cuentas, cada una entra y ve su propia sesión.
-CI en verde.
+| Trabajo | Ejecuta | Fuente |
+|---|---|---|
+| Catálogo sembrado: 200+ líneas curadas | **Coder** | Plan §8, fila del día 3 |
+| **Pantalla de referencia a mano:** INV-01 completa con sus tests | **Claude Code** | Plan, fila del día 3 |
 
-### Las tres decisiones del día 2 — no improvisar
+**Puerta de salida:** INV-01 renderiza el inventario real de la base de datos, con sus tests en
+verde, y las dos organizaciones tienen catálogo con solape deliberado.
 
-El día 2 es el más irreversible del sprint: el esquema lo lee todo lo que viene después y
-cambiarlo el día 8 significa migración más reescritura. Estas tres se deciden antes de
-escribir DDL:
+### Hoy es el primer día del Coder — y eso trae reglas que hasta ahora no aplicaban
 
-> **Las tres se decidieron en la puerta del 6-ago-2026.** El detalle, columna por columna,
-> vive en **`Dia-02_decisiones_esquema.md`** — ese es el documento contra el que se escribe
-> el DDL. Resumen:
+1. **Commits separados, sin excepción** (`CLAUDE.md` §1.6). El artefacto del Coder entra tal
+   como sale, con `Co-Authored-By: deepseek-v4-flash <coder@harness.local>`. Las correcciones a
+   mano van **después**, en otro commit. El diff del segundo *es* la medida de cuánto hubo que
+   arreglar, y es el objetivo 4 del MVP.
+2. **Una fila de `harness-metrics.csv` por intento**, con `ficheros`, y el `coste_usd` tiene que
+   coincidir con el JSON de `metrics/` (F-010). Si el cache hit es alto, se declara: no se
+   extrapola una cifra cacheada a coste por pantalla (F-011).
+3. **El Coder no escribe los tests que lo evalúan** (`CLAUDE.md` §3, innegociable).
 
-**1 · Frontera de cifrado.** Es RNG-VND-01 materializado en DDL, y va **por columna en las
-dos tablas** — el catálogo también tiene una columna cifrada:
+### Lo que INV-01 se va a encontrar
 
-- **Cifrado (`bytea`)** — precio unitario, cantidad *de las tarjetas*, plazo, transporte,
-  divisa, `valid_until`, notas y el cuerpo de los mensajes. **Y `unit_price` en la propia
-  línea de inventario** (lo exige `inventory-management`, sin indexar).
-- **Metadato en claro** — estado de la oferta, timestamps, participantes del hilo,
-  referencia y marca. Es lo que permite que VND-01 y PANEL-01 muestren agregados sin romper
-  el zero-knowledge, y lo que exige `RNG-MSG-02`: ninguna transición de estado descifra.
-- **Trampa:** `quantity` va **en claro en el inventario** (obligatoria y buscable) y
-  **cifrada en las tarjetas**. Mismo nombre, tratamiento opuesto.
+- **`inventory_lines.status` tiene CUATRO estados**, no tres: `DRAFT`, `PUBLISHED`, `ARCHIVED`,
+  **`DELETED`** (`inventory-management` · inventory-line-lifecycle). El HTML aprobado de INV-01
+  solo pinta tres. Decidir qué hace la pantalla con `DELETED` antes de generarla.
+- **`unit_price` está cifrado y no se puede leer desde el servidor.** INV-01 muestra el
+  inventario propio, así que el precio lo descifra el cliente o no se muestra. No hay tercera
+  opción y no es un detalle de implementación.
+- **`quantity` es la trampa:** en claro en el inventario (obligatoria y buscable), cifrada en las
+  tarjetas de consulta y oferta. Mismo nombre, tratamiento opuesto.
+- Los indicadores de antigüedad de 7 y 30 días se derivan de `last_upload_at`
+  (`inventory-management` · data-freshness). Sin transición automática: archivar es decisión
+  exclusiva del distribuidor.
 
-Si esto se modela mal, el día 11 se abre el panel de vista-servidor delante del socio y se
-ve texto plano donde debía haber cifrado. A esas alturas no hay arreglo rápido.
+### Convenciones de React ya escritas — no reinventarlas
 
-**2 · Catálogo buscable vs. negociación cifrada.** El inventario tiene que ser
-**consultable entre organizaciones** — sin eso SRCH-01 no encuentra nada el día 6. Buscable:
-`part_number`, `brand`, `quantity`, `location_country`, `product_family`, `status`,
-`updated_at`. **Decidido: el precio queda fuera de la parrilla de SRCH-01** — se ve al abrir
-la negociación (ya estaba en Out of Scope de `conversational-search`). INV-07 va en esquema y
-RLS sin UI, pero la lista de exclusión es **tabla propia**: al volver a modo VISIBLE la lista
-queda inactiva y no se borra.
-
-**3 · Máquina de estados como restricción de base de datos**, no solo como diagrama. **Manda
-el spec cerrado**, cuatro estados y la contraoferta como fila nueva:
-
-`estado_oferta ∈ {Pendiente, Aceptada, Rechazada, Superada por contraoferta}`
-
-`Superada por contraoferta` es **terminal**: la contraoferta es otra fila que nace
-`Pendiente`, y la anterior no se reutiliza jamás — el historial se conserva. **Entra hoy
-también `thread-lifecycle`** (`ABIERTO · CON CONSULTA PENDIENTE · CON OFERTA PENDIENTE ·
-ACUERDO ALCANZADO · CERRADO SIN ACUERDO`) más los estados de la tarjeta de consulta, para que
-el día 7 no pague una migración.
-
-### Además, antes de empezar — ✔ HECHO 6-ago-2026
-
-- ✔ **Atribución de autoría.** Regla escrita en `CLAUDE.md` §1.6: trailer
-  `Co-Authored-By: deepseek-v4-flash <coder@harness.local>` para código del Coder, y
-  **nunca** mezclar código del Coder con código a mano en el mismo commit (van en commits
-  separados, para que el diff del segundo mida cuánto hubo que arreglar).
-- ✔ **`0623451` NO se reescribe** — y queda documentado como precedente en **F-009**. Dos
-  razones: ya está en `origin/mvp/bootstrap` (exigiría force-push) y **mezcla** salida del
-  Coder con código a mano, así que ningún trailer único sería correcto. La autoría real del
-  artefacto se traza por `files` en `attempt_1.json` y por la columna `ficheros` del CSV.
-- ✔ **Columna `ficheros`** añadida a `harness-metrics.csv`.
-- ✔ **Coste unificado en `0.003581`** (el CSV acertaba; el JSON tenía `0.0`). Recomputado
-  con la fórmula de `run_deepseek.py`. Lo grave: falló el artefacto *de máquina* y acertó la
-  copia *a mano* → **F-010**, y el CSV pasa a generarse desde los JSON.
-- ✔ **Aviso de cache** en el CSV y en el JSON: 99,58% hit (18688/18767). En frío con los
-  mismos tokens serían ~$0.006145 (×1,7), y SP-1 sólo generó **un componente**, no una
-  pantalla → **F-011**. Para extrapolar a V1, cifra en frío.
+`design-system.md` §6 está **rellena** (se hizo el día 2, no el 4, porque el Coder lee ese
+documento desde el día 4 y la primera pantalla del arnés es del día 5). Tokens como variables
+CSS, CSS Modules conservando los nombres `bw*` del shell aprobado, y cuatro de los siete puntos
+del protocolo de verificación convertidos en test automático.
 
 ---
 
@@ -100,32 +97,56 @@ el día 7 no pague una migración.
 | # | Decisión | Dónde |
 |---|---|---|
 | Coder | `deepseek-v4-flash`, no GLM-5.2/DeepInfra. Cambio por coste. | F-001 |
-| Modelos | **Opus 4.8 / Claude Code** para esquema, RLS, Realtime, E2EE, máquina de estados y herramientas de VERA — y también para el **andamiaje del día 2**. El **Coder** (`deepseek-v4-flash`) para conversión de HTML→React, tests Playwright y catálogo sembrado; su primer trabajo es el día 3. **VERA en producción: Sonnet 4.6, fijo por contrato (QA-A00-06).** | Plan §1 + §7 · CLAUDE.md §3 |
+| Modelos | **Opus 4.8 / Claude Code** para esquema, RLS, Realtime, E2EE, máquina de estados y herramientas de VERA. El **Coder** para HTML→React, tests Playwright y catálogo sembrado. **VERA en producción: Sonnet 4.6, fijo por contrato (QA-A00-06).** | Plan §1 y §7 · `CLAUDE.md` §3 |
+| Estados de oferta | Los **cuatro** del spec: `Pendiente`, `Aceptada`, `Rechazada`, `Superada por contraoferta`. La última es **terminal** y la contraoferta es **fila nueva**. | `messaging-and-negotiation` · offer-card |
+| Frontera de cifrado | Por columna, en las dos tablas. `unit_price` cifrado **también en la línea de inventario**. | `Dia-02_decisiones_esquema.md` §1 |
+| Precio en SRCH-01 | **Fuera de la parrilla.** No se ordena ni se filtra por precio, nunca. Se ve al abrir la negociación. | `conversational-search` · Out of Scope |
+| Autoría | Código del Coder y código a mano **nunca en el mismo commit**. | `CLAUDE.md` §1.6 · F-009 |
 | Arnés | Solo 2 nodos (Coder + Test-runner). Planner/Evaluator/Escalation **no** se construyen en el MVP. | Plan §6 |
-| Integridad | El Coder **nunca** escribe los tests que lo evalúan. | Plan §6 |
-| Alcance | 8 pantallas. SRCH-01 es la núcleo y no se recorta. Inventario sembrado, sin pantallas de importación. | Plan §9 |
-| Monorepo | `app/` y `harness/` en este repo. Los HTML aprobados no se tocan. | Día-01 §1 |
+| Integridad | El **Coder** nunca escribe los tests que lo evalúan. | `CLAUDE.md` §3 |
+| Alcance | 8 pantallas, y el **app shell es una de ellas** (ya hecha). SRCH-01 es la núcleo y no se recorta. | Plan §9 |
+| Monorepo | `openspec/` + `app/` + `supabase/`. `harness/` llega el día 4. Los HTML aprobados no se tocan. | `CLAUDE.md` §2 |
 
 ---
 
 ## Pendiente de Álvaro
 
-- **Secrets de GitHub Actions**, o el CI falla en el trabajo de e2e a propósito:
-  `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `E2E_ALPHA_EMAIL/PASSWORD/ORG`,
-  `E2E_BETA_EMAIL/PASSWORD/ORG`.
-- **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados y es la
-  primera que ve el socio. Hoy va andamiaje hecho con los tokens.
-- **Los cuatro tokens neutros de fondo claro** (F-003): bordes, divisores, texto secundario
-  sobre blanco y hover. INV-01 los necesita **mañana**; sin ellos el Coder vuelve a inventar
-  grises.
-- `auth_leaked_password_protection` está desactivado en Auth. ¿Se activa?
+**Dos bloquean el arranque del día 3.**
+
+1. 🔴 **Los cuatro tokens neutros de fondo claro** (F-003): bordes de tabla, divisores, texto
+   secundario sobre blanco y hover. Son exactamente los cuatro grises que el Coder inventó en
+   SP-1 (`#e5e7eb`, `#f3f4f6`, `#374151`, `#4b5563`). El shell es oscuro y no los necesitaba;
+   **INV-01 sí**. Sin definirlos en `design-system.md`, el Coder los vuelve a inventar y el
+   check de paleta del Test-runner los rechazará.
+2. 🔴 **¿Qué va a buscar el socio en la demo?** Referencia, cantidad y zona. Plan §8 es
+   explícito: el catálogo se diseña **hacia atrás desde el guion de demo**, con solape
+   deliberado entre las dos organizaciones para que la búsqueda cruce. Sin esa decisión, las 200
+   líneas salen verosímiles pero no lucen en la reunión — y sembrar dos veces es tirar el
+   trabajo del Coder.
+
+**No bloquean, pero cuanto antes mejor.**
+
+3. **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados y **tampoco
+   está entre las 8 pantallas del alcance**: es una novena que nadie planificó, y es la primera
+   que ve el socio. Hoy va andamiaje hecho con los tokens. *(El "panel de vista-servidor" del
+   Plan §9 también es nuevo, pero ese sí está planificado.)*
+4. **Secrets de GitHub Actions**, o el trabajo de e2e falla a propósito:
+   `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `E2E_ALPHA_EMAIL/PASSWORD/ORG`,
+   `E2E_BETA_EMAIL/PASSWORD/ORG`.
+5. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
+   HaveIBeenPwned). Es configuración del proyecto, no del esquema. ¿Se activa?
 
 ---
 
 ## Riesgo con la vista más corta
 
-**Día 7 · MSG-02** es la pantalla más compleja del MVP y tiene margen para comerse dos
-días. Si el día 7 no está, se simplifica el hilo.
+**El día 3 arranca bloqueado.** Los dos puntos rojos de arriba son media hora de decisiones
+tuyas, pero sin ellos el Coder siembra un catálogo que habrá que rehacer e INV-01 vuelve a
+inventar grises. Es el riesgo más cercano y el más barato de quitar.
+
+**Día 7 · MSG-02** sigue siendo el riesgo estructural: la pantalla más compleja del MVP, con
+margen para comerse dos días. Si el día 7 no está, se simplifica el hilo. Lo que sí mejoró hoy:
+`thread-lifecycle` entró en el DDL del día 2, así que el día 7 no paga migración.
 
 ---
 
@@ -134,13 +155,16 @@ días. Si el día 7 no está, se simplifica el hilo.
 | Fichero | Qué contiene |
 |---|---|
 | `Plan_MVP_Bearingworld_v1.0.md` | Plan maestro de 15 días. La referencia. |
+| `Dia-02_decisiones_esquema.md` | Las tres decisiones de esquema, aprobadas. El DDL se escribió contra este documento. |
 | `Dia-01_Spikes_y_arranque.md` | Detalle del día 1 (cerrado). |
-| `findings-register.md` | Hallazgos → objetivos 2 y 3. |
-| `harness-metrics.csv` | Tokens, coste, intentos → objetivo 4. |
-| `harness-backlog.md` | Defectos del arnés a corregir antes de V1. |
-| `../architecture/design-system.md` | Contrato visual que lee el Coder en cada tarea. |
-| `../../CLAUDE.md` | Reglas de proyecto no negociables. |
+| `findings-register.md` | 17 hallazgos. F-003, F-008, F-010, F-011 y F-016 siguen abiertos. |
+| `harness-metrics.csv` | Tokens, coste, intentos, ficheros → objetivo 4. Primeras filas del Coder: mañana. |
+| `harness-backlog.md` | Defectos del arnés a corregir antes de V1. Se llena desde el día 4. |
+| `../architecture/design-system.md` | Contrato visual. **§6 (traducción a React) ya está rellena.** |
+| `../../supabase/README.md` | Esquema, las siete decisiones de implementación y cómo probarlo. |
+| `../../app/README.md` | Scaffold, qué decide y cómo verificarlo. |
+| `../../CLAUDE.md` | Reglas de proyecto no negociables. §1.6 es nueva. |
 
 ---
 
-*Actualizado al cierre del día 1 · 5 de agosto de 2026*
+*Actualizado al cierre del día 2 · 6 de agosto de 2026*

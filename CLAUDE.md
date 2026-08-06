@@ -37,6 +37,18 @@ Este fichero es el contrato de trabajo del MVP (plan de 15 días,
    traga todo lo que cuelga de él: verificar `git rev-parse --show-toplevel` antes de
    commitear y no dejar caer cambios del MVP en ese repo padre.
 
+6. **Autoría honesta en los commits.** El objetivo 4 del MVP es medir qué produce el
+   arnés; si la autoría se mezcla, la medición no vale.
+   - Código generado por el Coder → trailer
+     `Co-Authored-By: deepseek-v4-flash <coder@harness.local>`.
+   - Código escrito por Claude Code → trailer `Co-Authored-By` del modelo de Claude
+     correspondiente. Nunca atribuir a Claude lo que escribió el Coder, ni al revés.
+   - **Nunca mezclar código del Coder y código a mano en el mismo commit.** Van en
+     commits separados, aunque pertenezcan a la misma tarea: primero el artefacto del
+     Coder tal cual sale, después las correcciones a mano. Así el diff del segundo commit
+     *es* la medida de cuánto hubo que arreglar.
+   - Precedente documentado: `0623451` incumple esto y no se reescribe (ver F-009).
+
 ---
 
 ## 2. Estructura (monorepo)
@@ -73,8 +85,8 @@ Se reparte por **coste del fallo**, no por dificultad.
 - **VERA en producción** → **Claude Sonnet 4.6, fijo por contrato (QA-A00-06)**. No se
   cambia por decisiones de testing/caching.
 
-**Regla de integridad, innegociable:** GLM nunca escribe los tests que lo evalúan. El
-test es el contrato entre Planner y Coder; si el mismo modelo escribe prueba y código,
+**Regla de integridad, innegociable:** **el Coder nunca escribe los tests que lo evalúan.**
+El test es el contrato entre Planner y Coder; si el mismo modelo escribe prueba y código,
 la prueba deja de verificar.
 
 ---
@@ -104,8 +116,14 @@ la prueba deja de verificar.
 ## 6. Instrumentación (objetivo 4 del MVP)
 
 - Registrar **cada** tarea del arnés en `openspec/mvp/harness-metrics.csv`: modelo,
-  tokens in/out, coste, intentos hasta verde, si escaló a humano, minutos. Cada reintento
-  es una fila propia.
+  tokens in/out, coste, intentos hasta verde, si escaló a humano, minutos y **`ficheros`**
+  (los que escribió el Coder, separados por `;`). Cada reintento es una fila propia.
+  Convención del fichero: **ningún valor lleva coma** — se usa `;` — para que el CSV se
+  parsee sin comillas.
+- **El coste que se registra es el coste real de la llamada, y el cache hit se declara.**
+  Una cifra con cache alto no se extrapola nunca a coste por pantalla en frío (F-011).
+  `coste_usd` del CSV y `cost_usd` del JSON de métricas **tienen que coincidir**; si no
+  coinciden, gana el JSON recomputado, no la copia a mano (F-010).
 - Los hallazgos van a `openspec/mvp/findings-register.md`, clasificados como
   `SPEC-GAP` · `HARNESS` · `MODEL` · `INFRA` · `DESIGN`.
 
@@ -137,3 +155,17 @@ dice "no tengo ese dato" en cuanto sale de ahí.
 - `openspec/design-gui/specs y html aprobados/notas/Status_bearingworld.io a 1 de Julio de 2026.md` — handoff de la fase de prototipado.
 - `openspec/architecture/ADR-001_E2EE_Key_Backup_1.md` — decisión de cifrado (condiciona seguridad/mensajería).
 - `openspec/gaps-register.md` · `openspec/product-decisions.md` — debates cerrados y abiertos.
+
+---
+
+## Ritual de cierre de día (obligatorio, sin pedir confirmación)
+
+Al terminar la jornada, antes del último commit:
+1. Sobrescribir openspec/mvp/ESTADO.md: día, estado (verde/ámbar/rojo),
+   qué se cerró, qué toca mañana, decisiones vivas, bloqueos, riesgo
+   más cercano.
+2. Volcar hallazgos a findings-register.md y métricas a harness-metrics.csv.
+3. Si mañana es día 4, 8 o 9 — los de decisiones irreversibles — escribir
+   además openspec/mvp/Dia-NN_*.md con el detalle. El resto de días van
+   con la fila del plan maestro.
+4. Commit + push.

@@ -20,7 +20,10 @@
     "prompt_cache_miss_tokens": 79
   },
   "seconds": 67.7,
-  "cost_usd": 0.0,
+  "cost_usd": 0.003581,
+  "cost_usd_source": "recalculado a mano 6-ago-2026: la corrida escribio 0.0. Recomputado con la formula de run_deepseek.py (hit=0.0028 miss=0.14 out=0.28 USD/Mtok) -> 0.003581, que coincide con harness-metrics.csv. Causa del 0.0 no recuperable de git (el spike entero es un solo commit). Ver F-010",
+  "cache_hit_pct": 99.58,
+  "cost_usd_cold_equivalent": 0.006145,
   "files": [
     "InventoryTable.tsx",
     "InventoryTable.module.css"

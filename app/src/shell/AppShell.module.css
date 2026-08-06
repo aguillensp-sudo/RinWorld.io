@@ -1,0 +1,348 @@
+/* =============================================================================
+   Shell · transcripción de Rinworld_app_shell.html
+   =============================================================================
+   Los nombres de clase conservan los del shell aprobado (`bwnav`, `bwvera`, …)
+   para que el mapeo sea 1:1 y cualquiera pueda comparar los dos ficheros lado a
+   lado. Los valores salen de var(--bw-*): cero hex aquí.
+   ========================================================================== */
+
+.bwshell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* BRAND BAR — 24px */
+.bwbrand {
+  height: var(--bw-h-brand);
+  background: var(--bw-deep-steel-darkest);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bw-pad-brand);
+  font-size: var(--bw-size-brand);
+  font-weight: 400;
+  letter-spacing: var(--bw-ls-brand);
+  text-transform: uppercase;
+  color: var(--bw-on-dark-brand);
+  flex-shrink: 0;
+}
+
+/* NAV BAR — 72px */
+.bwnav {
+  height: var(--bw-h-nav);
+  background: var(--bw-deep-steel-darkest);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: var(--bw-pad-nav);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.bwhbg {
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--bw-radius-hamburger);
+  padding: 6px;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.bwhbg:hover {
+  background: var(--bw-on-dark-fill-3);
+}
+
+.bwhbg span {
+  display: block;
+  width: 14px;
+  height: 1.5px;
+  background: white;
+}
+
+.bwnavlogo {
+  display: block;
+  height: var(--bw-w-logo-height);
+  width: auto;
+}
+
+.bwnavdiv {
+  width: 1px;
+  height: 18px;
+  background: var(--bw-divider-on-dark);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.bwnavitems {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 0;
+  overflow: hidden;
+}
+
+.bwnavitem {
+  padding: 0 12px;
+  height: var(--bw-h-nav);
+  display: flex;
+  align-items: center;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-on-dark-soft);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.12s;
+  flex-shrink: 0;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-family: inherit;
+}
+
+.bwnavitem:hover {
+  color: var(--bw-on-dark-hover);
+}
+
+.bwnavitem.act {
+  color: white;
+  border-bottom-color: var(--bw-calibration-blue);
+}
+
+.bwnavright {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.bwnavuser {
+  text-align: right;
+}
+
+.bwnavco {
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+  white-space: nowrap;
+}
+
+.bwnavun {
+  font-size: 11px;
+  color: var(--bw-on-dark-brand);
+  white-space: nowrap;
+}
+
+.bwnavsout {
+  padding: 5px 12px;
+  border-radius: var(--bw-radius-hamburger);
+  background: var(--bw-on-dark-fill-2);
+  border: 0.5px solid var(--bw-on-dark-stroke);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+
+.bwnavsout:hover {
+  background: var(--bw-on-dark-fill-4);
+  color: white;
+}
+
+/* MAIN */
+.bwmain {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* SIDEBAR OVERLAY */
+.bwsbo {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 20;
+  pointer-events: none;
+  transition: background 0.2s;
+  border: none;
+  padding: 0;
+}
+
+.bwsbo.open {
+  background: var(--bw-sidebar-overlay);
+  pointer-events: auto;
+}
+
+.bwsb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--bw-w-sidebar);
+  background: var(--bw-deep-steel);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+.bwsb.open {
+  transform: translateX(0);
+}
+
+.bwsbh {
+  padding: 12px 14px;
+  border-bottom: 0.5px solid var(--bw-on-dark-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.bwsbx {
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: var(--bw-on-dark-dim);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--bw-radius-hamburger);
+  font-family: inherit;
+  transition: all 0.12s;
+}
+
+.bwsbx:hover {
+  background: var(--bw-on-dark-fill-3);
+  color: white;
+}
+
+.bwsbnav {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.bwsbitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-on-dark-dim);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+  width: 100%;
+  background: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+.bwsbitem i {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.bwsbitem:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: var(--bw-on-dark-fill-1);
+}
+
+.bwsbitem.act {
+  color: white;
+  border-left-color: var(--bw-calibration-blue);
+  background: var(--bw-nav-active-fill);
+}
+
+.bwsbft {
+  padding: 12px 14px;
+  border-top: 0.5px solid var(--bw-on-dark-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.bwsbset {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-on-dark-muted);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.bwsbset i {
+  font-size: 16px;
+}
+
+.bwsbset:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bwsbusr {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.bwav {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bw-brass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+  flex-shrink: 0;
+}
+
+.bwsbusrn {
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: white;
+}
+
+.bwsbusro {
+  font-size: 11px;
+  color: var(--bw-on-dark-faint);
+}
+
+/* CONTENT PANEL */
+.bwcnt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}

@@ -110,7 +110,15 @@ el día 7 no pague una migración.
 
 ## Pendiente de Álvaro
 
-- Nada bloqueante para el día 2.
+- **Secrets de GitHub Actions**, o el CI falla en el trabajo de e2e a propósito:
+  `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `E2E_ALPHA_EMAIL/PASSWORD/ORG`,
+  `E2E_BETA_EMAIL/PASSWORD/ORG`.
+- **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados y es la
+  primera que ve el socio. Hoy va andamiaje hecho con los tokens.
+- **Los cuatro tokens neutros de fondo claro** (F-003): bordes, divisores, texto secundario
+  sobre blanco y hover. INV-01 los necesita **mañana**; sin ellos el Coder vuelve a inventar
+  grises.
+- `auth_leaked_password_protection` está desactivado en Auth. ¿Se activa?
 
 ---
 

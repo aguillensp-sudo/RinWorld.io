@@ -1,0 +1,33 @@
+/* Reset y base, transcritos de Rinworld_app_shell.html. */
+@import './tokens.css';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100vh;
+  font-family: var(--bw-font-body);
+}
+
+/* El shell ocupa el viewport completo: §4 exige position:fixed; inset:0. */
+#root {
+  position: fixed;
+  inset: 0;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bw-scroll-thumb);
+  border-radius: 3px;
+}

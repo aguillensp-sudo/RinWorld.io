@@ -1,0 +1,114 @@
+/* =============================================================================
+   Login
+   =============================================================================
+   ⚠ NO HAY HTML APROBADO PARA ESTA PANTALLA. Entre los 32 HTML aprobados no hay
+   ninguno de inicio de sesión: están los de registro (REG-00…REG-09) y el de
+   recuperación (REC-01), pero no el login. Esto es andamiaje mínimo construido
+   con los tokens y las reglas de §3, siguiendo la excepción de §2 para REG-00
+   (fondo Deep Steel + tarjeta blanca). Necesita diseño aprobado antes de la
+   demo: es la primera pantalla que ve el socio.
+   ========================================================================== */
+
+.page {
+  height: 100%;
+  background: var(--bw-deep-steel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  background: white;
+  border-radius: var(--bw-radius);
+  padding: var(--bw-pad-panel);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-title);
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-deep-steel);
+}
+
+.input {
+  padding: var(--bw-pad-input);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.hint {
+  font-family: var(--bw-font-mono);
+  font-weight: 500;
+  font-size: var(--bw-size-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-hint);
+  color: var(--bw-steel-mist);
+}
+
+.submit {
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  color: white;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 16px;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  background: rgba(37, 99, 235, 0.32);
+  cursor: not-allowed;
+}
+
+/* §3 · aviso con borde brass. */
+.error {
+  border-left: 3px solid var(--bw-sensitive-text);
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-sensitive-text);
+  padding: 10px 12px;
+  font-size: var(--bw-size-input);
+}

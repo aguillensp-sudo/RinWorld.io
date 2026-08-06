@@ -197,21 +197,89 @@ Antes de dar por terminada una pantalla, verificar en este orden:
 
 ## 6. Traducción a React
 
-*Sección viva. Se rellena a partir del día 4 con las convenciones que se establezcan al
-convertir los HTML aprobados a componentes React (nombres de tokens, estructura de
-componentes, dónde vive el CSS). Vacía hoy a propósito.*
+*Rellenada el 6-ago-2026 (día 2) al construir el scaffold, no el día 4 como estaba previsto:
+el Coder lee este documento desde el día 4 y la primera pantalla del arnés es del día 5. Si
+llegara ahí con la sección vacía, inventaría sus propias convenciones y habría que rehacer
+las pantallas. Lo de abajo describe lo que el scaffold ya hace — no es una propuesta.*
 
 ### 6.1 Tokens
-_(pendiente)_
+
+Viven en **`app/src/styles/tokens.css`** como variables CSS bajo `:root`, con prefijo
+`--bw-`. Transcripción literal de §1. **Ningún componente escribe un hex**: se usa
+`var(--bw-token)`.
+
+| Grupo | Ejemplo |
+|---|---|
+| Paleta | `--bw-deep-steel-darkest`, `--bw-brass`, `--bw-calibration-blue` |
+| Servicio | `--bw-input-placeholder`, `--bw-focus-halo`, `--bw-sidebar-overlay` |
+| Sobre fondo oscuro | `--bw-on-dark-soft`, `--bw-divider-on-dark`, `--bw-on-dark-fill-3` |
+| Tipografía | `--bw-font-title`, `--bw-size-label`, `--bw-ls-eyebrow` |
+| Espaciado | `--bw-radius`, `--bw-pad-input`, `--bw-pad-panel` |
+| Layout | `--bw-h-brand`, `--bw-h-nav`, `--bw-w-sidebar` |
+
+> **El hueco de F-003 sigue abierto y ahora tiene fecha de caducidad.** Este documento **no
+> define** neutros para fondo claro: bordes de tabla, divisores, texto secundario sobre blanco
+> y estados hover. El shell es oscuro y no los necesita; **INV-01 (día 3) sí**. Los grises que
+> el Coder inventó en SP-1 (`#e5e7eb`, `#f3f4f6`, `#374151`, `#4b5563`) son exactamente estos
+> cuatro huecos. Hasta que el PO los defina aquí y bajen a `tokens.css`, cualquier gris nuevo
+> es un desvío — y el check de paleta del Test-runner lo rechazará.
 
 ### 6.2 Layout del shell
-_(pendiente)_
+
+`app/src/shell/AppShell.tsx` + `AppShell.module.css`, y `VeraPanel.tsx` + su módulo.
+
+- **CSS Modules**, un módulo por componente, como el prompt del Coder ya exigía en SP-1.
+- **Los nombres de clase conservan los del shell aprobado** (`bwnav`, `bwvera`, `bwsbitem`,
+  …). CSS Modules los hashea al compilar, pero la clave sigue siendo la del HTML aprobado:
+  así los dos ficheros se comparan lado a lado y una discrepancia salta a la vista. Es lo que
+  sustituye al "copiar el CSS íntegro" de §5.1, que con React no es literal.
+- El shell ocupa el viewport desde `#root { position: fixed; inset: 0 }` en `global.css`
+  (§4 exige `position:fixed; inset:0`).
+- Estado del shell en React, no en el DOM: `sidebarOpen`, `active`, `collapsed`, `width`. Nada
+  de `classList.toggle` ni `querySelectorAll`.
+- La pantalla concreta entra como `children` de `AppShell`, que es el `.bwcnt` del 67%.
 
 ### 6.3 Componentes
-_(pendiente)_
+
+- Un directorio por zona: `shell/` para el armazón, `screens/` para pantallas, `lib/` para
+  datos y sesión.
+- **Props tipadas y exportadas**, sin datos dentro del componente. Cero
+  `dangerouslySetInnerHTML`.
+- Los literales del diseño (los tres textos de la brand bar, los ocho ítems de nav con su
+  icono) van en **constantes `as const`** arriba del componente, no dispersos en el JSX:
+  quedan revisables contra la spec de un vistazo.
+- Los iconos siguen siendo Tabler por clase (`<i className="ti ti-package" />`), igual que el
+  shell aprobado.
 
 ### 6.4 Reglas de comportamiento
-_(pendiente)_
+
+- **Los datos de ejemplo del HTML aprobado NO sobreviven.** "Rodamientos del Sur SL", "Juan
+  Martínez" y "¡Bienvenido Walter!" vienen de la sesión. Hay un test que falla si reaparecen.
+- **Nombres accesibles unívocos.** El shell duplica los ocho ítems (barra superior y menú
+  lateral), así que cada `<nav>` lleva su `aria-label` (`Navegación principal` /
+  `Navegación lateral`) y cada `aside` el suyo (`VERA` / `Menú lateral`). Sin esto ninguna
+  consulta por rol es unívoca — ni en los tests ni para un lector de pantalla. Se descubrió
+  porque dos tests fallaron por ambigüedad, no por diseño previo.
+- **VERA no finge saber.** El shell aprobado responde "Entendido. ¿Algo más?" a cualquier cosa.
+  Eso **no se copia**: CLAUDE.md §7 dice que el riesgo #1 es VERA afirmando con aplomo algo que
+  no sabe, y un eco enlatado delante del socio se lee como un agente que funciona. Hasta el día
+  9, VERA declara que no está conectada. Hay test de unidad y e2e que lo fijan.
+- El arrastre de VERA quita la transición mientras dura (`.dragging`), o el panel va por detrás
+  del ratón.
 
 ### 6.5 Protocolo de verificación
-_(pendiente)_
+
+Los siete puntos de §5 siguen. Lo que cambia es que **cuatro dejan de ser inspección visual y
+pasan a ser test automático**:
+
+| §5 | Cómo se verifica ahora |
+|---|---|
+| 1 · Shell completo | `AppShell.test.tsx`: los ocho ítems en orden, los tres textos de la brand bar, el contenido |
+| 2 · VERA arrastrable y colapsable | e2e: colapsa a **32px** exactos y vuelve; el handle existe |
+| 3 · Proporciones | e2e mide el ancho real del panel; §2 también se comprueba viendo que el sidebar **no** empuja (su `x` es negativa cerrado) |
+| 4 · Placeholders | test que falla si reaparece un dato de ejemplo del HTML aprobado |
+| 5 · Grid proporcional | sigue siendo revisión a mano (no hay pantalla de formulario aún) |
+| 6 · Textos literales | test sobre los literales de la brand bar |
+| 7 · Orden de campos | sigue siendo revisión a mano |
+
+Comandos: `npm run typecheck` · `npm test` · `npx playwright test` en `app/`.

@@ -1,0 +1,98 @@
+/* =============================================================================
+   Tokens del sistema de diseño, como variables CSS
+   =============================================================================
+   Transcritos de openspec/architecture/design-system.md §1. Esta es la única
+   fuente de color, tipo y espaciado de la app: ningún componente escribe un hex.
+
+   Existe para cerrar la primera mitad de F-003: el Coder inventó grises porque
+   no tenía tokens que usar. A partir del día 5 lee `var(--bw-*)` de aquí.
+
+   ⚠ HUECO CONOCIDO, sigue abierto (F-003). El sistema de diseño **no define**
+   neutros para fondo claro: bordes de tabla, divisores, texto secundario sobre
+   blanco y estados hover. El shell es oscuro y no los necesita, así que aquí no
+   falta nada; la primera pantalla de fondo claro (INV-01, día 3) sí los va a
+   necesitar. NO se inventan aquí: los define el PO en design-system.md y bajan a
+   este fichero. Hasta entonces, cualquier gris nuevo es un desvío.
+   ========================================================================== */
+
+:root {
+  /* ── Paleta (§1.1) ───────────────────────────────────────────────────── */
+  --bw-deep-steel-darkest: #07111F; /* brand bar y nav bar */
+  --bw-deep-steel: #1B2537;         /* sidebar, ink, burbuja de usuario VERA */
+  --bw-warm-cream: #FAF8F4;         /* panel VERA */
+  --bw-cold-white: #F1F3F6;         /* fondo de contenido alternativo */
+  --bw-brass: #B8924A;              /* acentos de confianza */
+  --bw-calibration-blue: #2563EB;   /* acción primaria, foco, nav activo */
+  --bw-steel-mist: #6B7A99;         /* texto secundario */
+  --bw-signal-green: #16a34a;       /* punto "online" de VERA */
+
+  /* Colores de servicio (§1.1) */
+  --bw-input-placeholder: #9BA4B0;
+  --bw-input-text: var(--bw-deep-steel);
+  --bw-sidebar-overlay: rgba(0, 0, 0, 0.38);
+  --bw-divider-on-dark: rgba(255, 255, 255, 0.15);
+  --bw-sensitive-bg: rgba(220, 38, 38, 0.06);
+  --bw-sensitive-text: #dc2626;
+  --bw-tag-bg: rgba(184, 146, 74, 0.08);
+  --bw-tag-border: rgba(184, 146, 74, 0.28);
+  --bw-focus-halo: 0 0 0 3px rgba(37, 99, 235, 0.08);
+
+  /* Derivados del brass, tal como los usa el shell aprobado */
+  --bw-brass-border-soft: rgba(184, 146, 74, 0.18);
+  --bw-brass-border: rgba(184, 146, 74, 0.22);
+  --bw-brass-border-strong: rgba(184, 146, 74, 0.3);
+
+  /* Texto sobre fondo oscuro, tal como lo usa el shell aprobado */
+  --bw-on-dark-brand: rgba(255, 255, 255, 0.45);
+  --bw-on-dark-muted: rgba(255, 255, 255, 0.4);
+  --bw-on-dark-dim: rgba(255, 255, 255, 0.5);
+  --bw-on-dark-soft: rgba(255, 255, 255, 0.55);
+  --bw-on-dark-hover: rgba(255, 255, 255, 0.9);
+  --bw-on-dark-faint: rgba(255, 255, 255, 0.38);
+  --bw-on-dark-fill-1: rgba(255, 255, 255, 0.05);
+  --bw-on-dark-fill-2: rgba(255, 255, 255, 0.07);
+  --bw-on-dark-fill-3: rgba(255, 255, 255, 0.08);
+  --bw-on-dark-fill-4: rgba(255, 255, 255, 0.13);
+  --bw-on-dark-hairline: rgba(255, 255, 255, 0.08);
+  --bw-on-dark-stroke: rgba(255, 255, 255, 0.14);
+  --bw-nav-active-fill: rgba(37, 99, 235, 0.12);
+  --bw-vera-user-text: #dde2ea;
+  --bw-scroll-thumb: rgba(107, 122, 153, 0.2);
+
+  /* ── Tipografía (§1.2) ───────────────────────────────────────────────── */
+  --bw-font-title: 'Montserrat', sans-serif;
+  --bw-font-body: 'Inter', sans-serif;
+  --bw-font-mono: 'IBM Plex Mono', monospace;
+
+  --bw-size-title: 28px;
+  --bw-size-eyebrow: 14px;
+  --bw-size-body: 16px;
+  --bw-size-label: 12px;
+  --bw-size-input: 13px;
+  --bw-size-hint: 10px;
+  --bw-size-brand: 10px;
+
+  --bw-ls-title: 0.5px;
+  --bw-ls-eyebrow: 1.5px;
+  --bw-ls-label: 0.01em;
+  --bw-ls-hint: 0.04em;
+  --bw-ls-brand: 0.08em;
+  --bw-ls-divider: 0.06em;
+
+  /* ── Espaciado y radios (§1.3) ───────────────────────────────────────── */
+  --bw-radius: 3px;
+  --bw-radius-hamburger: 4px;
+  --bw-pad-panel: 48px;
+  --bw-pad-input: 10px 12px;
+  --bw-pad-radio: 12px 14px;
+  --bw-pad-checkbox: 14px;
+  --bw-pad-brand: 0 20px;
+  --bw-pad-nav: 0 14px;
+
+  /* ── Layout del shell (§2) ───────────────────────────────────────────── */
+  --bw-h-brand: 24px;
+  --bw-h-nav: 72px;
+  --bw-w-sidebar: 210px;
+  --bw-w-vera-collapsed: 32px;
+  --bw-w-logo-height: 46px;
+}

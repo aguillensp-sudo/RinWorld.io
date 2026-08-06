@@ -1,0 +1,240 @@
+/* VERA · transcripción del bloque "VERA PANEL" de Rinworld_app_shell.html. */
+
+.bwvera {
+  width: calc(33.333% - 0.5px);
+  min-width: var(--bw-w-vera-collapsed);
+  background: var(--bw-warm-cream);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+  border-left: 0.5px solid var(--bw-brass-border-soft);
+}
+
+.bwvera.col {
+  width: var(--bw-w-vera-collapsed);
+}
+
+/* Sin transición mientras se arrastra: si no, el panel va por detrás del ratón. */
+.bwvera.dragging {
+  transition: none;
+}
+
+.bwveratg {
+  position: absolute;
+  left: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 36px;
+  background: var(--bw-warm-cream);
+  border: 0.5px solid var(--bw-brass-border);
+  border-radius: 5px 0 0 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bw-steel-mist);
+  font-size: 13px;
+  z-index: 2;
+  transition: color 0.12s;
+}
+
+.bwveratg:hover {
+  color: var(--bw-deep-steel);
+}
+
+.bwveraResize {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  z-index: 1;
+}
+
+.bwveralbl {
+  display: none;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+  letter-spacing: 0.05em;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  cursor: pointer;
+  transition: color 0.12s;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.bwvera.col .bwveralbl {
+  display: flex;
+}
+
+.bwvera.col .bwveralbl:hover {
+  color: var(--bw-deep-steel);
+}
+
+.bwvera.col .bwvh,
+.bwvera.col .bwchat,
+.bwvera.col .bwia {
+  display: none;
+}
+
+.bwvh {
+  padding: 12px;
+  border-bottom: 0.5px solid var(--bw-brass-border-soft);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.bwvico {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bw-deep-steel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bwvname {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--bw-deep-steel);
+  letter-spacing: 0.02em;
+}
+
+.bwvsub {
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+}
+
+.bwvdot {
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bw-signal-green);
+  flex-shrink: 0;
+}
+
+.bwchat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bwmsg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bwmsg.u {
+  align-items: flex-end;
+}
+
+.bwmsg.v {
+  align-items: flex-start;
+}
+
+.bwbub {
+  padding: 9px 11px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 92%;
+}
+
+.bwmsg.u .bwbub {
+  background: var(--bw-deep-steel);
+  color: white;
+  border-bottom-right-radius: var(--bw-radius);
+}
+
+.bwmsg.v .bwbub {
+  background: white;
+  color: var(--bw-deep-steel);
+  border-bottom-left-radius: var(--bw-radius);
+  /* §3: la burbuja de VERA lleva borde izquierdo brass de 2px. */
+  border: 0.5px solid rgba(184, 146, 74, 0.2);
+  border-left: 2px solid var(--bw-brass);
+}
+
+.bwts {
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+  padding: 0 3px;
+}
+
+.bwia {
+  padding: 10px;
+  border-top: 0.5px solid var(--bw-brass-border-soft);
+  flex-shrink: 0;
+}
+
+.bwir {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.bwinpa {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 0.5px solid var(--bw-brass-border-strong);
+  background: white;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--bw-input-text);
+  resize: none;
+  outline: none;
+  min-height: 34px;
+  max-height: 72px;
+  transition: border-color 0.12s;
+}
+
+.bwinpa:focus {
+  border-color: var(--bw-calibration-blue);
+}
+
+.bwinpa::placeholder {
+  color: var(--bw-steel-mist);
+}
+
+.bwsnd {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+  font-size: 14px;
+  transition: opacity 0.12s;
+}
+
+.bwsnd:hover {
+  opacity: 0.85;
+}

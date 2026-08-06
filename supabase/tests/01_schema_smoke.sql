@@ -1,0 +1,427 @@
+-- =============================================================================
+-- Smoke test del esquema del día 2
+-- =============================================================================
+-- Comprueba que el esquema impone lo que los specs cerrados exigen. No prueba la
+-- app: prueba que la base de datos dice "no" cuando tiene que decir "no".
+-- Se ejecuta con: supabase/tests/run.sh
+-- =============================================================================
+
+\set ON_ERROR_STOP on
+
+-- UUIDs fijos para que el test sea determinista.
+\set orgA  '''11111111-1111-1111-1111-111111111111'''
+\set orgB  '''22222222-2222-2222-2222-222222222222'''
+\set orgC  '''33333333-3333-3333-3333-333333333333'''
+\set a1    '''0a000001-0000-0000-0000-000000000001'''
+\set a2    '''0a000002-0000-0000-0000-000000000002'''
+\set b1    '''0b000001-0000-0000-0000-000000000001'''
+\set c1    '''0c000001-0000-0000-0000-000000000001'''
+
+-- ---------------------------------------------------------------------------
+-- Semilla. Como postgres (equivalente a service_role): el operador aprueba
+-- organizaciones y crea miembros.
+-- ---------------------------------------------------------------------------
+insert into auth.users (id, email) values
+  (:a1, 'a1@alpha.test'), (:a2, 'a2@alpha.test'),
+  (:b1, 'b1@beta.test'),  (:c1, 'c1@gamma.test');
+
+insert into public.organizations (id, name, country, continent, status) values
+  (:orgA, 'Alpha Bearings', 'ES', 'EU', 'APPROVED'),
+  (:orgB, 'Beta Rodamientos', 'DE', 'EU', 'APPROVED'),
+  (:orgC, 'Gamma Bearings', 'MX', 'NA', 'APPROVED');
+
+-- role-auto-assignment: se pide EDITOR a propósito en los dos casos. El primero
+-- tiene que salir ADMIN de todas formas.
+insert into public.members (id, org_id, email, role, state) values
+  (:a1, :orgA, 'a1@alpha.test', 'EDITOR', 'PENDING_REVIEW'),
+  (:a2, :orgA, 'a2@alpha.test', 'EDITOR', 'PENDING_REVIEW'),
+  (:b1, :orgB, 'b1@beta.test',  'EDITOR', 'PENDING_REVIEW'),
+  (:c1, :orgC, 'c1@gamma.test', 'EDITOR', 'PENDING_REVIEW');
+
+do $$
+begin
+  assert (select role from public.members where id = '0a000001-0000-0000-0000-000000000001') = 'ADMIN',
+    'role-auto-assignment: el primer miembro de la organización tiene que ser ADMIN';
+  assert (select role from public.members where id = '0a000002-0000-0000-0000-000000000002') = 'EDITOR',
+    'role-auto-assignment: los adicionales tienen que ser EDITOR';
+  raise notice 'OK · role-auto-assignment (ADMIN al primero, EDITOR al resto)';
+end
+$$;
+
+-- schema-desde-dia-uno / member-state-machine: no se llega a KEY_ACTIVE sin
+-- backup de clave en servidor.
+select public.expect_fail(
+  $$update public.members set state = 'KEY_ACTIVE'
+    where id = '0a000001-0000-0000-0000-000000000001'$$,
+  'KEY_ACTIVE sin encrypted_key_blob');
+
+-- El backup es atómico: los cuatro campos o ninguno.
+select public.expect_fail(
+  $$update public.members set encrypted_key_blob = '\x00'::bytea
+    where id = '0a000001-0000-0000-0000-000000000001'$$,
+  'backup de clave parcial (solo encrypted_key_blob)');
+
+-- Ahora sí: backup completo → KEY_ACTIVE → ACTIVE.
+update public.members set
+  public_key         = decode(repeat('ab', 32), 'hex'),
+  encrypted_key_blob = decode(repeat('cd', 48), 'hex'),
+  key_iv             = decode(repeat('01', 12), 'hex'),
+  argon2_salt        = decode(repeat('02', 32), 'hex'),
+  kdf_params         = '{"m":65536,"t":3,"p":4}'::jsonb;
+
+update public.members set state = 'ACTIVE';
+
+-- key-wrapping: IV de 12 bytes, salt de 32.
+select public.expect_fail(
+  $$update public.members set key_iv = decode(repeat('01', 16), 'hex')
+    where id = '0a000001-0000-0000-0000-000000000001'$$,
+  'key_iv de 16 bytes (AES-GCM exige 12)');
+
+-- ---------------------------------------------------------------------------
+-- Inventario y frontera de cifrado
+-- ---------------------------------------------------------------------------
+insert into public.inventory_lines
+  (id, org_id, part_number, brand, quantity, location_country, product_family, status,
+   unit_price_ciphertext, unit_price_iv)
+values
+  ('e1000000-0000-0000-0000-000000000001', :orgB, '6205-2RS', 'SKF', 800, 'PL', 'Rodamiento rígido de bolas', 'PUBLISHED',
+   decode(repeat('ff', 32), 'hex'), decode(repeat('03', 12), 'hex')),
+  ('e1000000-0000-0000-0000-000000000002', :orgB, '6206-2RS', 'FAG', 120, 'DE', 'Rodamiento rígido de bolas', 'DRAFT',
+   decode(repeat('ff', 32), 'hex'), decode(repeat('03', 12), 'hex'));
+
+select public.expect_fail(
+  $$insert into public.inventory_lines
+      (org_id, part_number, brand, quantity, location_country, product_family, status)
+    values ('22222222-2222-2222-2222-222222222222','X','Y',-5,'DE','F','DRAFT')$$,
+  'cantidad negativa en línea de inventario');
+
+select public.expect_fail(
+  $$insert into public.inventory_lines
+      (org_id, part_number, brand, quantity, location_country, product_family, status)
+    values ('22222222-2222-2222-2222-222222222222','X','Y',5,'DE','F','PUBLICADO')$$,
+  'estado de línea fuera de DRAFT/PUBLISHED/ARCHIVED/DELETED');
+
+-- El precio no se puede quedar a medias.
+select public.expect_fail(
+  $$insert into public.inventory_lines
+      (org_id, part_number, brand, quantity, location_country, product_family, unit_price_ciphertext)
+    values ('22222222-2222-2222-2222-222222222222','X','Y',5,'DE','F', decode('ff','hex'))$$,
+  'unit_price cifrado sin su IV');
+
+-- ---------------------------------------------------------------------------
+-- RLS: lectura cruzada e INV-07
+-- ---------------------------------------------------------------------------
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines) = 1,
+      'Alpha debe ver exactamente 1 línea de Beta (la PUBLISHED), nunca la DRAFT';
+    assert (select count(*) from public.members) = 2,
+      'Alpha debe ver solo a los miembros de su propia organización';
+    raise notice 'OK · RLS: solo PUBLISHED entre organizaciones, miembros solo de la propia';
+  end
+  $$;
+commit;
+
+-- Beta excluye a Alpha por nombre de organización. Efecto inmediato.
+update public.organizations set inventory_visibility_mode = 'RESTRINGIDA' where id = :orgB;
+insert into public.inventory_exclusions (owner_org_id, excluded_org_id) values (:orgB, :orgA);
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines) = 0,
+      'INV-07: Alpha está excluida, no debe ver nada de Beta — y el efecto es inmediato';
+    raise notice 'OK · INV-07: exclusión por organización, efecto inmediato';
+  end
+  $$;
+commit;
+
+-- visibility-control: al volver a VISIBLE_TODOS la lista queda inactiva pero NO
+-- se borra, y al reactivar el modo la exclusión vuelve a aplicar.
+update public.organizations set inventory_visibility_mode = 'VISIBLE_TODOS' where id = :orgB;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines) = 1,
+      'Con modo VISIBLE_TODOS la exclusión queda inactiva';
+    raise notice 'OK · INV-07: exclusión inactiva en modo VISIBLE_TODOS';
+  end
+  $$;
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.inventory_exclusions
+          where owner_org_id = '22222222-2222-2222-2222-222222222222') = 1,
+    'visibility-control: la lista de exclusión no se borra al cambiar de modo';
+  raise notice 'OK · INV-07: la lista sobrevive al cambio de modo';
+end
+$$;
+
+-- Exclusión por continente: Gamma (NA) queda fuera, Alpha (EU) sigue dentro.
+update public.organizations set inventory_visibility_mode = 'RESTRINGIDA' where id = :orgB;
+delete from public.inventory_exclusions where owner_org_id = :orgB;
+insert into public.inventory_exclusions (owner_org_id, excluded_continent) values (:orgB, 'NA');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines) = 0,
+      'INV-07: Gamma (NA) excluida por continente';
+    raise notice 'OK · INV-07: exclusión por continente';
+  end
+  $$;
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines) = 1,
+      'INV-07: Alpha (EU) no está excluida por la regla de NA';
+    raise notice 'OK · INV-07: la exclusión por continente no arrastra a otros';
+  end
+  $$;
+commit;
+
+update public.organizations set inventory_visibility_mode = 'VISIBLE_TODOS' where id = :orgB;
+delete from public.inventory_exclusions where owner_org_id = :orgB;
+
+-- ---------------------------------------------------------------------------
+-- Hilos: un solo hilo por par de organizaciones
+-- ---------------------------------------------------------------------------
+insert into public.threads (id, org_low_id, org_high_id, created_by_org_id)
+values ('11110000-0000-0000-0000-000000000001', :orgA, :orgB, :orgA);
+
+select public.expect_fail(
+  $$insert into public.threads (org_low_id, org_high_id, created_by_org_id)
+    values ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222',
+            '22222222-2222-2222-2222-222222222222')$$,
+  'single-thread-model: segundo hilo entre el mismo par de organizaciones');
+
+select public.expect_fail(
+  $$insert into public.threads (org_low_id, org_high_id, created_by_org_id)
+    values ('22222222-2222-2222-2222-222222222222','11111111-1111-1111-1111-111111111111',
+            '11111111-1111-1111-1111-111111111111')$$,
+  'orden canónico invertido (evita duplicar el par)');
+
+select public.expect_fail(
+  $$insert into public.threads (org_low_id, org_high_id, created_by_org_id)
+    values ('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222',
+            '33333333-3333-3333-3333-333333333333')$$,
+  'creador que no participa en el hilo');
+
+select public.expect_fail(
+  $$update public.threads set state = 'CERRADO'
+    where id = '11110000-0000-0000-0000-000000000001'$$,
+  'thread-lifecycle: estado de hilo fuera de los cinco del spec');
+
+-- ---------------------------------------------------------------------------
+-- Tarjetas y la máquina de la oferta
+-- ---------------------------------------------------------------------------
+-- Consulta de Alpha sobre la línea PUBLISHED de Beta.
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, inventory_line_id, estado_consulta, content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-000000000001', '11110000-0000-0000-0000-000000000001',
+   :orgA, :a1, 'CONSULTA', '6205-2RS', 'SKF',
+   'e1000000-0000-0000-0000-000000000001', 'Pendiente',
+   decode(repeat('aa', 64), 'hex'), decode(repeat('04', 12), 'hex'));
+
+-- inquiry-card: una sola consulta por línea y organización compradora.
+select public.expect_fail(
+  $$insert into public.thread_items
+      (thread_id, sender_org_id, sender_member_id, item_type, part_number, brand,
+       inventory_line_id, estado_consulta, content_ciphertext, content_iv)
+    values ('11110000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111111',
+            '0a000002-0000-0000-0000-000000000002','CONSULTA','6205-2RS','SKF',
+            'e1000000-0000-0000-0000-000000000001','Pendiente',
+            decode('aa','hex'), decode(repeat('04',12),'hex'))$$,
+  'inquiry-card: segunda consulta sobre la misma línea por la misma organización');
+
+-- Un mensaje libre no lleva metadatos de tarjeta.
+select public.expect_fail(
+  $$insert into public.thread_items
+      (thread_id, sender_org_id, sender_member_id, item_type, part_number,
+       content_ciphertext, content_iv)
+    values ('11110000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111111',
+            '0a000001-0000-0000-0000-000000000001','MENSAJE','6205-2RS',
+            decode('aa','hex'), decode(repeat('04',12),'hex'))$$,
+  'MENSAJE con part_number (forma de tarjeta en un mensaje libre)');
+
+-- Un miembro no puede escribir en nombre de otra organización.
+select public.expect_fail(
+  $$insert into public.thread_items
+      (thread_id, sender_org_id, sender_member_id, item_type, content_ciphertext, content_iv)
+    values ('11110000-0000-0000-0000-000000000001','22222222-2222-2222-2222-222222222222',
+            '0a000001-0000-0000-0000-000000000001','MENSAJE',
+            decode('aa','hex'), decode(repeat('04',12),'hex'))$$,
+  'miembro de Alpha enviando como Beta');
+
+-- Oferta de Beta respondiendo a la consulta.
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, estado_oferta, responds_to_item_id, content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-000000000002', '11110000-0000-0000-0000-000000000001',
+   :orgB, :b1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente',
+   '12000000-0000-0000-0000-000000000001',
+   decode(repeat('bb', 96), 'hex'), decode(repeat('05', 12), 'hex'));
+
+update public.thread_items set estado_consulta = 'Respondida con oferta'
+  where id = '12000000-0000-0000-0000-000000000001';
+
+-- offer-card: un estado inventado no entra.
+select public.expect_fail(
+  $$update public.thread_items set estado_oferta = 'ENVIADA'
+    where id = '12000000-0000-0000-0000-000000000002'$$,
+  'offer-card: estado ENVIADA (el spec dice Pendiente)');
+
+select public.expect_fail(
+  $$update public.thread_items set estado_oferta = 'RETIRADA'
+    where id = '12000000-0000-0000-0000-000000000002'$$,
+  'offer-card: estado RETIRADA (no existe en el spec)');
+
+-- "Superada por contraoferta" y el puntero son inseparables.
+select public.expect_fail(
+  $$update public.thread_items set estado_oferta = 'Superada por contraoferta'
+    where id = '12000000-0000-0000-0000-000000000002'$$,
+  'Superada por contraoferta sin superseded_by_item_id');
+
+-- La contraoferta es una FILA NUEVA; la anterior queda terminal apuntando a ella.
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, estado_oferta, content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-000000000003', '11110000-0000-0000-0000-000000000001',
+   :orgA, :a1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente',
+   decode(repeat('cc', 96), 'hex'), decode(repeat('06', 12), 'hex'));
+
+update public.thread_items set
+  estado_oferta = 'Superada por contraoferta',
+  superseded_by_item_id = '12000000-0000-0000-0000-000000000003'
+where id = '12000000-0000-0000-0000-000000000002';
+
+-- Y ya no se mueve: es terminal. Esto es la otra mitad de "sin eliminarse del
+-- historial" — no basta con no borrar la fila, hay que no reescribirla.
+select public.expect_fail(
+  $$update public.thread_items set estado_oferta = 'Aceptada'
+    where id = '12000000-0000-0000-0000-000000000002'$$,
+  'reabrir una oferta ya Superada por contraoferta');
+
+update public.thread_items set estado_oferta = 'Aceptada'
+  where id = '12000000-0000-0000-0000-000000000003';
+
+select public.expect_fail(
+  $$update public.thread_items set estado_oferta = 'Rechazada'
+    where id = '12000000-0000-0000-0000-000000000003'$$,
+  'cambiar una oferta ya Aceptada');
+
+do $$
+begin
+  assert (select count(*) from public.thread_items
+          where item_type = 'OFERTA'
+            and estado_oferta in ('Aceptada','Superada por contraoferta')) = 2,
+    'El historial conserva las dos ofertas, la superada y la aceptada';
+  raise notice 'OK · offer-card: contraoferta = fila nueva, terminal irreversible, historial intacto';
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Claves envueltas: cada miembro ve solo la suya
+-- ---------------------------------------------------------------------------
+insert into public.thread_item_keys (item_id, recipient_member_id, wrapped_cek, wrap_iv, ephemeral_pubkey)
+values
+  ('12000000-0000-0000-0000-000000000003', :a1, decode(repeat('11',48),'hex'),
+   decode(repeat('07',12),'hex'), decode(repeat('22',32),'hex')),
+  ('12000000-0000-0000-0000-000000000003', :b1, decode(repeat('33',48),'hex'),
+   decode(repeat('07',12),'hex'), decode(repeat('44',32),'hex'));
+
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.thread_item_keys) = 1,
+      'Cada miembro ve exclusivamente su propia CEK envuelta';
+    raise notice 'OK · RLS: la CEK envuelta es por persona';
+  end
+  $$;
+commit;
+
+-- Un tercero (Gamma) no ve nada del hilo entre Alpha y Beta.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.threads) = 0, 'Gamma no participa: no ve el hilo';
+    assert (select count(*) from public.thread_items) = 0, 'Gamma no ve los elementos del hilo';
+    raise notice 'OK · RLS: un tercero no ve el hilo ni su contenido';
+  end
+  $$;
+commit;
+
+-- ---------------------------------------------------------------------------
+-- thread-rate-limiting: 25 hilos nuevos por día natural
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  i int;
+  new_org uuid;
+begin
+  -- Alpha ya creó 1. Le quedan 24.
+  for i in 1..24 loop
+    new_org := gen_random_uuid();
+    insert into public.organizations (id, name, country, continent, status)
+      values (new_org, 'Filler ' || i, 'FR', 'EU', 'APPROVED');
+    insert into public.threads (org_low_id, org_high_id, created_by_org_id)
+      values (least('11111111-1111-1111-1111-111111111111'::uuid, new_org),
+              greatest('11111111-1111-1111-1111-111111111111'::uuid, new_org),
+              '11111111-1111-1111-1111-111111111111');
+  end loop;
+  raise notice 'OK · 25 hilos creados por Alpha en el día';
+end
+$$;
+
+do $$
+declare
+  new_org uuid := gen_random_uuid();
+begin
+  insert into public.organizations (id, name, country, continent, status)
+    values (new_org, 'Filler 26', 'FR', 'EU', 'APPROVED');
+  begin
+    insert into public.threads (org_low_id, org_high_id, created_by_org_id)
+      values (least('11111111-1111-1111-1111-111111111111'::uuid, new_org),
+              greatest('11111111-1111-1111-1111-111111111111'::uuid, new_org),
+              '11111111-1111-1111-1111-111111111111');
+    raise exception 'TEST FALLIDO · el hilo 26 debería estar bloqueado';
+  exception
+    when others then
+      if sqlerrm like 'TEST FALLIDO%' then raise; end if;
+      raise notice 'OK · thread-rate-limiting: el hilo 26 del día queda bloqueado';
+  end;
+end
+$$;
+
+-- Y el límite no afecta al envío en hilos ya existentes.
+insert into public.thread_items
+  (thread_id, sender_org_id, sender_member_id, item_type, content_ciphertext, content_iv)
+values
+  ('11110000-0000-0000-0000-000000000001', :orgA, :a1, 'MENSAJE',
+   decode(repeat('dd', 32), 'hex'), decode(repeat('08', 12), 'hex'));
+
+select 'TODOS LOS ASSERTS PASAN' as resultado;

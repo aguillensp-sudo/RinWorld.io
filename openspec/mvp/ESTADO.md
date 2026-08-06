@@ -37,24 +37,43 @@ El día 2 es el más irreversible del sprint: el esquema lo lee todo lo que vien
 cambiarlo el día 8 significa migración más reescritura. Estas tres se deciden antes de
 escribir DDL:
 
-**1 · Frontera de cifrado.** Es RNG-VND-01 materializado en DDL:
+> **Las tres se decidieron en la puerta del 6-ago-2026.** El detalle, columna por columna,
+> vive en **`Dia-02_decisiones_esquema.md`** — ese es el documento contra el que se escribe
+> el DDL. Resumen:
 
-- **Cifrado (`bytea`)** — precio unitario, cantidad, plazo, transporte, y el cuerpo de los
-  mensajes. El servidor nunca los ve en claro.
+**1 · Frontera de cifrado.** Es RNG-VND-01 materializado en DDL, y va **por columna en las
+dos tablas** — el catálogo también tiene una columna cifrada:
+
+- **Cifrado (`bytea`)** — precio unitario, cantidad *de las tarjetas*, plazo, transporte,
+  divisa, `valid_until`, notas y el cuerpo de los mensajes. **Y `unit_price` en la propia
+  línea de inventario** (lo exige `inventory-management`, sin indexar).
 - **Metadato en claro** — estado de la oferta, timestamps, participantes del hilo,
-  referencia. Es lo que permite que VND-01 y PANEL-01 muestren agregados sin romper el
-  zero-knowledge.
+  referencia y marca. Es lo que permite que VND-01 y PANEL-01 muestren agregados sin romper
+  el zero-knowledge, y lo que exige `RNG-MSG-02`: ninguna transición de estado descifra.
+- **Trampa:** `quantity` va **en claro en el inventario** (obligatoria y buscable) y
+  **cifrada en las tarjetas**. Mismo nombre, tratamiento opuesto.
 
 Si esto se modela mal, el día 11 se abre el panel de vista-servidor delante del socio y se
 ve texto plano donde debía haber cifrado. A esas alturas no hay arreglo rápido.
 
 **2 · Catálogo buscable vs. negociación cifrada.** El inventario tiene que ser
-**consultable entre organizaciones** — sin eso SRCH-01 no encuentra nada el día 6. Lo
-cifrado es la *negociación*, no el catálogo. INV-07 añade reglas de visibilidad y exclusión
-por organización, que en el MVP pueden quedar como columna sin UI.
+**consultable entre organizaciones** — sin eso SRCH-01 no encuentra nada el día 6. Buscable:
+`part_number`, `brand`, `quantity`, `location_country`, `product_family`, `status`,
+`updated_at`. **Decidido: el precio queda fuera de la parrilla de SRCH-01** — se ve al abrir
+la negociación (ya estaba en Out of Scope de `conversational-search`). INV-07 va en esquema y
+RLS sin UI, pero la lista de exclusión es **tabla propia**: al volver a modo VISIBLE la lista
+queda inactiva y no se borra.
 
-**3 · Máquina de estados de la oferta como restricción de base de datos**, no solo como
-diagrama: `BORRADOR → ENVIADA → {CONTRAOFERTADA → ENVIADA | ACEPTADA | RECHAZADA | RETIRADA}`.
+**3 · Máquina de estados como restricción de base de datos**, no solo como diagrama. **Manda
+el spec cerrado**, cuatro estados y la contraoferta como fila nueva:
+
+`estado_oferta ∈ {Pendiente, Aceptada, Rechazada, Superada por contraoferta}`
+
+`Superada por contraoferta` es **terminal**: la contraoferta es otra fila que nace
+`Pendiente`, y la anterior no se reutiliza jamás — el historial se conserva. **Entra hoy
+también `thread-lifecycle`** (`ABIERTO · CON CONSULTA PENDIENTE · CON OFERTA PENDIENTE ·
+ACUERDO ALCANZADO · CERRADO SIN ACUERDO`) más los estados de la tarjeta de consulta, para que
+el día 7 no pague una migración.
 
 ### Además, antes de empezar — ✔ HECHO 6-ago-2026
 

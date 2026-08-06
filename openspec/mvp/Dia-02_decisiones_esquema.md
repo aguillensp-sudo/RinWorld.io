@@ -1,8 +1,16 @@
 # Día 2 · Las tres decisiones antes del DDL
 
-> **PROPUESTA — pendiente de aprobación del PO.** No se escribe una línea de DDL hasta que
-> esté aprobada. El día 2 es el más irreversible del sprint: el esquema lo lee todo lo que
-> viene después y cambiarlo el día 8 es migración más reescritura.
+> **APROBADA por el PO el 6-ago-2026.** Las tres decisiones están cerradas y el DDL se
+> escribe contra este documento. El día 2 es el más irreversible del sprint: el esquema lo
+> lee todo lo que viene después y cambiarlo el día 8 es migración más reescritura.
+
+**Lo que decidió el PO en la puerta:**
+
+| # | Decisión | Consecuencia |
+|---|---|---|
+| 1 | **Manda el spec cerrado** en la máquina de estados de la oferta: 4 estados, contraoferta = fila nueva, `Superada por contraoferta` terminal. | `ESTADO.md` tenía una paráfrasis errónea, no una decisión nueva → corregido. Sin enmienda de capability. |
+| 2 | **`thread-lifecycle` entra hoy, completa** — 5 estados del hilo + estados de la tarjeta de consulta, con `RNG-MSG-02`. | El día 7 (MSG-02, el riesgo de vista más corta) no paga migración. |
+| 3 | **`unit_price` cifrado también en el inventario. Precio fuera de la parrilla de SRCH-01.** | El precio se ve al abrir la negociación. Es la historia zero-knowledge que se cuenta al socio. Cero cambios de spec. |
 
 Fuentes consultadas, en orden de autoridad: `openspec/specs/*` (9 capabilities **cerradas**,
 read-only por `CLAUDE.md` §1.3) → `Plan_MVP_Bearingworld_v1.0.md` → `ESTADO.md`.
@@ -73,7 +81,7 @@ descifrar, la frontera está mal (`RNG-PANEL-01`, `RNG-VND-01`).
 `location_country`, `product_family`, `status`, `updated_at`. Sin esto SRCH-01 no encuentra
 nada el día 6.
 
-**Consecuencia que hay que aceptar hoy:** con `unit_price` cifrado, **SRCH-01 no puede
+**Consecuencia aceptada por el PO (6-ago):** con `unit_price` cifrado, **SRCH-01 no puede
 ordenar ni filtrar por precio, nunca.** No es una limitación del MVP — `conversational-search`
 ya lo tiene en *Out of Scope*: "Ordenación por precio (`unit_price` cifrado E2EE, no indexable
 server-side)". El precio se ve al abrir la negociación, no en la parrilla de resultados.
@@ -90,9 +98,25 @@ cambian el DDL:
 
 ---
 
-## 3 · Máquina de estados de la oferta ⚠ CONFLICTO
+## 3 · Máquina de estados de la oferta — RESUELTO: manda el spec
 
-`ESTADO.md` propone:
+**Decisión del PO (6-ago):** manda el spec cerrado. Los 6 estados de `ESTADO.md` eran una
+paráfrasis errónea del fichero de relevo, no una decisión de producto posterior — no hay
+enmienda de capability que redactar. `ESTADO.md` queda corregido. El registro del conflicto se
+conserva abajo porque explica *por qué* el `CHECK` es como es.
+
+El `CHECK` del DDL, entonces:
+
+```sql
+estado_oferta IN ('Pendiente','Aceptada','Rechazada','Superada por contraoferta')
+```
+
+y `superseded_by_item_id` apunta a la contraoferta que la superó — la fila anterior **no se
+reutiliza jamás**.
+
+### El conflicto que había (para memoria)
+
+`ESTADO.md` proponía:
 
 ```
 BORRADOR → ENVIADA → {CONTRAOFERTADA → ENVIADA | ACEPTADA | RECHAZADA | RETIRADA}
@@ -117,10 +141,10 @@ La diferencia 3 es la grave: el ciclo de `ESTADO.md` implica que la misma fila s
 eso **destruye el historial** que el spec exige conservar. Un `CHECK` construido sobre la
 versión de `ESTADO.md` no sería un error de estilo: contradiría una capability cerrada.
 
-### Y falta una máquina entera
+### Y falta una máquina entera — RESUELTO: entra hoy
 
-`ESTADO.md` no menciona `thread-lifecycle`, que es **igual de irreversible** y vive en el
-mismo DDL:
+**Decisión del PO (6-ago):** `thread-lifecycle` entra hoy, completa. `ESTADO.md` no la
+mencionaba, pero es **igual de irreversible** y vive en el mismo DDL:
 
 ```
 ABIERTO · CON CONSULTA PENDIENTE · CON OFERTA PENDIENTE · ACUERDO ALCANZADO · CERRADO SIN ACUERDO
@@ -152,4 +176,4 @@ ve su propia sesión. CI en verde.
 
 ---
 
-*Propuesta redactada el 6-ago-2026 · pendiente de aprobación del PO*
+*Redactada y aprobada el 6-ago-2026 · el DDL se escribe contra este documento*

@@ -1,0 +1,505 @@
+/* =============================================================================
+   INV-01 · Panel de Inventario
+   =============================================================================
+   Transcripción de los bloques CONTENT / Page header / Stats cards / Canales /
+   Filter chips + action bar / Pagination del HTML aprobado
+   `INV-01 · INV v1.0.html`. Nombres de clase equivalentes a los del HTML para que
+   se comparen lado a lado (design-system.md §6.2). Ningún color literal.
+   ========================================================================== */
+
+/* `.bwcnt` (el 67%) ya lo pone AppShell; aquí empieza `.bwcntb`. */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 48px 56px;
+  background: var(--bw-cold-white);
+}
+
+.inner {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── Cabecera de página ─────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--bw-brass);
+  margin-bottom: 8px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--bw-deep-steel);
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  margin: 0 0 4px;
+}
+
+.sub {
+  font-size: 14px;
+  color: var(--bw-steel-mist);
+  line-height: 1.5;
+  margin: 0 0 28px;
+}
+
+/* ── Tarjetas de resumen ────────────────────────────────────────────────── */
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+
+.statLbl {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bw-steel-mist);
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.statVal {
+  font-family: var(--bw-font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+  line-height: 1;
+}
+
+.statVal.warn {
+  color: var(--bw-warning);
+}
+
+/* "Hace 2 días" no cabe a 26px. El HTML aprobado lo resuelve con un style inline
+   de 18px en esa tarjeta; aquí es una clase, que es lo mismo sin inline. */
+.statVal.small {
+  font-size: 18px;
+  padding-top: 4px;
+}
+
+.statSub {
+  font-size: 11px;
+  color: var(--bw-input-placeholder);
+  margin-top: 4px;
+}
+
+/* Skeleton de carga, spec §6: "tarjetas visibles pero con skeleton loaders en los
+   números". Misma caja que `.statVal` para que no salte el layout al llegar. */
+.statSkeleton {
+  height: 26px;
+  border-radius: 3px;
+  background: var(--bw-divider-mist);
+}
+
+/* ── Canales de actualización ───────────────────────────────────────────── */
+
+.channels {
+  margin-bottom: 24px;
+}
+
+.channelsTitle {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bw-steel-mist);
+  margin: 0 0 6px;
+}
+
+/* No está en el HTML aprobado: es la nota de alcance. Ver la decisión 4 en
+   Inventory.tsx. */
+.channelsNote {
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+  line-height: 1.5;
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  background: var(--bw-surface-mist);
+  border-left: 2px solid var(--bw-brass);
+  border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+}
+
+.channelsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.chCard {
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.chHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.chIconManual {
+  background: var(--bw-icon-tint-brass);
+  color: var(--bw-brass);
+}
+
+.chIconEmail {
+  background: var(--bw-icon-tint-blue);
+  color: var(--bw-calibration-blue);
+}
+
+.chName {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--bw-deep-steel);
+  margin-bottom: 4px;
+}
+
+/* El HTML aprobado tiene `.ch-badge.ok` en verde ("Activo", "Siempre
+   disponible"). Aquí el badge es neutro porque el canal no existe en el MVP: un
+   verde de "activo" sobre algo que no funciona es el fallo que CLAUDE.md §7
+   describe, y en la interfaz parece más verificable que en el chat. */
+.chBadge {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  display: inline-block;
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border: 1px solid var(--bw-badge-neutral-border);
+}
+
+.chDesc {
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.miniDz {
+  border: 1.5px dashed var(--bw-dropzone-border);
+  border-radius: 6px;
+  padding: 18px 12px;
+  text-align: center;
+  /* Sin `cursor:pointer` ni `:hover`: no es interactivo. */
+  opacity: 0.55;
+}
+
+.miniDz i {
+  font-size: 22px;
+  color: var(--bw-brass);
+}
+
+.dzMain {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  margin-top: 7px;
+  margin-bottom: 2px;
+}
+
+.dzSec {
+  font-size: 12px;
+  color: var(--bw-input-placeholder);
+}
+
+.dzHint {
+  font-size: 11px;
+  color: var(--bw-hint-steel);
+  font-family: var(--bw-font-mono);
+  margin-top: 3px;
+}
+
+.ingestLbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bw-steel-mist);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+  font-family: var(--bw-font-title);
+}
+
+.ingestAddr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.ingestVal {
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  color: var(--bw-deep-steel);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  padding: 10px 16px;
+}
+
+.visIcon {
+  color: var(--bw-input-placeholder);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.visLbl {
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.visVal {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  flex: 1;
+}
+
+/* ── Barra de acciones ──────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+}
+
+.chip {
+  font-family: var(--bw-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--bw-line-steel-strong);
+  background: white;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+
+.chip:hover {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-ink-steel);
+}
+
+.chip.act {
+  background: var(--bw-chip-active-bg);
+  border-color: var(--bw-chip-active-border);
+  color: var(--bw-primary-dark);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+}
+
+.toolbarRight {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.srchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* En el HTML aprobado la lupa es un `<i>` con onclick. Aquí es un `<button>`: un
+   icono que dispara una búsqueda es un control, y como `<i>` no lo alcanza el
+   teclado ni lo anuncia un lector de pantalla. */
+.srchBtn {
+  position: absolute;
+  left: 5px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--bw-input-placeholder);
+  font-size: 15px;
+  transition: color 0.12s;
+}
+
+.srchBtn:hover {
+  color: var(--bw-ink-steel);
+}
+
+.srchInp {
+  padding: 7px 10px 7px 30px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  color: var(--bw-input-text);
+  background: white;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+
+.srchInp:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.srchInp::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Tabla y sus estados ────────────────────────────────────────────────── */
+
+.tblCard {
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tblMsg {
+  padding: 40px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+  margin: 0;
+}
+
+.error {
+  background: var(--bw-tint-danger);
+  border: 1px solid var(--bw-danger);
+  border-radius: var(--bw-radius);
+  color: var(--bw-error-text);
+  font-size: 13px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+/* ── Paginación ─────────────────────────────────────────────────────────── */
+
+.pag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--bw-divider-mist);
+  justify-content: flex-end;
+}
+
+.pagInfo {
+  font-size: 12px;
+  color: var(--bw-input-placeholder);
+  margin-right: 8px;
+  font-family: var(--bw-font-mono);
+}
+
+.pagBtn {
+  min-width: 30px;
+  height: 30px;
+  border: 1px solid var(--bw-line-steel);
+  background: white;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+.pagBtn:hover:not(:disabled) {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-ink-steel);
+}
+
+.pagBtn.act {
+  background: var(--bw-calibration-blue);
+  border-color: var(--bw-calibration-blue);
+  color: white;
+}
+
+.pagBtn.nav {
+  font-size: 16px;
+}
+
+.pagBtn:disabled {
+  cursor: default;
+  color: var(--bw-hint-steel);
+}
+
+.pagBtn:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+}
+
+.pagGap {
+  font-size: 12px;
+  color: var(--bw-input-placeholder);
+  padding: 0 4px;
+}

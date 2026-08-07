@@ -4,7 +4,7 @@ import { VeraPanel } from './VeraPanel';
 import styles from './AppShell.module.css';
 
 /** Los ocho ítems y sus iconos, en el orden del shell aprobado. */
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { label: 'Panel', icon: 'ti-layout-dashboard' },
   { label: 'Vendiendo', icon: 'ti-tag' },
   { label: 'Comprando', icon: 'ti-shopping-cart' },
@@ -22,15 +22,30 @@ const BRAND_TEXTS = [
   'INDUSTRIAL INTELLIGENCE NETWORK',
 ] as const;
 
+/** El índice del ítem con ese nombre, o 0 (Panel) si no existe. */
+export function navIndexOf(label: string): number {
+  const i = NAV_ITEMS.findIndex((n) => n.label === label);
+  return i === -1 ? 0 : i;
+}
+
 interface Props {
   profile: MemberProfile;
   onSignOut: () => void;
+  /**
+   * Qué ítem está activo, por índice. Va **controlado desde fuera**, y eso es un
+   * cambio del día 3: el ítem activo y la pantalla que se pinta son el mismo
+   * dato. Con el estado dentro del shell habría dos verdades sobre dónde estás y
+   * acabarían separándose. `App` decide qué pantalla va con qué ítem.
+   */
+  activeNav: number;
+  onNavigate: (index: number) => void;
   children: ReactNode;
 }
 
-export function AppShell({ profile, onSignOut, children }: Props) {
+export function AppShell({ profile, onSignOut, activeNav, onNavigate, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [active, setActive] = useState(0);
+  const active = activeNav;
+  const setActive = onNavigate;
 
   const toggleSidebar = () => setSidebarOpen((o) => !o);
   const userName = profile.fullName ?? profile.email;

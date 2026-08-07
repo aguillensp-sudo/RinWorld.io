@@ -1,10 +1,24 @@
+import { useState } from 'react';
 import { useSession } from './lib/session';
-import { AppShell } from './shell/AppShell';
+import { AppShell, navIndexOf } from './shell/AppShell';
 import { Login } from './screens/Login';
 import { Welcome } from './screens/Welcome';
+import { Inventory } from './screens/inventory/Inventory';
+
+/**
+ * Qué pantalla va con qué ítem de nav.
+ *
+ * `INV-01` cuelga de **Vendiendo**, no de Inventario, porque su spec §2 lo dice
+ * literalmente: "Ítem activo en nav: **Vendiendo**". No es lo que uno supondría
+ * leyendo los ocho nombres, y por eso está escrito aquí con el puntero al lado.
+ * Los otros seis ítems no tienen pantalla en el MVP (Plan §9, 8 pantallas).
+ */
+const INVENTORY_NAV = navIndexOf('Vendiendo');
+const HOME_NAV = navIndexOf('Panel');
 
 export function App() {
   const { state, error, signIn, signOut } = useSession();
+  const [nav, setNav] = useState(HOME_NAV);
 
   if (state.status === 'loading') {
     return <div style={{ height: '100%', background: '#1B2537' }} aria-busy="true" />;
@@ -27,8 +41,12 @@ export function App() {
   }
 
   return (
-    <AppShell profile={state.profile} onSignOut={signOut}>
-      <Welcome profile={state.profile} />
+    <AppShell profile={state.profile} onSignOut={signOut} activeNav={nav} onNavigate={setNav}>
+      {nav === INVENTORY_NAV ? (
+        <Inventory profile={state.profile} />
+      ) : (
+        <Welcome profile={state.profile} />
+      )}
     </AppShell>
   );
 }

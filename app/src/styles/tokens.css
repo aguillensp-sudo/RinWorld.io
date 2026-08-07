@@ -77,7 +77,20 @@
   --bw-badge-success-border: rgba(22, 163, 74, 0.2);
   --bw-badge-neutral-bg: rgba(107, 122, 153, 0.08);
   --bw-badge-neutral-border: rgba(107, 122, 153, 0.2);
+  --bw-badge-neutral-border-soft: rgba(107, 122, 153, 0.15); /* borde del badge ISO de país */
   --bw-danger-hover-bg: rgba(239, 68, 68, 0.06);
+
+  /* Derivados del azul de calibración que usa INV-01. Están aquí y no como
+     literal en el módulo porque §6.1 dice que ningún componente escribe un color:
+     un rgba suelto en un CSS Module es lo mismo que un hex, solo más difícil de
+     encontrar cuando cambie el token base. */
+  --bw-row-hover-tint: rgba(37, 99, 235, 0.025); /* hover de fila de tabla */
+  --bw-chip-active-bg: rgba(37, 99, 235, 0.08);
+  --bw-chip-active-border: rgba(37, 99, 235, 0.3);
+  --bw-icon-tint-brass: rgba(184, 146, 74, 0.1);  /* fondo del icono de canal manual */
+  --bw-icon-tint-blue: rgba(37, 99, 235, 0.08);   /* fondo del icono de canal email */
+  --bw-dropzone-border: rgba(184, 146, 74, 0.35); /* borde discontinuo de la mini-dropzone */
+  --bw-dropzone-hover-bg: rgba(184, 146, 74, 0.04);
 
   /* Texto sobre fondo oscuro, tal como lo usa el shell aprobado */
   --bw-on-dark-brand: rgba(255, 255, 255, 0.45);

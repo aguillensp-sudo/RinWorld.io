@@ -1,0 +1,189 @@
+/* =============================================================================
+   Tabla de INV-01 · transcripción del bloque "Table / Badges / Ref cell /
+   Antigüedad / Row actions" del HTML aprobado `INV-01 · INV v1.0.html`.
+   =============================================================================
+   Los nombres de clase son los del HTML aprobado (`badge`, `pub`, `age`,
+   `row-act`, …) para que los dos ficheros se comparen lado a lado — convención de
+   design-system.md §6.2. Ningún hex: todo sale de tokens.css.
+   ========================================================================== */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  background: var(--bw-surface-mist);
+  padding: 9px 14px;
+  text-align: left;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bw-steel-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  color: var(--bw-ink-steel);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background: var(--bw-row-hover-tint);
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+
+.badge {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.pub {
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-success-dark);
+  border: 1px solid var(--bw-badge-success-border);
+}
+
+.dft {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border: 1px solid var(--bw-badge-neutral-border);
+}
+
+.arc {
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning-dark);
+  border: 1px solid var(--bw-badge-warning-border);
+}
+
+/* DELETED no está en el HTML aprobado — no pinta el cuarto estado. Se construye
+   con los tokens de §1.5 siguiendo el patrón de los otros tres: fondo tenue,
+   texto oscuro del mismo color, borde a juego.
+   Se llama `deleted` y no `del` a propósito: el HTML aprobado usa `.row-act.del`
+   para el botón de eliminar, y en un CSS Module las dos serían LA MISMA clase —
+   el botón heredaría el fondo del badge. */
+.deleted {
+  background: var(--bw-danger-hover-bg);
+  color: var(--bw-sensitive-text);
+  border: 1px solid var(--bw-badge-neutral-border);
+}
+
+.brand {
+  background: var(--bw-deep-steel);
+  color: var(--bw-on-dark-hover);
+  border: 1px solid transparent;
+}
+
+.iso {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border: 1px solid var(--bw-badge-neutral-border-soft);
+}
+
+/* ── Celda de referencia ────────────────────────────────────────────────── */
+
+.refCode {
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  color: var(--bw-deep-steel);
+  font-weight: 500;
+}
+
+/* ── Antigüedad ─────────────────────────────────────────────────────────── */
+
+.age {
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+}
+
+.stale {
+  color: var(--bw-warning);
+  font-weight: 500;
+}
+
+.critical {
+  color: var(--bw-danger);
+  font-weight: 500;
+}
+
+/* ── Acciones de fila ───────────────────────────────────────────────────── */
+
+/* El HTML aprobado las esconde con `opacity:0` hasta el hover de la fila. Aquí
+   se conserva, pero con `:focus-within`: con opacidad 0 y sin esa regla, el
+   botón recibe el foco por teclado y no se ve dónde está. */
+.rowActs {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.table tbody tr:hover .rowActs,
+.rowActs:focus-within {
+  opacity: 1;
+}
+
+.rowAct {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--bw-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bw-input-placeholder);
+  transition: color 0.12s, background 0.12s;
+  font-size: 15px;
+}
+
+.rowAct:hover:not(:disabled) {
+  background: var(--bw-hover-surface);
+  color: var(--bw-ink-steel);
+}
+
+.rowAct.del:hover:not(:disabled) {
+  background: var(--bw-danger-hover-bg);
+  color: var(--bw-danger);
+}
+
+.rowAct:disabled {
+  cursor: default;
+  color: var(--bw-hint-steel);
+}
+
+.rowAct:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+}
+
+/* Etiqueta solo para lectores de pantalla (la cabecera de la columna 7). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

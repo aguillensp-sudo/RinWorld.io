@@ -1,7 +1,11 @@
 # App · Bearingworld.io MVP
 
-React 18 + TypeScript + Vite. Scaffold del día 2 (6-ago-2026): shell completo desde
-`Rinworld_app_shell.html`, auth de dos organizaciones contra Supabase, Vitest y Playwright.
+React 18 + TypeScript + Vite.
+
+| Día | Qué entró |
+|---|---|
+| 2 (6-ago) | Shell completo desde `Rinworld_app_shell.html`, auth de dos organizaciones contra Supabase, Vitest y Playwright |
+| 3 (7-ago) | **INV-01 · Panel de Inventario**, escrita a mano. Es la pantalla de referencia contra la que se compara lo que produzca el arnés desde el día 5 |
 
 ## Arrancar
 
@@ -17,14 +21,25 @@ están en `openspec/architecture/design-system.md` §6, que se rellenó al const
 ## Comprobar
 
 ```bash
-npm run typecheck && npm test && npx playwright test
+npm run typecheck && npm test && npm run check:palette && npx playwright test
 ```
 
-Estado a 6-ago-2026: **typecheck limpio · Vitest 21/21 · Playwright 9/9**, contra el proyecto
-Supabase real.
+Estado a 7-ago-2026: **typecheck limpio · Vitest 95/95 · Playwright 19/19 · paleta completa**,
+contra el proyecto Supabase real. Tres corridas seguidas del e2e sin flakiness.
 
-El e2e incluye la **puerta de salida del día 2**: dos contextos de navegador, dos cuentas,
-cada una entra y ve su propia sesión, y ninguna ve la organización de la otra.
+El e2e incluye las dos puertas de salida:
+
+- **Día 2** — dos contextos de navegador, dos cuentas, cada una entra y ve su propia sesión, y
+  ninguna ve la organización de la otra.
+- **Día 3** — INV-01 pinta el inventario real de la base, y las dos organizaciones tienen
+  catálogo con solape deliberado (`6205-2RS` en las dos, catálogos distintos).
+
+> **El test más importante de `inventory.spec.ts` es el que no se puede hacer en unidad.**
+> `inventory_lines` tiene DOS políticas de lectura permisivas que se suman: el inventario propio
+> en cualquier estado, y el `PUBLISHED` de las demás organizaciones. Sin el `.eq('org_id', …)`
+> explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del catálogo ajeno
+> — sin error y con toda la pinta de funcionar. Los 95 tests de unidad mockean `fetchPage`, así
+> que ese fallo los pasaría todos.
 
 > Si faltan las credenciales `E2E_*`, la suite de la puerta **se salta**. En local eso avisa;
 > en CI, `session.spec.ts` lanza un error a propósito. La primera vez que se ejecutó, los 6
@@ -34,8 +49,8 @@ cada una entra y ve su propia sesión, y ninguna ve la organización de la otra.
 ## Lo que este scaffold decide
 
 1. **Los tokens son variables CSS** en `src/styles/tokens.css`. Ningún componente escribe un
-   hex. Cierra la primera mitad de F-003; la segunda (los neutros de fondo claro que el sistema
-   de diseño no define) sigue abierta y la va a necesitar INV-01 el día 3.
+   hex. **Cierra F-003 completo**: los neutros de superficie clara (§1.4) y los semánticos
+   (§1.5) entraron el 7-ago, y son los que INV-01 usa de arriba abajo.
 2. **Los nombres de clase del shell aprobado se conservan** (`bwnav`, `bwvera`, …) dentro de
    CSS Modules, para que la comparación con el HTML aprobado siga siendo directa.
 3. **VERA no finge saber.** El shell aprobado contesta a todo; aquí declara que no está
@@ -44,6 +59,31 @@ cada una entra y ve su propia sesión, y ninguna ve la organización de la otra.
    la sesión, y un test falla si reaparecen "Rodamientos del Sur SL" o "Juan Martínez".
 5. **`eventsPerSecond: 50`** en el cliente de Supabase desde el primer commit (F-007: el
    default de 10 descartó 6/20 mensajes en ráfaga en SP-3).
+6. **El ítem de nav activo lo decide `App`, no el shell** (día 3). El ítem activo y la pantalla
+   que se pinta son el mismo dato; con el estado dentro de `AppShell` habría dos verdades sobre
+   dónde estás. Ojo con el mapeo: **INV-01 cuelga de "Vendiendo"**, no de "Inventario" — lo dice
+   su spec §2 y no es lo que uno supondría leyendo los ocho nombres.
+
+## ⚠ Lo que INV-01 NO hace, y es a propósito
+
+El diseño aprobado de INV-01 promete cuatro cosas que el MVP no tiene (F-023). La pantalla las
+pinta **con su estado real** en vez de fingir que funcionan:
+
+| El HTML aprobado dice | Y aquí sale |
+|---|---|
+| Badge verde **"Activo"** y **"Siempre disponible"** en los dos canales de carga | Badge neutro **"Fuera del MVP"** — INV-02/03/04 están en el Plan §9 "Fuera" |
+| Dropzone que abre un selector de archivos | Inerte: no es botón, no acepta drop, no abre nada |
+| `ingest-a3f7k9@ingest.bearingworld.io` | Un guion. Una dirección de ingestión falsa es una a la que alguien puede mandar su inventario de verdad |
+| **892** visitas en 30 días | Un guion + "sin instrumentar en el MVP". No hay tabla de visitas en el esquema |
+
+Hay 6 tests que fallan si cualquiera de las cuatro reaparece. El motivo es `CLAUDE.md` §7: si el
+riesgo #1 es VERA afirmando con aplomo algo que no sabe, la interfaz no puede hacer lo mismo — y
+en la interfaz engaña más, porque parece verificable.
+
+**Y un hueco que sí es del diseño, no del alcance:** los cuatro chips de filtro no incluyen
+ninguno para `DELETED`, así que **desde INV-01 no se puede ver ni restaurar una línea
+eliminada**. Eliminar es borrado lógico (la fila puede estar referenciada por un hilo abierto).
+Pendiente de decisión del PO para V1.
 
 ## ⚠ El login no tiene diseño aprobado
 
@@ -57,10 +97,17 @@ demo y necesita diseño aprobado antes.**
 
 ```
 src/
-├── lib/         supabase.ts · session.ts (auth + perfil del miembro)
-├── shell/       AppShell.tsx · VeraPanel.tsx  ← el armazón, se copia en toda pantalla
-├── screens/     Login.tsx · Welcome.tsx
-├── styles/      tokens.css · global.css
-└── test/        setup.ts
-e2e/             session.spec.ts  ← la puerta del día 2
+├── lib/               supabase.ts · session.ts (auth + perfil) · inventory.ts (datos de INV-01)
+├── shell/             AppShell.tsx · VeraPanel.tsx  ← el armazón, se copia en toda pantalla
+├── screens/           Login.tsx · Welcome.tsx
+│   └── inventory/     Inventory.tsx (INV-01) · InventoryTable.tsx
+├── styles/            tokens.css · global.css
+└── test/              setup.ts
+e2e/                   session.spec.ts   ← la puerta del día 2
+                       inventory.spec.ts ← la puerta del día 3
 ```
+
+`InventoryTable.tsx` está aparte del resto de la pantalla a propósito: es la contrapartida
+directa del `InventoryTable.tsx` que generó el Coder en SP-1
+(`openspec/mvp/spikes/SP-1/src/`). Mismo componente, misma fuente de verdad, uno a mano y otro
+del arnés — esa comparación es el objetivo 4 del MVP.

@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AppShell } from './AppShell';
+import { AppShell, navIndexOf } from './AppShell';
 import type { MemberProfile } from '../lib/session';
 
 const profile: MemberProfile = {
@@ -15,13 +16,24 @@ const profile: MemberProfile = {
   orgCountry: 'ES',
 };
 
+/**
+ * El shell pasó a ser controlado en el día 3: quien decide el ítem activo es
+ * `App`, porque es el mismo dato que la pantalla que se pinta. Aquí ese estado lo
+ * sostiene este envoltorio, para que los tests sigan probando el comportamiento
+ * del shell y no el de `App`.
+ */
+function Harness({ onSignOut }: { onSignOut: () => void }) {
+  const [nav, setNav] = useState(0);
+  return (
+    <AppShell profile={profile} onSignOut={onSignOut} activeNav={nav} onNavigate={setNav}>
+      <div>contenido</div>
+    </AppShell>
+  );
+}
+
 function renderShell() {
   const onSignOut = vi.fn();
-  render(
-    <AppShell profile={profile} onSignOut={onSignOut}>
-      <div>contenido</div>
-    </AppShell>,
-  );
+  render(<Harness onSignOut={onSignOut} />);
   // El shell tiene DOS navegaciones con los mismos ocho ítems (barra superior y
   // menú lateral). Toda consulta de ítem se acota a una de las dos, o no es
   // unívoca.
@@ -119,5 +131,17 @@ describe('AppShell', () => {
   it('renderiza el contenido que recibe', () => {
     renderShell();
     expect(screen.getByText('contenido')).toBeInTheDocument();
+  });
+
+  /**
+   * INV-01 §2 dice "Ítem activo en nav: Vendiendo". Es contraintuitivo — hay un
+   * ítem que se llama "Inventario" — y `App` enruta por ese índice, así que si
+   * alguien reordena los ocho ítems el mapeo se rompe en silencio.
+   */
+  it('navIndexOf resuelve los ítems por nombre y cae en Panel si no existe', () => {
+    expect(navIndexOf('Panel')).toBe(0);
+    expect(navIndexOf('Vendiendo')).toBe(1);
+    expect(navIndexOf('Inventario')).toBe(4);
+    expect(navIndexOf('Pantalla que no existe')).toBe(0);
   });
 });

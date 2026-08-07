@@ -88,6 +88,15 @@ Ninguna contradice un spec cerrado, pero todas son revisables:
    cambiarse el nombre o el `status` que aprueba el operador. Un trigger acota el permiso a
    `inventory_visibility_mode` y deja el resto al operador (`operator-approval`).
 
+8. **El recuento de favoritos es un contador desnormalizado, no una vista.** La estrella de cada
+   uno vive tras RLS por miembro, pero el número de la columna 9 de SRCH-01 es de toda la
+   plataforma, y con RLS restringida no se puede agregar desde el cliente. La primera versión usó
+   una vista agregada; el linter la marcó como `security_definer_view` a nivel **ERROR**, porque
+   una vista se ejecuta con los privilegios de su dueño y lee por encima de RLS. Un contador en
+   `organizations` mantenido por trigger no necesita ningún privilegio especial, y el cliente no
+   lo puede escribir (lo bloquea `guard_organization_columns`). No choca con RNG-SRCH-08: esa
+   regla prohíbe crear o modificar **favoritos** automáticamente, no cachear su recuento.
+
 ## Notas de RLS
 
 - Los helpers de `app` son `SECURITY DEFINER` **a propósito**: una política sobre `members` que
@@ -100,15 +109,6 @@ Ninguna contradice un spec cerrado, pero todas son revisables:
   vista materializada. Es lo que hace que el efecto sea inmediato, como pide el spec.
 - Los `GRANT` van explícitos aunque Supabase los daría por *default privileges*: es lo que
   permite aplicar y probar estas migraciones en un Postgres pelado.
-
-8. **El recuento de favoritos es un contador desnormalizado, no una vista.** La estrella de cada
-   uno vive tras RLS por miembro, pero el número de la columna 9 de SRCH-01 es de toda la
-   plataforma, y con RLS restringida no se puede agregar desde el cliente. La primera versión usó
-   una vista agregada; el linter la marcó como `security_definer_view` a nivel **ERROR**, porque
-   una vista se ejecuta con los privilegios de su dueño y lee por encima de RLS. Un contador en
-   `organizations` mantenido por trigger no necesita ningún privilegio especial, y el cliente no
-   lo puede escribir (lo bloquea `guard_organization_columns`). No choca con RNG-SRCH-08: esa
-   regla prohíbe crear o modificar **favoritos** automáticamente, no cachear su recuento.
 
 ## Pendiente
 

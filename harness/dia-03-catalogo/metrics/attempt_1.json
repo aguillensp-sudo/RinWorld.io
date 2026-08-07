@@ -23,5 +23,5 @@
     "catalog_demo.sql"
   ],
   "rows_generated": 215,
-  "csv_row": "2026-08-07;SIEMBRA-1;catalogo-demo;deepseek-v4-flash;4986;43679;0.012928;1;4.1;catalog_demo.sql"
+  "csv_row_sin_resultado": "2026-08-07,SIEMBRA-1,catalogo-demo,deepseek-v4-flash,4986,43679,0.012928,1,4.1,catalog_demo.sql"
 }

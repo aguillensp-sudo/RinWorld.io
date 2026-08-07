@@ -33,7 +33,7 @@ a ojo: `app/e2e/session.spec.ts`.
 
 | Verificación | Estado |
 |---|---|
-| `bash supabase/tests/run.sh` | **34/34** — el esquema dice "no" donde los specs exigen que diga no |
+| `bash supabase/tests/run.sh` | **65/65** — 35 de esquema + 30 del catálogo del día 3 |
 | `cd app && npm run typecheck` | limpio |
 | `cd app && npm test` | **21/21** |
 | `cd app && npx playwright test` | **9/9** contra el Supabase real, tres corridas sin flakiness |

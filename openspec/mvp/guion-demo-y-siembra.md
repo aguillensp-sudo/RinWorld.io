@@ -154,5 +154,33 @@ el día 6: buscar en un marketplace es buscar **oferta ajena**.
 
 ---
 
+## 5 · Resultado de la corrida — 7-ago-2026
+
+**El Coder pasó al primer intento: 27/27 asertos, cero correcciones al artefacto.**
+Detalle y cifras en F-022. Los asertos viven en `supabase/tests/03_catalog_asserts.sql` y
+`04_catalog_idempotent.sql`, se ejecutan con `bash supabase/tests/run.sh` (fase 2) y se
+escribieron **antes** de mirar el artefacto.
+
+| | |
+|---|---|
+| Filas | **215** · 72 referencias distintas · 49 con solape entre organizaciones |
+| Reparto | Padana/Wschód/Rhône 52 cada una · Anadolu 32 · Beta 15 · Alpha 12 |
+| Estados | 196 PUBLISHED · 11 DRAFT · 7 ARCHIVED · **1 DELETED** |
+| Precio | NULL en las 215 |
+| Coste | **$0.012928 · 0% cache hit** — la primera cifra en frío del proyecto |
+
+**El paso 1 del guion, ejecutado como Alpha a través de RLS** (no como `postgres`), devuelve
+10 filas de 6 empresas; el chip de zona quita Anadolu Rulman y quedan 9 de 5. El paso 2
+("solo SKF, plazo ≤ 7") las reduce a 3 sin vaciar la tabla. La línea más atractiva —
+1250 unidades en 2 días — es de Nordwälz Lager, que es el vendedor con quien se negocia
+en vivo: el catálogo cuenta la historia que tenía que contar.
+
+**Confirmado en vivo el detalle de §3:** el inventario propio de Alpha aparece en sus propios
+resultados (2 filas de las 10). La consulta de SRCH-01 tiene que excluirlo el día 6 —
+`inventory_select_cross_org` ya lleva `org_id <> app.current_org_id()`, así que es cuestión de
+usarlo, no de tocar el esquema.
+
+---
+
 *Redactado el 7-ago-2026 (día 3) · **confirmado por el PO el 7-ago-2026**: `6205-2RS` y seis
 organizaciones*

@@ -12,8 +12,10 @@ contra la API real.
 | `migrations/0003_threads_and_items.sql` | Hilos, tarjetas, las tres máquinas de estados, claves de contenido envueltas y RLS de mensajería |
 | `migrations/0004_lint_fixes.sql` | Correcciones del linter de Supabase: `search_path` en dos funciones y `pg_trgm` fuera de `public` |
 | `migrations/0005_lead_time_and_favorites.sql` | `lead_time_days` en claro (chip de filtro y columna ordenable de SRCH-01) y favoritos por distribuidora. Ver F-018 |
-| `migrations/0006_favorite_count_without_view.sql` | El recuento de favoritos pasa de vista agregada a contador con trigger: la vista era `security_definer_view` a nivel ERROR |
+| `migrations/0006_favorite_count_without_view.sql` | Bloquea la escritura de `favorite_count` desde el cliente y hace el backfill. **Su nombre engaña:** la vista agregada que iba a sustituir no llegó a git, y el contador ya está en 0005 — ver F-021 |
 | `seed/dev_accounts.sql` | Las dos organizaciones y las dos cuentas. Idempotente. Las contraseñas entran por variable, nunca en el fichero |
+| `seed/demo_orgs.sql` | Las **seis** organizaciones de la demo (decisión del PO, 7-ago) y la corrección de los diacríticos de las dos primeras. Ver F-019 |
+| `seed/catalog_demo.sql` | Catálogo de demo: **215 líneas** generadas por el Coder el 7-ago y aplicadas sin corregir. Diseñado hacia atrás desde `openspec/mvp/guion-demo-y-siembra.md`. Ver F-022 |
 
 ## Estado en el remoto
 
@@ -38,13 +40,30 @@ bash supabase/tests/run.sh
 ```
 
 Levanta un Postgres 16 desechable en Docker, aplica un stub de `auth` (para poder probar sin
-el stack de Supabase ni tocar el remoto), corre las migraciones y ejecuta 34 asertos.
+el stack de Supabase ni tocar el remoto) y corre **dos fases en dos bases separadas**:
+
+| Fase | Base | Qué prueba |
+|---|---|---|
+| 1 · esquema | `postgres` | **35 asertos**: que la base dice "no" donde los specs cerrados exigen que diga no |
+| 2 · catálogo | `bwcatalog` | **30 asertos** sobre la siembra del día 3: la demo del guion funciona sobre esos datos, y pasarla dos veces no duplica |
+
+Van en bases distintas porque la fase 1 deja sus propias organizaciones y líneas, y los
+recuentos del catálogo no pueden contar con datos ajenos. La fase 2 ejecuta
+`seed/demo_orgs.sql` y `seed/catalog_demo.sql` **tal cual**, sin copia intermedia: un test
+que prueba una copia prueba otra cosa que lo que se despliega.
+
 Cada aserto negativo imprime su `sqlstate`: `23514` CHECK, `23505` índice único, `P0001`
 trigger. Si una sentencia del test falla por sintaxis o por nombre (`42xxx`), el runner lo
 declara **TEST ROTO** en vez de contarlo como invariante verificada — sin eso, un typo en el
-test se disfrazaría de esquema correcto.
+test se disfrazaría de esquema correcto. Y los asertos positivos imprimen su etiqueta uno a
+uno: es la única forma de distinguir "30 asertos pasaron" de "el fichero se ejecutó y no
+comprobó nada", que es el fallo de F-015.
 
-Estado a 7-ago-2026: **verde, 34/34.** (30 el día 2 · 4 más con las migraciones 0005 y 0006.)
+Estado a 7-ago-2026: **verde, 65/65.** (35 de esquema · 30 de catálogo.)
+
+> El recuento de la fase 1 venía diciendo **34** desde el día 2 y son **35**: un aserto mal
+> contado a mano. Ahora los cuenta el propio runner (`grep -c` sobre sus `NOTICE OK`), que es
+> justo lo que F-015 pedía — leer el número de asertos *ejecutados*, no el que uno recuerda.
 
 ## Ocho decisiones de implementación que el documento de la puerta no cubría
 

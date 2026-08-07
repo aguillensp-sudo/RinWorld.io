@@ -180,7 +180,7 @@ Detalles que importan:
   en ningun literal.
 - El guardian `where not exists` va **una sola vez, al final**, y con ese UUID: hace
   el fichero repetible sin duplicar.
-- Sin `on conflict`, sin transaccion explicita, sin `\set`, sin `delete`.
+- Sin `on conflict`, sin transaccion explicita, sin metacomandos de psql, sin `delete`.
 
 ## FORMATO DE SALIDA (obligatorio, sin una palabra fuera del bloque)
 
@@ -311,8 +311,11 @@ def main():
         "files": list(files.keys()),
         "rows_generated": rows,
         # F-010: la fila del CSV se genera aqui, para que la copia a mano no pueda
-        # divergir del numero de maquina. Convencion: ningun valor lleva coma.
-        "csv_row": ";".join([
+        # divergir del numero de maquina. Separador coma, como el fichero; los
+        # valores multiples van con ';' (convencion de CLAUDE.md §6, para que el CSV
+        # se parsee sin comillas). Falta la ultima columna, `resultado`: es el
+        # veredicto de la revision, no salida del modelo, y la pone quien revisa.
+        "csv_row_sin_resultado": ",".join([
             time.strftime("%Y-%m-%d"), "SIEMBRA-1", "catalogo-demo", MODEL,
             str(tin), str(tout), f"{cost:.6f}", attempt,
             f"{secs_total / 60:.1f}", ";".join(files.keys()) or "-",

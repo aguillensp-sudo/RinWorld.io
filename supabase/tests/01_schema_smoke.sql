@@ -431,4 +431,74 @@ values
   ('11110000-0000-0000-0000-000000000001', :orgA, :a1, 'MENSAJE',
    decode(repeat('dd', 32), 'hex'), decode(repeat('08', 12), 'hex'));
 
+-- ---------------------------------------------------------------------------
+-- 0005 · plazo en claro y favoritos
+-- ---------------------------------------------------------------------------
+-- single-reference-search: el plazo es chip de filtro Y columna ordenable, asi
+-- que tiene que estar EN CLARO y ser consultable entre organizaciones.
+update public.inventory_lines set lead_time_days = 5
+  where id = 'e1000000-0000-0000-0000-000000000001';
+
+select public.expect_fail(
+  $$update public.inventory_lines set lead_time_days = -1
+    where id = 'e1000000-0000-0000-0000-000000000001'$$,
+  'plazo de entrega negativo');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    -- Alpha filtra y ordena por plazo sobre inventario de Beta, sin descifrar nada.
+    assert (select count(*) from public.inventory_lines
+            where lead_time_days <= 7 and status = 'PUBLISHED') = 1,
+      'El plazo tiene que ser filtrable entre organizaciones (chip de SRCH-01)';
+    raise notice 'OK · SRCH-01: plazo en claro, filtrable y ordenable entre organizaciones';
+  end
+  $$;
+commit;
+
+-- favorites-system: manual, y el recuento es agregado sin revelar quien marco.
+insert into public.favorite_distributors (member_id, distributor_org_id) values
+  ('0a000001-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222'),
+  ('0c000001-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.favorite_distributors) = 1,
+      'Cada miembro ve solo su propia lista de favoritos';
+    assert (select favorite_count from public.organizations
+            where id = '22222222-2222-2222-2222-222222222222') = 2,
+      'El recuento agregado es de toda la plataforma, no solo del miembro';
+    raise notice 'OK · favorites-system: estrella propia, recuento global, sin revelar quien marco';
+  end
+  $$;
+commit;
+
+-- El contador es derivado: el cliente no lo escribe.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$update public.organizations set favorite_count = 999
+      where id = '11111111-1111-1111-1111-111111111111'$$,
+    'cliente escribiendo favorite_count a mano');
+commit;
+
+-- Y baja al quitar el favorito.
+delete from public.favorite_distributors
+  where member_id = '0c000001-0000-0000-0000-000000000001';
+
+do $$
+begin
+  assert (select favorite_count from public.organizations
+          where id = '22222222-2222-2222-2222-222222222222') = 1,
+    'El contador baja al retirar un favorito';
+  raise notice 'OK · favorites-system: el contador sigue a la tabla en los dos sentidos';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

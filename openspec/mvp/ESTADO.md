@@ -22,7 +22,7 @@ organizaciones y el shell de la app. La puerta de salida está pasada de punta a
 |---|---|
 | Atribución y métricas | **Hecho.** Regla de autoría en `CLAUDE.md` §1.6; coste unificado en $0.003581; columna `ficheros` en el CSV. El trailer de `0623451` **no** se reescribe (F-009). |
 | Las tres decisiones de esquema | **Aprobadas por el PO.** Detalle en `Dia-02_decisiones_esquema.md`, que es el documento contra el que se escribió el DDL. |
-| Esquema + RLS | **Aplicado** al proyecto remoto (`troxminloxkjwihwfevs`, eu-west-1, PG 17). Migraciones 0001–0004. |
+| Esquema + RLS | **Aplicado** al proyecto remoto (`troxminloxkjwihwfevs`, eu-west-1, PG 17). Migraciones 0001–0006. |
 | Dos cuentas | **Creadas y verificadas por API**, no por `SELECT`. Login real contra `/auth/v1/token`. |
 | Shell de la app | **Hecho.** React 18 + TS + Vite. Es **una de las 8 pantallas** del alcance (Plan §9). |
 | CI | Tres trabajos: esquema, app, e2e. **Necesita secrets — ver abajo.** |
@@ -33,7 +33,7 @@ a ojo: `app/e2e/session.spec.ts`.
 
 | Verificación | Estado |
 |---|---|
-| `bash supabase/tests/run.sh` | **30/30** — el esquema dice "no" donde los specs exigen que diga no |
+| `bash supabase/tests/run.sh` | **34/34** — el esquema dice "no" donde los specs exigen que diga no |
 | `cd app && npm run typecheck` | limpio |
 | `cd app && npm test` | **21/21** |
 | `cd app && npx playwright test` | **9/9** contra el Supabase real, tres corridas sin flakiness |
@@ -121,29 +121,33 @@ del protocolo de verificación convertidos en test automático.
 
 ## Pendiente de Álvaro
 
-**Uno bloquea el arranque del día 3.**
+**Ninguno bloquea ya el arranque del día 3.** Queda una confirmación (punto 3).
 
 1. ✔ ~~**Los cuatro tokens neutros de fondo claro**~~ — **hecho el 6-ago.** `design-system.md`
    §1.4 (neutros de superficie clara) y §1.5 (semánticos), extraídos de los seis HTML aprobados
    y publicados en `tokens.css`. Resultó que **el Coder no había inventado nada**: los grises
    están en el HTML aprobado de INV-01 y tres de ellos en las seis pantallas. F-003 cerrado y
    corregido; ver el aviso de abajo sobre el check de paleta.
-2. 🔴 **¿Qué va a buscar el socio en la demo?** Referencia, cantidad y zona. Plan §8 es
-   explícito: el catálogo se diseña **hacia atrás desde el guion de demo**, con solape
-   deliberado entre las dos organizaciones para que la búsqueda cruce. Sin esa decisión, las 200
-   líneas salen verosímiles pero no lucen en la reunión — y sembrar dos veces es tirar el
-   trabajo del Coder.
+2. ✔ ~~**¿Qué va a buscar el socio en la demo?**~~ — **contestado el 6-ago:** referencia, marca,
+   cantidad y zona, con ordenación y filtrado. Aterrizado en **`guion-demo-y-siembra.md`**, que
+   es la entrada del prompt del Coder. Al diseñarlo saltó F-018 y hubo que ampliar el esquema
+   (migraciones 0005 y 0006) *antes* de sembrar.
+3. 🟠 **Confirmar `guion-demo-y-siembra.md`** antes de lanzar al Coder. Dos cosas concretas:
+   la **referencia del guion** (propuesta `6205-2RS`) y **cuántas organizaciones** — con solo
+   dos, la columna Empresa de SRCH-01 enseña **un único proveedor**, y esa columna es
+   obligatoria por spec. Propuesta: seis distribuidoras, solo dos con cuenta; las otras cuatro
+   son catálogo sin usuarios, que el esquema permite.
 
 **No bloquean, pero cuanto antes mejor.**
 
-3. **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados y **tampoco
+4. **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados y **tampoco
    está entre las 8 pantallas del alcance**: es una novena que nadie planificó, y es la primera
    que ve el socio. Hoy va andamiaje hecho con los tokens. *(El "panel de vista-servidor" del
    Plan §9 también es nuevo, pero ese sí está planificado.)*
-4. **Secrets de GitHub Actions**, o el trabajo de e2e falla a propósito:
+5. **Secrets de GitHub Actions**, o el trabajo de e2e falla a propósito:
    `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `E2E_ALPHA_EMAIL/PASSWORD/ORG`,
    `E2E_BETA_EMAIL/PASSWORD/ORG`.
-5. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
+6. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
    HaveIBeenPwned). Es configuración del proyecto, no del esquema. ¿Se activa?
 
 ---
@@ -167,7 +171,8 @@ margen para comerse dos días. Si el día 7 no está, se simplifica el hilo. Lo 
 | `Plan_MVP_Bearingworld_v1.0.md` | Plan maestro de 15 días. La referencia. |
 | `Dia-02_decisiones_esquema.md` | Las tres decisiones de esquema, aprobadas. El DDL se escribió contra este documento. |
 | `Dia-01_Spikes_y_arranque.md` | Detalle del día 1 (cerrado). |
-| `findings-register.md` | 17 hallazgos. Abiertos: **F-008, F-010, F-011, F-016**. F-003 cerrado el 6-ago (y su diagnóstico original, corregido). |
+| `guion-demo-y-siembra.md` | Guion de demo y diseño del catálogo sembrado. **Entrada del prompt del Coder del día 3.** |
+| `findings-register.md` | 18 hallazgos. Abiertos: **F-008, F-010, F-011, F-016**. F-003 cerrado el 6-ago (y su diagnóstico original, corregido). |
 | `harness-metrics.csv` | Tokens, coste, intentos, ficheros → objetivo 4. Primeras filas del Coder: mañana. |
 | `harness-backlog.md` | Defectos del arnés a corregir antes de V1. Se llena desde el día 4. |
 | `../architecture/design-system.md` | Contrato visual. **§1.4 y §1.5 (neutros claros y semánticos) y §6 (traducción a React) ya están rellenas.** |

@@ -11,6 +11,8 @@ contra la API real.
 | `migrations/0002_inventory.sql` | Líneas de inventario con la frontera de cifrado, índices de búsqueda, INV-07 (modo + exclusiones) y lectura cruzada entre organizaciones |
 | `migrations/0003_threads_and_items.sql` | Hilos, tarjetas, las tres máquinas de estados, claves de contenido envueltas y RLS de mensajería |
 | `migrations/0004_lint_fixes.sql` | Correcciones del linter de Supabase: `search_path` en dos funciones y `pg_trgm` fuera de `public` |
+| `migrations/0005_lead_time_and_favorites.sql` | `lead_time_days` en claro (chip de filtro y columna ordenable de SRCH-01) y favoritos por distribuidora. Ver F-018 |
+| `migrations/0006_favorite_count_without_view.sql` | El recuento de favoritos pasa de vista agregada a contador con trigger: la vista era `security_definer_view` a nivel ERROR |
 | `seed/dev_accounts.sql` | Las dos organizaciones y las dos cuentas. Idempotente. Las contraseñas entran por variable, nunca en el fichero |
 
 ## Estado en el remoto
@@ -36,15 +38,15 @@ bash supabase/tests/run.sh
 ```
 
 Levanta un Postgres 16 desechable en Docker, aplica un stub de `auth` (para poder probar sin
-el stack de Supabase ni tocar el remoto), corre las tres migraciones y ejecuta 30 asertos.
+el stack de Supabase ni tocar el remoto), corre las migraciones y ejecuta 34 asertos.
 Cada aserto negativo imprime su `sqlstate`: `23514` CHECK, `23505` índice único, `P0001`
 trigger. Si una sentencia del test falla por sintaxis o por nombre (`42xxx`), el runner lo
 declara **TEST ROTO** en vez de contarlo como invariante verificada — sin eso, un typo en el
 test se disfrazaría de esquema correcto.
 
-Estado a 6-ago-2026: **verde, 30/30.**
+Estado a 6-ago-2026: **verde, 34/34.**
 
-## Siete decisiones de implementación que el documento de la puerta no cubría
+## Ocho decisiones de implementación que el documento de la puerta no cubría
 
 Ninguna contradice un spec cerrado, pero todas son revisables:
 
@@ -99,10 +101,18 @@ Ninguna contradice un spec cerrado, pero todas son revisables:
 - Los `GRANT` van explícitos aunque Supabase los daría por *default privileges*: es lo que
   permite aplicar y probar estas migraciones en un Postgres pelado.
 
-## Lo que falta del día 2
+8. **El recuento de favoritos es un contador desnormalizado, no una vista.** La estrella de cada
+   uno vive tras RLS por miembro, pero el número de la columna 9 de SRCH-01 es de toda la
+   plataforma, y con RLS restringida no se puede agregar desde el cliente. La primera versión usó
+   una vista agregada; el linter la marcó como `security_definer_view` a nivel **ERROR**, porque
+   una vista se ejecuta con los privilegios de su dueño y lee por encima de RLS. Un contador en
+   `organizations` mantenido por trigger no necesita ningún privilegio especial, y el cliente no
+   lo puede escribir (lo bloquea `guard_organization_columns`). No choca con RNG-SRCH-08: esa
+   regla prohíbe crear o modificar **favoritos** automáticamente, no cachear su recuento.
 
-- Scaffold React+TS+Vite con el shell, y Vitest + Playwright en CI.
-- Meter `supabase/tests/run.sh` en el pipeline junto a Vitest.
-- Habilitar Realtime. Ojo con el plan §3, que lo pide "sobre `threads`, `messages`, `offers`":
+## Pendiente
+
+- **Habilitar Realtime.** Ojo con el plan §3, que lo pide "sobre `threads`, `messages`, `offers`":
   esas dos últimas tablas no existen. El spec cerrado tiene **un** hilo con elementos de tipo
   mezclado, así que Realtime va sobre `threads` y `thread_items`.
+- **Catálogo sembrado** (día 3, Coder), diseñado desde `openspec/mvp/guion-demo-y-siembra.md`.

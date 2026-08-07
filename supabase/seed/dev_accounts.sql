@@ -72,15 +72,17 @@ on conflict (id) do nothing;
 -- Tres líneas por organización, con una no-PUBLISHED cada una para poder ver la
 -- frontera de RLS de un vistazo. El catálogo de 200+ líneas es del día 3 (Coder).
 -- `unit_price` queda NULL: es E2EE y todavía no hay claves reales que lo cifren.
+-- `lead_time_days` va EN CLARO (migración 0005): es chip de filtro y columna
+-- ordenable de SRCH-01. Cifrado solo cuando viaja en una tarjeta de oferta.
 insert into public.inventory_lines
-  (org_id, part_number, brand, quantity, location_country, product_family, status)
+  (org_id, part_number, brand, quantity, location_country, product_family, status, lead_time_days)
 select * from (values
-  ('a1000000-0000-4000-8000-000000000001'::uuid, '6205-2RS',  'SKF',  840, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED'),
-  ('a1000000-0000-4000-8000-000000000001'::uuid, '6206-2RS',  'FAG',  310, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED'),
-  ('a1000000-0000-4000-8000-000000000001'::uuid, '22210-E1',  'FAG',   45, 'PT', 'Rodamiento de rodillos a rotula', 'DRAFT'),
-  ('b2000000-0000-4000-8000-000000000002'::uuid, '6205-2RS',  'NSK', 1200, 'DE', 'Rodamiento rigido de bolas', 'PUBLISHED'),
-  ('b2000000-0000-4000-8000-000000000002'::uuid, '32011-X',   'SKF',  180, 'PL', 'Rodamiento de rodillos conicos', 'PUBLISHED'),
-  ('b2000000-0000-4000-8000-000000000002'::uuid, 'NU-2210-E', 'INA',   90, 'DE', 'Rodamiento de rodillos cilindricos', 'ARCHIVED')
+  ('a1000000-0000-4000-8000-000000000001'::uuid, '6205-2RS',  'SKF',  840, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED', 3),
+  ('a1000000-0000-4000-8000-000000000001'::uuid, '6206-2RS',  'FAG',  310, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED', 5),
+  ('a1000000-0000-4000-8000-000000000001'::uuid, '22210-E1',  'FAG',   45, 'PT', 'Rodamiento de rodillos a rotula', 'DRAFT', 14),
+  ('b2000000-0000-4000-8000-000000000002'::uuid, '6205-2RS',  'NSK', 1200, 'DE', 'Rodamiento rigido de bolas', 'PUBLISHED', 7),
+  ('b2000000-0000-4000-8000-000000000002'::uuid, '32011-X',   'SKF',  180, 'PL', 'Rodamiento de rodillos conicos', 'PUBLISHED', 12),
+  ('b2000000-0000-4000-8000-000000000002'::uuid, 'NU-2210-E', 'INA',   90, 'DE', 'Rodamiento de rodillos cilindricos', 'ARCHIVED', 21)
 ) as v
 where not exists (select 1 from public.inventory_lines);
 

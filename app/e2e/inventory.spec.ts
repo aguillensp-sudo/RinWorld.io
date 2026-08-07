@@ -34,8 +34,10 @@ test.describe('INV-01 · inventario real', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // INV-01 cuelga de "Vendiendo", no de "Inventario" (spec §2).
-    await topNav(page).getByRole('button', { name: 'Vendiendo' }).click();
+    // INV-01 cuelga de "Inventario". Su spec §2 dice "Vendiendo" y es una errata:
+    // los cinco HTML de INV marcan Inventario y tres de las cinco specs también.
+    // Ver F-025 y el comentario largo de App.tsx.
+    await topNav(page).getByRole('button', { name: 'Inventario' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Mi inventario' })).toBeVisible();
     // Y se espera a la tabla, no solo al título: `allTextContents()` no
     // auto-espera, así que un test que lea columnas antes de que llegue la
@@ -180,6 +182,27 @@ test.describe('INV-01 · inventario real', () => {
     await expect(page.getByText('Activo', { exact: true })).toHaveCount(0);
     await expect(page.getByTestId('ingest-addr')).toHaveText('—');
   });
+
+  /** Decisión del PO el 7-ago: deshabilitado, no ausente. */
+  test('el botón de subir inventario se ve pero no se puede pulsar', async ({ page }) => {
+    const btn = page.getByRole('button', { name: /Subir nuevo inventario/i });
+    await expect(btn).toBeVisible();
+    await expect(btn).toBeDisabled();
+  });
+
+  /**
+   * INV-01 marca `Inventario` en la barra, no `Vendiendo`. Su spec §2 dice
+   * "Vendiendo" y es una errata heredada de la plantilla de VND-01: los cinco HTML
+   * de INV marcan `Inventario` y tres de las cinco specs de INV también. F-025.
+   */
+  test('el ítem de nav activo es Inventario', async ({ page }) => {
+    await expect(
+      topNav(page).getByRole('button', { name: 'Inventario' }),
+    ).toHaveAttribute('aria-current', 'page');
+    await expect(
+      topNav(page).getByRole('button', { name: 'Vendiendo' }),
+    ).not.toHaveAttribute('aria-current', 'page');
+  });
 });
 
 /**
@@ -197,7 +220,7 @@ test.describe('catálogo del día 3 · las dos organizaciones tienen stock', () 
     const betaPage = await betaCtx.newPage();
 
     async function openInventory(page: Page): Promise<string[]> {
-      await topNav(page).getByRole('button', { name: 'Vendiendo' }).click();
+      await topNav(page).getByRole('button', { name: 'Inventario' }).click();
       await expect(page.getByRole('heading', { level: 1, name: 'Mi inventario' })).toBeVisible();
       await expect(page.getByRole('table')).toBeVisible();
       return page.locator('tbody tr td:nth-child(1)').allTextContents();

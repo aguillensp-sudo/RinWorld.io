@@ -37,9 +37,9 @@ Es `app/e2e/inventory.spec.ts`, contra el Supabase real — no una comprobación
 |---|---|
 | `bash supabase/tests/run.sh` | **65/65** — 35 de esquema + 30 del catálogo. Los cuenta el runner, ya no se cuentan a mano (venía diciendo 34 y eran 35) |
 | `cd app && npm run typecheck` | limpio |
-| `cd app && npm test` | **97/97** |
+| `cd app && npm test` | **98/98** |
 | `cd app && npm run check:palette` | cobertura completa de las 6 pantallas claras |
-| `cd app && npx playwright test` | **20/20**, tres corridas seguidas sin flakiness |
+| `cd app && npx playwright test` | **22/22**, tres corridas seguidas sin flakiness |
 
 ---
 
@@ -74,13 +74,17 @@ colado un error silencioso. **Patrón a reusar en el arnés del día 4.**
 contrapartida directa del que generó el Coder en SP-1 (`openspec/mvp/spikes/SP-1/src/`). Mismo
 componente, misma fuente de verdad, uno a mano y otro del arnés — es el objetivo 4 del MVP.
 
-**Cuelga del ítem de nav "Vendiendo", no de "Inventario".** Lo dice su spec §2 literalmente, no es
-lo que uno supondría leyendo los ocho nombres, y `App.tsx` enruta por ahí. El ítem activo pasó a
-estar **controlado desde `App`**: el ítem y la pantalla que se pinta son el mismo dato, y con el
-estado dentro del shell habría dos verdades sobre dónde estás.
+**Cuelga del ítem de nav `Inventario`, aunque su spec §2 diga "Vendiendo".** Es la única vez del
+proyecto que se contradice un spec cerrado a propósito, y la evidencia está escrita en `App.tsx`
+junto al mapeo: **VND-01** dice Vendiendo en spec y en HTML; **INV-03/04/07** dicen Inventario en
+spec y en HTML; **INV-01 e INV-02** son las dos únicas que discrepan, y son las más antiguas. Los
+cinco HTML de INV marcan `Inventario` sin excepción y tres de las cinco specs les dan la razón:
+"Vendiendo" es una errata heredada de la plantilla de VND-01, no una intención de diseño. Lo
+resolvió el PO el 7-ago (F-025). El ítem activo pasó a estar **controlado desde `App`**: el ítem y
+la pantalla que se pinta son el mismo dato.
 
 **Cuatro cosas que el diseño aprobado promete y el MVP no tiene** (F-023). La pantalla las pinta
-con su estado real, y hay 6 tests que fallan si alguna vuelve a fingir:
+con su estado real, y hay 8 tests que fallan si alguna vuelve a fingir:
 
 | El HTML aprobado | Aquí |
 |---|---|
@@ -88,6 +92,7 @@ con su estado real, y hay 6 tests que fallan si alguna vuelve a fingir:
 | Dropzone que abre un selector de archivos | Inerte: no es botón, no acepta drop |
 | `ingest-a3f7k9@ingest.bearingworld.io` | Un guion. Una dirección falsa es una a la que alguien manda su inventario de verdad |
 | **892** visitas en 30 días | Un guion. No hay tabla de visitas en el esquema |
+| Botón azul **"Subir nuevo inventario"** | El mismo botón, **deshabilitado**, diciendo por qué. Decisión del PO: quitarlo dejaba la barra a medias |
 
 El motivo es `CLAUDE.md` §7: si el riesgo #1 es VERA afirmando con aplomo algo que no sabe, la
 interfaz no puede hacer lo mismo — y en la interfaz engaña más, porque parece verificable.
@@ -96,7 +101,7 @@ interfaz no puede hacer lo mismo — y en la interfaz engaña más, porque parec
 lectura permisivas que **se suman**: el inventario propio en cualquier estado
 (`inventory_select_own`) y el `PUBLISHED` de las demás (`inventory_select_cross_org`). Sin el
 `.eq('org_id', …)` explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del
-catálogo ajeno — sin error, sin aviso y con toda la pinta de funcionar. Los 97 tests de unidad
+catálogo ajeno — sin error, sin aviso y con toda la pinta de funcionar. Los 98 tests de unidad
 mockean `fetchPage`, así que ese fallo los pasaría todos. **RLS protege de leer lo que no toca; no
 elige por ti qué quieres leer.** Vale para toda pantalla nueva.
 
@@ -177,17 +182,14 @@ F-024, F-025. **No es que los mocks estén mal — es que son mocks.** El spec c
    siembra, así que su panel cabe en una página y **la paginación no se va a ver**. Fue decisión
    del guion (dar el grueso a las cuatro sin cuenta). Si quieres que se vea, Alpha necesita más de
    50 líneas: son cinco minutos.
-5. 🟠 **¿Qué ítem de nav va activo en INV-01?** (F-025). La spec §2 dice **`Vendiendo`** y el HTML
-   aprobado marca **`Inventario`**: el mock contradice a su propio spec. Hoy se sigue el spec,
-   porque un spec cerrado gana a un mock, pero es el HTML el que el socio va a comparar.
-6. **La app no tiene URL desplegada, y eso te dejó dos días a ciegas.** Pages sirve `main` en la
+5. **La app no tiene URL desplegada, y eso te dejó dos días a ciegas.** Pages sirve `main` en la
    raíz, y todo lo de los días 2 y 3 vive en `mvp/bootstrap`; además la app es React + Vite, no
    ficheros que se abran solos. **Decisión del PO el 7-ago: de momento solo local.** Se retoma
    antes del **día 11**, que es la primera sesión de prueba con él. Mientras tanto:
    `npm --prefix <ruta>/app run dev` y abrir `http://localhost:5173`.
-7. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
+6. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
    HaveIBeenPwned). Es configuración del proyecto, no del esquema. ¿Se activa?
-8. **Realtime** sigue sin habilitar en `threads` y `thread_items`. El Plan §3 nombra tablas
+7. **Realtime** sigue sin habilitar en `threads` y `thread_items`. El Plan §3 nombra tablas
    `messages`/`offers` que **no existen** — el esquema del día 2 las llama de otra forma. No urge
    hasta el día 7.
 

@@ -84,6 +84,8 @@ const CHANNELS = {
 
 /** El texto único que sustituye a los badges "Activo"/"Siempre disponible". */
 const OUT_OF_SCOPE = 'Fuera del MVP';
+const UPLOAD_LABEL = 'Subir nuevo inventario';
+const UPLOAD_WHY = 'La importación de inventario (INV-02) está fuera del alcance del MVP';
 const OUT_OF_SCOPE_NOTE =
   'La importación de inventario (INV-02, INV-03, INV-04) y la configuración de visibilidad (INV-07) están fuera del alcance del MVP. Las líneas de abajo se sembraron directamente en la base de datos.';
 
@@ -314,6 +316,24 @@ export function Inventory({ profile, now }: Props) {
                 }}
               />
             </div>
+            {/* Deshabilitado, no ausente. Decisión del PO el 7-ago: es un botón
+                primario de un diseño aprobado y quitarlo dejaba la barra a medias,
+                pero INV-02 está en el Plan §9 "Fuera" y no puede llevar a ningún
+                sitio. `disabled` más `title` es lo que lo hace honesto: se ve dónde
+                estará y se dice por qué todavía no. */}
+            <button
+              type="button"
+              className={styles.btnUpload}
+              disabled
+              title={UPLOAD_WHY}
+              aria-describedby="upload-why"
+            >
+              <i className="ti ti-upload" aria-hidden="true" />
+              {UPLOAD_LABEL}
+            </button>
+            <span id="upload-why" className={styles.srOnly}>
+              {UPLOAD_WHY}
+            </span>
           </div>
         </div>
 

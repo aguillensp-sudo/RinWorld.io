@@ -8,12 +8,22 @@ import { Inventory } from './screens/inventory/Inventory';
 /**
  * Qué pantalla va con qué ítem de nav.
  *
- * `INV-01` cuelga de **Vendiendo**, no de Inventario, porque su spec §2 lo dice
- * literalmente: "Ítem activo en nav: **Vendiendo**". No es lo que uno supondría
- * leyendo los ocho nombres, y por eso está escrito aquí con el puntero al lado.
+ * **`INV-01` cuelga de `Inventario`, aunque su spec §2 diga "Vendiendo".** Es la
+ * única vez en el proyecto que se contradice un spec cerrado a propósito, así que
+ * aquí queda la evidencia que lo justifica (F-025):
+ *
+ *   VND-01            spec "Vendiendo"  · HTML "Vendiendo"   -> coherente
+ *   INV-03/04/07      spec "Inventario" · HTML "Inventario"  -> coherente
+ *   INV-01, INV-02    spec "Vendiendo"  · HTML "Inventario"  -> las dos únicas que discrepan
+ *
+ * Los **cinco** HTML de INV marcan `Inventario` sin excepción, y **tres de las
+ * cinco** specs de INV dicen lo mismo. "Vendiendo" es de VND-01 y se colaron en las
+ * dos specs de INV más antiguas por copia de plantilla. No es una intención de
+ * diseño: es una errata, y el PO la resolvió el 7-ago.
+ *
  * Los otros seis ítems no tienen pantalla en el MVP (Plan §9, 8 pantallas).
  */
-const INVENTORY_NAV = navIndexOf('Vendiendo');
+const INVENTORY_NAV = navIndexOf('Inventario');
 const HOME_NAV = navIndexOf('Panel');
 
 /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */

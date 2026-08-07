@@ -412,6 +412,52 @@
   color: var(--bw-input-placeholder);
 }
 
+/* Botón primario de la barra. Vive deshabilitado en el MVP: INV-02 está fuera del
+   alcance. El estado deshabilitado no está en el HTML aprobado — se construye con
+   los neutros de §1.4, no con el azul apagado, porque un azul desvaído sigue
+   leyéndose como "pulsa aquí". */
+.btnUpload {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--bw-calibration-blue);
+  color: white;
+  border: 1px solid transparent;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.btnUpload:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btnUpload:disabled {
+  background: var(--bw-surface-mist);
+  border-color: var(--bw-line-steel-strong);
+  color: var(--bw-input-placeholder);
+  cursor: not-allowed;
+}
+
+/* Etiqueta solo para lectores de pantalla: el porqué del botón deshabilitado.
+   `title` lo ve el ratón y nadie más. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── Tabla y sus estados ────────────────────────────────────────────────── */
 
 .tblCard {

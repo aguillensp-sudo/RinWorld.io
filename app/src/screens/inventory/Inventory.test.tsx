@@ -141,10 +141,28 @@ describe('INV-01 · canales de actualización', () => {
     await waitFor(() => expect(fetchPage).toHaveBeenCalled());
   });
 
-  it('la dropzone no es un control: no hay botón ni input de archivo', async () => {
+  it('la dropzone no es un control: no abre ningún selector de archivo', async () => {
     renderScreen();
     expect(screen.getByText('Arrastra tu archivo aquí')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /subir/i })).not.toBeInTheDocument();
+    // La dropzone del HTML aprobado es un div con onclick que abre un <input
+    // type=file>. Aquí no hay input de archivo en toda la pantalla.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+    await waitFor(() => expect(fetchPage).toHaveBeenCalled());
+  });
+
+  /**
+   * Decisión del PO el 7-ago: **deshabilitado, no ausente**. Es un botón primario de
+   * un diseño aprobado y quitarlo dejaba la barra de herramientas a medias, pero
+   * INV-02 está en el Plan §9 "Fuera" y no puede llevar a ningún sitio.
+   */
+  it('el botón de subir inventario está, pero deshabilitado y diciendo por qué', async () => {
+    renderScreen();
+    const btn = screen.getByRole('button', { name: /Subir nuevo inventario/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringContaining('fuera del alcance del MVP'));
+    // Y el motivo también para quien no usa ratón.
+    expect(screen.getByText(/INV-02\) está fuera del alcance del MVP/)).toBeInTheDocument();
     await waitFor(() => expect(fetchPage).toHaveBeenCalled());
   });
 });

@@ -16,7 +16,7 @@ npm run dev
 ```
 
 Sirve en **http://localhost:5173**. Para llegar a INV-01: entrar con `alpha@bearingworld.test` y
-pulsar **Vendiendo** en la barra de navegación — no "Inventario" (su spec §2).
+pulsar **Inventario** en la barra de navegación.
 
 > **La app no tiene URL desplegada, y es una decisión, no un olvido.** GitHub Pages sirve la rama
 > `main` en la raíz, donde viven los 32 HTML aprobados; `app/` y `supabase/` están en
@@ -32,7 +32,7 @@ están en `openspec/architecture/design-system.md` §6, que se rellenó al const
 npm run typecheck && npm test && npm run check:palette && npx playwright test
 ```
 
-Estado a 7-ago-2026: **typecheck limpio · Vitest 97/97 · Playwright 20/20 · paleta completa**,
+Estado a 7-ago-2026: **typecheck limpio · Vitest 98/98 · Playwright 22/22 · paleta completa**,
 contra el proyecto Supabase real. Tres corridas seguidas del e2e sin flakiness.
 
 El e2e incluye las dos puertas de salida:
@@ -46,7 +46,7 @@ El e2e incluye las dos puertas de salida:
 > `inventory_lines` tiene DOS políticas de lectura permisivas que se suman: el inventario propio
 > en cualquier estado, y el `PUBLISHED` de las demás organizaciones. Sin el `.eq('org_id', …)`
 > explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del catálogo ajeno
-> — sin error y con toda la pinta de funcionar. Los 97 tests de unidad mockean `fetchPage`, así
+> — sin error y con toda la pinta de funcionar. Los 98 tests de unidad mockean `fetchPage`, así
 > que ese fallo los pasaría todos.
 
 > Si faltan las credenciales `E2E_*`, la suite de la puerta **se salta**. En local eso avisa;
@@ -69,12 +69,15 @@ El e2e incluye las dos puertas de salida:
    default de 10 descartó 6/20 mensajes en ráfaga en SP-3).
 6. **El ítem de nav activo lo decide `App`, no el shell** (día 3). El ítem activo y la pantalla
    que se pinta son el mismo dato; con el estado dentro de `AppShell` habría dos verdades sobre
-   dónde estás. Ojo con el mapeo: **INV-01 cuelga de "Vendiendo"**, no de "Inventario" — lo dice
-   su spec §2 y no es lo que uno supondría leyendo los ocho nombres.
+   dónde estás. **INV-01 va en `Inventario`, aunque su spec §2 diga "Vendiendo"** — es una errata
+   heredada de la plantilla de VND-01 y la evidencia está en el comentario de `App.tsx` (F-025).
+   Es la única vez del proyecto que se contradice un spec cerrado a propósito.
+7. **El subtítulo de VERA es de la pantalla, no del shell.** INV-01 §5 pide "Agente de inventario";
+   el shell base dice "Agente de búsqueda". `AppShell` lo recibe por prop (F-025).
 
 ## ⚠ Lo que INV-01 NO hace, y es a propósito
 
-El diseño aprobado de INV-01 promete cuatro cosas que el MVP no tiene (F-023). La pantalla las
+El diseño aprobado de INV-01 promete cinco cosas que el MVP no tiene (F-023). La pantalla las
 pinta **con su estado real** en vez de fingir que funcionan:
 
 | El HTML aprobado dice | Y aquí sale |
@@ -83,8 +86,13 @@ pinta **con su estado real** en vez de fingir que funcionan:
 | Dropzone que abre un selector de archivos | Inerte: no es botón, no acepta drop, no abre nada |
 | `ingest-a3f7k9@ingest.bearingworld.io` | Un guion. Una dirección de ingestión falsa es una a la que alguien puede mandar su inventario de verdad |
 | **892** visitas en 30 días | Un guion + "sin instrumentar en el MVP". No hay tabla de visitas en el esquema |
+| Botón azul **"Subir nuevo inventario"** | El mismo botón **deshabilitado**, con el motivo en `title` y también en texto para lectores de pantalla |
 
-Hay 6 tests que fallan si cualquiera de las cuatro reaparece. El motivo es `CLAUDE.md` §7: si el
+El botón se queda deshabilitado y no ausente por decisión del PO (7-ago): quitarlo dejaba la barra
+de herramientas a medias y es un control de un diseño aprobado. Su estado deshabilitado usa los
+neutros de §1.4 y **no** el azul apagado, porque un azul desvaído sigue leyéndose como "pulsa aquí".
+
+Hay 8 tests que fallan si cualquiera de estas reaparece. El motivo es `CLAUDE.md` §7: si el
 riesgo #1 es VERA afirmando con aplomo algo que no sabe, la interfaz no puede hacer lo mismo — y
 en la interfaz engaña más, porque parece verificable.
 

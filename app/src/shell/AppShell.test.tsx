@@ -134,9 +134,9 @@ describe('AppShell', () => {
   });
 
   /**
-   * INV-01 §2 dice "Ítem activo en nav: Vendiendo". Es contraintuitivo — hay un
-   * ítem que se llama "Inventario" — y `App` enruta por ese índice, así que si
-   * alguien reordena los ocho ítems el mapeo se rompe en silencio.
+   * `App` enruta por estos índices, así que si alguien reordena los ocho ítems el
+   * mapeo se rompe en silencio. INV-01 va en `Inventario` (índice 4); su spec §2
+   * dice "Vendiendo" y es una errata — ver el comentario largo de `App.tsx` y F-025.
    */
   it('navIndexOf resuelve los ítems por nombre y cae en Panel si no existe', () => {
     expect(navIndexOf('Panel')).toBe(0);

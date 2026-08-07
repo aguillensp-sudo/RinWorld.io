@@ -20,7 +20,7 @@ están en `openspec/architecture/design-system.md` §6, que se rellenó al const
 npm run typecheck && npm test && npx playwright test
 ```
 
-Estado a 6-ago-2026: **typecheck limpio · Vitest 21/21 · Playwright 8/8**, contra el proyecto
+Estado a 6-ago-2026: **typecheck limpio · Vitest 21/21 · Playwright 9/9**, contra el proyecto
 Supabase real.
 
 El e2e incluye la **puerta de salida del día 2**: dos contextos de navegador, dos cuentas,

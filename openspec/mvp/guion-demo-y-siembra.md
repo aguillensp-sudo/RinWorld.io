@@ -11,7 +11,7 @@
 
 ## 1 · La búsqueda de la demo
 
-Decisión del PO (6-ago): se busca por **referencia, marca, cantidad y zona**, y los resultados
+Decisión del PO (7-ago): se busca por **referencia, marca, cantidad y zona**, y los resultados
 **se ordenan y se filtran**.
 
 Eso encaja con `single-reference-search`, que fija los cuatro chips editables: **marca, país,
@@ -25,7 +25,7 @@ cantidad mínima y plazo**. La referencia no es un chip: es la consulta.
 | 2 | *"solo SKF, y que el plazo no pase de una semana"* | Refina sin repetir lo anterior: añade chip marca `SKF` y chip plazo `≤ 7 días`. `single-reference-search` · escenario "refinamiento en sesión activa" |
 | 3 | clic en cabecera **Plazo** | Reordena ascendente. Es lo que exige `Rinworld_spec_SRCH-01.md` línea 83 |
 
-**Referencia elegida: `6205-2RS`.** Es el rodamiento rígido de bolas más común del mercado, así
+**Referencia propuesta: `6205-2RS`.** Es el rodamiento rígido de bolas más común del mercado, así
 que un catálogo con muchas líneas de esa referencia es verosímil, y ya es la que sembramos el
 día 2. Si prefieres otra, es cambiar un valor en este documento.
 
@@ -139,4 +139,4 @@ el día 6: buscar en un marketplace es buscar **oferta ajena**.
 
 ---
 
-*Redactado el 6-ago-2026 · pendiente de confirmación del PO*
+*Redactado el 7-ago-2026 (día 3) · pendiente de confirmación del PO*

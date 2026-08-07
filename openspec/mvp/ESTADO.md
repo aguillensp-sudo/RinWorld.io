@@ -42,13 +42,25 @@ a ojo: `app/e2e/session.spec.ts`.
 
 **Métricas del arnés: cero filas nuevas hoy, y es correcto.** El día 2 lo ejecutó Claude Code
 completo; el arnés no existe hasta el día 4 y el Coder no interviene hasta el día 3. Las
-primeras filas de `harness-metrics.csv` desde SP-1 son las de mañana.
+primeras filas de `harness-metrics.csv` desde SP-1 son las del día 3, todavía sin escribir.
 
 ---
 
-## Hoy toca — Día 3
+## Hoy toca — Día 3 · EN CURSO (7-ago-2026)
 
-**Objetivo:** catálogo sembrado de 200+ líneas · INV-01 completa a mano con sus tests.
+### Ya hecho hoy, antes del catálogo
+
+Tres commits de desbloqueo, todos de Claude Code. **Ninguno es un entregable del día 3**: son
+las dos decisiones que estaban en "Pendiente de Álvaro" y lo que salió al aterrizarlas.
+
+| Commit | Qué |
+|---|---|
+| `33be478` | `design-system.md` §1.4 y §1.5 — neutros de superficie clara y semánticos, extraídos de los seis HTML aprobados. Cierra y **corrige** F-003 |
+| `7fa51c3` | Migraciones **0005** y **0006** (F-018): `lead_time_days` en claro y favoritos por distribuidora. Más `guion-demo-y-siembra.md` |
+| `3d10b06` | Orden de la lista de decisiones en el README de `supabase/` |
+
+**Objetivo del día, ninguno de los dos empezado:** catálogo sembrado de 200+ líneas · INV-01
+completa a mano con sus tests.
 
 | Trabajo | Ejecuta | Fuente |
 |---|---|---|
@@ -123,12 +135,12 @@ del protocolo de verificación convertidos en test automático.
 
 **Ninguno bloquea ya el arranque del día 3.** Queda una confirmación (punto 3).
 
-1. ✔ ~~**Los cuatro tokens neutros de fondo claro**~~ — **hecho el 6-ago.** `design-system.md`
+1. ✔ ~~**Los cuatro tokens neutros de fondo claro**~~ — **hecho el 7-ago.** `design-system.md`
    §1.4 (neutros de superficie clara) y §1.5 (semánticos), extraídos de los seis HTML aprobados
    y publicados en `tokens.css`. Resultó que **el Coder no había inventado nada**: los grises
    están en el HTML aprobado de INV-01 y tres de ellos en las seis pantallas. F-003 cerrado y
    corregido; ver el aviso de abajo sobre el check de paleta.
-2. ✔ ~~**¿Qué va a buscar el socio en la demo?**~~ — **contestado el 6-ago:** referencia, marca,
+2. ✔ ~~**¿Qué va a buscar el socio en la demo?**~~ — **contestado el 7-ago:** referencia, marca,
    cantidad y zona, con ordenación y filtrado. Aterrizado en **`guion-demo-y-siembra.md`**, que
    es la entrada del prompt del Coder. Al diseñarlo saltó F-018 y hubo que ampliar el esquema
    (migraciones 0005 y 0006) *antes* de sembrar.
@@ -172,7 +184,7 @@ margen para comerse dos días. Si el día 7 no está, se simplifica el hilo. Lo 
 | `Dia-02_decisiones_esquema.md` | Las tres decisiones de esquema, aprobadas. El DDL se escribió contra este documento. |
 | `Dia-01_Spikes_y_arranque.md` | Detalle del día 1 (cerrado). |
 | `guion-demo-y-siembra.md` | Guion de demo y diseño del catálogo sembrado. **Entrada del prompt del Coder del día 3.** |
-| `findings-register.md` | 18 hallazgos. Abiertos: **F-008, F-010, F-011, F-016**. F-003 cerrado el 6-ago (y su diagnóstico original, corregido). |
+| `findings-register.md` | 18 hallazgos. Abiertos: **F-008, F-010, F-011, F-016**. F-003 cerrado el 7-ago (y su diagnóstico original, corregido). |
 | `harness-metrics.csv` | Tokens, coste, intentos, ficheros → objetivo 4. Primeras filas del Coder: mañana. |
 | `harness-backlog.md` | Defectos del arnés a corregir antes de V1. Se llena desde el día 4. |
 | `../architecture/design-system.md` | Contrato visual. **§1.4 y §1.5 (neutros claros y semánticos) y §6 (traducción a React) ya están rellenas.** |

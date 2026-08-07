@@ -298,7 +298,7 @@ Los segundos roles de §1.4 se publican como **alias**, no como valores nuevos:
 `--bw-hover-surface: var(--bw-cold-white)`, `--bw-hover-border: var(--bw-input-placeholder)`,
 `--bw-text-secondary: var(--bw-steel-mist)`. Si cambia el token base, cambian con él.
 
-> **F-003 cerrado (6-ago).** §1.4 y §1.5 cubren toda superficie clara, así que ya no hay hueco
+> **F-003 cerrado (7-ago).** §1.4 y §1.5 cubren toda superficie clara, así que ya no hay hueco
 > que obligue a inventar. **El check de paleta del Test-runner se valida contra §1.1 + §1.4 +
 > §1.5**, nunca contra §1.1 a secas: con la paleta del shell sola rechazaría los colores que
 > los propios HTML aprobados especifican, y C3 fallaría en pantallas correctas.

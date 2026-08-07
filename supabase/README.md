@@ -44,7 +44,7 @@ trigger. Si una sentencia del test falla por sintaxis o por nombre (`42xxx`), el
 declara **TEST ROTO** en vez de contarlo como invariante verificada — sin eso, un typo en el
 test se disfrazaría de esquema correcto.
 
-Estado a 6-ago-2026: **verde, 34/34.**
+Estado a 7-ago-2026: **verde, 34/34.** (30 el día 2 · 4 más con las migraciones 0005 y 0006.)
 
 ## Ocho decisiones de implementación que el documento de la puerta no cubría
 

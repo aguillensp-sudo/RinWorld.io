@@ -11,7 +11,7 @@ const profile: MemberProfile = {
   role: 'ADMIN',
   state: 'ACTIVE',
   orgId: 'a1000000-0000-4000-8000-000000000001',
-  orgName: 'Rodamientos Ibericos',
+  orgName: 'Rodamientos Ibéricos',
   orgCountry: 'ES',
 };
 
@@ -35,7 +35,7 @@ function renderShell() {
 describe('AppShell', () => {
   it('pinta la organización y el usuario de la sesión, no datos de ejemplo', () => {
     renderShell();
-    expect(screen.getByTestId('nav-org')).toHaveTextContent('Rodamientos Ibericos');
+    expect(screen.getByTestId('nav-org')).toHaveTextContent('Rodamientos Ibéricos');
     expect(screen.getByTestId('nav-user')).toHaveTextContent('Alvaro Alpha');
     // El shell aprobado traía estos dos literales; no deben sobrevivir.
     expect(screen.queryByText('Rodamientos del Sur SL')).not.toBeInTheDocument();

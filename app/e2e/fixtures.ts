@@ -9,13 +9,13 @@ import type { Page } from '@playwright/test';
 export const ALPHA = {
   email: process.env.E2E_ALPHA_EMAIL ?? '',
   password: process.env.E2E_ALPHA_PASSWORD ?? '',
-  org: process.env.E2E_ALPHA_ORG ?? 'Rodamientos Ibericos',
+  org: process.env.E2E_ALPHA_ORG ?? 'Rodamientos Ibéricos',
 };
 
 export const BETA = {
   email: process.env.E2E_BETA_EMAIL ?? '',
   password: process.env.E2E_BETA_PASSWORD ?? '',
-  org: process.env.E2E_BETA_ORG ?? 'Nordwaelz Lager',
+  org: process.env.E2E_BETA_ORG ?? 'Nordwälz Lager',
 };
 
 export const haveCreds = !!(ALPHA.email && ALPHA.password && BETA.email && BETA.password);

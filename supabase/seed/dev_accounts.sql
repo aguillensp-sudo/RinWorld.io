@@ -18,10 +18,16 @@
 -- =============================================================================
 
 \set ON_ERROR_STOP on
+\encoding UTF8
 
+-- ⚠ Los nombres llevan diacríticos y el `\encoding UTF8` de arriba es lo que los
+-- protege: en Windows la consola entra con code page 850/1252 y sin esa línea psql
+-- reinterpreta los bytes y escribe mojibake en la columna que el socio lee en la
+-- demo. Las dos filas nacieron en ASCII y se corrigieron el 7-ago (F-019); aquí
+-- están ya bien para que un bootstrap desde cero no repita el fallo.
 insert into public.organizations (id, name, legal_name, country, continent, status) values
-  ('a1000000-0000-4000-8000-000000000001', 'Rodamientos Ibericos', 'Rodamientos Ibericos S.L.', 'ES', 'EU', 'APPROVED'),
-  ('b2000000-0000-4000-8000-000000000002', 'Nordwaelz Lager',      'Nordwaelz Lager GmbH',      'DE', 'EU', 'APPROVED')
+  ('a1000000-0000-4000-8000-000000000001', 'Rodamientos Ibéricos', 'Rodamientos Ibéricos S.L.', 'ES', 'EU', 'APPROVED'),
+  ('b2000000-0000-4000-8000-000000000002', 'Nordwälz Lager',       'Nordwälz Lager GmbH',       'DE', 'EU', 'APPROVED')
 on conflict (id) do nothing;
 
 insert into auth.users (

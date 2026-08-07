@@ -1,6 +1,8 @@
 # Guion de demo y siembra del catálogo
 
-> **Propuesta — pendiente de confirmación del PO.** El Coder no siembra hasta que esté cerrada.
+> **CONFIRMADO POR EL PO el 7-ago-2026.** Las dos decisiones abiertas quedan cerradas:
+> referencia de la demo **`6205-2RS`** y **seis organizaciones** distribuidoras. Este documento
+> pasa de propuesta a entrada del prompt del Coder.
 >
 > Plan §8 es explícito: las 200 líneas se diseñan **hacia atrás desde el guion de demo**, no al
 > revés. "200 líneas curadas rinden más que 2.000 aleatorias." Este documento fija primero qué
@@ -25,9 +27,9 @@ cantidad mínima y plazo**. La referencia no es un chip: es la consulta.
 | 2 | *"solo SKF, y que el plazo no pase de una semana"* | Refina sin repetir lo anterior: añade chip marca `SKF` y chip plazo `≤ 7 días`. `single-reference-search` · escenario "refinamiento en sesión activa" |
 | 3 | clic en cabecera **Plazo** | Reordena ascendente. Es lo que exige `Rinworld_spec_SRCH-01.md` línea 83 |
 
-**Referencia propuesta: `6205-2RS`.** Es el rodamiento rígido de bolas más común del mercado, así
-que un catálogo con muchas líneas de esa referencia es verosímil, y ya es la que sembramos el
-día 2. Si prefieres otra, es cambiar un valor en este documento.
+**Referencia confirmada por el PO: `6205-2RS`.** Es el rodamiento rígido de bolas más común del
+mercado, así que un catálogo con muchas líneas de esa referencia es verosímil, y ya es la que
+sembramos el día 2.
 
 > **Lo que NO se puede pedir en la demo, y conviene saberlo antes de la reunión:** ordenar o
 > filtrar **por precio**. `unit_price` va cifrado extremo a extremo, también en la línea de
@@ -86,27 +88,40 @@ el HTML aprobado de INV-01 no pinta y que hay que decidir cómo se muestra.
 
 ---
 
-## 3 · Una decisión que la demo pide: cuántas organizaciones
+## 3 · Cuántas organizaciones — decisión cerrada: seis
 
 **El problema.** SRCH-01 tiene una columna **Empresa** que el spec marca como *obligatoria*
 (línea 179: "fue el error del prototipo HTML v1"). Con solo dos organizaciones, el comprador ve
 **una sola empresa** en toda la tabla de resultados. La pantalla núcleo de un marketplace
 enseñando un único proveedor no cuenta la historia.
 
-**Propuesta.** Seis organizaciones distribuidoras, de las cuales **solo dos tienen cuenta**:
+**Aprobado por el PO el 7-ago-2026.** Seis organizaciones distribuidoras, de las cuales **solo
+dos tienen cuenta**. Sembradas en `supabase/seed/demo_orgs.sql` con estos UUID fijos, que son
+los que el catálogo y sus tests referencian literalmente:
 
-| Organización | País | Cuenta | Papel en la demo |
-|---|---|---|---|
-| Rodamientos Ibéricos | ES | ✔ `alpha@` | **El comprador.** Es quien busca |
-| Nordwälz Lager | DE | ✔ `beta@` | **El vendedor con quien se negocia en vivo.** Tiene la línea más atractiva de la referencia |
-| Cuscinetti Padana | IT | — | Catálogo, sin usuarios |
-| Łożyska Wschód | PL | — | Catálogo, sin usuarios |
-| Roulements Rhône | FR | — | Catálogo, sin usuarios |
-| Anadolu Rulman | TR | — | Catálogo, sin usuarios · **fuera de la UE**, para que el chip de zona corte |
+| Organización | UUID | País | Cont. | Cuenta | Papel en la demo |
+|---|---|---|---|---|---|
+| Rodamientos Ibéricos | `a1000000-…-0001` | ES | EU | ✔ `alpha@` | **El comprador.** Es quien busca |
+| Nordwälz Lager | `b2000000-…-0002` | DE | EU | ✔ `beta@` | **El vendedor con quien se negocia en vivo.** Tiene la línea más atractiva de la referencia |
+| Cuscinetti Padana | `c3000000-…-0003` | IT | EU | — | Catálogo, sin usuarios |
+| Łożyska Wschód | `d4000000-…-0004` | PL | EU | — | Catálogo, sin usuarios |
+| Roulements Rhône | `e5000000-…-0005` | FR | EU | — | Catálogo, sin usuarios |
+| Anadolu Rulman | `f6000000-…-0006` | TR | **AS** | — | Catálogo, sin usuarios · **fuera de Europa**, para que el chip de zona corte |
 
 Las cuatro sin cuenta son organizaciones del directorio con stock publicado y **cero miembros**:
-el esquema lo permite (`members` apunta a `organizations`, no al revés) y la RLS funciona igual.
-No hace falta inventar usuarios ni contraseñas que nadie va a usar.
+el esquema lo permite (`members` apunta a `organizations`, no al revés) y la RLS funciona igual —
+ni `inventory_select_cross_org` ni `can_view_inventory_of()` miran si hay miembros. No hace falta
+inventar usuarios ni contraseñas que nadie va a usar.
+
+**Turquía va en `continent = 'AS'`, y es deliberado.** `organizations_continent_chk` admite
+AF/AN/AS/EU/NA/OC/SA y Turquía está a caballo; se sigue el geoscheme de la ONU, que la sitúa en
+Asia Occidental. La consecuencia es la que la demo necesita: el chip de zona "Europa" filtra por
+`continent = 'EU'` y Anadolu Rulman desaparece en cuanto se aplica.
+
+**Los nombres llevan diacríticos, y hubo que arreglarlos (F-019).** `dev_accounts.sql` creó las
+dos primeras en ASCII — "Rodamientos Ibericos", "Nordwaelz Lager" — y `name` es exactamente lo que
+pinta la columna Empresa de SRCH-01 y la barra de marca del shell. Corregido en base, en el seed,
+en `.env.example` y en los dos tests que fijaban el nombre.
 
 **Un detalle de SRCH-01 que esto destapa.** Alpha es distribuidora además de compradora, así que
 su propio inventario aparecería en sus resultados de búsqueda. La política
@@ -139,4 +154,5 @@ el día 6: buscar en un marketplace es buscar **oferta ajena**.
 
 ---
 
-*Redactado el 7-ago-2026 (día 3) · pendiente de confirmación del PO*
+*Redactado el 7-ago-2026 (día 3) · **confirmado por el PO el 7-ago-2026**: `6205-2RS` y seis
+organizaciones*

@@ -29,6 +29,30 @@ export function initials(fullName: string | null, email: string): string {
   return (email.trim()[0] ?? '?').toUpperCase();
 }
 
+/**
+ * Mensaje legible de cualquier cosa que se lance aquí.
+ *
+ * Por qué no vale `String(e)`: los errores de PostgREST y de GoTrue son objetos
+ * planos (`{ message, code, details, hint }`), no instancias de `Error`, así que
+ * `String(e)` devuelve literalmente `"[object Object]"`. Eso es lo que la pantalla
+ * de login estuvo enseñando cuando la migración 0005 rompió el embed del perfil:
+ * un error rojo que no decía nada, tapando un `PGRST201` que sí lo decía todo.
+ * Un mensaje de error que no identifica el fallo cuesta más que no tenerlo. F-020.
+ */
+export function errorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === 'object' && e !== null) {
+    const o = e as { message?: unknown; code?: unknown; hint?: unknown };
+    const parts = [
+      typeof o.message === 'string' ? o.message : null,
+      typeof o.code === 'string' ? `[${o.code}]` : null,
+      typeof o.hint === 'string' ? o.hint : null,
+    ].filter((p): p is string => !!p);
+    if (parts.length) return parts.join(' · ');
+  }
+  return String(e);
+}
+
 type State =
   | { status: 'loading' }
   | { status: 'anonymous' }
@@ -41,11 +65,22 @@ type State =
  * a la propia organización y `organizations` a las aprobadas. Si esto devolviera
  * filas de otra organización, el fallo estaría en la política, no aquí — y el
  * e2e de dos cuentas lo cazaría.
+ *
+ * ⚠ EL `!members_org_id_fkey` NO ES OPCIONAL. Escrito como `organizations(...)` a
+ * secas, este embed funcionó hasta que la migración 0005 creó
+ * `favorite_distributors`, que abre un SEGUNDO camino `members → organizations`
+ * (many-to-many, vía sus dos claves ajenas). PostgREST dejó de poder elegir y
+ * empezó a devolver `PGRST201` "Could not embed because more than one relationship
+ * was found": el login se rompió al añadir una tabla que no toca ni a `members` ni
+ * al login. Nombrar la FK hace que la consulta no dependa de cuántas tablas nuevas
+ * apunten a `organizations` — y van a apuntar más. Ver F-020.
  */
 async function loadProfile(userId: string, email: string): Promise<State> {
   const { data, error } = await supabase
     .from('members')
-    .select('id, email, full_name, role, state, org_id, organizations(name, country)')
+    .select(
+      'id, email, full_name, role, state, org_id, organizations!members_org_id_fkey(name, country)',
+    )
     .eq('id', userId)
     .maybeSingle();
 
@@ -85,7 +120,7 @@ export function useSession() {
         if (alive) setState(next);
       } catch (e) {
         if (alive) {
-          setError(e instanceof Error ? e.message : String(e));
+          setError(errorMessage(e));
           setState({ status: 'anonymous' });
         }
       }

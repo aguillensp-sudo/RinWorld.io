@@ -26,7 +26,22 @@ const NOT_WIRED =
 
 const GREETING = 'Hola. Soy VERA, tu asistente. ¿En qué puedo ayudarte?';
 
-export function VeraPanel() {
+/**
+ * El subtítulo de VERA es **de la pantalla, no del shell**.
+ *
+ * `Rinworld_app_shell.html` pone "Agente de búsqueda", pero el HTML aprobado de
+ * INV-01 y su spec §5 dicen los dos **"Agente de inventario"** — y cuando el HTML
+ * y el spec coinciden, no hay nada que decidir. El día 2 se copió el del shell base
+ * y quedó fijo; se detectó el día 3 comparando las dos pantallas lado a lado.
+ * Cada pantalla pasa el suyo. Ver F-025.
+ */
+const DEFAULT_SUBTITLE = 'Agente de búsqueda';
+
+interface VeraProps {
+  subtitle?: string;
+}
+
+export function VeraPanel({ subtitle = DEFAULT_SUBTITLE }: VeraProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [width, setWidth] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -132,7 +147,9 @@ export function VeraPanel() {
         </div>
         <div>
           <div className={styles.bwvname}>VERA</div>
-          <div className={styles.bwvsub}>Agente de búsqueda</div>
+          <div className={styles.bwvsub} data-testid="vera-subtitle">
+            {subtitle}
+          </div>
         </div>
         <div className={styles.bwvdot} />
       </div>

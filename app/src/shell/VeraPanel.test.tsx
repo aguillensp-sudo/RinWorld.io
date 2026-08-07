@@ -42,6 +42,21 @@ describe('VeraPanel', () => {
     expect(screen.getByText('hola')).toBeInTheDocument();
   });
 
+  /**
+   * F-025: el subtítulo es de la PANTALLA, no del shell. INV-01 §5 pide "Agente de
+   * inventario" y el shell base dice "Agente de búsqueda". El día 2 quedó fijo el
+   * del shell, y se vio el día 3 comparando las dos pantallas lado a lado.
+   */
+  it('sin subtítulo usa el del shell base', () => {
+    render(<VeraPanel />);
+    expect(screen.getByTestId('vera-subtitle')).toHaveTextContent('Agente de búsqueda');
+  });
+
+  it('cada pantalla puede pasar el suyo', () => {
+    render(<VeraPanel subtitle="Agente de inventario" />);
+    expect(screen.getByTestId('vera-subtitle')).toHaveTextContent('Agente de inventario');
+  });
+
   it('no envía nada en blanco', async () => {
     render(<VeraPanel />);
     const before = screen.getByTestId('vera-chat').children.length;

@@ -37,9 +37,9 @@ Es `app/e2e/inventory.spec.ts`, contra el Supabase real — no una comprobación
 |---|---|
 | `bash supabase/tests/run.sh` | **65/65** — 35 de esquema + 30 del catálogo. Los cuenta el runner, ya no se cuentan a mano (venía diciendo 34 y eran 35) |
 | `cd app && npm run typecheck` | limpio |
-| `cd app && npm test` | **95/95** |
+| `cd app && npm test` | **97/97** |
 | `cd app && npm run check:palette` | cobertura completa de las 6 pantallas claras |
-| `cd app && npx playwright test` | **19/19**, tres corridas seguidas sin flakiness |
+| `cd app && npx playwright test` | **20/20**, tres corridas seguidas sin flakiness |
 
 ---
 
@@ -96,7 +96,7 @@ interfaz no puede hacer lo mismo — y en la interfaz engaña más, porque parec
 lectura permisivas que **se suman**: el inventario propio en cualquier estado
 (`inventory_select_own`) y el `PUBLISHED` de las demás (`inventory_select_cross_org`). Sin el
 `.eq('org_id', …)` explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del
-catálogo ajeno — sin error, sin aviso y con toda la pinta de funcionar. Los 95 tests de unidad
+catálogo ajeno — sin error, sin aviso y con toda la pinta de funcionar. Los 97 tests de unidad
 mockean `fetchPage`, así que ese fallo los pasaría todos. **RLS protege de leer lo que no toca; no
 elige por ti qué quieres leer.** Vale para toda pantalla nueva.
 
@@ -122,8 +122,16 @@ Según el Plan maestro, el día 4 es **el arnés**: `harness/` con el grafo Lang
    correcto — y C3 puertea cada pantalla del arnés desde el día 5.
 4. **El check de formato compara contra la función de formato, no contra la cifra del mock**
    (F-024). El pie del HTML aprobado dice "1.247 líneas" y el español correcto es "1247": el CLDR
-   de `es` no agrupa cuatro cifras. Tercera vez que el mock aprobado no es la fuente de verdad en
-   un detalle (F-003, F-019, F-024).
+   de `es` no agrupa cuatro cifras.
+5. **⚠ C2 se evalúa sobre el PANEL DE CONTENIDO, no sobre el shell** (F-025, y es lo más
+   importante de esta lista). El HTML de cada pantalla lleva un shell que **ha derivado** del
+   shell base aprobado: en INV-01 hay cinco diferencias en el armazón, y una de ellas es que el
+   HTML **contradice a su propio spec** sobre qué ítem de nav va activo. El shell tiene su propio
+   contrato, su propia implementación y sus propios tests desde el día 2. Volver a juzgarlo en
+   cada pantalla solo produce falsos rojos, y C2 puertea cada pantalla del arnés desde el día 5.
+
+Cuatro veces ya que el mock aprobado no es la fuente de verdad en un detalle: F-003, F-019,
+F-024, F-025. **No es que los mocks estén mal — es que son mocks.** El spec cerrado manda.
 
 ---
 
@@ -169,14 +177,17 @@ Según el Plan maestro, el día 4 es **el arnés**: `harness/` con el grafo Lang
    siembra, así que su panel cabe en una página y **la paginación no se va a ver**. Fue decisión
    del guion (dar el grueso a las cuatro sin cuenta). Si quieres que se vea, Alpha necesita más de
    50 líneas: son cinco minutos.
-5. **La fidelidad visual de INV-01 no se ha revisado a ojo.** Los 19 e2e y los 95 de unidad
-   comprueban estructura, literales, columnas, umbrales de color y comportamiento, y la paleta
-   está verificada por script — pero nadie ha mirado la pantalla. Es la primera que sale del
-   scaffold, así que merece un repaso tuyo: `npm run dev`, entrar con `alpha@` y pulsar
-   "Vendiendo".
-6. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
+5. 🟠 **¿Qué ítem de nav va activo en INV-01?** (F-025). La spec §2 dice **`Vendiendo`** y el HTML
+   aprobado marca **`Inventario`**: el mock contradice a su propio spec. Hoy se sigue el spec,
+   porque un spec cerrado gana a un mock, pero es el HTML el que el socio va a comparar.
+6. **La app no tiene URL desplegada, y eso te dejó dos días a ciegas.** Pages sirve `main` en la
+   raíz, y todo lo de los días 2 y 3 vive en `mvp/bootstrap`; además la app es React + Vite, no
+   ficheros que se abran solos. **Decisión del PO el 7-ago: de momento solo local.** Se retoma
+   antes del **día 11**, que es la primera sesión de prueba con él. Mientras tanto:
+   `npm --prefix <ruta>/app run dev` y abrir `http://localhost:5173`.
+7. **`auth_leaked_password_protection`** está desactivado en Auth (comprobación contra
    HaveIBeenPwned). Es configuración del proyecto, no del esquema. ¿Se activa?
-7. **Realtime** sigue sin habilitar en `threads` y `thread_items`. El Plan §3 nombra tablas
+8. **Realtime** sigue sin habilitar en `threads` y `thread_items`. El Plan §3 nombra tablas
    `messages`/`offers` que **no existen** — el esquema del día 2 las llama de otra forma. No urge
    hasta el día 7.
 

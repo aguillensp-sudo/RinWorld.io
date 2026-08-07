@@ -39,10 +39,22 @@ interface Props {
    */
   activeNav: number;
   onNavigate: (index: number) => void;
+  /**
+   * Subtítulo del panel de VERA. Es de la pantalla, no del shell: INV-01 §5 pide
+   * "Agente de inventario" y el shell base dice "Agente de búsqueda". Ver F-025.
+   */
+  veraSubtitle?: string;
   children: ReactNode;
 }
 
-export function AppShell({ profile, onSignOut, activeNav, onNavigate, children }: Props) {
+export function AppShell({
+  profile,
+  onSignOut,
+  activeNav,
+  onNavigate,
+  veraSubtitle,
+  children,
+}: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const active = activeNav;
   const setActive = onNavigate;
@@ -140,7 +152,7 @@ export function AppShell({ profile, onSignOut, activeNav, onNavigate, children }
 
         <main className={styles.bwcnt}>{children}</main>
 
-        <VeraPanel />
+        <VeraPanel {...(veraSubtitle ? { subtitle: veraSubtitle } : {})} />
       </div>
     </div>
   );

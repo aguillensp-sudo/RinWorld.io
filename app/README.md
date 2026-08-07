@@ -15,6 +15,14 @@ npm ci
 npm run dev
 ```
 
+Sirve en **http://localhost:5173**. Para llegar a INV-01: entrar con `alpha@bearingworld.test` y
+pulsar **Vendiendo** en la barra de navegación — no "Inventario" (su spec §2).
+
+> **La app no tiene URL desplegada, y es una decisión, no un olvido.** GitHub Pages sirve la rama
+> `main` en la raíz, donde viven los 32 HTML aprobados; `app/` y `supabase/` están en
+> `mvp/bootstrap`, y una SPA de Vite no se sirve sin construirla. El PO decidió el 7-ago que de
+> momento se revisa en local. Se retoma antes del **día 11**, la primera sesión de prueba con él.
+
 Las convenciones de traducción a React (tokens, CSS Modules, nombres de clase, verificación)
 están en `openspec/architecture/design-system.md` §6, que se rellenó al construir esto.
 
@@ -24,7 +32,7 @@ están en `openspec/architecture/design-system.md` §6, que se rellenó al const
 npm run typecheck && npm test && npm run check:palette && npx playwright test
 ```
 
-Estado a 7-ago-2026: **typecheck limpio · Vitest 95/95 · Playwright 19/19 · paleta completa**,
+Estado a 7-ago-2026: **typecheck limpio · Vitest 97/97 · Playwright 20/20 · paleta completa**,
 contra el proyecto Supabase real. Tres corridas seguidas del e2e sin flakiness.
 
 El e2e incluye las dos puertas de salida:
@@ -38,7 +46,7 @@ El e2e incluye las dos puertas de salida:
 > `inventory_lines` tiene DOS políticas de lectura permisivas que se suman: el inventario propio
 > en cualquier estado, y el `PUBLISHED` de las demás organizaciones. Sin el `.eq('org_id', …)`
 > explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del catálogo ajeno
-> — sin error y con toda la pinta de funcionar. Los 95 tests de unidad mockean `fetchPage`, así
+> — sin error y con toda la pinta de funcionar. Los 97 tests de unidad mockean `fetchPage`, así
 > que ese fallo los pasaría todos.
 
 > Si faltan las credenciales `E2E_*`, la suite de la puerta **se salta**. En local eso avisa;

@@ -16,6 +16,9 @@ import { Inventory } from './screens/inventory/Inventory';
 const INVENTORY_NAV = navIndexOf('Vendiendo');
 const HOME_NAV = navIndexOf('Panel');
 
+/** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
+const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
+
 export function App() {
   const { state, error, signIn, signOut } = useSession();
   const [nav, setNav] = useState(HOME_NAV);
@@ -40,13 +43,17 @@ export function App() {
     );
   }
 
+  const onInventory = nav === INVENTORY_NAV;
+
   return (
-    <AppShell profile={state.profile} onSignOut={signOut} activeNav={nav} onNavigate={setNav}>
-      {nav === INVENTORY_NAV ? (
-        <Inventory profile={state.profile} />
-      ) : (
-        <Welcome profile={state.profile} />
-      )}
+    <AppShell
+      profile={state.profile}
+      onSignOut={signOut}
+      activeNav={nav}
+      onNavigate={setNav}
+      {...(onInventory ? { veraSubtitle: INVENTORY_VERA_SUBTITLE } : {})}
+    >
+      {onInventory ? <Inventory profile={state.profile} /> : <Welcome profile={state.profile} />}
     </AppShell>
   );
 }

@@ -167,6 +167,11 @@ test.describe('INV-01 · inventario real', () => {
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
+  /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
+  test('VERA lleva el subtítulo de esta pantalla, no el del shell base', async ({ page }) => {
+    await expect(page.getByTestId('vera-subtitle')).toHaveText('Agente de inventario');
+  });
+
   test('los canales de actualización dicen que están fuera del MVP', async ({ page }) => {
     await expect(page.getByTestId('channels-scope')).toContainText('fuera del alcance del MVP');
     await expect(page.getByText('Fuera del MVP')).toHaveCount(2);

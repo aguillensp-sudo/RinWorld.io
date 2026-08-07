@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "check:palette": "node scripts/check-palette.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",

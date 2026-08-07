@@ -83,6 +83,16 @@ verde, y las dos organizaciones tienen catálogo con solape deliberado.
   (`inventory-management` · data-freshness). Sin transición automática: archivar es decisión
   exclusiva del distribuidor.
 
+### ⚠ Aviso para el arnés del día 4 — el check de paleta
+
+F-003 pedía "un check en el Test-runner que rechace hex fuera de paleta (habría cazado el
+`#ef4444`)". **Tal como estaba redactado, ese check rechazaría output correcto.** El `#ef4444`
+no era un desvío del Coder: el HTML aprobado usa `.age.danger{color:#ef4444}` para la
+antigüedad crítica y `.dropzone-err{color:#DC2626}` para el texto de error — dos roles
+distintos. El check se valida contra **§1.1 + §1.4 + §1.5** del sistema de diseño. Con la
+paleta del shell a secas, C3 fallaría en pantallas bien hechas, y C3 puertea cada pantalla del
+arnés desde el día 5.
+
 ### Convenciones de React ya escritas — no reinventarlas
 
 `design-system.md` §6 está **rellena** (se hizo el día 2, no el 4, porque el Coder lee ese
@@ -111,13 +121,13 @@ del protocolo de verificación convertidos en test automático.
 
 ## Pendiente de Álvaro
 
-**Dos bloquean el arranque del día 3.**
+**Uno bloquea el arranque del día 3.**
 
-1. 🔴 **Los cuatro tokens neutros de fondo claro** (F-003): bordes de tabla, divisores, texto
-   secundario sobre blanco y hover. Son exactamente los cuatro grises que el Coder inventó en
-   SP-1 (`#e5e7eb`, `#f3f4f6`, `#374151`, `#4b5563`). El shell es oscuro y no los necesitaba;
-   **INV-01 sí**. Sin definirlos en `design-system.md`, el Coder los vuelve a inventar y el
-   check de paleta del Test-runner los rechazará.
+1. ✔ ~~**Los cuatro tokens neutros de fondo claro**~~ — **hecho el 6-ago.** `design-system.md`
+   §1.4 (neutros de superficie clara) y §1.5 (semánticos), extraídos de los seis HTML aprobados
+   y publicados en `tokens.css`. Resultó que **el Coder no había inventado nada**: los grises
+   están en el HTML aprobado de INV-01 y tres de ellos en las seis pantallas. F-003 cerrado y
+   corregido; ver el aviso de abajo sobre el check de paleta.
 2. 🔴 **¿Qué va a buscar el socio en la demo?** Referencia, cantidad y zona. Plan §8 es
    explícito: el catálogo se diseña **hacia atrás desde el guion de demo**, con solape
    deliberado entre las dos organizaciones para que la búsqueda cruce. Sin esa decisión, las 200
@@ -157,10 +167,10 @@ margen para comerse dos días. Si el día 7 no está, se simplifica el hilo. Lo 
 | `Plan_MVP_Bearingworld_v1.0.md` | Plan maestro de 15 días. La referencia. |
 | `Dia-02_decisiones_esquema.md` | Las tres decisiones de esquema, aprobadas. El DDL se escribió contra este documento. |
 | `Dia-01_Spikes_y_arranque.md` | Detalle del día 1 (cerrado). |
-| `findings-register.md` | 17 hallazgos. F-003, F-008, F-010, F-011 y F-016 siguen abiertos. |
+| `findings-register.md` | 17 hallazgos. Abiertos: **F-008, F-010, F-011, F-016**. F-003 cerrado el 6-ago (y su diagnóstico original, corregido). |
 | `harness-metrics.csv` | Tokens, coste, intentos, ficheros → objetivo 4. Primeras filas del Coder: mañana. |
 | `harness-backlog.md` | Defectos del arnés a corregir antes de V1. Se llena desde el día 4. |
-| `../architecture/design-system.md` | Contrato visual. **§6 (traducción a React) ya está rellena.** |
+| `../architecture/design-system.md` | Contrato visual. **§1.4 y §1.5 (neutros claros y semánticos) y §6 (traducción a React) ya están rellenas.** |
 | `../../supabase/README.md` | Esquema, las siete decisiones de implementación y cómo probarlo. |
 | `../../app/README.md` | Scaffold, qué decide y cómo verificarlo. |
 | `../../CLAUDE.md` | Reglas de proyecto no negociables. §1.6 es nueva. |

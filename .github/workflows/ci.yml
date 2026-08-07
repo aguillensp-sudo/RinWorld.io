@@ -36,6 +36,10 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      - name: Cobertura de tokens
+        # Si el sistema de diseño se queda corto, el Coder no tiene mas salida que
+        # escribir un hex, y C3 falla por un hueco nuestro y no por fallo suyo.
+        run: npm run check:palette
       - name: Vitest
         run: npm test
       - name: Build

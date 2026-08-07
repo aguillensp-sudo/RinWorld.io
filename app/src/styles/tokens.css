@@ -4,15 +4,11 @@
    Transcritos de openspec/architecture/design-system.md §1. Esta es la única
    fuente de color, tipo y espaciado de la app: ningún componente escribe un hex.
 
-   Existe para cerrar la primera mitad de F-003: el Coder inventó grises porque
-   no tenía tokens que usar. A partir del día 5 lee `var(--bw-*)` de aquí.
-
-   ⚠ HUECO CONOCIDO, sigue abierto (F-003). El sistema de diseño **no define**
-   neutros para fondo claro: bordes de tabla, divisores, texto secundario sobre
-   blanco y estados hover. El shell es oscuro y no los necesita, así que aquí no
-   falta nada; la primera pantalla de fondo claro (INV-01, día 3) sí los va a
-   necesitar. NO se inventan aquí: los define el PO en design-system.md y bajan a
-   este fichero. Hasta entonces, cualquier gris nuevo es un desvío.
+   Cierra F-003. Los neutros de superficie clara y los semánticos ya están
+   definidos (§1.4 y §1.5), extraídos de los seis HTML aprobados de pantalla
+   clara del MVP — no inventados. El Coder lee `var(--bw-*)` de aquí desde el
+   día 5, y el check de paleta del Test-runner valida contra este fichero
+   completo, no contra la paleta del shell a secas.
    ========================================================================== */
 
 :root {
@@ -41,6 +37,47 @@
   --bw-brass-border-soft: rgba(184, 146, 74, 0.18);
   --bw-brass-border: rgba(184, 146, 74, 0.22);
   --bw-brass-border-strong: rgba(184, 146, 74, 0.3);
+
+  /* ── Neutros de superficie clara (§1.4) ─────────────────────────────────
+     Los cuatro primeros aparecen en las SEIS pantallas claras del MVP. */
+  --bw-line-steel: #E5E7EB;         /* borde de contenedor: card, tabla, fila */
+  --bw-ink-steel: #374151;          /* texto de celda de tabla; texto en hover */
+  --bw-line-steel-strong: #D1D5DB;  /* borde de control: chip, input, botón icono */
+  --bw-surface-mist: #F8F9FB;       /* superficie sutil: th, campo de solo lectura */
+  --bw-divider-mist: #F3F4F6;       /* divisor INTERNO de contenedor (td, pie) */
+  --bw-ink-steel-soft: #4B5563;     /* texto de badge neutro (DRAFT, ARCHIVED) */
+  --bw-hint-steel: #C4CAD6;         /* hint deshabilitado, el gris más tenue */
+
+  /* Segundos roles de tokens de §1.1, ahora explícitos: no eran tokens nuevos.
+     Alias, no valores nuevos — si cambia el token base, cambian con él. */
+  --bw-hover-surface: var(--bw-cold-white);       /* fondo de hover de fila/acción */
+  --bw-hover-border: var(--bw-input-placeholder); /* borde de hover de chip/botón */
+  --bw-text-secondary: var(--bw-steel-mist);      /* texto secundario, también sobre blanco */
+
+  /* ── Semánticos (§1.5) ──────────────────────────────────────────────────
+     §1.1 no tenía ámbar, y es el color de la antigüedad de stock. */
+  --bw-warning: #D97706;         /* antigüedad >7 días; stat en aviso */
+  --bw-warning-dark: #B45309;    /* texto de badge ARCHIVED */
+  --bw-danger: #EF4444;          /* antigüedad >30 días; hover destructivo */
+  --bw-error-text: var(--bw-sensitive-text); /* texto de error de formulario (#dc2626) */
+  --bw-success-dark: #15803D;    /* texto de badge PUBLISHED */
+  --bw-primary-dark: #1D4ED8;    /* texto de chip activo */
+  --bw-danger-light: #F87171;    /* hover del × que quita un chip */
+
+  /* Superficies tintadas: fondo sólido del color semántico, distinto del rgba
+     de los badges. Las dos primeras son los tintes de tarjeta de MSG-02. */
+  --bw-tint-consulta: #EFF6FF;
+  --bw-tint-oferta: #F0FDF4;
+  --bw-tint-danger: #FEF2F2;
+
+  /* Fondos de badge, tal como los usan las pantallas aprobadas */
+  --bw-badge-warning-bg: rgba(217, 119, 6, 0.1);
+  --bw-badge-warning-border: rgba(217, 119, 6, 0.22);
+  --bw-badge-success-bg: rgba(22, 163, 74, 0.08);
+  --bw-badge-success-border: rgba(22, 163, 74, 0.2);
+  --bw-badge-neutral-bg: rgba(107, 122, 153, 0.08);
+  --bw-badge-neutral-border: rgba(107, 122, 153, 0.2);
+  --bw-danger-hover-bg: rgba(239, 68, 68, 0.06);
 
   /* Texto sobre fondo oscuro, tal como lo usa el shell aprobado */
   --bw-on-dark-brand: rgba(255, 255, 255, 0.45);

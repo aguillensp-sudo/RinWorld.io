@@ -82,6 +82,81 @@ Tres familias:
   `12px 14px`; checkbox field `14px`; brand bar `0 20px`; nav bar `0 14px`.
 - **Anchos fijos:** sidebar `210px`; VERA colapsado / `min-width` `32px`; divisor de nav `1px`.
 
+### 1.4 Neutros de superficie clara
+
+**De dónde salen.** §1.1 se extrajo del shell, que es oscuro, así que no cubría ningún fondo
+claro. Estos valores **no se han inventado**: se han extraído de los seis HTML aprobados de
+pantalla clara del MVP (PANEL-01, INV-01, SRCH-01, MSG-01, MSG-02, VND-01) con la misma regla
+de §0 — cuando hay duda, manda el HTML aprobado. La columna de usos dice cuántas veces aparece
+y en cuántas de las seis pantallas.
+
+**Los cuatro sistémicos.** Aparecen en **las seis** pantallas. Son la retícula de cualquier
+superficie clara:
+
+| Token | Hex | Usos | Rol real, verificado en el HTML aprobado |
+|---|---|---|---|
+| Line Steel | `#E5E7EB` | 24 · 6/6 | **Borde de contenedor**: `stat-card`, `tbl-card`, `ch-card`, `vis-row`, `pag-btn` |
+| Ink Steel | `#374151` | 21 · 6/6 | **Texto de celda de tabla** (`td`), y color de texto al hacer hover en un control |
+| Line Steel Strong | `#D1D5DB` | 16 · 6/6 | **Borde de control interactivo**: `chip`, `srch-inp`, `copy-btn`. Más marcado que el de contenedor |
+| Surface Mist | `#F8F9FB` | 7 · 5/6 | **Superficie sutil**: cabecera de tabla (`th`), campo de solo lectura |
+
+**Los locales.** Menos frecuentes, pero con rol propio y necesarios en INV-01:
+
+| Token | Hex | Usos | Rol real |
+|---|---|---|---|
+| Divider Mist | `#F3F4F6` | 2 · INV-01 | **Divisor interno** de un contenedor: `td { border-bottom }`, pie de paginación. Más suave que el borde exterior |
+| Ink Steel Soft | `#4B5563` | 2 · INV-01 | Texto de **badge neutro** (DRAFT, ARCHIVED) sobre `rgba(107,122,153,.08)` |
+| Hint Steel | `#C4CAD6` | 1 · INV-01 | Hint deshabilitado, el gris más tenue del sistema |
+
+**Tres tokens de §1.1 tienen un segundo rol en superficie clara** que no estaba documentado, y
+por no estarlo parecía que faltaban tokens:
+
+| Token de §1.1 | Segundo rol |
+|---|---|
+| Cold White `#F1F3F6` | **Fondo de hover** de fila y de botón de acción (`.row-act:hover`) |
+| Placeholder `#9BA4B0` | **Borde en hover** de chip y de botón de paginación |
+| Steel Mist `#6B7A99` | **Texto secundario, también sobre blanco.** Es el color más frecuente de INV-01 (17 usos): nunca faltó |
+
+> **Cuatro valores de un solo uso quedan fuera a propósito**, pendientes de revisión: `#2D3748`
+> y `#E2E8F0` (SRCH-01), `#FAFBFF` (MSG-01), `#F5F7FF` (VND-01). Parecen deriva del set
+> aprobado más que decisiones — un gris azulado suelto por pantalla. No se canonizan sin
+> decidir si son intencionados; si al convertir esas pantallas hacen falta, se sustituyen por
+> el token equivalente de arriba.
+
+### 1.5 Colores semánticos
+
+Mismo origen y mismo método que §1.4. **§1.1 no tenía ámbar**, y es el color de la antigüedad
+de stock: sin él INV-01 no se puede pintar.
+
+| Rol | Hex | Usos | Dónde |
+|---|---|---|---|
+| Warning | `#D97706` | 8 · 5/6 | Antigüedad **>7 días** (`.age.warn`), valor de stat en aviso |
+| Warning oscuro | `#B45309` | 1 · INV-01 | Texto de badge ARCHIVED sobre `rgba(217,119,6,.1)` |
+| Danger | `#EF4444` | 2 · INV-01 | Antigüedad **>30 días** (`.age.danger`), hover de acción destructiva |
+| Error de formulario | `#DC2626` | — | Texto de error (`.dropzone-err`). Ya en §1.1 como *sensitive* |
+| Success oscuro | `#15803D` | 2 · INV-01 | Texto de badge PUBLISHED sobre `rgba(22,163,74,.08)` |
+| Primary oscuro | `#1D4ED8` | 2 · 2/6 | Texto de chip activo |
+| Danger claro | `#F87171` | 1 · SRCH-01 | Hover del `×` que quita un chip |
+
+**Superficies tintadas.** Fondo sólido y claro del color semántico, distinto del `rgba` de los
+badges. Los dos primeros son los tintes de tipo de tarjeta de MSG-02, la pantalla del día 7:
+
+| Rol | Hex | Dónde |
+|---|---|---|
+| Tinte de consulta | `#EFF6FF` | `.ctb-consulta` — fondo de la etiqueta de tarjeta de consulta |
+| Tinte de oferta | `#F0FDF4` | `.ctb-oferta` — fondo de la etiqueta de tarjeta de oferta |
+| Tinte destructivo | `#FEF2F2` | `.dd-item.danger:hover` — hover de opción destructiva de menú |
+
+> **`#EF4444` y `#DC2626` son dos roles distintos, no una equivocación.** El rojo de la
+> antigüedad crítica es `#EF4444` y el del texto de error es `#DC2626`; los dos están en el
+> HTML aprobado de INV-01, en declaraciones distintas. Esto **corrige F-003**, que trataba el
+> `#EF4444` del Coder como su único desvío real: el Coder puso el color que el HTML aprobado
+> especifica para ese rol exacto. Importa más allá del registro, porque la acción de F-003 era
+> añadir al Test-runner un check que rechazara hex fuera de paleta "que habría cazado el
+> `#EF4444`" — con la paleta de §1.1 a secas, ese check rechazaría output **correcto** en C3,
+> que es el criterio que puerta cada pantalla del arnés. El check se valida contra §1.1 + §1.4
+> + §1.5, no contra §1.1.
+
 ---
 
 ## 2. Layout del shell
@@ -210,19 +285,23 @@ Viven en **`app/src/styles/tokens.css`** como variables CSS bajo `:root`, con pr
 
 | Grupo | Ejemplo |
 |---|---|
-| Paleta | `--bw-deep-steel-darkest`, `--bw-brass`, `--bw-calibration-blue` |
-| Servicio | `--bw-input-placeholder`, `--bw-focus-halo`, `--bw-sidebar-overlay` |
+| Paleta (§1.1) | `--bw-deep-steel-darkest`, `--bw-brass`, `--bw-calibration-blue` |
+| Servicio (§1.1) | `--bw-input-placeholder`, `--bw-focus-halo`, `--bw-sidebar-overlay` |
 | Sobre fondo oscuro | `--bw-on-dark-soft`, `--bw-divider-on-dark`, `--bw-on-dark-fill-3` |
+| **Neutros claros (§1.4)** | `--bw-line-steel`, `--bw-ink-steel`, `--bw-line-steel-strong`, `--bw-surface-mist` |
+| **Semánticos (§1.5)** | `--bw-warning`, `--bw-danger`, `--bw-success-dark`, `--bw-badge-*` |
 | Tipografía | `--bw-font-title`, `--bw-size-label`, `--bw-ls-eyebrow` |
 | Espaciado | `--bw-radius`, `--bw-pad-input`, `--bw-pad-panel` |
 | Layout | `--bw-h-brand`, `--bw-h-nav`, `--bw-w-sidebar` |
 
-> **El hueco de F-003 sigue abierto y ahora tiene fecha de caducidad.** Este documento **no
-> define** neutros para fondo claro: bordes de tabla, divisores, texto secundario sobre blanco
-> y estados hover. El shell es oscuro y no los necesita; **INV-01 (día 3) sí**. Los grises que
-> el Coder inventó en SP-1 (`#e5e7eb`, `#f3f4f6`, `#374151`, `#4b5563`) son exactamente estos
-> cuatro huecos. Hasta que el PO los defina aquí y bajen a `tokens.css`, cualquier gris nuevo
-> es un desvío — y el check de paleta del Test-runner lo rechazará.
+Los segundos roles de §1.4 se publican como **alias**, no como valores nuevos:
+`--bw-hover-surface: var(--bw-cold-white)`, `--bw-hover-border: var(--bw-input-placeholder)`,
+`--bw-text-secondary: var(--bw-steel-mist)`. Si cambia el token base, cambian con él.
+
+> **F-003 cerrado (6-ago).** §1.4 y §1.5 cubren toda superficie clara, así que ya no hay hueco
+> que obligue a inventar. **El check de paleta del Test-runner se valida contra §1.1 + §1.4 +
+> §1.5**, nunca contra §1.1 a secas: con la paleta del shell sola rechazaría los colores que
+> los propios HTML aprobados especifican, y C3 fallaría en pantallas correctas.
 
 ### 6.2 Layout del shell
 

@@ -1,0 +1,27 @@
+{
+  "attempt": "1",
+  "task": "SIEMBRA-1",
+  "screen": "catalogo-demo",
+  "model": "deepseek-v4-flash",
+  "finish_reason": "stop",
+  "api_calls": 1,
+  "truncated_at": [],
+  "tokens_in": 4986,
+  "tokens_out": 43679,
+  "cache_hit": 0,
+  "cache_miss": 4986,
+  "cache_hit_pct": 0.0,
+  "seconds": 243.5,
+  "cost_usd": 0.012928,
+  "cost_usd_cold_equivalent": 0.012928,
+  "price_table": {
+    "in_hit": 0.0028,
+    "in_miss": 0.14,
+    "out": 0.28
+  },
+  "files": [
+    "catalog_demo.sql"
+  ],
+  "rows_generated": 215,
+  "csv_row": "2026-08-07;SIEMBRA-1;catalogo-demo;deepseek-v4-flash;4986;43679;0.012928;1;4.1;catalog_demo.sql"
+}

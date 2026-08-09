@@ -230,15 +230,13 @@ metiendo.
 
 **Ninguno bloquea el día 5.**
 
-1. 🔴 **Secrets de GitHub Actions — es la única condición de la puerta del sprint que no
-   podemos cerrar nosotros.** Comprobado con `gh run list`: el trabajo de Playwright cae en
-   **todas** las corridas de la rama desde el día 2, y por diseño (F-015). Además, desde el
-   día 5 el e2e es lo único que puede cazar un embed mal escrito o una lectura mal filtrada
-   en una pantalla **generada**, y sin credenciales no corre. La migración 0005 ya rompió el
-   login varias horas por esto (F-020, mismo agujero que F-015). Hacen falta `SUPABASE_URL`,
-   `SUPABASE_PUBLISHABLE_KEY`, `E2E_ALPHA_EMAIL/PASSWORD/ORG`, `E2E_BETA_EMAIL/PASSWORD/ORG`.
-   **Y los dos `_ORG` llevan el valor viejo en ASCII**: son `Rodamientos Ibéricos` y
-   `Nordwälz Lager`, con diacríticos (F-019).
+1. ✅ **Secrets de CI — RESUELTO el 9-ago a las 17:11. No queda nada de tu lado.** Los 8
+   están puestos y sus nombres casan uno a uno con los `secrets.*` de `ci.yml` (cruzado con
+   `gh secret list`). Y `app/.env` **ya los tenía desde antes**, con los `_ORG` con sus
+   diacríticos: `haveCreds` da `true` en local, comprobado cargando dotenv.
+   **Lo que sigue sin poder afirmarse** es que los valores de GitHub sean los buenos: no se
+   pueden leer y hoy no se pueden probar. Se ve mañana. Los dos síntomas a vigilar están en
+   la puerta del sprint, más arriba.
 2. 🟠 **F-027 (a) · el recuento de no leídos de MSG-01.** Para V1: o `thread_read_receipts`
    con su RLS, o el indicador se retira del spec. **En el MVP queda fuera**, y hay un test
    que falla si reaparece.

@@ -13,31 +13,30 @@
 > antes de actuar: la que este fichero traía sobre el precio de INV-01 apuntaba a una
 > pantalla que no tiene columna de precio.
 
-**Día 4 de 15 · cerrado 9-ago-2026 · Estado: VERDE, con la CI en rojo a propósito**
+**Día 4 de 15 · cerrado 9-ago-2026 · Estado: VERDE, con la CI en la fase roja de TDD**
 
-> **Lee esto antes de abrir GitHub. La CI está roja por DOS motivos, y solo uno se cierra
-> solo.**
+> **Lee esto antes de abrir GitHub. La CI está roja, y el único motivo que queda se cierra
+> mañana solo.**
 >
-> 1. **`App · typecheck` — fase roja de TDD, mía, y se cierra mañana.** `npm run typecheck`
->    da **dos** errores, `Cannot find module './Messages'` y `'./ThreadList'`, y ninguno más:
->    el contrato de aceptación de MSG-01 se escribió hoy y los componentes los produce el
->    Coder mañana (`Plan §6`: *"Test de aceptación Playwright ←── contrato, escrito ANTES del
->    código"*). **Los 102 tests que ya estaban siguen en verde.** Si mañana el rojo es otro,
->    o son más de dos, se rompió otra cosa.
-> 2. **`Playwright · puerta de las dos cuentas` — faltaba desde el día 2. **RESUELTO el
->    9-ago a las 17:11**: los 8 secrets están puestos y sus nombres casan uno a uno con los
->    que lee `ci.yml` (comprobado cruzando `gh secret list` contra el workflow). **Que los
->    VALORES sean correctos no se puede comprobar sin correr el trabajo**, y hoy no corre
->    porque tiene `needs: app`. Primera prueba real: mañana. Contexto de por qué faltaba:**
->    Comprobado con `gh run list`: **todas** las corridas de la rama fallan, también las
->    anteriores a hoy. En la del 9-ago previa a mi trabajo (`31306452948`), `App` y `Esquema`
->    salen en verde y **el trabajo de Playwright cae**. La causa es que faltan los secrets
->    `E2E_*`, y el fallo es **por diseño**: `session.spec.ts` lanza excepción en CI en vez de
->    saltarse la puerta (F-015 — un skip silencioso reportaría verde sin probar nada).
->    Hoy el trabajo ni arranca porque tiene `needs: app`, así que el rojo de arriba lo tapa.
+> **`App · typecheck` — fase roja de TDD, y es la buena.** `npm run typecheck` da **dos**
+> errores, `Cannot find module './Messages'` y `'./ThreadList'`, y ninguno más: el contrato
+> de aceptación de MSG-01 se escribió hoy y los componentes los produce el Coder mañana
+> (`Plan §6`: *"Test de aceptación Playwright ←── contrato, escrito ANTES del código"*).
+> **Los 102 tests que ya estaban siguen en verde.** Si mañana el rojo es otro, o son más de
+> dos, se rompió otra cosa.
 >
-> **Consecuencia para mañana:** el motivo 2 **no lo arregla el Coder ni yo**, y es una de las
-> cuatro condiciones de la puerta del sprint. Ver abajo.
+> **Efecto colateral, que hoy no se ve:** el trabajo `Playwright` tiene `needs: app`, así que
+> con el typecheck rojo **ni arranca**. Y `npm run build` es `tsc -b && vite build`, que es
+> lo que lanza el `webServer` de Playwright — **tampoco se puede correr el e2e en local**
+> hasta que llegue el artefacto del Coder.
+>
+> **Lo que SÍ se resolvió hoy: los secrets de CI (9-ago, 17:11).** Llevaban rojos desde el
+> día 2 y hacían caer el trabajo de Playwright en **todas** las corridas de la rama — por
+> diseño, porque `session.spec.ts` lanza excepción en CI en vez de saltarse la puerta (F-015:
+> un skip silencioso reportaría verde sin probar nada). Están los **8**, y sus nombres casan
+> uno a uno con los `secrets.*` de `ci.yml` (cruzado con `gh secret list`).
+> **Que los VALORES sean buenos no se puede leer, y hoy no se puede probar.** Los dos fallos
+> que siguen vivos están en la puerta del sprint, más abajo — y el segundo no da rojo.
 
 ---
 

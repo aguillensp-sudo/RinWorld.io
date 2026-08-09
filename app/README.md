@@ -32,8 +32,14 @@ están en `openspec/architecture/design-system.md` §6, que se rellenó al const
 npm run typecheck && npm test && npm run check:palette && npx playwright test
 ```
 
-Estado a 7-ago-2026: **typecheck limpio · Vitest 98/98 · Playwright 22/22 · paleta completa**,
+Estado a 9-ago-2026: **typecheck limpio · Vitest 102/102 · Playwright 22/22 · paleta completa**,
 contra el proyecto Supabase real. Tres corridas seguidas del e2e sin flakiness.
+
+> Los 4 tests que separan 98 de 102 son de F-026, y merecen leerse antes de escribir la siguiente
+> pantalla. El recuento de líneas desactualizadas y el color de la columna Antigüedad salían los
+> dos de "> 7 días" del spec, por dos caminos, con dos bordes: el chip decía `(3)` sobre una tabla
+> con dos filas en naranja. **Cuando un número y un color vienen de la misma regla por caminos
+> distintos, hace falta un test que los enfrente** — los de cada camino por separado pasaban los dos.
 
 El e2e incluye las dos puertas de salida:
 
@@ -46,7 +52,7 @@ El e2e incluye las dos puertas de salida:
 > `inventory_lines` tiene DOS políticas de lectura permisivas que se suman: el inventario propio
 > en cualquier estado, y el `PUBLISHED` de las demás organizaciones. Sin el `.eq('org_id', …)`
 > explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del catálogo ajeno
-> — sin error y con toda la pinta de funcionar. Los 98 tests de unidad mockean `fetchPage`, así
+> — sin error y con toda la pinta de funcionar. Los 102 tests de unidad mockean `fetchPage`, así
 > que ese fallo los pasaría todos.
 
 > Si faltan las credenciales `E2E_*`, la suite de la puerta **se salta**. En local eso avisa;

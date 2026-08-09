@@ -37,7 +37,7 @@ Es `app/e2e/inventory.spec.ts`, contra el Supabase real — no una comprobación
 |---|---|
 | `bash supabase/tests/run.sh` | **65/65** — 35 de esquema + 30 del catálogo. Los cuenta el runner, ya no se cuentan a mano (venía diciendo 34 y eran 35) |
 | `cd app && npm run typecheck` | limpio |
-| `cd app && npm test` | **98/98** |
+| `cd app && npm test` | **102/102** — los 4 últimos son de F-026, y enfrentan entre sí el recuento de desactualizadas y el color de la fila |
 | `cd app && npm run check:palette` | cobertura completa de las 6 pantallas claras |
 | `cd app && npx playwright test` | **22/22**, tres corridas seguidas sin flakiness |
 
@@ -101,9 +101,16 @@ interfaz no puede hacer lo mismo — y en la interfaz engaña más, porque parec
 lectura permisivas que **se suman**: el inventario propio en cualquier estado
 (`inventory_select_own`) y el `PUBLISHED` de las demás (`inventory_select_cross_org`). Sin el
 `.eq('org_id', …)` explícito de `fetchPage`, "Mi inventario" mostraría también las 196 líneas del
-catálogo ajeno — sin error, sin aviso y con toda la pinta de funcionar. Los 98 tests de unidad
+catálogo ajeno — sin error, sin aviso y con toda la pinta de funcionar. Los 102 tests de unidad
 mockean `fetchPage`, así que ese fallo los pasaría todos. **RLS protege de leer lo que no toca; no
 elige por ti qué quieres leer.** Vale para toda pantalla nueva.
+
+**⚠ Y el segundo que el mock tapaba (F-026, 9-ago).** El recuento de líneas desactualizadas y el
+color de la columna Antigüedad implementaban los dos el "> 7 días" del spec, por caminos distintos
+y con bordes distintos: el chip decía `Desactualizados (3)` sobre una tabla con **dos** filas en
+naranja. Cada camino tenía sus tests y los pasaba; lo que no existía era el test que los enfrenta.
+Salió calculando a mano las cifras de la revisión visual del PO, no ejecutando la suite. **Cuando un
+número y un color vienen de la misma regla del spec por caminos distintos, hay que probarlos juntos.**
 
 ---
 

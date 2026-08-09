@@ -146,8 +146,25 @@ function toLine(r: Row): InventoryLine {
   };
 }
 
-function staleCutoff(now: Date = new Date()): string {
-  return new Date(now.getTime() - STALE_DAYS * 86_400_000).toISOString();
+/**
+ * El instante a partir del cual una línea cuenta como desactualizada, tanto en la
+ * tarjeta "Desactualizadas" como en el chip y en su filtro.
+ *
+ * ⚠ RESTA `STALE_DAYS + 1` DÍAS, Y NO ES UN ERROR DE ÍNDICE. La regla del spec es
+ * "> 7 días", y la columna Antigüedad la aplica sobre días **enteros**: una línea
+ * de 7,6 días enseña "Hace 7 días" y sale sin colorear, porque `ageLevel` evalúa
+ * `7 > 7`. Con el corte en `now - 7d` esa misma línea sí entraba en el recuento, y
+ * el resultado era un chip que decía `Desactualizados (3)` sobre una tabla con dos
+ * filas en naranja. Recuento y color tienen que salir del mismo borde, y el borde
+ * es el número entero que el usuario ve.
+ *
+ * Con `lte` la equivalencia es exacta y no aproximada:
+ *   `last_upload_at <= now - 8d`  ⟺  `edad >= 8d`  ⟺  `floor(edad) > 7`  ⟺  `ageLevel != 'fresh'`
+ *
+ * Ver F-026.
+ */
+export function staleCutoff(now: Date = new Date()): string {
+  return new Date(now.getTime() - (STALE_DAYS + 1) * 86_400_000).toISOString();
 }
 
 export interface Page {
@@ -186,7 +203,7 @@ export async function fetchPage({ orgId, filter, search, page }: PageQuery): Pro
   if (filter === 'publicados') q = q.eq('status', 'PUBLISHED');
   if (filter === 'archivados') q = q.eq('status', 'ARCHIVED');
   if (filter === 'desactualizados') {
-    q = q.eq('status', 'PUBLISHED').lt('last_upload_at', staleCutoff());
+    q = q.eq('status', 'PUBLISHED').lte('last_upload_at', staleCutoff());
   }
 
   const term = sanitizeSearch(search);
@@ -224,7 +241,7 @@ export async function fetchStats(orgId: string, now: Date = new Date()): Promise
 
   const [pub, stale, last] = await Promise.all([
     base().eq('status', 'PUBLISHED'),
-    base().eq('status', 'PUBLISHED').lt('last_upload_at', staleCutoff(now)),
+    base().eq('status', 'PUBLISHED').lte('last_upload_at', staleCutoff(now)),
     supabase
       .from('inventory_lines')
       .select('last_upload_at')

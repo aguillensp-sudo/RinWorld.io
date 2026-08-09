@@ -10,6 +10,7 @@ import {
   PAGE_SIZE,
   sanitizeSearch,
   STALE_DAYS,
+  staleCutoff,
 } from './inventory';
 
 const NOW = new Date('2026-08-07T12:00:00Z');
@@ -60,6 +61,50 @@ describe('ageLevel', () => {
 
   it('recién subida es fresca', () => {
     expect(ageLevel(0)).toBe('fresh');
+  });
+});
+
+/**
+ * EL TEST QUE FALTABA EL 7-AGO, Y EL QUE HABRÍA AHORRADO LA REVISIÓN DEL 9.
+ *
+ * `staleCutoff` decide qué líneas se **cuentan** (tarjeta, chip y filtro) y
+ * `ageLevel` decide cuáles se **pintan**. Son dos caminos distintos hacia la misma
+ * regla del spec — "> 7 días" — y no coincidían: el corte estaba en `now - 7d` y
+ * el color en `floor(días) > 7`, así que toda línea de entre 7 y 8 días contaba en
+ * el chip y salía sin colorear. Sobre la base real eso era un `Desactualizados (3)`
+ * encima de una tabla con dos filas en naranja. Ningún test lo veía porque todos
+ * los de pantalla mockean `fetchPage` y `fetchStats`: el desajuste solo existe
+ * cuando las dos reglas se aplican a los mismos datos. Estos cuatro las enfrentan
+ * directamente. Ver F-026.
+ *
+ * La comparación de cadenas vale porque `toISOString()` da siempre el mismo formato
+ * UTC de ancho fijo, y ahí el orden lexicográfico es el orden cronológico.
+ */
+describe('el borde de desactualizado es el mismo para el recuento y para el color', () => {
+  it('una línea justo en el corte se cuenta y además se pinta', () => {
+    const cutoff = staleCutoff(NOW);
+    expect(ageLevel(daysSince(cutoff, NOW))).not.toBe('fresh');
+  });
+
+  it('un segundo más nueva que el corte no se cuenta, y tampoco se pinta', () => {
+    const justAfter = new Date(new Date(staleCutoff(NOW)).getTime() + 1_000).toISOString();
+    expect(justAfter > staleCutoff(NOW)).toBe(true);
+    expect(ageLevel(daysSince(justAfter, NOW))).toBe('fresh');
+  });
+
+  it('la de 7 días y 14 horas — el caso que rompía — queda fuera de los dos', () => {
+    const line = ago(7, 14);
+    expect(line > staleCutoff(NOW)).toBe(true);
+    expect(ageLevel(daysSince(line, NOW))).toBe('fresh');
+    // Y enseña un 7, que es lo que hace que "> 7 días" en naranja fuese mentira.
+    expect(ageLabel(daysSince(line, NOW))).toBe('Hace 7 días');
+  });
+
+  it('la de 8 días y un minuto entra en los dos', () => {
+    const line = ago(8, 0.02);
+    expect(line <= staleCutoff(NOW)).toBe(true);
+    expect(ageLevel(daysSince(line, NOW))).toBe('stale');
+    expect(ageLabel(daysSince(line, NOW))).toBe('Hace 8 días');
   });
 });
 

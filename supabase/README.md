@@ -16,6 +16,7 @@ contra la API real.
 | `seed/dev_accounts.sql` | Las dos organizaciones y las dos cuentas. Idempotente. Las contraseñas entran por variable, nunca en el fichero |
 | `seed/demo_orgs.sql` | Las **seis** organizaciones de la demo (decisión del PO, 7-ago) y la corrección de los diacríticos de las dos primeras. Ver F-019 |
 | `seed/catalog_demo.sql` | Catálogo de demo: **215 líneas** generadas por el Coder el 7-ago y aplicadas sin corregir. Diseñado hacia atrás desde `openspec/mvp/guion-demo-y-siembra.md`. Ver F-022 |
+| `seed/demo_threads.sql` | **Cinco hilos** de Rodamientos Ibéricos, uno por cada estado de `thread-lifecycle`, con su último elemento. Existe para que `app/e2e/messages.spec.ts` pueda correr contra datos reales: un test de aceptación declarado que no se puede ejecutar cuenta como rojo (F-015). El `content_ciphertext` es relleno a propósito — MSG-01 nunca descifra |
 
 ## Estado en el remoto
 

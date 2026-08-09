@@ -8,8 +8,8 @@
 > **Regla de F-012 aplicada a este fichero:** todo valor, nombre de criterio y umbral va
 > con su puntero. Lo que no lleva puntero es una decisión nueva y se marca como tal.
 
-**Estado: BORRADOR — pendiente de la puerta de revisión del PO.** No se escribe ni una
-línea de `harness/graph/` hasta que las seis decisiones de abajo estén aprobadas.
+**Estado: APROBADO por el PO el 9-ago-2026** — las cinco decisiones de la tabla final, sin
+cambios. El arnés está construido y en verde en seco: `harness/`.
 
 ---
 
@@ -305,4 +305,6 @@ Sin llamada real al modelo: la primera es MSG-01, mañana.
 | 4 | **El feedback al Coder es salida cruda, sin redactar** (§4) | Sí. Un feedback redactado inyecta la solución y el intento 2 deja de medir al Coder |
 | 5 | **Congelar hoy el formato de tarea** (§5) | Sí. Es el corpus para diseñar el Planner de V1; si cambia a mitad, no es comparable |
 
-*Borrador del 8-ago-2026 · Claude Code (Opus 5) · pendiente de puerta de revisión*
+*Escrito el 8-ago-2026 · **aprobado por el PO y ejecutado el 9-ago-2026** (el día 4 del plan
+corrió un día natural tarde; las fechas del registro y del CSV son las reales, no las
+nominales del calendario) · Claude Code (Opus 5)*

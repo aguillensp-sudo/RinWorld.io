@@ -7,8 +7,15 @@
     "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_MSG-01.md",
     "approved_html": "openspec/design-gui/specs y html aprobados/MSG-01 · MSG v1.0.html",
     "tokens": "app/src/styles/tokens.css",
-    "design_system": ["§1.1", "§1.4", "§1.5", "§6.4"],
-    "style_reference": "app/src/screens/inventory/InventoryTable.tsx"
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/inventory/InventoryTable.tsx",
+    "data_layer": "app/src/lib/threads.ts",
+    "_nota_data_layer": "La capa de datos y sus tipos ya estan escritos a mano (CLAUDE.md §3: RLS y embeds son de coste de fallo alto y silencioso). El Coder los importa, no los reescribe: la logica pura -previewLabel, stateTone, relativeTime, pageCount- se usa tal cual."
   },
   "outputs": [
     "app/src/screens/messages/ThreadList.tsx",
@@ -29,8 +36,10 @@
   "out_of_scope": [
     "El aviso E2EE con boton 'Introducir frase de seguridad': en el MVP las claves viven en memoria de sesion y NO hay passphrase, backup ni recuperacion (CLAUDE.md §4; Plan §9 'Fuera'). El boton no se pinta como accion disponible.",
     "'Nuevo contacto' abre DIR-01, que no esta entre las 8 pantallas del alcance (Plan §9). El control existe pero no lleva a ninguna parte: se pinta deshabilitado con el motivo, como el boton de subida de INV-01 (F-023 e).",
+    "El 'punto azul + recuento' de no leidos del spec §3: el esquema NO tiene ningun seguimiento de lectura -ni read_at, ni last_read_at, ni tabla de recibos-, asi que el recuento no tiene de donde salir. Un numero inventado delante del socio es F-023 otra vez. Ver F-027.",
     "El limite de '25 hilos activos iniciados en el mismo dia natural' es una regla de negocio del spec sin implementacion en el MVP: no se simula un contador que no existe.",
-    "Cualquier badge verde de 'Activo' o cifra inventada. F-023: el mock promete funciones que no existen y reproducirlas como si funcionaran es el riesgo #1 de CLAUDE.md §7 llevado a la interfaz, donde engana mas porque parece verificable."
+    "Cualquier badge verde de 'Activo' o cifra inventada. F-023: el mock promete funciones que no existen y reproducirlas como si funcionaran es el riesgo #1 de CLAUDE.md §7 llevado a la interfaz, donde engana mas porque parece verificable.",
+    "Los puntitos '• • • • • •' de la vista previa cuando la passphrase no esta activa (spec §3): la §7 dice que la vista previa NUNCA muestra contenido descifrado, asi que no hay nada que tapar. Tipo y referencia son metadatos en claro en thread_items. Se resuelve a favor de §7. Ver F-027."
   ],
   "constraints": [
     "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb(), ni aunque el valor sea correcto.",

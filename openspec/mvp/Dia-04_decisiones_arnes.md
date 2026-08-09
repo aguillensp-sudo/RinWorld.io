@@ -261,8 +261,17 @@ verificable (`CLAUDE.md` §7).
 - **Una fila de CSV por intento**, generada desde el JSON (`CLAUDE.md` §6, F-010). Ningún
   valor lleva coma; los múltiples van con `;`.
 - **Dos columnas nuevas**, que hoy no existen en `harness-metrics.csv` y `Plan §11` exige:
-  `cache_hit_pct` (F-011) y `escalado_a_humano`. Se añaden al final para no romper las tres
-  filas ya escritas.
+  `cache_hit_pct` (F-011) y `escalado_a_humano`.
+
+  > **Desviación al implementar, 8-ago.** Este párrafo decía "se añaden al final para no
+  > romper las tres filas ya escritas". Al ir a hacerlo: **al final** las deja *después* de
+  > `resultado`, que es la única columna de texto libre — y una columna libre en medio del
+  > fichero es una trampa para el siguiente que lo parsee, exactamente la fragilidad que la
+  > convención de "ningún valor lleva coma" (`CLAUDE.md` §6) existe para evitar. Entran
+  > **antes** de `resultado`, y las tres filas históricas se rellenan con su valor real
+  > (`0.00` / `99.58` / `0.00`; el de la fila truncada de SP-1 se verificó recomputando su
+  > coste, que sale exacto a 0% de cache). Se tocan las tres filas, que es lo que el texto
+  > original quería evitar — pero con el dato bueno, no con un hueco.
 - **`coste_usd` del CSV y `cost_usd` del JSON tienen que coincidir; si no, gana el JSON
   recomputado** (`CLAUDE.md` §6). Con el CSV generado, esa divergencia deja de ser posible.
 - **LangSmith**: trazas de cada nodo (`Plan §3`, ya está en el entorno). `LANGSMITH_API_KEY`

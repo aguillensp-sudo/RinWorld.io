@@ -1,0 +1,43 @@
+{
+  "task_id": "MSG-01",
+  "screen": "MSG-01",
+  "goal": "Panel de contenido de MSG-01 (Lista de Hilos): barra de acciones, lista de hilos ordenada por actividad descendente y estado vacio. El shell ya existe y no se toca.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5). Plan §6: la tarea es el borrador del contrato Planner->Coder de V1, y al dia 15 habra 10-15 en este formato. Si cambia a mitad del MVP, dejan de ser un corpus comparable.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_MSG-01.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/MSG-01 · MSG v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": ["§1.1", "§1.4", "§1.5", "§6.4"],
+    "style_reference": "app/src/screens/inventory/InventoryTable.tsx"
+  },
+  "outputs": [
+    "app/src/screens/messages/ThreadList.tsx",
+    "app/src/screens/messages/ThreadList.module.css",
+    "app/src/screens/messages/Messages.tsx",
+    "app/src/screens/messages/Messages.module.css"
+  ],
+  "acceptance": {
+    "unit": [
+      "app/src/screens/messages/ThreadList.test.tsx",
+      "app/src/screens/messages/Messages.test.tsx"
+    ],
+    "e2e": [
+      "app/e2e/messages.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea (Plan §6). El Coder no los ve: si los ve, escribe para el test. El e2e va contra el Supabase real porque los tests de unidad mockean la capa de datos y no pueden cazar una lectura mal filtrada por org (ESTADO.md, aviso de RLS de INV-01)."
+  },
+  "out_of_scope": [
+    "El aviso E2EE con boton 'Introducir frase de seguridad': en el MVP las claves viven en memoria de sesion y NO hay passphrase, backup ni recuperacion (CLAUDE.md §4; Plan §9 'Fuera'). El boton no se pinta como accion disponible.",
+    "'Nuevo contacto' abre DIR-01, que no esta entre las 8 pantallas del alcance (Plan §9). El control existe pero no lleva a ninguna parte: se pinta deshabilitado con el motivo, como el boton de subida de INV-01 (F-023 e).",
+    "El limite de '25 hilos activos iniciados en el mismo dia natural' es una regla de negocio del spec sin implementacion en el MVP: no se simula un contador que no existe.",
+    "Cualquier badge verde de 'Activo' o cifra inventada. F-023: el mock promete funciones que no existen y reproducirlas como si funcionaran es el riesgo #1 de CLAUDE.md §7 llevado a la interfaz, donde engana mas porque parece verificable."
+  ],
+  "constraints": [
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb(), ni aunque el valor sea correcto.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "No tocar el shell (app/src/shell/**) ni App.tsx: tienen contrato y tests propios desde el dia 2 (F-025).",
+    "Los numeros y fechas se formatean con toLocaleString/Intl en 'es-ES', nunca a mano. El mock escribe '1.247' donde el espanol correcto es '1247' (F-024).",
+    "La vista previa del ultimo elemento son METADATOS, nunca contenido descifrado (spec §3)."
+  ]
+}

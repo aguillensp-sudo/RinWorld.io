@@ -15,12 +15,25 @@
 
 **Día 4 de 15 · cerrado 9-ago-2026 · Estado: VERDE, con la CI en rojo a propósito**
 
-> **Lee esto antes de abrir GitHub.** La rama está **roja a sabiendas**: `npm run typecheck`
-> da **dos** errores, `Cannot find module './Messages'` y `'./ThreadList'`, y ninguno más.
-> Es la fase roja de TDD — el contrato de aceptación de MSG-01 se escribió hoy y los
-> componentes los produce el Coder mañana (`Plan §6`: *"Test de aceptación Playwright ←──
-> contrato, escrito ANTES del código"*). **Los 102 tests que ya estaban siguen en verde.**
-> Si mañana el rojo es otro, o son más de dos, se rompió otra cosa y no es esto.
+> **Lee esto antes de abrir GitHub. La CI está roja por DOS motivos, y solo uno se cierra
+> solo.**
+>
+> 1. **`App · typecheck` — fase roja de TDD, mía, y se cierra mañana.** `npm run typecheck`
+>    da **dos** errores, `Cannot find module './Messages'` y `'./ThreadList'`, y ninguno más:
+>    el contrato de aceptación de MSG-01 se escribió hoy y los componentes los produce el
+>    Coder mañana (`Plan §6`: *"Test de aceptación Playwright ←── contrato, escrito ANTES del
+>    código"*). **Los 102 tests que ya estaban siguen en verde.** Si mañana el rojo es otro,
+>    o son más de dos, se rompió otra cosa.
+> 2. **⚠ `Playwright · puerta de las dos cuentas` — falta desde el día 2 y NO es mía.**
+>    Comprobado con `gh run list`: **todas** las corridas de la rama fallan, también las
+>    anteriores a hoy. En la del 9-ago previa a mi trabajo (`31306452948`), `App` y `Esquema`
+>    salen en verde y **el trabajo de Playwright cae**. La causa es que faltan los secrets
+>    `E2E_*`, y el fallo es **por diseño**: `session.spec.ts` lanza excepción en CI en vez de
+>    saltarse la puerta (F-015 — un skip silencioso reportaría verde sin probar nada).
+>    Hoy el trabajo ni arranca porque tiene `needs: app`, así que el rojo de arriba lo tapa.
+>
+> **Consecuencia para mañana:** el motivo 2 **no lo arregla el Coder ni yo**, y es una de las
+> cuatro condiciones de la puerta del sprint. Ver abajo.
 
 ---
 
@@ -135,9 +148,26 @@ contradicción está dentro del mismo documento**, no entre el mock y la spec.
 ## Hoy toca — Día 5 (10-ago-2026)
 
 `Plan §3`, fila del día 5: *"Primera pantalla producida por el arnés: **MSG-01**. Registro de
-métricas."*, ejecuta el **Arnés**. Es también la **puerta de salida del sprint 1**:
-*"dos navegadores, dos cuentas, cada una ve su inventario. CI en verde. Una pantalla nacida
-del arnés, con su coste medido."*
+métricas."*, ejecuta el **Arnés**.
+
+### Y es fin de sprint: la puerta de salida de S1
+
+`Plan §3`, textual: *"dos navegadores, dos cuentas, cada una ve su inventario. CI en verde.
+Una pantalla nacida del arnés, con su coste medido."* Son **cuatro** condiciones y conviene
+mirarlas por separado, porque no dependen de lo mismo:
+
+| Condición | Cómo está | De quién depende |
+|---|---|---|
+| Dos cuentas, cada una ve su inventario | **Hecha el día 3.** `inventory.spec.ts`, 22/22 en local, tres corridas sin flakiness | hecho — solo re-verificar |
+| Una pantalla nacida del arnés | Mañana. El grafo está y la tarea también | del Coder, y del wiring previo |
+| Con su coste medido | El CSV lo genera el arnés solo, desde el JSON | automático |
+| **CI en verde** | 🔴 **No alcanzable sin los secrets `E2E_*`** | **de Álvaro** |
+
+**La cuarta es la única que no se puede cerrar desde dentro del repo.** El trabajo de
+Playwright lleva cayendo desde el día 2 por credenciales ausentes, y el fallo es deliberado
+(F-015). Con los secrets puestos, mañana la puerta se cierra entera; sin ellos, el sprint 1
+acaba con tres de cuatro y una condición pendiente de una acción de cinco minutos que no es
+de código.
 
 **En este orden, y los dos primeros antes de gastar un token:**
 
@@ -193,8 +223,10 @@ metiendo.
 
 **Ninguno bloquea el día 5.**
 
-1. 🔴 **Secrets de GitHub Actions — sube de naranja a rojo mañana.** Desde el día 5 el
-   trabajo de e2e es lo único que puede cazar un embed mal escrito o una lectura mal filtrada
+1. 🔴 **Secrets de GitHub Actions — es la única condición de la puerta del sprint que no
+   podemos cerrar nosotros.** Comprobado con `gh run list`: el trabajo de Playwright cae en
+   **todas** las corridas de la rama desde el día 2, y por diseño (F-015). Además, desde el
+   día 5 el e2e es lo único que puede cazar un embed mal escrito o una lectura mal filtrada
    en una pantalla **generada**, y sin credenciales no corre. La migración 0005 ya rompió el
    login varias horas por esto (F-020, mismo agujero que F-015). Hacen falta `SUPABASE_URL`,
    `SUPABASE_PUBLISHABLE_KEY`, `E2E_ALPHA_EMAIL/PASSWORD/ORG`, `E2E_BETA_EMAIL/PASSWORD/ORG`.

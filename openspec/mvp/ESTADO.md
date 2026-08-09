@@ -24,7 +24,11 @@
 >    Coder mañana (`Plan §6`: *"Test de aceptación Playwright ←── contrato, escrito ANTES del
 >    código"*). **Los 102 tests que ya estaban siguen en verde.** Si mañana el rojo es otro,
 >    o son más de dos, se rompió otra cosa.
-> 2. **⚠ `Playwright · puerta de las dos cuentas` — falta desde el día 2 y NO es mía.**
+> 2. **`Playwright · puerta de las dos cuentas` — faltaba desde el día 2. **RESUELTO el
+>    9-ago a las 17:11**: los 8 secrets están puestos y sus nombres casan uno a uno con los
+>    que lee `ci.yml` (comprobado cruzando `gh secret list` contra el workflow). **Que los
+>    VALORES sean correctos no se puede comprobar sin correr el trabajo**, y hoy no corre
+>    porque tiene `needs: app`. Primera prueba real: mañana. Contexto de por qué faltaba:**
 >    Comprobado con `gh run list`: **todas** las corridas de la rama fallan, también las
 >    anteriores a hoy. En la del 9-ago previa a mi trabajo (`31306452948`), `App` y `Esquema`
 >    salen en verde y **el trabajo de Playwright cae**. La causa es que faltan los secrets
@@ -161,13 +165,17 @@ mirarlas por separado, porque no dependen de lo mismo:
 | Dos cuentas, cada una ve su inventario | **Hecha el día 3.** `inventory.spec.ts`, 22/22 en local, tres corridas sin flakiness | hecho — solo re-verificar |
 | Una pantalla nacida del arnés | Mañana. El grafo está y la tarea también | del Coder, y del wiring previo |
 | Con su coste medido | El CSV lo genera el arnés solo, desde el JSON | automático |
-| **CI en verde** | 🔴 **No alcanzable sin los secrets `E2E_*`** | **de Álvaro** |
+| **CI en verde** | 🟠 **Secrets puestos el 9-ago (8/8, nombres verificados). Sin probar** | del Coder, ya no de Álvaro |
 
-**La cuarta es la única que no se puede cerrar desde dentro del repo.** El trabajo de
-Playwright lleva cayendo desde el día 2 por credenciales ausentes, y el fallo es deliberado
-(F-015). Con los secrets puestos, mañana la puerta se cierra entera; sin ellos, el sprint 1
-acaba con tres de cuatro y una condición pendiente de una acción de cinco minutos que no es
-de código.
+**La cuarta dejó de depender de Álvaro el 9-ago a las 17:11.** Con los 8 secrets puestos, la
+puerta se cierra entera mañana **si** el artefacto del Coder pasa y **si** los valores son
+buenos. Dos fallos siguen vivos y hay que mirarlos expresamente:
+
+- **Diacríticos comidos en `E2E_ALPHA_ORG` / `E2E_BETA_ORG`.** Síntoma: falla
+  `session.spec.ts` comparando el nombre de la organización, no el login. Es F-019.
+- **Clave de servicio en vez de la publicable en `SUPABASE_PUBLISHABLE_KEY`.** Síntoma: el
+  e2e pasa **de más**, saltándose RLS. Es el peligroso, porque no da rojo: da un verde que
+  no significa nada. Si el e2e pasa entero a la primera sin tocar nada, merece una mirada.
 
 **En este orden, y los dos primeros antes de gastar un token:**
 

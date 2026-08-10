@@ -1,0 +1,139 @@
+/* MSG-01 · Lista de Hilos — fila de hilo.
+ *
+ * El mock usa blanco puro para la tarjeta y radios de 8px/2px; no hay tokens
+ * de blanco ni de esos radios, así que se usan los más cercanos:
+ * --bw-warm-cream para la superficie y --bw-radius para los radios. */
+
+.list {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  overflow: hidden;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 4px 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--bw-row-hover-tint);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: -2px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.org {
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  padding: 1px 6px;
+  border-radius: var(--bw-radius);
+  background: var(--bw-cold-white);
+  color: var(--bw-steel-mist);
+  border: 1px solid var(--bw-line-steel);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tsRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.ts {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-input-placeholder);
+  white-space: nowrap;
+}
+
+.bot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.preview {
+  font-size: var(--bw-size-label);
+  color: var(--bw-text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.stateBadge {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: var(--bw-radius);
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+.neutral {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-steel-mist);
+  border-color: var(--bw-badge-neutral-border);
+}
+
+.info {
+  background: var(--bw-chip-active-bg);
+  color: var(--bw-calibration-blue);
+  border-color: var(--bw-chip-active-border);
+}
+
+.warn {
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning);
+  border-color: var(--bw-badge-warning-border);
+}
+
+.success {
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-signal-green);
+  border-color: var(--bw-badge-success-border);
+}
+
+.closed {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-input-placeholder);
+  border-color: var(--bw-badge-neutral-border-soft);
+  text-decoration: line-through;
+}

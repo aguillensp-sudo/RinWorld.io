@@ -1,0 +1,273 @@
+/* MSG-01 · Lista de Hilos — pantalla completa del panel de contenido.
+ *
+ * El mock usa blanco puro para superficies (tarjeta, input) y radios de 8/5/2px;
+ * no hay tokens de blanco ni de esos radios, así que se usan los más cercanos:
+ * --bw-warm-cream para superficies casi blancas y --bw-radius para los radios.
+ * El texto de los botones primarios sería blanco puro sobre azul; se usa
+ * --bw-on-dark-hover, el token de blanco más cercano. */
+
+.page {
+  background: var(--bw-cold-white);
+  min-height: 100%;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bw-steel-mist);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+  margin: 0 0 3px;
+}
+
+.subtitle {
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 16px;
+  max-width: 560px;
+}
+
+/* Aviso E2EE — bloque brass permanente. En el MVP no hay passphrase, así que
+   el botón se pinta deshabilitado con el motivo en texto accesible (F-023). */
+.e2eeBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: var(--bw-icon-tint-brass);
+  border: 1px solid var(--bw-brass-border-strong);
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-label);
+  color: var(--bw-deep-steel);
+}
+
+.e2eeBar i {
+  font-size: var(--bw-size-body);
+  color: var(--bw-brass);
+}
+
+.e2eeTitle {
+  font-weight: 600;
+}
+
+.e2eeText {
+  color: var(--bw-text-secondary);
+  margin-right: auto;
+}
+
+.e2eeBtn {
+  height: 32px;
+  padding: 0 14px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  color: var(--bw-on-dark-hover);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.e2eeBtn:disabled,
+.primaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actionsBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.searchWrap i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--bw-input-placeholder);
+  font-size: var(--bw-size-body);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: var(--bw-pad-input);
+  padding-left: 34px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-warm-cream);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.searchInput::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 18px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  color: var(--bw-on-dark-hover);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.12s;
+}
+
+.primaryBtn:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 18px;
+  background: transparent;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  color: var(--bw-deep-steel);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.secondaryBtn:hover {
+  border-color: var(--bw-brass);
+  color: var(--bw-brass);
+}
+
+.count {
+  font-size: var(--bw-size-label);
+  color: var(--bw-input-placeholder);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.status,
+.statusError {
+  padding: 28px 18px;
+  text-align: center;
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.statusError {
+  color: var(--bw-error-text);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.empty p {
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.pageBtn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius-hamburger);
+  background: var(--bw-warm-cream);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--bw-brass);
+  color: var(--bw-brass);
+}
+
+.pageBtn:disabled {
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}
+
+.pageActive,
+.pageActive:hover:not(:disabled) {
+  background: var(--bw-deep-steel);
+  border-color: var(--bw-deep-steel);
+  color: var(--bw-on-dark-hover);
+  cursor: default;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -181,12 +181,24 @@ describe('SRCH-01 · selección de filas', () => {
     expect(within(filas()[1]!).getByRole('checkbox')).toBeChecked();
   });
 
-  it('la cabecera lleva el checkbox de seleccionar todos', async () => {
-    const h = pintar([row({ id: 'a' }), row({ id: 'b' })]);
+  /**
+   * NO hay checkbox de "seleccionar todos" en la cabecera, y es deliberado.
+   *
+   * El HTML aprobado lo pinta (`<th class="th-chk"><input id="chkAll">`) y la
+   * spec §3 pone además un enlace `Seleccionar todos` en la metabarra: son dos
+   * controles para el mismo estado. La metabarra es la que manda —está en la
+   * spec, no solo en el mock— y vive en la pantalla, que es quien posee la
+   * selección. Un segundo control aquí exigiría un `onToggleAll` que esta tabla
+   * no tiene, y dos editores del mismo estado acaban discrepando: es la misma
+   * razón por la que el panel de filtros laterales quedó fuera.
+   *
+   * Este test lo exigía y el contrato no daba con qué implementarlo. Ver F-049.
+   */
+  it('la cabecera de selección no duplica el control de la metabarra', () => {
+    pintar([row({ id: 'a' }), row({ id: 'b' })]);
     const cabecera = screen.getAllByRole('columnheader')[0]!;
-    await userEvent.click(within(cabecera).getByRole('checkbox'));
-    // Marca las dos de una vez: el argumento son todos los ids visibles.
-    expect(h.onToggleRow).toHaveBeenCalled();
+    expect(within(cabecera).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
   });
 });
 

@@ -34,6 +34,28 @@
   cursor: pointer;
   user-select: none;
 }
+
+/*
+ * El botón de la cabecera ordenable. Hereda todo del `<th>` para que el cambio
+ * de `onClick` en la celda a botón de verdad no se vea: mismo tipo, mismo color,
+ * mismo peso. Lo que sí añade es lo que un `<th>` con `onClick` no podía dar —
+ * foco de teclado visible.
+ */
+.sortButton {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.sortButton:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 2px;
+}
 .sortable:hover {
   color: var(--bw-steel-mist);
 }

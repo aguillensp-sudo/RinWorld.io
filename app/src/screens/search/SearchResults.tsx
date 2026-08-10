@@ -174,7 +174,7 @@ export function SearchResults({ profile, now }: Props) {
                 sort={sort}
                 selected={selected}
                 minQuantity={criteria.minQuantity}
-                now={now}
+                now={now ?? new Date()}
                 onSort={handleSort}
                 onToggleRow={handleToggleRow}
                 onToggleFavorite={handleToggleFavorite}

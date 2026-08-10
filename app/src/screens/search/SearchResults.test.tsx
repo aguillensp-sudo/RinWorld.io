@@ -113,7 +113,7 @@ describe('SRCH-01 · carga de datos', () => {
     let resolver: (p: SearchPage) => void = () => {};
     fetchResults.mockReturnValue(new Promise<SearchPage>((r) => (resolver = r)));
     pintar();
-    expect(screen.getByRole('button', { name: /Filtro/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /filtro/i })).toBeInTheDocument();
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
     resolver(page([row()]));
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeNull());
@@ -155,7 +155,7 @@ describe('SRCH-01 · metabarra', () => {
     pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
 
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Qty mín');
     await userEvent.type(screen.getByLabelText('Valor'), '500');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
@@ -240,7 +240,7 @@ describe('SRCH-01 · chips y consulta', () => {
     pintar();
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
 
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Marca');
     await userEvent.type(screen.getByLabelText('Valor'), 'FAG');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
@@ -253,7 +253,7 @@ describe('SRCH-01 · chips y consulta', () => {
 
   it('quitar un chip vuelve a buscar sin él', async () => {
     pintar();
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Marca');
     await userEvent.type(screen.getByLabelText('Valor'), 'FAG');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
@@ -307,7 +307,7 @@ describe('SRCH-01 · favoritos', () => {
     pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
-    await userEvent.click(within(filas()[0]!).getByRole('button', { name: /12/ }));
+    await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
     expect(toggleFavorite).toHaveBeenCalledWith(profile.id, 'org-9', true);
   });
 
@@ -316,7 +316,8 @@ describe('SRCH-01 · favoritos', () => {
     pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
-    await userEvent.click(within(filas()[0]!).getByRole('button', { name: /12/ }));
+    // Aquí la fila llega YA marcada, así que el botón está `pressed: true`.
+    await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: true }));
     expect(toggleFavorite).toHaveBeenCalledWith(profile.id, 'org-9', false);
   });
 
@@ -329,7 +330,7 @@ describe('SRCH-01 · favoritos', () => {
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
 
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', favoriteCount: 13, isFavorite: true })]));
-    await userEvent.click(within(filas()[0]!).getByRole('button', { name: /12/ }));
+    await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
 
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(within(filas()[0]!).getByText(quantityLabel(13))).toBeInTheDocument());

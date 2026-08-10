@@ -69,24 +69,53 @@ export function ResultsTable({
         <thead>
           <tr>
             {COLUMNS.map((col, i) => {
+              /**
+               * Las dos cosas se calculan UNA vez y ya estrechadas, y esa es la
+               * corrección: el artefacto comprobaba `col.sortable && col.key` en
+               * la clase y en el `onClick`, pero no en `aria-sort`, y ahí
+               * `sort?.column === col.key` con `sort` a null y `col.key`
+               * `undefined` compara `undefined === undefined` — da **true** y
+               * entra a leer `sort.direction` de un null. No era un aviso de
+               * tipos: la tabla reventaba al primer render sin ordenación, que
+               * es el estado inicial de la pantalla.
+               */
+              const sortKey = col.sortable ? col.key : undefined;
+              const activeSort =
+                sort !== null && sortKey !== undefined && sort.column === sortKey ? sort : null;
+
               const cls = [styles.th];
               if (i === 0) cls.push(styles.thChk);
-              if (col.sortable && col.key) {
+              if (sortKey) {
                 cls.push(styles.sortable);
-                if (sort?.column === col.key) {
-                  cls.push(sort.direction === 'asc' ? styles.sortAsc : styles.sortDesc);
+                if (activeSort) {
+                  cls.push(activeSort.direction === 'asc' ? styles.sortAsc : styles.sortDesc);
                 }
               }
-              const ariaSort =
-                sort?.column === col.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined;
+              const ariaSort = activeSort
+                ? activeSort.direction === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : undefined;
               return (
-                <th
-                  key={col.label}
-                  className={cls.join(' ')}
-                  aria-sort={ariaSort}
-                  onClick={col.sortable && col.key ? () => onSort(col.key) : undefined}
-                >
-                  {col.isControl ? <span className={styles.srOnly}>{col.label}</span> : col.label}
+                <th key={col.label} className={cls.join(' ')} aria-sort={ariaSort} scope="col">
+                  {/*
+                   * La cabecera ordenable es un BOTÓN dentro del `<th>`, no un
+                   * `onClick` sobre la celda. El artefacto ponía el manejador en
+                   * el `<th>`: funciona con ratón y no existe con teclado — no
+                   * recibe foco, no responde a Enter ni a Espacio y ningún lector
+                   * de pantalla lo anuncia como accionable. La spec §3 pide
+                   * ordenar «clic en cabecera», y el `aria-sort` que ya estaba
+                   * puesto promete precisamente un control que aquí no lo era.
+                   */}
+                  {sortKey ? (
+                    <button type="button" className={styles.sortButton} onClick={() => onSort(sortKey)}>
+                      {col.label}
+                    </button>
+                  ) : col.isControl ? (
+                    <span className={styles.srOnly}>{col.label}</span>
+                  ) : (
+                    col.label
+                  )}
                 </th>
               );
             })}

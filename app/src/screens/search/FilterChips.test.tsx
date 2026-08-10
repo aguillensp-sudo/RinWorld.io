@@ -40,7 +40,7 @@ describe('SRCH-01 · chips activos', () => {
 
   it('sin filtros no hay chips, solo el de añadir', () => {
     pintar(EMPTY_CRITERIA);
-    expect(screen.getByRole('button', { name: /Filtro/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /filtro/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Quitar filtro/ })).not.toBeInTheDocument();
   });
 
@@ -92,21 +92,21 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
   it('el formulario está oculto hasta pulsar + Filtro', async () => {
     pintar(EMPTY_CRITERIA);
     expect(screen.queryByLabelText('Campo')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     expect(screen.getByLabelText('Campo')).toBeInTheDocument();
     expect(screen.getByLabelText('Valor')).toBeInTheDocument();
   });
 
   it('ofrece los cinco campos de la tabla de chips de la spec §3', async () => {
     pintar(EMPTY_CRITERIA);
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     const opciones = Array.from(screen.getByLabelText<HTMLSelectElement>('Campo').options).map((o) => o.text);
     expect(opciones).toEqual(['Ref', 'Marca', 'Qty mín', 'Zona', 'Lead time máx']);
   });
 
   it('añade un filtro de texto', async () => {
     const onChange = pintar(EMPTY_CRITERIA);
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await elegir('Campo', 'Marca');
     await userEvent.type(screen.getByLabelText('Valor'), 'SKF');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
@@ -115,7 +115,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
 
   it('la cantidad mínima llega como número, no como cadena', async () => {
     const onChange = pintar(EMPTY_CRITERIA);
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await elegir('Campo', 'Qty mín');
     await userEvent.type(screen.getByLabelText('Valor'), '500');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
@@ -127,7 +127,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
     // campo libre aquí deja escribir "Europa occidental" y el filtro no corta
     // nada — un chip que no filtra es peor que no tener chip.
     const onChange = pintar(EMPTY_CRITERIA);
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await elegir('Campo', 'Zona');
     await elegir('Valor', 'Europa');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
@@ -136,7 +136,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
 
   it('un valor vacío no añade nada', async () => {
     const onChange = pintar(EMPTY_CRITERIA);
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     await elegir('Campo', 'Marca');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
     expect(onChange).not.toHaveBeenCalled();
@@ -147,7 +147,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
     // probar, no se puede estilar y bloquea el hilo.
     const prompt = vi.spyOn(window, 'prompt').mockReturnValue('SKF');
     pintar(EMPTY_CRITERIA);
-    await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
+    await userEvent.click(screen.getByRole('button', { name: /filtro/i }));
     expect(prompt).not.toHaveBeenCalled();
     prompt.mockRestore();
   });

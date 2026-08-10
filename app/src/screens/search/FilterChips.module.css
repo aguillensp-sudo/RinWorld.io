@@ -1,0 +1,119 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--bw-deep-steel);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.label {
+  color: var(--bw-on-dark-faint);
+  font-size: 11px;
+}
+
+.value {
+  color: white;
+}
+
+.remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--bw-on-dark-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 0 0 3px;
+  display: flex;
+  align-items: center;
+  transition: color 0.12s;
+  font-family: inherit;
+}
+
+.remove:hover {
+  color: var(--bw-danger-light);
+}
+
+.add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1.5px dashed var(--bw-input-placeholder);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+
+.add:hover {
+  border-color: var(--bw-calibration-blue);
+  color: var(--bw-calibration-blue);
+}
+
+.form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.select,
+.input {
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--bw-input-text);
+  outline: none;
+  background: white;
+  font-family: inherit;
+  transition: border-color 0.12s;
+}
+
+.select:focus,
+.input:focus {
+  border-color: var(--bw-calibration-blue);
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.submit {
+  height: 28px;
+  padding: 0 11px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.12s;
+}
+
+.submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.submit:not(:disabled):hover {
+  opacity: 0.85;
+}

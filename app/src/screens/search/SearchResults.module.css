@@ -1,0 +1,156 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-steel-mist);
+  margin: 0 0 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+  margin: 0 0 16px;
+}
+
+.metabar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.metaCount {
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-calibration-blue);
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: opacity 0.12s;
+}
+
+.linkButton:hover {
+  opacity: 0.7;
+}
+
+.primaryButton {
+  height: 32px;
+  padding: 0 14px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: opacity 0.12s;
+}
+
+.primaryButton:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.primaryButton:not(:disabled):hover {
+  opacity: 0.87;
+}
+
+.watcherButton {
+  height: 32px;
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid var(--bw-dropzone-border);
+  border-radius: 5px;
+  color: var(--bw-brass);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: not-allowed;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  opacity: 0.72;
+}
+
+.watcherButton i {
+  font-size: 14px;
+}
+
+.capped {
+  font-size: 12px;
+  color: var(--bw-warning);
+  margin: 0 0 10px;
+}
+
+.tableArea {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stateBox {
+  flex: 1;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--bw-steel-mist);
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.stateBox i {
+  font-size: 20px;
+}
+
+.stateText {
+  margin: 0;
+}
+
+.retryButton {
+  height: 32px;
+  padding: 0 14px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.retryButton:hover {
+  opacity: 0.87;
+}

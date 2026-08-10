@@ -1,0 +1,53 @@
+{
+  "attempt": 2,
+  "task": "SRCH-01",
+  "screen": "SRCH-01",
+  "model": "deepseek-v4-flash",
+  "finish_reason": "stop",
+  "api_calls": 1,
+  "truncated_at": [],
+  "tokens_in": 32159,
+  "tokens_out": 55996,
+  "cache_hit": 30976,
+  "cache_miss": 1183,
+  "cache_hit_pct": 96.32,
+  "seconds": 387.4,
+  "cost_usd": 0.015931,
+  "cost_usd_cold_equivalent": 0.020181,
+  "price_table": {
+    "in_hit": 0.0028,
+    "in_miss": 0.14,
+    "out": 0.28
+  },
+  "files": [
+    "app/src/screens/search/FilterChips.module.css",
+    "app/src/screens/search/FilterChips.tsx",
+    "app/src/screens/search/ResultsTable.module.css",
+    "app/src/screens/search/ResultsTable.tsx",
+    "app/src/screens/search/SearchResults.module.css",
+    "app/src/screens/search/SearchResults.tsx"
+  ],
+  "checks": [
+    {
+      "id": "C1",
+      "ok": false,
+      "detail": "npm run typecheck (exit 2)\n> bearingworld-app@0.1.0 typecheck\n> tsc --noEmit\n\nsrc/screens/search/ResultsTable.test.tsx(72,6): error TS2322: Type '{ onSort: Mock<Procedure | Constructable>; onToggleRow: Mock<Procedure | Constructable>; onToggleFavorite: Mock<...>; ... 6 more ...; now: Date; }' is not assignable to type 'Props'.\n  Types of property 'onSort' are incompatible.\n    Type 'Mock<Procedure | Constructable>' is not assignable to type '(column: \"country\" | \"brand\" | \"quantity\" | \"age\" | \"leadTime\" | \"favorites\") => void'.\n      Type 'MockInstance<Procedure | Constructable> & (new (...args: any[]) => any) & {}' is not assignable to type '(column: \"country\" | \"brand\" | \"quantity\" | \"age\" | \"leadTime\" | \"favorites\") => void'.\n        Type 'MockInstance<Procedure | Constructable> & (new (...args: any[]) => any) & {}' provides no match for the signature '(column: \"country\" | \"brand\" | \"quantity\" | \"age\" | \"leadTime\" | \"favorites\"): void'."
+    },
+    {
+      "id": "C2",
+      "ok": false,
+      "detail": "vitest de aceptacion (exit 1)\n              \u001b[36m<td\u001b[39m\n                \u001b[33mclass\u001b[39m=\u001b[32m\"_td_f6dd0d\"\u001b[39m\n              \u001b[36m>\u001b[39m\n                \u001b[36m<div\u001b[39m\n                  \u001b[33mclass\u001b[39m=\u001b[32m\"_actionsCell_f6dd0d\"\u001b[39m\n                \u001b[36m>\u001b[39m\n                  \u001b[36m<button\u001b[39m\n                    \u001b[33mclass\u001b[39m=\u001b[32m\"_consultBtn_f6dd0d\"\u001b[39m\n                    \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n                  \u001b[36m>\u001b[39m\n                    \u001b[0mConsultar\u001b[0m\n                  \u001b[36m</button>\u001b[39m\n                  \u001b[36m<button\u001b[39m\n                    \u001b[33mclass\u001b[39m=\u001b[32m\"_contactBtn_f6dd0d\"\u001b[39m\n                    \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n                  \u001b[36m>\u001b[39m\n                    \u001b[0mContactar\u001b[0m\n                  \u001b[36m</button>\u001b[39m\n                \u001b[36m</div>\u001b[39m\n              \u001b[36m</td>\u001b[39m\n            \u001b[36m</tr>\u001b[39m\n          \u001b[36m</tbody>\u001b[39m\n        \u001b[36m</table>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</section>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m\n ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19\n ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38\n ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17\n ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19\n ❯ src/screens/search/SearchResults.test.tsx:299:34\n    297|     pintar();\n    298|     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));\n    299|     await userEvent.click(screen.getByRole('button', { name: 'Marca' }…\n       |                                  ^\n    300|     expect(fetchResults).toHaveBeenCalledTimes(1);\n    301|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯"
+    },
+    {
+      "id": "C3",
+      "ok": true,
+      "detail": "sin colores literales"
+    },
+    {
+      "id": "C4",
+      "ok": true,
+      "detail": "reglas mecanicas en verde"
+    }
+  ],
+  "escalated_to_human": false
+}

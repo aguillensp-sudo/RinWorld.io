@@ -265,17 +265,26 @@ describe('SRCH-01 · acciones de fila', () => {
 });
 
 describe('SRCH-01 · favoritos', () => {
+  /**
+   * El botón se busca por su ESTADO (`aria-pressed`), no por su nombre accesible.
+   * La corrida 1 lo buscaba por `/12/` dando por hecho que el recuento estaría en
+   * el nombre; el Coder puso `aria-label="Añadir favorita <organización>"`, que
+   * para un lector de pantalla es mejor —y `aria-label` tapa el texto interno—.
+   * El contrato fija el estado accesible y que el recuento se vea; cómo se llame
+   * el botón es suyo. Ver F-047.
+   */
   it('enseña el recuento agregado y avisa con la organización, no con la línea', async () => {
     const h = pintar([row({ orgId: 'org-9', favoriteCount: 12 })]);
-    const fav = within(filas()[0]!).getByRole('button', { name: /12/ });
-    await userEvent.click(fav);
+    const fila = filas()[0]!;
+    expect(within(fila).getByText('12')).toBeInTheDocument();
+    await userEvent.click(within(fila).getByRole('button', { pressed: false }));
     expect(h.onToggleFavorite).toHaveBeenCalledWith('org-9');
   });
 
   it('distingue marcada de no marcada por estado accesible, no solo por color', () => {
     pintar([row({ id: 'a', isFavorite: false }), row({ id: 'b', isFavorite: true })]);
-    expect(within(filas()[0]!).getByRole('button', { name: /12/ })).toHaveAttribute('aria-pressed', 'false');
-    expect(within(filas()[1]!).getByRole('button', { name: /12/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(filas()[0]!).getByRole('button', { pressed: false })).toBeInTheDocument();
+    expect(within(filas()[1]!).getByRole('button', { pressed: true })).toBeInTheDocument();
   });
 });
 
@@ -289,8 +298,18 @@ describe('SRCH-01 · estado vacío', () => {
     expect(screen.getByText('No hemos encontrado stock con estos filtros.')).toBeInTheDocument();
   });
 
-  it('no pinta filas ni promete un recuento', () => {
+  /**
+   * Una fila con `colSpan` es la forma correcta de poner un estado vacío DENTRO
+   * de una `<table>`, y es lo que hizo el Coder. La corrida 1 exigía cero filas
+   * de cuerpo, que habría obligado a sacar el mensaje fuera de la tabla o a
+   * romper la semántica. Lo que sí importa —y es lo que este test guarda— es que
+   * no haya ninguna fila de DATOS inventada.
+   */
+  it('no pinta filas de datos ni promete un recuento', () => {
     pintar([]);
-    expect(screen.queryAllByRole('row').slice(1)).toHaveLength(0);
+    const cuerpo = screen.getAllByRole('row').slice(1);
+    expect(cuerpo).toHaveLength(1);
+    expect(within(cuerpo[0]!).getByText('No hemos encontrado stock con estos filtros.')).toBeInTheDocument();
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EMPTY_CRITERIA, type SearchCriteria } from '../../lib/search';
 
@@ -73,6 +73,21 @@ describe('SRCH-01 · quitar un chip', () => {
   });
 });
 
+/**
+ * Elige una opción por su ETIQUETA VISIBLE, que es lo que ve y pulsa el usuario.
+ *
+ * La corrida 1 la elegía por `value` —`selectOptions(select, 'Marca')` casa
+ * contra el atributo `value`, no contra el texto— y eso daba por hecho que el
+ * Coder pondría la etiqueta también como valor. Puso `value={o.key}`, una clave
+ * estable, que es la decisión correcta y que el contrato no le pedía de un modo
+ * ni de otro. El test medía una elección de implementación que nadie fijó.
+ * Ver F-047.
+ */
+async function elegir(campo: string, etiqueta: string) {
+  const select = screen.getByLabelText<HTMLSelectElement>(campo);
+  await userEvent.selectOptions(select, within(select).getByRole('option', { name: etiqueta }));
+}
+
 describe('SRCH-01 · añadir un filtro a mano', () => {
   it('el formulario está oculto hasta pulsar + Filtro', async () => {
     pintar(EMPTY_CRITERIA);
@@ -92,7 +107,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
   it('añade un filtro de texto', async () => {
     const onChange = pintar(EMPTY_CRITERIA);
     await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
-    await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Marca');
+    await elegir('Campo', 'Marca');
     await userEvent.type(screen.getByLabelText('Valor'), 'SKF');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ brand: 'SKF' }));
@@ -101,7 +116,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
   it('la cantidad mínima llega como número, no como cadena', async () => {
     const onChange = pintar(EMPTY_CRITERIA);
     await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
-    await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Qty mín');
+    await elegir('Campo', 'Qty mín');
     await userEvent.type(screen.getByLabelText('Valor'), '500');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ minQuantity: 500 }));
@@ -113,8 +128,8 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
     // nada — un chip que no filtra es peor que no tener chip.
     const onChange = pintar(EMPTY_CRITERIA);
     await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
-    await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Zona');
-    await userEvent.selectOptions(screen.getByLabelText('Valor'), 'Europa');
+    await elegir('Campo', 'Zona');
+    await elegir('Valor', 'Europa');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ zone: 'EU' }));
   });
@@ -122,7 +137,7 @@ describe('SRCH-01 · añadir un filtro a mano', () => {
   it('un valor vacío no añade nada', async () => {
     const onChange = pintar(EMPTY_CRITERIA);
     await userEvent.click(screen.getByRole('button', { name: /Filtro/ }));
-    await userEvent.selectOptions(screen.getByLabelText('Campo'), 'Marca');
+    await elegir('Campo', 'Marca');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir' }));
     expect(onChange).not.toHaveBeenCalled();
   });

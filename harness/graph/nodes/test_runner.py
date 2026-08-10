@@ -129,16 +129,23 @@ def _check_c2(task, runner) -> dict:
                 + "; ".join(faltan) + ". Los escribe Claude Code ANTES del Coder "
                 "(Plan §6)"}
 
+    # Las rutas de la tarea son del repo y los dos procesos arrancan en `app/`:
+    # se rebajan igual para vitest que para Playwright. Sin esto vitest responde
+    # "No test files found" y sale con 1, que se registra como C2 ROJO — otro
+    # check inejecutable disfrazado de fallo del Coder, como el WinError 2 del
+    # `npm`. La rama del e2e lo hacia bien desde el dia 4 y la de unidad no, asi
+    # que C2 no se habia ejecutado nunca.
+    rel = lambda rutas: [str(pathlib.Path(p).relative_to("app")) for p in rutas]
+
     partes = []
     if unit:
-        code, out = runner(["npx", "vitest", "run", *unit], APP)
+        code, out = runner(["npx", "vitest", "run", *rel(unit)], APP)
         if code != 0:
             return {"id": "C2", "ok": False,
                     "detail": f"vitest de aceptacion (exit {code})\n{_tail(out)}"}
         partes.append(f"unidad {len(unit)} fichero(s)")
     if e2e:
-        rel = [str(pathlib.Path(p).relative_to("app")) for p in e2e]
-        code, out = runner(["npx", "playwright", "test", *rel], APP)
+        code, out = runner(["npx", "playwright", "test", *rel(e2e)], APP)
         if code != 0:
             return {"id": "C2", "ok": False,
                     "detail": f"playwright de aceptacion (exit {code})\n{_tail(out)}"}

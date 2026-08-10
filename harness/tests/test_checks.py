@@ -18,7 +18,7 @@ import sys
 from ..core import metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
 from ..graph.nodes.coder import build_system
-from ..graph.nodes.test_runner import resolve, run_cmd
+from ..graph.nodes.test_runner import _check_c2, resolve, run_cmd
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TOKENS = read_tokens(
@@ -216,6 +216,33 @@ def test_toolchain():
     check("npx --version tambien", code == 0)
 
 
+def test_c2_paths():
+    """Las rutas que C2 le pasa a vitest y a Playwright existen desde `app/`.
+
+    Segunda vez en el mismo dia que un check se reporta ROJO sin haberse
+    ejecutado: la tarea declara los tests con ruta de repo (`app/src/...`) y los
+    dos procesos arrancan con `cwd=app/`, asi que vitest respondia "No test files
+    found" y salia con 1. La rama del e2e lo hacia bien desde el dia 4 y la de
+    unidad no, de modo que C2 no se habia ejecutado nunca."""
+    print("\nC2 · las rutas llegan bien a los dos procesos")
+
+    task = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json").read_text(encoding="utf-8"))
+    vistos = []
+
+    def espia(cmd, cwd):
+        vistos.append((cmd, cwd))
+        return 0, ""
+
+    _check_c2(task, espia)
+    check("C2 lanza los dos procesos", len(vistos) == 2, vistos)
+
+    for cmd, cwd in vistos:
+        rutas = [a for a in cmd if a.endswith((".ts", ".tsx"))]
+        check(f"`{cmd[1]}` recibe rutas y no cero", bool(rutas), cmd)
+        for r in rutas:
+            check(f"{r} existe desde {cwd.name}", (cwd / r).exists(), str(cwd / r))
+
+
 def test_prompt_inputs():
     """Todo input declarado en la tarea tiene que llegar al prompt.
 
@@ -244,6 +271,7 @@ def main() -> int:
     test_pricing_guard()
     test_parse()
     test_toolchain()
+    test_c2_paths()
     test_prompt_inputs()
     print()
     if fallos:

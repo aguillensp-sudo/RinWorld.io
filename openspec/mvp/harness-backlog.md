@@ -14,6 +14,7 @@ accionables (`B-00x`) cuando toca ejecutarlas.
 | B-004 | 2026-08-09 | F-003 | Check de paleta sobre el output del Coder, validado contra **§1.1 + §1.4 + §1.5** vía `app/src/styles/tokens.css`. `harness/graph/checks.py`, con 8 pruebas — la mitad comprueban que **no** rechace output correcto. | Alta | **Hecho (día 4)** |
 | B-005 | 2026-08-09 | F-015 | Un check que no se puede ejecutar cuenta como **rojo**, nunca como ausente. Una tarea sin tests de aceptación declarados es roja; un test declarado que no existe en el repo, también. | Alta | **Hecho (día 4)** |
 | B-006 | 2026-08-09 | F-007 | Configurar `realtime.params.eventsPerSecond` por hilo en la app. No es del arnés, pero es la única semilla del día 1 que sigue sin dueño. | Media | Pendiente — día 7 (MSG-02) |
+| B-007 | 2026-08-11 | F-042 | `--seco` tiene que correr **la tarea que recibe**, o dejar de aceptar el argumento. Hoy `run_dry(task)` ignora el parámetro y va contra su fixture de MSG-01, así que una tarea nueva con un `data_layer` inexistente o un `component_api` malformado pasa el seco y revienta con el modelo ya pagado. Mínimo: verificar que existen los ficheros de `inputs` y de `acceptance`, que `outputs` no está vacío y que `component_api` cubre cada `.tsx` de `outputs`. | Media | Pendiente |
 
 ## Semillas ya identificadas (apuntadas, no accionar hoy)
 

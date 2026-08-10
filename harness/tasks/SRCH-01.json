@@ -1,0 +1,68 @@
+{
+  "task_id": "SRCH-01",
+  "screen": "SRCH-01",
+  "goal": "Panel de contenido de SRCH-01 (Resultados de Busqueda): chips de filtro editables, metabarra con contador y acciones, y tabla de resultados de diez columnas con seleccion multiple y ordenacion por cabecera. El shell ya existe y no se toca.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con la desviacion del dia 5: el campo `component_api`. Plan §6: la tarea es el borrador del contrato Planner->Coder de V1, y al dia 15 habra 10-15 en este formato. Si cambia a mitad del MVP, dejan de ser un corpus comparable.",
+  "_nota_criticidad": "Plan §9: SRCH-01 es la pantalla NUCLEO de la demo y no se recorta nunca. Es la primera vez que el arnes toca algo critico, asi que la revision a mano posterior no es opcional (Plan §3, fila del dia 6: 'Arnes + revision a mano').",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_SRCH-01.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/SRCH-01 · SRCH v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/inventory/InventoryTable.tsx",
+    "data_layer": "app/src/lib/search.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. La capa de datos y sus tipos ya estan escritos a mano (CLAUDE.md §3: SRCH-01 es la unica pantalla del MVP que lee inventario AJENO, y una consulta mal filtrada no da error - da una tabla plausible con el catalogo equivocado). El Coder los importa, no los reescribe: toda la logica pura -activeChips, withoutChip, nextSort, sortRows, countryName, quantityLabel, leadTimeLabel, metaCounterLabel, meetsMinQuantity, ageLabel, ageLevel, daysSince- se usa tal cual. Ni una de esas reglas se reimplementa a mano."
+  },
+  "outputs": [
+    "app/src/screens/search/SearchResults.tsx",
+    "app/src/screens/search/SearchResults.module.css",
+    "app/src/screens/search/FilterChips.tsx",
+    "app/src/screens/search/FilterChips.module.css",
+    "app/src/screens/search/ResultsTable.tsx",
+    "app/src/screens/search/ResultsTable.module.css"
+  ],
+  "component_api": {
+    "_nota": "Campo anadido el dia 5 (Dia-04_decisiones_arnes.md §5, desviacion escrita alli; F-034). Los tests de aceptacion fijan nombres de prop y el Coder NO los ve -regla de integridad de CLAUDE.md §3-, asi que sin este campo tiene que adivinarlos. Aqui va la firma publica, nunca lo que los tests asertan.",
+    "app/src/screens/search/SearchResults.tsx": "export function SearchResults({ profile, now }: { profile: MemberProfile; now?: Date }). Es LA PANTALLA, no un componente de presentacion: importa `type MemberProfile` de `../../lib/session`, llama a `fetchResults({ orgId: profile.orgId, memberId: profile.id, criteria })` y posee TODO el estado - criterios, orden (`Sort | null`), seleccion (`Set<string>` de ids de linea), carga y error. Ordena con `sortRows(page.rows, sort)` antes de pasar las filas a la tabla. `now` es inyectable para que los tests no dependan del reloj y por defecto es `new Date()`.",
+    "app/src/screens/search/FilterChips.tsx": "export function FilterChips({ criteria, onChange }: { criteria: SearchCriteria; onChange: (next: SearchCriteria) => void }). Presentacional y TOTALMENTE CONTROLADO: no guarda criterios, los recibe y emite los nuevos enteros. Pinta `activeChips(criteria)` -cada chip con su boton de quitar, nombre accesible `Quitar filtro <etiqueta>`, que emite `withoutChip(criteria, key)`- y el chip `+ Filtro` de borde discontinuo al final. `+ Filtro` despliega un formulario en linea con un `<select>` de nombre accesible `Campo` (opciones, en este orden: `Ref`, `Marca`, `Qty min`, `Zona`, `Lead time max`), un control de nombre accesible `Valor` y un boton `Anadir`. Cuando `Campo` es `Zona`, `Valor` es un `<select>` con las etiquetas de `ZONE_LABELS`; en el resto es un input. `Qty min` y `Lead time max` emiten numero, no cadena. Con `Valor` vacio no emite nada. Unico estado propio permitido: si el formulario esta abierto y lo que hay tecleado en el.",
+    "app/src/screens/search/ResultsTable.tsx": "export function ResultsTable({ rows, sort, selected, minQuantity, now, onSort, onToggleRow, onToggleFavorite, onConsult, onContact }: { rows: SearchResultRow[]; sort: Sort | null; selected: ReadonlySet<string>; minQuantity: number | null; now?: Date; onSort: (column: SortColumn) => void; onToggleRow: (lineId: string) => void; onToggleFavorite: (orgId: string) => void; onConsult: (lineId: string) => void; onContact: (orgId: string) => void }). Presentacional: pinta las filas que recibe EN EL ORDEN QUE LAS RECIBE -ordenar es de la pantalla- y no carga datos. `onToggleFavorite` y `onContact` avisan con el id de la ORGANIZACION; `onToggleRow` y `onConsult`, con el de la LINEA. El estado vacio de la spec §6 vive AQUI, no en la pantalla: 'no hay filas' es un estado de la lista, y si lo deciden los dos acaban discrepando (leccion de MSG-01). Es una `<table>` de verdad: `<th>` para las diez cabeceras y `aria-sort` en la que este activa."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/search/SearchResults.test.tsx",
+      "app/src/screens/search/FilterChips.test.tsx",
+      "app/src/screens/search/ResultsTable.test.tsx"
+    ],
+    "e2e": [
+      "app/e2e/search.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea (Plan §6). El Coder no los ve: si los ve, escribe para el test. El e2e va contra el Supabase real porque los tests de unidad mockean la capa de datos y no pueden cazar una lectura que se traiga el inventario propio (Dia-04 §4, ultimo aviso)."
+  },
+  "out_of_scope": [
+    "TODO lo de watchers: el boton 'Crear watcher con estos criterios' de la metabarra, el toast 'Watcher creado ... Te avisaremos cuando haya stock' y la confirmacion de VERA con 'Caduca en 30 dias'. SRCH-03 esta FUERA del alcance (Plan §9) y no existe ninguna tabla de watchers en el esquema (migraciones 0001-0006). El boton se pinta DESHABILITADO y con el motivo, como el de subida de INV-01 (F-023 e) y como 'Nuevo contacto' en MSG-01. Un aviso futuro que nadie va a mandar es el riesgo #1 de CLAUDE.md §7 llevado a la interfaz.",
+    "El PANEL DE FILTROS LATERALES COLAPSABLE de la spec §3. Es un espejo de los chips -mismos cuatro filtros- y dos editores del mismo estado acaban discrepando; el dia 9 VERA escribe sobre ese estado (Plan §3) y serian tres. Ademas, en el HTML aprobado sus cuatro inputs NO estan cableados a nada: reproducirlo fielmente seria reproducir cuatro controles muertos. La fila del dia 6 del Plan §3 pide 'chips editables', en singular.",
+    "La ORDENACION POR INSTRUCCION A VERA de la spec §3 y §5, y el cableado VERA<->chips en general: es la fila del dia 9 del Plan §3. La ordenacion por CLIC EN CABECERA si entra hoy.",
+    "El DESTINO de 'Consultar', 'Contactar' y 'Consultar seleccionados'. Los botones se pintan y avisan por su callback -eso es el contrato de hoy-, pero abrir la tarjeta de consulta y crear el hilo es la fila del dia 10 del Plan §3 ('Consultar Seleccionados: SRCH-01 -> creacion de hilo, GAP-004'). No se simula ningun envio, ninguna confirmacion de VERA del tipo 'Consultas enviadas a X distribuidores' y ningun cambio de fila a 'ya consultada' en cliente: ese estado sale de la base (`consulted`).",
+    "COLUMNA DE PRECIO, y cualquier cifra monetaria, simbolo de moneda o ordenacion/filtrado por precio. `unit_price` va cifrado E2EE en la propia linea y no se indexa nunca (inventory-management; cabecera de la migracion 0002), y `conversational-search · Out of Scope` lo dice literal: 'Ordenacion por precio (unit_price cifrado E2EE, no indexable server-side)'. Una columna de precio en una tabla que cruza organizaciones seria la ruptura del zero-knowledge, que es el argumento entero del producto. NOTA: el HTML aprobado NO tiene columna de precio -sus diez `<th>` son las diez de la spec-, asi que aqui no hay nada que resistirse a copiar; entra en la lista porque es la frontera que no se cruza. Ver F-040.",
+    "El campo PAIS en el formulario de '+ Filtro'. `SearchCriteria.country` existe y su valor SI se pinta en el chip de zona ('Europa · Espana'), pero no se ofrece para teclear a mano: son ~250 codigos ISO y un desplegable de paises no esta en el diseno aprobado. Lo rellena VERA el dia 9. La zona si se elige, porque son siete valores cerrados.",
+    "PAGINACION. La spec §3 de SRCH-01 no tiene paginador, a diferencia de la de INV-01. `fetchResults` trae el conjunto entero con tope `MAX_RESULTS` y devuelve `capped`; la pantalla lo dice cuando es true en vez de ensenar un recorte como si fuera todo.",
+    "El aprendizaje de preferencias, la busqueda por lotes (SRCH-02) y el modo TIERED de visibilidad: fuera por Plan §9 y por el Out of Scope de la propia capability."
+  ],
+  "constraints": [
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb(), ni aunque el valor sea correcto. La spec §3 da hex (`#2563EB` en el accent-color del checkbox, `rgba(37,99,235,0.04)` en la fila consultada): el mapeo hex->token vive en el CSS, y el componente no recibe colores.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`. El HTML aprobado usa `prompt()` para anadir un chip: en React es un dialogo que no se puede probar, no se puede estilar y bloquea el hilo.",
+    "No tocar el shell (app/src/shell/**) ni App.tsx: tienen contrato y tests propios desde el dia 2 (F-025). El subtitulo de VERA 'Agente de busqueda' (spec §5) es wiring de App.tsx y NO es de esta tarea.",
+    "No reimplementar nada de `app/src/lib/search.ts`. Ni el nombre del pais, ni el formato de la cantidad, ni el ciclo de tres clics de la ordenacion, ni los chips. Estan escritos y probados.",
+    "Los numeros y fechas se formatean con las funciones de la capa de datos, nunca a mano. El mock escribe '1.200' donde el espanol correcto es '1200', y escribe 'Ayer' donde la funcion de la casa da 'Hace 1 dia' (F-024).",
+    "El TITULO de la pantalla es 'Resultados de busqueda' (spec §3). El HTML aprobado escribe 'Mis consultas' en su `page-title` y es una errata de plantilla: manda el spec, el mock es un mock. Ver F-041.",
+    "El orden de las DIEZ columnas es fijo e inamovible (spec §7). Se ordenan filas, nunca columnas.",
+    "La tabla es una `<table>` semantica con `<th>` de verdad. Un `<div>` con `display:grid` no da rol de columnheader y hace inaccesible la ordenacion."
+  ]
+}

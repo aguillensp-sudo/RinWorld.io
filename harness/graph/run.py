@@ -23,7 +23,7 @@ from langgraph.graph import END, StateGraph
 
 from ..core import metrics, pricing
 from .nodes.coder import coder_node
-from .nodes.test_runner import test_runner_node
+from .nodes.test_runner import check_toolchain_or_exit, test_runner_node
 from .state import MAX_ATTEMPTS, HarnessState
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -81,6 +81,8 @@ def main(argv=None) -> int:
     if args.seco:
         from ..tests.dry_run import run_dry
         return run_dry(task)
+
+    check_toolchain_or_exit()  # dia 5: y esto tambien, antes de gastar
 
     app = build_graph()
     final = app.invoke({"task": task, "attempt": 0, "metrics": []},

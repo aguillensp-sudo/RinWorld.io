@@ -1,4 +1,7 @@
-"""Pruebas de las piezas puras del Test-runner. Sin red, sin npm, sin coste.
+"""Pruebas de las piezas puras del Test-runner. Sin red y sin coste.
+
+Sin npm tampoco, salvo `test_toolchain`, que arranca `npm --version` a proposito:
+"sin npm" era justo el agujero por el que se colo el fallo del dia 5.
 
 La mitad de estas pruebas no comprueban que el check **cace** un fallo: comprueban
 que **no rechace output correcto**. Es la leccion de F-003, donde el criterio C3
@@ -13,6 +16,7 @@ import sys
 
 from ..core import metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
+from ..graph.nodes.test_runner import resolve, run_cmd
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TOKENS = read_tokens(
@@ -104,6 +108,27 @@ def test_idiomatic():
                         OUTPUTS, DEPS)
     check("caza props sin tipar", not r["ok"], r["detail"])
 
+    # El falso rojo del dia 5, y el que mas caro sale: un valor por defecto con
+    # parentesis cortaba la captura de parametros antes de la anotacion de tipo.
+    # `ThreadList` estaba tipado y C4 lo suspendio en los tres intentos.
+    con_defecto = {OUTPUTS[0]: (
+        "export interface Props { threads: string[]; now?: Date }\n"
+        "export function ThreadList({\n"
+        "  threads,\n"
+        "  now = new Date(),\n"
+        "}: Props) { return <ul/>; }\n"
+    )}
+    r = check_idiomatic(con_defecto, OUTPUTS, DEPS)
+    check("no suspende un componente tipado con defecto entre parentesis",
+          r["ok"], r["detail"])
+
+    r = check_idiomatic({OUTPUTS[0]: "const Row = ({ id = f() }) => null;"}, OUTPUTS, DEPS)
+    check("y sigue cazando el mismo caso sin tipar", not r["ok"], r["detail"])
+
+    # `const X = (algo)` no es un componente: sin `=>` detras no se juzga.
+    r = check_idiomatic({OUTPUTS[0]: "const Total = (a + b);"}, OUTPUTS, DEPS)
+    check("no confunde un parentesis cualquiera con un componente", r["ok"], r["detail"])
+
 
 # -------------------------------------------------------- coste y fila del CSV
 
@@ -171,12 +196,31 @@ def test_parse():
     check("sin bloques, diccionario vacio", parse.parse_files("nada") == {})
 
 
+def test_toolchain():
+    """La unica prueba de este fichero que arranca un proceso, y esta aqui porque
+    su ausencia costo la corrida del dia 5: `npm` en Windows es `npm.CMD`,
+    `subprocess` con `shell=False` no aplica PATHEXT y los tres intentos se
+    pagaron con C1 y C2 en rojo sin haber ejecutado un solo test."""
+    print("\nCadena de herramientas de C1 y C2")
+
+    check("resuelve npm a un ejecutable real", resolve("npm") != "npm", resolve("npm"))
+    check("y deja en paz lo que no encuentra",
+          resolve("estonoexiste-bw") == "estonoexiste-bw")
+
+    code, out = run_cmd(["npm", "--version"], ROOT)
+    check("npm --version corre desde el Test-runner", code == 0, out.strip()[:80])
+
+    code, _ = run_cmd(["npx", "--version"], ROOT)
+    check("npx --version tambien", code == 0)
+
+
 def main() -> int:
     test_palette()
     test_idiomatic()
     test_metrics()
     test_pricing_guard()
     test_parse()
+    test_toolchain()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

@@ -35,10 +35,33 @@ FORBIDDEN = [
 NODE_BUILTINS = {"node:fs", "node:path", "node:url", "fs", "path", "url"}
 
 #: Componente = funcion con nombre en mayuscula. Si recibe parametros, van tipados.
-COMPONENT_FN = re.compile(
-    r"(?:export\s+)?(?:default\s+)?function\s+([A-Z]\w*)\s*\(([^)]*)\)"
-    r"|const\s+([A-Z]\w*)\s*(?::[^=]+)?=\s*\(([^)]*)\)\s*(?::[^=]+)?=>"
+#:
+#: Solo la CABECERA, hasta el parentesis de apertura. La lista de parametros no se
+#: captura con `[^)]*` y eso es una correccion del dia 5: un valor por defecto que
+#: lleve parentesis -`now = new Date()`- corta la captura por la mitad, la
+#: anotacion de tipo se queda fuera porque va detras, y C4 suspende un componente
+#: correctamente tipado. Le paso a `ThreadList` en los tres intentos de MSG-01.
+COMPONENT_HEAD = re.compile(
+    r"(?:export\s+)?(?:default\s+)?function\s+([A-Z]\w*)\s*\("
+    r"|const\s+([A-Z]\w*)\s*(?::[^=]+)?=\s*\("
 )
+
+#: Lo que tiene que seguir al cierre para que la rama del `const` sea de verdad un
+#: componente y no un `const X = (loQueSea)`.
+ARROW_AFTER = re.compile(r"\s*(?::[^=]*)?=>")
+
+
+def _balanced(text: str, open_idx: int) -> tuple:
+    """(contenido, indice del cierre) equilibrando parentesis desde `open_idx`."""
+    depth = 0
+    for i in range(open_idx, len(text)):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+            if depth == 0:
+                return text[open_idx + 1:i], i
+    return text[open_idx + 1:], len(text) - 1
 
 
 def _strip_comments(text: str) -> str:
@@ -105,9 +128,12 @@ def check_idiomatic(files: dict, allowed_outputs: list, dependencies: set) -> di
                 f"package.json")
 
         if name.endswith(".tsx"):
-            for m in COMPONENT_FN.finditer(clean):
-                params = (m.group(2) or m.group(4) or "").strip()
-                comp = m.group(1) or m.group(3)
+            for m in COMPONENT_HEAD.finditer(clean):
+                comp = m.group(1) or m.group(2)
+                params, close = _balanced(clean, m.end() - 1)
+                if m.group(2) and not ARROW_AFTER.match(clean, close + 1):
+                    continue
+                params = params.strip()
                 if params and ":" not in params:
                     problems.append(
                         f"{name}: `{comp}` recibe props sin tipar ({params})")

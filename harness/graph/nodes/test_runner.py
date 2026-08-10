@@ -35,6 +35,7 @@ solucion y el intento 2 deja de medir al Coder.
 """
 import json
 import pathlib
+import shutil
 import subprocess
 
 from ..checks import check_idiomatic, check_palette, read_tokens
@@ -44,11 +45,43 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]
 APP = ROOT / "app"
 
 
+def resolve(program: str) -> str:
+    """La ruta real del ejecutable, o el nombre tal cual si no aparece.
+
+    **En Windows `npm` es `npm.CMD`, y `subprocess` con `shell=False` no aplica
+    PATHEXT**: la llamada muere con `WinError 2` antes de arrancar nada. El dia 5
+    eso reporto C1 y C2 en ROJO en los tres intentos de MSG-01 sin haber ejecutado
+    ni un test, y el feedback que volvio al Coder fue *"no se pudo ejecutar npm"* —
+    ruido puro, tres veces pagado. La regla de F-015 (un check que no se puede
+    ejecutar es rojo) hizo justo lo que debia; el fallo era que no se podia
+    ejecutar. `shell=True` lo arreglaria tambien, y no se usa: mete la linea por
+    un interprete de comandos y las rutas con espacios -`C:\\Program Files`- dejan
+    de ser un argumento."""
+    return shutil.which(program) or program
+
+
+def check_toolchain_or_exit() -> None:
+    """Antes de llamar al Coder: que las herramientas de C1 y C2 existan.
+
+    Sin `npm` y `npx` los cuatro checks son inejecutables, asi que la corrida solo
+    puede acabar escalando — pero **despues** de pagar los tres intentos. Es lo
+    que paso el dia 5 con MSG-01: $0.0345 y tres artefactos evaluados a ciegas.
+    Misma idea que `pricing.check_prices_or_exit()`: lo que hace inutil la corrida
+    entera se comprueba antes de gastar, no al llegar al primer check."""
+    faltan = [p for p in ("npm", "npx") if not shutil.which(p)]
+    if faltan:
+        raise SystemExit(
+            "No estan en el PATH: " + ", ".join(faltan) + ".\n"
+            "C1 y C2 no se podrian ejecutar y la corrida acabaria escalando sin "
+            "haber probado nada. Se para antes de llamar al Coder.")
+
+
 def run_cmd(cmd: list, cwd: pathlib.Path) -> tuple:
     """(codigo, salida). Se inyecta en `test_runner_node` para poder correr el
     grafo en seco sin arrancar npm."""
     try:
-        p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+        p = subprocess.run([resolve(cmd[0]), *cmd[1:]], cwd=cwd,
+                           capture_output=True, text=True,
                            timeout=900, shell=False)
     except FileNotFoundError as e:
         return 127, f"no se pudo ejecutar {' '.join(cmd)}: {e}"

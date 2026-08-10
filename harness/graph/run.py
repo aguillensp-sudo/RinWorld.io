@@ -19,6 +19,23 @@ import json
 import pathlib
 import sys
 
+# -----------------------------------------------------------------------------
+# La consola de Windows es cp1252 y el feedback lleva caracteres que no estan en
+# esa tabla. En la corrida 1 de SRCH-01 el escalado reviento aqui —`★`, U+2605,
+# de la columna de favoritos— **justo al imprimir la razon del escalado**: el
+# proceso murio con UnicodeEncodeError, el veredicto se supo y el motivo hubo que
+# reproducirlo a mano corriendo los checks otra vez.
+#
+# Es el mismo hallazgo que 42e3e8c por el otro lado: aquel era el DECODE de la
+# salida de los checks, este es el ENCODE de lo que imprimimos. Y es otra vez el
+# patron de F-028..F-032: **el veredicto sobrevive y la razon no**. Con `replace`,
+# un caracter fuera de tabla sale como '?' y no se lleva por delante el informe.
+# Ver F-046.
+# -----------------------------------------------------------------------------
+for _flujo in (sys.stdout, sys.stderr):
+    if hasattr(_flujo, "reconfigure"):
+        _flujo.reconfigure(encoding="utf-8", errors="replace")
+
 from langgraph.graph import END, StateGraph
 
 from ..core import metrics, pricing

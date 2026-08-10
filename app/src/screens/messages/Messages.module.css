@@ -6,9 +6,14 @@
  * El texto de los botones primarios sería blanco puro sobre azul; se usa
  * --bw-on-dark-hover, el token de blanco más cercano. */
 
+/* El mismo respiro que INV-01 (`Inventory.module.css` .body). El artefacto salió
+   sin padding y el contenido quedaba pegado al borde izquierdo del panel: no lo
+   ve C2, que mira comportamiento, ni C3, que mira color, ni C4, que es mecánico.
+   Es de C5, y C5 lo da el PO. */
 .page {
   background: var(--bw-cold-white);
   min-height: 100%;
+  padding: 40px 48px 56px;
 }
 
 .eyebrow {

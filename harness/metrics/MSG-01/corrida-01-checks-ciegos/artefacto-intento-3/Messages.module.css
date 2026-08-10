@@ -1,0 +1,31 @@
+.content {
+  min-width: 0;
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-brand);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-steel-mist);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--bw-ink-steel);
+  margin-bottom: 3px;
+}
+
+.subtitle {
+  font-size: var(--bw-size-body);
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin-bottom: 16px;
+  max-width: 560px;
+}

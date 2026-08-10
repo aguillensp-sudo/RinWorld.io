@@ -4,6 +4,7 @@ import { AppShell, navIndexOf } from './shell/AppShell';
 import { Login } from './screens/Login';
 import { Welcome } from './screens/Welcome';
 import { Inventory } from './screens/inventory/Inventory';
+import { Messages } from './screens/messages/Messages';
 
 /**
  * Qué pantalla va con qué ítem de nav.
@@ -24,10 +25,15 @@ import { Inventory } from './screens/inventory/Inventory';
  * Los otros seis ítems no tienen pantalla en el MVP (Plan §9, 8 pantallas).
  */
 const INVENTORY_NAV = navIndexOf('Inventario');
+const MESSAGES_NAV = navIndexOf('Hilos');
 const HOME_NAV = navIndexOf('Panel');
 
 /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
 const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
+
+/** MSG-01 §5: "**Subtítulo del panel:** `Agente de mensajería`". Aquí spec y HTML
+ *  aprobado no discrepan, así que no hay nada que resolver como en F-025. */
+const MESSAGES_VERA_SUBTITLE = 'Agente de mensajería';
 
 export function App() {
   const { state, error, signIn, signOut } = useSession();
@@ -54,6 +60,13 @@ export function App() {
   }
 
   const onInventory = nav === INVENTORY_NAV;
+  const onMessages = nav === MESSAGES_NAV;
+
+  const veraSubtitle = onInventory
+    ? INVENTORY_VERA_SUBTITLE
+    : onMessages
+      ? MESSAGES_VERA_SUBTITLE
+      : undefined;
 
   return (
     <AppShell
@@ -61,9 +74,31 @@ export function App() {
       onSignOut={signOut}
       activeNav={nav}
       onNavigate={setNav}
-      {...(onInventory ? { veraSubtitle: INVENTORY_VERA_SUBTITLE } : {})}
+      {...(veraSubtitle ? { veraSubtitle } : {})}
     >
-      {onInventory ? <Inventory profile={state.profile} /> : <Welcome profile={state.profile} />}
+      {onMessages ? (
+        /*
+         * `now` va explícito, y no por omisión como en INV-01, a propósito. El
+         * contrato de aceptación lo pasa siempre (`Messages.test.tsx` monta
+         * `<Messages profile={…} now={NOW} />`) pero no fija si es opcional. Si el
+         * Coder lo declara obligatorio, un `<Messages profile={…} />` a secas
+         * rompería `npm run typecheck` desde este fichero — que la tarea le prohíbe
+         * tocar y que además no ve. Sería C1 en rojo por el wiring, no por el
+         * artefacto, y con tope de tres intentos ese falso rojo se lleva por
+         * delante la medición del día. Al revés no puede pasar: si no aceptara
+         * `now`, su propio contrato no compilaría.
+         *
+         * Se construye en el render y no se congela al montar: con un `now` fijo,
+         * una sesión abierta un par de horas acabaría diciendo "en 1 h" de un
+         * elemento del pasado. Es el mismo comportamiento que el `new Date()` por
+         * defecto de `relativeTime`.
+         */
+        <Messages profile={state.profile} now={new Date()} />
+      ) : onInventory ? (
+        <Inventory profile={state.profile} />
+      ) : (
+        <Welcome profile={state.profile} />
+      )}
     </AppShell>
   );
 }

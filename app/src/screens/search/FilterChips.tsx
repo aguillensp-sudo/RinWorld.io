@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import {
+  activeChips,
+  CHIP_LABELS,
+  withoutChip,
   ZONES,
   ZONE_LABELS,
-  activeChips,
-  withoutChip,
   type ChipKey,
   type SearchCriteria,
   type Zone,
@@ -12,71 +13,76 @@ import styles from './FilterChips.module.css';
 
 interface Props {
   criteria: SearchCriteria;
-  onChange(next: SearchCriteria): void;
+  onChange: (next: SearchCriteria) => void;
 }
 
-const FIELD_OPTIONS: { key: ChipKey; label: string }[] = [
-  { key: 'partNumber', label: 'Ref' },
-  { key: 'brand', label: 'Marca' },
-  { key: 'minQuantity', label: 'Qty min' },
-  { key: 'zone', label: 'Zona' },
-  { key: 'maxLeadTimeDays', label: 'Lead time max' },
-];
+/**
+ * Las cinco opciones de Campo, en el orden fijo de la tabla de chips de la
+ * spec §3: Ref · Marca · Qty mín · Zona · Lead time máx.
+ */
+const FIELD_OPTIONS: ChipKey[] = ['partNumber', 'brand', 'minQuantity', 'zone', 'maxLeadTimeDays'];
 
 /**
- * Chips de filtro de SRCH-01, totalmente controlados.
+ * Chips de filtro de SRCH-01.
  *
- * No guarda criterios: los recibe por prop y emite los nuevos enteros. El único
- * estado propio son el formulario desplegado y lo que hay tecleado en él.
+ * Presentacional y totalmente controlado: no guarda criterios, los recibe y
+ * emite los nuevos enteros. El único estado propio es el del formulario en
+ * línea (`+ Filtro`): si está abierto y qué hay tecleado en él.
  */
 export function FilterChips({ criteria, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [field, setField] = useState<ChipKey>('partNumber');
-  const [raw, setRaw] = useState('');
+  const [value, setValue] = useState('');
 
-  const chips = activeChips(criteria);
-  const numeric = field === 'minQuantity' || field === 'maxLeadTimeDays';
-  const canSubmit = raw.trim() !== '' && (!numeric || Number.isFinite(Number(raw)));
+  const handleAdd = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed) return;
 
-  const handleAdd = () => {
-    if (!canSubmit) return;
-    const value = raw.trim();
-    const next = { ...criteria };
-
+    const next: SearchCriteria = { ...criteria };
     switch (field) {
       case 'partNumber':
-        next.partNumber = value;
+        next.partNumber = trimmed;
         break;
       case 'brand':
-        next.brand = value;
+        next.brand = trimmed;
         break;
-      case 'minQuantity':
-        next.minQuantity = Number(value);
+      case 'minQuantity': {
+        const n = Number(trimmed);
+        if (Number.isNaN(n) || n <= 0) return;
+        next.minQuantity = n;
         break;
-      case 'zone':
-        next.zone = value as Zone;
+      }
+      case 'zone': {
+        const z = trimmed as Zone;
+        if (!ZONES.includes(z)) return;
+        next.zone = z;
         break;
-      case 'maxLeadTimeDays':
-        next.maxLeadTimeDays = Number(value);
+      }
+      case 'maxLeadTimeDays': {
+        const n = Number(trimmed);
+        if (Number.isNaN(n) || n <= 0) return;
+        next.maxLeadTimeDays = n;
         break;
+      }
     }
 
     onChange(next);
     setOpen(false);
-    setRaw('');
+    setField('partNumber');
+    setValue('');
   };
 
   return (
-    <div className={styles.row}>
-      {chips.map((chip) => (
+    <div className={styles.chipsRow}>
+      {activeChips(criteria).map((chip) => (
         <span key={chip.key} className={styles.chip}>
-          <span className={styles.label}>{chip.label}</span>
-          <span className={styles.value}>{chip.value}</span>
+          <span className={styles.chipLabel}>{chip.label}</span>
+          <span className={styles.chipValue}>{chip.value}</span>
           <button
             type="button"
-            className={styles.remove}
+            className={styles.chipX}
             aria-label={`Quitar filtro ${chip.label}`}
-            title={chip.value}
             onClick={() => onChange(withoutChip(criteria, chip.key))}
           >
             ×
@@ -84,47 +90,33 @@ export function FilterChips({ criteria, onChange }: Props) {
         </span>
       ))}
 
-      <button
-        type="button"
-        className={styles.add}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-      >
-        <span aria-hidden="true">+</span> Filtro
+      <button type="button" className={styles.chipAdd} aria-label="Añadir filtro" onClick={() => setOpen((o) => !o)}>
+        <i className="ti ti-plus" aria-hidden="true" /> Filtro
       </button>
 
-      {open ? (
-        <form
-          className={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAdd();
-          }}
-        >
+      {open && (
+        <form className={styles.filterForm} onSubmit={handleAdd}>
           <select
-            className={styles.select}
+            className={styles.fieldSelect}
             aria-label="Campo"
             value={field}
-            onChange={(e) => {
-              setField(e.target.value as ChipKey);
-              setRaw('');
-            }}
+            onChange={(e) => setField(e.target.value as ChipKey)}
           >
-            {FIELD_OPTIONS.map((o) => (
-              <option key={o.key} value={o.key}>
-                {o.label}
+            {FIELD_OPTIONS.map((k) => (
+              <option key={k} value={k}>
+                {CHIP_LABELS[k]}
               </option>
             ))}
           </select>
 
           {field === 'zone' ? (
             <select
-              className={styles.select}
+              className={styles.fieldSelect}
               aria-label="Valor"
-              value={raw}
-              onChange={(e) => setRaw(e.target.value)}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
             >
-              <option value="">Zona…</option>
+              <option value="">Selecciona zona...</option>
               {ZONES.map((z) => (
                 <option key={z} value={z}>
                   {ZONE_LABELS[z]}
@@ -133,21 +125,29 @@ export function FilterChips({ criteria, onChange }: Props) {
             </select>
           ) : (
             <input
-              className={styles.input}
+              className={styles.valueInput}
               aria-label="Valor"
-              type={numeric ? 'number' : 'text'}
-              min={numeric ? 0 : undefined}
-              placeholder={field === 'partNumber' ? '6205-2RS' : field === 'brand' ? 'SKF' : field === 'minQuantity' ? '500' : '7'}
-              value={raw}
-              onChange={(e) => setRaw(e.target.value)}
+              type={field === 'minQuantity' || field === 'maxLeadTimeDays' ? 'number' : 'text'}
+              min={field === 'minQuantity' || field === 'maxLeadTimeDays' ? 1 : undefined}
+              placeholder={
+                field === 'partNumber'
+                  ? '6205-2RS'
+                  : field === 'brand'
+                    ? 'SKF'
+                    : field === 'minQuantity'
+                      ? '500'
+                      : '7'
+              }
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
             />
           )}
 
-          <button type="submit" className={styles.submit} disabled={!canSubmit}>
-            Anadir
+          <button type="submit" className={styles.addButton}>
+            Añadir
           </button>
         </form>
-      ) : null}
+      )}
     </div>
   );
 }

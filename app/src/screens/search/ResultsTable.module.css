@@ -1,19 +1,19 @@
-.wrap {
+.tableOuter {
   flex: 1;
-  min-height: 0;
-  overflow: auto;
+  overflow-x: auto;
   background: white;
   border: 1px solid var(--bw-line-steel);
-  border-radius: 8px;
+  border-radius: 8px; /* no hay token para 8px; --bw-radius es 3px y el HTML aprobado usa 8px aquí */
+  min-height: 0;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 960px;
+  min-width: 860px;
 }
 
-.table th {
+.th {
   font-family: var(--bw-font-title);
   font-size: 10px;
   font-weight: 700;
@@ -30,67 +30,59 @@
   z-index: 1;
 }
 
-.table td {
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable:hover {
+  color: var(--bw-steel-mist);
+}
+
+.sortAsc {
+  color: var(--bw-calibration-blue);
+}
+.sortAsc::after {
+  content: ' ↑';
+}
+
+.sortDesc {
+  color: var(--bw-calibration-blue);
+}
+.sortDesc::after {
+  content: ' ↓';
+}
+
+.sortable:not(.sortAsc):not(.sortDesc)::after {
+  content: ' ·';
+  opacity: 0.3;
+}
+
+.thChk {
+  width: 36px;
+  padding: 10px 8px 10px 14px;
+}
+
+.td {
   padding: 10px;
   border-bottom: 1px solid var(--bw-divider-mist);
   vertical-align: middle;
 }
 
-.table tbody tr:last-child td {
+.tdChk {
+  padding: 10px 8px 10px 14px;
+}
+
+.row:last-child .td {
   border-bottom: none;
 }
 
-.chkTh {
-  width: 36px;
-  padding: 10px 8px 10px 14px;
+.consulted {
+  /* el HTML aprobado usa rgba(37,99,235,0.04); el token de superficie tintada
+     más cercano es --bw-tint-consulta (#EFF6FF) */
+  background: var(--bw-tint-consulta);
 }
 
-.chkTd {
-  padding: 10px 8px 10px 14px;
-}
-
-.table input[type='checkbox'] {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--bw-calibration-blue);
-  cursor: pointer;
-}
-
-.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.sortButton {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.sortButton:hover {
-  color: var(--bw-steel-mist);
-}
-
-.sortIcon {
-  font-size: 11px;
-  line-height: 1;
-}
-
-.table tbody tr:hover td {
-  background: var(--bw-row-hover-tint);
-}
-
-.table tbody tr.consulted td {
-  /* El spec pide rgba(37,99,235,0.04); el token más cercano es el hover de fila. */
+.row:hover:not(.consulted) .td {
   background: var(--bw-row-hover-tint);
 }
 
@@ -101,16 +93,17 @@
   white-space: nowrap;
 }
 
-.brand {
+.brandBadge {
   font-family: var(--bw-font-mono);
   font-size: 10px;
   padding: 2px 7px;
-  border-radius: 3px;
-  background: var(--bw-deep-steel);
-  color: var(--bw-vera-user-text);
+  border-radius: var(--bw-radius);
+  background: var(--bw-deep-steel); /* el HTML usa #2D3748; el token más cercano es deep-steel */
+  color: var(--bw-cold-white); /* el HTML usa #E2E8F0; el token más cercano es cold-white */
   font-weight: 500;
   letter-spacing: 0.03em;
   white-space: nowrap;
+  display: inline-block;
 }
 
 .qty {
@@ -118,12 +111,10 @@
   font-weight: 600;
   white-space: nowrap;
 }
-
-.qtyOk {
+.ok {
   color: var(--bw-signal-green);
 }
-
-.qtyLow {
+.low {
   color: var(--bw-steel-mist);
 }
 
@@ -139,15 +130,16 @@
   color: var(--bw-deep-steel);
 }
 
-.country {
+.countryBadge {
   font-size: 11px;
   padding: 2px 7px;
-  border-radius: 3px;
-  background: var(--bw-cold-white);
+  border-radius: var(--bw-radius);
+  background: var(--bw-cold-white); /* #F1F3F6 del HTML aprobado */
   color: var(--bw-ink-steel);
   font-weight: 500;
   white-space: nowrap;
   border: 1px solid var(--bw-line-steel);
+  display: inline-block;
 }
 
 .age {
@@ -155,13 +147,12 @@
   color: var(--bw-steel-mist);
   white-space: nowrap;
 }
-
-.ageStale {
+.stale {
   color: var(--bw-warning);
   font-weight: 500;
 }
 
-.favorite {
+.favButton {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -173,19 +164,16 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: inherit;
   transition: opacity 0.12s;
+  font-family: inherit;
 }
-
-.favorite:hover {
+.favButton:hover {
   opacity: 0.7;
 }
-
-.favoriteActive {
+.favButton[aria-pressed='true'] .favStar {
   color: var(--bw-warning);
 }
-
-.star {
+.favStar {
   font-size: 14px;
 }
 
@@ -205,15 +193,13 @@
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
+  transition: opacity 0.12s;
   white-space: nowrap;
   font-family: inherit;
-  transition: opacity 0.12s;
 }
-
-.consult:hover {
+.consult:hover:not(:disabled) {
   opacity: 0.85;
 }
-
 .consult:disabled {
   opacity: 0.32;
   cursor: not-allowed;
@@ -229,19 +215,38 @@
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.12s;
   white-space: nowrap;
   font-family: inherit;
-  transition: all 0.12s;
 }
-
 .contact:hover {
   border-color: var(--bw-brass);
   color: var(--bw-brass);
 }
 
-.empty {
+.checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+
+.emptyCell {
   text-align: center;
-  padding: 40px 16px;
+  padding: 32px 16px;
   font-size: 14px;
   color: var(--bw-steel-mist);
+  border-bottom: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }

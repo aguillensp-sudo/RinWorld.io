@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import {
   ageLabel,
   countryName,
@@ -12,54 +11,43 @@ import {
 } from '../../lib/search';
 import styles from './ResultsTable.module.css';
 
-export interface Props {
+interface Props {
   rows: SearchResultRow[];
   sort: Sort | null;
   selected: ReadonlySet<string>;
   minQuantity: number | null;
-  /** Inyectable para que los tests no dependan del reloj. */
   now?: Date;
-  onSort(column: SortColumn): void;
-  onToggleRow(lineId: string): void;
-  onToggleFavorite(orgId: string): void;
-  onConsult(lineId: string): void;
-  onContact(orgId: string): void;
-}
-
-interface SortableHeaderProps {
-  column: SortColumn;
-  label: string;
-  sort: Sort | null;
-  onSort(column: SortColumn): void;
-}
-
-function SortableHeader({ column, label, sort, onSort }: SortableHeaderProps) {
-  const active = sort?.column === column;
-  const direction = active ? sort?.direction ?? null : null;
-
-  return (
-    <th
-      scope="col"
-      className={styles.sortable}
-      aria-sort={direction ? (direction === 'asc' ? 'ascending' : 'descending') : undefined}
-    >
-      <button type="button" className={styles.sortButton} onClick={() => onSort(column)}>
-        {label}
-        {direction ? (
-          <span aria-hidden="true" className={styles.sortIcon}>
-            {direction === 'asc' ? '↑' : '↓'}
-          </span>
-        ) : null}
-      </button>
-    </th>
-  );
+  onSort: (column: SortColumn) => void;
+  onToggleRow: (lineId: string) => void;
+  onToggleFavorite: (orgId: string) => void;
+  onConsult: (lineId: string) => void;
+  onContact: (orgId: string) => void;
 }
 
 /**
- * Tabla de resultados de SRCH-01, presentacional.
+ * Las diez columnas de la spec §3, en el orden fijo e inamovible (§7).
+ * Las ordenables son las seis de `SORTABLE_COLUMNS`; Checkbox, Referencia,
+ * Empresa y Acciones no lo son.
+ */
+const COLUMNS: { key?: SortColumn; label: string; sortable: boolean; isControl?: boolean }[] = [
+  { label: 'Seleccionar fila', sortable: false, isControl: true },
+  { label: 'Referencia', sortable: false },
+  { label: 'Marca', key: 'brand', sortable: true },
+  { label: 'Cantidad', key: 'quantity', sortable: true },
+  { label: 'Plazo', key: 'leadTime', sortable: true },
+  { label: 'Empresa', sortable: false },
+  { label: 'País', key: 'country', sortable: true },
+  { label: 'Antigüedad', key: 'age', sortable: true },
+  { label: 'Favoritos', key: 'favorites', sortable: true },
+  { label: 'Acciones', sortable: false, isControl: true },
+];
+
+/**
+ * Tabla de resultados de SRCH-01.
  *
- * Pinta las filas exactamente en el orden que recibe; ordenar es de la pantalla.
- * El estado vacío vive aquí: "no hay filas" es un estado de la lista.
+ * Presentacional: pinta las filas en el orden que recibe y no carga datos.
+ * El estado vacío vive aquí, dentro de la tabla, porque "no hay filas" es un
+ * estado de la lista y no de la pantalla.
  */
 export function ResultsTable({
   rows,
@@ -73,108 +61,100 @@ export function ResultsTable({
   onConsult,
   onContact,
 }: Props) {
-  const effectiveNow = now ?? new Date();
-  const allSelected = rows.length > 0 && rows.every((row) => selected.has(row.id));
-  const someSelected = rows.some((row) => selected.has(row.id));
-  const headerRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (headerRef.current) {
-      headerRef.current.indeterminate = someSelected && !allSelected;
-    }
-  }, [someSelected, allSelected]);
-
-  const handleHeaderChange = () => {
-    if (allSelected) {
-      rows.filter((row) => selected.has(row.id)).forEach((row) => onToggleRow(row.id));
-    } else {
-      rows.filter((row) => !selected.has(row.id)).forEach((row) => onToggleRow(row.id));
-    }
-  };
+  const nowValue = now ?? new Date();
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.tableOuter}>
       <table className={styles.table}>
         <thead>
           <tr>
-            <th scope="col" className={styles.chkTh}>
-              <input
-                ref={headerRef}
-                type="checkbox"
-                checked={allSelected}
-                onChange={handleHeaderChange}
-                aria-label="Seleccionar todos"
-              />
-            </th>
-            <th scope="col">Referencia</th>
-            <SortableHeader column="brand" label="Marca" sort={sort} onSort={onSort} />
-            <SortableHeader column="quantity" label="Cantidad" sort={sort} onSort={onSort} />
-            <SortableHeader column="leadTime" label="Plazo" sort={sort} onSort={onSort} />
-            <th scope="col">Empresa</th>
-            <SortableHeader column="country" label="País" sort={sort} onSort={onSort} />
-            <SortableHeader column="age" label="Antigüedad" sort={sort} onSort={onSort} />
-            <SortableHeader column="favorites" label="Favoritos" sort={sort} onSort={onSort} />
-            <th scope="col">Acciones</th>
+            {COLUMNS.map((col, i) => {
+              const cls = [styles.th];
+              if (i === 0) cls.push(styles.thChk);
+              if (col.sortable && col.key) {
+                cls.push(styles.sortable);
+                if (sort?.column === col.key) {
+                  cls.push(sort.direction === 'asc' ? styles.sortAsc : styles.sortDesc);
+                }
+              }
+              const ariaSort =
+                sort?.column === col.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined;
+              return (
+                <th
+                  key={col.label}
+                  className={cls.join(' ')}
+                  aria-sort={ariaSort}
+                  onClick={col.sortable && col.key ? () => onSort(col.key) : undefined}
+                >
+                  {col.isControl ? <span className={styles.srOnly}>{col.label}</span> : col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td className={styles.empty} colSpan={10}>
+              <td colSpan={10} className={`${styles.td} ${styles.emptyCell}`}>
                 No hemos encontrado stock con estos filtros.
               </td>
             </tr>
           ) : (
             rows.map((row) => {
-              const days = daysSince(row.lastUploadAt, effectiveNow);
-              const quantityOk = meetsMinQuantity(row.quantity, minQuantity);
+              const days = daysSince(row.lastUploadAt, nowValue);
               return (
-                <tr key={row.id} className={row.consulted ? styles.consulted : undefined}>
-                  <td className={styles.chkTd}>
+                <tr key={row.id} className={row.consulted ? `${styles.row} ${styles.consulted}` : styles.row}>
+                  <td className={`${styles.td} ${styles.tdChk}`}>
                     <input
                       type="checkbox"
+                      className={styles.checkbox}
                       checked={selected.has(row.id)}
                       onChange={() => onToggleRow(row.id)}
                       aria-label={`Seleccionar ${row.partNumber}`}
                     />
                   </td>
-                  <td>
+                  <td className={styles.td}>
                     <span className={styles.ref}>{row.partNumber}</span>
                   </td>
-                  <td>
-                    <span className={styles.brand}>{row.brand}</span>
+                  <td className={styles.td}>
+                    <span className={styles.brandBadge}>{row.brand}</span>
                   </td>
-                  <td>
-                    <span className={`${styles.qty} ${quantityOk ? styles.qtyOk : styles.qtyLow}`}>
+                  <td className={styles.td}>
+                    <span
+                      className={`${styles.qty} ${meetsMinQuantity(row.quantity, minQuantity) ? styles.ok : styles.low}`}
+                    >
                       {quantityLabel(row.quantity)}
                     </span>
                   </td>
-                  <td>
+                  <td className={styles.td}>
                     <span className={styles.leadTime}>{leadTimeLabel(row.leadTimeDays)}</span>
                   </td>
-                  <td>
+                  <td className={styles.td}>
                     <span className={styles.company}>{row.orgName}</span>
                   </td>
-                  <td>
-                    <span className={styles.country}>{countryName(row.country)}</span>
+                  <td className={styles.td}>
+                    <span className={styles.countryBadge}>{countryName(row.country)}</span>
                   </td>
-                  <td>
-                    <span className={`${styles.age} ${days > 7 ? styles.ageStale : ''}`}>{ageLabel(days)}</span>
+                  <td className={styles.td}>
+                    <span className={`${styles.age} ${days > 7 ? styles.stale : ''}`}>{ageLabel(days)}</span>
                   </td>
-                  <td>
+                  <td className={styles.td}>
+                    {/* F-038: el estado de favorito se distingue por aria-pressed,
+                        no solo por color. El recuento agregado es texto visible. */}
                     <button
                       type="button"
-                      className={`${styles.favorite} ${row.isFavorite ? styles.favoriteActive : ''}`}
+                      className={styles.favButton}
+                      aria-pressed={row.isFavorite}
+                      aria-label={`${row.isFavorite ? 'Quitar' : 'Marcar'} favorito de ${row.orgName}`}
                       onClick={() => onToggleFavorite(row.orgId)}
-                      aria-label={`${row.isFavorite ? 'Quitar favorita' : 'Añadir favorita'} ${row.orgName}`}
                     >
-                      <span aria-hidden="true" className={styles.star}>
+                      <span className={styles.favStar} aria-hidden="true">
                         ★
                       </span>
-                      <span>{quantityLabel(row.favoriteCount)}</span>
+                      <span>{row.favoriteCount}</span>
                     </button>
                   </td>
-                  <td>
+                  <td className={styles.td}>
                     <div className={styles.actions}>
                       <button
                         type="button"

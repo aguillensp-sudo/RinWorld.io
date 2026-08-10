@@ -1,4 +1,4 @@
-.row {
+.chipsRow {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -16,22 +16,24 @@
   font-size: 12px;
   font-weight: 500;
   color: white;
+  cursor: default;
 }
 
-.label {
-  color: var(--bw-on-dark-faint);
+.chipLabel {
+  color: var(--bw-on-dark-dim); /* rgba(255,255,255,0.5) del HTML aprobado */
   font-size: 11px;
+  margin-right: 2px;
 }
 
-.value {
+.chipValue {
   color: white;
 }
 
-.remove {
+.chipX {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--bw-on-dark-muted);
+  color: var(--bw-on-dark-faint); /* el HTML usa rgba(255,255,255,0.45); el más cercano es on-dark-faint */
   font-size: 14px;
   line-height: 1;
   padding: 0 0 0 3px;
@@ -40,12 +42,11 @@
   transition: color 0.12s;
   font-family: inherit;
 }
-
-.remove:hover {
+.chipX:hover {
   color: var(--bw-danger-light);
 }
 
-.add {
+.chipAdd {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -57,63 +58,60 @@
   font-weight: 500;
   color: var(--bw-steel-mist);
   cursor: pointer;
-  font-family: inherit;
   transition: all 0.12s;
+  font-family: inherit;
 }
-
-.add:hover {
+.chipAdd:hover {
   border-color: var(--bw-calibration-blue);
   color: var(--bw-calibration-blue);
 }
 
-.form {
+.filterForm {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-size: 12px;
   flex-wrap: wrap;
 }
 
-.select,
-.input {
+.fieldSelect,
+.valueInput {
+  height: 28px;
+  padding: 0 8px;
   border: 1px solid var(--bw-line-steel-strong);
-  border-radius: 4px;
-  padding: 5px 8px;
+  border-radius: var(--bw-radius);
   font-size: 12px;
-  color: var(--bw-input-text);
-  outline: none;
+  color: var(--bw-deep-steel);
   background: white;
   font-family: inherit;
-  transition: border-color 0.12s;
 }
-
-.select:focus,
-.input:focus {
+.fieldSelect:focus,
+.valueInput:focus {
+  outline: none;
   border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+.valueInput {
+  width: 120px;
 }
 
-.input::placeholder {
-  color: var(--bw-input-placeholder);
-}
-
-.submit {
+.addButton {
   height: 28px;
-  padding: 0 11px;
+  padding: 0 12px;
   background: var(--bw-calibration-blue);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--bw-radius);
   color: white;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.12s;
+  white-space: nowrap;
 }
-
-.submit:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.submit:not(:disabled):hover {
-  opacity: 0.85;
+.addButton:hover {
+  opacity: 0.87;
 }

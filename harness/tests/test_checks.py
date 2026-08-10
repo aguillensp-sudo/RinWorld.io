@@ -11,11 +11,13 @@ de intentos hasta verde, que es la que decide si el arnes es viable (`Plan §11`
 
 Uso:  python -m harness.tests.test_checks
 """
+import json
 import pathlib
 import sys
 
 from ..core import metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
+from ..graph.nodes.coder import build_system
 from ..graph.nodes.test_runner import resolve, run_cmd
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -214,6 +216,27 @@ def test_toolchain():
     check("npx --version tambien", code == 0)
 
 
+def test_prompt_inputs():
+    """Todo input declarado en la tarea tiene que llegar al prompt.
+
+    El dia 5, `data_layer` estaba en el JSON de la tarea con una nota que decia
+    *"el Coder los importa, no los reescribe"* — y `build_system` no lo leia. El
+    Coder reinvento `ThreadSummary` entera porque nunca la vio. Un input declarado
+    y no entregado es una adivinanza disfrazada de contrato, y ninguno de los
+    cuatro checks lo puede detectar: castigan al Coder por no usar lo que no
+    recibio."""
+    print("\nEl prompt entrega todos los inputs declarados")
+
+    task = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json").read_text(encoding="utf-8"))
+    system = build_system(task)
+
+    for clave, valor in task["inputs"].items():
+        if clave.startswith("_") or not isinstance(valor, str):
+            continue
+        firma = (ROOT / valor).read_text(encoding="utf-8").strip()[:200]
+        check(f"el prompt lleva `{clave}`", firma in system, valor)
+
+
 def main() -> int:
     test_palette()
     test_idiomatic()
@@ -221,6 +244,7 @@ def main() -> int:
     test_pricing_guard()
     test_parse()
     test_toolchain()
+    test_prompt_inputs()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

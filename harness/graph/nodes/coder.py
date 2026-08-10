@@ -34,6 +34,27 @@ def build_system(task: dict) -> str:
     spec = _read(inputs["spec"])
     approved = _read(inputs["approved_html"])
 
+    # La capa de datos que la tarea declara. **Iba en el JSON y no llegaba al
+    # prompt**, y ese es el bug del dia 5: la tarea decia "el Coder los importa,
+    # no los reescribe" hablando de unos tipos que el Coder no veia por ninguna
+    # parte. Reinvento `ThreadSummary` entera, con los cinco estados en
+    # `CON_OFERTA_PENDIENTE` en vez de los literales del esquema y un mapa de
+    # alias para tapar su propia invencion. Pedir que se importe un fichero sin
+    # ensenarlo no es una prueba del Coder: es una adivinanza.
+    capa = ""
+    if inputs.get("data_layer"):
+        capa = f"""## CAPA DE DATOS — YA ESCRITA, SE IMPORTA TAL CUAL
+
+`{inputs['data_layer']}` ya existe en el repo. Sus tipos y su logica pura son la
+verdad: se importan. **Declarar un tipo paralelo o reescribir estas funciones es un
+fallo del intento**, aunque el resultado parezca equivalente.
+
+```ts
+{_read(inputs['data_layer'])}
+```
+
+"""
+
     fuera = "\n".join(f"  - {x}" for x in task.get("out_of_scope", []))
     prohibiciones = "\n".join(f"  - {x}" for x in task.get("constraints", []))
     salidas = "\n".join(f"  - {x}" for x in task["outputs"])
@@ -67,7 +88,7 @@ arriba, CSS Modules, sin logica de datos dentro del componente de presentacion.
 {reference}
 ```
 
-## PROHIBICIONES EXPLICITAS
+{capa}## PROHIBICIONES EXPLICITAS
 
 {prohibiciones}
 

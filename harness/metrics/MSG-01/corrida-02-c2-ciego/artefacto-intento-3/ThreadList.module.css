@@ -1,0 +1,129 @@
+/* La tarjeta usa warm-cream porque no hay token de blanco puro y la tarjeta
+   tiene que distinguirse del fondo cold-white del panel. */
+
+.list {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--bw-surface-mist);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--bw-row-hover-tint);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.org {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.country {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 2px;
+  background: var(--bw-cold-white);
+  color: var(--bw-steel-mist);
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.ts {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--bw-input-placeholder);
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.botRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.preview {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.abierto {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border);
+  color: var(--bw-steel-mist);
+}
+
+.consulta {
+  background: var(--bw-chip-active-bg);
+  border: 1px solid var(--bw-chip-active-border);
+  color: var(--bw-calibration-blue);
+}
+
+.oferta {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning);
+}
+
+.acuerdo {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-signal-green);
+}
+
+.cerrado {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border-soft);
+  color: var(--bw-steel-mist);
+  text-decoration: line-through;
+}

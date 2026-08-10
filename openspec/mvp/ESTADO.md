@@ -17,7 +17,15 @@
 > contados dos veces, en su fila y dentro de la suite. Un número mal copiado en el tripwire
 > hace que mañana el rojo bueno parezca malo.
 
-**Día 5 de 15 · cerrado 10-ago-2026 · Estado: VERDE. Puerta de S1 pasada, salvo C5**
+**Día 5 de 15 · cerrado 10-ago-2026 · Estado: ÁMBAR. Tres de las cuatro condiciones de S1
+cerradas; la CI sigue roja y ya se sabe por qué**
+
+> **Lo primero, porque es lo único urgente y es de seguridad (F-038).** El informe de
+> Playwright adjunta a cada fallo un volcado del DOM **con el valor de cada campo**, ese
+> informe se sube como artefacto de la CI, y **este repositorio es público**: la contraseña
+> de la cuenta `alpha` ha estado descargable en texto plano. Ya no se escribe en corridas
+> nuevas —`signIn` vacía la caja en cuanto el formulario ha leído el valor—, pero **eso solo
+> tapa lo de mañana: la contraseña actual hay que rotarla.**
 
 > **Lee esto antes de nada: hoy el arnés produjo su primera pantalla, y lo que se midió
 > fueron sobre todo bugs propios.**
@@ -61,7 +69,28 @@ del arnés, con su coste medido."*
 | Dos cuentas, cada una ve su inventario | ✅ re-verificado hoy dentro de los 31 e2e |
 | Una pantalla nacida del arnés | ✅ MSG-01. Artefacto en `a31dfe3`, arreglo en `ccdbeed` |
 | Con su coste medido | ✅ 9 filas en el CSV + 9 JSON + tres `LEEME.md` |
-| CI en verde | 🟠 **en local sí, entera. En GitHub sigue sin haber corrido nunca** |
+| **C5 · ¿lo mantendrías?** | ✅ **PASA. El PO lo dio el 10-ago**, después de que la revisión sacara F-035 |
+| CI en verde | 🔴 **ROJA, y ya se sabe por qué: F-037.** Es lo único que queda de la puerta |
+
+**La CI está roja por el valor de un secret, no por el código.** De los tres trabajos,
+`Esquema` y `App · typecheck, Vitest, build` **pasan**; cae `Playwright`, y con un error que
+no menciona ni a Supabase ni a la clave:
+
+```
+Failed to execute 'fetch' on 'Window': Failed to read the 'headers' property
+from 'RequestInit': String contains non ISO-8859-1 code point.
+```
+
+`SUPABASE_PUBLISHABLE_KEY` tiene un carácter fuera de ISO-8859-1 —comilla tipográfica o
+espacio duro al pegarlo— y una cabecera HTTP no lo admite. El navegador **falla al construir
+la petición**, no al autenticar, así que parecía un fallo de credenciales. **Ninguna corrida
+de Playwright ha llegado nunca a autenticarse**, desde el día 2. Los otros dos síntomas que
+este fichero vigilaba quedan **descartados**: no son los diacríticos de `E2E_*_ORG` (habrían
+dado texto distinto, no `element(s) not found`) ni la clave de servicio (Beta ve 1 hilo de 5,
+luego RLS se aplica).
+
+**Lo arregla volver a pegar el secret en texto plano, y es lo único.** Desde hoy, si vuelve a
+pasar, `supabase.ts` lo dice al arrancar con el punto de código exacto.
 
 **Verificaciones, todas de hoy:**
 
@@ -75,9 +104,9 @@ del arnés, con su coste medido."*
 | `python -m harness.tests.test_checks` | **52/52** |
 | `python -m harness.graph.run … --seco` | 3/3 escenarios |
 
-**El único que falta es C5, y no lo da una máquina** (`Dia-04_decisiones_arnes.md` §4). El
-PO tiene las capturas y la lista de qué mirar; **ya salió de ahí el primer hallazgo de C5
-del proyecto** (F-035, abajo).
+**C5 ya está dado** (`Dia-04_decisiones_arnes.md` §4: *"El PO, a mano. El grafo llega hasta
+C4"*). Pasa — y de la revisión salió **el primer hallazgo de C5 del proyecto**, F-035: la
+pantalla estaba mal compuesta con los cuatro checks automáticos en verde.
 
 ---
 
@@ -178,13 +207,20 @@ el arnés toca algo crítico: la revisión a mano de después no es opcional.
 
 ## Pendiente de Álvaro
 
-**Ninguno bloquea el día 6.**
+**Los dos primeros no bloquean el día 6, pero cierran la puerta de S1 — y el primero es de
+seguridad.**
 
-1. 🟠 **C5 de MSG-01 — el único criterio que falta para cerrar la puerta de S1.** Tienes las
-   dos capturas y la lista de qué verificar. La pregunta es *"¿lo mantendrías?"*, no *"¿pasa
-   los tests?"*, que eso ya está medido. **Ya salió de ahí el primer hallazgo de C5 del
-   proyecto** (F-035: la pantalla salió sin padding, y ningún check del arnés puede ver eso).
-2. 🟠 **F-033 · qué hacer con las nueve filas de hoy en V1.** Se quedan como están (tu
+1. 🔴 **F-038 · rotar la contraseña de la cuenta `alpha`. No es opcional.** Ha estado en
+   texto plano dentro de los artefactos de la CI de un repositorio público. Las corridas
+   nuevas ya no la escriben, pero la contraseña actual sigue siendo la que estuvo expuesta.
+   Decide también si el informe de Playwright se sigue subiendo tal cual: con
+   `retention-days: 7` los informes ya publicados caducan solos, la contraseña no.
+2. 🔴 **F-037 · volver a pegar `SUPABASE_PUBLISHABLE_KEY` en texto plano.** Tiene un
+   carácter fuera de ISO-8859-1 y por eso Playwright no ha autenticado nunca. **Es lo único
+   que separa la CI del verde** y, con ello, la puerta de S1 de estar cerrada: los otros dos
+   trabajos ya pasan y C5 ya está dado.
+3. ✅ **C5 de MSG-01 — DADO el 10-ago.** Pasa. De la revisión salió F-035.
+4. 🟠 **F-033 · qué hacer con las nueve filas de hoy en V1.** Se quedan como están (tu
    decisión de hoy). Lo que falta decidir es si en V1 el CSV lleva un estado propio de check
    —`rojo` / `inejecutable`— y si un intento con algún check inejecutable cuenta como intento
    del modelo. Con el formato de hoy, la métrica de "intentos hasta verde" no es fiable.
@@ -211,12 +247,17 @@ el arnés toca algo crítico: la revisión a mano de después no es opcional.
 
 ## Riesgo con la vista más corta
 
-**La CI de GitHub no ha corrido en verde ni una vez, y hoy es el día en que más fácil sería
-darla por buena.** Todo lo verde de arriba es **local**. Los 8 secrets están puestos y sus
-nombres verificados, pero que los **valores** sean buenos solo lo dice una corrida. Lo que sí
-quedó descartado hoy, y con prueba: **la clave publicable es la publicable** — Beta ve 1 hilo
-de 5 por PostgREST directo y el e2e lo confirma desde el navegador. Con la clave de servicio
-habría visto los cinco. El otro síntoma (diacríticos comidos en `E2E_*_ORG`) tampoco apareció.
+**El riesgo de hoy ya no es la CI: es lo que la CI escondía.** La causa está identificada
+(F-037, un carácter mal pegado en un secret) y se arregla en un minuto. Lo que preocupa es
+cómo se encontró: **la CI llevaba ocho días roja y nadie había bajado el artefacto**. Al
+bajarlo apareció, de paso, que el informe publicaba una contraseña en un repositorio público
+(F-038). Ninguna de las dos cosas la ve un test; las ve mirar el fallo entero una vez.
+
+**La regla que sale de ahí, para mañana: un rojo viejo deja de leerse.** Este fichero lo
+escribió el día 4 —*"un repo rojo es un repo donde un rojo nuevo no se distingue del
+viejo"*— y aun así la CI encadenó ocho días en rojo con la causa a un `gh run download` de
+distancia. Si mañana la CI sigue roja después de repegar el secret, se para y se mira, no se
+sigue.
 
 **El segundo riesgo es creerse la métrica de hoy.** Nueve filas en el CSV y solo tres miden
 al modelo. Si mañana alguien promedia "intentos hasta verde" sobre las nueve, sale un número

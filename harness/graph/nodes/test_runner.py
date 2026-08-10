@@ -80,8 +80,16 @@ def run_cmd(cmd: list, cwd: pathlib.Path) -> tuple:
     """(codigo, salida). Se inyecta en `test_runner_node` para poder correr el
     grafo en seco sin arrancar npm."""
     try:
+        # `text=True` a secas decodifica con la codificacion de la consola —
+        # cp1252 en este Windows— y la salida de vitest lleva UTF-8 (los ticks,
+        # las cajas, los nombres con diacriticos de la siembra). El hilo lector de
+        # `subprocess` revienta con UnicodeDecodeError, la salida se pierde entera
+        # y el check queda ROJO **sin detalle**: el feedback que vuelve al Coder es
+        # una cabecera vacia. Tercera variante del mismo fallo en un dia — el
+        # veredicto sobrevive y la razon no.
         p = subprocess.run([resolve(cmd[0]), *cmd[1:]], cwd=cwd,
                            capture_output=True, text=True,
+                           encoding="utf-8", errors="replace",
                            timeout=900, shell=False)
     except FileNotFoundError as e:
         return 127, f"no se pudo ejecutar {' '.join(cmd)}: {e}"

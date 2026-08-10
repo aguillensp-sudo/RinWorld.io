@@ -215,6 +215,12 @@ def test_toolchain():
     code, _ = run_cmd(["npx", "--version"], ROOT)
     check("npx --version tambien", code == 0)
 
+    # La salida de vitest lleva ticks y diacriticos. Decodificada con cp1252, el
+    # hilo lector de subprocess revienta, la salida se pierde y C2 queda ROJO sin
+    # detalle: el feedback que vuelve al Coder es una cabecera vacia.
+    code, out = run_cmd(["node", "-e", "console.log('\\u2713 Nordw\\u00e4lz L\\u0142')"], ROOT)
+    check("la salida en UTF-8 sobrevive", code == 0 and "Nordwälz" in out, repr(out))
+
 
 def test_c2_paths():
     """Las rutas que C2 le pasa a vitest y a Playwright existen desde `app/`.

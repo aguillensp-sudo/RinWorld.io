@@ -4,195 +4,143 @@
 > cierre de cada día — no se acumula histórico aquí (el histórico vive en git,
 > `findings-register.md` y `harness-metrics.csv`).
 >
-> **Regla de este fichero, aprendida a base de golpes (F-012).** Cita, no parafrasea. Los
+> **Regla de este fichero, aprendida a base de golpes (F-012).** Cita, no parafrasees. Los
 > valores de estado, los nombres de columna y las asignaciones de modelo se copian del spec
 > cerrado o del plan **con el puntero al lado**. Un enum o un nombre de campo sin puntero se
-> considera no verificado: tres paráfrasis mal hechas llegaron a un DDL a punto de escribirse.
+> considera no verificado.
 >
 > **Y su corolario, del día 3 (F-024).** Una advertencia de aquí sin puntero se comprueba
-> antes de actuar: la que este fichero traía sobre el precio de INV-01 apuntaba a una
-> pantalla que no tiene columna de precio.
+> antes de actuar.
+>
+> **Y el del día 5, que es nuevo: una cifra de aquí también.** Este fichero decía
+> *"`npm test` → 102 pasan"* y lo que daba eran **124**: los 22 de `threads.test.ts` estaban
+> contados dos veces, en su fila y dentro de la suite. Un número mal copiado en el tripwire
+> hace que mañana el rojo bueno parezca malo.
 
-**Día 4 de 15 · cerrado 9-ago-2026 · Estado: VERDE, con la CI en la fase roja de TDD**
+**Día 5 de 15 · cerrado 10-ago-2026 · Estado: VERDE. Puerta de S1 pasada, salvo C5**
 
-> **Lee esto antes de abrir GitHub. La CI está roja, y el único motivo que queda se cierra
-> mañana solo.**
+> **Lee esto antes de nada: hoy el arnés produjo su primera pantalla, y lo que se midió
+> fueron sobre todo bugs propios.**
 >
-> **`App · typecheck` — fase roja de TDD, y es la buena.** `npm run typecheck` da **dos**
-> errores, `Cannot find module './Messages'` y `'./ThreadList'`, y ninguno más: el contrato
-> de aceptación de MSG-01 se escribió hoy y los componentes los produce el Coder mañana
-> (`Plan §6`: *"Test de aceptación Playwright ←── contrato, escrito ANTES del código"*).
-> **Los 102 tests que ya estaban siguen en verde.** Si mañana el rojo es otro, o son más de
-> dos, se rompió otra cosa.
+> **Tres corridas, nueve intentos, $0.104527.** De ese total, **$0.069372 se fueron en
+> corridas donde los checks no llegaron a mirar.** Cinco bugs del arnés (F-028 a F-032), los
+> cinco del mismo patrón: **el veredicto sobrevive y la razón no.** Un check que no puede
+> ejecutarse, o que ejecuta y no sabe contarlo, se registra igual que uno que miró y falló.
 >
-> **Efecto colateral, que hoy no se ve:** el trabajo `Playwright` tiene `needs: app`, así que
-> con el typecheck rojo **ni arranca**. Y `npm run build` es `tsc -b && vite build`, que es
-> lo que lanza el `webServer` de Playwright — **tampoco se puede correr el e2e en local**
-> hasta que llegue el artefacto del Coder.
+> **Están arreglados los cinco, con guardia cada uno.** `test_checks` pasa de **34 a 52**.
+> Ninguno puede repetirse en silencio: hay una guardia genérica para los inputs del prompt,
+> otra para las rutas de C2, otra para la cadena de herramientas y otra para el UTF-8.
 >
-> **Lo que SÍ se resolvió hoy: los secrets de CI (9-ago, 17:11).** Llevaban rojos desde el
-> día 2 y hacían caer el trabajo de Playwright en **todas** las corridas de la rama — por
-> diseño, porque `session.spec.ts` lanza excepción en CI en vez de saltarse la puerta (F-015:
-> un skip silencioso reportaría verde sin probar nada). Están los **8**, y sus nombres casan
-> uno a uno con los `secrets.*` de `ci.yml` (cruzado con `gh secret list`).
-> **Que los VALORES sean buenos no se puede leer, y hoy no se puede probar.** Los dos fallos
-> que siguen vivos están en la puerta del sprint, más abajo — y el segundo no da rojo.
+> **Lo que NO está cerrado y es de F-033:** el CSV sigue sin distinguir un check **en rojo**
+> de uno **inejecutable**. Las nueve filas de hoy se quedan (decisión del PO) y su contexto
+> vive en los `LEEME.md` de `harness/metrics/MSG-01/`. Léelos antes de usar esas filas para
+> nada: seis de los nueve intentos no miden al modelo.
 
 ---
 
 ## Dónde estamos
 
-El día 4 era de decisiones irreversibles y los dos entregables están. El calendario del plan
-corrió **un día natural**: el día 4 nominal era el 8-ago y se ejecutó el 9. Las fechas del
-registro y del CSV son las **reales**, no las nominales.
+`Plan §3`, fila del día 5: *"Primera pantalla producida por el arnés: **MSG-01**. Registro
+de métricas."* Hecho, y la puerta de sprint con ello.
 
 | Bloque | Ejecuta | Resultado |
 |---|---|---|
-| `Dia-04_decisiones_arnes.md`, antes de escribir código | Claude Code | **Aprobado por el PO**: las cinco decisiones sin cambios |
-| **Arnés v0** · grafo LangGraph de 2 nodos | Claude Code | **Hecho.** `harness/`, verde en seco, **cero coste** |
-| Contrato de aceptación de MSG-01 | Claude Code | **Hecho.** 69 asertos en cuatro ficheros + capa de datos + siembra |
+| Wiring de `Hilos` en `App.tsx` | Claude Code | **Hecho** antes de gastar un token (`801b577`) |
+| Siembra de `demo_threads.sql` en el remoto | Claude Code | **Hecho.** 5 hilos + 5 elementos, uno por estado del CHECK |
+| MSG-01 por el arnés | Arnés | **Escalada en 3 intentos**, terminada a mano |
+| Cinco bugs del arnés | Claude Code | **Cerrados**, con guardia cada uno |
+| `component_api` en el formato de tarea | Claude Code | **Hecho.** Desviación escrita en `Dia-04 §5` |
 
-**Puerta de salida del día 4: PASADA.** *"El grafo corre de punta a punta con el Coder
-mockeado: da verde a la vuelta 1 con un artefacto bueno, rojo→reintento con uno malo, y
-escala al tercero. El CSV sale generado desde el JSON, con las dos columnas nuevas."*
+### Puerta de salida de S1 — `Plan §3`, textual
+
+*"dos navegadores, dos cuentas, cada una ve su inventario. CI en verde. Una pantalla nacida
+del arnés, con su coste medido."*
+
+| Condición | Estado |
+|---|---|
+| Dos cuentas, cada una ve su inventario | ✅ re-verificado hoy dentro de los 31 e2e |
+| Una pantalla nacida del arnés | ✅ MSG-01. Artefacto en `a31dfe3`, arreglo en `ccdbeed` |
+| Con su coste medido | ✅ 9 filas en el CSV + 9 JSON + tres `LEEME.md` |
+| CI en verde | 🟠 **en local sí, entera. En GitHub sigue sin haber corrido nunca** |
+
+**Verificaciones, todas de hoy:**
 
 | Verificación | Estado |
 |---|---|
-| `python -m harness.tests.dry_run` | **3/3 escenarios.** Verde al 1, reintento al 2, escalado al 3 |
-| `python -m harness.tests.test_checks` | **34/34** |
-| `cd app && npx vitest run src/lib/threads.test.ts` | **22/22** |
-| `cd app && npm test` | **102 pasan** + 2 ficheros que no resuelven (fase roja, arriba) |
-| `cd app && npm run typecheck` | **2 errores, los dos esperados** |
-| Coste del día | **$0.000000.** Ni una llamada al modelo |
+| `cd app && npm run typecheck` | **limpio** |
+| `cd app && npm test` | **158 pasan** (9 ficheros) |
+| `cd app && npx vitest run src/screens/messages` | **34/34** de aceptación |
+| `cd app && npx playwright test` | **31/31**, con los 9 de MSG-01 contra el Supabase real |
+| `cd app && npm run check:palette` | cobertura completa |
+| `python -m harness.tests.test_checks` | **52/52** |
+| `python -m harness.graph.run … --seco` | 3/3 escenarios |
+
+**El único que falta es C5, y no lo da una máquina** (`Dia-04_decisiones_arnes.md` §4). El
+PO tiene las capturas y la lista de qué mirar; **ya salió de ahí el primer hallazgo de C5
+del proyecto** (F-035, abajo).
 
 ---
 
-## Lo que hay que saber del arnés
+## Lo que hay que saber de MSG-01
 
-**Está en `harness/`, y su porqué en `openspec/mvp/Dia-04_decisiones_arnes.md`.** Se corre
-así:
+**La pantalla está en `app/src/screens/messages/`** y cuelga del ítem `Hilos`, con
+`veraSubtitle = 'Agente de mensajería'` (MSG-01 §5, `Rinworld_spec_MSG-01.md:113`).
 
-```
-python -m harness.graph.run harness/tasks/MSG-01.json          # de verdad
-python -m harness.graph.run harness/tasks/MSG-01.json --seco   # sin gastar un token
-```
+**El reparto es el de la casa:** `Messages.tsx` es la pantalla —posee búsqueda y página, y
+llama a `fetchThreadPage` con `profile.orgId`—; `ThreadList.tsx` es presentacional y pinta
+las filas en el orden que las recibe. **El estado vacío de la spec §6 vive en `ThreadList`**,
+no en la pantalla: "no hay filas" es un estado de la lista, y si lo deciden los dos acaban
+discrepando. La pantalla se queda solo con el vacío **por búsqueda**, que no es el mismo caso.
 
-**`harness/core/` sale de `dia-03-catalogo/run_coder.py` sin cambiar la lógica**, que era el
-riesgo escrito del día. La prueba de que la extracción es fiel no es una opinión:
-`test_checks` **reproduce al céntimo las cifras de SP-1** — 0.003581 real, 0.006145 en frío,
-99,58% de cache. Si alguien toca `pricing.py` y esa aritmética se mueve, el test lo dice.
+**⚠ `App.tsx` le pasa `now` explícito, y hay que saber por qué antes de "simplificarlo".**
+El contrato de aceptación monta `<Messages profile={…} now={NOW} />` pero no fija si `now`
+es opcional. Si el Coder lo declarara obligatorio, un `<Messages profile={…} />` a secas
+rompería el typecheck desde un fichero que la tarea le prohíbe tocar: C1 en rojo por el
+wiring y no por el artefacto. Se construye en el render y **no se congela al montar**: con
+un `now` fijo, una sesión abierta un par de horas acabaría diciendo "en 1 h" de un elemento
+del pasado.
 
-**Cinco cosas del grafo que conviene no redescubrir:**
+**Lo que costó terminarla a mano: `+171 / −145` sobre 695 líneas** (`a31dfe3` → `ccdbeed`).
+Cuatro defectos y una decisión, detallados en el mensaje de `ccdbeed`. **Dos de los cuatro
+eran inalcanzables para el Coder:** `errorMessage` vive en `lib/session.ts`, que no está
+entre sus inputs, y el bloque de passphrase lo prohíbe F-027, que no viaja en la tarea.
 
-1. **Tope de 3 intentos, y el tercero escala.** No hay nodo Escalation (`Plan §6`), así que
-   escalar es parar, marcar `escalado_a_humano = si` y salir con código 2. `Plan §11` pide
-   *"porcentaje de tareas que requieren intervención humana"*, y con reintentos infinitos
-   ese dato no existiría.
-2. **⚠ El veredicto lo escribe el Test-runner, no la arista.** Una función de enrutado de
-   LangGraph decide por dónde salir pero **no toca el estado**. Con el escalado viviendo
-   solo en la arista, el estado final decía `en_curso` y el CSV salía sin la marca. Lo cazó
-   la corrida en seco, no una revisión a ojo.
-3. **El Test-runner no lleva LLM.** Es la lección de `generate_screen.py` (`Plan §6`): *"un
-   LLM revisaba la salida de otro LLM sin verdad de referencia"*. El modelo que
-   `CLAUDE.md` §3 asigna a ese nodo **queda sin usar en el MVP**, y está bien.
-4. **El feedback al Coder es el `detail` crudo de los checks rojos, y nada más.** Un
-   feedback redactado inyecta la solución y el intento 2 deja de medir al Coder.
-5. **C5 no está en el grafo.** "¿Lo mantendrías?" lo da el PO. El grafo llega a C4.
+**Lo que NO hubo que tocar**, y es el dato bueno: la consulta, la cancelación del efecto, la
+paginación, la búsqueda con submit, los cinco literales del esquema, la separación
+pantalla/presentación y el CSS entero de la fila. C3 y C4 estaban verdes antes del arreglo.
 
-**`harness-metrics.csv` tiene dos columnas nuevas** — `cache_hit_pct` y
-`escalado_a_humano` — y van **antes de `resultado`, no al final**: `resultado` es la única
-columna de texto libre, y en medio del fichero es una trampa para quien lo parsee. Las tres
-filas históricas llevan su valor real (`0.00` / `99.58` / `0.00`). La desviación respecto a
-lo aprobado está escrita en `Dia-04_decisiones_arnes.md` §6.
-
-**Cinco hallazgos cerrados hoy**, promovidos a `B-001..B-005` del backlog, que llevaba desde
-el día 1 vacío esperando este día: F-010, F-011, F-005, F-003 y F-015.
+**La siembra está en el remoto y es idempotente** (`where not exists`). Cinco hilos de
+Alpha, uno por estado. El `content_ciphertext` es relleno a propósito: MSG-01 nunca descifra.
 
 ---
 
-## Lo que hay que saber del contrato de MSG-01
+## Hoy toca — Día 6 (11-ago-2026)
 
-**Los tests están escritos y el código no.** Eso es lo correcto (`Plan §6`), pero significa
-que mañana **el primer bloque no es lanzar el arnés**: es cerrar dos cosas que son de mano.
+`Plan §3`, filas del día 6 — **son dos bloques y no dependen el uno del otro**:
 
-| Fichero | Qué es | Estado |
-|---|---|---|
-| `app/src/screens/messages/ThreadList.test.tsx` | 22 asertos del componente | rojo (falta el componente) |
-| `app/src/screens/messages/Messages.test.tsx` | 16 de la pantalla, con `fetchThreadPage` mockeado | rojo (ídem) |
-| `app/e2e/messages.spec.ts` | 9 contra el Supabase real | rojo (ídem) |
-| `app/src/lib/threads.test.ts` | 22 de la lógica pura | **22/22 verde** |
+| Trabajo | Ejecuta |
+|---|---|
+| **SRCH-01** — capa presentacional: chips editables, tabla de resultados, selección de filas | Arnés + revisión a mano |
+| **Máquina de estados de la oferta (§7)** | Claude Code |
 
-**`app/src/lib/threads.ts` y `supabase/seed/demo_threads.sql` fueron con ellos, y no es
-ampliación de alcance:** sin capa de datos el test no tiene tipos que fijar, y sin datos el
-e2e es un contrato inejecutable — que cuenta como **rojo** (F-015). Las dos son de mano por
-`CLAUDE.md` §3: RLS y embeds son fallo caro y silencioso.
+**Antes de lanzar el arnés con SRCH-01, y esto es de hoy:**
 
-**⚠ `threads` tiene TRES claves ajenas hacia `organizations`** — `org_low_id`, `org_high_id`
-y `created_by_org_id` — así que `organizations(name)` a secas devuelve `PGRST201` y la
-pantalla se queda en blanco. Con **una** de más eso dejó el login roto varias horas el día 3
-(F-020). Los embeds van nombrados desde el primer minuto:
-`organizations!threads_org_low_id_fkey(...)`.
+1. **La tarea de SRCH-01 lleva `component_api` desde el minuto uno.** Es campo del formato
+   desde hoy (`Dia-04 §5`) y sin él el Coder adivina nombres de prop que fijan tests que no
+   ve. Y lleva `data_layer` **entregado**, no solo declarado.
+2. **Lo que F-036 dice que hay que meterle además: las decisiones vivas que afectan a la
+   pantalla.** El bloque de passphrase se pintó porque la §6 del spec lo pide y F-027 lo
+   prohíbe — y F-027 no viaja en la tarea. Para SRCH-01 la equivalente es **`Precio fuera de
+   la parrilla`** (`conversational-search`, Out of Scope): si no entra en `out_of_scope`, el
+   Coder pintará una columna de precio porque el mock la tiene.
+3. **`app/scripts/check-palette.mjs` tiene que estar verde antes**, o C3 juzga con un
+   sistema de diseño incompleto y suspende output correcto (F-003).
+4. **Commits separados, otra vez** (`CLAUDE.md` §1.6): artefacto tal cual con
+   `Co-Authored-By: deepseek-v4-flash <coder@harness.local>`, y las correcciones aparte. El
+   diff del segundo *es* la medida. Hoy funcionó y dio la cifra de F-036.
 
-**El aserto que más vale de los nueve del e2e** es el de la contraparte. El par va en orden
-canónico en base (`org_low_id < org_high_id`, constraint `threads_canonical_order_chk`), no
-por rol, así que resolverlo al revés **no da error**: da una lista entera de "Rodamientos
-Ibéricos" hablando consigo mismo. Plausible y falsa, y ningún test de unidad la ve.
-
-**F-027, y necesita decisión tuya para V1.** La spec de MSG-01 pide dos cosas que el esquema
-no sostiene: (a) un **recuento de no leídos** sin ningún seguimiento de lectura en la base —
-ni `read_at`, ni `last_read_at`, ni tabla de recibos; (b) los puntitos `• • • • • •` de §3,
-que **contradicen a la §7 del mismo documento** (*"la vista previa nunca muestra contenido
-descifrado"*). Resuelto a favor de §7. Es la **quinta** vez que el contrato aprobado no es la
-fuente de verdad en un detalle (F-003, F-019, F-024, F-025) y la **primera en que la
-contradicción está dentro del mismo documento**, no entre el mock y la spec.
-
----
-
-## Hoy toca — Día 5 (10-ago-2026)
-
-`Plan §3`, fila del día 5: *"Primera pantalla producida por el arnés: **MSG-01**. Registro de
-métricas."*, ejecuta el **Arnés**.
-
-### Y es fin de sprint: la puerta de salida de S1
-
-`Plan §3`, textual: *"dos navegadores, dos cuentas, cada una ve su inventario. CI en verde.
-Una pantalla nacida del arnés, con su coste medido."* Son **cuatro** condiciones y conviene
-mirarlas por separado, porque no dependen de lo mismo:
-
-| Condición | Cómo está | De quién depende |
-|---|---|---|
-| Dos cuentas, cada una ve su inventario | **Hecha el día 3.** `inventory.spec.ts`, 22/22 en local, tres corridas sin flakiness | hecho — solo re-verificar |
-| Una pantalla nacida del arnés | Mañana. El grafo está y la tarea también | del Coder, y del wiring previo |
-| Con su coste medido | El CSV lo genera el arnés solo, desde el JSON | automático |
-| **CI en verde** | 🟠 **Secrets puestos el 9-ago (8/8, nombres verificados). Sin probar** | del Coder, ya no de Álvaro |
-
-**La cuarta dejó de depender de Álvaro el 9-ago a las 17:11.** Con los 8 secrets puestos, la
-puerta se cierra entera mañana **si** el artefacto del Coder pasa y **si** los valores son
-buenos. Dos fallos siguen vivos y hay que mirarlos expresamente:
-
-- **Diacríticos comidos en `E2E_ALPHA_ORG` / `E2E_BETA_ORG`.** Síntoma: falla
-  `session.spec.ts` comparando el nombre de la organización, no el login. Es F-019.
-- **Clave de servicio en vez de la publicable en `SUPABASE_PUBLISHABLE_KEY`.** Síntoma: el
-  e2e pasa **de más**, saltándose RLS. Es el peligroso, porque no da rojo: da un verde que
-  no significa nada. Si el e2e pasa entero a la primera sin tocar nada, merece una mirada.
-
-**En este orden, y los dos primeros antes de gastar un token:**
-
-1. **Wiring a mano** (es mío, no del Coder): ítem `Hilos` en `App.tsx` con su `veraSubtitle`
-   — la spec MSG-01 §5 dice **`Agente de mensajería`** — y el mapeo del ítem activo.
-   `App.tsx` está en `constraints` de la tarea como "no tocar": lo toco yo, antes.
-2. **Aplicar `supabase/seed/demo_threads.sql` al remoto**, o el e2e no tiene datos. Y
-   después **volver a correr el e2e de la app**, no solo el smoke del esquema (regla de
-   F-020): esta siembra no añade FK, pero sí filas que el e2e da por existentes.
-3. **Lanzar el arnés.** `python -m harness.graph.run harness/tasks/MSG-01.json`.
-4. **Commits separados** (`CLAUDE.md` §1.6, F-009): primero el artefacto del Coder tal cual
-   sale, con `Co-Authored-By: deepseek-v4-flash <coder@harness.local>`; después las
-   correcciones a mano. El diff del segundo *es* la medida de cuánto hubo que arreglar.
-
-**Lo que el día 4 deja hecho y no hay que rehacer:** los cinco puntos del grafo de arriba, y
-que `harness/tasks/MSG-01.json` ya lleva **seis** entradas de `out_of_scope` aprobadas por el
-PO. Si el Coder pinta un badge verde o un recuento inventado, es que el prompt no las está
-metiendo.
+**SRCH-01 es la pantalla núcleo y `Plan §9` dice que no se recorta.** Es la primera vez que
+el arnés toca algo crítico: la revisión a mano de después no es opcional.
 
 ---
 
@@ -205,11 +153,13 @@ metiendo.
 | Arnés | Solo 2 nodos (Coder + Test-runner). Planner/Evaluator/Escalation **no** se construyen en el MVP. | Plan §6 |
 | Tope de intentos | **3**, y el tercero escala al humano con código de salida 2. | `Dia-04_decisiones_arnes.md` §1 |
 | Test-runner | **Sin LLM.** Ejecuta procesos y lee códigos de salida. C5 lo da el PO, fuera del grafo. | `Dia-04_decisiones_arnes.md` §4 |
+| **Formato de tarea** | Congelado el día 4, **con una desviación del día 5: el campo `component_api`**. Solo la firma pública, nunca lo que los tests asertan. | `Dia-04_decisiones_arnes.md` §5 · F-034 |
+| **Prompt del Coder** | **Todo input declarado en la tarea tiene que llegar al prompt**, y hay guardia que falla si no. | F-030 |
+| **Antes de gastar** | `check_prices_or_exit()` **y** `check_toolchain_or_exit()`, los dos antes de la primera llamada al modelo. | F-028 |
 | C2 del arnés | Se evalúa sobre el **panel de contenido**, nunca sobre el shell. | F-025 |
 | C3 del arnés | Contra **§1.1 + §1.4 + §1.5** de `design-system.md`, nunca §1.1 a secas. | F-003 |
 | Formato | Los checks comparan contra la **función de formato**, nunca contra la cifra del mock. | F-024 |
-| Checks | Un check que no se puede ejecutar es **rojo**, nunca ausente. | F-015 |
-| Formato de tarea | **Congelado.** Es el corpus con el que se diseñará el Planner de V1. | `Dia-04_decisiones_arnes.md` §5 |
+| Checks | Un check que no se puede ejecutar es **rojo**, nunca ausente. **Correcto para decidir; insuficiente para medir** (F-033). | F-015 · F-033 |
 | Integridad | El **Coder** nunca escribe los tests que lo evalúan, **y tampoco los ve**. | `CLAUDE.md` §3 · Plan §6 |
 | Autoría | Código del Coder y código a mano **nunca en el mismo commit**. | `CLAUDE.md` §1.6 · F-009 |
 | Demo | Referencia **`6205-2RS`** y **seis organizaciones** distribuidoras, solo dos con cuenta. | `guion-demo-y-siembra.md` §1 y §3 |
@@ -221,59 +171,63 @@ metiendo.
 | Precio en SRCH-01 | **Fuera de la parrilla.** No se ordena ni se filtra por precio, nunca. | `conversational-search` · Out of Scope |
 | Eliminar una línea | **Borrado lógico** a `status = 'DELETED'`. | F-023 |
 | Embeds de PostgREST | **Siempre con la clave ajena nombrada.** En `threads` son tres FK al mismo destino. | F-020 |
-| Alcance | 8 pantallas, y el **app shell es una de ellas**. SRCH-01 es la núcleo y no se recorta. **Hechas: shell, INV-01.** | Plan §9 |
+| Alcance | 8 pantallas, y el **app shell es una de ellas**. SRCH-01 es la núcleo y no se recorta. **Hechas: shell, INV-01, MSG-01.** | Plan §9 |
 | Monorepo | `openspec/` + `app/` + `supabase/` + `harness/`. Los HTML aprobados no se tocan. | `CLAUDE.md` §2 |
 
 ---
 
 ## Pendiente de Álvaro
 
-**Ninguno bloquea el día 5.**
+**Ninguno bloquea el día 6.**
 
-1. ✅ **Secrets de CI — RESUELTO el 9-ago a las 17:11. No queda nada de tu lado.** Los 8
-   están puestos y sus nombres casan uno a uno con los `secrets.*` de `ci.yml` (cruzado con
-   `gh secret list`). Y `app/.env` **ya los tenía desde antes**, con los `_ORG` con sus
-   diacríticos: `haveCreds` da `true` en local, comprobado cargando dotenv.
-   **Lo que sigue sin poder afirmarse** es que los valores de GitHub sean los buenos: no se
-   pueden leer y hoy no se pueden probar. Se ve mañana. Los dos síntomas a vigilar están en
-   la puerta del sprint, más arriba.
-2. 🟠 **F-027 (a) · el recuento de no leídos de MSG-01.** Para V1: o `thread_read_receipts`
+1. 🟠 **C5 de MSG-01 — el único criterio que falta para cerrar la puerta de S1.** Tienes las
+   dos capturas y la lista de qué verificar. La pregunta es *"¿lo mantendrías?"*, no *"¿pasa
+   los tests?"*, que eso ya está medido. **Ya salió de ahí el primer hallazgo de C5 del
+   proyecto** (F-035: la pantalla salió sin padding, y ningún check del arnés puede ver eso).
+2. 🟠 **F-033 · qué hacer con las nueve filas de hoy en V1.** Se quedan como están (tu
+   decisión de hoy). Lo que falta decidir es si en V1 el CSV lleva un estado propio de check
+   —`rojo` / `inejecutable`— y si un intento con algún check inejecutable cuenta como intento
+   del modelo. Con el formato de hoy, la métrica de "intentos hasta verde" no es fiable.
+3. 🟠 **F-027 (a) · el recuento de no leídos de MSG-01.** Para V1: o `thread_read_receipts`
    con su RLS, o el indicador se retira del spec. **En el MVP queda fuera**, y hay un test
    que falla si reaparece.
-3. 🟠 **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados ni
+4. 🟠 **Diseño de la pantalla de login** (F-016). No existe entre los 32 HTML aprobados ni
    entre las 8 del alcance: es una novena que nadie planificó, y es la primera que ve el
-   socio. Hoy va andamiaje hecho con los tokens.
-4. **¿Qué hace INV-01 con una línea eliminada?** (F-023 d). Para V1: o quinto chip
+   socio. Sigue con el andamiaje hecho con los tokens.
+5. **¿Los cinco hilos sembrados son los de la demo del día 11?** Están en el Supabase real,
+   con `content_ciphertext` de relleno. Si quieres otros, es de mano y son diez minutos.
+6. **¿Qué hace INV-01 con una línea eliminada?** (F-023 d). Para V1: o quinto chip
    "Eliminados" con restaurar, o eliminar es definitivo desde la interfaz. **No urge.**
-5. **¿Debe verse la paginación de INV-01 en la demo?** Alpha cabe en una página. Si quieres
-   que se vea, necesita más de 50 líneas: son cinco minutos.
-6. **La app no tiene URL desplegada.** Decisión del PO el 7-ago: **de momento solo local**.
+7. **¿Debe verse la paginación de INV-01 en la demo?** Alpha cabe en una página.
+8. **La app no tiene URL desplegada.** Decisión del PO el 7-ago: **de momento solo local**.
    Se retoma antes del **día 11**, que es la primera sesión de prueba contigo. Mientras
-   tanto: `npm --prefix <ruta>/app run dev` y `http://localhost:5173`.
-7. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
-8. **Realtime** sigue sin habilitar en `threads` y `thread_items`. El Plan §3 nombra tablas
-   `messages`/`offers` que **no existen**. No urge hasta el día 7.
+   tanto: `npm --prefix <ruta>/app run dev` (5173) o, más rápido para revisar,
+   `npm run build && npm run preview` (4173), que es el bundle que prueba el e2e.
+9. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
+10. **Realtime** sigue sin habilitar en `threads` y `thread_items`. El Plan §3 nombra tablas
+    `messages`/`offers` que **no existen**. Entra mañana con el día 7 a un día vista.
 
 ---
 
 ## Riesgo con la vista más corta
 
-**Mañana el arnés produce código por primera vez, y el riesgo no es que salga mal: es que
-salga bien y no sepamos por qué.** Los dos datos que hay (F-002 y F-022) son de un intento
-cada uno y los dos con prompts muy guiados. Si MSG-01 sale al primer intento, la cifra que
-importa para V1 no es esa: es **cuánto hubo que corregir a mano después**, y eso solo se lee
-si los commits van separados (`CLAUDE.md` §1.6). El día que se mezclen, la medición del
-objetivo 4 se pierde y no se recupera.
+**La CI de GitHub no ha corrido en verde ni una vez, y hoy es el día en que más fácil sería
+darla por buena.** Todo lo verde de arriba es **local**. Los 8 secrets están puestos y sus
+nombres verificados, pero que los **valores** sean buenos solo lo dice una corrida. Lo que sí
+quedó descartado hoy, y con prueba: **la clave publicable es la publicable** — Beta ve 1 hilo
+de 5 por PostgREST directo y el e2e lo confirma desde el navegador. Con la clave de servicio
+habría visto los cinco. El otro síntoma (diacríticos comidos en `E2E_*_ORG`) tampoco apareció.
 
-**El segundo riesgo es el rojo de hoy.** Un repo rojo es un repo donde un rojo nuevo no se
-distingue del viejo. Son dos errores conocidos y desaparecen mañana con el artefacto del
-Coder; si a media mañana siguen ahí, la prioridad es cerrarlos, no seguir.
+**El segundo riesgo es creerse la métrica de hoy.** Nueve filas en el CSV y solo tres miden
+al modelo. Si mañana alguien promedia "intentos hasta verde" sobre las nueve, sale un número
+que dice que el Coder necesita tres intentos, cuando lo que hubo fue un arnés que no miraba.
+Los `LEEME.md` están para eso; F-033 es la solución de verdad y es tuya.
 
 **Día 7 · MSG-02** sigue siendo el riesgo estructural: la pantalla más compleja del MVP, con
-margen para comerse dos días. Si el día 7 no está, se simplifica el hilo. A favor:
-`thread-lifecycle` ya está en el DDL, así que el día 7 no paga migración — y desde hoy
-`lib/threads.ts` y la siembra de hilos también están.
+margen para comerse dos días. A favor, y desde hoy más: `thread-lifecycle` ya está en el DDL,
+`lib/threads.ts` y la siembra existen, **y MSG-01 deja el patrón pantalla/presentacional ya
+resuelto y probado**. Si el día 7 no está, se simplifica el hilo.
 
 ---
 
-*Cerrado el 9-ago-2026 · Claude Code (Opus 5)*
+*Cerrado el 10-ago-2026 · Claude Code (Opus 5)*

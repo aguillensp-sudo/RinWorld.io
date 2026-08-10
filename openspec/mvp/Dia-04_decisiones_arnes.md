@@ -242,11 +242,31 @@ corpus comparable. JSON en `harness/tasks/<PANTALLA>.json`:
     "style_reference": "app/src/screens/inventory/InventoryTable.tsx"
   },
   "outputs": ["app/src/screens/messages/MessageList.tsx", "…"],
+  "component_api": { "app/src/screens/…/X.tsx": "export function X({ … }: { … }) — que es" },
   "acceptance": { "unit": "…", "e2e": "…" },
   "out_of_scope": ["lo que el mock promete y el MVP no tiene"],
   "constraints": ["sin dependencias nuevas", "sin hex", "no tocar el shell"]
 }
 ```
+
+> **Desviación al usarlo por primera vez, 10-ago.** Al formato le faltaba un campo y se
+> añade: **`component_api`**, la firma pública de cada componente de `outputs`.
+>
+> El motivo no es de comodidad. La tarea declara unos tests de aceptación que el Coder
+> **no puede ver** — es la regla de integridad de `CLAUDE.md` §3, y no se toca — y esos
+> tests fijan nombres de prop. Sin decírselos, el Coder tiene que adivinarlos: en las dos
+> corridas del día 5 escribió `Messages({ orgId })` donde el contrato pedía
+> `({ profile })`, y `onOpen` recibe el id del hilo, no el objeto. Suspender C1 por una
+> moneda al aire no mide al modelo, y esa cifra —intentos hasta verde— es la que decide
+> si el arnés es viable en V1.
+>
+> Congelar el formato era para tener un corpus comparable. Cambiarlo hoy cuesta **una**
+> tarea, que es todas las que hay: es el momento más barato posible para descubrir que
+> le faltaba un campo. Y en V1 el Planner escribe la tarea *y* los tests, así que tendría
+> que emitir este campo de todas formas.
+>
+> Lo que **no** entra en `component_api`: qué asertan los tests. Solo la firma — nombres
+> de prop, tipos y quién hace de pantalla y quién de presentacional.
 
 **`out_of_scope` es un campo de primera clase, no un comentario.** F-023 encontró **cuatro**
 cosas que el diseño aprobado de INV-01 promete y el MVP no tiene, más un badge verde

@@ -263,6 +263,14 @@ def test_prompt_inputs():
         firma = (ROOT / valor).read_text(encoding="utf-8").strip()[:200]
         check(f"el prompt lleva `{clave}`", firma in system, valor)
 
+    # Y el API publico, que es la desviacion del dia 5 sobre el formato: si se
+    # declara y no se entrega, el Coder vuelve a adivinar los nombres de prop.
+    for ruta, firma in (task.get("component_api") or {}).items():
+        if ruta.startswith("_"):
+            continue
+        check(f"el prompt lleva el API de {pathlib.PurePosixPath(ruta).name}",
+              firma in system, ruta)
+
 
 def main() -> int:
     test_palette()

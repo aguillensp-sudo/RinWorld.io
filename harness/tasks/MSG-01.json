@@ -23,6 +23,11 @@
     "app/src/screens/messages/Messages.tsx",
     "app/src/screens/messages/Messages.module.css"
   ],
+  "component_api": {
+    "_nota": "Anadido el dia 5 al formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5, con la desviacion escrita alli). Los tests de aceptacion fijan nombres de prop y el Coder NO los ve -regla de integridad de CLAUDE.md §3-, asi que sin este campo tiene que adivinarlos: dos corridas suspendieron C1 por escribir `orgId` donde el contrato pide `profile`. Aqui va la firma, nunca lo que los tests asertan.",
+    "app/src/screens/messages/Messages.tsx": "export function Messages({ profile, now }: { profile: MemberProfile; now?: Date }). Es LA PANTALLA, no un componente de presentacion: importa `type MemberProfile` de `../../lib/session`, llama a `fetchThreadPage` con `profile.orgId`, y posee el estado de busqueda y de pagina. `now` es inyectable para que los tests no dependan del reloj y por defecto es `new Date()`.",
+    "app/src/screens/messages/ThreadList.tsx": "export function ThreadList({ threads, now, onOpen }: { threads: ThreadSummary[]; now?: Date; onOpen: (id: string) => void }). Presentacional: pinta las filas que recibe en el orden que las recibe -el orden es del servidor- y al abrir una avisa con el ID del hilo, no con el objeto. No carga datos ni pagina."
+  },
   "acceptance": {
     "unit": [
       "app/src/screens/messages/ThreadList.test.tsx",

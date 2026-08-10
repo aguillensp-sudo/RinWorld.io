@@ -55,6 +55,24 @@ fallo del intento**, aunque el resultado parezca equivalente.
 
 """
 
+    # La firma publica de cada componente. Va aparte de `outputs` porque los tests
+    # de aceptacion fijan nombres de prop y el Coder no los ve nunca: sin esto
+    # tiene que adivinarlos, y adivinar mal suspende C1 sin medir nada. Es la
+    # desviacion del dia 5 sobre el formato congelado (Dia-04 §5).
+    api = "\n".join(
+        f"  - `{ruta}`\n    {firma}"
+        for ruta, firma in (task.get("component_api") or {}).items()
+        if not ruta.startswith("_"))
+    api = f"""## API PUBLICA DE CADA COMPONENTE — CONTRATO, NO SUGERENCIA
+
+Los tests que te evaluan los escribe otro y **no los vas a ver**. Por eso las firmas
+van aqui: **los nombres de prop son obligatorios**, no orientativos. Un componente que
+haga lo correcto con otro nombre de prop no pasa.
+
+{api}
+
+""" if api else ""
+
     fuera = "\n".join(f"  - {x}" for x in task.get("out_of_scope", []))
     prohibiciones = "\n".join(f"  - {x}" for x in task.get("constraints", []))
     salidas = "\n".join(f"  - {x}" for x in task["outputs"])
@@ -71,6 +89,7 @@ TAREA: {task['goal']}
 Escribir cualquier otro fichero es un fallo del intento. En particular **no toques el
 shell de la aplicacion**: tiene su propio contrato y sus propios tests desde el dia 2.
 
+{api}
 ## VOCABULARIO CERRADO DE COLOR
 
 Todo color sale de una de estas variables CSS. **Ningun hex, ningun rgb(), nunca**,

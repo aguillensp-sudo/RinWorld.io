@@ -44,4 +44,12 @@ export async function signIn(page: Page, who: { email: string; password: string 
   await page.getByLabel('Correo electrónico').fill(who.email);
   await page.getByLabel('Contraseña').fill(who.password);
   await page.getByRole('button', { name: 'Entrar' }).click();
+
+  // Se vacía la caja en cuanto el formulario la ha leído, y no es cosmético.
+  // Cuando un test falla, Playwright adjunta al informe un volcado del DOM con
+  // el VALOR de cada campo — y ese informe se sube como artefacto de la CI, en
+  // un repositorio público. La contraseña de la cuenta de pruebas estuvo
+  // descargable así. `submit()` de `Login.tsx` ya capturó el valor al pulsar,
+  // así que vaciar aquí no afecta al login. Ver F-038.
+  await page.getByLabel('Contraseña').fill('');
 }

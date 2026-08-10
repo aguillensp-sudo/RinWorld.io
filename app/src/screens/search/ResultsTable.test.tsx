@@ -8,6 +8,7 @@ import {
   quantityLabel,
   type SearchResultRow,
   type Sort,
+  type SortColumn,
 } from '../../lib/search';
 
 /**
@@ -49,24 +50,22 @@ function row(over: Partial<SearchResultRow> = {}): SearchResultRow {
 
 const { ResultsTable } = await import('./ResultsTable');
 
-interface Handlers {
-  onSort: ReturnType<typeof vi.fn>;
-  onToggleRow: ReturnType<typeof vi.fn>;
-  onToggleFavorite: ReturnType<typeof vi.fn>;
-  onConsult: ReturnType<typeof vi.fn>;
-  onContact: ReturnType<typeof vi.fn>;
-}
-
+/**
+ * Los mocks van TIPADOS, y no es cosmética: `vi.fn()` a secas produce
+ * `Mock<Procedure | Constructable>`, que con `strict` no satisface una prop de
+ * firma concreta. Es lo que suspendió C1 en los tres intentos de la primera
+ * corrida — un defecto de este fichero, no del artefacto. Ver F-047.
+ */
 function pintar(
   rows: SearchResultRow[],
   opts: { sort?: Sort | null; selected?: Set<string>; minQuantity?: number | null } = {},
 ) {
-  const h: Handlers = {
-    onSort: vi.fn(),
-    onToggleRow: vi.fn(),
-    onToggleFavorite: vi.fn(),
-    onConsult: vi.fn(),
-    onContact: vi.fn(),
+  const h = {
+    onSort: vi.fn<(column: SortColumn) => void>(),
+    onToggleRow: vi.fn<(lineId: string) => void>(),
+    onToggleFavorite: vi.fn<(orgId: string) => void>(),
+    onConsult: vi.fn<(lineId: string) => void>(),
+    onContact: vi.fn<(orgId: string) => void>(),
   };
   render(
     <ResultsTable

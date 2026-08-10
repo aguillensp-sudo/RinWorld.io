@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import type { MemberProfile } from '../../lib/session';
+import { errorMessage, type MemberProfile } from '../../lib/session';
 import { fetchThreadPage, pageCount } from '../../lib/threads';
 import type { ThreadSummary } from '../../lib/threads';
 import { ThreadList } from './ThreadList';
@@ -12,10 +12,16 @@ import styles from './Messages.module.css';
  * `orgId` del perfil. `now` es inyectable para que los tests no dependan del
  * reloj; por defecto es `new Date()`.
  *
- * El aviso E2EE con botón `Introducir frase de seguridad` se pinta como bloque
- * informativo permanente pero el botón va deshabilitado: en el MVP no existe
- * passphrase, backup ni recuperación (CLAUDE.md §4; Plan §9 'Fuera'). Igual que
- * `Nuevo contacto` / `Ir al Directorio`, que abrirían DIR-01 (fuera de alcance).
+ * **No hay bloque de passphrase, ni siquiera deshabilitado.** El Coder lo pintó
+ * como aviso permanente con el botón inerte, que es la lectura razonable de la
+ * §6 del spec — pero la decisión viva dice *"metadatos siempre, sin puntitos y
+ * sin bloque de passphrase"* (F-027, resuelto a favor de la §7). Un bloque que
+ * pide una frase de seguridad que no existe promete recuperación de claves donde
+ * el MVP las tiene en memoria de sesión y las pierde al recargar: es el mock
+ * prometiendo lo que no hay, que es lo que `out_of_scope` existe para cortar.
+ * `Nuevo contacto` e `Ir al Directorio` sí se quedan, deshabilitados y con el
+ * motivo en texto — quitarlos dejaría la barra y el estado vacío sin salida
+ * visible (F-023 e).
  */
 export function Messages({
   profile,
@@ -45,7 +51,12 @@ export function Messages({
       })
       .catch((err: unknown) => {
         if (!active) return;
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar los hilos.');
+        // `instanceof Error ? … : <texto generico>` es exactamente F-020: los
+        // errores de PostgREST son objetos planos, así que un `PGRST201` —el que
+        // devuelve `threads` si un embed va sin la clave ajena nombrada— se
+        // convertía en un mensaje que no dice nada, tapando el que lo decía todo.
+        // `errorMessage` existe desde el día 3 para esto.
+        setError(errorMessage(err));
         setLoading(false);
       });
     return () => {
@@ -77,26 +88,6 @@ export function Messages({
         a extremo.
       </p>
 
-      <div className={styles.e2eeBar} role="status">
-        <i className="ti ti-lock" aria-hidden="true" />
-        <span className={styles.e2eeTitle}>Contenido cifrado</span>
-        <span className={styles.e2eeText}>
-          — Introduce tu frase de seguridad para ver el contenido de los hilos.
-        </span>
-        <button
-          type="button"
-          className={styles.e2eeBtn}
-          disabled
-          aria-describedby="e2ee-reason"
-        >
-          Introducir frase de seguridad
-        </button>
-        <span id="e2ee-reason" className={styles.srOnly}>
-          La recuperación por frase de seguridad no está disponible en esta versión: las claves
-          viven en memoria de sesión.
-        </span>
-      </div>
-
       <div className={styles.actionsBar}>
         <form className={styles.searchWrap} role="search" onSubmit={submitSearch}>
           <i className="ti ti-search" aria-hidden="true" />
@@ -109,14 +100,16 @@ export function Messages({
             onChange={(event) => setSearch(event.target.value)}
           />
         </form>
-        <button type="button" className={styles.primaryBtn} disabled aria-describedby="dir-reason">
+        <button type="button" className={styles.primaryBtn} disabled>
           <i className="ti ti-address-book" aria-hidden="true" />
           Nuevo contacto
         </button>
-        <span id="dir-reason" className={styles.srOnly}>
-          DIR-01 no está disponible en esta versión.
+        {/* El motivo va en texto visible, no en un `aria-describedby` invisible:
+            F-023 e. Un botón deshabilitado sin explicación se lee como avería. */}
+        <span className={styles.scopeNote} data-testid="directorio-scope">
+          El Directorio (DIR-01) queda fuera del MVP.
         </span>
-        <span className={styles.count}>
+        <span className={styles.count} data-testid="pag-info">
           {total.toLocaleString('es-ES')} {total === 1 ? 'hilo' : 'hilos'} · Página {page} de{' '}
           {pages}
         </span>
@@ -130,42 +123,25 @@ export function Messages({
         <div className={styles.statusError} role="alert">
           {error}
         </div>
-      ) : threads.length === 0 ? (
-        searching ? (
-          <div className={styles.empty}>
-            <p>No se han encontrado hilos para «{submittedSearch}».</p>
-            <button
-              type="button"
-              className={styles.secondaryBtn}
-              onClick={() => {
-                setSearch('');
-                setSubmittedSearch('');
-                setPage(1);
-              }}
-            >
-              Limpiar búsqueda
-            </button>
-          </div>
-        ) : (
-          <div className={styles.empty}>
-            <p>
-              Todavía no tienes ninguna conversación. Usa el Directorio para contactar con otras
-              organizaciones.
-            </p>
-            <button
-              type="button"
-              className={styles.primaryBtn}
-              disabled
-              aria-describedby="dir-empty-reason"
-            >
-              <i className="ti ti-address-book" aria-hidden="true" />
-              Ir al Directorio
-            </button>
-            <span id="dir-empty-reason" className={styles.srOnly}>
-              DIR-01 no está disponible en esta versión.
-            </span>
-          </div>
-        )
+      ) : threads.length === 0 && searching ? (
+        // Vacío por búsqueda ≠ vacío de verdad, y mezclarlos diría "todavía no
+        // tienes ninguna conversación" a quien tiene cinco y ha escrito mal un
+        // nombre. El vacío de la spec §6 lo pinta `ThreadList`, que es de quien
+        // es: si lo decidieran los dos, acabarían discrepando.
+        <div className={styles.empty}>
+          <p>No se han encontrado hilos para «{submittedSearch}».</p>
+          <button
+            type="button"
+            className={styles.secondaryBtn}
+            onClick={() => {
+              setSearch('');
+              setSubmittedSearch('');
+              setPage(1);
+            }}
+          >
+            Limpiar búsqueda
+          </button>
+        </div>
       ) : (
         <ThreadList threads={threads} now={now} onOpen={handleOpenThread} />
       )}

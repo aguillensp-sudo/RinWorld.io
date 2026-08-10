@@ -37,54 +37,19 @@
   max-width: 560px;
 }
 
-/* Aviso E2EE — bloque brass permanente. En el MVP no hay passphrase, así que
-   el botón se pinta deshabilitado con el motivo en texto accesible (F-023). */
-.e2eeBar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  background: var(--bw-icon-tint-brass);
-  border: 1px solid var(--bw-brass-border-strong);
-  border-radius: var(--bw-radius);
-  font-size: var(--bw-size-label);
-  color: var(--bw-deep-steel);
-}
+/* El bloque de la frase de seguridad se fue con su marcado. F-027 lo resuelve a
+   favor de la §7 —metadatos siempre, sin puntitos y sin bloque de passphrase— y
+   dejar aquí el estilo huérfano solo invitaría a volver a pintarlo. */
 
-.e2eeBar i {
-  font-size: var(--bw-size-body);
-  color: var(--bw-brass);
-}
-
-.e2eeTitle {
-  font-weight: 600;
-}
-
-.e2eeText {
-  color: var(--bw-text-secondary);
-  margin-right: auto;
-}
-
-.e2eeBtn {
-  height: 32px;
-  padding: 0 14px;
-  background: var(--bw-calibration-blue);
-  border: none;
-  border-radius: var(--bw-radius);
-  color: var(--bw-on-dark-hover);
-  font-family: inherit;
-  font-size: var(--bw-size-input);
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.e2eeBtn:disabled,
 .primaryBtn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* El motivo de un control deshabilitado, en texto visible (F-023 e). */
+.scopeNote {
+  font-size: var(--bw-size-label);
+  color: var(--bw-input-placeholder);
 }
 
 .actionsBar {

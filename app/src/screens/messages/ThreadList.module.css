@@ -9,20 +9,34 @@
   border: 1px solid var(--bw-line-steel);
   border-radius: var(--bw-radius);
   overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
+/* La fila es un <button> dentro de un <li>: el <li> pone la semántica de lista
+   —que es lo que el contrato de aceptación lee— y el <button> la de acción, que
+   en un <div role="button"> había que reconstruir a mano con tabIndex y
+   onKeyDown. De ahí los reinicios de aquí abajo. */
 .row {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;
   gap: 4px 12px;
   padding: 14px 18px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  background: none;
+  border: 0;
   border-bottom: 1px solid var(--bw-divider-mist);
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.row:last-child {
+.item:last-child .row {
   border-bottom: none;
 }
 
@@ -136,4 +150,55 @@
   color: var(--bw-input-placeholder);
   border-color: var(--bw-badge-neutral-border-soft);
   text-decoration: line-through;
+}
+
+/* Estado vacío de la spec §6. Vive aquí y no en la pantalla porque "sin hilos"
+   es un estado de la lista: quien pinta las filas pinta también su ausencia, y
+   así no hay dos sitios decidiendo si hay lista o no. */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.emptyText {
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+/* El motivo va en texto visible, no en un `title` ni solo para lectores: F-023 e.
+   Un botón deshabilitado sin explicación se lee como una avería. */
+.emptyReason {
+  font-size: var(--bw-size-label);
+  color: var(--bw-input-placeholder);
+}
+
+/* Mismo botón primario que la barra de acciones de la pantalla. */
+.emptyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 18px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  color: var(--bw-on-dark-hover);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.emptyBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

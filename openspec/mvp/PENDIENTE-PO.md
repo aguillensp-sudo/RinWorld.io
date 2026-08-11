@@ -1,10 +1,12 @@
 # Pendiente del PO · cerrado el día 6 (10-ago-2026)
 
-> **Revisado el 11-ago.** El punto 1 estaba **mal diagnosticado** y ya está resuelto; el punto 2
-> ha cambiado de causa. Los dos se reescribieron con lo medido, no con lo supuesto.
+> **Revisado el 11-ago, dos veces.** El punto 1 estaba **mal diagnosticado**, el punto 2 cambió
+> de causa, y el punto 3 mandaba ejecutar **un comando que no puede funcionar en este repo**
+> (F-054). Los tres se reescribieron con lo medido, no con lo supuesto, y los tres están
+> **cerrados y comprobados**. De aquí en adelante solo quedan decisiones.
 >
 > Cada punto lleva **qué pasa si no se hace**, **los pasos exactos** y **cómo comprobar que
-> quedó cerrado**. Los tres primeros son los que bloquean algo; el resto son decisiones.
+> quedó cerrado**.
 >
 > Proyecto Supabase: **`troxminloxkjwihwfevs`** · Repo: **`aguillensp-sudo/RinWorld.io`**
 
@@ -103,51 +105,66 @@ Ese informe es el que adjuntaba el volcado del DOM con el valor de cada campo. T
 
 ---
 
-## 3 🟠 Aplicar las migraciones 0007 y 0008
+## 3 ✅ Migraciones 0007 y 0008 — APLICADAS AL REMOTO (11-ago)
 
-**Qué pasa si no se hace:** hoy, en el Supabase real, **`threads.state` no lo mantiene nadie**
-(los cinco badges de MSG-01 son ciertos solo porque la siembra los escribió a mano) y **una
-organización puede aceptar su propia oferta**. Las dos cosas están escritas y probadas, pero
-un fichero `.sql` en el repo no protege nada.
+**Aplicadas y comprobadas. No queda nada por tu parte.** Los dos agujeros están cerrados en la
+base: `threads.state` ya lo mantiene la derivación, y una organización ya no puede aceptar su
+propia oferta.
 
-### Pasos
+| versión | migración |
+|---|---|
+| `20260811130123` | `mvp_0007_thread_state_machine` |
+| `20260811130148` | `mvp_0008_offer_only_receiver_decides` |
 
-**El orden importa: 0007 antes que 0008.**
+### Lo que pasó de verdad, que es lo que hay que aprender de aquí
 
-Con la CLI, desde la raíz del repo:
+**El comando que te dejé escrito no podía funcionar, y por eso te quedaste parado.** Este repo
+**no tiene `supabase/config.toml`**: nunca se inicializó como proyecto de la CLI ni se enlazó
+con `troxminloxkjwihwfevs`. `supabase db push` te habría pedido un `supabase link` antes de
+nada. Es F-054.
 
-```bash
-supabase db push
+Y la pista estaba delante desde el principio. Así figuran registradas las seis anteriores:
+
+```
+mvp_0001_organizations_and_members … mvp_0006_favorite_count_without_view
 ```
 
-O a mano, en `https://supabase.com/dashboard/project/troxminloxkjwihwfevs/sql/new`, pegando y
-ejecutando **primero** `supabase/migrations/0007_thread_state_machine.sql` y **después**
-`supabase/migrations/0008_offer_only_receiver_decides.sql`.
+Ese prefijo `mvp_` **no lo pone la CLI** — lo puse yo al aplicarlas por MCP. El camino que sí
+funciona en este proyecto era justo el que no estaba escrito, y bastaba con leer el registro de
+migraciones del remoto para verlo. **Una instrucción que no se ha ejecutado nunca es una
+hipótesis, no un procedimiento.**
 
-### Qué hace 0007 que conviene saber antes de ejecutarlo
+### Antes de escribir, el recálculo se simuló en seco
 
-Al final **recalcula el estado de los hilos existentes** desde sus elementos. Ya está
-verificado contra la siembra: **los cinco hilos conservan su estado**, uno por badge. El
-único que se habría roto —`CERRADO SIN ACUERDO`, que caería a `ABIERTO`— queda excluido a
-propósito porque es transición manual.
+La única parte de 0007 que toca datos existentes es el `update` final del §6. Se corrió su
+misma lógica **como consulta de lectura contra tus datos reales** antes de aplicar nada:
 
-### Cómo compruebas que quedó cerrado
+| almacenado | derivado | veredicto |
+|---|---|---|
+| ABIERTO | ABIERTO | coincide |
+| ACUERDO ALCANZADO | ACUERDO ALCANZADO | coincide |
+| CON CONSULTA PENDIENTE | CON CONSULTA PENDIENTE | coincide |
+| CON OFERTA PENDIENTE | CON OFERTA PENDIENTE | coincide |
+| CERRADO SIN ACUERDO | *(ABIERTO)* | excluido — transición manual |
 
-En el SQL editor:
+### Y después, las tres comprobaciones del plan
 
-```sql
--- 1. Los cinco estados siguen ahí, uno por hilo.
-select state, count(*) from public.threads group by state order by state;
+1. **Los cinco estados siguen ahí**, uno por hilo. Los badges de MSG-01 no se han movido.
+2. **La consulta de divergencia devuelve 0 filas**: lo almacenado y lo derivado coinciden.
+3. **Los cuatro triggers existen y están habilitados** — `thread_items_touch_estado`,
+   `thread_items_sync_state`, `threads_guard_state`, `thread_items_guard_decider`.
+4. Y de propina: **0 filas** con estado de tarjeta y sin `estado_changed_at`, o sea que el
+   relleno de la columna nueva cubrió toda la siembra.
 
--- 2. La derivación coincide con lo almacenado (0 filas = correcto).
-select id, state, app.derive_thread_state(id) as derivado
-from public.threads
-where state <> 'CERRADO SIN ACUERDO' and state is distinct from app.derive_thread_state(id);
+El badge de MSG-01 ha dejado de ser una afirmación de la siembra y ha pasado a ser una función
+de las filas. Que era todo el objetivo.
 
--- 3. Los dos guardias existen.
-select tgname from pg_trigger
-where tgname in ('thread_items_sync_state','thread_items_guard_decider','threads_guard_state');
-```
+### Lo que sigue pendiente de decidir, para V1
+
+**Hay dos rutas de despliegue a medias y hay que quedarse con una:** o se enlaza la CLI y se
+retro-registran las seis primeras en su formato, o el MCP pasa a ser la ruta oficial y se
+documenta como tal. Dos caminos a medias es exactamente como se llega a un pendiente con un
+comando que no existe. No urge, pero no se puede quedar así.
 
 ---
 
@@ -269,15 +286,17 @@ Si quieres algo mejor para el día 11, hay que decidirlo con margen.
 
 ## Orden que yo seguiría
 
-1. **Punto 1** (la clave) — desbloquea el e2e, la CI y la puerta de S1 de una vez.
-2. **Punto 2** (la contraseña) — es seguridad y lleva dos días abierta.
-3. **Punto 3** (las migraciones) — cinco minutos, y hasta entonces hay dos agujeros vivos.
-4. **Punto 5** (reapertura del hilo) — **antes de mañana o ya no**.
-5. **Punto 4** (`RETIRADA`) — antes del día 8.
-6. El resto, cuando quieras.
+**Los tres que bloqueaban algo están cerrados.** No queda ni un arreglo pendiente de tu parte:
+lo que resta son decisiones de producto, y esas no las puedo tomar yo.
 
-Los puntos 1, 2 y 3 se hacen en un cuarto de hora largo y cierran todo lo que hoy está en
-rojo por tu lado.
+1. ~~Punto 1 (la clave)~~ ✅ · ~~Punto 2 (la contraseña)~~ ✅ · ~~Punto 3 (las migraciones)~~ ✅
+2. **Punto 5** (reapertura del hilo) — **hoy o ya no**: MSG-02 es donde vive el botón.
+3. **Punto 4** (`RETIRADA`) — antes del día 8, que es cuando se construye VND-01.
+4. La opción (a)/(b)/(c) del informe de Playwright en `ci.yml` — una línea, cuando quieras.
+5. El resto, sin prisa.
+
+Los dos primeros son decisiones de una frase, y las dos se abaratan hoy y se encarecen mañana:
+las pantallas que las implementan todavía no existen.
 
 ---
 

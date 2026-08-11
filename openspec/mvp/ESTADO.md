@@ -86,6 +86,29 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > contenedor y `docker logs` antes de rendirse. **Ningún camino de fallo puede terminar en un
 > código de salida a secas.**
 
+> **11-ago · 0007 y 0008 APLICADAS AL SUPABASE REAL. Los dos agujeros vivos, cerrados.**
+>
+> `mvp_0007_thread_state_machine` (`20260811130123`) y `mvp_0008_offer_only_receiver_decides`
+> (`20260811130148`). **`threads.state` ya lo mantiene la base** —el badge de MSG-01 ha dejado
+> de ser una afirmación de la siembra y es una función de las filas (F-044)— y **una
+> organización ya no puede aceptar su propia oferta** (F-051).
+>
+> Comprobado después de aplicar: los **cinco estados** siguen en pie, la consulta de
+> divergencia devuelve **0 filas**, los **cuatro triggers** están habilitados, y **0 filas**
+> con estado de tarjeta sin `estado_changed_at`. El recálculo del §6 —lo único que tocaba
+> datos existentes— **se simuló en seco contra la base real antes de escribir nada**: cuatro
+> hilos coincidían y el quinto era el `CERRADO SIN ACUERDO` que la migración excluye a
+> propósito.
+>
+> **Y una sexta repetición del patrón, esta vez en la documentación (F-054).** `PENDIENTE-PO.md`
+> §3 mandaba al PO ejecutar `supabase db push`, y **este repo no tiene `supabase/config.toml`**:
+> nunca se enlazó con la CLI, así que el comando no podía funcionar. El PO se quedó parado en
+> el punto que estaba estimado en cinco minutos. La pista llevaba ahí desde el día 2 — las seis
+> migraciones anteriores figuran como `mvp_000N_…` y **ese prefijo no lo pone la CLI, lo pone
+> el MCP**. **Una instrucción que no se ha ejecutado nunca es una hipótesis, no un
+> procedimiento**, y este fichero lleva seis días demostrando la versión general de la misma
+> frase.
+
 ---
 
 ## Dónde estamos

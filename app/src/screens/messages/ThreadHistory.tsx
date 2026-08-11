@@ -1,7 +1,195 @@
-import type { ThreadItem } from '../../lib/thread-detail';
+import {
+  ENCRYPTED_NOTICE,
+  asOfferCard,
+  authorLabel,
+  itemTypeLabel,
+  type ItemContent,
+  type ThreadItem,
+} from '../../lib/thread-detail';
+import { expiryNotice, offerActions, shippingLine } from '../../lib/offers';
+import { relativeTime } from '../../lib/threads';
+import styles from './ThreadHistory.module.css';
 
-/** ESQUELETO — ver la cabecera de `Thread.tsx`. Lo sobrescribe el Coder. */
-export function ThreadHistory(_props: {
+const COUNTER_OFFER_REASON = 'La contraoferta (MSG-03) queda fuera del MVP.';
+
+const OFFER_STATE_CLASS: Record<string, string | undefined> = {
+  Pendiente: styles.statePendiente,
+  Aceptada: styles.stateAceptada,
+  Rechazada: styles.stateRechazada,
+  'Superada por contraoferta': styles.stateSuperada,
+};
+
+const INQUIRY_STATE_CLASS: Record<string, string | undefined> = {
+  Pendiente: styles.statePendiente,
+  'Respondida con oferta': styles.stateRespondida,
+};
+
+function offerStateClass(state: string): string {
+  return OFFER_STATE_CLASS[state] ?? '';
+}
+
+function inquiryStateClass(state: string): string {
+  return INQUIRY_STATE_CLASS[state] ?? '';
+}
+
+function formatQuantity(quantity: number): string {
+  return `${quantity} ud.`;
+}
+
+function InquiryBody({ content }: { content: Extract<ItemContent, { kind: 'CONSULTA' }> }) {
+  return (
+    <>
+      <div className={styles.cardRow}>
+        <span className={styles.cardLabel}>Cantidad</span>
+        <span className={styles.cardVal}>{formatQuantity(content.quantity)}</span>
+      </div>
+      {content.comment && <p className={styles.cardNote}>{content.comment}</p>}
+    </>
+  );
+}
+
+function OfferBody({ content, now }: { content: Extract<ItemContent, { kind: 'OFERTA' }>; now?: Date }) {
+  const shipping = shippingLine(content.shippingCost, content.currency);
+  const expiry = expiryNotice(content.validUntil, now);
+
+  return (
+    <>
+      <div className={styles.cardRow}>
+        <span className={styles.cardLabel}>Precio unitario</span>
+        <span className={styles.cardVal}>
+          {new Intl.NumberFormat('es-ES', { style: 'currency', currency: content.currency }).format(
+            content.unitPrice,
+          )}
+          /ud.
+        </span>
+      </div>
+      <div className={styles.cardRow}>
+        <span className={styles.cardLabel}>Cantidad</span>
+        <span className={styles.cardVal}>{formatQuantity(content.quantity)}</span>
+      </div>
+      {content.leadTimeDays !== null && content.leadTimeDays !== undefined && (
+        <div className={styles.cardRow}>
+          <span className={styles.cardLabel}>Plazo de entrega</span>
+          <span className={styles.cardVal}>{content.leadTimeDays} días</span>
+        </div>
+      )}
+      {shipping && (
+        <div className={styles.cardRow}>
+          <span className={styles.cardLabel}>Coste transporte</span>
+          <span className={styles.cardVal}>{shipping}</span>
+        </div>
+      )}
+      {content.validUntil && (
+        <div className={styles.cardRow}>
+          <span className={styles.cardLabel}>Válida hasta</span>
+          <span className={styles.cardVal}>{content.validUntil}</span>
+        </div>
+      )}
+      {expiry && <p className={styles.cardExpiry}>{expiry}</p>}
+      {content.notes && <p className={styles.cardNote}>{content.notes}</p>}
+    </>
+  );
+}
+
+function Card({
+  item,
+  threadId,
+  viewerOrgId,
+  now,
+  onAcceptOffer,
+  onRejectOffer,
+}: {
+  item: ThreadItem;
+  threadId: string;
+  viewerOrgId: string;
+  now?: Date;
+  onAcceptOffer: (itemId: string) => void;
+  onRejectOffer: (itemId: string) => void;
+}) {
+  const isOffer = item.type === 'OFERTA';
+  const card = asOfferCard(item, threadId);
+  // Las acciones solo salen de offerActions: es lo único que sabe que sólo el
+  // receptor decide. Una condición equivalente escrita aquí pondría la regla en
+  // dos sitios (F-056).
+  const actions = card ? offerActions(card, viewerOrgId) : [];
+  const stateLabel = isOffer ? item.offerState : item.inquiryState;
+  const stateClass = stateLabel
+    ? isOffer
+      ? offerStateClass(stateLabel)
+      : inquiryStateClass(stateLabel)
+    : '';
+  const reference = [item.partNumber, item.brand].filter(Boolean).join(' · ');
+
+  return (
+    <article className={`${styles.card} ${item.isOwn ? styles.cardOwn : styles.cardOther}`}>
+      <header
+        className={`${styles.cardHeader} ${isOffer ? styles.cardHeaderOffer : styles.cardHeaderInquiry}`}
+      >
+        <span className={`${styles.typeBadge} ${isOffer ? styles.typeBadgeOffer : styles.typeBadgeInquiry}`}>
+          {itemTypeLabel(item.type)}
+        </span>
+        {reference && <span className={styles.cardRef}>{reference}</span>}
+      </header>
+
+      <div className={styles.cardBody}>
+        {item.content && item.content.kind === 'CONSULTA' && <InquiryBody content={item.content} />}
+        {item.content && item.content.kind === 'OFERTA' && <OfferBody content={item.content} now={now} />}
+        {!item.content && <div className={styles.encrypted}>{ENCRYPTED_NOTICE}</div>}
+      </div>
+
+      <footer className={styles.cardFooter}>
+        {stateLabel && <span className={`${styles.cardState} ${stateClass}`}>{stateLabel}</span>}
+        {actions.length > 0 && (
+          <div className={styles.cardActions}>
+            {actions.includes('aceptar') && (
+              <button
+                type="button"
+                className={styles.acceptButton}
+                onClick={() => onAcceptOffer(item.id)}
+              >
+                Aceptar oferta
+              </button>
+            )}
+            {actions.includes('rechazar') && (
+              <button
+                type="button"
+                className={styles.rejectButton}
+                onClick={() => onRejectOffer(item.id)}
+              >
+                Rechazar
+              </button>
+            )}
+            {actions.includes('contraofertar') && (
+              <span className={styles.counterWrap}>
+                <button type="button" className={styles.counterButton} disabled>
+                  Contra-ofertar
+                </button>
+                <span className={styles.reason}>{COUNTER_OFFER_REASON}</span>
+              </span>
+            )}
+          </div>
+        )}
+      </footer>
+    </article>
+  );
+}
+
+/**
+ * Historial de MSG-02, puramente presentacional.
+ *
+ * Recibe los elementos ya ordenados ascendentemente por la capa de datos y no
+ * carga nada. El estado vacío vive aquí, no en la pantalla.
+ */
+export function ThreadHistory({
+  items,
+  threadId,
+  viewerOrgId,
+  ownOrgName,
+  counterpartyName,
+  now,
+  onAcceptOffer,
+  onRejectOffer,
+}: {
   items: ThreadItem[];
   threadId: string;
   viewerOrgId: string;
@@ -11,5 +199,44 @@ export function ThreadHistory(_props: {
   onAcceptOffer: (itemId: string) => void;
   onRejectOffer: (itemId: string) => void;
 }) {
-  return null;
+  if (items.length === 0) {
+    return <div className={styles.empty}>Este hilo no tiene elementos todavía.</div>;
+  }
+
+  return (
+    <ul className={styles.list}>
+      {items.map((item) => {
+        const author = authorLabel(item, { ownOrgName, counterpartyName });
+        return (
+          <li
+            key={item.id}
+            className={`${styles.item} ${item.isOwn ? styles.itemOwn : styles.itemOther}`}
+            data-testid="thread-item"
+            data-item-id={item.id}
+            data-own={String(item.isOwn)}
+            aria-label={item.isOwn ? `Elemento enviado por ${author}` : `Elemento de ${author}`}
+          >
+            {item.type === 'MENSAJE' ? (
+              <div className={`${styles.bubble} ${item.isOwn ? styles.bubbleOwn : styles.bubbleOther}`}>
+                {item.content && item.content.kind === 'MENSAJE' ? item.content.text : ENCRYPTED_NOTICE}
+              </div>
+            ) : (
+              <Card
+                item={item}
+                threadId={threadId}
+                viewerOrgId={viewerOrgId}
+                now={now}
+                onAcceptOffer={onAcceptOffer}
+                onRejectOffer={onRejectOffer}
+              />
+            )}
+            <div className={styles.meta}>
+              <span className={styles.author}>{author}</span>
+              <span className={styles.timestamp}>{relativeTime(item.createdAt, now)}</span>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }

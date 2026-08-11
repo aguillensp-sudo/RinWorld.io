@@ -1,0 +1,291 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemOwn {
+  align-items: flex-end;
+}
+
+.itemOther {
+  align-items: flex-start;
+}
+
+.meta {
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--bw-text-secondary);
+  font-family: var(--bw-font-body);
+}
+
+.timestamp {
+  font-family: var(--bw-font-mono);
+}
+
+.bubble {
+  max-width: 68%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: var(--bw-font-body);
+}
+
+.bubbleOwn {
+  background: var(--bw-deep-steel);
+  color: var(--bw-cold-white);
+  border-bottom-right-radius: 3px;
+}
+
+.bubbleOther {
+  background: var(--bw-warm-cream);
+  color: var(--bw-deep-steel);
+  border: 1px solid var(--bw-line-steel);
+  border-bottom-left-radius: 3px;
+}
+
+.card {
+  max-width: 92%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--bw-line-steel);
+  background: var(--bw-warm-cream);
+}
+
+.cardOwn {
+  margin-left: auto;
+}
+
+.cardOther {
+  margin-right: auto;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+}
+
+.cardHeaderInquiry {
+  background: var(--bw-chip-active-bg);
+  border-left: 3px solid var(--bw-calibration-blue);
+}
+
+.cardHeaderOffer {
+  background: var(--bw-badge-success-bg);
+  border-left: 3px solid var(--bw-signal-green);
+}
+
+.typeBadge {
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.typeBadgeInquiry {
+  background: var(--bw-tint-consulta);
+  color: var(--bw-calibration-blue);
+  border: 1px solid var(--bw-chip-active-border);
+}
+
+.typeBadgeOffer {
+  background: var(--bw-tint-oferta);
+  color: var(--bw-signal-green);
+  border: 1px solid var(--bw-badge-success-border);
+}
+
+.cardRef {
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.cardBody {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardRow {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  font-family: var(--bw-font-body);
+}
+
+.cardLabel {
+  color: var(--bw-input-placeholder);
+  min-width: 100px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.cardVal {
+  color: var(--bw-ink-steel);
+  font-weight: 500;
+}
+
+.cardNote {
+  font-size: 12px;
+  color: var(--bw-input-placeholder);
+  font-style: italic;
+  border-top: 1px solid var(--bw-divider-mist);
+  padding-top: 8px;
+  margin-top: 4px;
+  font-family: var(--bw-font-body);
+}
+
+.cardExpiry {
+  font-size: 12px;
+  color: var(--bw-warning);
+  font-weight: 500;
+  margin: 2px 0 0;
+  font-family: var(--bw-font-body);
+}
+
+.encrypted {
+  font-size: 12px;
+  color: var(--bw-text-secondary);
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-top: 4px;
+  font-family: var(--bw-font-body);
+}
+
+.cardFooter {
+  padding: 10px 14px;
+  border-top: 1px solid var(--bw-divider-mist);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cardState {
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.statePendiente {
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning);
+  border: 1px solid var(--bw-badge-warning-border);
+}
+
+.stateAceptada {
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-success-dark);
+  border: 1px solid var(--bw-badge-success-border);
+}
+
+.stateRechazada {
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-sensitive-text);
+  border: 1px solid var(--bw-sensitive-text);
+}
+
+.stateSuperada {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border: 1px solid var(--bw-badge-neutral-border);
+}
+
+.stateRespondida {
+  background: var(--bw-chip-active-bg);
+  color: var(--bw-primary-dark);
+  border: 1px solid var(--bw-chip-active-border);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.acceptButton {
+  height: 28px;
+  padding: 0 12px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: 4px;
+  color: var(--bw-cold-white);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--bw-font-body);
+}
+
+.rejectButton {
+  height: 28px;
+  padding: 0 10px;
+  background: none;
+  border: 1px solid var(--bw-sensitive-text);
+  border-radius: 4px;
+  color: var(--bw-sensitive-text);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--bw-font-body);
+}
+
+.counterWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.counterButton {
+  height: 28px;
+  padding: 0 10px;
+  background: none;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 4px;
+  color: var(--bw-text-secondary);
+  font-size: 12px;
+  cursor: not-allowed;
+  font-family: var(--bw-font-body);
+  opacity: 0.7;
+}
+
+.reason {
+  font-size: 11px;
+  color: var(--bw-text-secondary);
+  line-height: 1.4;
+}
+
+.empty {
+  flex: 1;
+  padding: 40px 22px;
+  color: var(--bw-text-secondary);
+  font-size: 13px;
+  font-family: var(--bw-font-body);
+}

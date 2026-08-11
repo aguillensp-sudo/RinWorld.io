@@ -1,0 +1,208 @@
+.header {
+  flex-shrink: 0;
+  padding: 0 22px 12px;
+  background: var(--bw-cold-white);
+  border-bottom: 1px solid var(--bw-line-steel);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 6px;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-text-secondary);
+}
+
+.crumbLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-transform: uppercase;
+  color: var(--bw-text-secondary);
+  cursor: pointer;
+  font-family: var(--bw-font-mono);
+}
+
+.crumbLink:hover {
+  color: var(--bw-brass);
+}
+
+.crumbSep {
+  color: var(--bw-input-placeholder);
+}
+
+.crumbCurrent {
+  color: var(--bw-input-placeholder);
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-brand);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bw-text-secondary);
+  margin-bottom: 4px;
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.orgLink {
+  font-family: var(--bw-font-title);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bw-calibration-blue);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.orgLink:hover {
+  color: var(--bw-primary-dark);
+}
+
+.stateBadge {
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.stateNeutral {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border: 1px solid var(--bw-badge-neutral-border);
+}
+
+.stateInfo {
+  background: var(--bw-chip-active-bg);
+  color: var(--bw-primary-dark);
+  border: 1px solid var(--bw-chip-active-border);
+}
+
+.stateWarn {
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning);
+  border: 1px solid var(--bw-badge-warning-border);
+}
+
+.stateSuccess {
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-success-dark);
+  border: 1px solid var(--bw-badge-success-border);
+}
+
+.stateClosed {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border: 1px solid var(--bw-badge-neutral-border);
+}
+
+.countryBadge {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: var(--bw-surface-mist);
+  color: var(--bw-text-secondary);
+  border: 1px solid var(--bw-line-steel);
+  white-space: nowrap;
+}
+
+.actions {
+  margin-left: auto;
+  position: relative;
+}
+
+.actionsButton {
+  height: 32px;
+  padding: 0 12px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  color: var(--bw-ink-steel);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--bw-font-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.actionsButton:hover {
+  border-color: var(--bw-text-secondary);
+  color: var(--bw-deep-steel);
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 38px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  min-width: 210px;
+  z-index: 30;
+  overflow: hidden;
+}
+
+.dropdownOpen {
+  display: block;
+}
+
+.actionItem {
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+}
+
+.actionItem:last-child {
+  border-bottom: none;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+  font-family: var(--bw-font-body);
+  text-align: left;
+}
+
+.actionButton:hover:not(:disabled) {
+  background: var(--bw-cold-white);
+  color: var(--bw-deep-steel);
+}
+
+.actionButton:disabled {
+  cursor: not-allowed;
+  color: var(--bw-hint-steel);
+}
+
+.reason {
+  font-size: 11px;
+  color: var(--bw-text-secondary);
+  line-height: 1.4;
+}

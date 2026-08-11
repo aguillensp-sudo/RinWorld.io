@@ -1,0 +1,94 @@
+.composer {
+  flex-shrink: 0;
+  padding: 12px 22px;
+  border-top: 1px solid var(--bw-line-steel);
+  background: var(--bw-cold-white);
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.textarea {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--bw-line-steel-strong);
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-deep-steel);
+  resize: none;
+  outline: none;
+  min-height: 38px;
+  max-height: 90px;
+}
+
+.textarea:focus {
+  border-color: var(--bw-calibration-blue);
+}
+
+.textarea::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.sendButton {
+  width: 36px;
+  height: 36px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: 7px;
+  color: var(--bw-cold-white);
+  font-size: 16px;
+  cursor: not-allowed;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--bw-font-body);
+}
+
+.subRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.offerButton {
+  height: 30px;
+  padding: 0 14px;
+  background: none;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  color: var(--bw-hint-steel);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: not-allowed;
+  font-family: var(--bw-font-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reason {
+  font-size: 11px;
+  color: var(--bw-text-secondary);
+  font-family: var(--bw-font-body);
+}
+
+.encryptHint {
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  color: var(--bw-input-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

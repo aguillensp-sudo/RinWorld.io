@@ -108,14 +108,22 @@ test.describe('SRCH-01 · resultados reales', () => {
   });
 
   /**
-   * ⚠ El botón de abrir el formulario se busca por su nombre accesible EXACTO,
-   * `Añadir filtro`, y no por su texto visible `Filtro`: `FilterChips.tsx` le pone
-   * un `aria-label`, y un `aria-label` tapa el texto interno. Estaba escrito
-   * `/Filtro/` —con mayúscula y sin `i`— y no casaba con nada: los tres tests que
-   * abren el formulario caducaban en el `click`. Es F-048 otra vez, en el e2e.
+   * ⚠ LOS DOS BOTONES DE ESTE FORMULARIO SE BUSCAN CON CUIDADO, Y NO ES CELO.
    *
-   * Y exacto en vez de `/filtro/i` a propósito: con un chip ya puesto habría dos
-   * botones que casan (`Quitar filtro Marca`) y Playwright aborta por strict mode.
+   * `FilterChips.tsx` pone `aria-label="Añadir filtro"` al botón que **abre** el
+   * formulario, y el que lo **envía** dice `Añadir`. Un `aria-label` tapa el texto
+   * interno, así que el visible `+ Filtro` no es el nombre accesible de nada.
+   *
+   * Y en Playwright el `name` en cadena casa **por subcadena** e insensible a
+   * mayúsculas — al revés que Testing Library, que casa exacto —, de modo que
+   * `'Añadir'` a secas resuelve a los DOS botones y aborta por strict mode. De ahí
+   * el `exact: true` en el submit: es obligatorio, no estilo.
+   *
+   * Los dos defectos estaban aquí desde el día 6 y ninguno se vio, porque la suite
+   * no arrancaba (F-050). El primero era `/Filtro/` con mayúscula, que no casaba
+   * con nada; arreglarlo destapó el segundo tres líneas más abajo. Es F-048 otra
+   * vez y el corolario de F-052: **una suite que no corre deja de cubrirse a sí
+   * misma.**
    */
   test('el chip de zona Europa deja fuera a la distribuidora turca', async ({ page }) => {
     // `guion-demo-y-siembra.md` §3: Anadolu Rulman lleva `continent = 'AS'` por el
@@ -123,7 +131,7 @@ test.describe('SRCH-01 · resultados reales', () => {
     await page.getByRole('button', { name: 'Añadir filtro' }).click();
     await page.getByLabel('Campo').selectOption('Zona');
     await page.getByLabel('Valor').selectOption('Europa');
-    await page.getByRole('button', { name: 'Añadir' }).click();
+    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
 
     await expect(page.getByText('Anadolu Rulman')).toHaveCount(0);
     // Y sigue habiendo resultados: el chip filtra, no vacía la tabla.
@@ -134,7 +142,7 @@ test.describe('SRCH-01 · resultados reales', () => {
     await page.getByRole('button', { name: 'Añadir filtro' }).click();
     await page.getByLabel('Campo').selectOption('Ref');
     await page.getByLabel('Valor').fill('6205-2RS');
-    await page.getByRole('button', { name: 'Añadir' }).click();
+    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
 
     await expect(page.getByRole('row').nth(1)).toBeVisible();
     const filas = page.getByRole('row');
@@ -144,13 +152,43 @@ test.describe('SRCH-01 · resultados reales', () => {
     }
   });
 
+  /**
+   * ⚠ ESTE TEST PEDÍA EL ESTADO VACÍO Y SU PREMISA ERA FALSA. Decía: *"la
+   * referencia 32011X de Anadolu está ARCHIVED"*, y filtraba por `32011X`
+   * esperando cero filas. Pero el catálogo sembrado tiene **tres** referencias que
+   * casan con `32011`, no una:
+   *
+   *   32011-X · SKF · PUBLISHED · Nordwälz Lager  (EU)
+   *   32011X  · NTN · ARCHIVED  · Anadolu Rulman  (AS)   <- la que el test conocía
+   *   32011X  · NSK · PUBLISHED · Łożyska Wschód  (EU)   <- la que no
+   *
+   * Así que `32011X` devuelve UNA fila legítima y el estado vacío no llega nunca.
+   *
+   * Y el test era **débil** además de falso: esperar cero filas también lo pasa una
+   * búsqueda rota que no devuelva nada jamás. Con una referencia publicada y otra
+   * archivada compartiendo literal, se puede probar lo que el nombre promete —que
+   * el filtro de `status` corta— **y** que la búsqueda sigue trayendo lo que debe.
+   * Ese par de assertions juntos no los pasa ninguna de las dos averías.
+   *
+   * El estado vacío se prueba aparte, abajo, con una referencia que no existe.
+   */
   test('no trae líneas que no estén publicadas', async ({ page }) => {
-    // El catálogo sembrado tiene DRAFT, ARCHIVED y DELETED a propósito. La
-    // referencia 32011X de Anadolu está ARCHIVED y no puede aparecer nunca.
     await page.getByRole('button', { name: 'Añadir filtro' }).click();
     await page.getByLabel('Campo').selectOption('Ref');
     await page.getByLabel('Valor').fill('32011X');
-    await page.getByRole('button', { name: 'Añadir' }).click();
+    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
+
+    // La PUBLISHED de Łożyska sí sale: la búsqueda no está simplemente rota.
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    // Y la ARCHIVED de Anadolu no aparece, que es el invariante.
+    await expect(page.getByText('Anadolu Rulman')).toHaveCount(0);
+  });
+
+  test('sin resultados sale el estado vacío, no una tabla en blanco', async ({ page }) => {
+    await page.getByRole('button', { name: 'Añadir filtro' }).click();
+    await page.getByLabel('Campo').selectOption('Ref');
+    await page.getByLabel('Valor').fill('ZZ-NO-EXISTE-9999');
+    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
 
     await expect(page.getByText('No hemos encontrado stock con estos filtros.')).toBeVisible();
   });

@@ -645,4 +645,186 @@ begin
 end
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Rebanada E2EE (0012) · la pública de la contraparte se lee, la fila no se abre
+--
+-- Los cuatro asertos van en este orden a propósito (F-059): el primero es el
+-- ANCLA POSITIVA —la función devuelve de verdad la clave de la otra parte— y los
+-- tres siguientes acotan qué NO devuelve. Sin el ancla delante, "no devuelve a
+-- Gamma" y "no devuelve email" los cumpliría igual una función que no devuelve
+-- nada, que es exactamente el defecto que costó tres fallos el día 7.
+-- ---------------------------------------------------------------------------
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    filas int;
+    pub_de_beta bytea;
+  begin
+    -- 1 · ANCLA. Alpha pide las claves del hilo Alpha↔Beta y le llegan las tres
+    -- que hay: sus dos miembros y el de Beta. La CEK va envuelta por PERSONA
+    -- (0003:263), así que "los dos lados" son todos los miembros de ambas.
+    select count(*) into filas
+      from public.thread_public_keys('11110000-0000-0000-0000-000000000001');
+    assert filas = 3,
+      'thread_public_keys tiene que devolver los 3 miembros de las dos organizaciones del hilo, y devolvio ' || filas;
+
+    select public_key into pub_de_beta
+      from public.thread_public_keys('11110000-0000-0000-0000-000000000001')
+     where member_id = '0b000001-0000-0000-0000-000000000001';
+    assert pub_de_beta is not null and octet_length(pub_de_beta) = 32,
+      'Alpha tiene que poder leer la X25519 publica de Beta: sin eso no puede envolver la CEK y la rebanada E2EE no existe';
+
+    -- 2 · Ámbito. Gamma no participa en este hilo y no sale, aunque su fila de
+    -- `members` exista y tenga clave publicada.
+    assert not exists (
+      select 1 from public.thread_public_keys('11110000-0000-0000-0000-000000000001')
+       where member_id = '0c000001-0000-0000-0000-000000000001'),
+      'thread_public_keys no puede devolver miembros de una organizacion ajena al hilo';
+
+    -- 3 · LA REGRESIÓN QUE MÁS IMPORTA. 0012 abre una ventana de tres columnas,
+    -- no la puerta: `members_select_own_org` (0001:207) sigue cerrada y Alpha
+    -- sigue sin ver la fila de Beta. Si esto se cae, alguien "arregló" la
+    -- rebanada relajando la política y con ella se fueron `email` y los cuatro
+    -- campos del respaldo de clave (ADR-001 §8).
+    select count(*) into filas from public.members;
+    assert filas = 2,
+      'members_select_own_org tiene que seguir cerrada: Alpha ve sus 2 miembros y ninguno mas, y vio ' || filas;
+  end
+  $$;
+commit;
+
+-- 4 · Quien no participa no obtiene filas, y no obtiene tampoco un error que le
+-- diga que el hilo existe (mismo criterio que `maybeSingle` en thread-detail.ts).
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.thread_public_keys('11110000-0000-0000-0000-000000000001')) = 0,
+      'Un tercero no puede sacar las claves publicas de un hilo en el que no participa';
+    raise notice 'OK · 0012: la publica de la contraparte se lee, la fila de members sigue cerrada';
+  end
+  $$;
+commit;
+
+-- 5 · Un miembro sin clave publicada VUELVE, con `public_key` a NULL. Filtrarlo
+-- seria el fallo silencioso de 0012 §3: el emisor envolveria la CEK para menos
+-- gente de la que debe, el insert funcionaria, y la otra parte se quedaria con
+-- "Contenido cifrado" para siempre sin nada que lo explicara.
+begin;
+  update public.members set public_key = null
+    where id = '0b000001-0000-0000-0000-000000000001';
+
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.thread_public_keys('11110000-0000-0000-0000-000000000001')) = 3,
+      'Un miembro sin clave publicada sigue apareciendo: el hueco se pinta, no se esconde';
+    assert (select public_key from public.thread_public_keys('11110000-0000-0000-0000-000000000001')
+             where member_id = '0b000001-0000-0000-0000-000000000001') is null,
+      'El miembro sin clave publicada vuelve con public_key NULL, para que el cliente pueda negarse a enviar y decir de quien falta';
+    raise notice 'OK · 0012: el destinatario sin clave publicada se ve, no se filtra';
+  end
+  $$;
+rollback;
+
+-- ---------------------------------------------------------------------------
+-- create_thread_item (0012 §5) · el elemento y sus claves, o ninguna de las dos
+--
+-- Lo que se prueba aquí no es que inserte: es que **no puede quedar un elemento
+-- sin claves**, que es corrupción permanente e irreparable, y que agrupar las
+-- dos escrituras no ha abierto ninguna puerta (`security invoker`).
+-- ---------------------------------------------------------------------------
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    creado uuid;
+  begin
+    -- 1 · ANCLA. Alpha escribe un mensaje cifrado y deposita las dos CEK
+    -- envueltas —la de Nordwälz y la suya propia— en la misma transacción.
+    creado := public.create_thread_item(
+      '11110000-0000-0000-0000-000000000001',
+      'MENSAJE',
+      repeat('ab', 64),   -- ciphertext, hex pelado sin \x
+      repeat('07', 12),   -- iv de 12 bytes, thread_items_iv_len_chk
+      jsonb_build_array(
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+                           'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('07',12),
+                           'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+                           'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('07',12),
+                           'ephemeral_pubkey', repeat('44',32))
+      ));
+
+    assert creado is not null, 'create_thread_item tiene que devolver el id del elemento creado';
+    assert (select item_type from public.thread_items where id = creado) = 'MENSAJE',
+      'El elemento creado tiene que existir y ser un MENSAJE';
+    assert (select content_ciphertext from public.thread_items where id = creado)
+             = decode(repeat('ab',64),'hex'),
+      'El ciphertext se guarda tal cual llega: hex pelado decodificado, sin reinterpretar';
+
+    -- Las dos claves entraron. Se cuenta como `postgres` mas abajo porque
+    -- `item_keys_select_own` solo deja ver la propia — aqui se ve una.
+    assert (select count(*) from public.thread_item_keys where item_id = creado) = 1,
+      'Alpha ve exclusivamente su propia CEK envuelta, tambien en el elemento que acaba de crear';
+  end
+  $$;
+commit;
+
+-- Las dos filas están de verdad, mirando sin RLS.
+do $$
+begin
+  assert (select count(*) from public.thread_item_keys tik
+            join public.thread_items ti on ti.id = tik.item_id
+           where ti.item_type = 'MENSAJE') = 2,
+    'create_thread_item deposita UNA fila por destinatario: sin la del emisor, quien escribe no puede releerse';
+  raise notice 'OK · 0012: elemento y claves en la misma transaccion';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  -- 2 · Sin claves no se crea nada. Es el caso irreparable.
+  select public.expect_fail(
+    $$select public.create_thread_item('11110000-0000-0000-0000-000000000001','MENSAJE',
+        repeat('ab',32), repeat('07',12), '[]'::jsonb)$$,
+    'elemento cifrado sin una sola CEK envuelta (seria ilegible para siempre)');
+
+  -- 3 · Y solo MENSAJE: OFERTA es MSG-03 y CONSULTA llega con el envio de SRCH-01.
+  select public.expect_fail(
+    $$select public.create_thread_item('11110000-0000-0000-0000-000000000001','OFERTA',
+        repeat('ab',32), repeat('07',12),
+        jsonb_build_array(jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('07',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'create_thread_item con un tipo que no es MENSAJE');
+commit;
+
+-- 4 · `security invoker`: agrupar dos escrituras NO concede ningún permiso.
+-- Gamma no participa en el hilo y la función no le sirve de puerta trasera.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_thread_item('11110000-0000-0000-0000-000000000001','MENSAJE',
+        repeat('ab',32), repeat('07',12),
+        jsonb_build_array(jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('07',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'un tercero escribiendo en un hilo ajeno a traves de create_thread_item');
+commit;
+
+do $$
+begin
+  raise notice 'OK · 0012: create_thread_item no concede permisos (security invoker)';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

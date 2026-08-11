@@ -87,5 +87,70 @@ contradice sus propios elementos.
 
 ---
 
+## D-07-02 · `RETIRADA` no entra en el MVP
+
+**Decisión del PO, 11-ago-2026:** *"RETIRADA no entra en el MVP."*
+
+Cierra **F-043b**. Se decide hoy porque **VND-01 se construye el día 8** (`Plan §3`) y es la
+pantalla que la pide.
+
+### Qué queda fuera, exactamente
+
+`Rinworld_spec_VND-01.md` da `Retirar oferta` en la tabla de acciones para una oferta en estado
+PENDIENTE (línea 91), y `RNG-VND-04` (línea 149) describe su confirmación inline. **VND-01 no
+pinta ese botón.** Es la única desviación, y va con su nota al lado, como se hizo con F-025.
+
+### Por qué la desviación es pequeña
+
+- **No está en ninguna capability.** `offer-card` tiene cuatro estados —Pendiente, Aceptada,
+  Rechazada, Superada por contraoferta— y `RETIRADA` no es uno.
+- **El día 2 ya se había decidido igual** (`Dia-02_decisiones_esquema.md:138`: *"`RETIRADA` · No
+  existe. No hay escenario de retirada"*). Lo que faltó entonces fue mirar VND-01, no la
+  decisión.
+- **Y no es implementable tal como está escrita:** `RNG-VND-04` dice *"Confirmar retira la
+  oferta y **elimina la fila**"*, y eso choca de frente con el *"sin eliminarse del historial"*
+  de `offer-card`. Habría hecho falta rehacer la regla antes de poder construirla.
+
+### Ya hay un aserto que la sostiene
+
+No es solo una nota en un documento. `01_schema_smoke.sql` comprueba que la base **rechaza** el
+literal:
+
+```
+OK · bloqueado: offer-card: estado RETIRADA (no existe en el spec)
+```
+
+Y `offerActions()` no devuelve `retirar` a nadie. Si alguien lo reintroduce por descuido, falla
+la CI.
+
+### Si la quieres para V1
+
+Es una migración —valor nuevo en `thread_items_estado_oferta_chk`, guardia de que **solo el
+emisor** retira, simétrica a 0008/0010— más el botón. **Y antes hay que reescribir `RNG-VND-04`
+para que no elimine la fila.** Medio día largo, no un rato.
+
+---
+
+## D-07-03 · `EXPIRADA` no es un estado — y esto no es una decisión, es lo que dice el contrato
+
+Va junto a la anterior porque venía en el mismo hallazgo (F-043b) y afecta a la misma pantalla,
+pero **no hacía falta decidir nada**: la capability ya lo resuelve, con escenario propio.
+
+`messaging-and-negotiation/spec.md:173`:
+
+> - GIVEN una tarjeta de oferta con `valid_until` informado, ya pasada, y **`estado_oferta=Pendiente`**
+> - THEN se muestra el aviso *"Esta oferta ha expirado"* **de forma local**
+> - AND **el receptor puede aceptarla igualmente** — la fecha es orientativa, no contractual en V1
+
+Es decir: una oferta caducada **sigue Pendiente**. `EXPIRADA` en VND-01 es una **etiqueta de
+presentación**, no un quinto estado, y la caducidad no cambia lo que se puede hacer con la
+oferta. VND-01 puede pintar el aviso; lo que no puede es tratarla como terminal ni impedir que
+se acepte.
+
+**Si querías que caducar sí cerrara la oferta, dilo — eso sí sería una decisión y cambiaría la
+capability.** Tal como está, no hay nada que decidir.
+
+---
+
 *Escrito el 11-ago-2026 · Claude Code (Opus 5) · las decisiones de este fichero no caducan al
 cierre del día, a diferencia de `ESTADO.md`*

@@ -154,6 +154,24 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > algo. Lo que se verifica en el remoto es que **lo desplegado es el código probado**; que ese
 > código bloquee lo prueban los asertos, y no hay atajo.
 
+> **11-ago · DECISIÓN DEL PO (F-043b): `RETIRADA` no entra en el MVP.** VND-01 no pintará
+> `Retirar oferta`. Registrada como D-07-02. La desviación es pequeña —el literal no está en
+> ninguna capability, el día 2 ya se había resuelto igual, y `RNG-VND-04` no era implementable
+> tal como está escrita (*"elimina la fila"* contra el *"sin eliminarse del historial"* de
+> `offer-card`)— **y no se queda en una nota: hay un aserto que la sostiene**, porque la base
+> rechaza el literal y `offerActions()` no lo devuelve a nadie.
+>
+> **La otra mitad del hallazgo no era una decisión y se resolvió leyendo el contrato** (D-07-03):
+> `EXPIRADA` no es un quinto estado. `messaging-and-negotiation/spec.md:173` tiene escenario
+> propio — una oferta caducada **sigue Pendiente**, el aviso es local y *"el receptor puede
+> aceptarla igualmente"*. En VND-01 es una etiqueta de presentación. **Vale la pena separar las
+> dos: una era una decisión de producto y la otra una pregunta ya contestada por una capability
+> que nadie había ido a leer.**
+>
+> **Con esto el día 8 no tiene nada delante.** MSG-02 y VND-01 se pueden construir, y las dos
+> desviaciones vivas están en `Dia-07_decisiones_producto.md`, que se lee **antes** que la spec
+> de pantalla.
+
 ---
 
 ## Dónde estamos

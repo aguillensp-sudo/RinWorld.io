@@ -181,9 +181,13 @@ comando que no existe. No urge, pero no se puede quedar así.
 
 ---
 
-## 4 🟠 F-043b · ¿Existe `RETIRADA`? — **decide antes del día 8**
+## 4 ✅ F-043b · `RETIRADA` no entra en el MVP — DECIDIDO (11-ago)
 
-**Por qué ahora:** VND-01 se construye el día 8 (`Plan §3`) y es la pantalla que la pide.
+**Tu decisión, y es la opción (a).** VND-01 no pintará `Retirar oferta`. Registrada en
+[`Dia-07_decisiones_producto.md`](Dia-07_decisiones_producto.md) (D-07-02), que es lo que hay
+que leer antes de construir VND-01 mañana.
+
+Debajo queda el diagnóstico completo, que sigue siendo útil para quien construya la pantalla.
 
 **El estado real, verificado hoy sobre las 9 capabilities y los 32 HTML:**
 
@@ -208,9 +212,29 @@ como está escrita, no es implementable.**
 | **(b) Entra como quinto estado** | Migración nueva: valor en `thread_items_estado_oferta_chk`, guardia de que **solo el emisor** retira (simétrica a 0008), y `offerActions()` devuelve `['retirar']` al emisor. Medio día |
 | **(c) Entra, pero como decisión de V1** | Se anota en `product-decisions.md` y VND-01 pinta el botón deshabilitado con el motivo, como el watcher de SRCH-01 |
 
-**Mi recomendación: (a) para el MVP.** No está en ninguna capability, la demo del día 11 no la
-necesita, y el día 8 ya lleva la rebanada E2EE encima. Si la quieres para V1, (c) deja la
-constancia sin coste.
+**Elegida la (a).** Y no se queda en una nota en un documento: **ya hay un aserto que la
+sostiene.** `01_schema_smoke.sql` comprueba que la base rechaza el literal —
+`OK · bloqueado: offer-card: estado RETIRADA (no existe en el spec)`— y `offerActions()` no lo
+devuelve a nadie. Si alguien lo reintroduce por descuido, rompe la CI.
+
+Si la quieres para V1: migración con el valor nuevo en el CHECK, guardia de que **solo el
+emisor** retira (simétrica a 0010), el botón, **y antes reescribir `RNG-VND-04`** para que no
+elimine la fila. Medio día largo.
+
+### La otra mitad de este punto, `EXPIRADA`, no era una decisión
+
+Aquí decía que VND-01 usa un estado `EXPIRADA` que no existe en `offer-card`. **Fui a leer la
+capability y resulta que sí tiene escenario propio**, `messaging-and-negotiation/spec.md:173`:
+una oferta con `valid_until` pasada **sigue en `estado_oferta=Pendiente`**, el aviso *"Esta
+oferta ha expirado"* es **local**, y *"el receptor puede aceptarla igualmente — la fecha es
+orientativa, no contractual en V1"*.
+
+O sea: `EXPIRADA` es una **etiqueta de presentación**, no un quinto estado, y no hay nada que
+decidir. VND-01 puede pintar el aviso; lo que no puede es tratarla como terminal. Queda como
+D-07-03.
+
+**Si tu intención era que caducar sí cerrara la oferta, eso sí sería una decisión y cambiaría
+la capability — dilo y lo abrimos.** Tal como está el contrato, no hace falta.
 
 ---
 
@@ -334,16 +358,18 @@ Si quieres algo mejor para el día 11, hay que decidirlo con margen.
 **Los tres que bloqueaban algo están cerrados.** No queda ni un arreglo pendiente de tu parte:
 lo que resta son decisiones de producto, y esas no las puedo tomar yo.
 
-1. ~~Punto 1 (la clave)~~ ✅ · ~~Punto 2 (la contraseña)~~ ✅ · ~~Punto 3 (0007 y 0008)~~ ✅ ·
-   ~~Punto 5 (reapertura del hilo)~~ ✅ decidido por ti
-2. **Punto 5-bis** (aplicar 0009 y 0010) — **lo único urgente que queda**, y lo es porque
-   **0010 tapa un agujero que ahora mismo está abierto en producción**. Un «sí» y lo hago.
-3. **Punto 4** (`RETIRADA`) — antes del día 8, que es cuando se construye VND-01.
-4. La opción (a)/(b)/(c) del informe de Playwright en `ci.yml` — una línea, cuando quieras.
-5. El resto, sin prisa.
+**No queda nada que bloquee el día 8.** Los cinco puntos que lo hacían están cerrados:
 
-El punto 4 es una decisión de una frase y se abarata hoy: la pantalla que la implementa todavía
-no existe.
+1. ~~Punto 1 (la clave)~~ ✅ · ~~Punto 2 (la contraseña)~~ ✅ · ~~Punto 3 (0007 y 0008)~~ ✅ ·
+   ~~Punto 5 (reapertura del hilo)~~ ✅ · ~~Punto 5-bis (0009 y 0010 aplicadas)~~ ✅ ·
+   ~~Punto 4 (`RETIRADA`)~~ ✅
+2. La opción (a)/(b)/(c) del informe de Playwright en `ci.yml` — una línea, cuando quieras.
+3. Puntos 6 a 9 — nada urge, y varios son de V1.
+
+**MSG-02 y VND-01 se pueden construir.** Las dos desviaciones que arrastran tus decisiones están
+escritas en `Dia-07_decisiones_producto.md`, y quien las construya lee ese fichero **antes** que
+la spec de pantalla: MSG-02 mantiene el campo de mensaje visible en un hilo cerrado, y VND-01 no
+pinta `Retirar oferta`.
 
 ---
 

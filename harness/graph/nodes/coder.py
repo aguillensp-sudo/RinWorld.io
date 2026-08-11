@@ -41,17 +41,28 @@ def build_system(task: dict) -> str:
     # `CON_OFERTA_PENDIENTE` en vez de los literales del esquema y un mapa de
     # alias para tapar su propia invencion. Pedir que se importe un fichero sin
     # ensenarlo no es una prueba del Coder: es una adivinanza.
+    # Acepta una ruta o VARIAS. MSG-02 (dia 7) es la primera pantalla que importa
+    # de tres modulos —`thread-detail`, `offers` y `threads`—, y con el campo
+    # limitado a una cadena el prompt se habria llevado el `repr()` de la lista y
+    # `_read` habria reventado. Es el bug del dia 5 otra vez, en su version
+    # plural: **una capa declarada y no ensenada no es una prueba del Coder, es
+    # una adivinanza** — y aqui las reglas que no puede reinventar (quien decide
+    # una oferta, el formato del timestamp) viven justo en los dos modulos que se
+    # habrian quedado fuera.
+    rutas_capa = inputs.get("data_layer") or []
+    if isinstance(rutas_capa, str):
+        rutas_capa = [rutas_capa]
+
     capa = ""
-    if inputs.get("data_layer"):
+    if rutas_capa:
+        bloques = "\n\n".join(f"`{r}`:\n\n```ts\n{_read(r)}\n```" for r in rutas_capa)
         capa = f"""## CAPA DE DATOS — YA ESCRITA, SE IMPORTA TAL CUAL
 
-`{inputs['data_layer']}` ya existe en el repo. Sus tipos y su logica pura son la
-verdad: se importan. **Declarar un tipo paralelo o reescribir estas funciones es un
-fallo del intento**, aunque el resultado parezca equivalente.
+{', '.join(f'`{r}`' for r in rutas_capa)} ya existe(n) en el repo. Sus tipos y su
+logica pura son la verdad: se importan. **Declarar un tipo paralelo o reescribir
+estas funciones es un fallo del intento**, aunque el resultado parezca equivalente.
 
-```ts
-{_read(inputs['data_layer'])}
-```
+{bloques}
 
 """
 

@@ -10,6 +10,41 @@
 
 ---
 
+## ✅ RESUELTO EL 12-AGO · lo que decidió el PO, y la corrección de una de las tres
+
+**Las tres decisiones se cerraron antes de escribir una línea de cifrado.**
+
+| | Decidido | Resultado |
+|---|---|---|
+| **D-08-01** | **(a) Claves de demo deterministas** | `demo_threads.sql` se regenera cifrando de verdad. Divergencia registrada en **F-067** |
+| **D-08-02** | **Entran los dos**: oferta y mensaje libre | `sendMessage` + el pie de MSG-02 envía. `SEND_DISABLED_REASON` retirado |
+| **D-08-03** | **Se mantiene el diseño del día 2** | **Ninguna columna nueva.** Ver abajo |
+
+### ⚠ D-08-03 partía de una premisa falsa, y esto es lo que hay que leer antes de creerse el §D-08-03 de más abajo
+
+El texto original de este fichero decía: *"El esquema **no tiene columna para la clave pública
+de nadie**. Comprobado: `organizations` y `members` en `0001` no llevan material de clave"*.
+**No era cierto, y llevaba detrás una migración innecesaria.** Con punteros:
+
+- `members.public_key bytea` → **`0001:73`**, comentada *"X25519 pública (key-generation). La
+  privada NUNCA llega aquí"*, con su `members_pubkey_len_chk check (… = 32)` en **`0001:93`**.
+- `public.thread_item_keys` entera —`wrapped_cek`, `wrap_iv`, `ephemeral_pubkey`— →
+  **`0003:269-286`**, con sus dos políticas en **`0003:351`** y **`0003:356`**.
+- Y el día 2 dejó escrito para qué la construía (**`0003:265`**): *"Existe desde hoy para que el
+  día 8 no sea una migración de datos cifrados, que es la peor clase de migración."*
+
+**El hueco real existía y era otro:** `members_select_own_org` (**`0001:207`**) — un miembro ve a
+los de su organización y a nadie más, así que no puede leer la pública de la contraparte. No
+faltaba dónde guardar la clave: faltaba **por dónde leerla**. Lo resuelve `0012` con
+`public.thread_public_keys`, que devuelve tres columnas y nunca la fila de `members`.
+
+**El apunte de método, que es lo más caro de aquí: F-024 dice que una advertencia sin puntero se
+comprueba antes de actuar. Este fichero llevaba la palabra "comprobado" y era falso igual.** La
+regla, entonces, no es comprobar lo que no lleva puntero: es comprobar lo que no lleva un puntero
+**verificable**. Un puntero se sigue; una declaración de haber comprobado, no. **F-065.**
+
+---
+
 ## Lo que YA está decidido y no se reabre mañana
 
 No todo está abierto. Estas cuatro vienen de antes y **mañana se implementan, no se debaten**:

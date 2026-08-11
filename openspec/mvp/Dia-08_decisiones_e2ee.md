@@ -142,6 +142,23 @@ Las precondiciones del arnés están en `ESTADO.md`, sección "Hoy toca". Las tr
 son **F-058** (el rojo del contrato tiene que ser total), **F-059** (todo aserto negativo con
 ancla y ámbito) y **F-060** (un escalado no se canaliza ni se le pone nada detrás).
 
+### ⚠ Y una advertencia sobre lo que VND-01 va a medir mañana: nada, si escala
+
+El bucle de reintento del arnés **no le enseña al Coder el código que escribió** (F-064). El
+PO decidió el 11-ago aplazar el arreglo, y está bien aplazado — pero tiene una consecuencia
+que hay que tener delante **antes** de leer el resultado de mañana:
+
+**Si VND-01 escala 3/3, esa cuarta medición no dice nada sobre el modelo.** Será el cuarto
+dato producido por el mismo bucle roto. Lo que sí seguirá midiendo, y es lo que hay que
+apuntar en el CSV con su contexto:
+
+- **la calidad del PRIMER intento**, que es el único que el bucle no distorsiona;
+- **la medida de la revisión a mano** (líneas tocadas sobre líneas producidas), que es
+  independiente del bucle;
+- **qué ficheros salen sin tocar**, que en MSG-02 fueron seis de ocho.
+
+**Lee la corrida de mañana por el primer intento, no por el veredicto.**
+
 ---
 
 *Escrito el 11-ago-2026 · Claude Code (Opus 5) · las decisiones de este fichero no caducan al

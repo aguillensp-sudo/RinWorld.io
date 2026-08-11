@@ -172,12 +172,37 @@ fallos de C2, **dos eran defectos de mi contrato, no del artefacto** —dos aser
 3. **La fecha de validez pintada en crudo**, un ISO entero en la cara del usuario. **Ningún
    check podía verlo**: vive en la rama descifrada, que no se ejercita hasta el día 8.
 
-**Y el dato del modelo, por tercera vez con la misma forma: recibió la salida exacta de `tsc`
-en el feedback de los intentos 2 y 3 y no la resolvió** — dos de los cuatro errores eran el
-**mismo** `exactOptionalPropertyTypes`, repetido intacto. Es F-036 otra vez.
-
 **Lo bueno, y es la cifra que importa para el objetivo 4: seis de los ocho ficheros salieron
 sin tocar, incluidos los cuatro CSS enteros —690 líneas—.**
+
+### ⚠ Y LO QUE ESTE FICHERO DECÍA DEL MODELO ERA FALSO. Léelo antes de sacar conclusiones
+
+Al cerrar el día, esta sección afirmaba *"el modelo recibió la salida exacta de `tsc` en los
+intentos 2 y 3 y no la resolvió"*, y lo daba como el tercer caso de la misma forma que F-036.
+**Se comprobó esa misma noche y no se sostiene (F-064).**
+
+**El reintento del arnés no le enseña al Coder el código que escribió.** `coder_node` arma dos
+mensajes —la tarea, idéntica a la del intento 1, y *"produce los ficheros ahora"* más la salida
+cruda de los checks— y **no hay turno de asistente con el artefacto anterior**. El modelo
+recibe `ThreadHistory.tsx(136,61): error TS2375: …` **sobre un fichero que no está viendo**, y
+se le pide regenerar los ocho desde cero.
+
+Lo más incómodo: **el estado ya lo lleva.** `HarnessState.files` está declarado como *"{ruta:
+contenido} del último intento del Coder"* y `coder_node` lo devuelve en cada vuelta. El dato
+viaja por el grafo y nadie lo vuelve a mandar.
+
+**Qué se cae con esto, dicho entero:** F-036 (día 5), la lectura de la corrida 2 de SRCH-01
+(día 6) y la mitad de diagnóstico de F-059 (hoy) **atribuyen al modelo un comportamiento
+medido sobre un bucle roto**. Las escaladas ocurrieron y los defectos del artefacto eran
+reales; **lo que se cae es la causa**.
+
+**Hasta que el bucle se arregle y se remida, el objetivo 4 no tiene ni un dato en contra del
+modelo. Tiene un dato en contra del arnés.** El PO decidió el 11-ago **aplazar el arreglo**:
+no entra el día 8 por delante de la rebanada E2EE y VND-01.
+
+**El apunte de método, y es el más caro del registro: antes de concluir nada sobre lo que mide
+un instrumento, hay que leer el instrumento.** Tres días de dato acumulado, y bastaban veinte
+líneas de `coder.py`.
 
 ---
 
@@ -273,15 +298,24 @@ lo que resta son decisiones de producto y cosas de V1. Por urgencia:
 
 ## Riesgo con la vista más corta
 
-**El primero es el que más cambia el plan: el arnés lleva TRES pantallas escalando 3/3, y hoy
-ya no se puede echar la culpa al contrato.** MSG-01 escaló, SRCH-01 escaló dos veces, MSG-02
-escaló. Ayer se separó lo que falla por el contrato de lo que falla por el modelo, y **hoy el
-contrato se verificó antes de gastar un token —compilando, ejecutándose y en rojo total— y aun
-así escaló.** El dato limpio que queda: **el modelo recibió la salida exacta de `tsc` en dos
-reintentos y no la resolvió, siendo el mismo error las dos veces.** Con tres pantallas y la
-misma forma de fallo, **el objetivo 4 hay que replantearlo con esto delante**, y el día 8 hay
-una cuarta medición (VND-01) que lo confirmará o lo romperá. A favor del arnés: **seis de ocho
-ficheros salieron sin tocar y los 690 de CSS estaban bien.**
+**El primero es que llevamos tres días midiendo al modelo con un instrumento roto, y el
+objetivo 4 se ha estado decidiendo con esas cifras.** El arnés lleva tres pantallas escalando
+3/3 —MSG-01, SRCH-01 dos veces, MSG-02—, y hasta anoche la explicación que este fichero daba
+era del modelo. **No lo es: el reintento no le enseña al Coder su propio código (F-064).** Se
+le manda un error con número de línea sobre un fichero que no está viendo y se le pide
+regenerar los ocho desde cero.
+
+**Lo que eso deja en pie y lo que tumba:** las escaladas ocurrieron, los defectos del artefacto
+eran reales y la medida `+68 / −55` vale. **Lo que no vale es la causa** — y con ella, tres
+conclusiones acumuladas (F-036, la corrida 2 de SRCH-01, la mitad de F-059).
+
+**El riesgo real, entonces, no es que el modelo no sirva: es que no lo sabemos, a cuatro días
+de la sesión de prueba y a ocho del final.** El experimento limpio es barato —meter los
+ficheros del intento anterior en el prompt y relanzar MSG-02 con la misma tarea y el mismo
+contrato, ~$0,07 y veinte minutos— y **el PO lo ha aplazado a propósito el 11-ago** para no
+meterlo por delante de la rebanada E2EE y VND-01. **Hasta que corra, ninguna decisión sobre el
+arnés en V1 debería apoyarse en las cifras de estos tres días.** A favor del arnés, y esto sí
+está medido: **seis de ocho ficheros salieron sin tocar y los 690 de CSS estaban bien.**
 
 **El segundo es que la revisión a mano encontró un defecto que ningún check podía ver** —la
 fecha en crudo, en la rama descifrada— y **el día 8 esa rama pasa a ser la que se ejecuta**.

@@ -152,5 +152,114 @@ capability.** Tal como está, no hay nada que decidir.
 
 ---
 
+## D-07-04 · `Marcar acuerdo alcanzado` se pinta deshabilitado y con el motivo
+
+**Decisión del PO, 11-ago-2026:** la opción (b) — el ítem se queda en el menú, inerte y con la
+razón a la vista.
+
+### Por qué no se puede pintar activo
+
+La tabla de acciones de `Rinworld_spec_MSG-02.md` (línea 82) lo da como transición manual desde
+ABIERTO, CON CONSULTA PENDIENTE o CON OFERTA PENDIENTE. **Las otras dos fuentes dicen que no**, y
+las dos mandan más que una spec de pantalla:
+
+| dónde | qué dice |
+|---|---|
+| `messaging-and-negotiation/spec.md:195` · `thread-lifecycle` | ACUERDO ALCANZADO se alcanza **aceptando una oferta**. No hay escenario de marcado manual |
+| `0007_thread_state_machine.sql:246` · `app.guard_thread_state` | *"Desde el cliente solo se cierra el hilo o se revierte a ABIERTO; el resto del ciclo lo deriva la base"* — cualquier otro valor **lanza excepción** |
+
+O sea que el botón no es una desviación de estilo: **reventaría en ejecución**, y con un mensaje
+de Postgres delante del socio. Es la misma forma que D-07-03 —una spec de pantalla contra una
+capability cerrada— con el agravante de que aquí además hay una guardia aplicada al remoto.
+
+### Qué se pinta
+
+El ítem del desplegable, **deshabilitado**, con el motivo en **texto visible** y no en un
+`title` ni en un `aria-describedby`: es F-023 e, y `Messages.tsx:107` ya lo resolvió así para
+`Nuevo contacto`. Un ítem inerte sin explicación se lee como avería.
+
+El motivo es una frase que dice la verdad y no promete nada: **`El acuerdo se alcanza aceptando
+una oferta.`** No dice "próximamente" ni "en V1", porque no es una función que falte — es que el
+estado no se marca a mano por diseño.
+
+### Lo que NO cambia
+
+`Cerrar sin acuerdo` y `Revertir a abierto` **sí son las dos transiciones manuales de verdad** —
+las dos que `guard_thread_state` deja pasar— y se pintan activas cuando su estado toca.
+`closeThreadWithoutAgreement()` y `revertAgreement()` existen desde ayer en
+`app/src/lib/offers.ts:295`.
+
+### Si lo quieres activo en V1
+
+Sería una migración: ampliar lo que la guardia acepta desde el cliente, y decidir qué pasa
+cuando la derivación vuelva a discrepar de lo marcado a mano —que es exactamente el problema que
+0007 vino a quitar (F-044: *"el badge deja de ser una afirmación de la siembra y pasa a ser una
+función de las filas"*)—. **No es media jornada de trabajo: es rehacer la decisión del día 6.**
+
+---
+
+## D-07-05 · MSG-02 se construye contra una costura de descifrado, no contra contenido en claro
+
+**Decisión del PO, 11-ago-2026:** la opción (ii) — MSG-02 se construye hoy, con la costura, y la
+rebanada E2EE del día 8 la rellena **sin volver a tocar la pantalla**.
+
+### El hecho que la obliga
+
+`Plan §3` pone la rebanada E2EE el **día 8** y MSG-02 el **día 7**, y MSG-02 es la primera
+pantalla cuyo contenido *es* lo cifrado. Comprobado hoy, no supuesto:
+
+- **`app/src` no tiene una sola línea de criptografía.** Cero coincidencias de `crypto`, `AES`,
+  `X25519` o `subtle` fuera de los tests. Las únicas dependencias son `@supabase/supabase-js` y
+  React.
+- `content_ciphertext` es `bytea not null` (`0003_threads_and_items.sql`) — no hay forma de
+  insertar un elemento sin producir bytes.
+- La siembra lleva **relleno a propósito**: `demo_threads.sql:16`, *"EL CONTENIDO CIFRADO ES
+  RELLENO A PROPÓSITO"*. No hay nada que descifrar aunque hubiera con qué.
+
+### Qué es la costura
+
+`ThreadItem.content` es `ItemContent | null`. **`null` no significa "vacío": significa "cifrado y
+sin clave en esta sesión"**, que es un estado de primera clase de la pantalla y no un caso de
+error. La pantalla pinta las dos ramas desde hoy; hoy sólo la rama opaca tiene datos reales
+detrás.
+
+Los metadatos —tipo, autor, timestamp, `part_number`, `brand`, estado de la tarjeta— **no pasan
+por la costura**: van en claro en `thread_items` desde el día 2, y la migración 0003 los comenta
+como *"METADATO EN CLARO"* precisamente para esto. Un hilo sin passphrase no es una pantalla en
+blanco: es una pantalla con todo salvo las cifras y el texto.
+
+### Qué se pinta donde iría el contenido
+
+El literal de la capability, **verbatim**, que es contrato y no elección:
+`messaging-and-negotiation/spec.md:68` — **`Contenido cifrado — introduce tu frase de seguridad
+para ver`**.
+
+**Sin botón.** Es F-027 aplicado otra vez: la `§3` de MSG-02 pide un bloque brass con
+`Introducir frase de seguridad`, y en el MVP las claves viven en memoria de sesión y se pierden
+al recargar (`CLAUDE.md` §4). Un botón que pide una frase que no existe promete recuperación de
+claves que el MVP no tiene, y es el mock prometiendo lo que no hay. El indicador informa; no
+ofrece.
+
+### Y el envío de mensajes queda deshabilitado hoy, con el motivo
+
+Enviar exige producir ciphertext, y no hay con qué. Las dos salidas malas se descartan por
+escrito: escribir el texto en claro en `content_ciphertext` rompe `CLAUDE.md` §4 y el argumento
+entero del producto; escribir relleno deja un mensaje ilegible para siempre.
+
+Así que el textarea **se pinta y se queda visible** —lo exige D-07-01, que sin campo de mensaje
+no tiene efecto— y el botón de enviar va deshabilitado con el motivo a la vista:
+**`El cifrado en cliente llega en la rebanada E2EE.`**
+
+**Esto no debilita D-07-01.** La reapertura del hilo la garantiza `0009` en la base y la prueban
+dos asertos de `01_schema_smoke.sql`; no dependía nunca de que la pantalla supiera escribir.
+
+### Qué hay que revisar el día 8
+
+Cuando entre la rebanada, **la pantalla no se toca**: se rellena `decryptItem()` para que
+devuelva contenido en vez de `null`, y se habilita el envío. Si el día 8 alguien se encuentra
+editando `Thread.tsx`, la costura estaba mal puesta y esto es lo que hay que releer.
+
+---
+
 *Escrito el 11-ago-2026 · Claude Code (Opus 5) · las decisiones de este fichero no caducan al
 cierre del día, a diferencia de `ESTADO.md`*

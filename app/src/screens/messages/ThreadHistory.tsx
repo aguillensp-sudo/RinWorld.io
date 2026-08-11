@@ -3,6 +3,7 @@ import {
   asOfferCard,
   authorLabel,
   itemTypeLabel,
+  validUntilLabel,
   type ItemContent,
   type ThreadItem,
 } from '../../lib/thread-detail';
@@ -48,7 +49,7 @@ function InquiryBody({ content }: { content: Extract<ItemContent, { kind: 'CONSU
   );
 }
 
-function OfferBody({ content, now }: { content: Extract<ItemContent, { kind: 'OFERTA' }>; now?: Date }) {
+function OfferBody({ content, now }: { content: Extract<ItemContent, { kind: 'OFERTA' }>; now: Date }) {
   const shipping = shippingLine(content.shippingCost, content.currency);
   const expiry = expiryNotice(content.validUntil, now);
 
@@ -82,7 +83,10 @@ function OfferBody({ content, now }: { content: Extract<ItemContent, { kind: 'OF
       {content.validUntil && (
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Válida hasta</span>
-          <span className={styles.cardVal}>{content.validUntil}</span>
+          {/* El artefacto pintaba `content.validUntil` en crudo, o sea un ISO
+              entero -"2026-07-15T00:00:00.000Z"- en la cara del usuario. La
+              rama descifrada no se ejercita hoy, así que ningún check lo veía. */}
+          <span className={styles.cardVal}>{validUntilLabel(content.validUntil)}</span>
         </div>
       )}
       {expiry && <p className={styles.cardExpiry}>{expiry}</p>}
@@ -102,7 +106,7 @@ function Card({
   item: ThreadItem;
   threadId: string;
   viewerOrgId: string;
-  now?: Date;
+  now: Date;
   onAcceptOffer: (itemId: string) => void;
   onRejectOffer: (itemId: string) => void;
 }) {
@@ -203,6 +207,12 @@ export function ThreadHistory({
     return <div className={styles.empty}>Este hilo no tiene elementos todavía.</div>;
   }
 
+  // El reloj se resuelve UNA vez y baja ya concreto. El artefacto propagaba
+  // `now?: Date` a los subcomponentes y `exactOptionalPropertyTypes` lo rechaza:
+  // `Date | undefined` no es asignable a una prop opcional. Dos errores de C1 que
+  // el modelo tuvo delante en el feedback de los intentos 2 y 3 sin resolverlos.
+  const clock = now ?? new Date();
+
   return (
     <ul className={styles.list}>
       {items.map((item) => {
@@ -225,14 +235,14 @@ export function ThreadHistory({
                 item={item}
                 threadId={threadId}
                 viewerOrgId={viewerOrgId}
-                now={now}
+                now={clock}
                 onAcceptOffer={onAcceptOffer}
                 onRejectOffer={onRejectOffer}
               />
             )}
             <div className={styles.meta}>
               <span className={styles.author}>{author}</span>
-              <span className={styles.timestamp}>{relativeTime(item.createdAt, now)}</span>
+              <span className={styles.timestamp}>{relativeTime(item.createdAt, clock)}</span>
             </div>
           </li>
         );

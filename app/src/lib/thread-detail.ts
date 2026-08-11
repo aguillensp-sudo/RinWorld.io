@@ -177,6 +177,26 @@ export function itemTypeLabel(type: ItemType): string {
 }
 
 /**
+ * La fecha de validez de una oferta, legible.
+ *
+ * `validUntil` llega ya descifrado y es un ISO. Pintarlo en crudo pone
+ * `2026-07-15T00:00:00.000Z` en la cara del usuario — que es lo que hacía el
+ * artefacto del Coder, y ningún check lo vio porque la rama descifrada no se
+ * ejercita hasta el día 8.
+ *
+ * Va aquí y no en el componente por la regla de la casa: las fechas se formatean
+ * con las funciones de la capa de datos, nunca a mano (F-024). Si la cadena no
+ * es una fecha, se devuelve tal cual: inventarse un `—` taparía el dato.
+ */
+export function validUntilLabel(iso: string, locale = 'es-ES'): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(
+    new Date(t),
+  );
+}
+
+/**
  * Un elemento de tipo OFERTA visto como `OfferCard`, para poder pasárselo a
  * `offerActions()` sin reconstruirlo a mano.
  *

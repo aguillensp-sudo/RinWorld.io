@@ -162,8 +162,12 @@ describe('⚠ la frontera de lo cifrado (D-07-05)', () => {
     pinta([ofertaRecibida({ content: null })]);
     const tarjeta = screen.getByTestId('thread-item');
     expect(within(tarjeta).getByText('Oferta')).toBeInTheDocument();
-    expect(within(tarjeta).getByText(/6205-2RS/)).toBeInTheDocument();
-    expect(within(tarjeta).getByText(/NSK/)).toBeInTheDocument();
+    // ⚠ LA REFERENCIA ENTERA EN UN SOLO ASERTO, y el fallo era MÍO: `/NSK/` a
+    // secas casaba con dos nodos —la referencia `6205-2RS · NSK` y el autor
+    // `NSK Europe Ltd`, que también va dentro del elemento—. Pedir las dos
+    // partes juntas es inequívoco y además no fija el separador, que el
+    // contrato dejó libre a propósito.
+    expect(within(tarjeta).getByText(/6205-2RS.*NSK/)).toBeInTheDocument();
     expect(within(tarjeta).getByText(/Pendiente/i)).toBeInTheDocument();
   });
 

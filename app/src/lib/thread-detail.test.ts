@@ -4,6 +4,7 @@ import {
   authorLabel,
   decryptItem,
   itemTypeLabel,
+  validUntilLabel,
   AGREEMENT_DISABLED_REASON,
   CREATE_OFFER_DISABLED_REASON,
   ENCRYPTED_NOTICE,
@@ -108,6 +109,23 @@ describe('los literales que ve el usuario', () => {
     // D-07-04: no es que el botón esté a medias, es que el estado lo deriva la
     // base desde la aceptación de una oferta (`0007:246`, `spec.md:195`).
     expect(AGREEMENT_DISABLED_REASON).toMatch(/aceptando una oferta/i);
+  });
+});
+
+describe('validUntilLabel', () => {
+  it('una fecha de validez se lee, no se pinta el ISO en crudo', () => {
+    // El artefacto del Coder pintaba `content.validUntil` tal cual. Ningun check
+    // lo vio porque la rama descifrada no se ejercita hasta el dia 8: es el tipo
+    // de defecto que solo caza leer el codigo.
+    const salida = validUntilLabel('2026-07-15T00:00:00.000Z');
+    expect(salida).not.toMatch(/T\d{2}:\d{2}|Z$/);
+    expect(salida).toMatch(/2026/);
+    expect(salida).toMatch(/jul/i);
+  });
+
+  it('lo que no es una fecha se devuelve tal cual, sin taparlo', () => {
+    // Un guion en su lugar ocultaria que el dato llego mal.
+    expect(validUntilLabel('pronto')).toBe('pronto');
   });
 });
 

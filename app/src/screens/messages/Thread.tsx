@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
-  closeThreadWithoutAgreement,
   fetchThreadDetail,
   fetchThreadItems,
-  revertAgreement,
   type ThreadDetail,
   type ThreadItem,
 } from '../../lib/thread-detail';
-import { acceptOffer, rejectOffer } from '../../lib/offers';
+// ⚠ Las cuatro escrituras viven en `offers.ts`, no en `thread-detail.ts`. El
+// artefacto importaba `closeThreadWithoutAgreement` y `revertAgreement` del
+// segundo, y como el `catch` de cada handler se traga lo que sea, **cerrar y
+// revertir no hacían nada y lo decían con un banner de error**: dos de las tres
+// acciones del hilo, muertas en silencio.
+import {
+  acceptOffer,
+  closeThreadWithoutAgreement,
+  rejectOffer,
+  revertAgreement,
+} from '../../lib/offers';
 import { ThreadHeader } from './ThreadHeader';
 import { ThreadHistory } from './ThreadHistory';
 import { ThreadComposer } from './ThreadComposer';
@@ -39,7 +47,21 @@ export function Thread({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+
+  /**
+   * Cerrojo de reentrada. El artefacto tenía un `busy` de estado que **ponía y
+   * no leía nadie** —`tsc` lo cazó como TS6133— así que no protegía de nada:
+   * dos clics seguidos en `Aceptar oferta` lanzaban dos escrituras.
+   *
+   * Va en un `ref` y no en un `useState` a propósito: el estado se aplica de
+   * forma asíncrona, y dos clics en el mismo tick leerían los dos `false`. Un
+   * cerrojo que se puede saltar en el caso que viene a evitar no es un cerrojo.
+   *
+   * La carrera es real y llega hoy con Realtime: `setOfferState` lanza *"La
+   * oferta ya no estaba pendiente, o es tuya"* precisamente cuando la segunda
+   * escritura pierde.
+   */
+  const writing = useRef(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -66,61 +88,42 @@ export function Thread({
     setConfirmOpen(true);
   }, []);
 
+  /** Una escritura, su relectura y su error. Nunca dos a la vez. */
+  const write = useCallback(
+    async (accion: () => Promise<unknown>) => {
+      if (writing.current) return;
+      writing.current = true;
+      try {
+        await accion();
+        await reload();
+      } catch (err) {
+        setError(errorMessage(err));
+      } finally {
+        writing.current = false;
+      }
+    },
+    [reload],
+  );
+
   const confirmClose = useCallback(async () => {
     if (!detail) return;
-    setBusy(true);
-    try {
-      await closeThreadWithoutAgreement(detail.id);
-      await reload();
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-      setConfirmOpen(false);
-    }
-  }, [detail, reload]);
+    await write(() => closeThreadWithoutAgreement(detail.id));
+    setConfirmOpen(false);
+  }, [detail, write]);
 
   const handleRevert = useCallback(async () => {
     if (!detail) return;
-    setBusy(true);
-    try {
-      await revertAgreement(detail.id);
-      await reload();
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }, [detail, reload]);
+    await write(() => revertAgreement(detail.id));
+  }, [detail, write]);
 
   const handleAcceptOffer = useCallback(
-    async (itemId: string) => {
-      setBusy(true);
-      try {
-        await acceptOffer(itemId, profile.orgId);
-        await reload();
-      } catch (err) {
-        setError(errorMessage(err));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [profile.orgId, reload],
+    (itemId: string) => write(() => acceptOffer(itemId, profile.orgId)),
+    [profile.orgId, write],
   );
 
   const handleRejectOffer = useCallback(
-    async (itemId: string) => {
-      setBusy(true);
-      try {
-        await rejectOffer(itemId, profile.orgId);
-        await reload();
-      } catch (err) {
-        setError(errorMessage(err));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [profile.orgId, reload],
+    (itemId: string) => write(() => rejectOffer(itemId, profile.orgId)),
+    [profile.orgId, write],
   );
 
   // `now` es inyectable para los tests; por defecto se construye en cada render

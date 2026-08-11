@@ -122,7 +122,11 @@ describe('carga', () => {
 
   it('pinta la cabecera y el historial con lo que trajo', async () => {
     pinta();
-    expect(await screen.findByText('NSK Europe Ltd')).toBeInTheDocument();
+    // ⚠ POR ROL, NO POR TEXTO, y el fallo era MÍO: la §3 pone el nombre de la
+    // contraparte DOS veces —en el breadcrumb `Hilos › NSK Europe Ltd` y como
+    // enlace de la cabecera—, así que `findByText` encuentra dos y revienta.
+    // El artefacto estaba bien; el aserto estaba mal escrito.
+    expect(await screen.findByRole('button', { name: 'NSK Europe Ltd' })).toBeInTheDocument();
     expect(screen.getByText(ENCRYPTED_NOTICE)).toBeInTheDocument();
   });
 });
@@ -222,6 +226,26 @@ describe('decidir una oferta', () => {
     pinta();
     await user.click(await screen.findByRole('button', { name: 'Rechazar' }));
     expect(rejectOffer).toHaveBeenCalledWith('of-1', profile.orgId);
+  });
+
+  it('⚠ dos clics seguidos escriben UNA vez', async () => {
+    // El artefacto tenía un `busy` de estado que nadie leía —`tsc` lo cazó como
+    // TS6133—, así que no protegía de nada. Y no es teórico: hoy entra Realtime,
+    // y la segunda escritura pierde la carrera contra la primera y sale con "La
+    // oferta ya no estaba pendiente" en la cara del usuario que solo hizo doble
+    // clic. El cerrojo va en un `ref` porque el estado se aplica asíncrono y dos
+    // clics en el mismo tick leerían los dos `false`.
+    const user = userEvent.setup();
+    let resolver: (() => void) | undefined;
+    acceptOffer.mockImplementation(() => new Promise<void>((r) => { resolver = () => r(); }));
+
+    pinta();
+    const boton = await screen.findByRole('button', { name: 'Aceptar oferta' });
+    await user.click(boton);
+    await user.click(boton);
+
+    expect(acceptOffer).toHaveBeenCalledTimes(1);
+    resolver?.();
   });
 
   it('el error de una carrera perdida se enseña, no se traga', async () => {

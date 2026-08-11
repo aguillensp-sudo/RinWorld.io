@@ -19,6 +19,13 @@
 > **Y el del día 6, que es nuevo y es el más caro: una causa encontrada no es la única
 > causa.** Este fichero cerraba F-037 con *"lo arregla volver a pegar el secret, y **es lo
 > único**"*. No lo era: la clave está limpia y Supabase la rechaza igual. Ver F-050.
+>
+> **Ampliación del 11-ago: el diagnóstico de F-050 que este fichero daba también era falso.**
+> La clave no estaba caducada ni era de otro proyecto: **le sobraba un `;`** — 47 caracteres
+> contra 46. Se comprobó la **clase de carácter** (F-037 había sido eso) y no la **forma**, y
+> un `;` es ASCII, así que la guardia lo dejó pasar. Dos diagnósticos seguidos dados por
+> buenos sin que ningún verde los confirmara. **Un `sb_publishable_` tiene longitud fija: la
+> guardia tiene que validar longitud y forma, no solo la codificación.**
 
 **Día 6 de 15 · cerrado 10-ago-2026 · Estado: ÁMBAR. Los dos bloques del día cerrados;
 la CI sigue roja y ahora por una causa distinta de la que este fichero daba por buena**
@@ -38,6 +45,23 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > Lo bueno: **la guardia de ISO-8859-1 que se escribió ayer funciona y hoy lo demostró.**
 > Al dejar de disparar, destapó lo que tapaba.
 
+> **Estado real del e2e al arrancar el día 7 (11-ago).** F-050 **resuelto** — sobraba un `;`
+> en la clave, ya está fuera de `app/.env`. El e2e **sigue rojo**, pero por otra cosa y una
+> capa más adentro: el `setup` cae ahora con **`Invalid login credentials`**, no con
+> `Invalid API key`. Medido contra GoTrue sin la app por medio: **`beta` → 200 con token;
+> `alpha` → 400 `invalid_credentials`**. En `auth.users` alpha está confirmada, sin banear y
+> sin borrar, y su último login bueno fue el 10-ago 12:04:35 con `updated_at` idéntico — **la
+> contraseña no se ha tocado en Supabase**; lo que no vale es el valor de `.env`, escrito en
+> la edición de las 15:57 que también metió el `;`.
+>
+> El valor bueno **no está en el repo** (el seed las recibe como variables de psql) y solo lo
+> tiene el PO. Con eso, **F-038 y el desbloqueo del e2e son la misma operación**: rotar la
+> contraseña de alpha y ponerla en `.env` y en el secret de GitHub. Pasos exactos en
+> `PENDIENTE-PO.md` §2.
+>
+> **Y lo que sigue sin saberse:** los otros **39 escenarios no se han ejecutado** ni una vez
+> desde antes de SRCH-01. Que el `setup` autentique solo probará que el `setup` autentica.
+
 ---
 
 ## Dónde estamos
@@ -52,7 +76,7 @@ la oferta (§7)"*. **Los dos cerrados.**
 | SRCH-01 · corrida 2 | Arnés | **Escalada 3/3**, por tres defectos reales. **Esta sí mide** |
 | SRCH-01 · revisión a mano | Claude Code | **`+64 / −13`** sobre 1140 líneas |
 | SRCH-01 · wiring en `App.tsx` | Claude Code | Cuelga de `Comprando`, subtítulo `Agente de búsqueda` |
-| SRCH-01 · e2e | — | 🔴 **bloqueado por F-050**, ajeno al código |
+| SRCH-01 · e2e | — | 🔴 **bloqueado**, ajeno al código. F-050 resuelto el 11-ago; ahora es la contraseña de alpha (F-038) |
 | Máquina de estados · esquema | Claude Code | Migración **0007**, y F-043 y F-044 con ella |
 | Máquina de estados · cliente | Claude Code | `lib/offers.ts` + migración **0008** (F-051) |
 
@@ -66,7 +90,7 @@ la oferta (§7)"*. **Los dos cerrados.**
 | `cd app && npm run check:palette` | cobertura completa |
 | `python -m harness.tests.test_checks` | **52/52** |
 | `python -m harness.graph.run … --seco` | 3/3 escenarios |
-| `cd app && npx playwright test` | 🔴 **no corre.** Cae el setup de auth (F-050) |
+| `cd app && npx playwright test` | 🔴 **no corre.** Cae el setup de auth — 11-ago: ya no por la clave (F-050 cerrado) sino por la contraseña de alpha (F-038) |
 
 ---
 
@@ -215,10 +239,12 @@ está derivado en la base (0007) y que MSG-01 dejó el patrón pantalla/presenta
 **Ver `openspec/mvp/PENDIENTE-PO.md`** — se ha escrito hoy con las instrucciones paso a paso
 de cada punto. Resumen por urgencia:
 
-1. 🔴 **F-050 · la clave publicable de Supabase.** Bloquea los 40 e2e, la CI y con ello la
-   puerta de S1. Es lo único que separa la CI del verde.
-2. 🔴 **F-038 · rotar la contraseña de `alpha`.** Seguridad. Estuvo en texto plano en un
-   repositorio público y **sigue sin rotarse**.
+1. ✅ **F-050 · la clave publicable.** **Resuelto el 11-ago:** sobraba un `;`. Solo queda
+   repegar el secret `SUPABASE_PUBLISHABLE_KEY` de GitHub, que arrastra el mismo pegado.
+2. 🔴 **F-038 · rotar la contraseña de `alpha`.** Ya no es solo seguridad: **es lo único que
+   bloquea los 40 e2e**, la CI y la puerta de S1. La de `.env` no coincide con la de Supabase
+   (`invalid_credentials` solo para alpha; beta autentica), y el valor bueno no está en el
+   repo. Rotarla y ponerla en `.env` + secret cierra las dos cosas de un golpe.
 3. 🟠 **Aplicar las migraciones 0007 y 0008.** Sin ellas `threads.state` no se mantiene y el
    emisor puede aceptar su propia oferta.
 4. 🟠 **`RETIRADA`** (F-043b) — antes del día 8, que es cuando se construye VND-01.

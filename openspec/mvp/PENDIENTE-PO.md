@@ -1,5 +1,8 @@
 # Pendiente del PO · cerrado el día 6 (10-ago-2026)
 
+> **Revisado el 11-ago.** El punto 1 estaba **mal diagnosticado** y ya está resuelto; el punto 2
+> ha cambiado de causa. Los dos se reescribieron con lo medido, no con lo supuesto.
+>
 > Cada punto lleva **qué pasa si no se hace**, **los pasos exactos** y **cómo comprobar que
 > quedó cerrado**. Los tres primeros son los que bloquean algo; el resto son decisiones.
 >
@@ -7,44 +10,76 @@
 
 ---
 
-## 1 🔴 F-050 · La clave publicable de Supabase no vale
+## 1 ✅ F-050 · La clave publicable — RESUELTO en local (11-ago)
 
-**Qué bloquea:** los **40 escenarios e2e**, la CI entera, y con ella la **puerta de salida de
-S1**. Es lo único que la separa del verde.
-
-**Qué se sabe con certeza.** La clave de `app/.env` está limpia —cero caracteres fuera de
-ISO-8859-1, la guardia de `supabase.ts` no salta, la app arranca— y Supabase la rechaza
-igual. Verificado sin la app por medio:
+**Lo que yo escribí aquí ayer era falso.** Te mandé al dashboard a por una clave nueva. No
+hacía falta: la clave siempre fue la correcta. **Le sobraba un `;` al final.**
 
 ```
-GET https://troxminloxkjwihwfevs.supabase.co/rest/v1/organizations?select=id&limit=1
-→ HTTP 401  {"message":"Invalid API key","hint":"Double check your API key."}
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…N1g;
+                                                 ^ esto
 ```
 
-Formato `sb_publishable_`, 47 caracteres. `app/.env` está modificado el 10-ago a las 15:57.
-**Dos hipótesis:** se pegó una clave de **otro proyecto** o truncada, o se **rotó en Supabase**
-y esta copia quedó vieja.
+47 caracteres en `app/.env` contra los 46 que devuelve el API del proyecto; el resto coincidía
+byte a byte. Con el `;` fuera, `GET /auth/v1/health` responde **200**. Ya está quitado de tu
+`.env` local — no hay nada que hacer por tu parte en esta máquina.
 
-**Ojo, esto es distinto de F-037.** F-037 era un carácter fuera de ISO-8859-1 y **está
-arreglado** — la guardia lo demuestra al no dispararse. Esto es una segunda causa detrás.
+**Por qué se escapó un día entero.** F-037 había sido un carácter fuera de ISO-8859-1, así que
+comprobé la clase de carácter, salió limpia, y la di por buena. Pero un `;` es ASCII: la
+guardia miraba el **alfabeto** cuando el defecto estaba en la **forma**. Un `sb_publishable_`
+tiene longitud fija — comparar 47 contra 46 lo habría cazado en el primer minuto. Verifiqué
+que los bytes eran legales sin verificar que el valor lo fuera.
+
+### Lo único que queda de este punto, y es tuyo
+
+El secret **`SUPABASE_PUBLISHABLE_KEY` de GitHub** sale del mismo copiar-y-pegar, así que lo
+más probable es que arrastre el mismo `;`. No puedo leerlo. En
+`https://github.com/aguillensp-sudo/RinWorld.io/settings/secrets/actions`, vuelve a pegarlo
+**sin ningún carácter después de la última letra**. Si no, la CI seguirá roja aunque el local
+esté verde, y parecerá un problema nuevo.
+
+---
+
+## 2 🔴 La contraseña de `alpha` en `.env` no es la que hay en Supabase
+
+**Esto es lo único que hoy bloquea los 40 e2e.** Absorbe a F-038: una sola operación cierra el
+fallo y la rotación de seguridad.
+
+**Qué se sabe con certeza.** Con la clave ya arreglada, login directo contra GoTrue, sin la
+app por medio:
+
+| cuenta | resultado |
+|---|---|
+| `beta@bearingworld.test` | **200** · token emitido |
+| `alpha@bearingworld.test` | **400** · `invalid_credentials` |
+
+Y en `auth.users`: alpha está **confirmada, sin banear, sin borrar**, y su último login bueno
+fue el **10-ago 12:04:35**, con `updated_at` idéntico — es decir, **la contraseña no se ha
+tocado en Supabase desde entonces**. `app/.env` se modificó ese mismo día a las **15:57**, casi
+cuatro horas después. Esa edición metió las dos averías a la vez: el `;` de la clave y una
+contraseña de alpha que no coincide. El valor bueno no está en el repo (el seed las recibe
+como variables de psql, correcto según `CLAUDE.md` §1), así que **solo lo tienes tú**.
+
+**Y ya que hay que tocarla, se rota**, que es lo que F-038 pedía desde el día 4: esa contraseña
+estuvo descargable en texto plano en los artefactos de la CI de un repositorio público. Las
+corridas nuevas ya no la escriben, pero eso solo tapa lo de mañana. Además, la que hay ahora en
+`.env` es corta y de diccionario.
 
 ### Pasos
 
-1. Entra en `https://supabase.com/dashboard/project/troxminloxkjwihwfevs/settings/api-keys`.
-2. Copia la clave **publishable** (`sb_publishable_…`). **No la `secret`** (`sb_secret_…`):
-   esa va al navegador jamás, y si acaba en `VITE_*` se publica en el bundle.
-3. Comprueba que el **Project URL** de esa misma página es `https://troxminloxkjwihwfevs.supabase.co`.
-   Si no lo es, el problema es que `.env` apunta a un proyecto y la clave es de otro.
-4. Actualiza **`app/.env`** (local, gitignored):
+1. Elige una contraseña nueva **larga y aleatoria** (como la de beta, que sí lo es).
+2. Aplícala en el SQL editor del proyecto — es exactamente lo que hace el seed, y funciona con
+   un dominio `.test` que no recibe correo, cosa que "Reset password" del dashboard no:
+   ```sql
+   update auth.users
+      set encrypted_password = crypt('PON-AQUI-LA-NUEVA', gen_salt('bf')),
+          updated_at = now()
+    where email = 'alpha@bearingworld.test';
    ```
-   VITE_SUPABASE_URL=https://troxminloxkjwihwfevs.supabase.co
-   VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
-   ```
-   Pégala en un editor de texto plano. Nada de Word ni de chat: es lo que causó F-037.
-5. Actualiza el **secret de GitHub** en
-   `https://github.com/aguillensp-sudo/RinWorld.io/settings/secrets/actions`:
-   - `SUPABASE_PUBLISHABLE_KEY` ← la misma clave
-   - `SUPABASE_URL` ← la misma URL
+3. Ponla en los **dos** sitios, sin espacios ni caracteres de más al final:
+   - `app/.env` → `E2E_ALPHA_PASSWORD=`
+   - GitHub secret `E2E_ALPHA_PASSWORD`
+4. Aprovecha y haz lo mismo con **beta**: su contraseña viajó en los mismos informes.
 
 ### Cómo compruebas que quedó cerrado
 
@@ -52,35 +87,15 @@ arreglado** — la guardia lo demuestra al no dispararse. Esto es una segunda ca
 cd app && npx playwright test
 ```
 
-Tiene que dar **40 escenarios en verde** (31 de antes + 9 de SRCH-01). Si el `setup` de
-autenticación pasa, la clave es buena.
+**40 en verde.** Ojo con dos cosas:
 
-> **No des el diagnóstico por bueno hasta ver ese verde.** Es literalmente el error del día:
-> F-037 se cerró ayer sin volver a correr el e2e después de repegar el secret, y por eso la
-> segunda causa ha tardado un día más en aparecer.
+- **No lo des por bueno sin ver el verde.** Los 39 escenarios restantes llevan sin ejecutarse
+  desde antes de SRCH-01: nadie ha demostrado todavía que pasen. Que el `setup` autentique
+  solo prueba que el `setup` autentica.
+- Si lo lanzas encadenando algo detrás (`| tail`, `&& echo`), **el código de salida que verás
+  es el del último comando, no el de Playwright**. Es F-046, y hoy he vuelto a caer en ella.
 
----
-
-## 2 🔴 F-038 · Rotar la contraseña de `alpha` — seguridad, sigue sin hacerse
-
-**Qué pasa si no se hace:** la contraseña de `alpha@bearingworld.test` estuvo **descargable
-en texto plano** en los artefactos de la CI de un repositorio público. Las corridas nuevas ya
-no la escriben (`signIn` vacía la caja en cuanto el formulario lee el valor), pero **eso solo
-tapa lo de mañana**. La contraseña actual sigue siendo la que estuvo expuesta, y los informes
-ya publicados caducan solos a los 7 días — la contraseña no caduca sola.
-
-### Pasos
-
-1. `https://supabase.com/dashboard/project/troxminloxkjwihwfevs/auth/users`
-2. Busca `alpha@bearingworld.test` → **Reset password** (o borra y recrea el usuario con
-   contraseña nueva; si lo recreas, comprueba que su fila de `members` sigue apuntando a
-   `Rodamientos Ibéricos`).
-3. Haz lo mismo con la cuenta **beta** si su contraseña también viajó en algún informe.
-4. Actualiza en los **dos** sitios:
-   - `app/.env` → `E2E_ALPHA_PASSWORD` (y `E2E_BETA_PASSWORD` si la rotas)
-   - GitHub secrets → `E2E_ALPHA_PASSWORD`, `E2E_BETA_PASSWORD`
-
-### Y una decisión que va con esto
+### Y una decisión que sigue pendiente
 
 `ci.yml` sube el informe de Playwright con `actions/upload-artifact@v4` y `retention-days: 7`.
 Ese informe es el que adjuntaba el volcado del DOM con el valor de cada campo. Tres opciones:

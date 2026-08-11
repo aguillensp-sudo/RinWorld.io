@@ -107,10 +107,20 @@ test.describe('SRCH-01 · resultados reales', () => {
     await expect(page.getByText('€')).toHaveCount(0);
   });
 
+  /**
+   * ⚠ El botón de abrir el formulario se busca por su nombre accesible EXACTO,
+   * `Añadir filtro`, y no por su texto visible `Filtro`: `FilterChips.tsx` le pone
+   * un `aria-label`, y un `aria-label` tapa el texto interno. Estaba escrito
+   * `/Filtro/` —con mayúscula y sin `i`— y no casaba con nada: los tres tests que
+   * abren el formulario caducaban en el `click`. Es F-048 otra vez, en el e2e.
+   *
+   * Y exacto en vez de `/filtro/i` a propósito: con un chip ya puesto habría dos
+   * botones que casan (`Quitar filtro Marca`) y Playwright aborta por strict mode.
+   */
   test('el chip de zona Europa deja fuera a la distribuidora turca', async ({ page }) => {
     // `guion-demo-y-siembra.md` §3: Anadolu Rulman lleva `continent = 'AS'` por el
     // geoscheme de la ONU, precisamente para que este chip corte.
-    await page.getByRole('button', { name: /Filtro/ }).click();
+    await page.getByRole('button', { name: 'Añadir filtro' }).click();
     await page.getByLabel('Campo').selectOption('Zona');
     await page.getByLabel('Valor').selectOption('Europa');
     await page.getByRole('button', { name: 'Añadir' }).click();
@@ -121,7 +131,7 @@ test.describe('SRCH-01 · resultados reales', () => {
   });
 
   test('el chip de referencia filtra de verdad contra la base', async ({ page }) => {
-    await page.getByRole('button', { name: /Filtro/ }).click();
+    await page.getByRole('button', { name: 'Añadir filtro' }).click();
     await page.getByLabel('Campo').selectOption('Ref');
     await page.getByLabel('Valor').fill('6205-2RS');
     await page.getByRole('button', { name: 'Añadir' }).click();
@@ -137,7 +147,7 @@ test.describe('SRCH-01 · resultados reales', () => {
   test('no trae líneas que no estén publicadas', async ({ page }) => {
     // El catálogo sembrado tiene DRAFT, ARCHIVED y DELETED a propósito. La
     // referencia 32011X de Anadolu está ARCHIVED y no puede aparecer nunca.
-    await page.getByRole('button', { name: /Filtro/ }).click();
+    await page.getByRole('button', { name: 'Añadir filtro' }).click();
     await page.getByLabel('Campo').selectOption('Ref');
     await page.getByLabel('Valor').fill('32011X');
     await page.getByRole('button', { name: 'Añadir' }).click();

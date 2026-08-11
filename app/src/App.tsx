@@ -5,6 +5,7 @@ import { Login } from './screens/Login';
 import { Welcome } from './screens/Welcome';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
+import { SearchResults } from './screens/search/SearchResults';
 
 /**
  * Qué pantalla va con qué ítem de nav.
@@ -22,10 +23,13 @@ import { Messages } from './screens/messages/Messages';
  * dos specs de INV más antiguas por copia de plantilla. No es una intención de
  * diseño: es una errata, y el PO la resolvió el 7-ago.
  *
- * Los otros seis ítems no tienen pantalla en el MVP (Plan §9, 8 pantallas).
+ * Los otros cinco ítems no tienen pantalla en el MVP (Plan §9, 8 pantallas).
  */
 const INVENTORY_NAV = navIndexOf('Inventario');
 const MESSAGES_NAV = navIndexOf('Hilos');
+/** SRCH-01 §2: "Ítem activo en nav: **Comprando**". Aquí spec y HTML aprobado
+ *  coinciden, así que no hay nada que resolver como en F-025. */
+const SEARCH_NAV = navIndexOf('Comprando');
 const HOME_NAV = navIndexOf('Panel');
 
 /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
@@ -34,6 +38,9 @@ const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
 /** MSG-01 §5: "**Subtítulo del panel:** `Agente de mensajería`". Aquí spec y HTML
  *  aprobado no discrepan, así que no hay nada que resolver como en F-025. */
 const MESSAGES_VERA_SUBTITLE = 'Agente de mensajería';
+
+/** SRCH-01 §5: "**Subtítulo del panel:** `Agente de búsqueda`". */
+const SEARCH_VERA_SUBTITLE = 'Agente de búsqueda';
 
 export function App() {
   const { state, error, signIn, signOut } = useSession();
@@ -61,12 +68,15 @@ export function App() {
 
   const onInventory = nav === INVENTORY_NAV;
   const onMessages = nav === MESSAGES_NAV;
+  const onSearch = nav === SEARCH_NAV;
 
   const veraSubtitle = onInventory
     ? INVENTORY_VERA_SUBTITLE
     : onMessages
       ? MESSAGES_VERA_SUBTITLE
-      : undefined;
+      : onSearch
+        ? SEARCH_VERA_SUBTITLE
+        : undefined;
 
   return (
     <AppShell
@@ -94,6 +104,13 @@ export function App() {
          * defecto de `relativeTime`.
          */
         <Messages profile={state.profile} now={new Date()} />
+      ) : onSearch ? (
+        /* Mismo criterio que arriba con `now`, y por la misma razón: explícito
+         * desde aquí y construido en el render. La columna Antigüedad de SRCH-01
+         * es tan sensible al reloj como el timestamp relativo de MSG-01 — con un
+         * `now` congelado al montar, una sesión larga acabaría pintando en naranja
+         * lo que ya debería estar en rojo. */
+        <SearchResults profile={state.profile} now={new Date()} />
       ) : onInventory ? (
         <Inventory profile={state.profile} />
       ) : (

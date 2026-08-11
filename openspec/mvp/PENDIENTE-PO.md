@@ -240,21 +240,43 @@ elementos, y forzarlo sería reintroducir el problema que 0007 vino a quitar.
 
 ---
 
-## 5-bis 🔴 Aplicar 0009 y 0010 — y **0010 corrige un agujero abierto ahora mismo**
+## 5-bis ✅ 0009 y 0010 — APLICADAS AL REMOTO (11-ago)
 
-**0010 no es opcional y no es cosmético.** La guardia que aplicamos esta tarde para impedir que
-una organización acepte su propia oferta **no bloquea a nadie**: se creó `security definer`, y
-dentro de una función así `current_user` es la dueña —`postgres`—, con lo cual su propia
-exención para la siembra se cumple siempre. **El agujero de F-051 sigue abierto en producción,
-con la migración puesta y el trigger habilitado.** Es F-056.
+| versión | migración |
+|---|---|
+| `20260811…` | `mvp_0009_thread_reopens_on_write` |
+| `20260811…` | `mvp_0010_offer_decider_guard_must_be_invoker` |
 
-Lo encontró el aserto que ayer no existía, en su primera corrida. Y el aviso llevaba escrito en
-el repo desde el día 2, en `0001_organizations_and_members.sql:219`: *"OJO: este trigger NO
-puede ser SECURITY DEFINER […] la guarda se desactivaría siempre a sí misma"*. **Un comentario
-solo protege a quien lo lee. Lo que protege de verdad es un aserto.**
+**0010 no era cosmética: tapaba un agujero que estuvo abierto en producción toda la tarde.** La
+guardia que aplicamos a mediodía para impedir que una organización acepte su propia oferta **no
+bloqueaba a nadie**. Se creó `security definer`, y dentro de una función así `current_user` es
+la dueña —`postgres`—, con lo cual su propia exención para la siembra se cumplía siempre. Es
+**F-056**, y reabrió F-051 durante unas horas.
 
-Las dos están probadas en local: la fase de esquema pasa de 35 a **41 asertos**, verdes, y seis
-son nuevos. **Dime y las aplico**, igual que las dos de esta tarde.
+Lo encontró el aserto que por la mañana no existía, en su primera corrida. Y el aviso llevaba
+escrito en el repo desde el día 2, en `0001_organizations_and_members.sql:219`: *"OJO: este
+trigger NO puede ser SECURITY DEFINER […] la guarda se desactivaría siempre a sí misma"*. **Un
+comentario solo protege a quien lo lee. Lo que protege de verdad es un aserto.**
+
+### Cómo se comprobó esta vez, que es lo que cambia
+
+A mediodía di 0008 por buena porque *"el trigger existe y está habilitado"*. **Eso no probaba
+nada** — el trigger existía y no hacía nada. La comprobación de ahora es el bit del que dependía
+todo:
+
+```
+app.guard_offer_decider   security invoker   ← el arreglo
+app.guard_thread_state    security invoker
+app.derive_thread_state   SECURITY DEFINER   ← a propósito: escribe por encima de RLS
+app.sync_thread_state     SECURITY DEFINER   ← a propósito, y no mira current_user
+```
+
+Y los cinco estados de los hilos siguen intactos tras 0009.
+
+**Lo que sigue sin poder comprobarse desde aquí, dicho claro:** las dos guardias se
+auto-exceptúan para `service_role` y `postgres`, así que ninguna conexión administrativa puede
+dispararlas. Que **bloqueen** lo prueban los asertos de `01_schema_smoke.sql` desde una sesión
+`authenticated`; lo que se verifica en el remoto es que lo desplegado es ese mismo código.
 
 ---
 

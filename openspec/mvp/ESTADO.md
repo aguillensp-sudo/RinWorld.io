@@ -143,8 +143,16 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > es el más incómodo del registro: un comentario de aviso solo protege a quien lo lee, y nadie
 > lee el fichero de al lado. Lo que protege de verdad es un aserto.**
 >
-> **0009 y 0010 están en el repo y NO aplicadas al remoto.** Hasta que se apliquen, el agujero
-> de F-051 sigue vivo en producción.
+> **0009 y 0010 aplicadas al remoto el 11-ago.** El agujero de F-051 queda cerrado de verdad, y
+> esta vez la comprobación no es *"el trigger existe"* —que es lo que lo dio por bueno a
+> mediodía y no probaba nada— sino **`prosecdef = false` sobre `app.guard_offer_decider`**, que
+> es el bit del que dependía todo. Las otras tres guardias siguen en invoker;
+> `derive_thread_state` y `sync_thread_state` se quedan `DEFINER` a propósito, porque escriben
+> por encima de RLS y no miran `current_user`.
+>
+> **El criterio que hay que llevarse:** comprobar que un objeto existe no dice nada de si hace
+> algo. Lo que se verifica en el remoto es que **lo desplegado es el código probado**; que ese
+> código bloquee lo prueban los asertos, y no hay atajo.
 
 ---
 

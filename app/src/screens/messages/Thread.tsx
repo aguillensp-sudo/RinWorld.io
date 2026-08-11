@@ -37,10 +37,15 @@ export function Thread({
   profile,
   threadId,
   now,
+  onBack,
 }: {
   profile: MemberProfile;
   threadId: string;
   now?: Date;
+  /** Vuelta a MSG-01 desde el breadcrumb. **Opcional**, por lo mismo que
+   *  `Messages.onOpenThread`: el contrato de aceptación no lo pasa, y hacerlo
+   *  obligatorio pondría C1 en rojo por el wiring y no por el artefacto. */
+  onBack?: () => void;
 }) {
   const [detail, setDetail] = useState<ThreadDetail | null>(null);
   const [items, setItems] = useState<ThreadItem[]>([]);
@@ -135,11 +140,11 @@ export function Thread({
       {detail && (
         <ThreadHeader
           detail={detail}
-          onBack={() => {
-            // La navegación a MSG-01 es decisión del shell.
-          }}
+          onBack={() => onBack?.()}
           onOpenCounterparty={() => {
-            // DIR-02 (ficha pública) queda fuera del MVP.
+            // DIR-02 (ficha pública) queda fuera del MVP: el botón se pinta y su
+            // aviso no lleva a ninguna parte todavía, igual que `Consultar` y
+            // `Contactar` en SRCH-01.
           }}
           onClose={handleClose}
           onRevert={() => {

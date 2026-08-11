@@ -228,4 +228,34 @@ describe('MSG-01 · pantalla', () => {
       }
     });
   });
+
+  describe('cableado a MSG-02 — FUERA del contrato del arnés', () => {
+    /**
+     * `onOpenThread` llegó en el cableado a mano del día 7, cuando MSG-02 pasó a
+     * existir. Va aparte para que la frontera de qué se le pidió al Coder de
+     * MSG-01 siga siendo legible: hasta ayer, abrir un hilo no llevaba a ningún
+     * sitio y esa era la respuesta correcta.
+     */
+    it('abrir un hilo avisa con su id', async () => {
+      const user = userEvent.setup();
+      const onOpenThread = vi.fn();
+      render(<Messages profile={profile} now={NOW} onOpenThread={onOpenThread} />);
+
+      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
+      await user.click(screen.getByRole('button', { name: /Nordwälz Lager/ }));
+
+      expect(onOpenThread).toHaveBeenCalledWith('10000000-0000-4000-8000-000000000001');
+    });
+
+    it('sin `onOpenThread` el clic no revienta', async () => {
+      // La prop es opcional para que el contrato de MSG-01 compile sin ella. Un
+      // `onOpenThread(id)` a secas sobre `undefined` sería un TypeError en el clic.
+      const user = userEvent.setup();
+      pintar();
+      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
+      await expect(
+        user.click(screen.getByRole('button', { name: /Nordwälz Lager/ })),
+      ).resolves.not.toThrow();
+    });
+  });
 });

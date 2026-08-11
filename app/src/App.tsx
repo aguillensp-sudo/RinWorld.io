@@ -5,6 +5,7 @@ import { Login } from './screens/Login';
 import { Welcome } from './screens/Welcome';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
+import { Thread } from './screens/messages/Thread';
 import { SearchResults } from './screens/search/SearchResults';
 
 /**
@@ -36,7 +37,11 @@ const HOME_NAV = navIndexOf('Panel');
 const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
 
 /** MSG-01 §5: "**Subtítulo del panel:** `Agente de mensajería`". Aquí spec y HTML
- *  aprobado no discrepan, así que no hay nada que resolver como en F-025. */
+ *  aprobado no discrepan, así que no hay nada que resolver como en F-025.
+ *
+ *  **MSG-02 §5 dice exactamente lo mismo**, así que el subtítulo no cambia al
+ *  entrar en un hilo — y su ítem de nav también es `Hilos` (MSG-02 §2). Las dos
+ *  pantallas son el mismo sitio del shell; lo que cambia es qué se pinta dentro. */
 const MESSAGES_VERA_SUBTITLE = 'Agente de mensajería';
 
 /** SRCH-01 §5: "**Subtítulo del panel:** `Agente de búsqueda`". */
@@ -45,6 +50,22 @@ const SEARCH_VERA_SUBTITLE = 'Agente de búsqueda';
 export function App() {
   const { state, error, signIn, signOut } = useSession();
   const [nav, setNav] = useState(HOME_NAV);
+
+  /**
+   * El hilo abierto, o `null` si estamos en la lista. MSG-01 y MSG-02 comparten
+   * ítem de nav, así que el shell necesita este segundo dato para saber cuál de
+   * las dos pintar.
+   *
+   * **Se limpia al cambiar de ítem de nav, y no es cosmético:** sin limpiarlo,
+   * salir a `Inventario` y volver a `Hilos` devolvería al hilo que estaba abierto
+   * hace media hora en vez de a la lista, con el estado del hilo ya rancio.
+   */
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
+
+  const navigate = (index: number) => {
+    setNav(index);
+    setOpenThreadId(null);
+  };
 
   if (state.status === 'loading') {
     return <div style={{ height: '100%', background: '#1B2537' }} aria-busy="true" />;
@@ -83,7 +104,7 @@ export function App() {
       profile={state.profile}
       onSignOut={signOut}
       activeNav={nav}
-      onNavigate={setNav}
+      onNavigate={navigate}
       {...(veraSubtitle ? { veraSubtitle } : {})}
     >
       {onMessages ? (
@@ -103,7 +124,18 @@ export function App() {
          * elemento del pasado. Es el mismo comportamiento que el `new Date()` por
          * defecto de `relativeTime`.
          */
-        <Messages profile={state.profile} now={new Date()} />
+        openThreadId ? (
+          /* MSG-02. `now` explícito y construido en el render, mismo criterio que
+           * las otras tres: los timestamps del historial son relativos. */
+          <Thread
+            profile={state.profile}
+            threadId={openThreadId}
+            now={new Date()}
+            onBack={() => setOpenThreadId(null)}
+          />
+        ) : (
+          <Messages profile={state.profile} now={new Date()} onOpenThread={setOpenThreadId} />
+        )
       ) : onSearch ? (
         /* Mismo criterio que arriba con `now`, y por la misma razón: explícito
          * desde aquí y construido en el render. La columna Antigüedad de SRCH-01

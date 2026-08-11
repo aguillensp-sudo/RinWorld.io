@@ -26,9 +26,15 @@ import styles from './Messages.module.css';
 export function Messages({
   profile,
   now = new Date(),
+  onOpenThread,
 }: {
   profile: MemberProfile;
   now?: Date;
+  /** A dónde lleva un hilo. **Opcional a propósito:** el contrato de aceptación
+   *  de MSG-01 monta `<Messages profile={…} now={…} />` sin él, y hacerlo
+   *  obligatorio rompería sus tests por el wiring, no por la pantalla. Lo pasa
+   *  `App.tsx` desde el día 7, cuando MSG-02 existe. */
+  onOpenThread?: (id: string) => void;
 }) {
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
@@ -67,10 +73,11 @@ export function Messages({
   const pages = pageCount(total);
   const searching = submittedSearch.trim() !== '';
 
-  const handleOpenThread = (_id: string) => {
-    // MSG-02 (detalle de hilo) no entra en el alcance del MVP: el shell de
-    // navegación decidirá a dónde lleva este id. La firma se mantiene para que
-    // el cableado de ThreadList siga siendo verificable por los tests.
+  const handleOpenThread = (id: string) => {
+    // MSG-02 existe desde el día 7. Quien decide a dónde lleva el id es el shell,
+    // no esta pantalla: sin `onOpenThread` el clic no hace nada, que es lo que
+    // hacía antes y lo que siguen viendo los tests de MSG-01.
+    onOpenThread?.(id);
   };
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {

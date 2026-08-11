@@ -260,6 +260,27 @@ describe('decidir una oferta', () => {
   });
 });
 
+describe('cableado — FUERA del contrato del arnés', () => {
+  /**
+   * Estos dos no los midió el Coder: `onBack` es opcional y llegó en el cableado
+   * a mano del día 7, después de la corrida. Van aquí y no mezclados arriba para
+   * que la frontera de qué se le pidió al modelo siga siendo legible.
+   */
+  it('el breadcrumb vuelve a la lista de hilos', async () => {
+    const user = userEvent.setup();
+    const onBack = vi.fn();
+    render(<Thread profile={profile} threadId={HILO} now={NOW} onBack={onBack} />);
+    await user.click(await screen.findByRole('button', { name: 'Hilos' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('sin `onBack` el breadcrumb no revienta', () => {
+    // La prop es opcional justamente para que el contrato del arnés compile sin
+    // ella. Un `onBack()` a secas sobre `undefined` sería un TypeError en el clic.
+    expect(() => pinta()).not.toThrow();
+  });
+});
+
 describe('el reloj', () => {
   it('`now` se le pasa al historial y no se congela al montar', async () => {
     // Mismo criterio que MSG-01 y SRCH-01: `new Date()` en el render, no en un

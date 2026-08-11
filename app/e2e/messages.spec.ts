@@ -1,5 +1,5 @@
 import './env';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { ALPHA, ALPHA_STORAGE, BETA, haveCreds, NO_SESSION, signIn, topNav } from './fixtures';
 
 /**
@@ -118,6 +118,93 @@ test.describe('MSG-01 · hilos reales', () => {
     // de INV-01: presente, deshabilitado y con el motivo (F-023 e).
     await expect(page.getByRole('button', { name: /Nuevo contacto/ })).toBeDisabled();
     await expect(page.getByTestId('directorio-scope')).toContainText(/fuera del MVP/i);
+  });
+});
+
+test.describe('MSG-02 · un hilo real', () => {
+  test.skip(!haveCreds, 'sin credenciales E2E_*');
+  test.use({ storageState: ALPHA_STORAGE });
+
+  /**
+   * Lo que los 67 tests de unidad de MSG-02 NO pueden ver, y por eso existe esto.
+   * `Thread.test.tsx` mockea `fetchThreadDetail` y `fetchThreadItems`, así que
+   * pasaría entero con:
+   *
+   *   · el embed de las dos organizaciones sin nombrar la FK — `threads` tiene
+   *     TRES hacia `organizations` y saldría `PGRST201` (F-020);
+   *   · la contraparte resuelta al revés, que no da error: da una cabecera
+   *     plausible con mi propia organización enfrente;
+   *   · el ciphertext escapándose al DOM. **Y este es nuevo de MSG-02:** a
+   *     diferencia de MSG-01, aquí la consulta SÍ se trae `content_ciphertext`
+   *     —es lo que hace real la costura de D-07-05—, así que por primera vez hay
+   *     bytes cifrados en el navegador y hay que mirar que no lleguen a pintarse.
+   */
+  const abrirHilo = async (page: Page, org: string) => {
+    await page.goto('/');
+    await topNav(page).getByRole('button', { name: 'Hilos' }).click();
+    await expect(page.getByRole('listitem').first()).toBeVisible();
+    await page.getByRole('button', { name: new RegExp(org) }).click();
+  };
+
+  test('la cabecera resuelve la contraparte, y no soy yo', async ({ page }) => {
+    await abrirHilo(page, 'Nordwälz Lager');
+
+    // ⚠ SE MIRA EL ENLACE DE LA CABECERA, NO LA PÁGINA ENTERA, y la primera
+    // versión de este test miraba la página: `ALPHA.org` sale **dos veces en el
+    // shell** —la barra de nav y el pie del sidebar llevan la organización del
+    // usuario— y además sale, legítimamente, como autor de cada elemento que yo
+    // mandé. Un `toHaveCount(0)` global aquí no mide la contraparte: mide el
+    // shell. Es la misma forma que los dos asertos sin ámbito de la revisión a
+    // mano de hoy (F-059).
+    const enlaceOrg = page.getByRole('button', { name: 'Nordwälz Lager' });
+    await expect(enlaceOrg).toBeVisible();
+    await expect(enlaceOrg).not.toHaveText(ALPHA.org);
+
+    // El badge de país es el ISO de dos letras (§3), no "Alemania" como el mock.
+    await expect(page.getByText('Alemania', { exact: true })).toHaveCount(0);
+  });
+
+  test('⚠ el historial trae elementos y NO se escapa un byte cifrado al DOM', async ({ page }) => {
+    await abrirHilo(page, 'Nordwälz Lager');
+    await expect(page.getByTestId('thread-item').first()).toBeVisible();
+
+    const html = await page.content();
+    // El blob viaja como cadena hex `\x…` por PostgREST. Que no aparezca es la
+    // frontera del zero-knowledge mirada desde donde se ve de verdad.
+    expect(html).not.toContain('content_ciphertext');
+    expect(html).not.toMatch(/\\x[0-9a-f]{16,}/i);
+    // Y ninguna cifra de la negociación, que hoy no se descifra (D-07-05).
+    await expect(page.getByText(/EUR\/ud\./)).toHaveCount(0);
+  });
+
+  test('sin passphrase se pinta el indicador de la capability, sin botón', async ({ page }) => {
+    await abrirHilo(page, 'Nordwälz Lager');
+    await expect(
+      page.getByText('Contenido cifrado — introduce tu frase de seguridad para ver').first(),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /frase de seguridad/i })).toHaveCount(0);
+  });
+
+  test('`Marcar acuerdo alcanzado` está deshabilitado y dice por qué (D-07-04)', async ({ page }) => {
+    await abrirHilo(page, 'Nordwälz Lager');
+    await page.getByRole('button', { name: 'Acciones del hilo' }).click();
+    await expect(page.getByRole('button', { name: 'Marcar acuerdo alcanzado' })).toBeDisabled();
+    await expect(page.getByText('El acuerdo se alcanza aceptando una oferta.')).toBeVisible();
+  });
+
+  test('⚠ el campo de mensaje SIGUE en un hilo CERRADO SIN ACUERDO (D-07-01)', async ({ page }) => {
+    // La desviación obligatoria de MSG-02 contra su §6, contra el hilo cerrado
+    // que la siembra tiene con Anadolu Rulman. Si el campo desapareciera, nadie
+    // podría volver a escribir y la reapertura de 0009 no ocurriría nunca.
+    await abrirHilo(page, 'Anadolu Rulman');
+    await expect(page.getByText('CERRADO SIN ACUERDO', { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Escribe un mensaje' })).toBeVisible();
+  });
+
+  test('el breadcrumb vuelve a la lista', async ({ page }) => {
+    await abrirHilo(page, 'Nordwälz Lager');
+    await page.getByRole('button', { name: 'Hilos' }).first().click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Hilos' })).toBeVisible();
   });
 });
 

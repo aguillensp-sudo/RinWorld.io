@@ -45,11 +45,15 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > Lo bueno: **la guardia de ISO-8859-1 que se escribió ayer funciona y hoy lo demostró.**
 > Al dejar de disparar, destapó lo que tapaba.
 
-> **11-ago · LA CI HA PASADO DE LA PUERTA POR PRIMERA VEZ DESDE EL DÍA 2.**
+> **11-ago · LA CI ESTÁ EN VERDE ENTERA. Los tres trabajos. Primera vez desde el día 2.**
 >
-> F-050 resuelto —sobraba un `;` en la clave de `app/.env`— y con eso la corrida de las 09:59
-> UTC autenticó y ejecutó los 40 escenarios: **37 pasan, 3 fallan.** Los otros dos trabajos,
-> `Esquema` y `App · typecheck, Vitest, build`, también en verde.
+> `App · typecheck, Vitest, build` ✅ · `Esquema (30 asertos)` ✅ · `Playwright · puerta de las
+> dos cuentas` ✅ **41/41**. Corrida `31481984861`.
+>
+> Costó cuatro corridas y cuatro causas encadenadas, ninguna de las cuales era la que este
+> fichero daba por buena al cerrar el día 6. F-050 resuelto —sobraba un `;` en la clave de
+> `app/.env`— destapó la corrida de las 09:59 UTC: **37 pasan, 3 fallan**, y esos 3 eran
+> defectos de la propia suite.
 >
 > **Los secrets de GitHub estaban bien todos.** El PO repegó `SUPABASE_PUBLISHABLE_KEY` y
 > `SUPABASE_URL` hoy a las 09:45/09:46 UTC, y los seis `E2E_*` son del 9-ago y funcionan. Lo

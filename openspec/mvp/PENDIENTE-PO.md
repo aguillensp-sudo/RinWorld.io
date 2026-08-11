@@ -159,6 +159,19 @@ misma lógica **como consulta de lectura contra tus datos reales** antes de apli
 El badge de MSG-01 ha dejado de ser una afirmación de la siembra y ha pasado a ser una función
 de las filas. Que era todo el objetivo.
 
+### Una salvedad honesta sobre lo que aquí ponía "probadas" (F-055)
+
+Este documento decía que las dos migraciones estaban *"escritas y probadas"*. **Escritas y
+revisadas sí; probadas no.** En `supabase/tests/` no hay ni una mención a `derive_thread_state`
+ni a `guard_offer_decider`: los 30 asertos cubren las reglas de 0003, no las nuevas. Que la CI
+siga verde con las dos aplicadas demuestra que **no rompen nada**, que no es lo mismo.
+
+Tampoco se pueden comprobar desde una conexión administrativa: las dos guardias se
+auto-exceptúan para `service_role` y `postgres` —tiene que ser así, por ahí entra la siembra—,
+así que ni el MCP ni el smoke test pueden dispararlas. Hace falta el stub de `auth.uid()` que
+la suite ya usa para RLS. **Cuatro asertos, y los pongo el día 8 junto a MSG-02** — no los meto
+hoy porque el día ya va cargado y esto no lo has pedido.
+
 ### Lo que sigue pendiente de decidir, para V1
 
 **Hay dos rutas de despliegue a medias y hay que quedarse con una:** o se enlaza la CLI y se

@@ -36,6 +36,18 @@ vi.mock('../../lib/offers', async (importOriginal) => ({
   revertAgreement: (t: string) => revertAgreement(t),
 }));
 
+/**
+ * Realtime se mockea por lo mismo que en `Messages.test.tsx`: sin esto el
+ * `.subscribe()` de supabase-js abre un websocket de verdad contra el
+ * `localhost:54321` de mentira de `test/setup.ts` y se queda reintentando.
+ */
+const desuscribir = vi.fn();
+const onThreadChanged = vi.fn<(id: string, cb: () => void) => () => void>(() => desuscribir);
+
+vi.mock('../../lib/realtime', () => ({
+  onThreadChanged: (id: string, cb: () => void) => onThreadChanged(id, cb),
+}));
+
 const { Thread } = await import('./Thread');
 const { ENCRYPTED_NOTICE, SEND_DISABLED_REASON } = await import('../../lib/thread-detail');
 
@@ -90,6 +102,9 @@ beforeEach(() => {
   ]) {
     m.mockReset();
   }
+  desuscribir.mockReset();
+  onThreadChanged.mockReset();
+  onThreadChanged.mockReturnValue(desuscribir);
   fetchThreadDetail.mockResolvedValue(detail());
   fetchThreadItems.mockResolvedValue([ofertaRecibida]);
   acceptOffer.mockResolvedValue(undefined);
@@ -257,6 +272,33 @@ describe('decidir una oferta', () => {
     pinta();
     await user.click(await screen.findByRole('button', { name: 'Aceptar oferta' }));
     expect(await screen.findByText(/ya no estaba pendiente/)).toBeInTheDocument();
+  });
+});
+
+describe('Realtime — FUERA del contrato del arnés', () => {
+  it('se suscribe a ESTE hilo, por su id', async () => {
+    pinta();
+    await waitFor(() => expect(onThreadChanged).toHaveBeenCalledWith(HILO, expect.any(Function)));
+  });
+
+  it('un evento vuelve a leer el hilo y sus elementos', async () => {
+    pinta();
+    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalledTimes(1));
+
+    // Señal, no datos: ni el estado del hilo ni los elementos salen del payload.
+    // El estado lo deriva la base (0007) y dos navegadores que lo mezclaran a
+    // mano acabarían discrepando, ganando el último que escriba (F-044).
+    onThreadChanged.mock.calls[0]![1]!();
+
+    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalledTimes(2));
+    expect(fetchThreadItems).toHaveBeenCalledTimes(2);
+  });
+
+  it('⚠ se da de baja al desmontar', async () => {
+    const { unmount } = pinta();
+    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalled());
+    unmount();
+    expect(desuscribir).toHaveBeenCalled();
   });
 });
 

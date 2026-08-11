@@ -27,6 +27,23 @@ vi.mock('../../lib/threads', async (importOriginal) => ({
   fetchThreadPage: (q: ThreadQuery) => fetchThreadPage(q),
 }));
 
+/**
+ * Realtime se mockea, y no solo por comodidad: sin esto el `.subscribe()` de
+ * supabase-js abre un websocket **de verdad** contra el `http://localhost:54321`
+ * de mentira que pone `test/setup.ts`, y se queda reintentando con backoff en
+ * cada test de este fichero. La nota de `setup.ts` decía que los tests de unidad
+ * no llegan a la red; desde el día 7 eso dejó de ser cierto por su cuenta.
+ *
+ * `desuscribir` es un espía para poder comprobar la limpieza al desmontar, que es
+ * lo único que de verdad se rompe aquí.
+ */
+const desuscribir = vi.fn();
+const onThreadsChanged = vi.fn<(cb: () => void) => () => void>(() => desuscribir);
+
+vi.mock('../../lib/realtime', () => ({
+  onThreadsChanged: (cb: () => void) => onThreadsChanged(cb),
+}));
+
 const { Messages } = await import('./Messages');
 
 const NOW = new Date('2026-08-08T12:00:00Z');
@@ -61,6 +78,9 @@ function page(threads: ThreadSummary[], total = threads.length): ThreadPage {
 beforeEach(() => {
   fetchThreadPage.mockReset();
   fetchThreadPage.mockResolvedValue(page([thread()]));
+  desuscribir.mockReset();
+  onThreadsChanged.mockReset();
+  onThreadsChanged.mockReturnValue(desuscribir);
 });
 
 function pintar() {
@@ -226,6 +246,37 @@ describe('MSG-01 · pantalla', () => {
       ]) {
         expect(screen.queryByText(inventada)).not.toBeInTheDocument();
       }
+    });
+  });
+
+  describe('Realtime — FUERA del contrato del arnés', () => {
+    it('se suscribe a los cambios de hilos al montar', async () => {
+      pintar();
+      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
+      expect(onThreadsChanged).toHaveBeenCalled();
+    });
+
+    it('un evento vuelve a leer la página', async () => {
+      pintar();
+      await waitFor(() => expect(fetchThreadPage).toHaveBeenCalledTimes(1));
+
+      // Lo que el canal entrega es una SEÑAL, no datos: la pantalla pregunta otra
+      // vez en vez de mezclar el payload. La lista está paginada y ordenada por
+      // `last_item_at` en el servidor, así que insertar a mano lo que llega la
+      // pondría en una página que a lo mejor no es la que se está viendo.
+      const avisar = onThreadsChanged.mock.calls[0]![0];
+      avisar();
+
+      await waitFor(() => expect(fetchThreadPage).toHaveBeenCalledTimes(2));
+    });
+
+    it('⚠ se da de baja al desmontar', async () => {
+      // Sin esto, cada visita a Hilos deja un canal abierto y una relectura que
+      // apunta a un componente que ya no está.
+      const { unmount } = pintar();
+      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
+      unmount();
+      expect(desuscribir).toHaveBeenCalled();
     });
   });
 

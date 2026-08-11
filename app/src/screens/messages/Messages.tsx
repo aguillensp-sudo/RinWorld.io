@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
+import { onThreadsChanged } from '../../lib/realtime';
 import { fetchThreadPage, pageCount } from '../../lib/threads';
 import type { ThreadSummary } from '../../lib/threads';
 import { ThreadList } from './ThreadList';
@@ -44,19 +45,28 @@ export function Messages({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
+  /**
+   * La consulta de la página. Sale del `useEffect` a un `useCallback` porque
+   * ahora la llaman **dos**: el montaje y el canal de Realtime.
+   *
+   * `vivo` sigue siendo un objeto y no un booleano suelto por lo mismo de antes:
+   * una respuesta que llega después de cambiar de página no debe pisar a la
+   * nueva. Con Realtime eso deja de ser teórico — dos relecturas pueden estar en
+   * vuelo a la vez.
+   */
+  const cargar = useCallback(() => {
+    const vivo = { si: true };
     setLoading(true);
     setError(null);
     fetchThreadPage({ orgId: profile.orgId, search: submittedSearch, page })
       .then((result) => {
-        if (!active) return;
+        if (!vivo.si) return;
         setThreads(result.threads);
         setTotal(result.total);
         setLoading(false);
       })
       .catch((err: unknown) => {
-        if (!active) return;
+        if (!vivo.si) return;
         // `instanceof Error ? … : <texto generico>` es exactamente F-020: los
         // errores de PostgREST son objetos planos, así que un `PGRST201` —el que
         // devuelve `threads` si un embed va sin la clave ajena nombrada— se
@@ -66,9 +76,23 @@ export function Messages({
         setLoading(false);
       });
     return () => {
-      active = false;
+      vivo.si = false;
     };
   }, [profile.orgId, submittedSearch, page]);
+
+  useEffect(() => cargar(), [cargar]);
+
+  /**
+   * Realtime (`Plan §3`, día 7). Un elemento nuevo en cualquiera de mis hilos
+   * mueve su fila al principio de la lista y le cambia la vista previa, y eso lo
+   * escribe la otra parte: sin esto, MSG-01 se queda rancia hasta recargar.
+   *
+   * El evento es una **señal para releer**, no una fuente de datos. Aquí importa
+   * especialmente: la lista está paginada y ordenada por `last_item_at` en el
+   * servidor, así que insertar a mano un hilo que llega por el socket lo pondría
+   * en una página que a lo mejor no es la que se está viendo.
+   */
+  useEffect(() => onThreadsChanged(cargar), [cargar]);
 
   const pages = pageCount(total);
   const searching = submittedSearch.trim() !== '';

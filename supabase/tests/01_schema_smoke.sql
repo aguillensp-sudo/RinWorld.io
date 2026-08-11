@@ -615,4 +615,34 @@ begin
 end
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Realtime (0011) · las dos tablas publicadas, y ninguna en identidad completa
+--
+-- Esto es F-056 aplicado por adelantado: la publicación es exactamente la clase
+-- de cosa que se rompe en silencio. Si `threads` cayera de `supabase_realtime`,
+-- el canal seguiría conectando, seguiría devolviendo SUBSCRIBED y no entregaría
+-- un solo evento — no hay error que mirar, solo una pantalla que no se entera.
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  assert (select count(*) from pg_publication p
+            join pg_publication_rel pr on pr.prpubid = p.oid
+            join pg_class c on c.oid = pr.prrelid
+           where p.pubname = 'supabase_realtime'
+             and c.relname in ('threads','thread_items')) = 2,
+    'threads y thread_items tienen que estar en supabase_realtime (0011): sin eso Realtime conecta y no entrega nada';
+
+  -- El aserto que protege la DECISIÓN, no solo el estado. `REPLICA IDENTITY
+  -- FULL` sobre `thread_items` mandaría el `content_ciphertext` VIEJO en cada
+  -- UPDATE, a todos los suscriptores que pasen RLS, a cambio de un evento DELETE
+  -- que este MVP ni produce ni escucha. Ver 0011 §2.
+  assert (select relreplident from pg_class
+           where relname = 'thread_items'
+             and relnamespace = 'public'::regnamespace) <> 'f',
+    'thread_items NO puede ir en REPLICA IDENTITY FULL: empujaria el ciphertext viejo por el socket en cada update (0011 §2)';
+
+  raise notice 'OK · realtime: las dos tablas publicadas, sin identidad de replica completa';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

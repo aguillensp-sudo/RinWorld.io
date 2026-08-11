@@ -17,6 +17,7 @@ import {
   rejectOffer,
   revertAgreement,
 } from '../../lib/offers';
+import { onThreadChanged } from '../../lib/realtime';
 import { ThreadHeader } from './ThreadHeader';
 import { ThreadHistory } from './ThreadHistory';
 import { ThreadComposer } from './ThreadComposer';
@@ -88,6 +89,17 @@ export function Thread({
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  /**
+   * Realtime (`Plan §3`, día 7). El evento es una **señal para releer**, no una
+   * fuente de datos: no se mezcla ningún payload — ver la cabecera de
+   * `lib/realtime.ts`.
+   *
+   * Se suscribe a los elementos del hilo **y a la fila del hilo**, porque el
+   * badge de estado lo mueve el trigger de 0007 cuando la otra parte acepta una
+   * oferta y esa fila no la toca nadie desde aquí.
+   */
+  useEffect(() => onThreadChanged(threadId, () => void reload()), [threadId, reload]);
 
   const handleClose = useCallback(() => {
     setConfirmOpen(true);

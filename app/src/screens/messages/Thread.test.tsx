@@ -49,7 +49,7 @@ vi.mock('../../lib/realtime', () => ({
 }));
 
 const { Thread } = await import('./Thread');
-const { ENCRYPTED_NOTICE, SEND_DISABLED_REASON } = await import('../../lib/thread-detail');
+const { ENCRYPTED_NOTICE } = await import('../../lib/thread-detail');
 
 const NOW = new Date('2026-08-11T12:00:00Z');
 const HILO = 't1000000-0000-4000-8000-000000000001';
@@ -155,7 +155,11 @@ describe('⚠ el campo de mensaje se queda en LOS CINCO estados (D-07-01)', () =
     // ACUERDO — y si desapareciera, nadie podría escribir y la reapertura no
     // ocurriría nunca. Esta es la desviación obligatoria de MSG-02.
     expect(await screen.findByRole('textbox', { name: 'Escribe un mensaje' })).toBeInTheDocument();
-    expect(screen.getByText(SEND_DISABLED_REASON)).toBeInTheDocument();
+    // Y desde el día 8 el campo no solo está: **funciona**. Hasta hoy este
+    // aserto comprobaba el motivo de un botón inerte; comprobar que se puede
+    // enviar de verdad es lo que cierra D-07-01, porque la reapertura del hilo
+    // depende de que alguien pueda escribir.
+    expect(screen.getByRole('button', { name: 'Enviar mensaje' })).toBeInTheDocument();
   });
 });
 

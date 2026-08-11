@@ -3,6 +3,7 @@ import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   fetchThreadDetail,
   fetchThreadItems,
+  sendMessage,
   type ThreadDetail,
   type ThreadItem,
 } from '../../lib/thread-detail';
@@ -105,16 +106,24 @@ export function Thread({
     setConfirmOpen(true);
   }, []);
 
-  /** Una escritura, su relectura y su error. Nunca dos a la vez. */
+  /**
+   * Una escritura, su relectura y su error. Nunca dos a la vez.
+   *
+   * Devuelve si salió bien. Lo necesita el pie de composición, que solo vacía el
+   * campo cuando el mensaje llegó de verdad: borrar lo escrito porque la red
+   * falló sería perder el texto del usuario para tapar un error.
+   */
   const write = useCallback(
-    async (accion: () => Promise<unknown>) => {
-      if (writing.current) return;
+    async (accion: () => Promise<unknown>): Promise<boolean> => {
+      if (writing.current) return false;
       writing.current = true;
       try {
         await accion();
         await reload();
+        return true;
       } catch (err) {
         setError(errorMessage(err));
+        return false;
       } finally {
         writing.current = false;
       }
@@ -141,6 +150,22 @@ export function Thread({
   const handleRejectOffer = useCallback(
     (itemId: string) => write(() => rejectOffer(itemId, profile.orgId)),
     [profile.orgId, write],
+  );
+
+  /**
+   * D-08-02 · el mensaje libre cifrado.
+   *
+   * Va por el mismo `write` que las tres acciones de oferta, y no por un camino
+   * propio: hereda el cerrojo de reentrada, la relectura y el banner de error de
+   * una sola pieza. Y la relectura importa más aquí que en ninguna otra acción,
+   * porque **escribir en un hilo cerrado lo reabre** (D-07-01, `0009`): el badge
+   * de la cabecera cambia por un trigger que este navegador no ejecuta, así que
+   * sin volver a leer se quedaría diciendo `CERRADO SIN ACUERDO` encima de un
+   * hilo que acaba de abrirse.
+   */
+  const handleSend = useCallback(
+    (text: string) => write(() => sendMessage(threadId, text)),
+    [threadId, write],
   );
 
   // `now` es inyectable para los tests; por defecto se construye en cada render
@@ -192,8 +217,9 @@ export function Thread({
             />
             {/* D-07-01: el pie se monta en los cinco estados del hilo, CERRADO
                 SIN ACUERDO incluido. La reapertura ocurre cuando alguien vuelve
-                a escribir (0009), así que el campo no puede desaparecer. */}
-            <ThreadComposer />
+                a escribir (0009), así que el campo no puede desaparecer — y
+                desde hoy (D-08-02) ese "volver a escribir" es real. */}
+            <ThreadComposer onSend={handleSend} />
           </>
         )}
       </div>

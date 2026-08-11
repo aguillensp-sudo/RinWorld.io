@@ -8,10 +8,18 @@ import {
   AGREEMENT_DISABLED_REASON,
   CREATE_OFFER_DISABLED_REASON,
   ENCRYPTED_NOTICE,
-  SEND_DISABLED_REASON,
+  type EncryptedBlob,
   type ThreadItem,
 } from './thread-detail';
 import { offerActions } from './offers';
+import {
+  type SessionKeyPair,
+  encryptContent,
+  generateCek,
+  generateKeyPair,
+  toBytea,
+  wrapCekFor,
+} from './crypto';
 
 /**
  * La lógica pura de MSG-02. Igual que en `threads.test.ts`: estos tests son los
@@ -40,21 +48,111 @@ function item(over: Partial<ThreadItem> = {}): ThreadItem {
   };
 }
 
-describe('la costura de descifrado (D-07-05)', () => {
-  it('hoy devuelve null para los tres tipos, y es deliberado', () => {
-    // Este test CAMBIA el día 8, cuando entre la rebanada E2EE. Que cambie es la
-    // señal de que la costura se rellenó; que siga verde el día 9 sería la señal
-    // de que no.
-    for (const type of ['MENSAJE', 'CONSULTA', 'OFERTA'] as const) {
-      expect(decryptItem({ type, ciphertext: '\\xdeadbeef', iv: '\\x000102030405060708090a0b' }))
-        .toBeNull();
-    }
+/**
+ * Cifra un contenido y devuelve el blob tal y como llegaría de la fila, con su
+ * CEK envuelta para `paraQuien`. Es el laboratorio de la costura: sin esto, los
+ * tests de abajo tendrían que hablar de bytes a mano.
+ */
+async function blobDe(
+  type: 'MENSAJE' | 'CONSULTA' | 'OFERTA',
+  contenido: unknown,
+  paraQuien: SessionKeyPair,
+): Promise<EncryptedBlob> {
+  const cek = await generateCek();
+  const { ciphertext, iv } = await encryptContent(contenido, cek);
+  const w = await wrapCekFor(cek, paraQuien.publicKey);
+  return {
+    type,
+    ciphertext: toBytea(ciphertext),
+    iv: toBytea(iv),
+    wrapped: {
+      wrappedCek: toBytea(w.wrappedCek),
+      wrapIv: toBytea(w.wrapIv),
+      ephemeralPublicKey: toBytea(w.ephemeralPublicKey),
+    },
+  };
+}
+
+describe('la costura de descifrado · RELLENADA el día 8 (D-07-05 → rebanada E2EE)', () => {
+  /**
+   * ⚠ ESTE BLOQUE ES EL QUE CAMBIÓ HOY, Y QUE CAMBIARA ERA LA SEÑAL.
+   *
+   * El día 7 decía *"hoy devuelve null para los tres tipos, y es deliberado"*,
+   * con la nota de que **tenía que cambiar el día 8**; que hubiera seguido verde
+   * el día 9 habría sido la señal de que la costura no se rellenó
+   * (`Dia-08_decisiones_e2ee.md`, "lo que hay que revisar de lo de hoy").
+   *
+   * `null` **sigue significando exactamente lo mismo**: "cifrado y sin clave en
+   * esta sesión". Lo que cambia es que ahora hay un camino que devuelve
+   * contenido, y los `null` de abajo se miden contra él.
+   */
+  it('ANCLA · con la clave correcta, sale exactamente lo que se cifró', async () => {
+    const yo = await generateKeyPair();
+    const oferta = {
+      kind: 'OFERTA',
+      unitPrice: 12.4,
+      currency: 'EUR',
+      quantity: 800,
+      leadTimeDays: 5,
+      shippingCost: null,
+      shippingCostCurrency: null,
+      validUntil: '2026-08-20T00:00:00.000Z',
+      notes: null,
+    };
+    expect(await decryptItem(await blobDe('OFERTA', oferta, yo), yo)).toEqual(oferta);
   });
 
-  it('no intenta leer el ciphertext como si fuera texto', () => {
+  it('sin llavero en esta sesión devuelve null', async () => {
+    const yo = await generateKeyPair();
+    const blob = await blobDe('MENSAJE', { kind: 'MENSAJE', text: 'Hola' }, yo);
+
+    expect(await decryptItem(blob, yo)).toEqual({ kind: 'MENSAJE', text: 'Hola' }); // ancla
+    expect(await decryptItem(blob, null)).toBeNull();
+  });
+
+  it('sin fila mía en thread_item_keys devuelve null', async () => {
+    // Es el caso normal del MVP: la CEK se envolvió para la clave que yo tenía en
+    // otra sesión, así que por RLS no baja ninguna fila para mí.
+    const yo = await generateKeyPair();
+    const blob = await blobDe('MENSAJE', { kind: 'MENSAJE', text: 'Hola' }, yo);
+
+    expect(await decryptItem(blob, yo)).not.toBeNull(); // ancla
+    expect(await decryptItem({ ...blob, wrapped: null }, yo)).toBeNull();
+  });
+
+  it('TRAS RECARGAR con claves aleatorias, lo de antes deja de abrirse', async () => {
+    // Es `CLAUDE.md` §4 en un test: las claves viven en memoria de sesión y se
+    // pierden al recargar. La pantalla lo dice con ENCRYPTED_NOTICE; aquí se ve
+    // por qué.
+    const antes = await generateKeyPair();
+    const despues = await generateKeyPair();
+    const blob = await blobDe('MENSAJE', { kind: 'MENSAJE', text: 'Hola' }, antes);
+
+    expect(await decryptItem(blob, antes)).not.toBeNull(); // ancla
+    expect(await decryptItem(blob, despues)).toBeNull();
+  });
+
+  it('un contenido que no cuadra con el tipo del elemento devuelve null', async () => {
+    // Los metadatos van en claro y el contenido cifrado: nada obliga a que una
+    // fila marcada OFERTA lleve dentro cifras de oferta. Sin esta comprobación, la
+    // tarjeta pintaría campos vacíos como si fueran datos — el riesgo #1 de
+    // CLAUDE.md §7 por la puerta de atrás.
+    const yo = await generateKeyPair();
+    const mentiroso = await blobDe('OFERTA', { kind: 'MENSAJE', text: 'Hola' }, yo);
+
+    expect(await decryptItem(await blobDe('MENSAJE', { kind: 'MENSAJE', text: 'Hola' }, yo), yo))
+      .not.toBeNull(); // ancla: el mismo contenido, en su fila correcta, sí abre
+    expect(await decryptItem(mentiroso, yo)).toBeNull();
+  });
+
+  it('no intenta leer el ciphertext como si fuera texto', async () => {
     // La tentación del día que corra prisa: devolver el blob tal cual para que la
     // pantalla "enseñe algo". Enseñaría bytes cifrados como si fueran un mensaje.
-    const salida = decryptItem({ type: 'MENSAJE', ciphertext: 'Hola', iv: 'x' });
+    const yo = await generateKeyPair();
+    const salida = await decryptItem(
+      { type: 'MENSAJE', ciphertext: 'Hola', iv: 'x', wrapped: null },
+      yo,
+    );
     expect(salida).toBeNull();
   });
 
@@ -92,12 +190,11 @@ describe('los literales que ve el usuario', () => {
     expect(ENCRYPTED_NOTICE).not.toMatch(/pulsa|haz clic|introdúcela aquí/i);
   });
 
-  it('los tres motivos de deshabilitado son frases completas y sin promesas', () => {
-    for (const motivo of [
-      SEND_DISABLED_REASON,
-      AGREEMENT_DISABLED_REASON,
-      CREATE_OFFER_DISABLED_REASON,
-    ]) {
+  it('los motivos de deshabilitado son frases completas y sin promesas', () => {
+    // Eran tres hasta el día 8. `SEND_DISABLED_REASON` se retiró con D-08-02:
+    // decía *"El cifrado en cliente llega en la rebanada E2EE"* y la rebanada ya
+    // está, así que el pie envía en vez de explicar por qué no.
+    for (const motivo of [AGREEMENT_DISABLED_REASON, CREATE_OFFER_DISABLED_REASON]) {
       expect(motivo.length).toBeGreaterThan(20);
       expect(motivo.endsWith('.')).toBe(true);
       // "Próximamente" es una fecha que nadie se ha comprometido a cumplir.

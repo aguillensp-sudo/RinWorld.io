@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase';
+import { clearKeyring, ensureKeyring } from './keys';
 
 /** Lo que la sesión necesita saber del miembro y su organización. */
 export interface MemberProfile {
@@ -112,12 +113,38 @@ export function useSession() {
 
     const apply = async (userId: string | undefined, email: string | undefined) => {
       if (!userId || !email) {
+        clearKeyring();
         if (alive) setState({ status: 'anonymous' });
         return;
       }
       try {
         const next = await loadProfile(userId, email);
         if (alive) setState(next);
+
+        /**
+         * El llavero E2EE se monta al establecerse la sesión, no la primera vez
+         * que alguien abre un hilo: publicar la clave pública es lo que hace a
+         * este miembro **escribible** por la otra parte, y para cuando abriera
+         * un hilo ya podrían haber intentado escribirle y haber fallado.
+         *
+         * ⚠ VA EN SU PROPIO `try` Y NO TUMBA LA SESIÓN, y es deliberado. Si la
+         * publicación falla, la sesión es perfectamente válida para leer y
+         * navegar; lo que no se puede es fingir que no ha pasado nada, porque el
+         * síntoma llegaría días después y desde la otra parte ("no me llega
+         * nada"). Se entra, y el fallo se dice. Ver `keys.ts`.
+         */
+        if (next.status === 'authenticated') {
+          try {
+            await ensureKeyring(next.profile.id);
+          } catch (e) {
+            if (alive) {
+              setError(
+                'No se pudo publicar tu clave pública, así que la otra parte no podrá escribirte contenido cifrado: ' +
+                  errorMessage(e),
+              );
+            }
+          }
+        }
       } catch (e) {
         if (alive) {
           setError(errorMessage(e));
@@ -151,6 +178,11 @@ export function useSession() {
   }, []);
 
   const signOut = useCallback(async () => {
+    // El llavero se tira ANTES de cerrar sesión, no después: es lo que hace que
+    // cerrar sesión signifique algo. Sin esto, la privada X25519 del miembro
+    // anterior seguiría en memoria mientras la pestaña siguiera abierta, y la
+    // siguiente persona que entrara en el mismo navegador la tendría delante.
+    clearKeyring();
     await supabase.auth.signOut();
   }, []);
 

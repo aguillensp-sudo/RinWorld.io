@@ -168,20 +168,49 @@ test.describe('MSG-02 · un hilo real', () => {
     await abrirHilo(page, 'Nordwälz Lager');
     await expect(page.getByTestId('thread-item').first()).toBeVisible();
 
+    // ANCLA · el contenido se descifra de verdad. Sin esto, los dos asertos de
+    // abajo los cumpliría una pantalla que no pinta nada — que es exactamente lo
+    // que pasaba hasta el día 7, y por eso este test decía otra cosa.
+    // El texto sale del blob cifrado: no existe en ninguna columna en claro.
+    await expect(page.getByText('Precio por unidad para el lote completo.')).toBeVisible();
+    await expect(page.getByText(/4,82\s?€\/ud\./)).toBeVisible();
+
     const html = await page.content();
-    // El blob viaja como cadena hex `\x…` por PostgREST. Que no aparezca es la
-    // frontera del zero-knowledge mirada desde donde se ve de verdad.
+    // El blob viaja como cadena hex `\x…` por PostgREST. Que el contenido se lea
+    // ARRIBA y el ciphertext no aparezca por ningún lado es la frontera del
+    // zero-knowledge mirada desde donde se ve de verdad — y es la pareja de
+    // pantallas que el panel de vista-servidor del día 11 tiene que enseñar.
     expect(html).not.toContain('content_ciphertext');
     expect(html).not.toMatch(/\\x[0-9a-f]{16,}/i);
-    // Y ninguna cifra de la negociación, que hoy no se descifra (D-07-05).
-    await expect(page.getByText(/EUR\/ud\./)).toHaveCount(0);
+    // Y la CEK envuelta tampoco baja al DOM, aunque la consulta sí la traiga.
+    expect(html).not.toContain('wrapped_cek');
   });
 
-  test('sin passphrase se pinta el indicador de la capability, sin botón', async ({ page }) => {
+  test('con la clave de la sesión NO se pinta el indicador de cifrado, y sigue sin haber botón', async ({
+    page,
+  }) => {
+    /**
+     * ⚠ ESTE TEST DECÍA LO CONTRARIO HASTA EL DÍA 8, Y QUE SE CAYERA ERA LA SEÑAL.
+     *
+     * Afirmaba *"sin passphrase se pinta el indicador de la capability"*, y era
+     * cierto mientras `decryptItem` devolviera `null` siempre (D-07-05). Con la
+     * rebanada E2EE y las claves deterministas de la demo (D-08-01 a), el
+     * contenido se abre y el indicador desaparece — que es justo lo que el socio
+     * tiene que ver el día 11.
+     *
+     * La rama opaca NO deja de existir ni deja de estar probada: se recorre en
+     * cuanto no hay clave para un elemento (otra sesión, claves aleatorias) y la
+     * cubren cinco asertos de `thread-detail.test.ts`. Lo que no se puede es
+     * ejercitarla aquí con la semilla de demo puesta, y decir lo contrario sería
+     * un aserto que no mide lo que dice.
+     */
     await abrirHilo(page, 'Nordwälz Lager');
+    await expect(page.getByText('Precio por unidad para el lote completo.')).toBeVisible(); // ancla
     await expect(
-      page.getByText('Contenido cifrado — introduce tu frase de seguridad para ver').first(),
-    ).toBeVisible();
+      page.getByText('Contenido cifrado — introduce tu frase de seguridad para ver'),
+    ).toHaveCount(0);
+    // F-027 sigue en pie: no hay recuperación de claves que prometer, ni después
+    // de la rebanada. Las claves siguen viviendo en memoria de sesión.
     await expect(page.getByRole('button', { name: /frase de seguridad/i })).toHaveCount(0);
   });
 

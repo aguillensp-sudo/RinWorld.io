@@ -1,6 +1,17 @@
 import { supabase } from './supabase';
 import type { OfferCard, OfferState } from './offers';
 import type { ItemType, ThreadState } from './threads';
+import {
+  type SessionKeyPair,
+  decryptContent,
+  encryptContent,
+  fromBytea,
+  generateCek,
+  toHex,
+  unwrapCek,
+  wrapCekFor,
+} from './crypto';
+import { currentKeyPair, fetchThreadRecipients } from './keys';
 
 /**
  * Capa de datos de MSG-02 · Vista de un Hilo.
@@ -125,11 +136,15 @@ export interface ThreadDetail {
 export const ENCRYPTED_NOTICE = 'Contenido cifrado — introduce tu frase de seguridad para ver';
 
 /**
- * D-07-05. El motivo va en **texto visible**, no en un `title` ni en un
- * `aria-describedby`: un control inerte sin explicación se lee como avería
- * (F-023 e, y `Messages.tsx:107` ya lo resolvió así).
+ * `SEND_DISABLED_REASON` vivía aquí y **se ha retirado hoy (D-08-02)**. Decía
+ * *"El cifrado en cliente llega en la rebanada E2EE"*, y la rebanada es hoy: un
+ * literal que promete algo ya entregado envejece peor que no tenerlo.
+ *
+ * Queda anotado en vez de borrado en silencio porque el contrato de aceptación
+ * de MSG-02 lo comprobaba en pantalla, y quien vea desaparecer ese aserto tiene
+ * que poder saber si se cumplió o se tapó. Se cumplió: `sendMessage` está más
+ * abajo y el pie de composición envía.
  */
-export const SEND_DISABLED_REASON = 'El cifrado en cliente llega en la rebanada E2EE.';
 
 /**
  * D-07-04. Dice la verdad y no promete nada: no es una función que falte, es que
@@ -225,32 +240,85 @@ export function asOfferCard(item: ThreadItem, threadId: string): OfferCard | nul
 // La costura
 // -----------------------------------------------------------------------------
 
+/** La CEK de este elemento, envuelta para MÍ. `bytea` llega como `\x…`. */
+export interface WrappedForMe {
+  wrappedCek: string;
+  wrapIv: string;
+  ephemeralPublicKey: string;
+}
+
 /** Lo que sale de la fila y entra al descifrado. `bytea` llega como cadena hex
  *  (`\x…`) por PostgREST. */
 export interface EncryptedBlob {
   type: ItemType;
   ciphertext: string | null;
   iv: string | null;
+  /**
+   * `null` = **no hay fila mía** en `thread_item_keys` para este elemento.
+   *
+   * Pasa de verdad y no es un error: `item_keys_select_own` (`0003:353`) reparte
+   * por persona, así que un elemento escrito para la clave que yo tenía en otra
+   * sesión llega aquí sin envoltura utilizable. Es el caso normal del MVP con
+   * claves aleatorias (`CLAUDE.md` §4).
+   */
+  wrapped: WrappedForMe | null;
 }
 
 /**
- * ⚠ ESTA ES LA COSTURA, Y HOY DEVUELVE `null` SIEMPRE. Es deliberado (D-07-05).
+ * ⚠ ESTA ES LA COSTURA. El día 7 devolvía `null` siempre; hoy descifra.
  *
- * No hay clave con la que abrir nada: la rebanada E2EE es la fila del **día 8**
- * del `Plan §3` y `app/src` no tiene una sola línea de criptografía. Devolver
- * `null` es la respuesta correcta y honesta a *"¿qué dice este elemento?"* cuando
- * la respuesta es "no lo sé y el servidor tampoco".
+ * **`null` sigue significando exactamente lo mismo que el día 7** —"cifrado y
+ * sin clave en esta sesión"— y por eso la pantalla no cambia: lo que cambia es
+ * cuántas veces se da ese caso, no qué se hace con él. D-07-05 puso la costura
+ * aquí justo para que hoy no hubiera que tocar ni un `.tsx`.
  *
- * Lo que **no** se hace, y queda escrito para que nadie lo intente el día que
- * corra prisa: no se lee el ciphertext como si fuera texto, y no se inventa
- * contenido de relleno para que la pantalla luzca. Una pantalla que enseña cifras
- * que nadie escribió es el riesgo #1 de `CLAUDE.md` §7 llevado al historial.
+ * Devuelve `null`, sin distinguir, en los cuatro caminos que significan lo
+ * mismo desde la pantalla:
  *
- * El día 8 esto se rellena —AES-256-GCM con el `iv` de la fila y la clave de
- * sesión— y **no se toca nada más**.
+ *   1. no hay llavero en esta sesión;
+ *   2. no hay fila de `thread_item_keys` para mí;
+ *   3. la envoltura no abre — es lo que pasa **tras recargar** con claves
+ *      aleatorias: la CEK se envolvió para mi clave anterior, que ya no existe;
+ *   4. el contenido no cuadra con el tipo del elemento.
+ *
+ * ⚠ **El caso 4 no es paranoia de más.** Los metadatos van en claro y el
+ * contenido va cifrado: nada obliga a que un elemento marcado `OFERTA` lleve
+ * dentro cifras de oferta. Sin esta comprobación, un blob con `kind: 'MENSAJE'`
+ * dentro de una fila `OFERTA` haría que la tarjeta pintara campos vacíos como si
+ * fueran datos. Es el riesgo #1 de `CLAUDE.md` §7 —afirmar con aplomo un dato
+ * falso— por la puerta de atrás.
+ *
+ * Lo que **no** se hace, y queda escrito para el día que corra prisa: no se lee
+ * el ciphertext como si fuera texto y no se inventa contenido de relleno para
+ * que la pantalla luzca.
  */
-export function decryptItem(_blob: EncryptedBlob): ItemContent | null {
-  return null;
+export async function decryptItem(
+  blob: EncryptedBlob,
+  keyPair: SessionKeyPair | null,
+): Promise<ItemContent | null> {
+  if (!keyPair || !blob.wrapped || !blob.ciphertext || !blob.iv) return null;
+
+  try {
+    const cek = await unwrapCek(
+      {
+        wrappedCek: fromBytea(blob.wrapped.wrappedCek),
+        wrapIv: fromBytea(blob.wrapped.wrapIv),
+        ephemeralPublicKey: fromBytea(blob.wrapped.ephemeralPublicKey),
+      },
+      keyPair,
+    );
+    const contenido = await decryptContent(fromBytea(blob.ciphertext), fromBytea(blob.iv), cek);
+    return contenido !== null && typeof contenido === 'object' &&
+      (contenido as { kind?: unknown }).kind === blob.type
+      ? (contenido as ItemContent)
+      : null;
+  } catch {
+    // Se traga a propósito y sin ruido: en el MVP, "no abre" es el estado normal
+    // de todo lo cifrado antes de la recarga, y un `console.error` por elemento
+    // llenaría la consola de la demo de rojo describiendo el funcionamiento
+    // correcto. Lo que NO se hace es devolver algo distinto de `null`.
+    return null;
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -320,12 +388,26 @@ interface ItemRow {
   superseded_by_item_id: string | null;
   content_ciphertext: string | null;
   content_iv: string | null;
+  thread_item_keys: { wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[] | null;
 }
 
+/**
+ * ⚠ EL EMBED DE `thread_item_keys` DEVUELVE COMO MUCHO UNA FILA, Y NO ES SUERTE:
+ * `item_keys_select_own` (`0003:353`) filtra por `recipient_member_id =
+ * auth.uid()`. Aunque el elemento tenga una CEK envuelta por cada miembro de las
+ * dos organizaciones, por aquí solo baja la mía. Es la política haciendo el
+ * trabajo, no la consulta — y por eso no lleva `.eq()` de miembro: filtrar aquí
+ * además sugeriría que sin el filtro se verían las ajenas.
+ *
+ * Va con la clave ajena SIN nombrar porque `thread_item_keys` tiene un único
+ * camino hacia `thread_items` (`item_id`). Los de `threads` sí van nombrados, y
+ * la diferencia es real: allí hay tres FK hacia `organizations` (F-020).
+ */
 const ITEM_COLUMNS =
   'id, item_type, sender_org_id, created_at, part_number, brand, ' +
   'estado_oferta, estado_consulta, responds_to_item_id, superseded_by_item_id, ' +
-  'content_ciphertext, content_iv';
+  'content_ciphertext, content_iv, ' +
+  'thread_item_keys(wrapped_cek, wrap_iv, ephemeral_pubkey)';
 
 /**
  * El historial completo del hilo, **ascendente** — el más antiguo arriba, como
@@ -348,22 +430,130 @@ export async function fetchThreadItems(threadId: string, orgId: string): Promise
 
   if (error) throw error;
 
-  return ((data ?? []) as unknown as ItemRow[]).map((r) => ({
-    id: r.id,
-    type: r.item_type,
-    senderOrgId: r.sender_org_id,
-    isOwn: r.sender_org_id === orgId,
-    createdAt: r.created_at,
-    partNumber: r.part_number,
-    brand: r.brand,
-    offerState: r.estado_oferta,
-    inquiryState: r.estado_consulta,
-    respondsToItemId: r.responds_to_item_id,
-    supersededByItemId: r.superseded_by_item_id,
-    content: decryptItem({
+  /**
+   * ⚠ EL `Promise.all` ES LO QUE MANTIENE LA COSTURA EN SU SITIO. `decryptItem`
+   * pasó a ser asíncrona hoy porque `crypto.subtle` lo es — no hay forma de que
+   * no lo sea— pero `fetchThreadItems` **ya era asíncrona el día 7** y devuelve
+   * lo mismo que devolvía. Por eso D-07-05 se sostiene y no se toca ni un
+   * `.tsx`: quien llama no distingue una costura vacía de una llena.
+   *
+   * El llavero se lee aquí dentro, de `keys.ts`, y no entra por parámetro
+   * justamente para eso: un parámetro nuevo habría subido hasta `Thread.tsx`.
+   */
+  const keyPair = currentKeyPair();
+
+  return Promise.all(
+    ((data ?? []) as unknown as ItemRow[]).map(async (r) => ({
+      id: r.id,
       type: r.item_type,
-      ciphertext: r.content_ciphertext,
-      iv: r.content_iv,
+      senderOrgId: r.sender_org_id,
+      isOwn: r.sender_org_id === orgId,
+      createdAt: r.created_at,
+      partNumber: r.part_number,
+      brand: r.brand,
+      offerState: r.estado_oferta,
+      inquiryState: r.estado_consulta,
+      respondsToItemId: r.responds_to_item_id,
+      supersededByItemId: r.superseded_by_item_id,
+      content: await decryptItem(
+        {
+          type: r.item_type,
+          ciphertext: r.content_ciphertext,
+          iv: r.content_iv,
+          wrapped: toWrapped(r.thread_item_keys),
+        },
+        keyPair,
+      ),
+    })),
+  );
+}
+
+/** El embed llega como lista de 0 o 1 por RLS. Aquí se le pone nombre. */
+function toWrapped(filas: ItemRow['thread_item_keys']): WrappedForMe | null {
+  const fila = filas?.[0];
+  if (!fila) return null;
+  return {
+    wrappedCek: fila.wrapped_cek,
+    wrapIv: fila.wrap_iv,
+    ephemeralPublicKey: fila.ephemeral_pubkey,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Escritura
+// -----------------------------------------------------------------------------
+
+/**
+ * Escribe un mensaje libre cifrado en el hilo (D-08-02).
+ *
+ * El `Plan §3` del día 8 dice *"cifrado de campos de **oferta** en cliente"*, y
+ * el mensaje libre entra por decisión del PO del 12-ago: es el caso más simple
+ * del mismo blob y el mismo algoritmo, y **es lo único que hace observable en la
+ * interfaz la reapertura del hilo de D-07-01**, que hasta hoy solo sostenían dos
+ * asertos de SQL.
+ *
+ * ── EL ORDEN DE LOS PASOS ES EL CONTRATO ────────────────────────────────────
+ *
+ * 1. **Se piden los destinatarios ANTES de cifrar.** Si falta la clave de
+ *    alguien, no se ha gastado nada y no hay nada que deshacer.
+ * 2. **Si falta una sola clave, no se envía.** Se podría envolver para quien sí
+ *    la tiene y el `insert` funcionaría — y la otra persona vería `Contenido
+ *    cifrado` para siempre sin nada que lo explicara. Es el fallo silencioso que
+ *    0012 §3 se negó a esconder en la base; esconderlo aquí sería lo mismo.
+ * 3. **Una CEK nueva por elemento**, envuelta una vez por destinatario, incluido
+ *    quien escribe: sin su copia no podría releerse (`0003:263`).
+ * 4. **Una sola llamada** a `create_thread_item`, que mete el elemento y sus
+ *    claves en la misma transacción. Dos escrituras sueltas podrían dejar un
+ *    elemento sin claves, que es ilegible para siempre y no se puede reparar
+ *    (0012 §5).
+ */
+export async function sendMessage(threadId: string, text: string): Promise<void> {
+  const cuerpo = text.trim();
+  if (!cuerpo) throw new Error('El mensaje está vacío.');
+
+  const keyPair = currentKeyPair();
+  if (!keyPair) {
+    throw new Error(
+      'Tu clave de cifrado no está lista en esta sesión. Vuelve a entrar antes de escribir.',
+    );
+  }
+
+  const destinatarios = await fetchThreadRecipients(threadId);
+  const sinClave = destinatarios.filter((d) => d.publicKey === null);
+  if (sinClave.length > 0) {
+    throw new Error(
+      `No se puede cifrar todavía: ${sinClave.length} ${
+        sinClave.length === 1 ? 'destinatario no ha' : 'destinatarios no han'
+      } publicado su clave pública. Tienen que entrar una vez en la aplicación.`,
+    );
+  }
+  if (destinatarios.length === 0) {
+    throw new Error('Este hilo no tiene destinatarios: vuelve a cargarlo.');
+  }
+
+  const cek = await generateCek();
+  const { ciphertext, iv } = await encryptContent({ kind: 'MENSAJE', text: cuerpo }, cek);
+
+  const claves = await Promise.all(
+    destinatarios.map(async (d) => {
+      const w = await wrapCekFor(cek, d.publicKey!);
+      return {
+        member_id: d.memberId,
+        wrapped_cek: toHex(w.wrappedCek),
+        wrap_iv: toHex(w.wrapIv),
+        ephemeral_pubkey: toHex(w.ephemeralPublicKey),
+      };
     }),
-  }));
+  );
+
+  const { error } = await supabase.rpc('create_thread_item', {
+    p_thread_id: threadId,
+    p_item_type: 'MENSAJE',
+    // Hex pelado, sin `\x`: es el contrato de 0012 §5, porque PostgREST no
+    // transporta `bytea` dentro de un JSON.
+    p_ciphertext: toHex(ciphertext),
+    p_iv: toHex(iv),
+    p_keys: claves,
+  });
+  if (error) throw error;
 }

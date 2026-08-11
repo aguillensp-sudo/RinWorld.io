@@ -145,12 +145,18 @@ describe('las dos transiciones manuales del hilo', () => {
   });
 
   /**
-   * MSG-02 lo dice tres veces y MSG-03 y MSG-01 lo repiten: CERRADO SIN ACUERDO
-   * es el único estado irreversible, y en un hilo cerrado el campo de mensaje
-   * desaparece. Si el PO decide lo contrario (F-045), este test es lo primero
-   * que tiene que cambiar — está aquí para que ese cambio sea deliberado.
+   * **El PO decidió lo contrario el 11-ago (F-045): un hilo cerrado se reabre
+   * cuando uno de los dos vuelve a escribir en él.** Este comentario decía que
+   * este test sería lo primero en cambiar, y resulta que no cambia nada — porque
+   * lo que prueba es otra cosa.
+   *
+   * La reapertura la hace la base al llegar un elemento nuevo (0009), no una
+   * transición que el cliente pida. Estas dos funciones siguen diciendo lo mismo
+   * que antes: no se cierra un hilo ya cerrado, y `Revertir a abierto` sigue
+   * siendo solo para un acuerdo alcanzado. **Lo que se movió está en MSG-02 —el
+   * campo de mensaje ya no desaparece— y en el trigger, no aquí.**
    */
-  it('un hilo cerrado no se revierte', () => {
+  it('un hilo cerrado no se revierte a mano: lo reabre escribir, no un botón', () => {
     expect(canRevertAgreement('CERRADO SIN ACUERDO')).toBe(false);
     expect(canCloseThread('CERRADO SIN ACUERDO')).toBe(false);
   });

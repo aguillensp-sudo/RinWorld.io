@@ -13,7 +13,7 @@ jobs:
   # El esquema se prueba contra un Postgres real, sin tocar el proyecto remoto.
   # Es el mismo runner que se usa en local: supabase/tests/run.sh.
   schema:
-    name: Esquema (30 asertos)
+    name: Esquema (41 asertos)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

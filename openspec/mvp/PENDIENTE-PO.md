@@ -214,37 +214,47 @@ constancia sin coste.
 
 ---
 
-## 5 🟠 F-045 · ¿Se reabre un hilo cerrado? — **hoy es barato, mañana no**
+## 5 ✅ F-045 · El hilo cerrado se reabre al escribir — DECIDIDO (11-ago)
 
-**Por qué ahora:** mañana se construye **MSG-02**, que es donde vive el botón `Cerrar sin
-acuerdo`. Después habría que rehacerlo.
+**Tu decisión, literal:** *"Un hilo cerrado sólo se reabre cuando uno de los dos usuarios
+vuelve a escribir en él. No hay más opciones."* Implementada en **0009** y registrada en
+[`Dia-07_decisiones_producto.md`](Dia-07_decisiones_producto.md) (D-07-01), que es donde tiene
+que leerla quien construya MSG-02.
 
-**Lo que dicen las specs aprobadas, unánimes** (verificado hoy a petición tuya):
+**Tres cosas que conviene que sepas de cómo ha quedado:**
 
-- `MSG-02:84` — *"`Cerrar sin acuerdo` → CERRADO SIN ACUERDO (**irreversible** — pide
-  confirmación)"*
-- `MSG-02:154` — *"El campo de mensaje y el botón `Crear oferta` **desaparecen**. Solo se
-  muestra el historial en modo lectura. Botón `Revertir a abierto` **no disponible**"*
-- `MSG-02:175` y `MSG-03:159` — *"El único estado irreversible es CERRADO SIN ACUERDO"*
-- `MSG-01:82` — badge tachado, *"solo lectura"*
+1. **Sale más barata de lo que este documento decía.** Las cuatro specs que dicen lo contrario
+   son de *pantalla*. La **capability cerrada no dice nada**: `thread-lifecycle` nombra
+   `CERRADO SIN ACUERDO` una sola vez y es para hablar del marcado de líneas consultadas. **Tu
+   decisión no rompe ninguna de las nueve capabilities.**
+2. **Arrastra una regla obligatoria:** MSG-02 tiene que **mantener el campo de mensaje visible**
+   en un hilo cerrado. Si desaparece —como dice su spec— nadie puede escribir y la reapertura
+   no ocurre nunca.
+3. **Solo reabre un elemento nuevo.** Marcar una consulta como respondida o cualquier
+   mantenimiento sobre los elementos existentes **no** resucita el hilo. Si no, un hilo que
+   cerraste se te reabriría solo y sin que nadie hubiera dicho nada.
 
-La capability `thread-lifecycle` **calla**: su único escenario de cierre habla del marcado de
-líneas consultadas.
+Reabre además **al estado que digan sus filas**, no a un `ABIERTO` forzado: si el hilo se cerró
+teniendo una oferta aceptada, vuelve a `ACUERDO ALCANZADO`. El estado es una función de los
+elementos, y forzarlo sería reintroducir el problema que 0007 vino a quitar.
 
-**El mecanismo que propusiste —que se reabra cuando cualquiera de las dos partes escribe— no
-puede ocurrir tal como está especificado: si el campo de mensaje desaparece, nadie puede
-escribir.** La reapertura por escritura exige antes quitar esa regla.
+---
 
-### Las dos opciones
+## 5-bis 🔴 Aplicar 0009 y 0010 — y **0010 corrige un agujero abierto ahora mismo**
 
-| | Qué implica |
-|---|---|
-| **(a) Se queda irreversible** (lo implementado) | Cero trabajo. Es lo que dicen las cuatro specs |
-| **(b) Se reabre al escribir** | Toca: la tabla de acciones de MSG-02, su §6 y §7, la §7 de MSG-03, el badge de MSG-01, y el trigger `app.sync_thread_state` de 0007. **De esas, solo MSG-01 está construida** |
+**0010 no es opcional y no es cosmético.** La guardia que aplicamos esta tarde para impedir que
+una organización acepte su propia oferta **no bloquea a nadie**: se creó `security definer`, y
+dentro de una función así `current_user` es la dueña —`postgres`—, con lo cual su propia
+exención para la siembra se cumple siempre. **El agujero de F-051 sigue abierto en producción,
+con la migración puesta y el trigger habilitado.** Es F-056.
 
-Si eliges **(b)**, dilo **antes de que empiece MSG-02** y lo dejo hecho de una pasada. Como
-decisión de producto es razonable —un cierre no tiene por qué ser para siempre—; lo que no
-puede quedarse es la contradicción entre lo que dicen las specs y lo que hace el código.
+Lo encontró el aserto que ayer no existía, en su primera corrida. Y el aviso llevaba escrito en
+el repo desde el día 2, en `0001_organizations_and_members.sql:219`: *"OJO: este trigger NO
+puede ser SECURITY DEFINER […] la guarda se desactivaría siempre a sí misma"*. **Un comentario
+solo protege a quien lo lee. Lo que protege de verdad es un aserto.**
+
+Las dos están probadas en local: la fase de esquema pasa de 35 a **41 asertos**, verdes, y seis
+son nuevos. **Dime y las aplico**, igual que las dos de esta tarde.
 
 ---
 
@@ -302,14 +312,16 @@ Si quieres algo mejor para el día 11, hay que decidirlo con margen.
 **Los tres que bloqueaban algo están cerrados.** No queda ni un arreglo pendiente de tu parte:
 lo que resta son decisiones de producto, y esas no las puedo tomar yo.
 
-1. ~~Punto 1 (la clave)~~ ✅ · ~~Punto 2 (la contraseña)~~ ✅ · ~~Punto 3 (las migraciones)~~ ✅
-2. **Punto 5** (reapertura del hilo) — **hoy o ya no**: MSG-02 es donde vive el botón.
+1. ~~Punto 1 (la clave)~~ ✅ · ~~Punto 2 (la contraseña)~~ ✅ · ~~Punto 3 (0007 y 0008)~~ ✅ ·
+   ~~Punto 5 (reapertura del hilo)~~ ✅ decidido por ti
+2. **Punto 5-bis** (aplicar 0009 y 0010) — **lo único urgente que queda**, y lo es porque
+   **0010 tapa un agujero que ahora mismo está abierto en producción**. Un «sí» y lo hago.
 3. **Punto 4** (`RETIRADA`) — antes del día 8, que es cuando se construye VND-01.
 4. La opción (a)/(b)/(c) del informe de Playwright en `ci.yml` — una línea, cuando quieras.
 5. El resto, sin prisa.
 
-Los dos primeros son decisiones de una frase, y las dos se abaratan hoy y se encarecen mañana:
-las pantallas que las implementan todavía no existen.
+El punto 4 es una decisión de una frase y se abarata hoy: la pantalla que la implementa todavía
+no existe.
 
 ---
 

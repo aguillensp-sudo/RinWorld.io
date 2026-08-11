@@ -109,6 +109,43 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > procedimiento**, y este fichero lleva seis días demostrando la versión general de la misma
 > frase.
 
+> **11-ago · DECISIÓN DEL PO (F-045): un hilo cerrado se reabre al volver a escribir en él.**
+>
+> *"Sólo se reabre cuando uno de los dos usuarios vuelve a escribir en él. No hay más
+> opciones."* Implementada en **0009**, registrada en `Dia-07_decisiones_producto.md` (D-07-01),
+> que es lo que hay que leer **antes** de la spec de MSG-02.
+>
+> **Sale más barata de lo que se creía:** las cuatro specs que dicen lo contrario son de
+> *pantalla*; la capability cerrada **no declara el estado irreversible en ninguna parte**
+> (`messaging-and-negotiation/spec.md:225` lo nombra una vez y es para el marcado de líneas).
+> **Ninguna de las nueve capabilities se rompe.** Arrastra una regla obligatoria: **MSG-02
+> mantiene el campo de mensaje visible en un hilo cerrado** — si desaparece, nadie puede
+> escribir y la reapertura no ocurre nunca. Y solo reabre un elemento **nuevo**: un `update`
+> sobre lo que ya había, no.
+
+> **11-ago · Y AL PROBARLA SALIÓ F-056: la guardia de 0008 llevaba toda la tarde sin hacer
+> nada, en producción.**
+>
+> `app.guard_offer_decider` se creó `security definer`, y dentro de una función así
+> **`current_user` es la dueña —`postgres`—, no quien llama**: su exención para la siembra se
+> cumplía siempre y la guardia devolvía `new` sin mirar nada. **Una organización podía seguir
+> aceptando su propia oferta, con la migración aplicada y el trigger habilitado.** F-051 vuelve
+> a abrirse y la cierra **0010**, que la pasa a `SECURITY INVOKER`.
+>
+> **Lo encontró el aserto que F-055 decía que faltaba, en su primera corrida** — tercera vez en
+> dos días que arreglar el instrumento encuentra el fallo (F-046, F-053, esta). La fase de
+> esquema pasa de 35 a **41 asertos**, verdes.
+>
+> **Y el aviso llevaba escrito en el repo desde el día 2**, siete migraciones antes:
+> `0001_organizations_and_members.sql:219` dice *"OJO: este trigger NO puede ser SECURITY
+> DEFINER […] la guarda se desactivaría siempre a sí misma"*. De las cuatro funciones que usan
+> esa exención, las tres del día 2 son invoker y la única definer era la de ayer. **Corolario, y
+> es el más incómodo del registro: un comentario de aviso solo protege a quien lo lee, y nadie
+> lee el fichero de al lado. Lo que protege de verdad es un aserto.**
+>
+> **0009 y 0010 están en el repo y NO aplicadas al remoto.** Hasta que se apliquen, el agujero
+> de F-051 sigue vivo en producción.
+
 ---
 
 ## Dónde estamos

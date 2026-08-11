@@ -383,6 +383,120 @@ begin;
 commit;
 
 -- ---------------------------------------------------------------------------
+-- 0007/0008/0009 · la máquina de estados del hilo
+-- ---------------------------------------------------------------------------
+-- Esto llegó tarde y por eso está anotado: las tres migraciones se aplicaron sin
+-- que un solo aserto las tocara (F-055). Que la CI siguiera verde demostraba que
+-- no rompían nada, que no es lo mismo que demostrar que funcionan.
+--
+-- Y hay un motivo por el que no bastaba con mirarlas desde fuera: las dos guardias
+-- se auto-exceptúan con `current_user in ('service_role','postgres')` —tiene que
+-- ser así, por ahí entra la siembra—, así que **ninguna conexión administrativa
+-- puede dispararlas**. Se prueban como se prueba RLS en este mismo fichero: con el
+-- stub de `auth.uid()` y `set local role authenticated`.
+
+-- 0007 · nadie ha escrito `state` en todo el fichero: lo puso la derivación sola.
+do $$
+begin
+  assert (select state from public.threads
+          where id = '11110000-0000-0000-0000-000000000001') = 'ACUERDO ALCANZADO',
+    'thread-lifecycle: la oferta aceptada deja el hilo en ACUERDO ALCANZADO sin que nadie escriba el estado';
+  raise notice 'OK · 0007: el estado del hilo lo deriva la base, no la siembra';
+end
+$$;
+
+-- Una oferta nueva de Beta, Pendiente, para probar quién puede decidirla.
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, estado_oferta, content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-000000000004', '11110000-0000-0000-0000-000000000001',
+   :orgB, :b1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente',
+   decode(repeat('ee', 96), 'hex'), decode(repeat('09', 12), 'hex'));
+
+do $$
+begin
+  assert (select state from public.threads
+          where id = '11110000-0000-0000-0000-000000000001') = 'CON OFERTA PENDIENTE',
+    'thread-lifecycle: una oferta Pendiente manda sobre el acuerdo anterior (regla 1)';
+  raise notice 'OK · 0007: la oferta pendiente mueve el hilo sola';
+end
+$$;
+
+-- 0008 · el emisor NO decide su propia oferta. Como Beta, que la emitió.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$update public.thread_items set estado_oferta = 'Aceptada'
+      where id = '12000000-0000-0000-0000-000000000004'$$,
+    'offer-card: Beta aceptando la oferta que ella misma emitió');
+commit;
+
+-- Y el receptor sí. Como Alpha.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  update public.thread_items set estado_oferta = 'Aceptada'
+    where id = '12000000-0000-0000-0000-000000000004';
+commit;
+
+do $$
+begin
+  assert (select estado_oferta from public.thread_items
+          where id = '12000000-0000-0000-0000-000000000004') = 'Aceptada',
+    'offer-card: el receptor sí puede aceptar — la guardia acota quién, no prohíbe a todos';
+  assert (select state from public.threads
+          where id = '11110000-0000-0000-0000-000000000001') = 'ACUERDO ALCANZADO',
+    'thread-lifecycle: aceptada la oferta, el hilo vuelve a ACUERDO ALCANZADO';
+  raise notice 'OK · 0008: la oferta la decide quien la recibe, y solo esa parte';
+end
+$$;
+
+-- 0009 · el cierre manual, y la reapertura al volver a escribir (decisión del PO).
+update public.threads set state = 'CERRADO SIN ACUERDO'
+  where id = '11110000-0000-0000-0000-000000000001';
+
+-- Un UPDATE sobre un elemento que ya existía NO es volver a escribir en el hilo.
+-- Se reescribe el mismo valor a propósito: lo que se prueba es que el trigger se
+-- dispara y decide no reabrir, no que no se haya disparado.
+update public.thread_items set estado_consulta = 'Respondida con oferta'
+  where id = '12000000-0000-0000-0000-000000000001';
+
+do $$
+begin
+  assert (select state from public.threads
+          where id = '11110000-0000-0000-0000-000000000001') = 'CERRADO SIN ACUERDO',
+    '0009: tocar un elemento que ya existía no reabre un hilo cerrado';
+  raise notice 'OK · 0009: un update sobre lo que ya había no resucita el hilo';
+end
+$$;
+
+-- Un elemento NUEVO sí lo reabre.
+insert into public.thread_items
+  (thread_id, sender_org_id, sender_member_id, item_type, content_ciphertext, content_iv)
+values
+  ('11110000-0000-0000-0000-000000000001', :orgA, :a1, 'MENSAJE',
+   decode(repeat('ff', 32), 'hex'), decode(repeat('0a', 12), 'hex'));
+
+do $$
+declare
+  ahora text;
+begin
+  select state into ahora from public.threads
+    where id = '11110000-0000-0000-0000-000000000001';
+
+  assert ahora <> 'CERRADO SIN ACUERDO',
+    '0009: escribir en un hilo cerrado lo reabre (decisión del PO, 11-ago)';
+  -- Y reabre a lo que digan sus filas, no a un ABIERTO forzado: este hilo tiene
+  -- una oferta aceptada y vigente, así que le toca ACUERDO ALCANZADO.
+  assert ahora = app.derive_thread_state('11110000-0000-0000-0000-000000000001'),
+    '0009: reabre al estado que derivan sus elementos, no a uno inventado';
+  raise notice 'OK · 0009: un elemento nuevo reabre el hilo, y al estado que dicen sus filas (%)', ahora;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
 -- thread-rate-limiting: 25 hilos nuevos por día natural
 -- ---------------------------------------------------------------------------
 do $$

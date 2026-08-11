@@ -174,13 +174,19 @@ export function shippingLine(
  */
 
 /**
- * Cerrar sin acuerdo. `Rinworld_spec_MSG-02.md` lo marca **irreversible** y pide
- * confirmación explícita; MSG-03 §7 y MSG-01 §3 dicen lo mismo, y en un hilo
- * cerrado *"el campo de mensaje y el botón Crear oferta desaparecen"*.
+ * Cerrar sin acuerdo. Sigue pidiendo confirmación explícita y sigue sin poder
+ * aplicarse a un hilo ya cerrado, que es lo único que esta función decide.
  *
- * Es decir: no se reabre escribiendo, porque no se puede escribir. Ver F-045 — el
- * PO tiene abierta la decisión de cambiarlo, y si la cambia toca aquí, en 0007 y
- * en tres specs de pantalla.
+ * **Lo que ha cambiado es lo de después (F-045, decisión del PO del 11-ago):**
+ * *"un hilo cerrado sólo se reabre cuando uno de los dos usuarios vuelve a
+ * escribir en él"*. Lo implementa la migración 0009 en la base, no el cliente —
+ * el estado del hilo es una función de sus filas (0007) y no un valor que la
+ * pantalla escriba.
+ *
+ * Consecuencia para MSG-02, que va contra su spec y es deliberado: **el campo de
+ * mensaje NO desaparece en un hilo cerrado.** Si desapareciera, nadie podría
+ * volver a escribir y la reapertura no ocurriría nunca. Ver
+ * `openspec/mvp/Dia-07_decisiones_producto.md`.
  */
 export function canCloseThread(state: ThreadState): boolean {
   return state !== 'CERRADO SIN ACUERDO';

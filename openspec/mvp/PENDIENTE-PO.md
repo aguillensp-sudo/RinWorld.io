@@ -10,6 +10,35 @@
 
 ---
 
+## ✅ 12-ago · las tres decisiones del día 8, cerradas por ti
+
+**D-08-01 → (a)** claves de demo deterministas · **D-08-02 → los dos**, oferta y mensaje libre ·
+**D-08-03 → se mantiene el diseño del día 2** (ninguna columna nueva: D-08-03 partía de una
+premisa falsa, **F-065**). El punto 1 de abajo queda **cerrado**; se deja escrito porque explica
+por qué la siembra es como es.
+
+### Y dos cosas nuevas que aparecieron construyéndolo
+
+**🟠 A · `app/.env.example` no está en el repo, y nunca lo ha estado.** El `.gitignore` raíz
+tiene `.env.*`, que se lo traga. `supabase.ts` remite a él —*"Copia .env.example a .env"*— y
+quien clone el repo no lo encuentra. **No contiene ningún secreto**: es la plantilla con
+marcadores y las contraseñas de e2e vacías. **Yo lo añadiría con un `!.env.example` en el
+`.gitignore`**, pero no toco esa regla por mi cuenta: es la §1 no negociable de `CLAUDE.md`.
+Una línea, cuando digas. *(Efecto hoy: el aviso de `VITE_DEMO_KEY_SEED` que escribí ahí solo
+existe en tu máquina.)*
+
+**🟠 B · El envío cifrado de D-08-02 no tiene e2e, y es el único hueco del bloque.** Los tests
+de unidad lo cubren —el pie de composición, `sendMessage`, y el esquema prueba que un elemento
+no puede quedarse sin claves—, pero **no hay un test que envíe de verdad contra el Supabase
+real**. El motivo es concreto: enviar mueve el hilo al principio de la lista y cambia la vista
+previa de MSG-01, y eso rompe otros dos e2e que ya existen. La suite **no tiene forma de
+reponer la siembra entre corridas**, así que un test así solo pasaría la primera vez. **Lo que
+hace falta es un paso de reseteo de fixture antes de la suite**, no el test; medio día, y
+resolvería lo mismo para el día 10. **No lo he metido a medias a propósito:** un e2e que solo
+pasa con la base recién sembrada es peor que un hueco documentado.
+
+---
+
 ## 0 · Lo que hay que leer antes que nada, si mañana tocas el día 8
 
 **[`Dia-08_decisiones_e2ee.md`](Dia-08_decisiones_e2ee.md)**, escrito esta noche. El día 8 es

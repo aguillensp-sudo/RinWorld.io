@@ -52,63 +52,40 @@ Los ocho secrets del repo, por fecha:
 
 ---
 
-## 2 🟠 La contraseña de `alpha` de tu `.env` local no es la que hay en Supabase
+## 2 ✅ La contraseña de `alpha` — ROTADA Y VERIFICADA (11-ago)
 
-**Ojo, esto ya no bloquea la CI** — la CI usa el secret `E2E_ALPHA_PASSWORD`, que es correcto y
-autentica. **Bloquea solo tu máquina**: mientras no lo arregles no puedes correr el e2e en
-local y dependes de esperar 5 minutos a GitHub para cada comprobación.
+Cerrado, y cierra F-038 con ello. Los tres sitios:
 
-**Qué se sabe con certeza.** Con la clave ya arreglada, login directo contra GoTrue, sin la
-app por medio:
+| dónde | cuándo | comprobado |
+|---|---|---|
+| Supabase (`auth.users`) | 10:33:40 UTC | cambio real de contraseña, no un login |
+| Secret `E2E_ALPHA_PASSWORD` | 10:38:40 UTC | corrida `31483500764`, la primera posterior, **41/41** |
+| `app/.env` local | 12:56 local | login directo contra GoTrue → **200** |
 
-| cuenta | resultado |
-|---|---|
-| `beta@bearingworld.test` | **200** · token emitido |
-| `alpha@bearingworld.test` | **400** · `invalid_credentials` |
+**Que la CI pasara es lo que demuestra que el secret y la base emparejan.** Sin esa corrida
+posterior a la rotación, tener los dos "actualizados" no probaba que fueran el mismo valor.
 
-Y en `auth.users`: alpha está **confirmada, sin banear, sin borrar**, y su último login bueno
-fue el **10-ago 12:04:35**, con `updated_at` idéntico — es decir, **la contraseña no se ha
-tocado en Supabase desde entonces**. `app/.env` se modificó ese mismo día a las **15:57**, casi
-cuatro horas después. Esa edición metió las dos averías a la vez: el `;` de la clave y una
-contraseña de alpha que no coincide. El valor bueno no está en el repo (el seed las recibe
-como variables de psql, correcto según `CLAUDE.md` §1), así que **solo lo tienes tú**.
+### Lo que se aprendió por el camino, que vale más que el arreglo
 
-**Tienes dos caminos, y el segundo es mejor.**
+El `.env` local tardó un paso más, y durante un rato quedó como cambiado sin estarlo. Lo que
+lo resolvió no fue mirar el fichero otra vez, sino **tres evidencias independientes**: el
+`mtime` era anterior a la rotación, el tamaño cuadraba byte a byte con la edición previa, y un
+login en vivo devolvía `400`.
 
-**(a) Recuperar el valor bueno.** Está en tu gestor de contraseñas o donde lo guardaras el
-9-ago. Del secret de GitHub **no se puede sacar**: son de solo escritura. Lo pones en `.env` y
-listo. Rápido, pero deja F-038 sin cerrar.
-
-**(b) Rotarla, que es lo que F-038 pide desde el día 4 — recomendado.** Esa contraseña estuvo
-descargable en texto plano en los artefactos de la CI de un repositorio público; las corridas
-nuevas ya no la escriben, pero eso solo tapa lo de mañana. Y la que hay ahora en `.env` es
-corta y de diccionario. Rotarla cierra el fallo **y** la deuda de seguridad de una vez.
-
-### Pasos (camino b)
-
-1. Elige una contraseña nueva **larga y aleatoria** (como la de beta, que sí lo es).
-2. Aplícala en el SQL editor del proyecto — es exactamente lo que hace el seed, y funciona con
-   un dominio `.test` que no recibe correo, cosa que "Reset password" del dashboard no:
-   ```sql
-   update auth.users
-      set encrypted_password = crypt('PON-AQUI-LA-NUEVA', gen_salt('bf')),
-          updated_at = now()
-    where email = 'alpha@bearingworld.test';
-   ```
-3. Ponla en los **dos** sitios, sin espacios ni caracteres de más al final:
-   - `app/.env` → `E2E_ALPHA_PASSWORD=`
-   - GitHub secret `E2E_ALPHA_PASSWORD`
-4. Aprovecha y haz lo mismo con **beta**: su contraseña viajó en los mismos informes.
-
-### Cómo compruebas que quedó cerrado
+**Un "ya está cambiado" no es una verificación. La longitud del valor sí lo es** — y no
+obliga a enseñar el secreto a nadie. Para la próxima:
 
 ```bash
-cd app && npx playwright test
+awk -F= '/^E2E_ALPHA_PASSWORD=/{print "longitud: " length(substr($0, index($0,"=")+1))}' app/.env
 ```
 
-**40 en verde**, que es lo que la CI ya da. Ojo con una cosa: si lo lanzas encadenando algo
-detrás (`| tail`, `&& echo`), **el código de salida que verás es el del último comando, no el
-de Playwright**. Es F-046, y hoy he vuelto a caer en ella.
+### `beta` no se rota — decisión del PO, 11-ago
+
+Su contraseña viajó en los mismos informes de CI y **se acepta el riesgo a sabiendas**: es una
+cuenta de prueba de un dominio `.test`, sin datos reales, sin más poder que el de su propia
+organización sembrada, y los informes ya publicados caducan a los 7 días. Queda anotado para
+que nadie lo reabra como si fuera un descuido. **Si algún día se siembran datos que no sean de
+demo, esto vuelve a la mesa.**
 
 ### Y una decisión que sigue pendiente
 

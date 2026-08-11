@@ -45,22 +45,42 @@ la CI sigue roja y ahora por una causa distinta de la que este fichero daba por 
 > Lo bueno: **la guardia de ISO-8859-1 que se escribió ayer funciona y hoy lo demostró.**
 > Al dejar de disparar, destapó lo que tapaba.
 
-> **Estado real del e2e al arrancar el día 7 (11-ago).** F-050 **resuelto** — sobraba un `;`
-> en la clave, ya está fuera de `app/.env`. El e2e **sigue rojo**, pero por otra cosa y una
-> capa más adentro: el `setup` cae ahora con **`Invalid login credentials`**, no con
-> `Invalid API key`. Medido contra GoTrue sin la app por medio: **`beta` → 200 con token;
-> `alpha` → 400 `invalid_credentials`**. En `auth.users` alpha está confirmada, sin banear y
-> sin borrar, y su último login bueno fue el 10-ago 12:04:35 con `updated_at` idéntico — **la
-> contraseña no se ha tocado en Supabase**; lo que no vale es el valor de `.env`, escrito en
-> la edición de las 15:57 que también metió el `;`.
+> **11-ago · LA CI HA PASADO DE LA PUERTA POR PRIMERA VEZ DESDE EL DÍA 2.**
 >
-> El valor bueno **no está en el repo** (el seed las recibe como variables de psql) y solo lo
-> tiene el PO. Con eso, **F-038 y el desbloqueo del e2e son la misma operación**: rotar la
-> contraseña de alpha y ponerla en `.env` y en el secret de GitHub. Pasos exactos en
-> `PENDIENTE-PO.md` §2.
+> F-050 resuelto —sobraba un `;` en la clave de `app/.env`— y con eso la corrida de las 09:59
+> UTC autenticó y ejecutó los 40 escenarios: **37 pasan, 3 fallan.** Los otros dos trabajos,
+> `Esquema` y `App · typecheck, Vitest, build`, también en verde.
 >
-> **Y lo que sigue sin saberse:** los otros **39 escenarios no se han ejecutado** ni una vez
-> desde antes de SRCH-01. Que el `setup` autentique solo probará que el `setup` autentica.
+> **Los secrets de GitHub estaban bien todos.** El PO repegó `SUPABASE_PUBLISHABLE_KEY` y
+> `SUPABASE_URL` hoy a las 09:45/09:46 UTC, y los seis `E2E_*` son del 9-ago y funcionan. Lo
+> que estaba mal era **solo `app/.env` en la máquina del PO**, en las dos variables: el `;` de
+> la clave y una contraseña de alpha que no coincide con la de Supabase (`beta` → 200 contra
+> GoTrue, `alpha` → 400 `invalid_credentials`). Eso ya no bloquea la CI, solo el e2e local.
+> Ver `PENDIENTE-PO.md` §2.
+>
+> **Los 3 fallos eran de la propia suite, no del código (F-052), y costaron tres tandas
+> porque cada arreglo destapaba el siguiente.** (1) `search.spec.ts` buscaba el botón de
+> filtros por `/Filtro/` y el nombre accesible es `Añadir filtro` —`FilterChips.tsx:93` le
+> pone un `aria-label`, que tapa el texto interno—. (2) Al abrirse por fin el formulario,
+> el submit resolvía a **dos** botones: en Playwright el `name` en cadena casa **por
+> subcadena**, al revés que Testing Library, y `'Añadir'` cogía también `'Añadir filtro'`.
+> (3) El test *"no trae líneas que no estén publicadas"* tenía la **premisa falsa** — el
+> catálogo tiene tres referencias que casan con `32011`, y una de las `32011X` está
+> **PUBLISHED** (Łożyska Wschód), así que el estado vacío no llegaba nunca. Reescrito para
+> que pruebe lo que promete, y el estado vacío a test propio: **41, todos verdes.**
+>
+> **El corolario, que es el que hay que llevarse al día 7:** una suite roja por infraestructura
+> no solo deja el código sin cubrir — **deja de cubrirse a sí misma** y acumula defectos
+> propios que solo salen el día que vuelve a arrancar. Mientras una suite esté en rojo por
+> infra, toda corrección hecha en otra suite hay que propagarla a mano.
+>
+> **Y una quinta repetición del patrón más viejo del proyecto (F-053).** Con Playwright ya
+> verde, el trabajo `Esquema` —que había pasado dos veces esa misma mañana— murió con
+> `exit code 2` **y ni una línea más**. La causa hubo que deducirla del número: 2 es el código
+> de `pg_isready` para "sin respuesta", y `run.sh` tenía uno con `-q` suelto detrás del bucle
+> de espera. Transitorio en la causa, estructural en el silencio. Ya vuelca estado del
+> contenedor y `docker logs` antes de rendirse. **Ningún camino de fallo puede terminar en un
+> código de salida a secas.**
 
 ---
 
@@ -76,7 +96,7 @@ la oferta (§7)"*. **Los dos cerrados.**
 | SRCH-01 · corrida 2 | Arnés | **Escalada 3/3**, por tres defectos reales. **Esta sí mide** |
 | SRCH-01 · revisión a mano | Claude Code | **`+64 / −13`** sobre 1140 líneas |
 | SRCH-01 · wiring en `App.tsx` | Claude Code | Cuelga de `Comprando`, subtítulo `Agente de búsqueda` |
-| SRCH-01 · e2e | — | 🔴 **bloqueado**, ajeno al código. F-050 resuelto el 11-ago; ahora es la contraseña de alpha (F-038) |
+| SRCH-01 · e2e | Claude Code | ✅ **verde el 11-ago.** F-050 (el `;`) desbloqueó la suite; 3 defectos de la propia suite corregidos (F-052). 41/41 |
 | Máquina de estados · esquema | Claude Code | Migración **0007**, y F-043 y F-044 con ella |
 | Máquina de estados · cliente | Claude Code | `lib/offers.ts` + migración **0008** (F-051) |
 
@@ -90,7 +110,7 @@ la oferta (§7)"*. **Los dos cerrados.**
 | `cd app && npm run check:palette` | cobertura completa |
 | `python -m harness.tests.test_checks` | **52/52** |
 | `python -m harness.graph.run … --seco` | 3/3 escenarios |
-| `cd app && npx playwright test` | 🔴 **no corre.** Cae el setup de auth — 11-ago: ya no por la clave (F-050 cerrado) sino por la contraseña de alpha (F-038) |
+| `cd app && npx playwright test` | ✅ **41/41 en la CI** (11-ago). En la máquina del PO no corre hasta que arregle la contraseña de alpha en su `.env` — ver `PENDIENTE-PO.md` §2 |
 
 ---
 

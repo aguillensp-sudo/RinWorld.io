@@ -24,11 +24,35 @@ echo "· arrancando $IMAGE en :$PORT"
 docker run -d --name "$NAME" -e POSTGRES_PASSWORD=postgres \
   -p "$PORT:5432" "$IMAGE" >/dev/null
 
-for _ in $(seq 1 60); do
-  if docker exec "$NAME" pg_isready -U postgres -q; then break; fi
+# ⚠ Si Postgres no llega a tiempo, se IMPRIME POR QUÉ.
+#
+# Antes esto era un bucle de 60 y un `pg_isready -q` suelto detrás. `-q` calla por
+# definición, así que cuando el contenedor no arrancaba el script moría con el
+# código 2 de `pg_isready` —"sin respuesta"— y ni una línea de contexto: en la CI
+# se veía el `docker pull` entero y detrás `Process completed with exit code 2`.
+# Es el patrón de F-032 y F-046 por quinta vez, ahora en el esquema: **el veredicto
+# sobrevive y la razón no.** Pasó de verdad el 11-ago, y hubo que deducir la causa
+# por el número de salida.
+#
+# 90 y no 60 porque el fallo real fue un runner lento con la imagen recién bajada.
+listo=0
+for _ in $(seq 1 90); do
+  if docker exec "$NAME" pg_isready -U postgres -q; then listo=1; break; fi
   sleep 1
 done
-docker exec "$NAME" pg_isready -U postgres -q
+
+if [ "$listo" -ne 1 ]; then
+  {
+    echo
+    echo "!! Postgres no aceptó conexiones en 90s. Esto es lo que se sabe:"
+    docker ps -a --filter "name=$NAME" --format '   contenedor: {{.Status}} · {{.Ports}}' || true
+    echo "   pg_isready dice:"
+    docker exec "$NAME" pg_isready -U postgres || true
+    echo "   últimas 40 líneas del log del contenedor:"
+    docker logs --tail 40 "$NAME" 2>&1 | sed 's/^/   /' || true
+  } >&2
+  exit 1
+fi
 
 # $1 = fichero · $2 = base de datos (por defecto `postgres`)
 run() {

@@ -30,20 +30,33 @@ guardia miraba el **alfabeto** cuando el defecto estaba en la **forma**. Un `sb_
 tiene longitud fija — comparar 47 contra 46 lo habría cazado en el primer minuto. Verifiqué
 que los bytes eran legales sin verificar que el valor lo fuera.
 
-### Lo único que queda de este punto, y es tuyo
+### De este punto no queda nada. Los secrets de GitHub están bien
 
-El secret **`SUPABASE_PUBLISHABLE_KEY` de GitHub** sale del mismo copiar-y-pegar, así que lo
-más probable es que arrastre el mismo `;`. No puedo leerlo. En
-`https://github.com/aguillensp-sudo/RinWorld.io/settings/secrets/actions`, vuelve a pegarlo
-**sin ningún carácter después de la última letra**. Si no, la CI seguirá roja aunque el local
-esté verde, y parecerá un problema nuevo.
+Llegué a escribir aquí que había que repegar el secret de CI. **No hace falta: ya lo hiciste
+tú hoy a las 09:45 UTC y está correcto.** Lo demuestra la corrida de CI de las 09:59, que
+**autenticó y ejecutó los 40 escenarios** — cosa imposible con una clave mala.
+
+Los ocho secrets del repo, por fecha:
+
+| secret | actualizado |
+|---|---|
+| `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL` | **hoy 09:45 / 09:46 UTC** |
+| los seis `E2E_*` | 9-ago |
+
+> **Y de paso, una aclaración por si te vuelve a pasar:** un secret de GitHub Actions **no se
+> puede copiar nunca**, ni siendo dueño del repo. Son de solo escritura: la web enseña el
+> nombre y la fecha, y el valor no lo enseña a nadie. Si estás en una pantalla donde puedes
+> copiar el valor pero no editarlo, es la de **claves API de Supabase**, no la de GitHub.
+> Para editarlos de verdad: `Settings → Secrets and variables → Actions`, icono del lápiz.
+> Eres **admin** del repo, así que permisos no te faltan.
 
 ---
 
-## 2 🔴 La contraseña de `alpha` en `.env` no es la que hay en Supabase
+## 2 🟠 La contraseña de `alpha` de tu `.env` local no es la que hay en Supabase
 
-**Esto es lo único que hoy bloquea los 40 e2e.** Absorbe a F-038: una sola operación cierra el
-fallo y la rotación de seguridad.
+**Ojo, esto ya no bloquea la CI** — la CI usa el secret `E2E_ALPHA_PASSWORD`, que es correcto y
+autentica. **Bloquea solo tu máquina**: mientras no lo arregles no puedes correr el e2e en
+local y dependes de esperar 5 minutos a GitHub para cada comprobación.
 
 **Qué se sabe con certeza.** Con la clave ya arreglada, login directo contra GoTrue, sin la
 app por medio:
@@ -60,12 +73,18 @@ cuatro horas después. Esa edición metió las dos averías a la vez: el `;` de 
 contraseña de alpha que no coincide. El valor bueno no está en el repo (el seed las recibe
 como variables de psql, correcto según `CLAUDE.md` §1), así que **solo lo tienes tú**.
 
-**Y ya que hay que tocarla, se rota**, que es lo que F-038 pedía desde el día 4: esa contraseña
-estuvo descargable en texto plano en los artefactos de la CI de un repositorio público. Las
-corridas nuevas ya no la escriben, pero eso solo tapa lo de mañana. Además, la que hay ahora en
-`.env` es corta y de diccionario.
+**Tienes dos caminos, y el segundo es mejor.**
 
-### Pasos
+**(a) Recuperar el valor bueno.** Está en tu gestor de contraseñas o donde lo guardaras el
+9-ago. Del secret de GitHub **no se puede sacar**: son de solo escritura. Lo pones en `.env` y
+listo. Rápido, pero deja F-038 sin cerrar.
+
+**(b) Rotarla, que es lo que F-038 pide desde el día 4 — recomendado.** Esa contraseña estuvo
+descargable en texto plano en los artefactos de la CI de un repositorio público; las corridas
+nuevas ya no la escriben, pero eso solo tapa lo de mañana. Y la que hay ahora en `.env` es
+corta y de diccionario. Rotarla cierra el fallo **y** la deuda de seguridad de una vez.
+
+### Pasos (camino b)
 
 1. Elige una contraseña nueva **larga y aleatoria** (como la de beta, que sí lo es).
 2. Aplícala en el SQL editor del proyecto — es exactamente lo que hace el seed, y funciona con
@@ -87,13 +106,9 @@ corridas nuevas ya no la escriben, pero eso solo tapa lo de mañana. Además, la
 cd app && npx playwright test
 ```
 
-**40 en verde.** Ojo con dos cosas:
-
-- **No lo des por bueno sin ver el verde.** Los 39 escenarios restantes llevan sin ejecutarse
-  desde antes de SRCH-01: nadie ha demostrado todavía que pasen. Que el `setup` autentique
-  solo prueba que el `setup` autentica.
-- Si lo lanzas encadenando algo detrás (`| tail`, `&& echo`), **el código de salida que verás
-  es el del último comando, no el de Playwright**. Es F-046, y hoy he vuelto a caer en ella.
+**40 en verde**, que es lo que la CI ya da. Ojo con una cosa: si lo lanzas encadenando algo
+detrás (`| tail`, `&& echo`), **el código de salida que verás es el del último comando, no el
+de Playwright**. Es F-046, y hoy he vuelto a caer en ella.
 
 ### Y una decisión que sigue pendiente
 

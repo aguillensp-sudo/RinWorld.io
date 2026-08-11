@@ -9,310 +9,207 @@
 > **con el puntero al lado**. Un enum o un nombre de campo sin puntero se considera no
 > verificado.
 >
-> **Corolario del día 3 (F-024).** Una advertencia de aquí sin puntero se comprueba antes
-> de actuar. **Hoy pagó por sexta vez:** este fichero avisaba de que *"el Coder pintará una
-> columna de precio porque el mock la tiene"*. **El mock no la tiene** — sus diez `<th>` son
-> las diez de la spec. La advertencia era falsa y costó comprobarla dos minutos.
+> **Corolario que este fichero lleva seis días pagando (F-024).** Una advertencia de aquí
+> sin puntero se comprueba antes de actuar. **Hoy volvió a pagar, y esta vez contra el
+> propio fichero:** la tabla de decisiones vivas seguía diciendo *"Cierre del hilo ·
+> **Irreversible** … no se reabre escribiendo porque no se puede escribir"* mientras la
+> cabecera del mismo documento registraba la decisión contraria del PO. Quien hubiera leído
+> solo la tabla habría hecho desaparecer el campo de mensaje en MSG-02 —que se construía
+> ese mismo día— y con él la reapertura. **Corregido y con su puntero.**
 >
-> **Corolario del día 5 (una cifra de aquí también).**
->
-> **Y el del día 6, que es nuevo y es el más caro: una causa encontrada no es la única
-> causa.** Este fichero cerraba F-037 con *"lo arregla volver a pegar el secret, y **es lo
-> único**"*. No lo era: la clave está limpia y Supabase la rechaza igual. Ver F-050.
->
-> **Ampliación del 11-ago: el diagnóstico de F-050 que este fichero daba también era falso.**
-> La clave no estaba caducada ni era de otro proyecto: **le sobraba un `;`** — 47 caracteres
-> contra 46. Se comprobó la **clase de carácter** (F-037 había sido eso) y no la **forma**, y
-> un `;` es ASCII, así que la guardia lo dejó pasar. Dos diagnósticos seguidos dados por
-> buenos sin que ningún verde los confirmara. **Un `sb_publishable_` tiene longitud fija: la
-> guardia tiene que validar longitud y forma, no solo la codificación.**
+> **Y el corolario nuevo del día 7, que vale para todo lo que se escriba a partir de aquí:
+> un aserto negativo no mide nada por sí solo.** Nueve de los 67 asertos del contrato de
+> MSG-02 pasaban en verde contra un componente que no pintaba nada, y entre ellos estaba el
+> de la frontera del zero-knowledge. Un aserto que dice *"esto NO está"* lo cumple una
+> pantalla vacía: necesita **un ancla positiva delante** y **un ámbito acotado**. Los tres
+> fallos propios de hoy fueron los tres el mismo defecto (F-058, F-059).
 
-**Día 6 de 15 · cerrado 10-ago-2026 · Estado: ÁMBAR. Los dos bloques del día cerrados;
-la CI sigue roja y ahora por una causa distinta de la que este fichero daba por buena**
+**Día 7 de 15 · cerrado 11-ago-2026 · Estado: VERDE. Los dos bloques del día cerrados,
+la CI en verde los tres trabajos, y por primera vez el día se cierra sin nada bloqueando
+al siguiente**
 
-> **Lo urgente sigue siendo de seguridad y sigue sin hacerse (F-038).** La contraseña de la
-> cuenta `alpha` estuvo descargable en texto plano en los artefactos de una CI pública. Las
-> corridas nuevas ya no la escriben. **La contraseña actual sigue siendo la que estuvo
-> expuesta.**
-
-> **Y lo nuevo que bloquea: el e2e entero no corre, y no por el código (F-050).** La clave
-> de `app/.env` está **limpia** —cero caracteres fuera de ISO-8859-1, la guardia de
-> `supabase.ts` no salta, la app arranca— y Supabase **la rechaza igual**. Verificado sin la
-> app por medio: `GET /rest/v1/organizations` con esa `apikey` devuelve
-> **HTTP 401 `{"message":"Invalid API key"}`**. Cae el `setup` de autenticación, así que
-> **los 40 escenarios quedan sin correr**, no solo los de SRCH-01.
->
-> Lo bueno: **la guardia de ISO-8859-1 que se escribió ayer funciona y hoy lo demostró.**
-> Al dejar de disparar, destapó lo que tapaba.
-
-> **11-ago · LA CI ESTÁ EN VERDE ENTERA. Los tres trabajos. Primera vez desde el día 2.**
->
-> `App · typecheck, Vitest, build` ✅ · `Esquema (30 asertos)` ✅ · `Playwright · puerta de las
-> dos cuentas` ✅ **41/41**. Corrida `31481984861`.
->
-> Costó cuatro corridas y cuatro causas encadenadas, ninguna de las cuales era la que este
-> fichero daba por buena al cerrar el día 6. F-050 resuelto —sobraba un `;` en la clave de
-> `app/.env`— destapó la corrida de las 09:59 UTC: **37 pasan, 3 fallan**, y esos 3 eran
-> defectos de la propia suite.
->
-> **Los secrets de GitHub estaban bien todos.** El PO repegó `SUPABASE_PUBLISHABLE_KEY` y
-> `SUPABASE_URL` hoy a las 09:45/09:46 UTC, y los seis `E2E_*` son del 9-ago y funcionan. Lo
-> que estaba mal era **solo `app/.env` en la máquina del PO**, en las dos variables: el `;` de
-> la clave y una contraseña de alpha que no coincide con la de Supabase (`beta` → 200 contra
-> GoTrue, `alpha` → 400 `invalid_credentials`). Eso ya no bloquea la CI, solo el e2e local.
-> Ver `PENDIENTE-PO.md` §2.
->
-> **Los 3 fallos eran de la propia suite, no del código (F-052), y costaron tres tandas
-> porque cada arreglo destapaba el siguiente.** (1) `search.spec.ts` buscaba el botón de
-> filtros por `/Filtro/` y el nombre accesible es `Añadir filtro` —`FilterChips.tsx:93` le
-> pone un `aria-label`, que tapa el texto interno—. (2) Al abrirse por fin el formulario,
-> el submit resolvía a **dos** botones: en Playwright el `name` en cadena casa **por
-> subcadena**, al revés que Testing Library, y `'Añadir'` cogía también `'Añadir filtro'`.
-> (3) El test *"no trae líneas que no estén publicadas"* tenía la **premisa falsa** — el
-> catálogo tiene tres referencias que casan con `32011`, y una de las `32011X` está
-> **PUBLISHED** (Łożyska Wschód), así que el estado vacío no llegaba nunca. Reescrito para
-> que pruebe lo que promete, y el estado vacío a test propio: **41, todos verdes.**
->
-> **El corolario, que es el que hay que llevarse al día 7:** una suite roja por infraestructura
-> no solo deja el código sin cubrir — **deja de cubrirse a sí misma** y acumula defectos
-> propios que solo salen el día que vuelve a arrancar. Mientras una suite esté en rojo por
-> infra, toda corrección hecha en otra suite hay que propagarla a mano.
->
-> **Y una quinta repetición del patrón más viejo del proyecto (F-053).** Con Playwright ya
-> verde, el trabajo `Esquema` —que había pasado dos veces esa misma mañana— murió con
-> `exit code 2` **y ni una línea más**. La causa hubo que deducirla del número: 2 es el código
-> de `pg_isready` para "sin respuesta", y `run.sh` tenía uno con `-q` suelto detrás del bucle
-> de espera. Transitorio en la causa, estructural en el silencio. Ya vuelca estado del
-> contenedor y `docker logs` antes de rendirse. **Ningún camino de fallo puede terminar en un
-> código de salida a secas.**
-
-> **11-ago · 0007 y 0008 APLICADAS AL SUPABASE REAL. Los dos agujeros vivos, cerrados.**
->
-> `mvp_0007_thread_state_machine` (`20260811130123`) y `mvp_0008_offer_only_receiver_decides`
-> (`20260811130148`). **`threads.state` ya lo mantiene la base** —el badge de MSG-01 ha dejado
-> de ser una afirmación de la siembra y es una función de las filas (F-044)— y **una
-> organización ya no puede aceptar su propia oferta** (F-051).
->
-> Comprobado después de aplicar: los **cinco estados** siguen en pie, la consulta de
-> divergencia devuelve **0 filas**, los **cuatro triggers** están habilitados, y **0 filas**
-> con estado de tarjeta sin `estado_changed_at`. El recálculo del §6 —lo único que tocaba
-> datos existentes— **se simuló en seco contra la base real antes de escribir nada**: cuatro
-> hilos coincidían y el quinto era el `CERRADO SIN ACUERDO` que la migración excluye a
-> propósito.
->
-> **Y una sexta repetición del patrón, esta vez en la documentación (F-054).** `PENDIENTE-PO.md`
-> §3 mandaba al PO ejecutar `supabase db push`, y **este repo no tiene `supabase/config.toml`**:
-> nunca se enlazó con la CLI, así que el comando no podía funcionar. El PO se quedó parado en
-> el punto que estaba estimado en cinco minutos. La pista llevaba ahí desde el día 2 — las seis
-> migraciones anteriores figuran como `mvp_000N_…` y **ese prefijo no lo pone la CLI, lo pone
-> el MCP**. **Una instrucción que no se ha ejecutado nunca es una hipótesis, no un
-> procedimiento**, y este fichero lleva seis días demostrando la versión general de la misma
-> frase.
-
-> **11-ago · DECISIÓN DEL PO (F-045): un hilo cerrado se reabre al volver a escribir en él.**
->
-> *"Sólo se reabre cuando uno de los dos usuarios vuelve a escribir en él. No hay más
-> opciones."* Implementada en **0009**, registrada en `Dia-07_decisiones_producto.md` (D-07-01),
-> que es lo que hay que leer **antes** de la spec de MSG-02.
->
-> **Sale más barata de lo que se creía:** las cuatro specs que dicen lo contrario son de
-> *pantalla*; la capability cerrada **no declara el estado irreversible en ninguna parte**
-> (`messaging-and-negotiation/spec.md:225` lo nombra una vez y es para el marcado de líneas).
-> **Ninguna de las nueve capabilities se rompe.** Arrastra una regla obligatoria: **MSG-02
-> mantiene el campo de mensaje visible en un hilo cerrado** — si desaparece, nadie puede
-> escribir y la reapertura no ocurre nunca. Y solo reabre un elemento **nuevo**: un `update`
-> sobre lo que ya había, no.
-
-> **11-ago · Y AL PROBARLA SALIÓ F-056: la guardia de 0008 llevaba toda la tarde sin hacer
-> nada, en producción.**
->
-> `app.guard_offer_decider` se creó `security definer`, y dentro de una función así
-> **`current_user` es la dueña —`postgres`—, no quien llama**: su exención para la siembra se
-> cumplía siempre y la guardia devolvía `new` sin mirar nada. **Una organización podía seguir
-> aceptando su propia oferta, con la migración aplicada y el trigger habilitado.** F-051 vuelve
-> a abrirse y la cierra **0010**, que la pasa a `SECURITY INVOKER`.
->
-> **Lo encontró el aserto que F-055 decía que faltaba, en su primera corrida** — tercera vez en
-> dos días que arreglar el instrumento encuentra el fallo (F-046, F-053, esta). La fase de
-> esquema pasa de 35 a **41 asertos**, verdes.
->
-> **Y el aviso llevaba escrito en el repo desde el día 2**, siete migraciones antes:
-> `0001_organizations_and_members.sql:219` dice *"OJO: este trigger NO puede ser SECURITY
-> DEFINER […] la guarda se desactivaría siempre a sí misma"*. De las cuatro funciones que usan
-> esa exención, las tres del día 2 son invoker y la única definer era la de ayer. **Corolario, y
-> es el más incómodo del registro: un comentario de aviso solo protege a quien lo lee, y nadie
-> lee el fichero de al lado. Lo que protege de verdad es un aserto.**
->
-> **0009 y 0010 aplicadas al remoto el 11-ago.** El agujero de F-051 queda cerrado de verdad, y
-> esta vez la comprobación no es *"el trigger existe"* —que es lo que lo dio por bueno a
-> mediodía y no probaba nada— sino **`prosecdef = false` sobre `app.guard_offer_decider`**, que
-> es el bit del que dependía todo. Las otras tres guardias siguen en invoker;
-> `derive_thread_state` y `sync_thread_state` se quedan `DEFINER` a propósito, porque escriben
-> por encima de RLS y no miran `current_user`.
->
-> **El criterio que hay que llevarse:** comprobar que un objeto existe no dice nada de si hace
-> algo. Lo que se verifica en el remoto es que **lo desplegado es el código probado**; que ese
-> código bloquee lo prueban los asertos, y no hay atajo.
-
-> **11-ago · DECISIÓN DEL PO (F-043b): `RETIRADA` no entra en el MVP.** VND-01 no pintará
-> `Retirar oferta`. Registrada como D-07-02. La desviación es pequeña —el literal no está en
-> ninguna capability, el día 2 ya se había resuelto igual, y `RNG-VND-04` no era implementable
-> tal como está escrita (*"elimina la fila"* contra el *"sin eliminarse del historial"* de
-> `offer-card`)— **y no se queda en una nota: hay un aserto que la sostiene**, porque la base
-> rechaza el literal y `offerActions()` no lo devuelve a nadie.
->
-> **La otra mitad del hallazgo no era una decisión y se resolvió leyendo el contrato** (D-07-03):
-> `EXPIRADA` no es un quinto estado. `messaging-and-negotiation/spec.md:173` tiene escenario
-> propio — una oferta caducada **sigue Pendiente**, el aviso es local y *"el receptor puede
-> aceptarla igualmente"*. En VND-01 es una etiqueta de presentación. **Vale la pena separar las
-> dos: una era una decisión de producto y la otra una pregunta ya contestada por una capability
-> que nadie había ido a leer.**
->
-> **Con esto el día 8 no tiene nada delante.** MSG-02 y VND-01 se pueden construir, y las dos
-> desviaciones vivas están en `Dia-07_decisiones_producto.md`, que se lee **antes** que la spec
-> de pantalla.
+> **La CI está entera en verde.** Corrida `31521288138`: `Esquema` ✅ · `App · typecheck,
+> Vitest, build` ✅ · `Playwright · puerta de las dos cuentas` ✅ **47/47**. Y en local, lo
+> mismo más la suite de esquema y el verificador de Realtime.
 
 ---
 
 ## Dónde estamos
 
-`Plan §3`, filas del día 6: *"**SRCH-01** — capa presentacional"* y *"Máquina de estados de
-la oferta (§7)"*. **Los dos cerrados.**
+`Plan §3`, filas del día 7: *"**MSG-02** (hilo) — la pantalla más compleja"* y *"**Realtime**:
+hilos y mensajes propagando entre sesiones"*. **Los dos cerrados.**
 
 | Bloque | Ejecuta | Resultado |
 |---|---|---|
-| SRCH-01 · corrida 1 | Arnés | **Escalada 3/3.** Midió el contrato, no al modelo |
-| SRCH-01 · contrato corregido | Claude Code | F-047 y F-048, dos reglas nuevas del formato |
-| SRCH-01 · corrida 2 | Arnés | **Escalada 3/3**, por tres defectos reales. **Esta sí mide** |
-| SRCH-01 · revisión a mano | Claude Code | **`+64 / −13`** sobre 1140 líneas |
-| SRCH-01 · wiring en `App.tsx` | Claude Code | Cuelga de `Comprando`, subtítulo `Agente de búsqueda` |
-| SRCH-01 · e2e | Claude Code | ✅ **verde el 11-ago.** F-050 (el `;`) desbloqueó la suite; 3 defectos de la propia suite corregidos (F-052). 41/41 |
-| Máquina de estados · esquema | Claude Code | Migración **0007**, y F-043 y F-044 con ella |
-| Máquina de estados · cliente | Claude Code | `lib/offers.ts` + migración **0008** (F-051) |
+| MSG-02 · decisiones previas | Claude Code | **D-07-04** y **D-07-05**, las dos del PO. Sin ellas la tarea no se podía escribir |
+| MSG-02 · capa de datos | Claude Code | `lib/thread-detail.ts` con **la costura de descifrado**. 20 asertos |
+| MSG-02 · contrato de aceptación | Claude Code | **67 asertos**, en rojo entero antes de lanzar. Nueve hubo que anclarlos (F-058) |
+| MSG-02 · corrida del arnés | Arnés | **Escalada 3/3.** $0,067393 · 22,8 min · un truncado (F-005) |
+| MSG-02 · revisión a mano | Claude Code | **`+68 / −55`** sobre 1437 líneas. **Seis de los ocho ficheros sin tocar** |
+| MSG-02 · cableado + e2e | Claude Code | `App.tsx` posee `openThreadId`. Seis escenarios e2e nuevos |
+| Realtime · esquema | Claude Code | Migración **0011**, aplicada al remoto. La publicación estaba **vacía** (F-061) |
+| Realtime · cliente | Claude Code | `lib/realtime.ts`, cableado en MSG-01 y MSG-02. 10 asertos |
 
-**Verificaciones, todas de hoy:**
+**Verificaciones, todas de hoy y todas en local:**
 
 | Verificación | Estado |
 |---|---|
 | `cd app && npm run typecheck` | **limpio** |
-| `cd app && npm test` | **265 pasan** (14 ficheros) |
-| `cd app && npx vitest run src/screens/search` | **58/58** de aceptación |
+| `cd app && npm test` | **373 pasan** (20 ficheros) |
+| `cd app && npx playwright test` | ✅ **47/47** contra el Supabase real |
 | `cd app && npm run check:palette` | cobertura completa |
+| `cd app && npm run build` | verde |
+| `bash supabase/tests/run.sh` | verde, con los dos asertos nuevos de Realtime |
+| `node app/scripts/check-realtime.mjs` | **verde · 563 ms a través de RLS, sin dejar rastro** |
 | `python -m harness.tests.test_checks` | **52/52** |
-| `python -m harness.graph.run … --seco` | 3/3 escenarios |
-| `cd app && npx playwright test` | ✅ **41/41 en la CI** (11-ago). En la máquina del PO no corre hasta que arregle la contraseña de alpha en su `.env` — ver `PENDIENTE-PO.md` §2 |
 
 ---
 
-## Lo que hay que saber de SRCH-01
+## Lo que hay que saber de MSG-02
 
-**La pantalla está en `app/src/screens/search/`** y cuelga del ítem `Comprando`
-(SRCH-01 §2), con `veraSubtitle = 'Agente de búsqueda'` (SRCH-01 §5). Aquí spec y HTML
-aprobado **coinciden**, así que no hay nada que resolver como en F-025.
+**La pantalla está en `app/src/screens/messages/`** —`Thread.tsx` es la pantalla;
+`ThreadHeader`, `ThreadHistory` y `ThreadComposer` son presentacionales— y **comparte ítem
+de nav y subtítulo de VERA con MSG-01**: las dos son `Hilos` (MSG-02 §2) y
+`Agente de mensajería` (MSG-02 §5). Son el mismo sitio del shell; lo que cambia es qué se
+pinta dentro, y por eso `App.tsx` necesita `openThreadId` además de `nav`.
 
-**El reparto es el de la casa:** `SearchResults.tsx` es la pantalla —posee criterios, orden,
-selección, carga y error—; `FilterChips.tsx` y `ResultsTable.tsx` son presentacionales. **El
-estado vacío vive en `ResultsTable`**, no en la pantalla, igual que en MSG-01.
+**⚠ TRES DESVIACIONES CONTRA SU PROPIA SPEC, y las tres están en
+`Dia-07_decisiones_producto.md`, que se lee ANTES que la spec de pantalla:**
 
-**⚠ `App.tsx` le pasa `now` explícito**, mismo criterio que MSG-01 y por la misma razón: se
-construye en el render y **no se congela al montar**. La columna Antigüedad es tan sensible
-al reloj como el timestamp relativo del hilo.
+- **El campo de mensaje NO desaparece en un hilo cerrado** (D-07-01). La §6 dice lo
+  contrario, y si desapareciera nadie podría volver a escribir y la reapertura de 0009 no
+  ocurriría nunca. Hay un e2e que lo prueba contra el hilo cerrado real de Anadolu Rulman.
+- **`Marcar acuerdo alcanzado` se pinta deshabilitado, siempre** (D-07-04). No es estilo:
+  `thread-lifecycle` alcanza ese estado aceptando una oferta
+  (`messaging-and-negotiation/spec.md:195`) y `app.guard_thread_state` levanta excepción ante
+  cualquier otro valor puesto desde el cliente (`0007:246`). **El botón activo reventaría en
+  ejecución, con un mensaje de Postgres delante del socio.**
+- **No hay contenido descifrado** (D-07-05). Ver la costura, abajo.
 
-**Los tres defectos que hubo que corregir a mano**, y solo uno era grave:
-
-1. **`ResultsTable`, `aria-sort`.** El artefacto comprobaba `col.sortable && col.key` en la
-   clase y en el `onClick`, **pero no ahí**: con `sort` a null y `col.key` `undefined`,
-   `undefined === undefined` da `true` y entra a leer `sort.direction` de un null. **No era
-   un aviso de tipos: la tabla reventaba en el primer render sin ordenación**, que es el
-   estado inicial de la pantalla.
-2. Misma raíz — pasaba `col.key` posiblemente `undefined` a `onSort`.
-3. **La ordenación iba con `onClick` sobre el `<th>`.** Funciona con ratón y **no existe con
-   teclado**. Ahora es un `<button>` dentro del `<th>`, con foco visible.
-
-**Lo que NO hubo que tocar**, y es el dato bueno: la consulta y su cancelación, la selección,
-el ciclo de tres clics de la ordenación, los chips controlados, el estado vacío, el aviso de
-recorte, el watcher deshabilitado con su motivo, el umbral de ≥2 y **el CSS entero**. C3 y C4
-verdes los tres intentos de **las dos** corridas.
+**El badge de país es el ISO de dos letras** (§3). El HTML aprobado escribe `Alemania` y es
+el mock: manda el spec, como en F-041.
 
 ---
 
-## Lo que hay que saber de la máquina de estados
+## La costura de descifrado, y es lo que hay que entender antes de tocar el día 8
 
-**La mitad que manda está en la base**, no en cliente: el día 7 entra Realtime y dos
-navegadores calculando el mismo estado discrepan, ganando el último que escribe.
+`ThreadItem.content` es `ItemContent | null`, y **`null` no significa "vacío": significa
+"cifrado y sin clave en esta sesión"**. Es un estado de primera clase de la pantalla, no un
+caso de error.
 
-- **0007** deriva `threads.state` desde los metadatos de sus elementos. Las cuatro reglas
-  salen de `thread-lifecycle` y **el orden hace que el rechazo salga solo con sus dos ramas**
-  — sin escribirlas como casos especiales, que es donde se cuela el que falta.
-- **0008** impide que el emisor decida su propia oferta (F-051).
-- `lib/offers.ts` **no reimplementa ningún invariante**: decide qué se le ofrece al usuario.
+**Existe porque el `Plan §3` pone la rebanada E2EE el día 8 y MSG-02 el día 7.** Comprobado,
+no supuesto: `app/src` no tenía una sola línea de criptografía, `content_ciphertext` es
+`bytea not null` y la siembra lleva relleno a propósito (`demo_threads.sql:16`).
 
-**⚠ LAS DOS MIGRACIONES ESTÁN SIN APLICAR AL REMOTO.** Hasta que se apliquen, `threads.state`
-sigue sin mantenerse y el emisor sigue pudiendo aceptar su propia oferta.
+- La pantalla pinta **las dos ramas desde hoy**. Hoy solo la opaca tiene datos detrás; la
+  otra está cubierta por los tests porque `ThreadHistory` es presentacional y se le puede
+  pasar contenido a mano.
+- Donde iría el contenido va el literal de la capability, **verbatim y sin botón**:
+  `Contenido cifrado — introduce tu frase de seguridad para ver`
+  (`messaging-and-negotiation/spec.md:68`). Sin botón por F-027: en el MVP las claves viven
+  en memoria de sesión, y pedir una frase que no existe promete recuperación de claves que
+  no hay.
+- **El envío está deshabilitado con el motivo a la vista.** Enviar exige producir ciphertext
+  y no hay con qué.
+- **`fetchThreadItems` SÍ se trae el blob**, y `threads.ts` decidió lo contrario a propósito
+  para MSG-01. No es incoherencia: en la vista previa el blob no se puede enseñar nunca, aquí
+  el contenido **es** la pantalla, y traerlo desde hoy es lo que hace que la costura sea real.
 
-**Verificado contra la siembra:** la derivación de 0007 reproduce **los cinco estados** que
-`demo_threads.sql` escribió a mano el día 5, uno por badge. El único que se habría roto
-—`CERRADO SIN ACUERDO`, que caería a `ABIERTO`— es el que protege la regla de transición
-manual.
+**El día 8 se rellena `decryptItem()` y no se toca ningún `.tsx`.** Si alguien se encuentra
+editando un componente, la costura estaba mal puesta y eso es lo que hay que releer.
+
+---
+
+## Lo que hay que saber de Realtime
+
+**El principio, y es toda la decisión de diseño: un evento es una SEÑAL PARA RELEER, nunca
+una fuente de datos.** No se mira el payload. Llega un evento y la pantalla vuelve a
+preguntar. Tres razones, ninguna es purismo:
+
+1. **El estado del hilo lo deriva la base** (0007). Dos navegadores mezclándolo a mano
+   discreparían y ganaría el último que escriba — F-044 otra vez.
+2. **El orden de llegada no es el orden de los hechos.** Dos eventos de dos tablas llegan por
+   el mismo socket sin garantía de orden. Una relectura no tiene ese problema.
+3. **Una relectura pasa por RLS entera y por la costura.** Mezclar un payload se salta las dos.
+
+- **0011** publica `threads` y `thread_items`, y solo esas dos. **No toca la
+  `REPLICA IDENTITY`, y es una decisión:** `FULL` mandaría el `content_ciphertext` **viejo**
+  en cada UPDATE, a todos los suscriptores que pasen RLS, a cambio de un evento DELETE que
+  este MVP ni produce ni escucha. Hay un aserto que protege esa decisión.
+- **MSG-01 se suscribe sin filtro a propósito.** El filtro de `postgres_changes` es un único
+  `columna=op.valor` y hace falta `org_low_id = yo OR org_high_id = yo`. Media lista es peor
+  que ninguna: **filtra RLS**, que es donde tiene que estar.
+- **MSG-02 escucha también `threads`**, una fila que el navegador no escribe nunca — la mueve
+  el trigger de 0007 cuando la otra parte acepta. Sin eso, el historial se actualizaría y la
+  cabecera no.
+- **Agrupa a 120 ms**, porque una sola acción produce dos eventos, y **la baja cancela la
+  relectura pendiente**, que es lo único que de verdad se rompe al desmontar.
 
 ---
 
 ## Lo que el arnés midió hoy, y lo que no
 
-**Dos corridas, seis intentos, $0.134904.** Las seis filas están en el CSV.
+**Una corrida, tres intentos, $0,067393** ($0,080196 en frío). Las tres filas están en el CSV.
 
-| | Corrida 1 | Corrida 2 |
-|---|---|---|
-| Coste real | $0.086187 | **$0.048717** |
-| En frío | $0.103327 | $0.057428 |
-| Tiempo | 33,5 min | **17,7 min** |
-| Truncados (F-005) | 2 | **0** |
-| Qué midió | **el contrato** | **el modelo** |
+| | MSG-02 |
+|---|---|
+| Coste real | **$0,067393** |
+| Tiempo | 22,8 min |
+| Truncados (F-005) | 1, en el intento 1 |
+| Veredicto | **Escalada 3/3** — tercera pantalla seguida |
+| Checks | C3 y C4 **verdes los tres intentos**; C1 y C2 rojos los tres |
 
-**Las tres filas de la corrida 1 no miden al Coder** y hay que leerlas con eso delante: C1
-estuvo rojo por un `vi.fn()` sin tipar en mi propio contrato de aceptación —con los mocks
-tipados, `tsc` sale limpio sobre las 1076 líneas del Coder— y de los 18 tests de C2 en rojo,
-los verificados uno a uno **no eran defectos del artefacto** (F-047).
+**⚠ Estas tres filas miden a medias, y hay que leerlas con eso delante.** De los cuatro
+fallos de C2, **dos eran defectos de mi contrato, no del artefacto** —dos asertos sin
+ámbito—. Los defectos reales fueron tres:
 
-**Las tres de la corrida 2 sí miden.** El dato: **el modelo recibió la salida exacta de `tsc`
-en el feedback de los intentos 2 y 3 y no la resolvió ninguna de las dos veces.** Es la misma
-forma que F-036.
+1. **`closeThreadWithoutAgreement` y `revertAgreement` importados de `thread-detail`**, y
+   viven en `offers`. Como el `catch` de cada handler se lo traga, **cerrar y revertir no
+   hacían nada y lo decían con un banner de error**: dos de las tres acciones del hilo,
+   muertas en silencio.
+2. Un **`busy` de estado que nadie leía** (`TS6133`) → cero protección contra doble clic,
+   justo el día que entra Realtime y `setOfferState` documenta esa carrera.
+3. **La fecha de validez pintada en crudo**, un ISO entero en la cara del usuario. **Ningún
+   check podía verlo**: vive en la rama descifrada, que no se ejercita hasta el día 8.
 
-**Y el contrato más apretado sale a mitad de precio y en la mitad de tiempo.** Es el dato más
-accionable del día para el objetivo 4.
+**Y el dato del modelo, por tercera vez con la misma forma: recibió la salida exacta de `tsc`
+en el feedback de los intentos 2 y 3 y no la resolvió** — dos de los cuatro errores eran el
+**mismo** `exactOptionalPropertyTypes`, repetido intacto. Es F-036 otra vez.
+
+**Lo bueno, y es la cifra que importa para el objetivo 4: seis de los ocho ficheros salieron
+sin tocar, incluidos los cuatro CSS enteros —690 líneas—.**
 
 ---
 
-## Hoy toca — Día 7 (11-ago-2026)
+## Hoy toca — Día 8 (12-ago-2026)
 
-`Plan §3`, filas del día 7 — **son dos bloques**:
+`Plan §3`, filas del día 8 — **son dos bloques**, y el primero es de decisiones irreversibles:
 
 | Trabajo | Ejecuta |
 |---|---|
-| **MSG-02 (hilo)** — la pantalla más compleja del MVP | Arnés + revisión a mano |
-| **Realtime**: hilos y mensajes propagando entre sesiones | Claude Code |
+| **Rebanada E2EE**: cifrado de campos de oferta en cliente | Claude Code |
+| **VND-01** (ofertas del vendedor, metadata-only por RNG-VND-01) | Arnés |
 
-**Antes de lanzar el arnés con MSG-02, y esto es de hoy:**
+**Léete `Dia-08_decisiones_e2ee.md` antes de escribir una línea.** El día 8 es uno de los tres
+días de decisiones irreversibles del plan y la rebanada E2EE toca ADR-001.
 
-1. **El contrato de aceptación tiene que compilar ANTES de gastar un token, y sus helpers
-   tienen que haberse ejecutado al menos una vez** (F-047). Un `typecheck` con los módulos
-   del Coder aún sin escribir da rojo esperado, **y ese rojo tapa el del contrato**. Un
-   contrato solo se verifica contra una implementación, aunque sea un esqueleto vacío.
-2. **Todo literal que ve el usuario va verbatim en la tarea, con sus acentos** (F-048). La
-   prosa del JSON va sin acentos por convención; los literales no. Cinco tests suspendieron
-   por caracteres que el modelo reprodujo exactamente como se le pidieron.
-3. **Los tests asertan sobre lo que la spec exige y sobre lo declarado en `component_api`,
-   nunca sobre una elección de implementación que el contrato dejó libre** (F-047).
-4. **Cuando el mock y la spec ofrecen dos caminos para la misma acción, la tarea elige uno
-   explícitamente** (F-049), o el contrato pide los dos y el `component_api` solo soporta uno.
-5. **`app/scripts/check-palette.mjs` verde antes**, o C3 juzga con un sistema de diseño
-   incompleto (F-003).
-6. **Commits separados** (`CLAUDE.md` §1.6). El diff del segundo *es* la medida.
-7. **Un escalado no se canaliza.** Lanzar sin `| tail`: la tubería se come el código de
-   salida 2 que `Dia-04 §1` puso para que un escalado se vea (F-046).
+**Antes de lanzar el arnés con VND-01:**
 
-**MSG-02 es el riesgo estructural del plan** y hoy tiene a favor que `thread-lifecycle` ya
-está derivado en la base (0007) y que MSG-01 dejó el patrón pantalla/presentacional resuelto.
+1. **`Dia-07_decisiones_producto.md` se lee ANTES que la spec de VND-01** (D-07-02): no se
+   pinta `Retirar oferta`, y `EXPIRADA` es una etiqueta de presentación, no un quinto estado.
+2. **El contrato tiene que compilar y ejecutarse contra esqueletos vacíos** (F-047) **y su
+   rojo tiene que ser TOTAL** (F-058, nuevo hoy). Un aserto que se queda verde contra una
+   pantalla vacía no está midiendo nada.
+3. **Todo aserto negativo lleva ancla positiva y ámbito acotado** (F-059, nuevo hoy). Los
+   tres fallos propios de hoy fueron los tres eso.
+4. **Todo literal que ve el usuario va verbatim en la tarea, con sus acentos** (F-048).
+5. **Cuando el mock y la spec ofrecen dos caminos, la tarea elige uno explícitamente** (F-049).
+6. **`check:palette` verde antes** (F-003).
+7. **Commits separados** (`CLAUDE.md` §1.6). El diff del segundo *es* la medida.
+8. **Un escalado no se canaliza NI SE LE PONE NADA DETRÁS** (F-060, nuevo hoy). Un `; echo`
+   detrás del lanzamiento se lleva el código de salida igual que una tubería.
+9. **La capa de datos se entrega, no se declara**, y `inputs.data_layer` ya acepta varias
+   rutas (F-057).
 
 ---
 
@@ -325,76 +222,78 @@ está derivado en la base (0007) y que MSG-01 dejó el patrón pantalla/presenta
 | Arnés | Solo 2 nodos (Coder + Test-runner). Planner/Evaluator/Escalation **no** se construyen en el MVP. | Plan §6 |
 | Tope de intentos | **3**, y el tercero escala al humano con código de salida 2. | `Dia-04_decisiones_arnes.md` §1 |
 | **Formato de tarea** | Congelado el día 4. **Tres desviaciones: `component_api` (día 5), literales verbatim y estado accesible declarado (día 6).** | `Dia-04` §5 · F-034 · F-047 · F-048 |
+| **Contrato de aceptación** | Compila, se ejecuta contra esqueletos vacíos **y su rojo es TOTAL** antes de lanzar. Todo aserto negativo lleva **ancla y ámbito**. | F-047 · **F-058** · **F-059** |
 | **Estados de oferta** | Los **cuatro** del spec: `Pendiente`, `Aceptada`, `Rechazada`, `Superada por contraoferta`. La última es **terminal** y la contraoferta es **fila nueva**. **El `Plan §7` dibuja otra máquina y no manda** (F-043). | `messaging-and-negotiation` · offer-card |
-| **Quién decide una oferta** | **El receptor, nunca el emisor.** RLS deja escribir a los dos; lo acota `app.guard_offer_decider` (0008). | `offer-card` · F-051 |
-| **Oferta expirada** | **Sigue siendo aceptable.** La fecha informa, no vincula en V1. | `offer-card` · F-051 |
+| **Quién decide una oferta** | **El receptor, nunca el emisor.** Lo acota `app.guard_offer_decider`, y en **invoker** (0010) — en definer no bloqueaba a nadie. | `offer-card` · F-051 · F-056 |
+| **Oferta expirada** | **Sigue siendo aceptable.** La fecha informa, no vincula en V1. | `offer-card` · D-07-03 |
+| **`RETIRADA`** | **No entra en el MVP.** VND-01 no pinta `Retirar oferta`. Hay un aserto que lo sostiene. | **D-07-02** · F-043b |
 | **`shipping_cost` no informado** | `null`, **nunca `0`**. Un cero dice "portes gratis", no "no informado". | `offer-card` |
-| Estados de hilo | Los **cinco** del CHECK de 0003. **Derivados en la base desde 0007**; `CERRADO SIN ACUERDO` y la reversión son manuales. | `0003` · `0007` · MSG-01 §3 |
-| **Cierre del hilo** | **Reversible desde el 11-ago: un elemento nuevo lo reabre.** Decisión del PO, literal: *"Sólo se reabre cuando uno de los dos usuarios vuelve a escribir en él. No hay más opciones."* Sólo el `insert`; un `update` sobre lo que ya había **no** reabre. Y reabre **al estado que digan sus filas**, no a un `ABIERTO` forzado. **Arrastra una regla obligatoria: MSG-02 mantiene el campo de mensaje visible en un hilo cerrado** — las cuatro specs de pantalla dicen que *"el campo de mensaje desaparece"*, y si desaparece la reapertura no ocurre nunca. **Esas cuatro specs ya no mandan aquí**; la capability cerrada no declara el estado irreversible en ninguna parte. | D-07-01 · `0009` · F-045 |
+| Estados de hilo | Los **cinco** del CHECK de 0003. **Derivados en la base desde 0007**; `CERRADO SIN ACUERDO` y la reversión del acuerdo son manuales. | `0003` · `0007` |
+| **Cierre del hilo** | **Reversible: un elemento nuevo lo reabre.** Solo el `insert`; un `update` no. Reabre **al estado que digan sus filas**. **Arrastra una regla obligatoria: MSG-02 mantiene el campo de mensaje visible en un hilo cerrado.** | **D-07-01** · `0009` · F-045 |
+| **`Marcar acuerdo alcanzado`** | **Deshabilitado siempre, con el motivo a la vista.** La base lo rechaza desde el cliente. | **D-07-04** · `0007:246` |
+| **Contenido cifrado** | **Hoy no se descifra nada.** `content: ItemContent \| null`, y `null` = "cifrado sin clave". La rebanada E2EE es el día 8 y **rellena `decryptItem()` sin tocar ningún `.tsx`**. | **D-07-05** |
+| **Realtime** | **El evento es una señal para releer, nunca datos.** `threads` y `thread_items` publicadas (0011); **la `REPLICA IDENTITY` no se toca**. | `0011` · F-061 |
 | Test-runner | **Sin LLM.** C5 lo da el PO, fuera del grafo. | `Dia-04` §4 |
 | Checks | Un check que no se puede ejecutar es **rojo**, nunca ausente. **Correcto para decidir; insuficiente para medir** (F-033). | F-015 · F-033 |
 | Integridad | El **Coder** nunca escribe los tests que lo evalúan, **y tampoco los ve**. | `CLAUDE.md` §3 · Plan §6 |
 | Autoría | Código del Coder y código a mano **nunca en el mismo commit**. | `CLAUDE.md` §1.6 · F-009 |
 | Demo | Referencia **`6205-2RS`** y **seis organizaciones**, solo dos con cuenta. | `guion-demo-y-siembra.md` §1 y §3 |
 | Turquía | `continent = 'AS'`, geoscheme de la ONU, para que el chip de zona "Europa" corte. | `guion-demo-y-siembra.md` §3 |
-| Precio en SRCH-01 | **Fuera de la parrilla.** No se ordena ni se filtra por precio, nunca. **El HTML aprobado tampoco tiene columna de precio** — verificado hoy. | `conversational-search` · Out of Scope · F-040 |
-| Watchers | **Fuera** (SRCH-03, `Plan §9`) y sin tabla en el esquema. El botón se pinta **deshabilitado y con el motivo**. | `Plan §9` · F-023 e |
-| Alcance | 8 pantallas. **Hechas: shell, INV-01, MSG-01, SRCH-01.** | Plan §9 |
+| Precio en SRCH-01 | **Fuera de la parrilla.** No se ordena ni se filtra por precio, nunca. | `conversational-search` · F-040 |
+| Watchers | **Fuera** (SRCH-03, `Plan §9`). El botón se pinta **deshabilitado y con el motivo**. | `Plan §9` · F-023 e |
+| Alcance | 8 pantallas. **Hechas: shell, INV-01, MSG-01, SRCH-01, MSG-02.** | Plan §9 |
 | Monorepo | `openspec/` + `app/` + `supabase/` + `harness/`. Los HTML aprobados no se tocan. | `CLAUDE.md` §2 |
 
 ---
 
 ## Pendiente de Álvaro
 
-**Ver `openspec/mvp/PENDIENTE-PO.md`** — se ha escrito hoy con las instrucciones paso a paso
-de cada punto. Resumen por urgencia:
+**Ver `openspec/mvp/PENDIENTE-PO.md`.** **Hoy no queda ni un arreglo pendiente de tu parte**;
+lo que resta son decisiones de producto y cosas de V1. Por urgencia:
 
-1. ✅ **F-050 · la clave publicable.** **Resuelto el 11-ago:** sobraba un `;`. Solo queda
-   repegar el secret `SUPABASE_PUBLISHABLE_KEY` de GitHub, que arrastra el mismo pegado.
-2. 🔴 **F-038 · rotar la contraseña de `alpha`.** Ya no es solo seguridad: **es lo único que
-   bloquea los 40 e2e**, la CI y la puerta de S1. La de `.env` no coincide con la de Supabase
-   (`invalid_credentials` solo para alpha; beta autentica), y el valor bueno no está en el
-   repo. Rotarla y ponerla en `.env` + secret cierra las dos cosas de un golpe.
-3. 🟠 **Aplicar las migraciones 0007 y 0008.** Sin ellas `threads.state` no se mantiene y el
-   emisor puede aceptar su propia oferta.
-4. 🟠 **`RETIRADA`** (F-043b) — antes del día 8, que es cuando se construye VND-01.
-5. 🟠 **Reapertura del hilo tras cierre** (F-045) — **hoy es barato y el día 7 ya no**, porque
-   mañana se construye MSG-02, que es donde vive el botón de cerrar.
-6. 🟠 **F-033 · el CSV no distingue un check en rojo de uno inejecutable.** Con el formato de
-   hoy, "intentos hasta verde" no es fiable. **Las tres filas de la corrida 1 de hoy son un
-   caso nuevo del mismo problema.**
-7. 🟠 **F-027 (a) · el recuento de no leídos de MSG-01.** En el MVP queda fuera.
-8. 🟠 **Diseño de la pantalla de login** (F-016). Es una novena pantalla que nadie planificó y
-   es la primera que ve el socio.
-9. **¿Los cinco hilos sembrados son los de la demo del día 11?**
-10. **¿Qué hace INV-01 con una línea eliminada?** (F-023 d). No urge.
-11. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
-12. **La app no tiene URL desplegada.** Decisión del PO el 7-ago: solo local. **Se retoma
-    antes del día 11**, que es la primera sesión de prueba.
+1. 🟠 **El informe de Playwright en `ci.yml`** — (a) dejarlo, (b) subirlo solo al fallar,
+   (c) no subirlo. **Yo haría la (b).** Una línea, cuando quieras.
+2. 🟠 **F-033 · el CSV no distingue un check en rojo de uno inejecutable.** Con el formato de
+   hoy, "intentos hasta verde" no es fiable — y hoy suma otro caso: **dos de los cuatro
+   fallos de C2 eran de mi contrato**, no del modelo, y en el CSV son indistinguibles.
+3. 🟠 **Diseño de la pantalla de login** (F-016). Es una novena pantalla que nadie planificó
+   y **es la primera que ve el socio**. Si quieres algo mejor para el día 11, decídelo con
+   margen.
+4. 🟠 **Una sola ruta de despliegue de migraciones** (F-054). Hoy hay dos a medias: la CLI sin
+   `config.toml` y el MCP, que es la que funciona. No urge, pero no se puede quedar así.
+5. 🟠 **F-027 (a) · el recuento de no leídos de MSG-01.** Fuera del MVP; para V1 o se retira
+   del spec.
+6. **¿Los cinco hilos sembrados son los de la demo del día 11?**
+7. **¿Qué hace INV-01 con una línea eliminada?** (F-023 d). No urge.
+8. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
+9. **La app no tiene URL desplegada.** Decisión del 7-ago: solo local. **Se retoma antes del
+   día 11**, que es la primera sesión de prueba.
 
 ---
 
 ## Riesgo con la vista más corta
 
-**El riesgo de hoy es que la CI lleva NUEVE días roja y hoy se ha descubierto que la causa
-que este fichero daba por identificada no era la causa.** F-037 se cerró ayer con *"lo
-arregla volver a pegar el secret, y es lo único"*. Se repegó, la guardia de ISO-8859-1 dejó
-de disparar — y Supabase sigue devolviendo 401. **La regla que sale de aquí: una causa
-encontrada no es la única causa, y un diagnóstico no está cerrado hasta que el verde lo
-confirma.** Nadie corrió el e2e después de repegar el secret.
+**El primero es el que más cambia el plan: el arnés lleva TRES pantallas escalando 3/3, y hoy
+ya no se puede echar la culpa al contrato.** MSG-01 escaló, SRCH-01 escaló dos veces, MSG-02
+escaló. Ayer se separó lo que falla por el contrato de lo que falla por el modelo, y **hoy el
+contrato se verificó antes de gastar un token —compilando, ejecutándose y en rojo total— y aun
+así escaló.** El dato limpio que queda: **el modelo recibió la salida exacta de `tsc` en dos
+reintentos y no la resolvió, siendo el mismo error las dos veces.** Con tres pantallas y la
+misma forma de fallo, **el objetivo 4 hay que replantearlo con esto delante**, y el día 8 hay
+una cuarta medición (VND-01) que lo confirmará o lo romperá. A favor del arnés: **seis de ocho
+ficheros salieron sin tocar y los 690 de CSS estaban bien.**
 
-**El segundo riesgo es que el arnés lleva dos pantallas escalando 3/3.** MSG-01 escaló, SRCH-01
-escaló dos veces. Pero el reparto de culpas cambia: hoy, por primera vez, se separó lo que
-falla por el contrato de lo que falla por el modelo, y **el contrato era la mitad cara**. Si
-mañana MSG-02 escala con el contrato ya verificado, entonces sí es un dato sobre el modelo y
-hay que replantear el objetivo 4 con él delante — no antes.
+**El segundo es que la revisión a mano encontró un defecto que ningún check podía ver** —la
+fecha en crudo, en la rama descifrada— y **el día 8 esa rama pasa a ser la que se ejecuta**.
+La rebanada E2EE va a destapar lo que hoy nadie recorre. Presupuesta tiempo para eso, no solo
+para escribir el cifrado.
 
-**El tercero es de mañana y es de calendario: MSG-02 es la pantalla más compleja del MVP y hoy
-se han gastado dos corridas y una revisión a mano en SRCH-01.** A favor: `thread-lifecycle` ya
-está derivado en la base, `lib/offers.ts` existe, y el patrón pantalla/presentacional está
-resuelto y probado dos veces. Si el día 7 no está, se simplifica el hilo (`Plan §9`, orden de
-recorte).
+**El tercero es de calendario y es nuevo: el día 8 tiene dos bloques y uno de ellos es de
+decisiones irreversibles** (rebanada E2EE, ADR-001) más una pantalla del arnés. Es el mismo
+reparto que hoy, y hoy cupo — pero hoy la mitad de la mañana se fue en decisiones que ya
+estaban tomadas y anotadas. Si el día 8 se estrecha, **el orden de recorte del `Plan §9` dice
+que se simplifica VND-01, no la rebanada.**
 
 ---
 
-*Cerrado el 10-ago-2026 · Claude Code (Opus 5)*
+*Cerrado el 11-ago-2026 · Claude Code (Opus 5)*

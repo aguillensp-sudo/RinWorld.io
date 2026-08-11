@@ -13,7 +13,12 @@ jobs:
   # El esquema se prueba contra un Postgres real, sin tocar el proyecto remoto.
   # Es el mismo runner que se usa en local: supabase/tests/run.sh.
   schema:
-    name: Esquema (41 asertos)
+    # El nombre llevaba "(41 asertos)" y el 11-ago ya eran más — 0011 añadió dos.
+    # Una cifra dentro de un nombre es un dato que hay que recomputar a mano cada
+    # vez que alguien añade un aserto, y nadie lo hace: el número dejó de casar
+    # sin que nada fallara, que es la forma más barata de que un rótulo mienta.
+    # El recuento real lo dice el propio runner al ejecutarse.
+    name: Esquema (smoke + catálogo)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

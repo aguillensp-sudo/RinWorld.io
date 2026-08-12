@@ -159,7 +159,14 @@ añadidas, 30 son comentarios: el cambio funcional son cuatro líneas.**
 
 ---
 
-## Hoy toca — Día 9 (13-ago-2026)
+## Hoy toca — Día 9 (planificado 13-ago-2026)
+
+> ⚠ **EL DÍA 9 SE EJECUTÓ EL 12-AGO, NO EL 13: vamos un día por delante del plan.**
+> El día 8 se cerró el 12-ago por la mañana y el 9 arrancó esa misma tarde. Se deja escrito
+> porque el registro de hallazgos se usa como evidencia y sus fechas tienen que ser las del
+> reloj, no las de la etiqueta del plan: `F-073` y `F-074` nacieron fechadas 13-ago y están
+> corregidas a 12-ago. **Las etiquetas «día N» del `Plan §3` no se renumeran** — el desfase
+> se anota aquí y el calendario se recalcula, si hace falta, al cierre.
 
 `Plan §3`, filas del día 9 — **son tres bloques**, y es el segundo de los tres días de
 decisiones irreversibles:

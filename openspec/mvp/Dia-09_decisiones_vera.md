@@ -1,6 +1,6 @@
 # Día 9 · VERA · decisiones antes de escribir una línea
 
-> ## ✅ CONTESTADO POR EL PO EL 13-AGO, ANTES DE ESCRIBIR CÓDIGO
+> ## ✅ CONTESTADO POR EL PO EL 12-AGO, ANTES DE ESCRIBIR CÓDIGO
 >
 > | Decisión | Respuesta | Efecto |
 > |---|---|---|
@@ -109,7 +109,7 @@ artefacto descargable (F-038 + F-070).
 
 ## ✅ D-09-04 · Cómo llega `ANTHROPIC_API_KEY` a la Edge Function — CERRADA (b)
 
-> **Contestada el 13-ago por la vía (b): el PO puso la clave en el dashboard de Supabase.**
+> **Contestada el 12-ago por la vía (b): el PO puso la clave en el dashboard de Supabase.**
 > **VERA responde.** Primera corrida real verificada, y deja tres medidas:
 >
 > | Qué se comprobó | Resultado |
@@ -199,4 +199,4 @@ el día 9"*. Los chips se derivan; VERA no los toca.
 
 ---
 
-*Escrito el 12-ago-2026 · Claude Code (Opus 5) · contestado y ampliado el 13-ago*
+*Escrito el 12-ago-2026 · Claude Code (Opus 5) · contestado y ampliado el mismo 12-ago*

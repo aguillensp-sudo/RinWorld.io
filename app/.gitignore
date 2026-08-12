@@ -11,3 +11,17 @@ blob-report/
 # Lo crea `vercel link`. No lleva secretos (projectId y orgId), pero es estado
 # de la máquina de quien despliega, no del proyecto.
 .vercel/
+
+.vercel
+.env*
+# ⚠ LA EXCEPCIÓN VA DESPUÉS DEL PATRÓN QUE LA EXCLUYE, o git no la ve.
+#
+# `vercel link` añadió `.env*` solo, el 12-ago. Eso se traga `.env.example`, que
+# este proyecto versiona a propósito (es la plantilla a la que remite
+# `src/lib/supabase.ts`, y el único sitio donde está escrito el aviso de
+# `VITE_DEMO_KEY_SEED`). Es el mismo fallo que el `.gitignore` de la raíz
+# documenta desde el día 1 — pero una carpeta más abajo, y **la excepción de la
+# raíz no llega hasta aquí: un `.gitignore` más profundo gana.**
+#
+# Hoy no rompió nada solo porque git no desindexa lo que ya está trackeado.
+!.env.example

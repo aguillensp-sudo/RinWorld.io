@@ -1,2 +1,213 @@
-/* Esqueleto: lo sobrescribe el Coder. */
-.table { width: 100%; }
+.tableOuter {
+  background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  overflow: auto;
+  max-height: calc(100vh - 270px);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* ── Cabeceras ─────────────────────────────────────────────────── */
+
+.th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-text-secondary);
+  background: var(--bw-surface-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  user-select: none;
+}
+
+.thText {
+  font-weight: 600;
+}
+
+.sortButton {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.12s;
+}
+
+.sortButton:hover {
+  color: var(--bw-ink-steel);
+}
+
+.sortIndicator {
+  font-style: normal;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--bw-calibration-blue);
+}
+
+/* ── Celdas ───────────────────────────────────────────────────── */
+
+.td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--bw-ink-steel);
+  border-bottom: 1px solid var(--bw-divider-mist);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.row:last-child .td {
+  border-bottom: none;
+}
+
+.row:hover .td {
+  background: var(--bw-row-hover-tint);
+}
+
+/* Columna 1 — referencia en monoespaciada (§5.1) */
+
+.ref {
+  display: block;
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  line-height: 1.3;
+}
+
+.brand {
+  display: block;
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  color: var(--bw-input-placeholder);
+  margin-top: 1px;
+}
+
+/* Columna 2 — la organización se pinta como TEXTO (DIR-02 no está en alcance) */
+
+.org {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  white-space: nowrap;
+}
+
+/* Columna 3 — badge de estado: literal exacto, sin cambiar el caso */
+
+.badge {
+  display: inline-block;
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: var(--bw-radius);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.statePending {
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning);
+  border-color: var(--bw-badge-warning-border);
+}
+
+.stateAccepted {
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-success-dark);
+  border-color: var(--bw-badge-success-border);
+}
+
+.stateRejected {
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-sensitive-text);
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+.stateSuperseded {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border-color: var(--bw-badge-neutral-border);
+}
+
+.stateNeutral {
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  border-color: var(--bw-badge-neutral-border);
+}
+
+/* Columna 4 — fecha formateada con `sentAtLabel`, nunca el ISO crudo */
+
+.ts {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-input-placeholder);
+}
+
+/* Columna 5 — acción única por estado (§5.3) */
+
+.actPrimary {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--bw-radius);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--bw-font-body);
+  white-space: nowrap;
+  background: var(--bw-calibration-blue);
+  color: white;
+  border: none;
+  transition: opacity 0.12s;
+}
+
+.actPrimary:hover {
+  opacity: 0.87;
+}
+
+.actGhost {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--bw-radius);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--bw-font-body);
+  white-space: nowrap;
+  background: none;
+  color: var(--bw-text-secondary);
+  border: 1px solid var(--bw-line-steel-strong);
+  transition: all 0.12s;
+}
+
+.actGhost:hover {
+  border-color: var(--bw-input-placeholder);
+  color: var(--bw-ink-steel);
+}
+
+/* ── Estados vacíos (§5.5) ─────────────────────────────────────── */
+
+.emptyState {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--bw-input-placeholder);
+}
+
+.emptyState p {
+  font-size: var(--bw-size-body);
+}

@@ -1,0 +1,51 @@
+{
+  "attempt": 2,
+  "task": "VND-01",
+  "screen": "VND-01",
+  "model": "deepseek-v4-flash",
+  "finish_reason": "stop",
+  "api_calls": 1,
+  "truncated_at": [],
+  "tokens_in": 28294,
+  "tokens_out": 39163,
+  "cache_hit": 27136,
+  "cache_miss": 1158,
+  "cache_hit_pct": 95.91,
+  "seconds": 252.4,
+  "cost_usd": 0.011204,
+  "cost_usd_cold_equivalent": 0.014927,
+  "price_table": {
+    "in_hit": 0.0028,
+    "in_miss": 0.14,
+    "out": 0.28
+  },
+  "files": [
+    "app/src/screens/selling/SentOffers.module.css",
+    "app/src/screens/selling/SentOffers.tsx",
+    "app/src/screens/selling/SentOffersTable.module.css",
+    "app/src/screens/selling/SentOffersTable.tsx"
+  ],
+  "checks": [
+    {
+      "id": "C1",
+      "ok": false,
+      "detail": "npm run typecheck (exit 2)\n> bearingworld-app@0.1.0 typecheck\n> tsc --noEmit\n\nsrc/screens/selling/SentOffersTable.tsx(37,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.\n  Type 'undefined' is not assignable to type 'string'.\nsrc/screens/selling/SentOffersTable.tsx(39,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.\n  Type 'undefined' is not assignable to type 'string'.\nsrc/screens/selling/SentOffersTable.tsx(41,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.\n  Type 'undefined' is not assignable to type 'string'.\nsrc/screens/selling/SentOffersTable.tsx(43,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.\n  Type 'undefined' is not assignable to type 'string'."
+    },
+    {
+      "id": "C2",
+      "ok": false,
+      "detail": "vitest de aceptacion (exit 1)\n                    \u001b[36m</span>\u001b[39m\n                    \u001b[36m<span\u001b[39m\n                      \u001b[33maria-hidden\u001b[39m=\u001b[32m\"true\"\u001b[39m\n                      \u001b[33mclass\u001b[39m=\u001b[32m\"_sortIndicator_3d50fd\"\u001b[39m\n                    \u001b[36m>\u001b[39m\n                      \u001b[0m↕\u001b[0m\n                    \u001b[36m</span>\u001b[39m\n                  \u001b[36m</button>\u001b[39m\n                \u001b[36m</th>\u001b[39m\n                \u001b[36m<th\u001b[39m\n                  \u001b[33mclass\u001b[39m=\u001b[32m\"_th_3d50fd\"\u001b[39m\n                  \u001b[33mscope\u001b[39m=\u001b[32m\"col\"\u001b[39m\n                \u001b[36m>\u001b[39m\n                  \u001b[0mAcciones\u001b[0m\n                \u001b[36m</th>\u001b[39m\n              \u001b[36m</tr>\u001b[39m\n            \u001b[36m</thead>\u001b[39m\n            \u001b[36m<tbody>\u001b[39m\n              \u001b[36m<tr\u001b[39m\n                \u001b[33mclass\u001b[39m=\u001b[32m\"_row_3d50fd\"\u001b[39m\n                \u001b[33mdata-offer-id\u001b[39m=\u001b[32m\"of-2\"\u001b[39m\n                \u001b[33mdata-testid\u001b[39m=\u001b[32m\"sent-offer-row\"\u001b[39m\n              \u001b[36m>\u001b[39m\n                \u001b[36m<td\u001b[39m\n                  \u001b[33mclass\u001b[39m=\u001b[32m\"_td_3d50fd\"\u001b[39m\n                \u001b[36m>\u001b[39m\n                  \u001b[36m<span\u001b[39m\n        ...\n ❯ src/screens/selling/SentOffers.test.tsx:292:45\n    290|\n    291|     await user.click(screen.getByRole('button', { name: /Organización/…\n    292|     await waitFor(() => expect(filas()[0]!).toHaveAttribute('data-offe…\n       |                                             ^\n    293|   });\n    294|\n ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12\n ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77\n ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯"
+    },
+    {
+      "id": "C3",
+      "ok": true,
+      "detail": "sin colores literales"
+    },
+    {
+      "id": "C4",
+      "ok": true,
+      "detail": "reglas mecanicas en verde"
+    }
+  ],
+  "escalated_to_human": false
+}

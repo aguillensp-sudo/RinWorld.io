@@ -32,7 +32,23 @@ def build_system(task: dict) -> str:
     tokens_css = _read(inputs["tokens"])
     reference = _read(inputs["style_reference"])
     spec = _read(inputs["spec"])
-    approved = _read(inputs["approved_html"])
+
+    # ⚠ CUARTA DESVIACION DEL FORMATO CONGELADO DEL DIA 4, y va anotada como las
+    # otras tres (`component_api` el dia 5, literales verbatim y estado accesible
+    # el dia 6): **`approved_html` pasa a ser OPCIONAL**.
+    #
+    # Existe por LOGIN-01 (F-016). Es la novena pantalla, la que nadie planifico,
+    # y **no tiene mock**: no esta entre los 32 HTML aprobados porque nadie la
+    # diseño nunca. Con el campo obligatorio, `_read` reventaba antes de llamar al
+    # modelo.
+    #
+    # Lo que NO se hace es apuntar a un HTML de otra pantalla para rellenar el
+    # hueco. Seria darle una referencia visual de algo que no es esto, y el
+    # resultado se parece a lo que le enseñaste: F-041 al reves. Cuando no hay
+    # mock, manda la spec y punto — que es lo que manda siempre (F-041), solo que
+    # aqui sin nada al lado que la contradiga.
+    ruta_html = inputs.get("approved_html")
+    approved = _read(ruta_html) if ruta_html else ""
 
     # La capa de datos que la tarea declara. **Iba en el JSON y no llegaba al
     # prompt**, y ese es el bug del dia 5: la tarea decia "el Coder los importa,
@@ -134,10 +150,16 @@ proyecto llevado a la interfaz, y ahi engana mas porque parece verificable.
 
 {spec}
 
-## HTML APROBADO — REFERENCIA VISUAL
+{f'''## HTML APROBADO — REFERENCIA VISUAL
 
 {approved}
+''' if approved else '''## NO HAY HTML APROBADO PARA ESTA PANTALLA
 
+Y no es un olvido: esta pantalla no se diseño nunca. **Manda la spec de arriba, y la
+referencia de estilo es el componente de la casa que tienes mas arriba.** No copies el
+aspecto de otra pantalla del producto que no sea esa referencia: lo que hay que respetar
+son los tokens y la forma de escribir componentes, no el layout de una pantalla distinta.
+'''}
 ## FORMATO DE SALIDA (obligatorio, sin una palabra fuera de los bloques)
 
 Un bloque por fichero, con la ruta tal como aparece en la lista de arriba:

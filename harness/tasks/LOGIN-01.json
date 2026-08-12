@@ -1,0 +1,57 @@
+{
+  "task_id": "LOGIN-01",
+  "screen": "LOGIN-01",
+  "goal": "Pantalla de acceso de Bearingworld.io: tarjeta centrada sobre fondo de marca, con correo, contraseña, boton de entrar y el aviso de cifrado. NO hay shell: esta pantalla se pinta ANTES de que exista sesion.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con CUATRO desviaciones vivas: `component_api` (dia 5), literales verbatim y estado accesible declarado (dia 6), y **`approved_html` opcional (dia 8, esta tarea)**.",
+  "_nota_sin_mock": "⚠ ESTA PANTALLA NO TIENE HTML APROBADO, Y NO ES UN OLVIDO: no se diseño nunca. No esta entre los 32 HTML aprobados ni entre las 8 pantallas del alcance (Plan §9). Es la NOVENA, la que nadie planifico, y es LA PRIMERA QUE VE EL SOCIO el dia 11 — eso es F-016, abierto desde el dia 2. Manda la spec, y la referencia de estilo es `ThreadComposer.tsx`. NO se copia el layout de otra pantalla del producto: lo que hay que respetar son los tokens y la forma de escribir componentes.",
+  "_nota_criticidad": "⚠ SI ESTA PANTALLA SE ROMPE, NO FALLA EL LOGIN: FALLA LA SUITE ENTERA. `app/e2e/auth.setup.ts` corre ANTES que todos los demas proyectos de Playwright y autentica con tres selectores exactos —`getByLabel('Correo electrónico')`, `getByLabel('Contraseña')` y `getByRole('button', { name: 'Entrar' })`—. Si cualquiera deja de encontrarse, el informe apunta a cuarenta tests que no tienen nada que ver. Los tres son contrato duro y estan en la §8 de la spec.",
+  "inputs": {
+    "spec": "openspec/mvp/LOGIN-01_spec.md",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5"
+    ],
+    "style_reference": "app/src/screens/messages/ThreadComposer.tsx",
+    "_nota_style_reference": "⚠ ELEGIDO POR EL PATRON, NO POR EL PARECIDO, y esa distincion costo el unico defecto real de VND-01 (F-069). `ThreadComposer` no se parece visualmente a un login: lo que comparte es EXACTAMENTE lo que aqui hay que resolver —campos controlados, un boton que se habilita segun el contenido, un envio asincrono con su estado de ocupado, y el cuidado de no perder lo que el usuario escribio—. Miralo antes de inventar nada."
+  },
+  "outputs": [
+    "app/src/screens/Login.tsx",
+    "app/src/screens/Login.module.css"
+  ],
+  "_nota_esqueletos": "`Login.tsx` existe como ESQUELETO que devuelve `null`, con la firma publica correcta. Se comprobo que el rojo del contrato es TOTAL contra el: 17 de 17, ni uno verde (F-058). `Login.module.css` existe y se sobrescribe entero.",
+  "component_api": {
+    "_nota": "Los tests de aceptacion fijan nombres y el Coder NO los ve. Aqui va la firma publica, nunca lo que los tests asertan.",
+    "_nota_literales": "TODO LITERAL QUE EL USUARIO VE va VERBATIM, con sus acentos (F-048). La prosa de este fichero va sin acentos por convencion; los literales NO.",
+    "app/src/screens/Login.tsx": "export function Login({ onSubmit, error }: { onSubmit: (email: string, password: string) => Promise<boolean>; error: string | null }). LA FIRMA NO SE TOCA: la llama `App.tsx`, que esta fuera de esta tarea. Posee su propio estado —correo, contraseña y si hay envio en curso— y no lee nada de red. ⚠ LOS TRES SELECTORES DUROS: el campo de correo lleva un `<label for>` REAL con el texto 'Correo electrónico'; el de contraseña, otro con 'Contraseña'; y el boton dice 'Entrar' —y 'Entrando…' mientras hay envio en curso, con puntos suspensivos de un solo caracter—. Un `aria-label` en vez de `<label for>` NO sirve: el resto de la aplicacion usa etiquetas visibles. LO QUE FIJA EL CONTRATO: (1) es un `<form>` de verdad con el boton en `type=\"submit\"`, para que Enter envie; (2) el boton esta DESHABILITADO hasta que los dos campos tienen contenido —un correo de solo espacios NO cuenta— y tambien mientras hay un envio en curso: dos `signInWithPassword` seguidos contra el mismo GoTrue es la carrera que dejo intermitente la suite del dia 2; (3) se llama a `onSubmit(email.trim(), password)` — el correo SIN espacios alrededor, la contraseña TAL CUAL, porque un espacio al final puede ser parte de ella; (4) el campo de correo es `type=\"email\"` con `autoComplete=\"username\"` y `placeholder` 'nombre@empresa.com', y el de contraseña `type=\"password\"` con `autoComplete=\"current-password\"` — sin esos autocompletados el gestor del navegador no rellena y el socio teclea la contraseña a mano delante de todos; (5) el dato de ejemplo va en el `placeholder` y NUNCA en el `value`: un valor precargado se envia si nadie lo borra; (6) cuando `error` no es null se pinta un nodo con `role=\"alert\"` DENTRO de la tarjeta con el texto tal cual llega, y cuando es null ese nodo NO existe. TEXTOS: el eyebrow 'Bearingworld.io', el titulo 'Iniciar sesión' en un `<h1>`, y debajo del campo de contraseña el aviso, verbatim: 'Cifrado extremo a extremo · el servidor no ve tu contenido'.",
+    "app/src/screens/Login.module.css": "Pantalla completa, sin shell. Fondo de marca —el azul profundo de la barra superior— y la tarjeta centrada vertical y horizontalmente, con ancho maximo acotado: un formulario de dos campos estirado a 1920px se lee mal. Por debajo de 480px la tarjeta ocupa el ancho disponible con su margen. Es la primera pantalla que ve el socio: tiene que estar cuidada, pero sin adornos que el resto de la aplicacion no tenga."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/Login.test.tsx"
+    ],
+    "e2e": [],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea (Plan §6). Son 17 asertos, verificados en ROJO TOTAL contra el esqueleto: 17 de 17. ⚠ Y uno de ellos hubo que anclarlo en caliente — `sin error no hay alerta` paso en VERDE contra el componente vacio, porque un componente que devuelve `null` tampoco tiene alerta. Es F-058 exactamente, y por eso el rojo total se comprueba en vez de suponerse. El e2e de esta pantalla ya existe en `session.spec.ts` y no es de esta tarea."
+  },
+  "out_of_scope": [
+    "⚠ REGISTRO, 'Crear cuenta' O CUALQUIER ALTA. `organization-onboarding` NO esta en el alcance del MVP (Plan §9): las cuentas las provisiona el operador. Un enlace que no lleva a ninguna parte es peor que su ausencia.",
+    "⚠ '¿Has olvidado tu contraseña?' Y TODA RECUPERACION. No hay flujo construido, y ademas prometeria recuperar algo que en el MVP no se puede: las claves E2EE viven en memoria de sesion y se pierden al recargar (CLAUDE.md §4). Es F-027 otra vez — el indicador informa, no ofrece.",
+    "LA CASILLA 'Recordarme'. `supabase.ts` ya fija `persistSession: true` para todo el mundo. Una casilla que no cambia nada es una mentira con casilla.",
+    "SSO, OAuth Y BOTONES DE PROVEEDOR. No hay ninguno configurado en Auth.",
+    "SELECTOR DE IDIOMA. El MVP es solo español.",
+    "CUALQUIER ENLACE. Ni 'saber mas' sobre el cifrado, ni terminos, ni privacidad, ni soporte. Ninguno tiene destino construido, y esta pantalla es justo donde un enlace muerto se nota mas.",
+    "LOGICA DE AUTENTICACION. `onSubmit` viene de `useSession` y ya hace todo: no se llama a supabase desde aqui, no se lee `supabase.auth`, no se navega a ninguna parte. Esta pantalla recoge dos cadenas y avisa.",
+    "EL SHELL. No hay barra superior, ni nav, ni sidebar, ni panel de VERA: `App.tsx` devuelve esta pantalla EN VEZ del shell cuando no hay sesion, asi que nada de eso esta montado.",
+    "GUARDAR O RECORDAR EL CORREO entre sesiones. Ni `localStorage` ni cookies propias."
+  ],
+  "constraints": [
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb(), nunca. Si crees que falta un token, usa el mas cercano y dilo en un comentario; no inventes un valor.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "No tocar `App.tsx`, ni el shell, ni ninguna otra pantalla: tienen contrato y tests propios (F-025).",
+    "⚠ La contraseña NO se guarda en ningun sitio que sobreviva al envio, y su `value` sale del estado del componente y de ningun otro lado. Playwright adjunta al informe un volcado del DOM con el `value` de cada campo, y ese informe se sube como artefacto de la CI: la contraseña de la cuenta de pruebas estuvo descargable asi (F-038). El helper del e2e VACIA el campo despues de rellenarlo, asi que el valor tiene que leerse en el `submit` y no en un efecto posterior.",
+    "El titulo es un `<h1>` de verdad y las etiquetas son `<label for>` de verdad. Esta pantalla es la unica del producto que no tiene landmarks del shell alrededor: si aqui la semantica falla, no hay nada que la compense.",
+    "Nada de animaciones de entrada que retrasen el primer render util. Es la primera pantalla y se mide por lo rapido que deja teclear."
+  ]
+}

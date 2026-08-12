@@ -13,6 +13,14 @@ import styles from './Login.module.css';
  * nunca en un efecto posterior: el helper e2e vacía el campo después de rellenarlo
  * (F-038) y el volcado del DOM que Playwright sube a la CI no debe arrastrar
  * credenciales.
+ *
+ * ⚠ Y POR ESO MISMO LOS DOS CAMPOS **NO** SE DESHABILITAN DURANTE EL ENVÍO, solo
+ * el botón (RNG-LOG-02). El artefacto los deshabilitaba, y eso desactivaba la
+ * mitigación de F-038 de la peor manera posible: `fill('')` no puede escribir en
+ * un campo inerte, así que **la contraseña se quedaba en el DOM** — que es
+ * exactamente lo que Playwright vuelca al informe que la CI publica. De paso
+ * colgaba `auth.setup.ts`, y con él la suite entera. Ningún test de unidad lo vio;
+ * lo cazó el e2e. Ver el aserto que ahora lo fija.
  */
 export function Login({
   onSubmit,
@@ -62,7 +70,6 @@ export function Login({
               placeholder="nombre@empresa.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              disabled={submitting}
             />
           </div>
           <div className={styles.field}>
@@ -75,7 +82,6 @@ export function Login({
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              disabled={submitting}
               aria-describedby="login-encrypt-hint"
             />
             <p id="login-encrypt-hint" className={styles.encryptHint}>

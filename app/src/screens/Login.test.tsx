@@ -110,6 +110,27 @@ describe('CA-LOG-02 y CA-LOG-03 · el envío', () => {
 
     expect(boton).toBeDisabled();
     expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    /**
+     * ⚠ EL ASERTO QUE FALTABA, Y SU AUSENCIA COSTÓ LA SUITE ENTERA.
+     *
+     * El artefacto del Coder deshabilitaba **también los dos campos** durante el
+     * envío. Los 17 asertos de este contrato pasaron igual, y los cuatro checks
+     * del arnés salieron verdes: **lo cazó el e2e**, colgando `auth.setup.ts` —
+     * que corre antes que todo lo demás— y con él las otras 47 pruebas.
+     *
+     * Y lo grave no era el cuelgue. `fixtures.ts` **vacía el campo de contraseña
+     * justo después de pulsar Entrar** porque Playwright adjunta al informe un
+     * volcado del DOM con el `value` de cada campo, y ese informe se sube como
+     * artefacto de la CI (F-038). En un campo inerte `fill('')` no escribe, así
+     * que **la contraseña se quedaba dentro del volcado**. Un `disabled` de más
+     * desactivaba la mitigación entera.
+     *
+     * RNG-LOG-02 deshabilita el BOTÓN. Los campos se quedan como están.
+     */
+    expect(screen.getByLabelText('Correo electrónico')).toBeEnabled();
+    expect(screen.getByLabelText('Contraseña')).toBeEnabled();
+
     resolver?.(true);
   });
 

@@ -1,0 +1,29 @@
+# Qué NO se sube a Vercel.
+#
+# Existe sobre todo por `.env`. Vercel dice que si no hay `.vercelignore` usa
+# `.gitignore` — y `.gitignore` ya excluye `.env`. Pero eso es una promesa de la
+# documentación de otro, y este proyecto tiene un registro entero de cosas que
+# se dieron por buenas sin verificarlas (F-050, F-054). El fichero que llevaría
+# `VITE_DEMO_KEY_SEED` a un despliegue de *Preview* —donde el PO decidió el
+# 12-ago que NO debe estar— no se deja a una promesa de fallback.
+.env
+.env.*
+!.env.example
+
+# Artefactos: no se suben, se construyen allí.
+node_modules
+dist
+*.tsbuildinfo
+
+# Salidas de Playwright. Pueden llevar volcados de DOM (F-038).
+test-results
+playwright-report
+blob-report
+.playwright
+
+# ⚠ `e2e/` NO se excluye, y no es un descuido.
+#
+# `tsconfig.json` lo lleva en `include`, y el build es `tsc -b && vite build`.
+# Sin `e2e/` en el árbol, `tsc -b` falla en Vercel por ficheros que no encuentra
+# — y falla en el build remoto, no en local, que es la peor forma de enterarse.
+# No entra en el bundle: Vite solo sigue lo que cuelga de `index.html`.

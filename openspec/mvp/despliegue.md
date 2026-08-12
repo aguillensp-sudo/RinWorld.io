@@ -69,6 +69,66 @@ cabecera (§3).
 
 ---
 
+## 1b · Ruta B · la CLI, sin GitHub de por medio
+
+**El 12-ago la ruta A se atascó: Vercel no dejaba importar el repo ni conectando la cuenta de
+GitHub.** El repo es **público** (`aguillensp-sudo/RinWorld.io`, comprobado), así que no era un
+problema de visibilidad — la causa habitual es que la **GitHub App de Vercel** está instalada con
+*Only select repositories* y este repo no está en la lista, o que se está importando bajo un
+*scope* de equipo donde la App no está instalada. Se arregla en
+`github.com/settings/installations` → **Vercel** → *Repository access*.
+
+**Pero para llegar al día 11 no hace falta arreglarlo.** La CLI despliega el directorio local sin
+tocar GitHub, y de paso **elimina tres de los cuatro fallos del §1**: el *root directory* es
+donde ejecutas, no hay rama de producción que elegir, y el nombre te lo pregunta.
+
+```bash
+npx vercel login
+```
+
+Desde **`app/`** (importante: desde ahí, no desde la raíz del repo):
+
+```bash
+npx vercel link
+```
+
+Responde: *Link to existing project?* **No** · *Project name* **`bearingworld`** · *In which
+directory is your code located?* **`./`**.
+
+Las tres variables, una a una. **La CLI pide el valor por teclado**, así que no pasa por ningún
+fichero ni por el historial de comandos:
+
+```bash
+npx vercel env add VITE_SUPABASE_URL production
+```
+
+```bash
+npx vercel env add VITE_SUPABASE_PUBLISHABLE_KEY production
+```
+
+```bash
+npx vercel env add VITE_DEMO_KEY_SEED production
+```
+
+Y a producción:
+
+```bash
+npx vercel --prod
+```
+
+**Lo que se pierde:** no hay despliegue automático al hacer push. Para la demo eso es más ventaja
+que otra cosa —ningún build sorpresa la víspera— pero significa que **cada cambio que quieras ver
+en la URL necesita otro `npx vercel --prod`**. Si más adelante se arregla la ruta A, esto no se
+tira: el proyecto es el mismo y se le conecta el repo desde *Settings → Git*.
+
+> **`app/.vercelignore` existe por esta ruta.** La CLI sube el directorio, y sin él dependeríamos
+> de que Vercel caiga al `.gitignore` para no subir `app/.env` — que llevaría la semilla también
+> a *Preview*, justo lo que la decisión del PO excluye. **Y `e2e/` NO se excluye**: `tsconfig.json`
+> lo tiene en `include` y el build es `tsc -b && vite build`, así que sin él el build **falla en
+> remoto y no en local**, que es la peor forma de enterarse.
+
+---
+
 ## 2 · Variables de entorno
 
 Se copian de `app/.env` local. Los valores **no** se escriben aquí ni en ningún fichero

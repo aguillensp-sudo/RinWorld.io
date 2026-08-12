@@ -8,3 +8,6 @@ test-results/
 blob-report/
 .playwright/
 *.tsbuildinfo
+# Lo crea `vercel link`. No lleva secretos (projectId y orgId), pero es estado
+# de la máquina de quien despliega, no del proyecto.
+.vercel/

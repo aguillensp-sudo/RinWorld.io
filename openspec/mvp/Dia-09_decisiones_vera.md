@@ -1,5 +1,18 @@
 # Día 9 · VERA · decisiones antes de escribir una línea
 
+> ## ✅ CONTESTADO POR EL PO EL 13-AGO, ANTES DE ESCRIBIR CÓDIGO
+>
+> | Decisión | Respuesta | Efecto |
+> |---|---|---|
+> | **D-09-01** | **Las cuatro del documento** | Buscar en catálogo · Consultar mi inventario · Listar mis hilos (metadatos) · Navegar |
+> | **D-09-02** | **(a)** dice que no puede **y explica por qué**, una vez, en una frase | Entra en el bloque estático del system prompt |
+> | **D-09-03** | **(a)** C2 corre **siempre** el e2e completo | Se aplica antes de lanzar PANEL-01 |
+> | **D-09-04** ⬅ nueva, no estaba anoche | Ver abajo: **sigue abierta**, y con la premisa corregida | La función se escribe y se prueba; **no vive** |
+>
+> **Y una corrección de premisa que conviene que no se pierda.** El PO contestó a D-09-04
+> *"ahora mismo me he logueado a Supabase desde el terminal, por tanto deberías poder hacerlo
+> tú"*. **Se comprobó antes de darlo por bueno, y no era así** — F-073.
+
 > **Día de decisiones irreversibles** (`CLAUDE.md` §ritual, junto al 4 y al 8). Escrito la noche
 > del 12-ago, antes de empezar.
 >
@@ -94,14 +107,75 @@ artefacto descargable (F-038 + F-070).
 
 ---
 
-## Lo que hago mañana en cuanto contestes
+## 🔴 D-09-04 · Cómo llega `ANTHROPIC_API_KEY` a la Edge Function — ABIERTA
 
-1. Edge Function proxy, con la clave de Sonnet solo en el entorno de Supabase.
-2. Las cuatro herramientas de D-09-01, con su contrato de aceptación **en rojo total antes de
-   lanzarlas** (F-058), y cada aserto negativo visto fallar contra su caso positivo (F-059).
-3. `SRCH-01` · cableado VERA↔chips.
-4. `PANEL-01` por el arnés, con la rúbrica ya corregida según D-09-03.
+**No estaba en el documento de anoche, y bloquea el único paso del bloque 1 que no puedo dar
+solo.** Sale de mirar el terreno antes de escribir: no existe `supabase/functions`, la CLI está
+instalada (2.109.0) pero **no logueada en la cuenta que hace falta**, y **el MCP de Supabase
+despliega funciones pero no gestiona secrets** — no hay tool para eso en todo su catálogo.
+
+**La premisa de la primera respuesta no se sostuvo, y se comprobó antes de actuar (F-024, F-065):**
+
+| Comprobación | Resultado |
+|---|---|
+| `npx supabase projects list` | `web-julsaindustrial` y `Base de Conocimientos`, org **`mjxnlvvrnjuuawlxkmte`**. **`troxminloxkjwihwfevs` no está** |
+| `npx supabase secrets list --project-ref troxminloxkjwihwfevs` | **403** · *"Your account does not have the necessary privileges"* |
+| `list_projects` por el MCP | Sí ve **`MVP_RinWorld.io`** (`troxminloxkjwihwfevs`), org **`ujatcozvbspkycepemfq`** |
+
+**Son dos cuentas distintas.** La CLI está logueada en la del web de Julsa; el MVP vive en la
+otra, que es la que aplicó las migraciones del día 8 por el MCP. De ahí el reparto de hoy:
+**desplegar la función sí puedo** (MCP), **poner el secret no**.
+
+| | Opción | Coste |
+|---|---|---|
+| **(a)** | `npx supabase login` **en la cuenta de `ujatcozvbspkycepemfq`**. Después yo hago `secrets set` + `functions deploy` leyendo la clave del entorno de usuario — donde ya está, 108 chars — sin que pase por pantalla ni por fichero, como F-071 | Un login tuyo |
+| **(b)** | La pegas tú en el dashboard: Supabase → Edge Functions → Secrets. Yo despliego por el MCP | Dos clics tuyos |
+| **(c)** | No se despliega hoy | Gratis hoy; quedan tres días para el socio |
+
+**Mientras tanto no se para nada:** `CLAUDE.md` §5 obliga igualmente a que todos los tests de
+unidad mockeen el cliente LLM, así que el proxy y las cuatro herramientas se escriben y se
+verifican enteros sin la clave. **Lo único que no se puede hacer es la corrida real contra
+Sonnet.**
 
 ---
 
-*Escrito el 12-ago-2026 · Claude Code (Opus 5)*
+## D-09-05 · Dónde se ejecutan las herramientas — decidido, y se deja escrito porque no es obvio
+
+**El proxy no toca la base. Las herramientas se ejecutan en el navegador.**
+
+Parece la decisión perezosa y es la contraria: es la que hace **estructural**, y no confiada, la
+garantía de `spec.md:223` — *"actuando siempre con los permisos del usuario autenticado sin
+posibilidad de escalar privilegios"*.
+
+- Si las herramientas corrieran en la Edge Function, el servidor necesitaría credenciales para
+  leer datos **en nombre de** alguien, y esa garantía pasaría a depender de que el código las use
+  bien. **En el navegador la impone RLS con el JWT del usuario, que es donde ya vive** — y la capa
+  de datos existe y está probada desde los días 3, 6 y 7 (`inventory.ts`, `threads.ts`, `search.ts`).
+- La función se queda con **una sola responsabilidad: guardar la clave de Sonnet**. No lee ni una
+  fila, así que comprometerla no expone datos de nadie.
+- Y hace `Navegar` posible sin inventar nada: navegar es un efecto de interfaz, y el sitio donde
+  ocurre es el cliente.
+
+**El precio, y va dicho:** un cliente manipulado puede devolverle a VERA un resultado de
+herramienta falso. **No hay ganancia de privilegio** —se estaría engañando a sí mismo, sobre sus
+propios datos— así que para el MVP se acepta. En V1, con acciones de escritura, esto se revisa.
+
+**Consecuencia de diseño que ya estaba escrita desde el día 6:** VERA escribe **criterios**, no
+chips. `search.ts:154` lo dejó dicho — *"Si los chips fueran su propio estado habría dos verdades
+sobre qué se está filtrando … y acabarían separándose en cuanto VERA escriba sobre una de las dos
+el día 9"*. Los chips se derivan; VERA no los toca.
+
+---
+
+## Lo que hago hoy, ya contestado
+
+1. Edge Function proxy, con la clave de Sonnet solo en el entorno de Supabase. **Se escribe y se
+   prueba; el despliegue vivo espera a D-09-04.**
+2. Las cuatro herramientas de D-09-01, con su contrato de aceptación **en rojo total antes de
+   lanzarlas** (F-058), y cada aserto negativo visto fallar contra su caso positivo (F-059).
+3. `SRCH-01` · cableado VERA↔chips.
+4. `PANEL-01` por el arnés, con la rúbrica ya corregida según D-09-03 **(a)**.
+
+---
+
+*Escrito el 12-ago-2026 · Claude Code (Opus 5) · contestado y ampliado el 13-ago*

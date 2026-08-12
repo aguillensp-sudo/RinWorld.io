@@ -1,0 +1,85 @@
+[
+  {
+    "name": "buscar_en_catalogo",
+    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores, precios de mercado o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco rodamientos SKF en Europa', 'necesito 500 unidades'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Devuelve filas con referencia, marca, cantidad, plazo, país y organización. NO devuelve precios: el precio va cifrado y se negocia en un hilo.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "referencia": {
+          "type": "string",
+          "description": "Referencia del rodamiento, total o parcial. Ej: '6205-2RS', '6205'."
+        },
+        "marca": {
+          "type": "string",
+          "description": "Marca o fabricante, total o parcial. Ej: 'SKF', 'FAG'."
+        },
+        "cantidad_minima": {
+          "type": "integer",
+          "description": "Unidades mínimas que necesita el usuario. Solo si lo dice."
+        },
+        "zona": {
+          "type": "string",
+          "enum": ["AF", "AN", "AS", "EU", "NA", "OC", "SA"],
+          "description": "Continente de la organización vendedora. EU = Europa, AS = Asia, NA = América del Norte, SA = América del Sur, AF = África, OC = Oceanía, AN = Antártida."
+        },
+        "pais": {
+          "type": "string",
+          "description": "Código ISO-3166-1 alfa-2 de DÓNDE ESTÁ EL STOCK, que puede no ser la sede de la organización. Ej: 'ES', 'DE'."
+        },
+        "plazo_maximo_dias": {
+          "type": "integer",
+          "description": "Plazo de entrega máximo aceptable, en días."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "consultar_mi_inventario",
+    "description": "Consulta el inventario de la PROPIA organización del usuario: lo que él vende, no lo que compra. Llámala cuando pregunte por 'mi stock', 'mis líneas', 'lo que tengo publicado', 'qué tengo desactualizado'. No la uses para buscar proveedores — para eso es buscar_en_catalogo.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "referencia": {
+          "type": "string",
+          "description": "Referencia a filtrar, total o parcial."
+        },
+        "filtro": {
+          "type": "string",
+          "enum": ["todos", "publicados", "desactualizados", "archivados"],
+          "description": "Estado de las líneas. 'desactualizados' son las que llevan más de 7 días sin actualizar. Por defecto 'todos'."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "listar_mis_hilos",
+    "description": "Lista los hilos de negociación del usuario. IMPORTANTE: devuelve SOLO METADATOS — contraparte, estado, fecha y tipo del último elemento. NO devuelve el contenido de los mensajes, ni cantidades, ni precios, ni condiciones: todo eso va cifrado extremo a extremo y el servidor no tiene la clave. Llámala para '¿cuántas negociaciones tengo abiertas?', '¿en qué estado está lo de Anadolu?', '¿tengo ofertas pendientes?'. Si el usuario pide RESUMIR o LEER un hilo, no puedes: díselo y explica por qué.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "contraparte": {
+          "type": "string",
+          "description": "Filtra por nombre de la organización con la que se negocia, total o parcial."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "navegar",
+    "description": "Lleva al usuario a una pantalla de la aplicación. Llámala cuando lo pida explícitamente ('llévame a mi inventario', 'abre los hilos') y también después de una búsqueda, para que vea los resultados en la tabla. No pide confirmación: navegar es reversible.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "pantalla": {
+          "type": "string",
+          "enum": ["Panel", "Vendiendo", "Comprando", "Hilos", "Inventario"],
+          "description": "Destino. 'Comprando' es la búsqueda en catálogo, 'Vendiendo' son las ofertas enviadas, 'Inventario' es el stock propio, 'Hilos' son las negociaciones. Son las cinco únicas pantallas que existen: Empresas, Foros y Contacto están en el menú pero NO están construidas."
+        }
+      },
+      "required": ["pantalla"]
+    }
+  }
+]

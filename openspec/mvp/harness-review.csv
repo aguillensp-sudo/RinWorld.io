@@ -1,0 +1,8 @@
+fecha,tarea,corrida,commit_artefacto,commit_revision,ficheros,lineas_artefacto,lineas_anadidas,lineas_quitadas,ficheros_tocados,ficheros_sin_tocar,nota
+2026-08-09,MSG-01,corrida-03,a31dfe3,ccdbeed,4,695,171,145,4,0,escalado 3/3
+2026-08-10,SRCH-01,corrida-01,3ead525,-,6,1076,0,0,0,6,"escalado 3/3 · sustituida por la corrida 2, sin revision"
+2026-08-10,SRCH-01,corrida-02,548d7b8,9608eae,6,1089,64,13,3,3,escalado 3/3
+2026-08-11,MSG-02,corrida-01,2585caf,c34d473,8,1294,68,55,2,6,escalado 3/3
+2026-08-12,VND-01,bucle-roto,9682dd3,94e0579,4,652,39,4,2,2,escalado 3/3 · bucle F-064 sin arreglar
+2026-08-12,VND-01,bucle-arreglado,8e8beae,-,4,629,0,0,0,4,VERDE en 2 · mismo task y contrato que la de arriba
+2026-08-12,LOGIN-01,corrida-01,cf74fab,ab1844b,2,241,8,2,1,1,VERDE en 1

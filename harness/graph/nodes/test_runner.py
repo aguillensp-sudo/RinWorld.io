@@ -143,14 +143,56 @@ def _dependencies() -> set:
     return set(pkg.get("dependencies", {})) | set(pkg.get("devDependencies", {}))
 
 
+# -----------------------------------------------------------------------------
+# F-033 · el tercer estado de un check
+#
+# ⚠ `rojo` E `inejecutable` SE REGISTRABAN IGUAL, Y NO SON LO MISMO.
+#
+#   rojo         = el check MIRO el artefacto y dijo que no. Dato sobre el modelo.
+#   inejecutable = el check NO LLEGO A MIRAR. No dice nada del modelo.
+#
+# F-015 zanjo que un check que no se puede ejecutar cuenta como ROJO, y **para
+# decidir sigue siendo correcto**: una corrida asi no se da por buena. Para MEDIR
+# son cosas distintas, y el objetivo 4 vive de esa medicion.
+#
+# La prueba de que hacia falta esta en el CSV: las tres filas de
+# `MSG-01/corrida-01-checks-ciegos` dicen `FALLA 1/4 (rojo: C1;C2;C4)` con `npm`
+# fuera del PATH — el arnes no evaluo nada y se pago la llamada igual—, y se leen
+# exactamente igual que un fallo de tipos del artefacto.
+#
+# ⚠ Y NO SE PUEDE DEDUCIR DEL CODIGO DE SALIDA, que era la tentacion. Comprobado
+# sobre las corridas guardadas: `corrida-01` sale con **127** (comando no
+# encontrado) pero `corrida-02` sale con **1** — vitest arranco, dijo "No test
+# files found" y devolvio 1, indistinguible de "los tests fallaron". Por eso cada
+# check lo DECLARA en el sitio donde sabe que no miro, y el codigo de salida es
+# solo la red de seguridad.
+# -----------------------------------------------------------------------------
+VERDE, ROJO, INEJECUTABLE = "verde", "rojo", "inejecutable"
+
+# 127 = comando no encontrado · 124 = timeout. En los dos casos no hubo proceso
+# que mirara nada.
+_SIN_PROCESO = (127, 124)
+
+
+def _no_miro(code: int, out: str) -> bool:
+    """Si el proceso arranco pero no llego a evaluar el artefacto."""
+    return code in _SIN_PROCESO or "No test files found" in (out or "")
+
+
+def _rojo(check_id: str, detail: str, code: int = 0, out: str = "") -> dict:
+    estado = INEJECUTABLE if _no_miro(code, out) else ROJO
+    return {"id": check_id, "ok": False, "estado": estado, "detail": detail}
+
+
 def _check_c1(runner) -> dict:
     code, out = runner(["npm", "run", "typecheck"], APP)
     if code != 0:
-        return {"id": "C1", "ok": False, "detail": f"npm run typecheck (exit {code})\n{_tail(out)}"}
+        return _rojo("C1", f"npm run typecheck (exit {code})\n{_tail(out)}", code, out)
     code, out = runner(["npm", "test"], APP)
     if code != 0:
-        return {"id": "C1", "ok": False, "detail": f"npm test (exit {code})\n{_tail(out)}"}
-    return {"id": "C1", "ok": True, "detail": "typecheck limpio y suite de unidad en verde"}
+        return _rojo("C1", f"npm test (exit {code})\n{_tail(out)}", code, out)
+    return {"id": "C1", "ok": True, "estado": VERDE,
+            "detail": "typecheck limpio y suite de unidad en verde"}
 
 
 def _check_c2(task, runner) -> dict:
@@ -160,13 +202,16 @@ def _check_c2(task, runner) -> dict:
     unit = acceptance.get("unit") or []
     e2e = acceptance.get("e2e") or []
     if not unit and not e2e:
-        return {"id": "C2", "ok": False, "detail":
+        # INEJECUTABLE, no rojo: sin contrato declarado no hay nada que mirar. Se
+        # sigue tratando como fallo para decidir (F-015); lo que cambia es que la
+        # medicion ya no lo confunde con un artefacto malo.
+        return {"id": "C2", "ok": False, "estado": INEJECUTABLE, "detail":
                 "la tarea no declara tests de aceptacion. F-015: un check que no se "
                 "puede ejecutar es rojo, no ausente"}
 
     faltan = [p for p in list(unit) + list(e2e) if not (ROOT / p).exists()]
     if faltan:
-        return {"id": "C2", "ok": False, "detail":
+        return {"id": "C2", "ok": False, "estado": INEJECUTABLE, "detail":
                 "tests de aceptacion declarados que no existen en el repo: "
                 + "; ".join(faltan) + ". Los escribe Claude Code ANTES del Coder "
                 "(Plan §6)"}
@@ -183,16 +228,15 @@ def _check_c2(task, runner) -> dict:
     if unit:
         code, out = runner(["npx", "vitest", "run", *rel(unit)], APP)
         if code != 0:
-            return {"id": "C2", "ok": False,
-                    "detail": f"vitest de aceptacion (exit {code})\n{_tail(out)}"}
+            return _rojo("C2", f"vitest de aceptacion (exit {code})\n{_tail(out)}", code, out)
         partes.append(f"unidad {len(unit)} fichero(s)")
     if e2e:
         code, out = runner(["npx", "playwright", "test", *rel(e2e)], APP)
         if code != 0:
-            return {"id": "C2", "ok": False,
-                    "detail": f"playwright de aceptacion (exit {code})\n{_tail(out)}"}
+            return _rojo("C2", f"playwright de aceptacion (exit {code})\n{_tail(out)}", code, out)
         partes.append(f"e2e {len(e2e)} fichero(s)")
-    return {"id": "C2", "ok": True, "detail": "aceptacion en verde: " + " + ".join(partes)}
+    return {"id": "C2", "ok": True, "estado": VERDE,
+            "detail": "aceptacion en verde: " + " + ".join(partes)}
 
 
 def test_runner_node(state: HarnessState, runner=run_cmd) -> dict:
@@ -200,7 +244,11 @@ def test_runner_node(state: HarnessState, runner=run_cmd) -> dict:
     files = state.get("files") or {}
 
     if not files:
-        checks = [{"id": "C0", "ok": False, "detail":
+        # INEJECUTABLE: no hay artefacto que mirar, asi que ninguno de los cuatro
+        # llego a evaluar nada. Que la causa sea del modelo o del arnes -F-005, el
+        # truncado por `max_tokens`- es otra pregunta, y este campo no la responde:
+        # `estado` dice si el check MIRO, no de quien fue la culpa.
+        checks = [{"id": "C0", "ok": False, "estado": INEJECUTABLE, "detail":
                    "el Coder no devolvio ningun fichero parseable. Revisa el formato "
                    "===FILE: ruta=== / ===ENDFILE==="}]
         return _finish(state, checks)
@@ -217,9 +265,14 @@ def test_runner_node(state: HarnessState, runner=run_cmd) -> dict:
 
 
 def _finish(state: HarnessState, checks: list) -> dict:
+    # `check_palette` y `check_idiomatic` son puros sobre los ficheros: si hay
+    # artefacto, miran. Se les pone el estado aqui para no repetirlo en cada uno.
+    for c in checks:
+        c.setdefault("estado", VERDE if c["ok"] else ROJO)
+
     rojos = [c for c in checks if not c["ok"]]
     for c in checks:
-        print(f"  {c['id']}: {'verde' if c['ok'] else 'ROJO'}")
+        print(f"  {c['id']}: {c['estado'].upper() if not c['ok'] else 'verde'}")
 
     # El veredicto lo escribe este nodo, no la arista: una funcion de enrutado de
     # LangGraph decide por donde salir pero no toca el estado, y si el escalado

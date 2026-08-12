@@ -18,7 +18,9 @@ import sys
 from ..core import metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
 from ..graph.nodes.coder import build_messages, build_system
-from ..graph.nodes.test_runner import _check_c2, _finish, resolve, run_cmd, strip_ansi
+from ..graph.nodes.test_runner import (
+    _check_c1, _check_c2, _finish, resolve, run_cmd, strip_ansi,
+)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TOKENS = read_tokens(
@@ -381,6 +383,65 @@ def test_metricas_guardan_el_artefacto():
           rec["sources"] == {"a.tsx": "contenido real"}, str(rec.get("sources")))
 
 
+def test_estado_de_check():
+    """F-033 · `rojo` e `inejecutable` dejan de ser la misma casilla.
+
+    Los dos casos de abajo son REALES y estan guardados en
+    `harness/metrics/MSG-01/`. En el CSV del dia 5 se escribieron identicos:
+
+      corrida-01 · `npm run typecheck (exit 127)` — npm fuera del PATH
+      corrida-02 · `vitest (exit 1)` + "No test files found" — rutas sin rebajar
+
+    En ninguno de los dos el arnes miro el artefacto, y los dos se leian como
+    "el Coder fallo". El tercero es un fallo de verdad y tiene que seguir
+    contando como tal.
+
+    ⚠ El de en medio es el que justifica que esto no se deduzca del codigo de
+    salida: sale con **1**, igual que un test que falla de verdad."""
+    print("\nF-033 · rojo e inejecutable no son lo mismo")
+
+    def runner_fijo(code, out):
+        return lambda cmd, cwd: (code, out)
+
+    c1 = _check_c1(runner_fijo(127, "'npm' no se reconoce como un comando"))
+    check("npm fuera del PATH -> INEJECUTABLE", c1["estado"] == "inejecutable", c1["estado"])
+    check("y sigue contando como fallo para decidir (F-015)", c1["ok"] is False)
+
+    task = {"acceptance": {"unit": ["app/src/screens/messages/ThreadList.test.tsx"]}}
+    c2 = _check_c2(task, runner_fijo(1, "No test files found, exiting with code 1"))
+    check("⚠ 'No test files found' con exit 1 -> INEJECUTABLE",
+          c2["estado"] == "inejecutable", c2["estado"])
+
+    c2b = _check_c2(task, runner_fijo(1, "FAIL  Thread.test.tsx > expected 2 to be 3"))
+    check("un test que falla de verdad -> ROJO", c2b["estado"] == "rojo", c2b["estado"])
+
+    sin_contrato = _check_c2({"acceptance": {}}, runner_fijo(0, ""))
+    check("una tarea sin tests declarados -> INEJECUTABLE",
+          sin_contrato["estado"] == "inejecutable", sin_contrato["estado"])
+
+    c1v = _check_c1(runner_fijo(0, "ok"))
+    check("y lo verde sigue siendo verde", c1v["estado"] == "verde" and c1v["ok"])
+
+    # La columna del CSV y el texto de `resultado`, que es lo que alguien lee.
+    checks = [
+        {"id": "C1", "ok": False, "estado": "inejecutable", "detail": "exit 127"},
+        {"id": "C2", "ok": False, "estado": "rojo", "detail": "falla de verdad"},
+        {"id": "C3", "ok": True, "estado": "verde", "detail": ""},
+    ]
+    check("la columna nueva lista los ciegos",
+          metrics.inexecutables(checks) == ["C1"], str(metrics.inexecutables(checks)))
+
+    texto = metrics.resultado_from_checks(checks, escalated=False)
+    check("y `resultado` los nombra APARTE de los rojos",
+          "INEJECUTABLE: C1" in texto and "rojo: C2" in texto, texto)
+    check("un check ciego no se cuenta como rojo del modelo",
+          "rojo: C1" not in texto, texto)
+
+    check("`checks_inejecutables` es columna propia del CSV",
+          "checks_inejecutables" in metrics.COLUMNS and
+          metrics.COLUMNS.index("checks_inejecutables") < metrics.COLUMNS.index("resultado"))
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -408,6 +469,7 @@ def main() -> int:
     test_ansi_no_llega_al_modelo()
     test_reintento_ensena_el_artefacto()
     test_metricas_guardan_el_artefacto()
+    test_estado_de_check()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

@@ -31,8 +31,19 @@ COLUMNS = [
     "fecha", "tarea", "pantalla", "modelo",
     "tokens_in", "tokens_out", "coste_usd",
     "intentos", "minutos", "ficheros",
-    "cache_hit_pct", "escalado_a_humano", "resultado",
+    "cache_hit_pct", "escalado_a_humano", "checks_inejecutables", "resultado",
 ]
+
+# F-033 · los tres estados de un check. `rojo` e `inejecutable` se registraban
+# igual y no son lo mismo: uno miro el artefacto y dijo que no, el otro no llego a
+# mirar. Para DECIDIR los dos son fallo (F-015); para MEDIR, solo el primero dice
+# algo del modelo — y el objetivo 4 vive de esa medicion.
+VERDE, ROJO, INEJECUTABLE = "verde", "rojo", "inejecutable"
+
+
+def inexecutables(checks: list) -> list:
+    """Los ids de los checks que no llegaron a mirar el artefacto."""
+    return [c["id"] for c in checks if c.get("estado") == INEJECUTABLE]
 
 
 class CsvContractError(RuntimeError):
@@ -108,6 +119,11 @@ def csv_row(rec: dict, resultado: str, fecha: str = None) -> list:
         ";".join(rec["files"]) or "-",
         f"{rec['cache_hit_pct']:.2f}",
         "si" if rec["escalated_to_human"] else "no",
+        # F-033 · columna propia y no una nota dentro de `resultado`, para que una
+        # agregacion pueda descartar estas filas sin leer texto libre. Ese es el
+        # punto entero del hallazgo: el dato crudo estaba, lo que faltaba era poder
+        # contarlo.
+        ";".join(inexecutables(rec.get("checks") or [])) or "-",
         resultado,
     ]
 
@@ -151,7 +167,13 @@ def resultado_from_checks(checks: list, escalated: bool) -> str:
     """El texto de la columna `resultado`, construido desde los checks. Sin coma,
     por contrato del fichero."""
     verdes = [c["id"] for c in checks if c["ok"]]
-    rojos = [c["id"] for c in checks if not c["ok"]]
-    cabeza = "ESCALADO" if escalated else ("PASA" if not rojos else "FALLA")
+    ciegos = inexecutables(checks)
+    rojos = [c["id"] for c in checks if not c["ok"] and c["id"] not in ciegos]
+    cabeza = "ESCALADO" if escalated else ("PASA" if not (rojos or ciegos) else "FALLA")
+
     detalle = f"verde: {';'.join(verdes) or '-'} / rojo: {';'.join(rojos) or '-'}"
+    if ciegos:
+        # F-033 · se nombra aparte. Un `FALLA 1/4 (rojo: C1;C2;C4)` con `npm` fuera
+        # del PATH se leia como "el Coder fallo" cuando el arnes no evaluo nada.
+        detalle += f" / INEJECUTABLE: {';'.join(ciegos)}"
     return f"{cabeza} {len(verdes)}/{len(checks)} ({detalle}). C5 lo da el PO"

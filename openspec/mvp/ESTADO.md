@@ -255,8 +255,13 @@ los días 4, 8 y 9 llevan fichero propio). Y dos cosas que condicionan ese día:
 3. 🟠 **F-070, nuevo de esta tarde: los cuatro checks del arnés no ven el e2e.** LOGIN-01
    salió **4/4 verde** y colgaba la suite entera. Para V1 hay que decidir si C2 corre siempre
    el e2e completo o si la tarea está obligada a declarar los ficheros que la cubren.
-4. 🟠 **F-033 · el CSV no distingue un check en rojo de uno inejecutable.** Lo dejaste
-   pendiente a propósito.
+4. ✅ **F-033 · cerrado el 12-ago.** Los checks tienen tercer estado
+   (`verde`/`rojo`/`inejecutable`) con columna propia en el CSV, las 27 filas históricas
+   están rellenadas —**7 tenían algún check ciego**— y **la métrica del objetivo 4 se ha
+   movido** de «intentos hasta verde» a las dos que no dependen del bucle: líneas tocadas
+   sobre líneas del artefacto, y ficheros sin tocar. Viven en
+   **`openspec/mvp/harness-review.csv`**, derivadas de git. La tendencia se lee sola: de
+   tocar **4 de 4** ficheros en MSG-01 a **0 de 4** en VND-01 con el bucle arreglado.
 5. **¿Los cinco hilos sembrados son los de la demo del día 11?** Ahora llevan contenido
    legible, así que la pregunta pasa a ser **qué dicen**, no si se ven. Los textos están en
    `supabase/seed/demo-content.mjs` y se cambian en un sitio.

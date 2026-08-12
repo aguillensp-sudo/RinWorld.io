@@ -77,3 +77,37 @@ Coder.
 `DEEPSEEK_API_KEY` es obligatoria. `DS_PRICE_IN_HIT` · `DS_PRICE_IN_MISS` · `DS_PRICE_OUT`
 tienen valor por defecto de agosto de 2026 y **el arnés no arranca si alguna está a cero**
 (F-010). Ninguna clave en ningún fichero, nunca (`CLAUDE.md` §1.1).
+
+---
+
+## Los dos registros de medida, y cuál responde a qué (F-033, 12-ago)
+
+| Fichero | Una fila por | Responde a |
+|---|---|---|
+| `openspec/mvp/harness-metrics.csv` | **intento** | coste, tokens, caché, minutos, y **qué checks miraron y cuáles no** |
+| `openspec/mvp/harness-review.csv` | **corrida** | **la métrica del objetivo 4**: líneas tocadas en la revisión a mano sobre líneas del artefacto, y ficheros sin tocar |
+
+**«Intentos hasta verde» ya no es la cifra con la que se decide si el arnés sirve en V1.**
+No porque estuviera mal medida, sino porque **es frágil por construcción**: mide el bucle
+tanto como al modelo, y el bucle estuvo roto tres días sin que nadie lo notara (F-064) más
+otro con la entrada corrompida por códigos de color (F-068). De las 24 filas de intento
+sobre pantallas, solo **3** las produjo un instrumento que hoy creemos sano.
+
+Las dos medidas de `harness-review.csv` **han sobrevivido a los cuatro problemas** porque no
+dependen ni del bucle ni de la rúbrica. Y cada fila lleva `commit_artefacto` y
+`commit_revision`: **se recomputan desde git**, no hay que fiarse de que alguien las tecleara
+bien.
+
+### El tercer estado de un check
+
+`verde` · `rojo` (miró el artefacto y dijo que no) · `inejecutable` (**no llegó a mirar**).
+
+Para **decidir** los dos últimos son fallo, y eso no ha cambiado (F-015): una corrida con un
+check ciego no se da por buena. Para **medir** son cosas distintas, y solo `rojo` dice algo
+del modelo.
+
+⚠ **No se deduce del código de salida.** Comprobado sobre las corridas guardadas:
+`MSG-01/corrida-01` salía con **127** (comando no encontrado) pero `corrida-02` con **1** —
+vitest arrancó, dijo *"No test files found"* y devolvió 1, **indistinguible de un test que
+falla de verdad**. Cada check lo declara en el sitio donde sabe que no miró; el código de
+salida es solo la red de seguridad.

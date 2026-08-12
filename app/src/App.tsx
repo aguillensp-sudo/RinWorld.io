@@ -7,6 +7,7 @@ import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
 import { SearchResults } from './screens/search/SearchResults';
+import { SentOffers } from './screens/selling/SentOffers';
 
 /**
  * Qué pantalla va con qué ítem de nav.
@@ -31,6 +32,9 @@ const MESSAGES_NAV = navIndexOf('Hilos');
 /** SRCH-01 §2: "Ítem activo en nav: **Comprando**". Aquí spec y HTML aprobado
  *  coinciden, así que no hay nada que resolver como en F-025. */
 const SEARCH_NAV = navIndexOf('Comprando');
+/** VND-01 §2: "Ítem activo en nav: **Vendiendo**". Aquí spec y HTML aprobado
+ *  coinciden — es INV-01/INV-02 quien discrepa, ver el comentario de arriba. */
+const SELLING_NAV = navIndexOf('Vendiendo');
 const HOME_NAV = navIndexOf('Panel');
 
 /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
@@ -44,7 +48,11 @@ const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
  *  pantallas son el mismo sitio del shell; lo que cambia es qué se pinta dentro. */
 const MESSAGES_VERA_SUBTITLE = 'Agente de mensajería';
 
-/** SRCH-01 §5: "**Subtítulo del panel:** `Agente de búsqueda`". */
+/** SRCH-01 §5: "**Subtítulo del panel:** `Agente de búsqueda`".
+ *
+ *  **VND-01 §6 dice exactamente lo mismo** —`Agente de búsqueda`— aunque la
+ *  pantalla no tenga nada que ver con SRCH-01. Está comprobado en la spec, no
+ *  supuesto: no es un copiar y pegar de aquí. */
 const SEARCH_VERA_SUBTITLE = 'Agente de búsqueda';
 
 export function App() {
@@ -90,12 +98,13 @@ export function App() {
   const onInventory = nav === INVENTORY_NAV;
   const onMessages = nav === MESSAGES_NAV;
   const onSearch = nav === SEARCH_NAV;
+  const onSelling = nav === SELLING_NAV;
 
   const veraSubtitle = onInventory
     ? INVENTORY_VERA_SUBTITLE
     : onMessages
       ? MESSAGES_VERA_SUBTITLE
-      : onSearch
+      : onSearch || onSelling
         ? SEARCH_VERA_SUBTITLE
         : undefined;
 
@@ -143,6 +152,26 @@ export function App() {
          * `now` congelado al montar, una sesión larga acabaría pintando en naranja
          * lo que ya debería estar en rojo. */
         <SearchResults profile={state.profile} now={new Date()} />
+      ) : onSelling ? (
+        /*
+         * VND-01. Sin `now`: es la única de las cuatro que no tiene ni un
+         * timestamp relativo — su columna Fecha es absoluta (`DD Mmm YYYY`, §5.1)
+         * y la calcula `sentAtLabel`. Inyectar un reloj que nadie usa sería una
+         * prop que hay que mantener sin nada detrás.
+         *
+         * `onOpenThread` sí se cablea: `Ver hilo` y `Ver acuerdo` llevan a MSG-02,
+         * que es CA-VND-05. Y **cambia el ítem de nav además del hilo**, porque
+         * MSG-02 vive en `Hilos` (MSG-02 §2): sin eso, la pantalla del hilo se
+         * pintaría con `Vendiendo` marcado en el nav y el shell mentiría sobre
+         * dónde está el usuario.
+         */
+        <SentOffers
+          profile={state.profile}
+          onOpenThread={(threadId) => {
+            setNav(MESSAGES_NAV);
+            setOpenThreadId(threadId);
+          }}
+        />
       ) : onInventory ? (
         <Inventory profile={state.profile} />
       ) : (

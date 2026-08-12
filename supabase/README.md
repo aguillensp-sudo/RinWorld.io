@@ -1,5 +1,40 @@
 # Esquema Supabase — MVP Bearingworld.io
 
+## ⚠ Cómo se despliega una migración · **la CLI, y solo la CLI** (F-054, 12-ago)
+
+Hasta el 12-ago había **dos rutas a medias**: la CLI sin `config.toml`, que no podía
+enlazarse con nada, y el MCP, que es la que de verdad aplicó de 0007 a 0012. El PO pidió
+resolverlo con la opción más inteligente aunque fuera la más costosa. **La ruta oficial es
+la CLI y el repo es la fuente de verdad.**
+
+```bash
+npx supabase link --project-ref troxminloxkjwihwfevs   # una vez, pide la contraseña
+npx supabase db push --dry-run                          # SIEMPRE antes de aplicar
+npx supabase db push
+```
+
+**El `--dry-run` no es opcional.** Tiene que decir que no hay nada pendiente salvo lo que
+acabas de escribir; si nombra migraciones antiguas, el registro del remoto y el repo han
+dejado de coincidir y hay que pararse antes de tocar nada.
+
+**Los ficheros NO se renombran a `<timestamp>_nombre.sql`.** Se midió antes de decidir,
+contra un Postgres desechable y sin credenciales: la CLI 2.109 parsea `0001`…`0012` como
+versiones y aplica **las doce desde cero, en orden**. Renombrar habría roto **76 punteros**
+del tipo `0003:269` repartidos por el repo, que son los que hacen verificable la
+documentación (F-012).
+
+El registro del remoto se reescribió a `0001`…`0012` para que las dos partes digan lo
+mismo. Quedan dos filas históricas que no están en el repo —`sp3_spike_messages_realtime` y
+`mvp_0011a_realtime_publication_portable`— y se dejan a propósito: `db push` las ignora
+porque ya están aplicadas, y borrarlas falsearía qué se ejecutó contra esa base.
+
+**Antes de aplicar nada al remoto, `bash supabase/tests/run.sh`.** Es lo que distingue una
+migración probada de una hipótesis sobre el resto de entornos — la lección que dejó 0011,
+que solo se había ejecutado contra Supabase y se llevó por delante el trabajo `Esquema` de
+la CI en cuanto tocó un Postgres pelado.
+
+---
+
 Escrito el 6-ago-2026 (día 2) contra `openspec/mvp/Dia-02_decisiones_esquema.md`, aprobado por
 el PO. **Aplicado al proyecto remoto `troxminloxkjwihwfevs` (MVP_RinWorld.io, eu-west-1,
 Postgres 17) el 6-ago-2026**, con las dos cuentas de desarrollo sembradas y el login verificado

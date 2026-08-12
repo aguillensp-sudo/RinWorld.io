@@ -1,0 +1,71 @@
+# =============================================================================
+# Configuración de la CLI de Supabase · F-054, cerrado el 12-ago-2026
+# =============================================================================
+# ⚠ ESTE FICHERO FALTABA, Y SU AUSENCIA ERA LA MITAD DEL PROBLEMA.
+#
+# Hasta hoy había DOS rutas de despliegue de migraciones a medias: la CLI, que no
+# tenía `config.toml` y por tanto no podía enlazarse con nada, y el MCP, que es la
+# que de verdad aplicó de 0007 a 0012. Dos caminos a medias es exactamente cómo se
+# llegó a un pendiente con un comando que no podía funcionar.
+#
+# **La ruta oficial pasa a ser la CLI, y el repo es la fuente de verdad.** El PO
+# lo decidió el 12-ago pidiendo la opción más inteligente aunque fuera la más
+# costosa. Resultó ser la barata, y por un dato que había que medir en vez de
+# suponer.
+#
+# ── LO QUE SE COMPROBÓ ANTES DE DECIDIR ─────────────────────────────────────
+#
+# El riesgo evidente de adoptar la CLI era el renombrado: su convención es
+# `<timestamp>_<nombre>.sql` y aquí los ficheros son `0001_…` a `0012_…`. Renombrar
+# habría roto **76 punteros** del tipo `0003:269` repartidos por comentarios,
+# migraciones y documentos — y esos punteros son medio patrimonio del proyecto
+# (F-012: un nombre sin puntero se considera no verificado).
+#
+# No hizo falta. Medido contra un Postgres desechable, sin credenciales y sin
+# riesgo, con la CLI 2.109:
+#
+#   supabase migration list --db-url …   → parsea 0001..0012 como versiones
+#   supabase migration up   --db-url …   → aplica LAS DOCE desde cero, en orden
+#
+# Así que los nombres se quedan y los punteros sobreviven.
+#
+# ── Y EL REGISTRO DEL REMOTO SE ALINEÓ CON EL REPO ──────────────────────────
+#
+# `supabase_migrations.schema_migrations` tenía las doce con versiones de
+# timestamp (`20260806080333`, `mvp_0001_…`). Con eso, `supabase db push` habría
+# visto doce migraciones locales cuya versión no figuraba en el remoto y habría
+# intentado **reaplicarlas todas** sobre un esquema que ya las tiene. Se
+# reescribieron a `0001`…`0012`, que es lo que dicen los ficheros.
+#
+# Quedan dos filas históricas que NO están en el repo y se dejan a propósito, no
+# por descuido: `sp3_spike_messages_realtime` (el spike del día 1, con su propia
+# tabla) y `mvp_0011a_realtime_publication_portable` (una corrección de 0011 que
+# acabó plegada dentro del propio 0011). `db push` las ignora — ya están
+# aplicadas— y borrarlas sería falsear qué se ejecutó contra esa base.
+#
+# ── LO QUE FALTA, Y ES UNA SOLA ORDEN DEL PO ────────────────────────────────
+#
+#   npx supabase link --project-ref troxminloxkjwihwfevs
+#
+# Pide la contraseña de la base, que no está aquí ni puede estarlo (`CLAUDE.md`
+# §1). Después de eso, `npx supabase db push --dry-run` tiene que decir que **no
+# hay nada que aplicar**: si dijera otra cosa, el registro de arriba estaría mal y
+# hay que pararse antes de tocar nada.
+#
+# ── LO QUE ESTE FICHERO NO CONFIGURA, PARA QUE NO SE BUSQUE AQUÍ ────────────
+#
+# No lleva la sección `[auth]`, ni `[db].seed`, ni los puertos del stack local.
+# El MVP **no levanta el stack local de Supabase**: la suite de esquema usa un
+# `postgres:16-alpine` pelado con su propio stub de `auth`
+# (`supabase/tests/run.sh`), y la aplicación va contra el proyecto remoto. Añadir
+# configuración que nadie ejecuta es la forma de que envejezca sin que nadie se
+# entere — que es de lo que iba F-054.
+# =============================================================================
+
+project_id = "troxminloxkjwihwfevs"
+
+[db]
+# La versión mayor del Postgres del proyecto. Tiene que coincidir con la del
+# remoto: si no, `db push` avisa y con razón — un `generated always as identity`
+# o un `MERGE` se comportan distinto entre mayores.
+major_version = 16

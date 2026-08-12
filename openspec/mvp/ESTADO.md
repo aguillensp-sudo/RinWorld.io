@@ -250,13 +250,12 @@ los días 4, 8 y 9 llevan fichero propio). Y dos cosas que condicionan ese día:
      (`sp3_spike_messages_realtime`, `mvp_0011a_realtime_publication_portable`), que `db push`
      ignora por estar ya aplicadas. Si dijera otra cosa, párate y avísame. Falta solo el
      enlace: no hay `supabase/.temp`, así que la CLI aún no está enlazada.
-   - **DOS secrets de GitHub, no uno — y `ci.yml` ya está arreglado (F-071).** Lo que te pedí
-     —`SUPABASE_SERVICE_KEY`— **no habría servido de nada**: el workflow no lo nombraba, y
-     además `canResetFixture` (`app/e2e/fixtures.ts:40-42`) exige **tres** variables, de las
-     que a CI solo llegaba `VITE_SUPABASE_URL`. Hay que crear **`SUPABASE_SERVICE_KEY`** y
-     **`DEMO_KEY_SEED`**. Comprobado que hoy existen 8 secrets y ninguno es esos dos.
-     **La verificación no es leer el YAML, es que la corrida de CI deje de saltarse el
-     reseteo de fixture y el test de envío cifrado.**
+   - ✅ **Los dos secrets: HECHO, y no los tuviste que poner tú (F-071 cerrado).**
+     `DEMO_KEY_SEED` salió de `app/.env` y `SUPABASE_SERVICE_KEY` de tu entorno de usuario;
+     ninguno de los dos valores pasó por pantalla ni por fichero. **CI verde: Playwright
+     49/49**, desde `4 failed / 2 skipped / 43 passed`. Era la primera verde desde el 11-ago
+     19:54: **la CI llevaba siete corridas en rojo** y el día 8 se cerró reportando
+     *"Playwright 47/47"*, cierto en local y nunca contrastado contra CI.
 2. 🟠 **Despliegue · decidido y preparado el 12-ago; falta que lo pulses tú.** El PO eligió
    **Vercel, con semilla de demo, la semilla solo en *Production*, URL sin indexar y muerte
    en V1**. El repo ya lleva las tres piezas del no-indexado (`app/vercel.json`,

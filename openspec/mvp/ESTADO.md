@@ -226,49 +226,67 @@ los días 4, 8 y 9 llevan fichero propio). Y dos cosas que condicionan ese día:
 | Autoría | Código del Coder y código a mano **nunca en el mismo commit**. | `CLAUDE.md` §1.6 · F-009 |
 | Demo | Referencia **`6205-2RS`** y **seis organizaciones**, solo dos con cuenta. | `guion-demo-y-siembra.md` §1 y §3 |
 | Precio en SRCH-01 | **Fuera de la parrilla.** No se ordena ni se filtra por precio, nunca. | `conversational-search` · F-040 |
-| Alcance | 8 pantallas. **Hechas: shell, INV-01, MSG-01, SRCH-01, MSG-02, VND-01.** | Plan §9 |
+| Alcance | 8 pantallas + LOGIN-01, que nadie planifico (F-016). **Hechas: shell, LOGIN-01, INV-01, MSG-01, SRCH-01, MSG-02, VND-01.** | Plan §9 |
 | Monorepo | `openspec/` + `app/` + `supabase/` + `harness/`. Los HTML aprobados no se tocan. | `CLAUDE.md` §2 |
 
 ---
 
 ## Pendiente de Álvaro
 
-**Ver `openspec/mvp/PENDIENTE-PO.md`.** Por urgencia:
+> **⚠ ADENDA DE LA TARDE DEL 12-AGO.** Contestaste a `PENDIENTE-PO.md` entero y **los ocho
+> puntos accionables están hechos**: `.env.example` al repo, el bucle del arnés arreglado y
+> el experimento de F-064 corrido, la convención `[skip ci]`, el informe de Playwright como
+> pediste (opción **a**, se queda), el reseteo de fixture del e2e con su test de envío,
+> F-054 cerrado con la CLI como ruta oficial, y **LOGIN-01 construida**. El detalle está en
+> el registro, en "Cierres del 12-ago (tarde)".
 
-1. 🟠 **`app/.env.example` no está en el repo y nunca lo ha estado** — lo come el patrón
-   `.env.*` del `.gitignore` raíz, y `supabase.ts` remite a él. **No lleva secretos.** Se
-   arregla con un `!.env.example`, pero esa es la §1 no negociable y no la toco sin ti.
-2. 🟠 **El envío cifrado no tiene e2e.** Enviar mueve el hilo al principio de la lista y
-   cambia la vista previa de MSG-01, así que rompería otros dos tests: la suite **no sabe
-   reponer la siembra entre corridas**. Falta el reseteo de fixture, no el test. Medio día,
-   y resuelve lo mismo para el día 10.
-3. 🟠 **El informe de Playwright en `ci.yml`** — (a) dejarlo, (b) subirlo solo al fallar,
-   (c) no subirlo. **Yo haría la (b).**
-4. 🟠 **F-033 · el CSV no distingue un check en rojo de uno inejecutable.**
-5. 🟠 **Diseño de la pantalla de login** (F-016). Es la primera que ve el socio.
-6. 🟠 **Una sola ruta de despliegue de migraciones** (F-054). Hoy sigue habiendo dos.
-7. **¿Los cinco hilos sembrados son los de la demo del día 11?** Ahora ya llevan contenido
-   legible, así que la pregunta pasa a ser qué DICEN, no si se ven.
-8. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
-9. **La app no tiene URL desplegada.** **Se retoma antes del día 11**, que es la primera
-   sesión de prueba — quedan tres días.
+**Ver `openspec/mvp/PENDIENTE-PO.md`.** Lo que queda, por urgencia:
+
+1. 🔴 **Dos órdenes tuyas, y las dos piden credenciales que no puedo tener.**
+   - `npx supabase link --project-ref troxminloxkjwihwfevs` — pide la contraseña de la base.
+     Después, `npx supabase db push --dry-run` **tiene que decir que no hay nada pendiente**;
+     si nombra migraciones antiguas, párate y avísame.
+   - **`SUPABASE_SERVICE_KEY` como secret de GitHub.** Sin él, el reseteo de fixture y el
+     test de envío cifrado **se saltan en CI** — con su motivo a la vista, no en silencio,
+     pero se saltan. En local corren.
+2. 🔴 **La app sigue sin URL desplegada**, y ahora quedan **dos días** hasta la sesión de
+   prueba. El día 9 tiene tres bloques y uno es de decisiones irreversibles. **Si no entra
+   el día 9, entra el 10 o no entra.**
+3. 🟠 **F-070, nuevo de esta tarde: los cuatro checks del arnés no ven el e2e.** LOGIN-01
+   salió **4/4 verde** y colgaba la suite entera. Para V1 hay que decidir si C2 corre siempre
+   el e2e completo o si la tarea está obligada a declarar los ficheros que la cubren.
+4. 🟠 **F-033 · el CSV no distingue un check en rojo de uno inejecutable.** Lo dejaste
+   pendiente a propósito.
+5. **¿Los cinco hilos sembrados son los de la demo del día 11?** Ahora llevan contenido
+   legible, así que la pregunta pasa a ser **qué dicen**, no si se ven. Los textos están en
+   `supabase/seed/demo-content.mjs` y se cambian en un sitio.
+6. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
+7. **F-027 (a)** · el recuento de no leídos de MSG-01, y **F-023 d** · qué hace INV-01 con
+   una línea eliminada. Los dos de V1, los dos los dejaste pendientes.
 
 ---
 
 ## Riesgo con la vista más corta
 
-**El primero sigue siendo el arnés, y hoy ha empeorado el diagnóstico, no mejorado.**
-Anoche había **un** mecanismo que invalidaba las medidas (F-064: el reintento no le enseña
-al Coder su propio código). Hoy hay **dos**: el feedback le llega además con los códigos de
-color como texto, y el intento 3 pegó dos dentro de un `import` (F-068). **Lo que eso
-significa para las cuatro corridas anteriores: cualquier lectura de un intento ≥2 está
-contaminada por los dos, no solo por uno.**
+> **⚠ ESTE PRIMER RIESGO SE CERRÓ LA MISMA TARDE, y se deja escrito con su antes y su
+> después porque el contraste es el dato.** Lo de abajo se redactó al cerrar el día; unas
+> horas más tarde el PO autorizó arreglar el bucle y correr el experimento. **Se corrió, y
+> el arnés escalaba por su bucle, no por el modelo:** misma tarea, mismo contrato, mismo
+> repo, único cambio el bucle → de **escalado 3/3** a **VERDE en 2**, más barato y con cero
+> líneas de revisión a mano. **F-064 cerrado con dato.** Lo que sigue en pie: las cuatro
+> corridas anteriores no valen como medida del modelo. Y hay un tercer mecanismo nuevo,
+> **F-070**: los cuatro checks no ven el e2e, así que "verde 4/4" no es "verde".
 
-**La cara buena, y es real: el arreglo de F-068 es de una línea** —`NO_COLOR=1` en
-origen— y **B-010** (guardar el contenido de cada intento, no solo las rutas) es igual de
-barato. Con los dos puestos más B-008, el experimento limpio de MSG-02 vuelve a valer
-~$0,07. **Sigue aplazado por decisión del PO**, y sigue siendo la entrada más importante
-del backlog.
+**El primero era el arnés, y al cerrar el día el diagnóstico había empeorado, no mejorado.**
+La noche anterior había **un** mecanismo que invalidaba las medidas (F-064: el reintento no
+le enseña al Coder su propio código). Al cerrar había **dos**: el feedback le llegaba además
+con los códigos de color como texto, y el intento 3 pegó dos dentro de un `import` (F-068).
+**Para las cuatro corridas anteriores eso significa que cualquier lectura de un intento ≥2
+está contaminada por los dos, no solo por uno.**
+
+**La cara buena era real y se confirmó: el arreglo de F-068 era de una línea** —`NO_COLOR=1`
+en origen— y **B-010** (guardar el contenido de cada intento, no solo las rutas) igual de
+barato. Los tres se pusieron esa misma tarde, y el experimento costó **$0,0178**.
 
 **El segundo es que tres de los cuatro defectos de hoy fueron míos, no del modelo**, y los
 tres de la misma familia: asertos sin ámbito. Es la tercera vez (F-059, la revisión de

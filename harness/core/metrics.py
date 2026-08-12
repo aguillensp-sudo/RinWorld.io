@@ -40,8 +40,20 @@ class CsvContractError(RuntimeError):
 
 
 def build_record(*, task_id, screen, model, attempt, acc, seconds, finish_reason,
-                 truncated_at, files, checks=None, escalated=False, extra=None) -> dict:
-    """El JSON del intento. Es la fuente de verdad del coste; el CSV se deriva."""
+                 truncated_at, files, checks=None, escalated=False, extra=None,
+                 sources=None) -> dict:
+    """El JSON del intento. Es la fuente de verdad del coste; el CSV se deriva.
+
+    `files` son las RUTAS —es lo que va al CSV, separadas por `;`— y `sources` el
+    `{ruta: contenido}` entero.
+
+    ⚠ **`sources` existe porque el artefacto de los intentos intermedios se
+    perdia** (B-010). Solo el ultimo queda en disco, asi que al leer una corrida
+    escalada no habia forma de mirar lo que produjo el intento 1 — que es
+    justamente el unico que el bucle roto no distorsionaba (F-064) y el que habia
+    que leer. El 12-ago costo no poder medir el intento 1 de VND-01 despues de
+    haberlo pagado. Guardarlo es barato y hace la corrida reproducible sin
+    volver a pagarla."""
     pricing.check_prices()  # F-010: antes de calcular nada, no despues
 
     tin, tout = acc["tokens_in"], acc["tokens_out"]
@@ -65,6 +77,7 @@ def build_record(*, task_id, screen, model, attempt, acc, seconds, finish_reason
         "cost_usd_cold_equivalent": round(pricing.cost_usd_cold(tin, tout), 6),  # F-011
         "price_table": pricing.table(),
         "files": sorted(files),
+        "sources": dict(sorted((sources or {}).items())),
         "checks": checks or [],
         "escalated_to_human": bool(escalated),
     }

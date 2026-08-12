@@ -148,22 +148,62 @@ Un bloque por fichero, con la ruta tal como aparece en la lista de arriba:
 """
 
 
+def build_messages(task: dict, files: dict, feedback: str) -> list:
+    """Los mensajes de una vuelta. **Puro y aparte de `coder_node` a proposito**:
+    lo que hay que poder probar sin gastar es COMO se arma el reintento, y eso
+    era justamente lo que nadie miraba (F-064).
+
+    ⚠ EL TURNO DE ASISTENTE ES F-064 ENTERO, Y FALTABA.
+
+    Hasta el 12-ago el reintento se armaba con dos mensajes —la tarea, IDENTICA a
+    la del intento 1, y la salida cruda de los checks— **sin un turno de asistente
+    con el artefacto anterior**. O sea que al modelo se le mandaba
+    `ThreadHistory.tsx(136,61): error TS2375: …` **sobre un fichero que no estaba
+    viendo**, y se le pedia regenerar los ocho desde cero. Que reprodujera el
+    mismo error no era ignorar a `tsc`: era volver a tirar el dado con una nota de
+    como salio la vez anterior.
+
+    **El dato ya viajaba por el grafo.** `HarnessState.files` esta declarado como
+    "{ruta: contenido} del ultimo intento del Coder" y `coder_node` lo devuelve en
+    cada vuelta. No faltaba informacion: faltaba usarla. Tres conclusiones sobre
+    el modelo se midieron sin esto — F-036, la corrida 2 de SRCH-01 y la mitad de
+    F-059.
+
+    Se reconstruye en el MISMO formato `===FILE:===` que se le exige de salida, y
+    a proposito: asi el turno anterior es indistinguible de una respuesta suya,
+    que es lo que era.
+
+    **En el intento 1 no hay turno de asistente y no puede haberlo**: el primer
+    intento tiene que seguir siendo una pagina en blanco, o deja de medir lo que
+    dice medir."""
+    user = ("Produce los ficheros ahora. SOLO los bloques FILE, sin explicaciones "
+            "ni resumen.")
+    if feedback:
+        user += ("\n\n## RESULTADO DE TU INTENTO ANTERIOR (corrigelo todo)\n"
+                 "Esto es salida cruda de las comprobaciones sobre los ficheros que "
+                 "acabas de escribir, no una explicacion. **Los numeros de linea son "
+                 "de ESOS ficheros**, que tienes arriba:\n\n" + feedback)
+
+    messages = [{"role": "system", "content": build_system(task)}]
+
+    if files:
+        messages.append({
+            "role": "assistant",
+            "content": "\n".join(
+                f"===FILE: {ruta}===\n{codigo}\n===ENDFILE==="
+                for ruta, codigo in sorted(files.items())),
+        })
+
+    messages.append({"role": "user", "content": user})
+    return messages
+
+
 def coder_node(state: HarnessState) -> dict:
     """Llama al modelo, escribe los ficheros y deja el registro del intento."""
     task = state["task"]
     attempt = state.get("attempt", 0) + 1
 
-    user = ("Produce los ficheros ahora. SOLO los bloques FILE, sin explicaciones "
-            "ni resumen.")
-    if state.get("feedback"):
-        user += ("\n\n## RESULTADO DEL INTENTO ANTERIOR (corrigelo todo)\n"
-                 "Esto es salida cruda de las comprobaciones, no una explicacion:\n\n"
-                 + state["feedback"])
-
-    messages = [
-        {"role": "system", "content": build_system(task)},
-        {"role": "user", "content": user},
-    ]
+    messages = build_messages(task, state.get("files") or {}, state.get("feedback") or "")
 
     def on_truncation(nuevo):
         print(f"  TRUNCADO (finish_reason=length). Reintento con max_tokens={nuevo} (F-005)")
@@ -182,6 +222,10 @@ def coder_node(state: HarnessState) -> dict:
         attempt=attempt, acc=out["acc"], seconds=out["seconds"],
         finish_reason=out["finish_reason"], truncated_at=out["truncated_at"],
         files=list(files),
+        # B-010: el contenido, no solo las rutas. Sin esto, el artefacto de los
+        # intentos 1 y 2 se pierde y solo sobrevive en disco el del ultimo — que
+        # es el peor de los tres cuando la corrida escala.
+        sources=files,
     )
 
     print(f"  ficheros: {sorted(files) or 'NINGUNO'}")

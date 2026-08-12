@@ -17,8 +17,8 @@ import sys
 
 from ..core import metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
-from ..graph.nodes.coder import build_system
-from ..graph.nodes.test_runner import _check_c2, resolve, run_cmd
+from ..graph.nodes.coder import build_messages, build_system
+from ..graph.nodes.test_runner import _check_c2, _finish, resolve, run_cmd, strip_ansi
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TOKENS = read_tokens(
@@ -278,7 +278,125 @@ def test_prompt_inputs():
               firma in system, ruta)
 
 
+def test_ansi_no_llega_al_modelo():
+    """F-068 · ni un codigo de color en lo que se le manda al Coder.
+
+    ⚠ **El caso que importa es el de EN MEDIO: la secuencia SIN su ESC delante.**
+    La salida de vitest llegaba con el byte 0x1B ya perdido y el resto intacto
+    —`[36m`, `[1m`, `[0m`—, asi que un patron `\\x1b\\[[0-9;]*m` de manual la
+    dejaba pasar entera. Medido: 72 secuencias en el feedback del intento 1 de
+    VND-01 y 70 en el del 2.
+
+    Y no era cosmetico. El intento 3 escribio `import type { SentOffer, [1m, [0m
+    } from '...'` y el fichero dejo de parsear: **el intento 3 salio peor que el
+    1**, que solo tenia errores de tipo.
+
+    La tercera comprobacion es la que hace que esta prueba valga: **un texto
+    normal no se toca**. Un limpiador que se coma corchetes legitimos romperia
+    los mensajes de `tsc`, que van llenos de `Type '...'` y de indices."""
+    print("\nF-068 · el feedback no lleva codigos de color")
+
+    con_esc = "\x1b[36mFAIL\x1b[39m src/App.tsx"
+    sin_esc = "[36mFAIL[39m src/App.tsx"          # el caso real, y el que se colaba
+    limpio = "src/App.tsx(1,53): error TS1003: Identifier expected."
+
+    check("limpia la secuencia con ESC", strip_ansi(con_esc) == "FAIL src/App.tsx",
+          strip_ansi(con_esc))
+    check("⚠ limpia la secuencia SIN ESC, que es la que llegaba de verdad",
+          strip_ansi(sin_esc) == "FAIL src/App.tsx", strip_ansi(sin_esc))
+    check("no toca un texto sin color", strip_ansi(limpio) == limpio, strip_ansi(limpio))
+
+    # El caso exacto que rompio VND-01, de punta a punta.
+    roto = "import type { SentOffer, SortColumn, [1m, [0m } from './x';"
+    check("el import de VND-01 sale sin los codigos",
+          "[1m" not in strip_ansi(roto) and "[0m" not in strip_ansi(roto))
+
+    # Y la frontera: `_finish` es lo ultimo antes del modelo.
+    salida = _finish({"attempt": 1},
+                     [{"id": "C1", "ok": False, "detail": sin_esc}])
+    check("y el feedback que sale del nodo tampoco los lleva",
+          "[36m" not in salida["feedback"] and "[39m" not in salida["feedback"],
+          salida["feedback"])
+
+
+def test_reintento_ensena_el_artefacto():
+    """F-064 · el reintento tiene que enseñarle al Coder el codigo que escribio.
+
+    Hasta el 12-ago el reintento se armaba con DOS mensajes —la tarea, identica a
+    la del intento 1, y la salida cruda de los checks— **sin un turno de asistente
+    con el artefacto anterior**. Al modelo se le mandaba
+    `ThreadHistory.tsx(136,61): error TS2375` sobre un fichero que no estaba
+    viendo, y se le pedia regenerar los ocho desde cero.
+
+    Tres conclusiones sobre el modelo se midieron asi: F-036, la corrida 2 de
+    SRCH-01 y la mitad de F-059.
+
+    Las dos comprobaciones van juntas a proposito: **en el intento 1 NO puede
+    haber turno de asistente**. Si lo hubiera, el primer intento dejaria de ser
+    una pagina en blanco y la corrida no mediria lo que dice medir."""
+    print("\nF-064 · el reintento lleva el artefacto anterior")
+
+    task = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json").read_text(encoding="utf-8"))
+    anterior = {"app/src/screens/messages/ThreadList.tsx": "export function X() { return null; }"}
+
+    primero = build_messages(task, files={}, feedback="")
+    check("el intento 1 va sin turno de asistente",
+          [m["role"] for m in primero] == ["system", "user"],
+          str([m["role"] for m in primero]))
+
+    reintento = build_messages(task, files=anterior, feedback="### C1 ROJO\nerror TS2322")
+    roles = [m["role"] for m in reintento]
+    check("⚠ el reintento SI lo lleva", roles == ["system", "assistant", "user"], str(roles))
+
+    asistente = next(m["content"] for m in reintento if m["role"] == "assistant")
+    check("y lleva el contenido del fichero, no solo su ruta",
+          "export function X()" in asistente)
+    check("en el mismo formato ===FILE:=== que se le exige de salida",
+          "===FILE: app/src/screens/messages/ThreadList.tsx===" in asistente
+          and "===ENDFILE===" in asistente)
+
+    usuario = next(m["content"] for m in reintento if m["role"] == "user")
+    check("y el feedback sigue yendo crudo en el turno de usuario",
+          "error TS2322" in usuario)
+
+
+def test_metricas_guardan_el_artefacto():
+    """B-010 · el JSON del intento guarda el CONTENIDO, no solo las rutas.
+
+    Sin esto solo sobrevive en disco el artefacto del ultimo intento, que en una
+    corrida escalada es el peor de los tres. El 12-ago costo no poder leer el
+    intento 1 de VND-01 despues de haberlo pagado — y era el unico que el bucle
+    roto no distorsionaba."""
+    print("\nB-010 · el JSON del intento guarda el artefacto")
+
+    acc = {"tokens_in": 100, "tokens_out": 50, "cache_hit": 0, "cache_miss": 100, "calls": 1}
+    rec = metrics.build_record(
+        task_id="T", screen="T", model="m", attempt=1, acc=acc, seconds=1.0,
+        finish_reason="stop", truncated_at=None,
+        files=["a.tsx"], sources={"a.tsx": "contenido real"})
+
+    check("`files` sigue siendo la lista de rutas (es lo que va al CSV)",
+          rec["files"] == ["a.tsx"], str(rec["files"]))
+    check("⚠ y `sources` lleva el contenido",
+          rec["sources"] == {"a.tsx": "contenido real"}, str(rec.get("sources")))
+
+
 def main() -> int:
+    # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
+    # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
+    # y el primer nombre de prueba con un caracter fuera de ese rango levanta
+    # `UnicodeEncodeError`. Lo que se ve entonces es una suite que **se corta sin
+    # decir por que**, con las pruebas anteriores en verde y ninguna señal de que
+    # falten las siguientes. Es la tercera variante del mismo fallo del proyecto
+    # (F-019 en la siembra, F-037 en la clave de Supabase): el veredicto sobrevive
+    # y la razon no.
+    #
+    # En CI no pasaba —Linux va en UTF-8— asi que solo rompia en la maquina donde
+    # se desarrolla, que es la peor forma de romper.
+    for flujo in (sys.stdout, sys.stderr):
+        if hasattr(flujo, "reconfigure"):
+            flujo.reconfigure(encoding="utf-8", errors="replace")
+
     test_palette()
     test_idiomatic()
     test_metrics()
@@ -287,6 +405,9 @@ def main() -> int:
     test_toolchain()
     test_c2_paths()
     test_prompt_inputs()
+    test_ansi_no_llega_al_modelo()
+    test_reintento_ensena_el_artefacto()
+    test_metricas_guardan_el_artefacto()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

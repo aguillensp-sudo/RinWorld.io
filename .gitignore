@@ -1,6 +1,18 @@
 # Secretos y configuración local
 .env
 .env.*
+# ⚠ LA PLANTILLA SÍ SE VERSIONA, y la excepción tiene que ir DESPUÉS del patrón
+# que la excluye o git no la ve.
+#
+# `.env.*` se tragaba `.env.example` desde el día 1, así que el fichero al que
+# `app/src/lib/supabase.ts` remite —*"Copia .env.example a .env"*— no estaba en
+# el repo: quien clonara no lo encontraba, y el aviso de `VITE_DEMO_KEY_SEED`
+# solo existía en la máquina donde se escribió.
+#
+# No lleva ningún secreto y no puede llevarlo: marcadores en las dos claves de
+# Supabase y las contraseñas de e2e **vacías**. Si alguna vez alguien pone un
+# valor real ahí, el fallo es ese, no esta línea.
+!.env.example
 **/.claude/settings.local.json
 
 # Artefactos de Python

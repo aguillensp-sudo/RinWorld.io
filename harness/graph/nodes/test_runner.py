@@ -34,7 +34,9 @@ Nada redactado por un humano ni por otro modelo: si se redacta, se inyecta la
 solucion y el intento 2 deja de medir al Coder.
 """
 import json
+import os
 import pathlib
+import re
 import shutil
 import subprocess
 
@@ -43,6 +45,31 @@ from ..state import MAX_ATTEMPTS, HarnessState
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 APP = ROOT / "app"
+
+# ⚠ EL BYTE ESC ES OPCIONAL EN ESTE PATRON, Y ESA ES LA GRACIA (F-068).
+#
+# La salida de vitest llegaba aqui con el ESC (0x1B) ya perdido por el camino y
+# el resto de la secuencia intacto: `[36m`, `[39m`, `[1m`, `[0m`... Un
+# `re.sub(r'\x1b\[[0-9;]*m', ...)` de manual NO limpia eso, porque lo que queda
+# no es una secuencia de escape: es texto. Medido el 12-ago sobre la corrida de
+# VND-01: **72 secuencias en el feedback del intento 1 y 70 en el del 2**, todas
+# sin ESC.
+#
+# Y no es cosmetico. En el intento 3 el Coder recibio ese texto, se lo creyo, y
+# escribio literalmente:
+#
+#   import type { SentOffer, SortColumn, SortDirection, [1m, [0m } from '...';
+#
+# El fichero dejo de parsear. **El intento 3 salio PEOR que el 1** —que solo
+# tenia tres errores de tipo— y la corrida escalo con un error de sintaxis que no
+# habia escrito nadie. Es el segundo mecanismo que invalidaba las medidas, junto
+# con F-064.
+_ANSI = re.compile(r"\x1b?\[[0-9;]*m")
+
+
+def strip_ansi(text: str) -> str:
+    """Quita los codigos de color, con o sin su ESC delante."""
+    return _ANSI.sub("", text or "")
 
 
 def resolve(program: str) -> str:
@@ -87,15 +114,22 @@ def run_cmd(cmd: list, cwd: pathlib.Path) -> tuple:
         # y el check queda ROJO **sin detalle**: el feedback que vuelve al Coder es
         # una cabecera vacia. Tercera variante del mismo fallo en un dia — el
         # veredicto sobrevive y la razon no.
+        # `NO_COLOR` y `FORCE_COLOR=0` apagan el color EN ORIGEN, que es donde hay
+        # que apagarlo: limpiar despues es un parche que depende de acertar con el
+        # patron, y ya se fallo una vez (F-068). Los dos porque no hay uno solo
+        # que respeten todos: `NO_COLOR` es la convencion (no-color.org) y vitest
+        # y tsc miran `FORCE_COLOR`. `strip_ansi` de abajo se queda igualmente
+        # como red: `npx` no propaga el entorno a todo lo que arranca.
+        env = {**os.environ, "NO_COLOR": "1", "FORCE_COLOR": "0"}
         p = subprocess.run([resolve(cmd[0]), *cmd[1:]], cwd=cwd,
                            capture_output=True, text=True,
                            encoding="utf-8", errors="replace",
-                           timeout=900, shell=False)
+                           timeout=900, shell=False, env=env)
     except FileNotFoundError as e:
         return 127, f"no se pudo ejecutar {' '.join(cmd)}: {e}"
     except subprocess.TimeoutExpired:
         return 124, f"timeout ejecutando {' '.join(cmd)}"
-    return p.returncode, (p.stdout or "") + (p.stderr or "")
+    return p.returncode, strip_ansi((p.stdout or "") + (p.stderr or ""))
 
 
 def _tail(text: str, lines: int = 40) -> str:
@@ -199,7 +233,13 @@ def _finish(state: HarnessState, checks: list) -> dict:
         verdict = "en_curso"
 
     # El feedback es el `detail` crudo de los rojos. Nada mas.
-    feedback = "\n\n".join(f"### {c['id']} ROJO\n{c['detail']}" for c in rojos)
+    #
+    # `strip_ansi` otra vez aqui, y no es redundante: esto es LO QUE SALE HACIA EL
+    # MODELO, asi que la garantia se cierra en la frontera, no en cada productor.
+    # `run_cmd` ya limpia lo suyo, pero un check nuevo que traiga texto de otro
+    # sitio no tendria que acordarse de nada (F-068).
+    feedback = strip_ansi(
+        "\n\n".join(f"### {c['id']} ROJO\n{c['detail']}" for c in rojos))
 
     # El registro del intento se devuelve explicitamente, no se muta en el estado:
     # confiar en que el grafo comparte el objeto es la clase de suposicion que se

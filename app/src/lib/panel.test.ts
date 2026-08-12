@@ -67,7 +67,7 @@ describe('subtitleLabel · CA-PANEL-01', () => {
 
 describe('las líneas de detalle', () => {
   it('la de ofertas lleva referencia, organización y fecha', () => {
-    expect(latestOfferLine(H)).toBe('Más reciente: 6205-2RS · NSK Europe Ltd (11/08/2026)');
+    expect(latestOfferLine(H)).toBe('Más reciente: 6205-2RS · NSK Europe Ltd (11 ago 2026)');
   });
 
   it('la de consultas no lleva fecha, que la spec no la pide', () => {
@@ -91,8 +91,13 @@ describe('las líneas de detalle', () => {
 });
 
 describe('dateLabel', () => {
-  it('formatea a DD/MM/AAAA', () => {
-    expect(dateLabel('2026-08-11T10:00:00Z')).toBe('11/08/2026');
+  /**
+   * `DD Mmm YYYY`, que es el del HTML aprobado (`29 Jun 2026`) — y NO el
+   * `DD/MM/AAAA` del subtítulo. Son dos formatos distintos en la misma pantalla.
+   */
+  it('formatea como las tarjetas del HTML aprobado, no como el subtítulo', () => {
+    expect(dateLabel('2026-08-11T10:00:00Z')).toBe('11 ago 2026');
+    expect(dateLabel('2026-08-11T10:00:00Z')).not.toContain('/');
   });
 
   it('sin fecha, raya', () => {

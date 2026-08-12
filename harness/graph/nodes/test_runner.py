@@ -230,11 +230,27 @@ def _check_c2(task, runner) -> dict:
         if code != 0:
             return _rojo("C2", f"vitest de aceptacion (exit {code})\n{_tail(out)}", code, out)
         partes.append(f"unidad {len(unit)} fichero(s)")
-    if e2e:
-        code, out = runner(["npx", "playwright", "test", *rel(e2e)], APP)
-        if code != 0:
-            return _rojo("C2", f"playwright de aceptacion (exit {code})\n{_tail(out)}", code, out)
-        partes.append(f"e2e {len(e2e)} fichero(s)")
+    # D-09-03 (a), decidido por el PO el 12-ago: **C2 corre SIEMPRE la suite e2e
+    # ENTERA**, declare la tarea ficheros o no.
+    #
+    # F-070 nacio justo de lo contrario. LOGIN-01 salio 4/4 VERDE y estaba
+    # colgando la suite completa: su tarea no declaraba ningun e2e, asi que esta
+    # rama no corria y los cuatro checks daban por buena una pantalla que rompia
+    # otras. Un "verde 4/4" que no mira lo de al lado no es verde: es un hueco
+    # con forma de verde.
+    #
+    # Los ficheros que la tarea declare ya van DENTRO de la suite, asi que no se
+    # corren aparte —seria pagar dos veces por lo mismo—. Lo que se pierde es
+    # atribucion: el fallo dice "la suite" y no "tu fichero". Lo que se gana es
+    # que deje de existir un modo de pasar sin haber mirado.
+    #
+    # El coste son minutos de CPU por intento. El del hueco fue una contrasena en
+    # un artefacto descargable (F-038 + F-070).
+    code, out = runner(["npx", "playwright", "test"], APP)
+    if code != 0:
+        return _rojo("C2", f"suite e2e COMPLETA (exit {code})\n{_tail(out)}", code, out)
+    partes.append("suite e2e completa" + (f" (cubre los {len(e2e)} declarados)" if e2e else ""))
+
     return {"id": "C2", "ok": True, "estado": VERDE,
             "detail": "aceptacion en verde: " + " + ".join(partes)}
 

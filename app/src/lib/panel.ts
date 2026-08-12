@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { fetchStats } from './inventory';
-import { fetchSentOffers } from './sent-offers';
+import { fetchSentOffers, sentAtLabel } from './sent-offers';
 
 /**
  * Capa de datos de PANEL-01 · Mi Panel (dashboard de inicio).
@@ -103,9 +103,21 @@ export function metricLabel(n: number | null): string {
   return n === null ? '—' : String(n);
 }
 
-/** `Última publicación: {fecha}` — o raya si nunca se publicó nada. */
+/**
+ * La fecha de una tarjeta: `28 Jun 2026`.
+ *
+ * ⚠ **NO es el formato del subtítulo.** El HTML aprobado usa dos: el subtítulo
+ * lleva `DD/MM/AAAA` porque la spec §3 lo escribe así con su ejemplo
+ * (`martes 30/06/2026`), y las líneas de detalle de las tarjetas llevan
+ * `29 Jun 2026`. Se descubrió leyendo el HTML, no la spec: la §4.1 solo dice
+ * `{fecha}`.
+ *
+ * Y no se reimplementa: es `sentAtLabel` de VND-01, que ya hace exactamente
+ * esto. Dos formateadores del mismo formato acabarían discrepando en el mes
+ * abreviado o en el punto, y la discrepancia no daría error.
+ */
 export function dateLabel(iso: string | null): string {
-  return iso ? FECHA_CORTA.format(new Date(iso)) : '—';
+  return iso ? sentAtLabel(iso) : '—';
 }
 
 /** `Más reciente: {referencia} · {organización} ({fecha})` (spec §4.1). */

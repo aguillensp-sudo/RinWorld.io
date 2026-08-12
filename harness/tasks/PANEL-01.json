@@ -1,0 +1,67 @@
+{
+  "task_id": "PANEL-01",
+  "screen": "PANEL-01",
+  "goal": "Panel de contenido de PANEL-01 (Mi Panel, el dashboard de entrada tras el login): cabecera con eyebrow/titulo/subtitulo y una rejilla de SEIS tarjetas de resumen, cada una clicable entera. Los datos NO se calculan aqui: llegan de `fetchPanelSummary`, que ya esta escrita y probada.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md 5) con las cuatro desviaciones vivas: `component_api` (dia 5), literales verbatim y estado accesible declarado (dia 6), y el `style_reference` elegido POR PATRON y no por parecido (dia 8, F-069).",
+  "_nota_criticidad": "Plan 3, fila del dia 9. Es LA PRIMERA PANTALLA QUE SE VE AL ENTRAR, asi que un fallo aqui es lo primero que ve el socio el dia 11. Y tiene una trampa que no ha tenido ninguna pantalla anterior: TRES de sus cifras NO EXISTEN. Ver `_nota_decisiones`.",
+  "_nota_decisiones": "TRES METRICAS NO TIENEN FUENTE DE DATOS, comprobado contra el esquema: no hay tabla de visitas, no hay ningun registro de lectura (F-027 a) y los favoritos del mes son ilegibles por RLS (`favorites_select_own`, 0005:67, devolveria cero filas en silencio). `fetchPanelSummary` devuelve `null` en las tres y el TIPO lo dice: `visits: null`, `unread: null`, `favorites.monthly: null` — no son `number`. PINTALAS CON EL GUION `metricLabel(null)` -> '—'. NUNCA con 0, y nunca omitiendo la caja. El motivo esta en RNG-PANEL-02: la spec dice que las cajas se ven 'incluso en valor 0 para reforzar que el dato esta actualizado y no ausente', asi que un 0 AFIRMA que se ha mirado y no hay ninguno. Donde no hay fuente, eso seria mentir con respaldo del spec. El resto de cifras SI son reales y van tal cual.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_PANEL-01.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/PANEL-01 · PANEL v1.0.html",
+    "decisions": "openspec/mvp/Dia-09_decisiones_vera.md",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "1.1",
+      "1.4",
+      "1.5",
+      "6.4"
+    ],
+    "style_reference": "app/src/screens/inventory/Inventory.tsx",
+    "_nota_style_reference": "F-069: el `style_reference` es el fichero que ya resolvio EL PATRON, no el que mas se parece. Inventory.tsx resuelve LOS DOS problemas de esta pantalla: (1) es la otra rejilla de TARJETAS DE RESUMEN del MVP -numero grande, etiqueta debajo, linea de detalle-, y (2) ya tuvo una metrica SIN FUENTE DE DATOS -'Visitas recibidas (30 dias)'- y la resolvio pintando un guion, con el comentario explicando que inventar el numero seria el riesgo #1 de CLAUDE.md 7. Copia ese tratamiento tres veces.",
+    "data_layer": [
+      "app/src/lib/panel.ts"
+    ],
+    "_nota_data_layer": "ENTREGADA, no solo declarada (F-057): `panel.ts` esta escrita a mano y probada con 28 asertos verdes. IMPORTALA, no la reescribas. De ahi salen `fetchPanelSummary`, `subtitleLabel`, `metricLabel`, `dateLabel`, `latestOfferLine`, `latestQueryLine` y el tipo `PanelSummary`. Ninguna cifra ni ningun texto derivado se calcula en el componente: si lo calculas, habra dos verdades sobre el mismo dato."
+  },
+  "outputs": [
+    "app/src/screens/panel/Panel.tsx",
+    "app/src/screens/panel/Panel.module.css"
+  ],
+  "_nota_esqueletos": "Los dos ficheros ya existen como ESQUELETOS vacios y hay que sobrescribirlos enteros. Estan asi para que el contrato de aceptacion pudiera verificarse en ROJO TOTAL antes de que existiera el artefacto (F-058): 20 asertos, 20 en rojo, ni un verde.",
+  "component_api": {
+    "_nota": "Los tests de aceptacion fijan nombres de prop y el Coder NO los ve -regla de integridad de CLAUDE.md 3-, asi que sin este campo tendria que adivinarlos.",
+    "_nota_literales": "TODO LITERAL QUE EL USUARIO VE va VERBATIM, con sus acentos (F-048). La prosa de este fichero va sin acentos por convencion; los literales NO. Salen del HTML aprobado: 'Panel · PANEL-01', 'Mi Panel', 'Ofertas', 'pendientes de respuesta', 'Consultas', 'sin respuesta', 'lineas publicadas' (con acento: lineas -> líneas), 'Ultima publicacion:' (-> 'Última publicación:'), 'visitas (30d)', 'con mensajes sin leer', 'Resumen mes', 'Ofertas Aceptadas', 'Ofertas Realizadas', 'Consultas Realizadas', 'Favoritos recibidos'. Las mayusculas de 'Ofertas Aceptadas' son las del HTML: no las cambies.",
+    "_nota_accesibilidad": "RNG-PANEL-03: el click en CUALQUIER punto de la tarjeta navega, no solo el numero. Cada tarjeta es un <button> cuyo NOMBRE ACCESIBLE incluye su titulo o su etiqueta, porque los tests la buscan por rol: getByRole('button', {name: /Ofertas/}), /Consultas/, /lineas publicadas/ y /con mensajes sin leer/.",
+    "app/src/screens/panel/Panel.tsx": "export function Panel({ profile, now, onNavigate }: { profile: MemberProfile; now?: Date; onNavigate: (screen: 'Vendiendo' | 'Comprando' | 'Inventario' | 'Hilos') => void }). ES LA PANTALLA: llama a `fetchPanelSummary({ orgId: profile.orgId, now })` en un efecto, guarda el `PanelSummary | null` y el error. Mientras carga NO pinta ninguna caja (los tests comprueban que no aparece 'pendientes de respuesta'). Si falla, pinta un texto que empiece por 'No se ha podido cargar'. El subtitulo sale de `subtitleLabel(profile.fullName, profile.email, now)`. Las navegaciones: Ofertas -> 'Vendiendo', Consultas -> 'Comprando', Inventario -> 'Inventario', Hilos -> 'Hilos'."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/panel/Panel.test.tsx"
+    ],
+    "e2e": [],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea (Plan 6). El Coder no los ve: si los ve, escribe para el test. Son 20 asertos y se verificaron en ROJO TOTAL contra los esqueletos vacios -20 de 20-, con cada aserto negativo llevando su ancla positiva en el MISMO `it` (F-074). Y desde hoy C2 corre ADEMAS la suite e2e COMPLETA aunque este campo `e2e` este vacio (D-09-03 a): F-070 nacio de que LOGIN-01 saliera 4/4 verde colgando la suite."
+  },
+  "out_of_scope": [
+    "El shell (brand bar, nav, sidebar, panel de VERA): ya existe en AppShell.tsx. Solo el panel de contenido.",
+    "Cablear la pantalla en App.tsx: lo hace Claude Code despues, a mano.",
+    "Tocar app/src/lib/panel.ts o cualquier otro fichero de lib/: la capa de datos esta entregada y probada.",
+    "Calcular cualquier cifra en el componente: todas vienen de fetchPanelSummary.",
+    "Inventar un dato para las tres metricas sin fuente. Van con guion. No hay excepcion.",
+    "Ordenar o filtrar nada: este panel no tiene ni tabla ni controles.",
+    "La caja 4.6 navega a DIR-01/DIR-02 segun la spec, pero esas pantallas NO existen en el MVP: esa tarjeta no navega a ninguna parte.",
+    "Anadir dependencias nuevas.",
+    "Tocar los tests: no los ves y no existen para ti.",
+    "Escribir en la base de datos: esta pantalla es de solo lectura."
+  ],
+  "constraints": [
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb(), ni aunque el valor sea correcto. El HTML aprobado da hex por todas partes: el mapeo hex->token vive en el CSS y el componente no reimplementa colores.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "TypeScript estricto: nada de `any`, nada de `@ts-ignore`, nada de `!` no justificado. `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes` estan activos.",
+    "CSS Modules, como el resto de pantallas. Nada de estilos en linea salvo los que dependan de un valor calculado en tiempo de ejecucion.",
+    "El guion de las metricas sin fuente sale de `metricLabel(null)`, no de un '—' escrito a mano: si el dia de manana esas metricas tienen fuente, se cambia en un sitio.",
+    "Cada tarjeta es un <button type='button'>, no un <div onClick>: RNG-PANEL-03 exige que toda la tarjeta sea clicable, y un div no es accesible por teclado.",
+    "La rejilla es de 2 columnas en escritorio y 1 en movil (spec 4). La caja 'Resumen mes' ocupa la fila entera.",
+    "Nada de `useEffect` sin array de dependencias, y la carga se cancela o se ignora si el componente se desmonta antes de resolver.",
+    "No uses `toLocaleDateString` ni construyas fechas a mano: las fechas ya vienen formateadas por `dateLabel` y `subtitleLabel`."
+  ]
+}

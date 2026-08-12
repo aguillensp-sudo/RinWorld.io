@@ -25,6 +25,30 @@ dist/assets/index-*.js        426,67 kB │ gzip 122,07 kB
 Eso lo sirve cualquier hosting estático. **Vercel es la elección del PO**; Cloudflare Pages o
 Netlify servirían igual y sin la cláusula del §7.
 
+### Y está simulado, no supuesto
+
+`F-054` dejó la regla: **una instrucción para el PO que no se ha ejecutado nunca es una
+hipótesis, no un procedimiento.** Así que antes de escribir este documento se hizo lo que hará
+Vercel: **clon limpio de `mvp/bootstrap`** (sin `.env`, que está en `.gitignore`), `npm ci`, y
+`npm run build` con **solo** las tres variables del §2 exportadas al entorno. Resultado:
+
+| Comprobación | Resultado |
+|---|---|
+| El build termina | ✅ `tsc -b && vite build`, sin `.env` en el árbol |
+| La semilla llega al bundle de *Production* | ✅ aparece literal en el `.js` (se usó un marcador, no la real) |
+| `robots.txt` se sirve en la raíz | ✅ `dist/robots.txt` |
+| El `<meta robots>` sobrevive al build | ✅ `dist/index.html` |
+| **Nada de servicio ni de e2e en lo publicado** | ✅ ni `sb_secret_…` ni JWT en `dist/` |
+
+La última es negativa, así que va con **ancla positiva**: el mismo `grep`, en la misma corrida,
+encuentra el marcador de la semilla. Si no encontrase nada, el "no hay fugas" no significaría
+nada — es F-059 aplicado a una comprobación de despliegue.
+
+> Un aviso para quien repita el negativo: `sb_secret` **aparece** en el bundle y **no es una
+> fuga**. Es código de `@supabase/supabase-js` comprobando prefijos
+> (`e.startsWith('sb_secret_')`). Hay que buscar claves con forma de clave
+> (`sb_secret_[A-Za-z0-9_-]{10,}`), no el nombre del token.
+
 ---
 
 ## 1 · Los cuatro ajustes al importar el proyecto

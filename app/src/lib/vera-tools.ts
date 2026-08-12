@@ -57,11 +57,22 @@ export interface ToolResult {
 }
 
 /**
- * Cuántas filas se le enseñan al modelo. No son todas, y **cuando se recorta se
- * dice**: un recorte silencioso le haría contestar "tienes 10" sobre 84, con
- * aplomo y sin que nada falle. Es el patrón de F-023 llevado a la conversación.
+ * Cuántas filas se le enseñan al modelo.
+ *
+ * ⚠ **ERA 10, Y ESO PROVOCÓ EL PRIMER CASO REAL DE RIESGO #1 DEL PROYECTO
+ * (F-075).** En la primera corrida contra Sonnet, la herramienta devolvió 10 de
+ * 13 filas y el pie decía *"13 coincidencias (se listan 10)"*. VERA contestó
+ * nombrando la marca `NTN` y un stock *"desde 150"* — **ninguna de las dos cosas
+ * estaba en su retorno**: eran los puestos 11-13, que no vio. No sonaron raras
+ * porque eran valores reales de la base; rellenó el hueco con conocimiento del
+ * mundo que casualmente encajaba.
+ *
+ * Dársele un recuento cuyo contenido no puede ver es una invitación a especular.
+ * Se ataca por los dos lados: **el tope sube** —estas líneas son cortas y 25
+ * caben de sobra— y **cuando aun así se recorta, se le prohíbe explícitamente
+ * suponer nada de lo que no ve** (ver `recorte`).
  */
-const MAX_FILAS = 10;
+const MAX_FILAS = 25;
 
 export const FORBIDDEN_THREAD_FIELDS = [
   'content_ciphertext',
@@ -122,10 +133,23 @@ export function criteriaFromInput(input: unknown): SearchCriteria {
   };
 }
 
+/**
+ * La cabecera del retorno.
+ *
+ * Cuando hay más filas que las mostradas **se lo dice y le prohíbe suponer**.
+ * Decirle solo *"13 (se listan 10)"* fue lo que produjo F-075: un recuento sin
+ * contenido es un hueco, y este modelo rellena huecos con fluidez.
+ */
 function recorte(mostradas: number, total: number, singular: string, plural: string): string {
   if (total === 0) return `Ninguna ${singular}.`;
   const cabeza = total === 1 ? `1 ${singular}` : `${total} ${plural}`;
-  return total > mostradas ? `${cabeza} (se listan ${mostradas})` : cabeza;
+  if (total <= mostradas) return cabeza;
+  const ocultas = total - mostradas;
+  return (
+    `${cabeza}, y AQUÍ SOLO VES ${mostradas}. Las otras ${ocultas} NO se te han mostrado: ` +
+    `no menciones marcas, cantidades, plazos ni empresas que no estén en la lista de abajo, ` +
+    `y si te preguntan por el resto di que hay ${ocultas} más y que hace falta afinar la búsqueda.`
+  );
 }
 
 // -----------------------------------------------------------------------------

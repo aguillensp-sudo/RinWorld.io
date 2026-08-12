@@ -139,11 +139,87 @@ test.describe('shell autenticado', () => {
     }).toPass();
   });
 
-  test('VERA no finge saber', async ({ page }) => {
+  /**
+   * ⚠ **EL PROXY SE INTERCEPTA, Y NO ES POR VELOCIDAD.** `CLAUDE.md` §5 prohíbe
+   * llamadas reales al LLM en CI automático, así que aquí Sonnet queda fuera.
+   *
+   * Lo que sí se prueba es **todo el camino del cliente**: construir la petición,
+   * firmarla con la sesión, leer la respuesta y pintar. Lo único sin cubrir es lo
+   * que diga el modelo — que no es determinista y no se puede afirmar en un test.
+   *
+   * Sustituye al test del día 2, que comprobaba que VERA declaraba no estar
+   * conectada. Esa afirmación dejó de ser cierta al cablearla, y **el e2e fue lo
+   * único que lo notó**: los tests de unidad montan el panel SIN agente, así que
+   * seguían pasando mientras la aplicación real ya se comportaba de otra forma.
+   */
+  test('VERA responde desde su herramienta, nunca con el eco enlatado del shell', async ({ page }) => {
+    let autorizacion: string | undefined;
+
+    await page.route('**/functions/v1/vera', async (route) => {
+      autorizacion = route.request().headers()['authorization'];
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stop_reason: 'end_turn',
+          content: [
+            {
+              type: 'text',
+              text: 'No puedo leer el contenido de los hilos: va cifrado y el servidor no tiene la clave.',
+            },
+          ],
+        }),
+      });
+    });
+
     await page.getByLabel('Pregunta a VERA').fill('¿qué precio me han ofrecido?');
     await page.getByRole('button', { name: 'Enviar' }).click();
-    await expect(page.getByText(/Todavía no estoy conectada/)).toBeVisible();
+
+    await expect(page.getByText(/va cifrado y el servidor no tiene la clave/)).toBeVisible();
+    // El eco del shell aprobado sigue prohibido: es el riesgo #1 con otra cara.
     await expect(page.getByText(/Entendido\. ¿Algo más\?/)).toBeHidden();
+    // Y la llamada viajó con la sesión del usuario, no anónima.
+    expect(autorizacion).toMatch(/^Bearer .+/);
+  });
+
+  /**
+   * La costura que de verdad importa: que una herramienta **mueva la aplicación**,
+   * no que VERA diga que la ha movido. Con el cableado roto, VERA contaría que te
+   * ha llevado a Hilos y la pantalla se quedaría donde estaba — el riesgo #1 en
+   * su forma más difícil de ver.
+   */
+  test('una herramienta de VERA mueve la aplicación de verdad', async ({ page }) => {
+    let vuelta = 0;
+
+    await page.route('**/functions/v1/vera', async (route) => {
+      vuelta += 1;
+      const cuerpo =
+        vuelta === 1
+          ? {
+              stop_reason: 'tool_use',
+              content: [
+                { type: 'tool_use', id: 'toolu_1', name: 'navegar', input: { pantalla: 'Hilos' } },
+              ],
+            }
+          : { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Ya estás en Hilos.' }] };
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(cuerpo),
+      });
+    });
+
+    await page.getByLabel('Pregunta a VERA').fill('llévame a los hilos');
+    await page.getByRole('button', { name: 'Enviar' }).click();
+
+    await expect(page.getByText('Ya estás en Hilos.')).toBeVisible();
+    // El nav se movió de verdad, y hubo dos vueltas: la herramienta y la respuesta.
+    await expect(page.getByRole('button', { name: 'Hilos' }).first()).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(vuelta).toBe(2);
   });
 
   test('cerrar sesión vuelve al login', async ({ page }) => {

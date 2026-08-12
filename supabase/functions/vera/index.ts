@@ -38,11 +38,9 @@ const MAX_TOKENS = 2048;
  * que es la condición para que se cachee (`CLAUDE.md` §5, desde el primer commit
  * y no como optimización posterior).
  *
- * ⚠ **Y una limitación que hay que saber antes de leer métricas:** el prefijo
- * mínimo cacheable de Sonnet 4.6 son **1024 tokens**. Por debajo de eso el
- * `cache_control` no da error — simplemente no cachea, y `cache_creation_input_tokens`
- * vuelve a 0. Se comprueba mirando `usage` en la respuesta, que por eso se
- * devuelve al cliente, no suponiendo que por poner la marca ya está cacheado.
+ * Medido en la primera corrida real: **2119 tokens de escritura de caché en la
+ * primera llamada y 2119 de lectura en la segunda** — por encima del mínimo de
+ * 1024 de Sonnet 4.6, que es el que falla en silencio si no se llega.
  */
 const PROMPT_ESTATICO = `Eres VERA, la asistente de Bearingworld.io, una plataforma B2B de distribución de rodamientos industriales entre organizaciones.
 
@@ -50,6 +48,8 @@ REGLA PRIMERA, Y ESTÁ POR ENCIMA DE PARECER ÚTIL:
 Respondes exclusivamente desde el retorno de tus herramientas. Cualquier dato sobre catálogo, inventario, hilos o estados sale de una llamada que acabas de hacer en esta misma conversación — nunca de tu memoria, nunca de lo que parezca razonable, nunca de una pregunta anterior. Si no has llamado a la herramienta, no tienes el dato. Dilo.
 
 No recuerdas estado entre preguntas: si el usuario vuelve a preguntar por algo, vuelves a consultarlo.
+
+Y esto vale también CUANDO RESUMES, que es donde es más fácil colarse: si listas marcas, di solo las que aparecen en las filas que has recibido; si das un rango de cantidades o de plazos, calcúlalo solo con esas filas. Una herramienta puede decirte que hay más resultados de los que te enseña — en ese caso NO adivines qué hay en los que no ves, ni siquiera si te parece obvio. Di cuántos faltan y ofrece afinar la búsqueda.
 
 LO QUE NO PUEDES HACER, Y CÓMO SE DICE:
 El contenido de las negociaciones va cifrado extremo a extremo. Los mensajes, las cantidades, los precios, los plazos y las condiciones se cifran en el navegador de cada parte, y este servidor NO tiene la clave. Tú tampoco. Puedes ver metadatos —con quién se negocia, en qué estado está, de cuándo es lo último— y nada más.
@@ -106,8 +106,7 @@ Deno.serve(async (peticion: Request) => {
 
   /*
    * Si falta el secret, se dice con todas las letras. Un proxy que falla con un
-   * 500 opaco manda a buscar el problema al sitio equivocado — y esta es la
-   * pieza que el día 9 quedó pendiente de D-09-04.
+   * 500 opaco manda a buscar el problema al sitio equivocado.
    */
   const clave = Deno.env.get('ANTHROPIC_API_KEY');
   if (!clave) {

@@ -68,4 +68,8 @@ project_id = "troxminloxkjwihwfevs"
 # La versión mayor del Postgres del proyecto. Tiene que coincidir con la del
 # remoto: si no, `db push` avisa y con razón — un `generated always as identity`
 # o un `MERGE` se comportan distinto entre mayores.
-major_version = 16
+# Corregido el 12-ago: ponía 16 y el remoto es **17** (`db.troxminloxkjwihwfevs`,
+# 17.6.1.155, consultado). El 16 se escribió por analogía con el
+# `postgres:16-alpine` de la suite de esquema, que es otra base y no tiene por
+# qué coincidir.
+major_version = 17

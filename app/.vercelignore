@@ -21,9 +21,21 @@ playwright-report
 blob-report
 .playwright
 
-# ⚠ `e2e/` NO se excluye, y no es un descuido.
+# ── e2e ─────────────────────────────────────────────────────────────────────
+# ⚠ LA PRIMERA VERSIÓN DE ESTE FICHERO DECÍA LO CONTRARIO, Y ROMPIÓ EL PRIMER
+# DESPLIEGUE (F-072). Decía: *"`e2e/` NO se excluye — `tsconfig.json` lo lleva
+# en `include` y el build es `tsc -b`, así que sin él el build falla"*.
 #
-# `tsconfig.json` lo lleva en `include`, y el build es `tsc -b && vite build`.
-# Sin `e2e/` en el árbol, `tsc -b` falla en Vercel por ficheros que no encuentra
-# — y falla en el build remoto, no en local, que es la peor forma de enterarse.
-# No entra en el bundle: Vite solo sigue lo que cuelga de `index.html`.
+# El razonamiento era correcto y la conclusión estaba al revés. Lo que se me
+# escapó es que **`e2e/fixture.setup.ts:7` importa `../../supabase/seed/…`, que
+# está FUERA de `app/`** — y el despliegue sube solo `app/`. Incluir `e2e` no
+# arreglaba nada: garantizaba el fallo, porque el import nunca podría resolverse
+# allí. `tsc` cascó con TS2307 sobre código que ni siquiera se publica.
+#
+# Arreglado en origen: `npm run build` usa ahora `tsconfig.build.json`, que solo
+# mira `src` y `vite.config.ts`. Con eso, excluir `e2e` es además lo correcto:
+# es código de prueba y no tiene por qué viajar a un proveedor de hosting.
+# `npm run typecheck` lo sigue comprobando entero, y la CI lo ejecuta aparte.
+e2e
+playwright.config.ts
+vitest.config.ts

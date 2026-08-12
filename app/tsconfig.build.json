@@ -1,0 +1,21 @@
+{
+  // Lo que se comprueba al CONSTRUIR, que no es lo mismo que lo que se
+  // comprueba al desarrollar (F-072).
+  //
+  // `tsconfig.json` incluye `e2e`, y `e2e/fixture.setup.ts:7` importa
+  // `../../supabase/seed/demo-content.mjs` — un fichero que vive FUERA de
+  // `app/`. Eso está bien y es deliberado: el fixture y el generador de la
+  // siembra comparten la misma fuente de datos, para que no puedan divergir.
+  //
+  // Pero el despliegue sube SOLO `app/`, así que allí ese fichero no existe y
+  // `tsc` falla con TS2307 sobre código que ni siquiera se publica. La
+  // comprobación correcta al construir es **lo que va dentro del bundle**, y
+  // eso es `src` (autocontenido, verificado) más la config de Vite.
+  //
+  // El e2e NO deja de comprobarse: `npm run typecheck` sigue usando
+  // `tsconfig.json` entero, y la CI lo ejecuta como paso propio antes del
+  // build. Lo único que cambia es que el build deja de opinar sobre código de
+  // prueba que no empaqueta.
+  "extends": "./tsconfig.json",
+  "include": ["src", "vite.config.ts"]
+}

@@ -25,16 +25,32 @@ dist/assets/index-*.js        426,67 kB │ gzip 122,07 kB
 Eso lo sirve cualquier hosting estático. **Vercel es la elección del PO**; Cloudflare Pages o
 Netlify servirían igual y sin la cláusula del §7.
 
-### Y está simulado, no supuesto
+### Y está simulado, no supuesto — al segundo intento (F-072)
 
 `F-054` dejó la regla: **una instrucción para el PO que no se ha ejecutado nunca es una
-hipótesis, no un procedimiento.** Así que antes de escribir este documento se hizo lo que hará
-Vercel: **clon limpio de `mvp/bootstrap`** (sin `.env`, que está en `.gitignore`), `npm ci`, y
-`npm run build` con **solo** las tres variables del §2 exportadas al entorno. Resultado:
+hipótesis, no un procedimiento.** Se aplicó, y **aun así el primer despliegue falló**, porque
+la simulación modelaba lo que no era.
+
+> **La primera simulación clonó el repo entero** y construyó desde `app/`. Verde. Pero **la CLI
+> no sube el repo: sube `app/`**, y `e2e/fixture.setup.ts:7` importa
+> `../../supabase/seed/demo-content.mjs`, que queda fuera. En el repo clonado ese fichero
+> existía; en el despliegue no. `tsc` cascó con `TS2307` sobre código que ni siquiera se
+> publica. **La simulación era del checkout, no de la subida** — y la diferencia entre las dos
+> es justo donde vivía el fallo.
+>
+> **La lección, que es la de F-054 una vuelta más arriba:** no basta con ejecutar el
+> procedimiento antes de dárselo a nadie. Hay que ejecutarlo **sobre la misma entrada** que
+> tendrá en real. Un ensayo con más ficheros de los que habrá no es un ensayo conservador: es
+> un ensayo de otra cosa.
+
+La simulación buena copia **solo lo que sobrevive a `.vercelignore`**, en un directorio donde
+`../supabase` no existe, y desde ahí `npm ci` + `npm run build` con las tres variables del §2:
 
 | Comprobación | Resultado |
 |---|---|
-| El build termina | ✅ `tsc -b && vite build`, sin `.env` en el árbol |
+| El build termina | ✅ `tsc -p tsconfig.build.json && vite build`, sin `.env` en el árbol |
+| **`tsc` sigue guardando la puerta** | ✅ con un `TS2322` inyectado a mano en `src/`, el build **falla**. Sin esto, "el build pasa" también lo diría un build que dejó de comprobar |
+| `npm run typecheck` sigue viendo `e2e` | ✅ 8 ficheros de `e2e/` en la compilación, verde |
 | La semilla llega al bundle de *Production* | ✅ aparece literal en el `.js` (se usó un marcador, no la real) |
 | `robots.txt` se sirve en la raíz | ✅ `dist/robots.txt` |
 | El `<meta robots>` sobrevive al build | ✅ `dist/index.html` |

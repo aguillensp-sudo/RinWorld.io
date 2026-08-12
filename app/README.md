@@ -18,10 +18,21 @@ npm run dev
 Sirve en **http://localhost:5173**. Para llegar a INV-01: entrar con `alpha@bearingworld.test` y
 pulsar **Inventario** en la barra de navegación.
 
-> **La app no tiene URL desplegada, y es una decisión, no un olvido.** GitHub Pages sirve la rama
-> `main` en la raíz, donde viven los 32 HTML aprobados; `app/` y `supabase/` están en
-> `mvp/bootstrap`, y una SPA de Vite no se sirve sin construirla. El PO decidió el 7-ago que de
-> momento se revisa en local. Se retoma antes del **día 11**, la primera sesión de prueba con él.
+> **Despliegue: el runbook entero está en `openspec/mvp/despliegue.md`.** El PO decidió el
+> 12-ago desplegar en Vercel **con** semilla de demo, con la semilla solo en *Production* y la
+> URL sin indexar. Sustituye a la decisión del 7-ago (*"solo local"*), que vencía en el día 11.
+>
+> Tres cosas de ahí que se olvidan y cuestan una tarde: **Root Directory es `app`**, no la raíz;
+> **la rama de producción es `mvp/bootstrap`**, no `main`; y el proyecto se llama
+> **`bearingworld`**, porque el nombre por defecto lo saca Vercel del repo de GitHub —que sigue
+> siendo `RinWorld.io`— y eso publicaría una URL con el nombre que `CLAUDE.md` §2 prohíbe
+> enseñar. GitHub Pages sigue sirviendo `main` en la raíz con los 32 HTML aprobados; son dos
+> cosas distintas y ninguna estorba a la otra.
+>
+> **Lo que se acepta al desplegar con semilla está en `despliegue.md` §5, escrito entero.**
+> Resumen: `VITE_DEMO_KEY_SEED` acaba literal dentro del `.js` publicado —es cómo funciona el
+> prefijo `VITE_`, no un descuido—, ADR-001 no se rompe y RLS sigue tapando el ciphertext, pero
+> se pierde la segunda capa. Datos inventados, y **muere en V1**.
 
 Las convenciones de traducción a React (tokens, CSS Modules, nombres de clase, verificación)
 están en `openspec/architecture/design-system.md` §6, que se rellenó al construir esto.

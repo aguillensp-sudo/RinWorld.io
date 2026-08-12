@@ -249,9 +249,16 @@ los días 4, 8 y 9 llevan fichero propio). Y dos cosas que condicionan ese día:
    - **`SUPABASE_SERVICE_KEY` como secret de GitHub.** Sin él, el reseteo de fixture y el
      test de envío cifrado **se saltan en CI** — con su motivo a la vista, no en silencio,
      pero se saltan. En local corren.
-2. 🔴 **La app sigue sin URL desplegada**, y ahora quedan **dos días** hasta la sesión de
-   prueba. El día 9 tiene tres bloques y uno es de decisiones irreversibles. **Si no entra
-   el día 9, entra el 10 o no entra.**
+2. 🟠 **Despliegue · decidido y preparado el 12-ago; falta que lo pulses tú.** El PO eligió
+   **Vercel, con semilla de demo, la semilla solo en *Production*, URL sin indexar y muerte
+   en V1**. El repo ya lleva las tres piezas del no-indexado (`app/vercel.json`,
+   `<meta robots>` en `index.html`, `app/public/robots.txt`) y el runbook completo en
+   **`openspec/mvp/despliegue.md`**.
+   **Lo que queda son clics en tu cuenta**, y los cuatro valores por defecto de Vercel están
+   mal en este repo: Root Directory **`app`**, rama de producción **`mvp/bootstrap`**, nombre
+   del proyecto **`bearingworld`** (si no, la URL sale `rinworld-io.vercel.app` — el nombre
+   que `CLAUDE.md` §2 prohíbe enseñar, y una URL sale en todas las capturas), y las tres
+   `VITE_*`. Comprobado que el build sale limpio desde un clon nuevo con **solo** esas tres.
 3. 🟠 **F-070, nuevo de esta tarde: los cuatro checks del arnés no ven el e2e.** LOGIN-01
    salió **4/4 verde** y colgaba la suite entera. Para V1 hay que decidir si C2 corre siempre
    el e2e completo o si la tarea está obligada a declarar los ficheros que la cubren.
@@ -298,6 +305,13 @@ tres de la misma familia: asertos sin ámbito. Es la tercera vez (F-059, la revi
 SRCH-01, hoy). **A partir del día 9 el contrato no está terminado hasta que cada aserto
 negativo se haya visto fallar contra el caso positivo que le corresponde** — no basta con
 comprobar que el conjunto está en rojo contra un esqueleto vacío.
+
+> **⚠ ESTE TERCER RIESGO TAMBIÉN SE MOVIÓ ESA NOCHE, y por la misma vía que el primero:
+> preguntando en vez de esperar al día 9.** El PO decidió el despliegue el 12-ago y el repo
+> quedó preparado — punto 2 de los pendientes y `openspec/mvp/despliegue.md`. **Pero sigue
+> sin haber URL viva hasta que él dé los clics**, que son en su cuenta y con sus
+> credenciales. El riesgo baja de rojo a naranja; no desaparece. Lo de abajo se deja escrito
+> tal como se redactó al cerrar el día 8.
 
 **El tercero es de calendario, y es el más corto: quedan TRES días hasta la sesión de
 prueba con el socio y la app sigue sin URL desplegada.** La decisión del 7-ago fue "solo

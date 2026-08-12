@@ -1,0 +1,24 @@
+# Bearingworld.io · despliegue de demo (día 11). NO INDEXAR.
+#
+# El bundle JS lleva `VITE_DEMO_KEY_SEED` dentro, en claro. No es un descuido de
+# configuración: es cómo funciona Vite — todo lo que empieza por `VITE_` se
+# compila dentro del JavaScript que descarga el navegador. Comprobado sobre el
+# `dist/` real, no supuesto.
+#
+# El riesgo está acotado (los datos son inventados y el ciphertext sigue detrás
+# de RLS y del login), pero no hay ninguna razón para que un rastreador se lleve
+# una copia del bundle a un archivo público que ya no controla nadie.
+#
+# ⚠ ESTE FICHERO NO ES LO QUE IMPIDE LA INDEXACIÓN. Solo reduce el rastreo.
+# Quien la impide es `X-Robots-Tag: noindex` (vercel.json) y el
+# `<meta name="robots">` de index.html.
+#
+# Y las tres piezas se estorban entre sí A PROPÓSITO, así que no se "arreglen":
+# un rastreador que respete este `Disallow` nunca llegará a leer el `noindex`,
+# y uno que lo ignore sí lo leerá. Con las tres, los dos casos quedan cubiertos.
+# Con una sola, ninguno del todo.
+#
+# Se retira cuando la app deje de ser una demo con una semilla de claves dentro
+# — es decir, en V1, donde `VITE_DEMO_KEY_SEED` no debe existir (`.env.example`).
+User-agent: *
+Disallow: /

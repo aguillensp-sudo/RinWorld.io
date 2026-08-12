@@ -244,11 +244,19 @@ los días 4, 8 y 9 llevan fichero propio). Y dos cosas que condicionan ese día:
 
 1. 🔴 **Dos órdenes tuyas, y las dos piden credenciales que no puedo tener.**
    - `npx supabase link --project-ref troxminloxkjwihwfevs` — pide la contraseña de la base.
-     Después, `npx supabase db push --dry-run` **tiene que decir que no hay nada pendiente**;
-     si nombra migraciones antiguas, párate y avísame.
-   - **`SUPABASE_SERVICE_KEY` como secret de GitHub.** Sin él, el reseteo de fixture y el
-     test de envío cifrado **se saltan en CI** — con su motivo a la vista, no en silencio,
-     pero se saltan. En local corren.
+     Después, `npx supabase db push --dry-run` **tiene que decir que no hay nada pendiente**.
+     **Y ahora se sabe que eso es lo que dirá**: el registro del remoto está leído y son
+     `0001`…`0012` más las dos filas históricas que se dejaron a propósito
+     (`sp3_spike_messages_realtime`, `mvp_0011a_realtime_publication_portable`), que `db push`
+     ignora por estar ya aplicadas. Si dijera otra cosa, párate y avísame. Falta solo el
+     enlace: no hay `supabase/.temp`, así que la CLI aún no está enlazada.
+   - **DOS secrets de GitHub, no uno — y `ci.yml` ya está arreglado (F-071).** Lo que te pedí
+     —`SUPABASE_SERVICE_KEY`— **no habría servido de nada**: el workflow no lo nombraba, y
+     además `canResetFixture` (`app/e2e/fixtures.ts:40-42`) exige **tres** variables, de las
+     que a CI solo llegaba `VITE_SUPABASE_URL`. Hay que crear **`SUPABASE_SERVICE_KEY`** y
+     **`DEMO_KEY_SEED`**. Comprobado que hoy existen 8 secrets y ninguno es esos dos.
+     **La verificación no es leer el YAML, es que la corrida de CI deje de saltarse el
+     reseteo de fixture y el test de envío cifrado.**
 2. 🟠 **Despliegue · decidido y preparado el 12-ago; falta que lo pulses tú.** El PO eligió
    **Vercel, con semilla de demo, la semilla solo en *Production*, URL sin indexar y muerte
    en V1**. El repo ya lleva las tres piezas del no-indexado (`app/vercel.json`,

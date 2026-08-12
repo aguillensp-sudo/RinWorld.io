@@ -84,6 +84,23 @@ jobs:
           E2E_BETA_EMAIL: ${{ secrets.E2E_BETA_EMAIL }}
           E2E_BETA_PASSWORD: ${{ secrets.E2E_BETA_PASSWORD }}
           E2E_BETA_ORG: ${{ secrets.E2E_BETA_ORG }}
+          # F-071 · las dos que faltaban, y sin las cuales el secret que se le
+          # pidió al PO no habría servido de nada.
+          #
+          # `canResetFixture` (e2e/fixtures.ts:40-42) exige LAS TRES:
+          # VITE_SUPABASE_URL, SUPABASE_SERVICE_KEY y VITE_DEMO_KEY_SEED. Aquí
+          # solo llegaba la primera, así que el reseteo de fixture y el test de
+          # envío cifrado se saltaban en CI — y seguirían saltándose después de
+          # añadir el secret, porque el workflow no lo leía.
+          #
+          # `VITE_DEMO_KEY_SEED` hace falta además por otra vía: `webServer`
+          # (playwright.config.ts:58) construye la app con `npm run build`
+          # dentro de este job. Sin la semilla, la app deriva claves aleatorias
+          # y no puede descifrar lo sembrado, aunque el fixture sí corriera.
+          #
+          # Nombres de secret sin el prefijo `VITE_`, como SUPABASE_URL.
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          VITE_DEMO_KEY_SEED: ${{ secrets.DEMO_KEY_SEED }}
       # DECISIÓN DEL PO, 12-ago: se queda como está — opción (a) de las tres que
       # había sobre la mesa. Yo recomendaba la (b), subirlo solo al fallar; el PO
       # eligió dejarlo, y queda anotado aquí para que nadie lo "arregle" sin saber

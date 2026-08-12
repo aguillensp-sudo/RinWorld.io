@@ -1,201 +1,101 @@
-# Pendiente del PO · cerrado el día 7 (11-ago-2026)
+# Pendiente del PO · cerrado el día 8 (12-ago-2026)
 
-> **Hoy no queda ni un arreglo pendiente de tu parte.** Los cinco puntos que bloqueaban algo
-> se cerraron ayer y ninguno ha vuelto. Lo que resta son **decisiones de producto** y cosas
-> de V1 — y esas no las puedo tomar yo.
->
-> Cada punto lleva **qué pasa si no se hace**, **lo que yo haría** y **cuánto cuesta**.
->
-> Proyecto Supabase: **`troxminloxkjwihwfevs`** · Repo: **`aguillensp-sudo/RinWorld.io`**
+> **Fichero de una sola cara.** Se sobrescribe cada día como `ESTADO.md`. Lo de ayer vive en git;
+> tus respuestas del día 7 están en `PENDIENTE-PO-respuesta.md`.
 
 ---
 
-## ✅ 12-ago · las tres decisiones del día 8, cerradas por ti
+## ✅ Lo que se cerró hoy y ya no tienes que mirar
 
-**D-08-01 → (a)** claves de demo deterministas · **D-08-02 → los dos**, oferta y mensaje libre ·
-**D-08-03 → se mantiene el diseño del día 2** (ninguna columna nueva: D-08-03 partía de una
-premisa falsa, **F-065**). El punto 1 de abajo queda **cerrado**; se deja escrito porque explica
-por qué la siembra es como es.
+Los **ocho puntos** del pendiente del día 7, más cuatro cosas que salieron por el camino:
 
-### Y dos cosas nuevas que aparecieron construyéndolo
+| | Cómo quedó |
+|---|---|
+| **D-08-01/02/03** · claves de demo, envío libre, esquema | Cerradas por ti. La rebanada E2EE funciona extremo a extremo |
+| **F-064** · el arnés medía con un instrumento roto | Cerrado **con dato**: mismo trabajo, solo cambia el bucle → de escalado 3/3 a verde en 2, $0,0178 |
+| **F-033** · el CSV no distinguía rojo de inejecutable | Cerrado. Tercer estado por check, y **la métrica del objetivo 4 se movió** a `harness-review.csv` |
+| **F-054** · dos rutas de despliegue de migraciones | Cerrado. Y ver abajo: el `supabase link` **se descartó**, no hacía falta |
+| **F-063** · commits del arnés dejaban la CI roja | Cerrado con la convención `[skip ci]` |
+| **F-016** · pantalla de login | Construida por el arnés. Verde al primer intento, `−2` líneas de revisión |
+| **URL desplegada** | ✅ **Desplegada.** Ver el punto 1: queda un interruptor |
+| **`SUPABASE_SERVICE_KEY` de GitHub** | ✅ Puesto, junto con `DEMO_KEY_SEED`. No tuviste que tocarlo |
+| **F-071** · el secret que nadie leía | Cerrado. **CI verde 49/49**, la primera desde el 11-ago 19:54 |
+| **F-072** · el primer despliegue falló | Cerrado. `tsconfig.build.json` |
 
-**🟠 A · `app/.env.example` no está en el repo, y nunca lo ha estado.** El `.gitignore` raíz
-tiene `.env.*`, que se lo traga. `supabase.ts` remite a él —*"Copia .env.example a .env"*— y
-quien clone el repo no lo encuentra. **No contiene ningún secreto**: es la plantilla con
-marcadores y las contraseñas de e2e vacías. **Yo lo añadiría con un `!.env.example` en el
-`.gitignore`**, pero no toco esa regla por mi cuenta: es la §1 no negociable de `CLAUDE.md`.
-Una línea, cuando digas. *(Efecto hoy: el aviso de `VITE_DEMO_KEY_SEED` que escribí ahí solo
-existe en tu máquina.)*
-
-**🟠 B · El envío cifrado de D-08-02 no tiene e2e, y es el único hueco del bloque.** Los tests
-de unidad lo cubren —el pie de composición, `sendMessage`, y el esquema prueba que un elemento
-no puede quedarse sin claves—, pero **no hay un test que envíe de verdad contra el Supabase
-real**. El motivo es concreto: enviar mueve el hilo al principio de la lista y cambia la vista
-previa de MSG-01, y eso rompe otros dos e2e que ya existen. La suite **no tiene forma de
-reponer la siembra entre corridas**, así que un test así solo pasaría la primera vez. **Lo que
-hace falta es un paso de reseteo de fixture antes de la suite**, no el test; medio día, y
-resolvería lo mismo para el día 10. **No lo he metido a medias a propósito:** un e2e que solo
-pasa con la base recién sembrada es peor que un hueco documentado.
+> **`supabase link` se descarta y no vuelve a la lista.** Era para tener la CLI como ruta oficial
+> de migraciones de cara a V1, no para nada operativo. El remoto está verificado en sync
+> (`0001`…`0012`, nada pendiente), así que no bloquea. Se retoma cuando haya una migración nueva.
 
 ---
 
-## 0 · Lo que hay que leer antes que nada, si mañana tocas el día 8
+## 🔴 1 · Un desplegable, y sin él no hay demo
 
-**[`Dia-08_decisiones_e2ee.md`](Dia-08_decisiones_e2ee.md)**, escrito esta noche. El día 8 es
-uno de los tres días de decisiones irreversibles y hay **una decisión tuya que bloquea el
-resto**: la de abajo, el punto 1.
+**Vercel activa *Deployment Protection* por defecto.** Ahora mismo la URL redirige al login de
+Vercel (`https://vercel.com/sso-api?url=…`), así que **tu socio vería una pantalla de Vercel
+pidiéndole cuenta, no la app**.
 
----
+**Project → Settings → Deployment Protection → Vercel Authentication → Disabled**
 
-## 1 🔴 D-08-01 · La siembra de la demo NO se puede descifrar, y eso decide el modelo de claves
-
-**Es lo más urgente que hay sobre la mesa, y no estaba escrito en ninguna parte hasta hoy.**
-
-`demo_threads.sql:16` lo dice sin rodeos: *"EL CONTENIDO CIFRADO ES RELLENO A PROPÓSITO"*. Los
-cinco hilos sembrados llevan bytes que no son el cifrado de nada.
-
-**Qué pasa si no se decide:** mañana se escribe la rebanada E2EE, funciona perfectamente, y
-**los cinco hilos de la demo siguen mostrando `Contenido cifrado` en cada elemento**. La
-rebanada no arregla la siembra: la deja igual. Y **el día 11 es tu primera sesión de prueba**.
-
-**Por qué es una decisión de arquitectura y no de datos:** si la siembra tiene que ser legible
-en la demo, el material de clave **no puede ser aleatorio por sesión** — alguien tiene que
-cifrarla hoy y que las dos cuentas la lean mañana, en otro navegador.
-
-| | Qué implica | Coste |
-|---|---|---|
-| **(a) Claves de demo deterministas** y siembra regenerada cifrando de verdad | La demo enseña un hilo **con contenido**. **No es "romper el E2EE"**: el servidor sigue sin ver nada; lo que se relaja es de dónde sale la clave, y va anotado en tres sitios para que nadie lo confunda con V1 | Medio día |
-| **(b) La demo solo enseña lo que se escribe en vivo** | Cero trabajo. Pero el histórico del hilo —la consulta de hace 3 días, la oferta de hace 2 horas— se ve como bloques opacos: es enseñar la caja fuerte cerrada | Cero, se paga en el guion |
-| **(c) Aplazar el descifrado a después del día 11** | Deja la costura sin ejercitar justo hasta la semana sin margen. **No la recomiendo** | Cero hoy, caro el día 12 |
-
-**Yo iría a la (a).** El argumento del producto es *"el servidor no puede leer esto"*, y esa
-frase solo se demuestra enseñando **contenido legible arriba y ciphertext abajo**. Con (b) el
-socio ve dos pantallas opacas y tiene que creerse la explicación — y además el **panel de
-vista-servidor del día 11** (`Plan §3`) necesita exactamente ese contraste: con la siembra de
-relleno, las dos mitades salen ilegibles y el panel no enseña nada.
-
-**Dime (a), (b) o (c) y mañana se construye para esa.**
+Cuando lo apagues, avísame: falta la verificación final contra la URL real —cabecera
+`X-Robots-Tag`, `robots.txt`, y que el bundle publicado lleva lo que debe y ninguna clave de
+servicio—, que ahora no se puede hacer porque el muro devuelve un 302 antes de llegar a la app.
 
 ---
 
-## 2 🟠 F-063 · Los commits del arnés dejan la CI roja por diseño
+## 🟠 2 · Dos decisiones del día 9, y son irreversibles
 
-Construir una pantalla por el arnés produce **dos commits rojos previstos**: el del contrato
-—que tiene que estar en rojo total antes de lanzar, es la regla nueva de hoy— y el del
-artefacto tal cual sale, que escaló. Solo el tercero, la revisión a mano, sale verde.
+Mañana es uno de los tres días de decisiones que no se deshacen (`CLAUDE.md` §ritual). El detalle
+está en **`Dia-09_decisiones_vera.md`**; aquí va lo que tienes que responder:
 
-**Qué pasa si no se decide:** con VND-01 el día 8 y PANEL-01 el día 9, **un rojo en esta rama
-deja de significar "algo se ha roto"**. Es lo mismo que dejó la CI nueve días en rojo sin que
-nadie mirara por qué.
+| | Decisión |
+|---|---|
+| **D-09-01** | **Cuáles son las cuatro herramientas.** El `Plan §3` dice "las 4" sin nombrarlas y el spec expone **siete** áreas (`specs/vera-agent/spec.md:219-224`). Llevo cuatro propuestas con su razón; solo hace falta un sí o un cambio |
+| **D-09-02** | **Qué dice VERA cuando NO puede.** Después del día 8 es el caso más frecuente: todo el contenido de los hilos es ilegible para el servidor. El spec cubre lo *ambiguo* pero no esto, y `CLAUDE.md` §7 lo llama el riesgo #1 del proyecto |
+| **D-09-03** | **F-070**, ver el punto 3 |
 
-**Lo que yo haría:** `[skip ci]` en los dos commits previstos, con el motivo en el cuerpo, y la
-CI entera en el de la revisión. No se pierde cobertura y **un rojo vuelve a significar algo**.
-Una línea de convención. No lo he aplicado hoy porque cambia una regla de commit a mitad de un
-día ya cerrado.
-
----
-
-## 3 🟠 El informe de Playwright en `ci.yml`
-
-Sigue igual desde ayer. `actions/upload-artifact@v4` con `retention-days: 7`. Ese informe es el
-que llegó a adjuntar el volcado del DOM con la contraseña de alpha.
-
-- **(a)** Dejarlo como está. Ya no se escribe la contraseña, y 7 días acotan el daño.
-- **(b)** Subirlo **solo cuando el job falla** (`if: failure()`). Menos superficie, y cuando lo
-  necesitas sigue estando. **Es lo que yo haría.**
-- **(c)** No subirlo. Barato hoy y caro el día que la CI falle y no puedas ver por qué.
-
-**Dime cuál y lo dejo hecho.**
+> **Lo que NO es decisión, y verificarlo ahorró plantearte tres preguntas falsas:** que la clave de
+> Sonnet no llega al navegador (`Plan §S2`) y que **VERA no lee el contenido cifrado de los hilos**
+> ya están cerrados en spec (`spec.md:221`, *"mensajería: solo metadatos y redacción en claro"*).
+> **Consecuencia práctica para el día 11: VERA no puede resumir un hilo.** No es un límite del MVP,
+> es la rebanada E2EE funcionando.
 
 ---
 
-## 4 🔴 F-064 · Llevamos tres días midiendo al modelo con un instrumento roto — APLAZADO POR TI
+## 🟠 3 · F-070 · "verde 4/4" no es "verde"
 
-**Lo encontré al cerrar el día, comprobando una conclusión mía que no me cuadraba, y tumba
-tres días de dato sobre el objetivo 4.**
-
-El reintento del arnés **no le enseña al Coder el código que escribió**. Le manda la tarea
-otra vez —idéntica— y la salida cruda de los checks, o sea `ThreadHistory.tsx(136,61): error
-TS2375: …` **sobre un fichero que el modelo no está viendo**, y le pide regenerar los ocho
-desde cero. Que reproduzca el mismo error no es ignorar a `tsc`: es volver a tirar el dado.
-
-**Y el estado del grafo ya lleva ese código guardado.** `HarnessState.files` está declarado
-como *"{ruta: contenido} del último intento del Coder"*. Viaja por el grafo y nadie lo vuelve
-a mandar. No falta información: falta usarla.
-
-**Qué se cae:** F-036 (día 5), la lectura de la corrida 2 de SRCH-01 (día 6) y la mitad de
-F-059 (día 7) decían todas alguna forma de *"recibió `tsc` y no lo resolvió"*. **Ninguna vale
-como dato sobre el modelo.** Las escaladas ocurrieron y los defectos del artefacto eran
-reales — lo que se cae es la causa.
-
-**Decidiste el 11-ago aplazarlo**, y queda escrito para que nadie lo lea como un descuido. Lo
-que hay que tener presente mientras tanto:
-
-- **Ninguna decisión sobre el arnés en V1 debería apoyarse en las cifras de estos tres días.**
-- El experimento limpio es barato: meter los ficheros del intento anterior en el prompt y
-  **relanzar MSG-02 con la misma tarea y el mismo contrato** — misma entrada, único cambio el
-  bucle. **~$0,07 y veinte minutos.**
-- Si VND-01 escala mañana con el bucle sin arreglar, **esa cuarta medición tampoco dice nada
-  del modelo.**
+Los cuatro checks del arnés **no ven el e2e**. LOGIN-01 salió 4/4 verde y colgaba la suite entera.
+Para V1: **o C2 corre siempre la suite e2e completa, o la tarea está obligada a declarar los
+ficheros e2e que la cubren.** Decide antes de la primera tarea del arnés del día 9 (PANEL-01).
 
 ---
 
-## 5 🟠 F-033 · El CSV no distingue un check en rojo de uno inejecutable — y hoy suma un caso nuevo
+## 🟠 4 · Dos cosas del despliegue que no he tocado a propósito
 
-**Y el caso nuevo es peor que los anteriores.** Las tres filas de MSG-02 dicen `FALLA 2/4` y
-`ESCALADO 2/4`, pero **dos de los cuatro fallos de C2 eran defectos de mi contrato de
-aceptación, no del artefacto** — dos asertos mal escritos que casaban con dos nodos. En el CSV
-son indistinguibles de un fallo del modelo.
-
-**Con el formato de hoy, "intentos hasta verde" no es fiable**, y es justo la cifra de la que
-`Plan §11` hace depender la viabilidad del arnés en V1.
-
-Para V1 hay que decidir: ¿el CSV lleva un estado propio de check (`rojo` / `inejecutable`)?
-¿Un intento que falla por un defecto del **contrato** cuenta como intento del modelo?
-
-Mientras tanto, las tres filas de hoy llevan su contexto en `harness/metrics/MSG-02/`.
-**No las promedies con las de SRCH-01.**
+| | |
+|---|---|
+| **`@tabler/icons-webfont@latest`** (`app/index.html:20`) | `@latest` puede cambiar **solo**, entre hoy y el día 11. Si cambia de major, el shell se rompe visualmente la mañana de la demo sin que nadie toque nada. Fijar la versión es una línea; no lo hago porque puede alterar lo que hoy se ve, y eso hay que mirarlo antes |
+| **Plan Hobby de Vercel** | Es **para uso no comercial** según sus términos. Demo privada a un socio es zona gris. Si esto se queda puesto más allá del día 11: Pro, o Cloudflare Pages |
 
 ---
 
-## 6 🟠 F-016 · El diseño de la pantalla de login
+## 5 · Preguntas menores, sin bloqueo
 
-No existe entre los 32 HTML aprobados ni entre las 8 del alcance: es una **novena** que nadie
-planificó, y **es la primera que ve el socio**. Sigue con el andamiaje hecho con los tokens. Si
-quieres algo mejor para el día 11, hay que decidirlo con margen — y quedan cuatro días.
-
----
-
-## 7 🟠 F-054 · Dos rutas de despliegue de migraciones a medias
-
-O se enlaza la CLI y se retro-registran las once en su formato, o **el MCP pasa a ser la ruta
-oficial y se documenta como tal** — que es la que funciona y la que se ha usado para 0007 a
-0011. Dos caminos a medias es exactamente como se llegó a un pendiente con un comando que no
-podía funcionar. No urge, pero no se puede quedar así.
-
----
-
-## 8 · Preguntas menores, sin bloqueo
-
-| # | Pregunta | Nota |
-|---|---|---|
-| 7.1 | **¿Los cinco hilos sembrados son los de la demo del día 11?** | Sube de prioridad con el punto 1: si eliges (a), la siembra se regenera y es el momento de cambiarlos |
-| 7.2 | F-027 (a) · el recuento de no leídos de MSG-01 | Fuera del MVP. Para V1: o `thread_read_receipts` con su RLS, o se retira del spec |
-| 7.3 | ¿Qué hace INV-01 con una línea eliminada? (F-023 d) | O quinto chip "Eliminados" con restaurar, o eliminar es definitivo. **No urge** |
-| 7.4 | `auth_leaked_password_protection` desactivado en Auth | ¿Se activa? |
-| 7.5 | La app no tiene URL desplegada | Decisión del 7-ago: solo local. **Se retoma antes del día 11**. Mientras: `npm --prefix app run dev` (5173), o `npm run build && npm run preview` (4173), que es el bundle que prueba el e2e |
+| | |
+|---|---|
+| 5.1 | **¿Los cinco hilos sembrados son los de la demo del día 11?** Ahora llevan contenido legible, así que la pregunta es **qué dicen**. Los textos están en `supabase/seed/demo-content.mjs`, un solo sitio |
+| 5.2 | **F-027 (a)** · recuento de no leídos de MSG-01. Fuera del MVP. Para V1: o `thread_read_receipts` con su RLS, o se retira del spec |
+| 5.3 | **F-023 (d)** · qué hace INV-01 con una línea eliminada. O quinto chip "Eliminados" con restaurar, o eliminar es definitivo |
+| 5.4 | **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa? |
 
 ---
 
 ## Orden que yo seguiría
 
-1. **El punto 1**, y hoy si puedes: bloquea cómo se escribe la rebanada E2EE de mañana.
-2. **El punto 2**, que es una línea y devuelve el significado a la CI.
-3. **El punto 3**, que es otra línea.
-4. **El punto 4 lo has aplazado tú** y está bien aplazado — pero es el que decide si el
-   objetivo 4 tiene datos o no. En cuanto haya un hueco, es media hora y ~$0,07.
-5. Los puntos 5 a 8 — nada urge, y varios son de V1.
+1. **El desplegable de Vercel** (punto 1). Un minuto, y sin él no hay demo.
+2. **Las dos decisiones del día 9** (punto 2), antes de que empiece el trabajo de mañana.
+3. **F-070** (punto 3), antes de lanzar PANEL-01 al arnés.
+4. El resto cuando quieras.
 
 ---
 
-*Escrito el 11-ago-2026 · Claude Code (Opus 5) · se sobrescribe en cada cierre de día*
+*Escrito el 12-ago-2026 · Claude Code (Opus 5)*

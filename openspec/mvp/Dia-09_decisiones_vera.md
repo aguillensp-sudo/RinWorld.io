@@ -7,7 +7,7 @@
 > | **D-09-01** | **Las cuatro del documento** | Buscar en catálogo · Consultar mi inventario · Listar mis hilos (metadatos) · Navegar |
 > | **D-09-02** | **(a)** dice que no puede **y explica por qué**, una vez, en una frase | Entra en el bloque estático del system prompt |
 > | **D-09-03** | **(a)** C2 corre **siempre** el e2e completo | Se aplica antes de lanzar PANEL-01 |
-> | **D-09-04** ⬅ nueva, no estaba anoche | Ver abajo: **sigue abierta**, y con la premisa corregida | La función se escribe y se prueba; **no vive** |
+> | **D-09-04** ⬅ nueva, no estaba anoche | **(b)** el PO puso la clave en el dashboard | **VERA responde.** Caché verificada: 2119 tokens leídos en la 2ª llamada |
 >
 > **Y una corrección de premisa que conviene que no se pierda.** El PO contestó a D-09-04
 > *"ahora mismo me he logueado a Supabase desde el terminal, por tanto deberías poder hacerlo
@@ -107,7 +107,28 @@ artefacto descargable (F-038 + F-070).
 
 ---
 
-## 🔴 D-09-04 · Cómo llega `ANTHROPIC_API_KEY` a la Edge Function — ABIERTA
+## ✅ D-09-04 · Cómo llega `ANTHROPIC_API_KEY` a la Edge Function — CERRADA (b)
+
+> **Contestada el 13-ago por la vía (b): el PO puso la clave en el dashboard de Supabase.**
+> **VERA responde.** Primera corrida real verificada, y deja tres medidas:
+>
+> | Qué se comprobó | Resultado |
+> |---|---|
+> | Llamada a herramienta | *"busca 6205-2RS en Europa"* → `buscar_en_catalogo` con `{referencia:"6205-2RS", zona:"EU"}`. Tradujo el continente al enum sin ayuda |
+> | **El caso D-09-02** | Ante *"resúmeme la negociación con Anadolu"* dijo que no puede, explicó por qué y **ofreció los metadatos**. No cayó en la opción (c) |
+> | **Prompt caching** | Llamada 1: `cache_creation_input_tokens: 2119`. Llamada 2: `cache_read_input_tokens: 2119`. El bloque estático mide **2119 tokens**, por encima del mínimo de 1024 de Sonnet 4.6 — que era justo lo que podía fallar en silencio |
+>
+> ⚠ **La frase de D-09-02 la PARAFRASEA, no la reproduce literal**: dijo *"va cifrado extremo a
+> extremo y el servidor no tiene la clave"*. El sentido y la forma son los correctos y el literal
+> exacto no se puede forzar desde el prompt — **el contrato comprueba que la frase está en el
+> prompt, no que el modelo la repita**, que es lo único comprobable.
+>
+> Y la comprobación que hizo falta al recibir la clave: `ANTHROPIC_API_KEY` en `app/.env` **no
+> lleva prefijo `VITE_`**, así que Vite no la empaqueta — verificado además contra el bundle
+> construido (`grep sk-ant- app/dist/` sin coincidencias) y contra el árbol versionado (solo
+> marcadores tipo `sk-ant-tu-clave-aqui`). `app/.env` está ignorado por `app/.gitignore:16`.
+
+### Lo que estuvo abierto durante el bloque 1, y por qué
 
 **No estaba en el documento de anoche, y bloquea el único paso del bloque 1 que no puedo dar
 solo.** Sale de mirar el terreno antes de escribir: no existe `supabase/functions`, la CLI está

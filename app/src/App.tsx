@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { useSession } from './lib/session';
+import { supabase } from './lib/supabase';
+import { createProxyCall } from './lib/vera';
+import type { Screen } from './lib/vera-tools';
+import type { SearchCriteria } from './lib/search';
+import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, navIndexOf } from './shell/AppShell';
 import { Login } from './screens/Login';
 import { Welcome } from './screens/Welcome';
@@ -70,6 +75,13 @@ export function App() {
    */
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
 
+  /**
+   * Lo último que VERA ha escrito como criterios de búsqueda, o `null` si aún no
+   * ha escrito nada. Vive aquí y no en SRCH-01 porque VERA puede escribirlo
+   * estando el usuario en otra pantalla — y entonces hay que llevarle a ella.
+   */
+  const [veraCriteria, setVeraCriteria] = useState<SearchCriteria | null>(null);
+
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
@@ -108,12 +120,49 @@ export function App() {
         ? SEARCH_VERA_SUBTITLE
         : undefined;
 
+  /*
+   * El agente se construye aquí, después de saber que hay perfil, y no en un
+   * `useMemo`: los hooks no pueden ir detrás de los retornos tempranos de
+   * arriba, y memorizarlo no compraría nada — nada depende de su identidad.
+   */
+  const vera: VeraAgent = {
+    profile: state.profile,
+
+    navigate: (pantalla: Screen) => navigate(navIndexOf(pantalla)),
+
+    /*
+     * Escribir criterios LLEVA a Comprando, además de escribirlos.
+     *
+     * No es redundante con la herramienta `navegar`: si el modelo se olvidara de
+     * llamarla después de buscar —y a veces se olvidará— el usuario habría
+     * pedido una búsqueda y no vería pasar nada, con los resultados cargados en
+     * una pantalla que no está mirando. Pedir una búsqueda es pedir verla.
+     */
+    setCriteria: (criteria: SearchCriteria) => {
+      setVeraCriteria(criteria);
+      navigate(SEARCH_NAV);
+    },
+
+    /*
+     * El token se pide en cada llamada, no al montar: el de acceso caduca y se
+     * renueva solo, y uno congelado empezaría a dar 401 a mitad de sesión.
+     */
+    call: createProxyCall(
+      async () => {
+        const { data } = await supabase.auth.getSession();
+        return data.session?.access_token ?? null;
+      },
+      { orgName: state.profile.orgName, fullName: state.profile.fullName },
+    ),
+  };
+
   return (
     <AppShell
       profile={state.profile}
       onSignOut={signOut}
       activeNav={nav}
       onNavigate={navigate}
+      vera={vera}
       {...(veraSubtitle ? { veraSubtitle } : {})}
     >
       {onMessages ? (
@@ -151,7 +200,7 @@ export function App() {
          * es tan sensible al reloj como el timestamp relativo de MSG-01 — con un
          * `now` congelado al montar, una sesión larga acabaría pintando en naranja
          * lo que ya debería estar en rojo. */
-        <SearchResults profile={state.profile} now={new Date()} />
+        <SearchResults profile={state.profile} now={new Date()} veraCriteria={veraCriteria} />
       ) : onSelling ? (
         /*
          * VND-01. Sin `now`: es la única de las cuatro que no tiene ni un

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { initials, type MemberProfile } from '../lib/session';
-import { VeraPanel } from './VeraPanel';
+import { VeraPanel, type VeraAgent } from './VeraPanel';
 import styles from './AppShell.module.css';
 
 /** Los ocho ítems y sus iconos, en el orden del shell aprobado. */
@@ -44,6 +44,12 @@ interface Props {
    * "Agente de inventario" y el shell base dice "Agente de búsqueda". Ver F-025.
    */
   veraSubtitle?: string;
+  /**
+   * Lo que conecta a VERA. **Opcional**: sin esto el panel se monta igual y dice
+   * que no está conectada, que es lo que tiene que decir si el cable se suelta.
+   * El shell no sabe nada del agente — solo lo deja pasar.
+   */
+  vera?: VeraAgent;
   children: ReactNode;
 }
 
@@ -53,6 +59,7 @@ export function AppShell({
   activeNav,
   onNavigate,
   veraSubtitle,
+  vera,
   children,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -152,7 +159,10 @@ export function AppShell({
 
         <main className={styles.bwcnt}>{children}</main>
 
-        <VeraPanel {...(veraSubtitle ? { subtitle: veraSubtitle } : {})} />
+        <VeraPanel
+          {...(veraSubtitle ? { subtitle: veraSubtitle } : {})}
+          {...(vera ? { agent: vera } : {})}
+        />
       </div>
     </div>
   );

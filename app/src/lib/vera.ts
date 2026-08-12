@@ -120,15 +120,25 @@ type Bloque = BloqueTexto | BloqueHerramienta | { type: string };
 /**
  * El `ProxyCall` de producción.
  *
- * El token se pasa desde fuera en vez de leerse aquí de `supabase`: así este
- * módulo no arrastra el cliente de base de datos —que no necesita— y los tests
- * del bucle corren sin mockearlo.
+ * `getToken` se inyecta en vez de leer aquí de `supabase`: así este módulo no
+ * arrastra el cliente de base de datos —que no necesita— y los tests del bucle
+ * corren sin mockearlo.
+ *
+ * Y es un **getter**, no un token: se pide en cada llamada porque el de acceso
+ * caduca y se renueva solo. Con uno congelado al montar, una sesión de demo
+ * larga empezaría a devolver 401 a mitad, y el síntoma sería *"VERA ha dejado de
+ * funcionar"* sin nada que lo explique en pantalla.
  */
 export function createProxyCall(
-  accessToken: string,
+  getToken: () => Promise<string | null>,
   contexto: { orgName: string; fullName: string | null },
 ): ProxyCall {
   return async ({ messages }) => {
+    const accessToken = await getToken();
+    if (!accessToken) {
+      throw new Error('Tu sesión ha caducado. Vuelve a entrar para seguir hablando con VERA.');
+    }
+
     const r = await fetch(proxyUrl(), {
       method: 'POST',
       headers: {

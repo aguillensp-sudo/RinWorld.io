@@ -21,6 +21,20 @@ interface Props {
   profile: MemberProfile;
   /** Inyectable para que los tests no dependan del reloj. */
   now?: Date;
+  /**
+   * Los criterios que acaba de escribir VERA, o `null` si no ha escrito ninguno.
+   *
+   * **Opcional a propósito.** `<SearchResults profile now />` a secas sigue
+   * siendo válido, que es exactamente como lo monta el contrato de aceptación
+   * del día 6. Un prop nuevo obligatorio lo habría roto desde fuera, y con él la
+   * medida del objetivo 4 para esta pantalla.
+   *
+   * La pantalla **sigue siendo la dueña** de los criterios: esto es un empujón,
+   * no una segunda fuente de verdad. Por eso el usuario puede quitar después el
+   * chip que puso VERA, y por eso los chips se siguen derivando de los criterios
+   * y no al revés — `search.ts:154`, escrito el día 6 previendo justo esto.
+   */
+  veraCriteria?: SearchCriteria | null;
 }
 
 /**
@@ -31,7 +45,7 @@ interface Props {
  * un favorito se vuelve a consultar la base (`toggleFavorite` + `fetchResults`).
  * La tabla y los chips son presentacionales y no guardan estado de datos.
  */
-export function SearchResults({ profile, now }: Props) {
+export function SearchResults({ profile, now, veraCriteria }: Props) {
   const [criteria, setCriteria] = useState<SearchCriteria>(EMPTY_CRITERIA);
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -55,6 +69,19 @@ export function SearchResults({ profile, now }: Props) {
     },
     [profile.orgId, profile.id],
   );
+
+  /*
+   * VERA escribe: se adoptan sus criterios y el efecto de abajo relanza la
+   * consulta sola, porque `criteria` es la única entrada de esa consulta.
+   *
+   * Depende de la IDENTIDAD del objeto, no de su contenido: cada búsqueda de
+   * VERA construye uno nuevo, así que dos búsquedas seguidas con los mismos
+   * criterios vuelven a lanzarse — que es lo que se quiere cuando el usuario
+   * repite la pregunta. Y `null` no borra nada: no escribir no es escribir vacío.
+   */
+  useEffect(() => {
+    if (veraCriteria) setCriteria(veraCriteria);
+  }, [veraCriteria]);
 
   useEffect(() => {
     void load(criteria);

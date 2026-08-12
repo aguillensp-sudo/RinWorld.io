@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './VeraPanel.module.css';
+import { ask, type ProxyCall } from '../lib/vera';
+import type { Screen } from '../lib/vera-tools';
+import type { SearchCriteria } from '../lib/search';
+import { errorMessage, type MemberProfile } from '../lib/session';
 
 interface Message {
   id: number;
@@ -13,16 +17,35 @@ function hhmm(d: Date): string {
 }
 
 /**
- * VERA NO ESTÁ CONECTADA. El shell aprobado responde "Entendido. ¿Algo más?" a
- * cualquier cosa, y eso aquí no se copia: CLAUDE.md §7 dice que el riesgo #1 del
- * proyecto es VERA afirmando con aplomo algo que no sabe. Un eco enlatado en el
- * andamiaje es exactamente ese fallo con otra cara — delante del socio se lee
- * como un agente que funciona. Hasta el día 9 (herramientas + Edge Function
- * proxy), VERA dice que no está conectada. El panel, el arrastre y el colapso sí
- * son los definitivos.
+ * SIN AGENTE, VERA SIGUE DICIENDO QUE NO ESTÁ CONECTADA.
+ *
+ * El shell aprobado responde "Entendido. ¿Algo más?" a cualquier cosa, y eso
+ * aquí no se copia: `CLAUDE.md` §7 dice que el riesgo #1 del proyecto es VERA
+ * afirmando con aplomo algo que no sabe, y un eco enlatado en el andamiaje es
+ * ese mismo fallo con otra cara.
+ *
+ * **El día 9 llegaron las herramientas, pero este camino no se borra**: el panel
+ * se monta sin `agent` en los tests del shell y podría montarse así por un fallo
+ * de cableado. Que en ese caso diga la verdad —que no está conectada— es lo que
+ * impide que un cable suelto se vea como un agente funcionando.
  */
 const NOT_WIRED =
-  'Todavía no estoy conectada: mis herramientas de búsqueda llegan el día 9. Hasta entonces no puedo responder sobre inventario ni ofertas.';
+  'Todavía no estoy conectada: no tengo acceso a mis herramientas. No puedo responder sobre inventario ni ofertas.';
+
+/**
+ * El modelo terminó sin texto. Pasa si agotó el tope de vueltas del bucle o si
+ * devolvió solo llamadas a herramienta. **Una burbuja vacía sería peor que
+ * esto**: parecería que VERA ha contestado y que la respuesta es nada.
+ */
+const SIN_RESPUESTA = 'No he podido terminar de responder. Vuelve a preguntármelo, por favor.';
+
+/** Lo que hace falta para que el panel deje de ser andamiaje. */
+export interface VeraAgent {
+  profile: MemberProfile;
+  navigate: (screen: Screen) => void;
+  setCriteria: (criteria: SearchCriteria) => void;
+  call: ProxyCall;
+}
 
 const GREETING = 'Hola. Soy VERA, tu asistente. ¿En qué puedo ayudarte?';
 
@@ -39,13 +62,15 @@ const DEFAULT_SUBTITLE = 'Agente de búsqueda';
 
 interface VeraProps {
   subtitle?: string;
+  agent?: VeraAgent;
 }
 
-export function VeraPanel({ subtitle = DEFAULT_SUBTITLE }: VeraProps) {
+export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [width, setWidth] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [draft, setDraft] = useState('');
+  const [pensando, setPensando] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { id: 0, from: 'vera', text: GREETING, at: hhmm(new Date()) },
   ]);
@@ -84,19 +109,52 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE }: VeraProps) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  const send = useCallback(() => {
-    const text = draft.trim();
-    if (!text) return;
-    const at = hhmm(new Date());
+  const responde = useCallback((text: string) => {
     setMessages((prev) => [
       ...prev,
-      { id: prev.length, from: 'user', text, at },
-      { id: prev.length + 1, from: 'vera', text: NOT_WIRED, at },
+      { id: prev.length, from: 'vera', text, at: hhmm(new Date()) },
+    ]);
+  }, []);
+
+  const send = useCallback(async () => {
+    const text = draft.trim();
+    // Con una pregunta en vuelo no se manda otra: el bucle tiene estado
+    // (historial, herramientas a medio ejecutar) y dos a la vez lo entrelazan.
+    if (!text || pensando) return;
+
+    setMessages((prev) => [
+      ...prev,
+      { id: prev.length, from: 'user', text, at: hhmm(new Date()) },
     ]);
     setDraft('');
     const ta = textareaRef.current;
     if (ta) ta.style.height = 'auto';
-  }, [draft]);
+
+    if (!agent) {
+      responde(NOT_WIRED);
+      return;
+    }
+
+    setPensando(true);
+    try {
+      const r = await ask(
+        text,
+        { profile: agent.profile, navigate: agent.navigate, setCriteria: agent.setCriteria },
+        agent.call,
+      );
+      responde(r.text || SIN_RESPUESTA);
+    } catch (e) {
+      /*
+       * El fallo se pinta EN EL HILO, con su motivo. Tragárselo dejaría el panel
+       * con la pregunta del usuario y sin respuesta, que se lee como que VERA ha
+       * decidido no contestar — y el motivo real (la clave sin poner, la sesión
+       * caducada) se quedaría solo en la consola.
+       */
+      responde(errorMessage(e));
+    } finally {
+      setPensando(false);
+    }
+  }, [draft, pensando, agent, responde]);
 
   const cls = [styles.bwvera, collapsed ? styles.col : '', dragging ? styles.dragging : '']
     .filter(Boolean)
@@ -164,6 +222,11 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE }: VeraProps) {
             <div className={styles.bwts}>{m.at}</div>
           </div>
         ))}
+        {pensando ? (
+          <div className={`${styles.bwmsg} ${styles.v}`} data-testid="vera-pensando">
+            <div className={styles.bwbub}>Consultando…</div>
+          </div>
+        ) : null}
       </div>
 
       <div className={styles.bwia}>
@@ -184,11 +247,16 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE }: VeraProps) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                send();
+                void send();
               }
             }}
           />
-          <button className={styles.bwsnd} onClick={send} aria-label="Enviar">
+          <button
+            className={styles.bwsnd}
+            onClick={() => void send()}
+            aria-label="Enviar"
+            disabled={pensando}
+          >
             →
           </button>
         </div>

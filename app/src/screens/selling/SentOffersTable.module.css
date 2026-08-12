@@ -136,7 +136,7 @@
 .stateRejected {
   background: var(--bw-sensitive-bg);
   color: var(--bw-sensitive-text);
-  border-color: rgba(220, 38, 38, 0.2);
+  border-color: var(--bw-badge-danger-border);
 }
 
 .stateSuperseded {

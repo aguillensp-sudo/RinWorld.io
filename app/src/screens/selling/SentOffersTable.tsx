@@ -1,4 +1,21 @@
-import type { SentOffer, SortColumn, SortDirection, [1m, [0m } from '../../lib/sent-offers';
+// ⚠ ESTA LINEA LLEGO ROTA DEL ARNES, y no por culpa del modelo (F-068). Decia:
+//
+//   import type { SentOffer, SortColumn, SortDirection, [1m, [0m } from '…';
+//
+// `[1m` y `[0m` son codigos de color de terminal que viajaron hasta el Coder
+// COMO TEXTO —el byte ESC se pierde y sobrevive el resto de la secuencia—, y el
+// modelo pego dos en la lista de importaciones. Ademas faltaban los cuatro
+// valores que el fichero SI usa: se importaban como `type` y se llamaban como
+// funciones.
+import {
+  EMPTY_NO_MATCHES,
+  EMPTY_NO_OFFERS,
+  rowActionLabel,
+  sentAtLabel,
+  type SentOffer,
+  type SortColumn,
+  type SortDirection,
+} from '../../lib/sent-offers';
 import styles from './SentOffersTable.module.css';
 
 interface Props {
@@ -128,7 +145,9 @@ export function SentOffersTable({ offers, sort, onSort, onOpenThread, hasQuery }
                 <span className={styles.org}>{offer.counterpartyName}</span>
               </td>
               <td className={styles.td}>
-                <span className={`${styles.badge} ${badgeClass(offer.state)}`}>{offer.state}</span>
+                <span className={`${styles.badge ?? ''} ${badgeClass(offer.state) ?? ''}`}>
+                  {offer.state}
+                </span>
               </td>
               <td className={styles.td}>
                 <span className={styles.ts}>{sentAtLabel(offer.createdAt)}</span>
@@ -150,7 +169,23 @@ export function SentOffersTable({ offers, sort, onSort, onOpenThread, hasQuery }
   );
 }
 
-const badgeClass = (state: SentOffer['state']): string => {
+/**
+ * ⚠ EL DEFECTO REAL DE ESTA CORRIDA, Y EL UNICO QUE MIDE AL MODELO. Estaba
+ * identico en los intentos 1 y 2, y salia como cinco `TS2322` seguidos.
+ *
+ * Un modulo CSS, con `noUncheckedIndexedAccess`, devuelve `string | undefined`:
+ * la clase podria no existir en el fichero. Declarar `: string` no lo arregla,
+ * lo tapa hasta que `tsc` lo mira.
+ *
+ * **Y esto ya estaba resuelto en la casa**, con su comentario, en
+ * `ThreadList.tsx` — que es el fichero que NO le di como `style_reference`. Le
+ * di `ResultsTable.tsx`, que es la otra tabla y no tiene mapa de clases por
+ * estado. Es un defecto de mi tarea, no del artefacto (F-069).
+ *
+ * El `?? ''` se resuelve en el unico sitio donde se usa: asi una clase que falte
+ * deja el badge sin adorno en vez de escribir `undefined` en el `class`.
+ */
+const badgeClass = (state: SentOffer['state']): string | undefined => {
   switch (state) {
     case 'Pendiente':
       return styles.statePending;

@@ -135,18 +135,36 @@ describe('la tabla · §5.1', () => {
   });
 
   it('⚠ CA-VND-01 · NI UNA columna de contenido cifrado, en ninguna fila', async () => {
-    // ÁMBITO Y ANCLA: se mide sobre una tabla que YA se ha comprobado que pinta
-    // las cuatro filas con sus metadatos. Sobre una pantalla vacía este aserto
-    // pasaría solo, que es exactamente el defecto de F-058.
-    const { container } = render(<SentOffers profile={profile} onOpenThread={vi.fn()} />);
+    /**
+     * ⚠ EL ÁMBITO ES **LA TABLA**, NO LA PÁGINA, y la primera versión de este
+     * test miraba la página entera. Se cayó, y tenía razón en caerse: el
+     * subtítulo de la §3 dice, verbatim, *"Para ver **precio** y condiciones de
+     * una oferta, abre el hilo correspondiente"*. **Esa frase TIENE que estar** —
+     * es RNG-VND-01 explicado al usuario en vez de una ausencia sin motivo—, así
+     * que un `not.toContain('precio')` sobre el `container` prohíbe justo lo que
+     * la spec exige.
+     *
+     * Es F-059 otra vez y esta vez el defecto es mío: un aserto negativo sin
+     * ámbito no mide lo que dice medir. Lo que hay que comprobar es que las
+     * CIFRAS no bajan a la tabla, no que la palabra no aparezca en la pantalla.
+     */
+    render(<SentOffers profile={profile} onOpenThread={vi.fn()} />);
     await waitFor(() => expect(screen.getAllByTestId('sent-offer-row')).toHaveLength(4));
 
-    const texto = container.textContent ?? '';
+    // Ancla: la tabla existe y trae sus cuatro filas con metadatos.
+    // ⚠ `getAllBy`, no `getBy`: `6205-2RS` sale DOS veces en el fixture —una con
+    // NSK y otra con SKF, que es justo lo que hace realista el caso—. Escribirlo
+    // en singular fue el tercer defecto propio de este contrato, y es la misma
+    // forma exacta que el `findByText('NSK Europe Ltd')` del día 7 (F-059).
+    const tabla = screen.getByRole('table');
+    expect(within(tabla).getAllByText(/6205-2RS/)).toHaveLength(2);
+
+    const texto = tabla.textContent ?? '';
     for (const prohibido of ['Precio', 'precio', 'Cantidad', 'Plazo', 'Transporte', 'Portes', '€', 'EUR']) {
       expect(texto).not.toContain(prohibido);
     }
     for (const cabecera of ['Precio', 'Cantidad', 'Plazo', 'Transporte']) {
-      expect(screen.queryByText(cabecera)).not.toBeInTheDocument();
+      expect(within(tabla).queryByText(cabecera)).not.toBeInTheDocument();
     }
   });
 
@@ -288,8 +306,13 @@ describe('la ordenación · §5.4 y CA-VND-03/04', () => {
     // `Ácido Bearings` primero: se ordena con acentos, no por punto de código.
     await waitFor(() => expect(filas()[0]!).toHaveAttribute('data-offer-id', 'of-4'));
 
+    // Y al invertir, la última pasa a ser la primera. ⚠ Es `of-2` —`Roulements
+    // Rhône`— y la primera versión de este test esperaba `of-1`: una cuenta mal
+    // hecha mía, no un fallo del artefacto. Las cuatro organizaciones ordenadas
+    // en español son Ácido < Cuscinetti < Nordwälz < Roulements, así que
+    // descendente empieza por Roulements.
     await user.click(screen.getByRole('button', { name: /Organización/ }));
-    await waitFor(() => expect(filas()[0]!).toHaveAttribute('data-offer-id', 'of-1'));
+    await waitFor(() => expect(filas()[0]!).toHaveAttribute('data-offer-id', 'of-2'));
   });
 
   it('⚠ el sentido se declara en aria-sort, no solo con una flecha', async () => {

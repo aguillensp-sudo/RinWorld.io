@@ -78,6 +78,11 @@
   --bw-badge-neutral-bg: rgba(107, 122, 153, 0.08);
   --bw-badge-neutral-border: rgba(107, 122, 153, 0.2);
   --bw-badge-neutral-border-soft: rgba(107, 122, 153, 0.15); /* borde del badge ISO de país */
+  /* El cuarto de la familia, y faltaba: el badge `Rechazada` de VND-01 usa el
+     mismo fondo que el resto de lo sensible (`--bw-sensitive-bg`) y necesitaba su
+     borde. Sale del mismo #dc2626 que `--bw-sensitive-text`, con la opacidad de
+     sus tres hermanos. */
+  --bw-badge-danger-border: rgba(220, 38, 38, 0.2);
   --bw-danger-hover-bg: rgba(239, 68, 68, 0.06);
 
   /* Derivados del azul de calibración que usa INV-01. Están aquí y no como

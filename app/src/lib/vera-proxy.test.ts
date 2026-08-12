@@ -29,10 +29,15 @@ describe('la clave de VERA no llega al navegador', () => {
     expect(fuente).toContain("Deno.env.get('ANTHROPIC_API_KEY')");
   });
 
-  it('la manda en la cabecera y no la escribe en el fichero', () => {
-    // Ancla positiva: la cabecera que la lleva EXISTE. Sin esto, un fichero
-    // vacío pasaría el aserto negativo — que es como se cuela un verde falso.
-    expect(fuente).toContain('x-api-key');
+  /**
+   * Este aserto pedía el literal `x-api-key`, que daba por hecho un `fetch` a
+   * mano. La implementación usa el SDK oficial —que arma la cabecera él— así que
+   * comprueba lo mismo por su camino: **el valor de la clave va al constructor
+   * del SDK y a ningún otro sitio**. El ancla positiva sigue ahí, que es lo que
+   * impide que un fichero vacío pase.
+   */
+  it('la pasa al SDK y no la escribe en el fichero', () => {
+    expect(fuente).toMatch(/new Anthropic\(\{\s*apiKey:/);
     expect(fuente).not.toContain('sk-ant-');
   });
 

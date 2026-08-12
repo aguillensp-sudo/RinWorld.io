@@ -47,6 +47,14 @@ Este fichero es el contrato de trabajo del MVP (plan de 15 días,
      commits separados, aunque pertenezcan a la misma tarea: primero el artefacto del
      Coder tal cual sale, después las correcciones a mano. Así el diff del segundo commit
      *es* la medida de cuánto hubo que arreglar.
+   - **Los commits previsiblemente rojos llevan `[skip ci]`, con el motivo en el
+     cuerpo** (F-063, decidido por el PO el 12-ago). Construir una pantalla por el arnés
+     deja **dos commits que la CI no puede pasar por diseño**: el contrato de aceptación
+     en rojo contra los esqueletos, y el artefacto del Coder antes de revisarlo. Si esos
+     dos corren la CI, el rojo deja de significar nada — y un rojo que no significa nada
+     es peor que no tener CI. **La CI entera va en el commit de la revisión a mano**, que
+     es el primero que puede estar verde. No se pierde cobertura: se pierde ruido.
+     **Un artefacto que sale verde del arnés no lleva `[skip ci]`**: si puede pasar, pasa.
    - Precedente documentado: `0623451` incumple esto y no se reescribe (ver F-009).
 
 ---

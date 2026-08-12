@@ -28,13 +28,28 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
+    /**
+     * ⚠ LA SIEMBRA SE REPONE ANTES DE NADA, Y ES LO QUE HACE LA SUITE
+     * IDEMPOTENTE.
+     *
+     * Sin esto no se podía escribir un e2e que **enviara un mensaje de verdad**:
+     * enviar mueve el hilo al principio de la lista y cambia la vista previa de
+     * MSG-01, así que rompía otros dos tests y solo pasaba la primera vez. Lo que
+     * faltaba no era el test, era esto — y con ello entra la única cosa de
+     * D-08-02 que no se observaba de punta a punta: que escribir en un hilo
+     * cerrado lo reabre (D-07-01, `0009`).
+     *
+     * Va ANTES de `setup` porque publica `members.public_key` de las dos cuentas,
+     * y sin esa clave el envío se niega (0012 §3).
+     */
+    { name: 'fixture', testMatch: /fixture\.setup\.ts/ },
     // Autentica una vez y guarda el estado; el proyecto principal lo reutiliza.
-    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    { name: 'setup', testMatch: /auth\.setup\.ts/, dependencies: ['fixture'] },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: ALPHA_STORAGE },
       dependencies: ['setup'],
-      testIgnore: /auth\.setup\.ts/,
+      testIgnore: /(auth|fixture)\.setup\.ts/,
     },
   ],
   // `preview` sobre el build, no `dev`: la puerta se prueba contra lo que se

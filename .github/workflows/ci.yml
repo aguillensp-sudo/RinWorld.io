@@ -84,6 +84,15 @@ jobs:
           E2E_BETA_EMAIL: ${{ secrets.E2E_BETA_EMAIL }}
           E2E_BETA_PASSWORD: ${{ secrets.E2E_BETA_PASSWORD }}
           E2E_BETA_ORG: ${{ secrets.E2E_BETA_ORG }}
+      # DECISIÓN DEL PO, 12-ago: se queda como está — opción (a) de las tres que
+      # había sobre la mesa. Yo recomendaba la (b), subirlo solo al fallar; el PO
+      # eligió dejarlo, y queda anotado aquí para que nadie lo "arregle" sin saber
+      # que ya se decidió.
+      #
+      # El contexto, porque importa: este informe es el que llegó a adjuntar un
+      # volcado del DOM con la contraseña de alpha. Ya no se escribe, y los 7 días
+      # de retención acotan lo que quede. Si algún día vuelve a colarse un
+      # secreto en el DOM, esta línea es la que hay que revisar primero.
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

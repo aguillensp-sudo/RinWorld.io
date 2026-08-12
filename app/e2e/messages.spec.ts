@@ -1,6 +1,15 @@
 import './env';
 import { expect, test, type Page } from '@playwright/test';
-import { ALPHA, ALPHA_STORAGE, BETA, haveCreds, NO_SESSION, signIn, topNav } from './fixtures';
+import {
+  ALPHA,
+  ALPHA_STORAGE,
+  BETA,
+  canResetFixture,
+  haveCreds,
+  NO_SESSION,
+  signIn,
+  topNav,
+} from './fixtures';
 
 /**
  * CONTRATO DE ACEPTACIÓN · MSG-01 · contra el Supabase real.
@@ -234,6 +243,63 @@ test.describe('MSG-02 · un hilo real', () => {
     await abrirHilo(page, 'Nordwälz Lager');
     await page.getByRole('button', { name: 'Hilos' }).first().click();
     await expect(page.getByRole('heading', { level: 1, name: 'Hilos' })).toBeVisible();
+  });
+
+  test('⚠ D-08-02 · se envía cifrado, se lee descifrado, y el hilo cerrado SE REABRE', async ({
+    page,
+  }) => {
+    /**
+     * ⚠ ESTE ES EL ÚNICO TEST QUE RECORRE LA REBANADA E2EE ENTERA, Y HASTA HOY NO
+     * SE PODÍA ESCRIBIR.
+     *
+     * Enviar mueve el hilo al principio de la lista y cambia la vista previa de
+     * MSG-01, así que rompía otros dos tests de este mismo fichero: la suite no
+     * sabía reponer la siembra y un test así solo pasaba la primera vez. Lo que
+     * faltaba no era el test — era `fixture.setup.ts`.
+     *
+     * Lo que se recorre de punta a punta, y **ningún test de unidad alcanza**:
+     * generar una CEK, envolverla para los dos miembros con la pública que
+     * `thread_public_keys` (0012) devuelve, cifrar, escribir elemento y claves en
+     * UNA transacción (`create_thread_item`), volver a leer, desenvolver y
+     * descifrar. Si cualquiera de esos ocho pasos falla, el texto no aparece.
+     *
+     * Y de propina cierra D-07-01: **escribir en un hilo cerrado lo reabre**
+     * (`0009`), que es exactamente el argumento con el que D-08-02 metió el envío
+     * en el día 8. Hasta hoy eso solo lo sostenían dos asertos de SQL.
+     */
+    test.skip(!canResetFixture, 'sin SUPABASE_SERVICE_KEY no hay siembra repuesta que reabrir');
+
+    await abrirHilo(page, 'Anadolu Rulman');
+
+    // ANCLA 1 · el hilo empieza cerrado. Sin esto, "se reabrió" no significa nada.
+    await expect(page.getByText('CERRADO SIN ACUERDO', { exact: true }).first()).toBeVisible();
+
+    // Un texto único por corrida: si el historial trajera uno viejo, el aserto de
+    // abajo pasaría sin haber enviado nada.
+    const texto = `Retomamos esto. Referencia de prueba ${Date.now()}`;
+
+    await page.getByRole('textbox', { name: 'Escribe un mensaje' }).fill(texto);
+    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+
+    // ANCLA 2 · el mensaje se lee EN CLARO. Salió cifrado y ha vuelto descifrado:
+    // es la costura de D-07-05 recorrida en la dirección que faltaba.
+    await expect(page.getByText(texto)).toBeVisible({ timeout: 15_000 });
+
+    // Y el campo se vació, que es la señal de que el envío salió bien y no de que
+    // se perdió el texto: el pie solo lo vacía cuando `onSend` devuelve true.
+    await expect(page.getByRole('textbox', { name: 'Escribe un mensaje' })).toHaveValue('');
+
+    // LO QUE DE VERDAD PRUEBA ESTE TEST · el trigger de 0009 reabrió el hilo, y
+    // la cabecera se enteró porque `handleSend` vuelve a leer. El estado lo
+    // deriva la base, no el cliente (F-044).
+    await expect(page.getByText('CERRADO SIN ACUERDO', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('ABIERTO', { exact: true }).first()).toBeVisible();
+
+    // Y el ciphertext sigue sin bajar al DOM, ahora también en el camino de
+    // escritura.
+    const html = await page.content();
+    expect(html).not.toContain('content_ciphertext');
+    expect(html).not.toContain('wrapped_cek');
   });
 });
 

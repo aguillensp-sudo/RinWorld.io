@@ -20,6 +20,28 @@ export const BETA = {
 
 export const haveCreds = !!(ALPHA.email && ALPHA.password && BETA.email && BETA.password);
 
+/**
+ * Lo que `fixture.setup.ts` necesita para reponer la siembra de demo antes de la
+ * suite.
+ *
+ * Vive aquí y no en el propio setup porque **Playwright no deja que un fichero de
+ * test importe otro fichero de test**, y los tests que dependen de la siembra
+ * repuesta tienen que consultarlo para saltarse con motivo. Es la misma bandera
+ * que `haveCreds` y por el mismo susto: un skip mudo hizo que la suite dijera
+ * *"3 passed"* sin haber probado nada.
+ *
+ * ⚠ `SUPABASE_SERVICE_KEY` **no existe en la aplicación ni puede existir**: vive
+ * solo en el arranque de la suite y nunca la ve el navegador (`CLAUDE.md` §1 y
+ * §4). Hace falta porque reponer exige saltarse RLS —borrar filas ajenas y
+ * escribir `members.public_key` de las dos cuentas—, y eso la clave publicable no
+ * lo puede hacer, que es precisamente el punto de que sea publicable.
+ */
+export const canResetFixture = !!(
+  process.env.VITE_SUPABASE_URL &&
+  process.env.SUPABASE_SERVICE_KEY &&
+  process.env.VITE_DEMO_KEY_SEED
+);
+
 export const ALPHA_STORAGE = '.playwright/alpha.json';
 
 /** Contexto sin sesión, para los tests que tienen que ver el login. */

@@ -1,47 +1,46 @@
 import { useEffect, useMemo, useState } from 'react';
-import { errorMessage, type MemberProfile } from '../../lib/session';
+import { errorMessage } from '../../lib/session';
+import type { MemberProfile } from '../../lib/session';
 import {
   DEFAULT_SORT,
   EYEBROW,
+  SEARCH_PLACEHOLDER,
+  SUBTITLE,
+  TITLE,
   fetchSentOffers,
   filterSentOffers,
   resultCountLabel,
-  SEARCH_PLACEHOLDER,
   sortSentOffers,
-  SUBTITLE,
-  TITLE,
   type SentOffer,
   type SortColumn,
-  type SortDirection,
 } from '../../lib/sent-offers';
 import { SentOffersTable } from './SentOffersTable';
 import styles from './SentOffers.module.css';
 
-interface Props {
-  profile: MemberProfile;
-  onOpenThread?: (threadId: string) => void;
-}
-
 /**
  * VND-01 · Mis Ofertas (vista del vendedor).
  *
- * Posee TODO el estado — ofertas, carga, error, texto de búsqueda y ordenación.
- * El orden de operaciones es FILTRAR y luego ORDENAR (§4 / §5.4). La ordenación
- * arranca en `DEFAULT_SORT` (Fecha descendente) y se aplica SIEMPRE desde aquí.
- * El panel VERA es wiring del shell (contrato propio desde el día 2) y no es de
- * esta pantalla.
+ * La pantalla posee todo el estado: ofertas, carga, error, texto de búsqueda y
+ * ordenación. La carga se hace exactamente una vez al montar; `orgId` no cambia
+ * durante la vida de la pantalla, así que incluirlo en las dependencias solo
+ * provocaría un refetch.
  */
-export function SentOffers({ profile, onOpenThread }: Props) {
+export function SentOffers({
+  profile,
+  onOpenThread,
+}: {
+  profile: MemberProfile;
+  onOpenThread?: (threadId: string) => void;
+}) {
   const [offers, setOffers] = useState<SentOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<{ column: SortColumn; direction: SortDirection }>(DEFAULT_SORT);
+  const [sort, setSort] = useState(DEFAULT_SORT);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+
     fetchSentOffers(profile.orgId)
       .then((data) => {
         if (cancelled) return;
@@ -49,20 +48,23 @@ export function SentOffers({ profile, onOpenThread }: Props) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(errorMessage(err));
+        setError(err);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
-  }, [profile.orgId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(() => filterSentOffers(offers, query), [offers, query]);
-  const sorted = useMemo(() => sortSentOffers(filtered, sort.column, sort.direction), [filtered, sort]);
-
-  const hasQuery = query.trim().length > 0;
+  const sorted = useMemo(
+    () => sortSentOffers(filtered, sort.column, sort.direction),
+    [filtered, sort],
+  );
 
   const handleSort = (column: SortColumn) => {
     setSort((prev) =>
@@ -72,51 +74,61 @@ export function SentOffers({ profile, onOpenThread }: Props) {
     );
   };
 
+  const handleOpenThread = (threadId: string) => {
+    onOpenThread?.(threadId);
+  };
+
+  const hasQuery = query.trim().length > 0;
+
   return (
-    <div className={styles.page} data-testid="selling-body" aria-busy={loading}>
+    <div
+      className={styles.content}
+      data-testid="selling-body"
+      aria-busy={loading ? 'true' : 'false'}
+    >
       <p className={styles.eyebrow}>{EYEBROW}</p>
       <h1 className={styles.title}>{TITLE}</h1>
       <p className={styles.subtitle}>{SUBTITLE}</p>
 
-      {error !== null ? (
-        <div className={styles.error} role="alert">
-          {error}
+      {loading && <p className={styles.loading}>Cargando ofertas…</p>}
+
+      {!loading && error != null && (
+        <div className={styles.alert} role="alert">
+          {errorMessage(error as Error)}
         </div>
-      ) : loading ? (
-        <div className={styles.loading}>Cargando ofertas…</div>
-      ) : (
+      )}
+
+      {!loading && error == null && (
         <>
           <div className={styles.searchBar}>
             <div className={styles.searchWrap}>
               <svg
                 className={styles.searchIcon}
+                aria-hidden="true"
                 width="15"
                 height="15"
-                viewBox="0 0 24 24"
+                viewBox="0 0 16 16"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1.5"
                 strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
               >
-                <circle cx="11" cy="11" r="7" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <circle cx="7" cy="7" r="5" />
+                <path d="M11 11l3.5 3.5" />
               </svg>
               <input
                 type="text"
                 className={styles.searchInput}
                 placeholder={SEARCH_PLACEHOLDER}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-label={SEARCH_PLACEHOLDER}
+                onChange={(event) => setQuery(event.target.value)}
               />
-              {hasQuery && (
+              {query.length > 0 && (
                 <button
                   type="button"
-                  className={styles.clearButton}
-                  onClick={() => setQuery('')}
+                  className={styles.searchClear}
                   aria-label="Limpiar búsqueda"
+                  onClick={() => setQuery('')}
                 >
                   ×
                 </button>
@@ -129,7 +141,7 @@ export function SentOffers({ profile, onOpenThread }: Props) {
             offers={sorted}
             sort={sort}
             onSort={handleSort}
-            onOpenThread={(threadId) => onOpenThread?.(threadId)}
+            onOpenThread={handleOpenThread}
             hasQuery={hasQuery}
           />
         </>

@@ -1,7 +1,9 @@
-.page {
-  background: var(--bw-cold-white);
-  padding: 24px 28px 40px;
+.content {
+  flex: 1;
   min-width: 0;
+  overflow-y: auto;
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
 }
 
 .eyebrow {
@@ -9,28 +11,43 @@
   font-size: var(--bw-size-eyebrow);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--bw-ls-eyebrow);
   color: var(--bw-calibration-blue);
   margin-bottom: 4px;
 }
 
 .title {
   font-family: var(--bw-font-title);
-  font-size: 20px;
+  font-size: var(--bw-size-title);
   font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
   color: var(--bw-deep-steel);
   margin-bottom: 3px;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: var(--bw-text-secondary);
+  font-size: var(--bw-size-body);
   line-height: 1.6;
+  color: var(--bw-text-secondary);
   margin-bottom: 20px;
   max-width: 600px;
 }
 
-/* ── Barra de búsqueda (§4) ────────────────────────────────────── */
+.loading {
+  padding: 24px 0;
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+}
+
+.alert {
+  padding: 14px 16px;
+  border: 1px solid var(--bw-badge-danger-border);
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-error-text);
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-body);
+  line-height: 1.5;
+}
 
 .searchBar {
   display: flex;
@@ -54,15 +71,17 @@
   pointer-events: none;
 }
 
+/* El mock pinta el campo en blanco puro; no hay token de blanco en §1.4, así
+   que la superficie clara más próxima es --bw-surface-mist (#F8F9FB). */
 .searchInput {
   width: 100%;
   height: 36px;
-  padding: 0 30px 0 34px;
+  padding: 0 12px 0 34px;
   border: 1px solid var(--bw-line-steel-strong);
-  border-radius: 6px;
-  background: var(--bw-cold-white);
-  font-size: var(--bw-size-input);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
   font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
   color: var(--bw-input-text);
   outline: none;
   transition: border-color 0.12s;
@@ -70,21 +89,14 @@
 
 .searchInput:focus {
   border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
 }
 
 .searchInput::placeholder {
   color: var(--bw-input-placeholder);
 }
 
-/* Reiniciar el fondo a blanco: el campo de búsqueda se escribe sobre él y es un
-   control, no una superficie. El fondo Cold White del panel pasa por detrás del
-   campo; para que el input se lea como editable, la superficie correcta es la
-   misma que usa el HTML aprobado. */
-.searchWrap .searchInput {
-  background: white;
-}
-
-.clearButton {
+.searchClear {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -93,42 +105,14 @@
   border: none;
   color: var(--bw-input-placeholder);
   cursor: pointer;
-  font-size: 14px;
+  /* 14px no tiene token propio; --bw-size-eyebrow es el tamaño de 14px. */
+  font-size: var(--bw-size-eyebrow);
   line-height: 1;
   padding: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--bw-radius);
-  transition: color 0.12s;
-}
-
-.clearButton:hover {
-  color: var(--bw-deep-steel);
 }
 
 .resultCount {
   font-size: var(--bw-size-label);
   color: var(--bw-input-placeholder);
   white-space: nowrap;
-}
-
-/* ── Estados de la pantalla ────────────────────────────────────── */
-
-.loading {
-  font-size: var(--bw-size-body);
-  color: var(--bw-text-secondary);
-  padding: 24px 0;
-}
-
-.error {
-  background: var(--bw-tint-danger);
-  border: 1px solid var(--bw-badge-warning-border);
-  border-radius: var(--bw-radius);
-  color: var(--bw-error-text);
-  font-size: var(--bw-size-body);
-  line-height: 1.5;
-  padding: 14px 16px;
 }

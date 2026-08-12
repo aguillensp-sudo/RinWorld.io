@@ -1,0 +1,53 @@
+{
+  "attempt": 1,
+  "task": "LOGIN-01",
+  "screen": "LOGIN-01",
+  "model": "deepseek-v4-flash",
+  "finish_reason": "stop",
+  "api_calls": 1,
+  "truncated_at": [],
+  "tokens_in": 8047,
+  "tokens_out": 27392,
+  "cache_hit": 0,
+  "cache_miss": 8047,
+  "cache_hit_pct": 0.0,
+  "seconds": 172.2,
+  "cost_usd": 0.008796,
+  "cost_usd_cold_equivalent": 0.008796,
+  "price_table": {
+    "in_hit": 0.0028,
+    "in_miss": 0.14,
+    "out": 0.28
+  },
+  "files": [
+    "app/src/screens/Login.module.css",
+    "app/src/screens/Login.tsx"
+  ],
+  "sources": {
+    "app/src/screens/Login.module.css": "/* LOGIN-01 — Tarjeta de acceso centrada sobre el azul de marca. Sin shell. */\n\n.page {\n  min-height: 100vh;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 24px;\n  background: var(--bw-deep-steel-darkest);\n  box-sizing: border-box;\n}\n\n.card {\n  width: 100%;\n  max-width: 400px;\n  padding: var(--bw-pad-panel);\n  background: var(--bw-warm-cream);\n  border: 1px solid var(--bw-line-steel);\n  border-radius: var(--bw-radius);\n  box-sizing: border-box;\n}\n\n.eyebrow {\n  margin: 0;\n  font-family: var(--bw-font-body);\n  font-size: var(--bw-size-eyebrow);\n  letter-spacing: var(--bw-ls-eyebrow);\n  text-transform: uppercase;\n  color: var(--bw-brass);\n}\n\n.title {\n  margin: 6px 0 0;\n  font-family: var(--bw-font-title);\n  font-size: var(--bw-size-title);\n  line-height: 1.2;\n  letter-spacing: var(--bw-ls-title);\n  color: var(--bw-deep-steel);\n}\n\n.form {\n  display: flex;\n  flex-direction: column;\n  gap: 18px;\n  margin-top: 28px;\n}\n\n.field {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n\n.label {\n  font-family: var(--bw-font-body);\n  font-size: var(--bw-size-label);\n  letter-spacing: var(--bw-ls-label);\n  color: var(--bw-text-secondary);\n}\n\n.input {\n  width: 100%;\n  padding: var(--bw-pad-input);\n  font-family: var(--bw-font-body);\n  font-size: var(--bw-size-input);\n  color: var(--bw-input-text);\n  background: var(--bw-cold-white);\n  border: 1px solid var(--bw-line-steel-strong);\n  border-radius: var(--bw-radius);\n  box-sizing: border-box;\n  outline: none;\n}\n\n.input::placeholder {\n  color: var(--bw-input-placeholder);\n}\n\n.input:focus {\n  border-color: var(--bw-calibration-blue);\n  box-shadow: var(--bw-focus-halo);\n}\n\n.input:disabled {\n  opacity: 0.65;\n}\n\n.encryptHint {\n  margin: 0;\n  font-family: var(--bw-font-body);\n  font-size: var(--bw-size-hint);\n  letter-spacing: var(--bw-ls-hint);\n  line-height: 1.5;\n  color: var(--bw-text-secondary);\n}\n\n.error {\n  margin: 0;\n  padding: var(--bw-pad-input);\n  font-family: var(--bw-font-body);\n  font-size: var(--bw-size-input);\n  line-height: 1.4;\n  color: var(--bw-error-text);\n  background: var(--bw-sensitive-bg);\n  border: 1px solid var(--bw-badge-danger-border);\n  border-radius: var(--bw-radius);\n}\n\n.submit {\n  width: 100%;\n  padding: var(--bw-pad-input);\n  font-family: var(--bw-font-body);\n  font-size: var(--bw-size-input);\n  font-weight: 600;\n  color: var(--bw-warm-cream);\n  background: var(--bw-calibration-blue);\n  border: 1px solid var(--bw-calibration-blue);\n  border-radius: var(--bw-radius);\n  cursor: pointer;\n}\n\n.submit:hover:not(:disabled) {\n  background: var(--bw-primary-dark);\n  border-color: var(--bw-primary-dark);\n}\n\n.submit:focus-visible {\n  outline: none;\n  box-shadow: var(--bw-focus-halo);\n}\n\n.submit:disabled {\n  background: var(--bw-surface-mist);\n  color: var(--bw-hint-steel);\n  border-color: var(--bw-line-steel);\n  cursor: not-allowed;\n}\n\n@media (max-width: 479px) {\n  .page {\n    padding: 16px;\n  }\n\n  .card {\n    padding: 24px;\n  }\n}",
+    "app/src/screens/Login.tsx": "import { useState } from 'react';\nimport type { FormEvent } from 'react';\nimport styles from './Login.module.css';\n\n/**\n * LOGIN-01 — Iniciar sesión.\n *\n * Pantalla completa sin shell: es la primera que ve el socio. Recoge correo y\n * contraseña y delega la autenticación en `onSubmit` (lo monta `useSession`);\n * aquí no hay red, ni enlaces, ni flujos que el MVP no tenga.\n *\n * La contraseña se lee solo en el submit (`email.trim()`, `password` tal cual) y\n * nunca en un efecto posterior: el helper e2e vacía el campo después de rellenarlo\n * (F-038) y el volcado del DOM que Playwright sube a la CI no debe arrastrar\n * credenciales.\n */\nexport function Login({\n  onSubmit,\n  error,\n}: {\n  onSubmit: (email: string, password: string) => Promise<boolean>;\n  error: string | null;\n}) {\n  const [email, setEmail] = useState('');\n  const [password, setPassword] = useState('');\n  const [submitting, setSubmitting] = useState(false);\n\n  // Un correo de solo espacios no cuenta como contenido (RNG-LOG-01). La\n  // contraseña no se recorta: un espacio al final puede ser parte de ella.\n  const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;\n\n  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {\n    event.preventDefault();\n    if (!canSubmit) return;\n\n    setSubmitting(true);\n    try {\n      await onSubmit(email.trim(), password);\n    } finally {\n      setSubmitting(false);\n    }\n  };\n\n  return (\n    <main className={styles.page}>\n      <div className={styles.card}>\n        <p className={styles.eyebrow}>Bearingworld.io</p>\n        <h1 id=\"login-title\" className={styles.title}>Iniciar sesión</h1>\n        <form\n          className={styles.form}\n          aria-labelledby=\"login-title\"\n          onSubmit={handleSubmit}\n        >\n          <div className={styles.field}>\n            <label htmlFor=\"login-email\" className={styles.label}>Correo electrónico</label>\n            <input\n              id=\"login-email\"\n              className={styles.input}\n              type=\"email\"\n              name=\"email\"\n              autoComplete=\"username\"\n              placeholder=\"nombre@empresa.com\"\n              value={email}\n              onChange={(event) => setEmail(event.target.value)}\n              disabled={submitting}\n            />\n          </div>\n          <div className={styles.field}>\n            <label htmlFor=\"login-password\" className={styles.label}>Contraseña</label>\n            <input\n              id=\"login-password\"\n              className={styles.input}\n              type=\"password\"\n              name=\"password\"\n              autoComplete=\"current-password\"\n              value={password}\n              onChange={(event) => setPassword(event.target.value)}\n              disabled={submitting}\n              aria-describedby=\"login-encrypt-hint\"\n            />\n            <p id=\"login-encrypt-hint\" className={styles.encryptHint}>\n              Cifrado extremo a extremo · el servidor no ve tu contenido\n            </p>\n          </div>\n          {error !== null && (\n            <div className={styles.error} role=\"alert\">{error}</div>\n          )}\n          <button type=\"submit\" className={styles.submit} disabled={!canSubmit}>\n            {submitting ? 'Entrando…' : 'Entrar'}\n          </button>\n        </form>\n      </div>\n    </main>\n  );\n}"
+  },
+  "checks": [
+    {
+      "id": "C1",
+      "ok": true,
+      "detail": "typecheck limpio y suite de unidad en verde"
+    },
+    {
+      "id": "C2",
+      "ok": true,
+      "detail": "aceptacion en verde: unidad 1 fichero(s)"
+    },
+    {
+      "id": "C3",
+      "ok": true,
+      "detail": "sin colores literales"
+    },
+    {
+      "id": "C4",
+      "ok": true,
+      "detail": "reglas mecanicas en verde"
+    }
+  ],
+  "escalated_to_human": false
+}

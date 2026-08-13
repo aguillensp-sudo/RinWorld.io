@@ -191,13 +191,25 @@ socio.
 
 ## Pendiente de Álvaro
 
-1. 🟠 **Despliegue · sigue esperando tus clics, y mañana es la sesión de pruebas.** Decidido
-   el 12-ago: **Vercel, con semilla de demo, la semilla solo en *Production*, URL sin
-   indexar y muerte en V1**. El repo lleva las tres piezas del no-indexado y el runbook en
-   **`openspec/mvp/despliegue.md`**. Los cuatro valores por defecto de Vercel están mal:
-   Root Directory **`app`**, rama **`mvp/bootstrap`**, nombre **`bearingworld`** y las tres
-   `VITE_*`. **⚠ Con el día 10 cerrado el mismo 13-ago, no queda colchón: la sesión de
-   `Plan §3` día 11 es la próxima fila del plan y sigue sin haber URL viva.**
+1. ✅ **Despliegue · RESUELTO esta tarde. URL viva: `https://bearingworld.vercel.app`.**
+   Dos problemas, los dos cerrados con el CLI (proyecto ya estaba enlazado desde el 12-ago,
+   ruta B de `despliegue.md`):
+   - **Vercel Authentication (SSO) bloqueaba la URL** con un 302 al login de Vercel.
+     `npx vercel project protection disable bearingworld --sso` — confirmado contigo antes
+     de tocarlo. Verificado con `curl -I`: `200 OK`, sin redirección, `X-Robots-Tag: noindex,
+     nofollow, noarchive` puesto.
+   - 🔴 **F-084 · las tres variables de *Production* valían literalmente `"n"`** desde que se
+     pusieron el 12-ago — no vacías, el carácter `n`, compatible con que se colara la
+     respuesta a un `y/N` de otro prompt en una sesión no interactiva de verdad. La app
+     cargaba en blanco (`Invalid supabaseUrl`). Borradas y vueltas a poner por pipe desde
+     `app/.env` (el valor nunca se tecleó ni quedó en el historial de la shell). Redesplegado
+     y **verificado contra el bundle real**: `troxminloxkjwihwfevs` aparece, ningún
+     `sb_secret_…`, y la app carga el login limpio en una pestaña nueva sin errores de
+     consola.
+   - **Pendiente, sin bloquear:** las comprobaciones 3 y 4 de `despliegue.md` §4 (que Beta no
+     vea el inventario/hilos de Alpha en remoto, y la cabecera por `curl`) no se repitieron
+     hoy porque no hacía falta para desbloquear la URL — son un minuto si quieres cerrarlas
+     del todo antes de la sesión.
 2. **`npx supabase link --project-ref troxminloxkjwihwfevs`** — pide la contraseña de la
    base. **Y ojo (F-073): la CLI está logueada en la cuenta equivocada** —la de
    `web-julsaindustrial`, org `mjxnlvvrnjuuawlxkmte`—; el MVP vive en `ujatcozvbspkycepemfq`.
@@ -219,20 +231,21 @@ socio.
      deshacer con un `update`, solo borrando filas.
    - Dos tarjetas de **`CONSULTA`** nuevas de Alpha a Nordwälz Lager (`6205-2RS` SKF 1250 u.
      y NSK 1200 u.), ambas `Pendiente`, ambas legibles por las dos partes.
-   - **Si el guion de la sesión de mañana daba por hecho la oferta de 4,82 € intacta y sin
-     contraofertar, hay que decidir:** dejarlo (es una demostración real y correcta de la
-     función) o que te borre las tres filas para devolver el hilo a como lo dejó
-     `demo_threads.sql`. Dilo y lo hago antes de mañana.
+   - **Decidido por el PO (13-ago): se deja tal cual, no se limpia.** Es una demostración
+     real y correcta de las dos funciones del día 10; el hilo Alpha↔Nordwälz Lager se usa
+     para la sesión de mañana con este estado, no con el de la siembra original.
 
 ---
 
 ## Riesgo con la vista más corta
 
-**El primero, sin cambios desde ayer y ahora sin colchón: la sesión de pruebas de mañana
-(`Plan §3`, día 11) no tiene URL desplegada.** Todo lo que falta son clics en la cuenta de
-Álvaro.
+**El primero se cerró esta tarde: `https://bearingworld.vercel.app` está viva, sin login de
+Vercel por delante y con las variables de entorno correctas** (ver "Pendiente de Álvaro" #1
+y F-084). Queda un resto de riesgo, no un bloqueo: las comprobaciones 3 y 4 de
+`despliegue.md` §4 (aislamiento Beta/Alpha en remoto, cabecera por `curl`) no se repitieron
+hoy.
 
-**El segundo se cerró esta tarde, y con un hallazgo real de por medio.** Contraoferta y
+**El segundo se cerró esta tarde también, y con un hallazgo real de por medio.** Contraoferta y
 "Consultar Seleccionados" se verificaron en el navegador con las dos cuentas reales —la
 primera corrida de "Consultar Seleccionados" reveló F-083 (la CEK no se envolvía para quien
 escribía), arreglado y reverificado en la misma sesión. **La lección de F-082 se repitió a
@@ -242,17 +255,17 @@ clave— solo lo vio abrir la aplicación de verdad y releer lo que se acababa d
 Ninguna de las tres capas de prueba (unidad, Postgres real, navegador real) sustituye a las
 otras dos.
 
-**El tercero es nuevo: la base de demo tiene ahora tres filas que la siembra no puso** (ver
-"Pendiente de Álvaro" #7). No es grave —son datos reales y correctos, no basura— pero si el
-guion de mañana asumía el hilo Alpha↔Nordwälz en su estado sembrado, hay que decidir antes
-de la sesión.
+**El tercero es informativo, no un riesgo: la base de demo tiene tres filas que la siembra no
+puso** (contraoferta + dos consultas sobre el hilo Alpha↔Nordwälz), y el PO decidió dejarlas
+— el guion de mañana cuenta con ellas.
 
 **El cuarto sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se sepa
 cuál es, cualquier pieza que dependa de una credencial es sospechosa.
 
 > **La conclusión operativa para el día 11:** las dos piezas del día 10 están probadas de
-> punta a punta con cuentas reales. Lo que queda es logística — el despliegue de Vercel
-> (#1) y decidir qué hacer con el hilo de prueba (#7) — no más código.
+> punta a punta con cuentas reales, y la URL de la demo está viva. Queda repasar las dos
+> comprobaciones de `despliegue.md` §4 que no se repitieron hoy, y la clave rotada de F-081
+> — no más código.
 
 ---
 

@@ -5,11 +5,13 @@ import {
   counterOffer,
   decryptItem,
   itemTypeLabel,
+  sendInquiries,
   validUntilLabel,
   AGREEMENT_DISABLED_REASON,
   CREATE_OFFER_DISABLED_REASON,
   ENCRYPTED_NOTICE,
   type EncryptedBlob,
+  type InquiryLine,
   type OfferContent,
   type ThreadItem,
 } from './thread-detail';
@@ -35,15 +37,23 @@ import type { ThreadRecipient } from './keys';
  */
 const rpcLlamadas: { fn: string; args: unknown }[] = [];
 let rpcError: unknown = null;
+/** Errores de un solo uso, en orden: la llamada N-ésima a `rpc` consume el
+ *  N-ésimo de la cola antes de caer en `rpcError`. Sirve para probar que un
+ *  fallo en una línea de `sendInquiries` no bloquea a las siguientes. */
+let rpcErrorQueue: unknown[] = [];
 let llavero: SessionKeyPair | null = null;
 let destinatarios: ThreadRecipient[] = [];
 const fetchThreadRecipientsMock = vi.fn(async (_threadId: string) => destinatarios);
+/** Por organización distribuidora, para los tests de `sendInquiries`. */
+let publicasPorOrg = new Map<string, ThreadRecipient[]>();
+const fetchOrgRecipientsMock = vi.fn(async (orgId: string) => publicasPorOrg.get(orgId) ?? []);
 
 vi.mock('./supabase', () => ({
   supabase: {
     rpc: (fn: string, args: unknown) => {
       rpcLlamadas.push({ fn, args });
-      return Promise.resolve({ error: rpcError });
+      const error = rpcErrorQueue.length > 0 ? rpcErrorQueue.shift() : rpcError;
+      return Promise.resolve({ error: error ?? null });
     },
   },
 }));
@@ -51,6 +61,7 @@ vi.mock('./supabase', () => ({
 vi.mock('./keys', () => ({
   currentKeyPair: () => llavero,
   fetchThreadRecipients: (threadId: string) => fetchThreadRecipientsMock(threadId),
+  fetchOrgRecipients: (orgId: string) => fetchOrgRecipientsMock(orgId),
 }));
 
 /**
@@ -355,6 +366,7 @@ describe('counterOffer · la fila del día 10 del Plan §3', () => {
   beforeEach(async () => {
     rpcLlamadas.length = 0;
     rpcError = null;
+    rpcErrorQueue = [];
     fetchThreadRecipientsMock.mockClear();
     llavero = await generateKeyPair();
     const otro = await generateKeyPair();
@@ -429,5 +441,149 @@ describe('counterOffer · la fila del día 10 del Plan §3', () => {
   it('un fallo de la base se propaga tal cual', async () => {
     rpcError = { message: 'La oferta ya no esta Pendiente' };
     await expect(counterOffer(OLD_ITEM, HILO, CONTENIDO)).rejects.toBeTruthy();
+  });
+});
+
+describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)', () => {
+  /**
+   * CONTRATO DE ACEPTACIÓN. Las públicas del distribuidor se piden por
+   * ORGANIZACIÓN (`fetchOrgRecipients`), no por hilo: es la diferencia con
+   * `counterOffer` y `sendMessage`, que ya tienen un hilo del que partir.
+   */
+
+  const NORDWALZ = 'org-nordwalz';
+  const ANADOLU = 'org-anadolu';
+
+  beforeEach(async () => {
+    rpcLlamadas.length = 0;
+    rpcError = null;
+    rpcErrorQueue = [];
+    fetchOrgRecipientsMock.mockClear();
+    llavero = await generateKeyPair();
+    const nordwalz = await generateKeyPair();
+    const anadolu = await generateKeyPair();
+    publicasPorOrg = new Map([
+      [
+        NORDWALZ,
+        [
+          { memberId: 'yo', orgId: NORDWALZ, publicKey: llavero.publicKey },
+          { memberId: 'nordwalz-1', orgId: NORDWALZ, publicKey: nordwalz.publicKey },
+        ],
+      ],
+      [
+        ANADOLU,
+        [
+          { memberId: 'yo', orgId: ANADOLU, publicKey: llavero.publicKey },
+          { memberId: 'anadolu-1', orgId: ANADOLU, publicKey: anadolu.publicKey },
+        ],
+      ],
+    ]);
+  });
+
+  function linea(over: Partial<InquiryLine> = {}): InquiryLine {
+    return { lineId: 'linea-1', distributorOrgId: NORDWALZ, quantity: 800, ...over };
+  }
+
+  it('sin llave de sesión, ni una línea se envía', async () => {
+    llavero = null;
+    await expect(sendInquiries([linea()])).rejects.toThrow(/clave de cifrado/i);
+    expect(fetchOrgRecipientsMock).not.toHaveBeenCalled();
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('ANCLA · una línea llama a create_inquiry con su id y una CEK por destinatario, incluida la propia', async () => {
+    const resultados = await sendInquiries([linea({ lineId: 'l-1' })]);
+
+    expect(resultados).toEqual([{ lineId: 'l-1', distributorOrgId: NORDWALZ, ok: true }]);
+    expect(rpcLlamadas).toHaveLength(1);
+    expect(rpcLlamadas[0]!.fn).toBe('create_inquiry');
+
+    const args = rpcLlamadas[0]!.args as {
+      p_line_id: string;
+      p_ciphertext: string;
+      p_iv: string;
+      p_keys: { member_id: string }[];
+    };
+    expect(args.p_line_id).toBe('l-1');
+    expect(args.p_keys.map((k) => k.member_id).sort()).toEqual(['nordwalz-1', 'yo']);
+  });
+
+  it('lo que llega a la base descifra a la cantidad de la línea, sin comentario', async () => {
+    await sendInquiries([linea({ lineId: 'l-1', quantity: 250 })]);
+    const args = rpcLlamadas[0]!.args as {
+      p_ciphertext: string;
+      p_iv: string;
+      p_keys: { member_id: string; wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[];
+    };
+    const propia = args.p_keys.find((k) => k.member_id === 'yo')!;
+    const cek = await unwrapCek(
+      {
+        wrappedCek: fromBytea(propia.wrapped_cek),
+        wrapIv: fromBytea(propia.wrap_iv),
+        ephemeralPublicKey: fromBytea(propia.ephemeral_pubkey),
+      },
+      llavero!,
+    );
+    const contenido = await decryptContent(fromBytea(args.p_ciphertext), fromBytea(args.p_iv), cek);
+    expect(contenido).toEqual({ kind: 'CONSULTA', quantity: 250, comment: null });
+  });
+
+  it('dos líneas del MISMO distribuidor piden sus públicas UNA sola vez', async () => {
+    await sendInquiries([
+      linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),
+      linea({ lineId: 'l-2', distributorOrgId: NORDWALZ }),
+    ]);
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledTimes(1);
+    expect(rpcLlamadas).toHaveLength(2);
+  });
+
+  it('líneas de distribuidores DISTINTOS piden las públicas de cada uno', async () => {
+    const resultados = await sendInquiries([
+      linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),
+      linea({ lineId: 'l-2', distributorOrgId: ANADOLU }),
+    ]);
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledTimes(2);
+    expect(resultados.filter((r) => r.ok)).toHaveLength(2);
+  });
+
+  it('sin la clave pública de un miembro del distribuidor, esa línea falla y las demás no', async () => {
+    publicasPorOrg.set(ANADOLU, [
+      { memberId: 'yo', orgId: ANADOLU, publicKey: llavero!.publicKey },
+      { memberId: 'anadolu-1', orgId: ANADOLU, publicKey: null },
+    ]);
+
+    const resultados = await sendInquiries([
+      linea({ lineId: 'l-ok', distributorOrgId: NORDWALZ }),
+      linea({ lineId: 'l-falla', distributorOrgId: ANADOLU }),
+    ]);
+
+    expect(resultados).toEqual([
+      { lineId: 'l-ok', distributorOrgId: NORDWALZ, ok: true },
+      {
+        lineId: 'l-falla',
+        distributorOrgId: ANADOLU,
+        ok: false,
+        error: expect.stringMatching(/no ha publicado su clave/i),
+      },
+    ]);
+    // La línea que sí pudo cifrarse SÍ llamó a la base: un fallo ajeno no la
+    // bloquea (F-023 — un fallo parcial no se puede tapar con un "no se envió
+    // nada" tan cómodo como falso).
+    expect(rpcLlamadas).toHaveLength(1);
+  });
+
+  it('un rechazo de la base en una línea no impide que la siguiente se intente', async () => {
+    // Solo la primera llamada a create_inquiry falla (p. ej. el límite diario
+    // de hilos nuevos de ese distribuidor); la segunda línea, ya con el hilo
+    // encontrado en vez de creado, no tiene por qué correr la misma suerte.
+    rpcErrorQueue = [{ message: 'Límite diario alcanzado' }];
+
+    const resultados = await sendInquiries([
+      linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),
+      linea({ lineId: 'l-2', distributorOrgId: NORDWALZ }),
+    ]);
+
+    expect(resultados[0]).toMatchObject({ lineId: 'l-1', ok: false, error: expect.stringContaining('Límite diario') });
+    expect(resultados[1]).toMatchObject({ lineId: 'l-2', ok: true });
   });
 });

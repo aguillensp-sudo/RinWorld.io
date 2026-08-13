@@ -22,11 +22,19 @@ import type { MemberProfile } from '../../lib/session';
 
 const fetchResults = vi.fn<(q: SearchQuery) => Promise<SearchPage>>();
 const toggleFavorite = vi.fn<(m: string, o: string, n: boolean) => Promise<void>>();
+const sendInquiries =
+  vi.fn<(lines: { lineId: string; distributorOrgId: string; quantity: number }[]) => Promise<
+    { lineId: string; distributorOrgId: string; ok: boolean; error?: string }[]
+  >>();
 
 vi.mock('../../lib/search', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/search')>()),
   fetchResults: (q: SearchQuery) => fetchResults(q),
   toggleFavorite: (m: string, o: string, n: boolean) => toggleFavorite(m, o, n),
+}));
+
+vi.mock('../../lib/thread-detail', () => ({
+  sendInquiries: (lines: unknown) => sendInquiries(lines as never),
 }));
 
 const { SearchResults } = await import('./SearchResults');
@@ -70,8 +78,12 @@ function page(rows: SearchResultRow[], over: Partial<SearchPage> = {}): SearchPa
 beforeEach(() => {
   fetchResults.mockReset();
   toggleFavorite.mockReset();
+  sendInquiries.mockReset();
   fetchResults.mockResolvedValue(page([row()]));
   toggleFavorite.mockResolvedValue();
+  sendInquiries.mockImplementation(async (lines) =>
+    lines.map((l) => ({ lineId: l.lineId, distributorOrgId: l.distributorOrgId, ok: true })),
+  );
 });
 
 function pintar() {
@@ -211,6 +223,155 @@ describe('SRCH-01 · Consultar seleccionados', () => {
     await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
     await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
     expect(screen.getByRole('button', { name: 'Consultar seleccionados' })).toBeEnabled();
+  });
+
+  /**
+   * GAP-004: el boundary dice que esta pantalla "ejecuta la selección y
+   * dispara la acción"; `messaging-and-negotiation` (`sendInquiries`) hace el
+   * resto y se mockea igual que `fetchResults`. La lógica real de cifrado y
+   * hallar-o-crear el hilo vive en `thread-detail.test.ts` y
+   * `01_schema_smoke.sql`.
+   */
+  it('envía una línea por fila marcada, con el id de línea, el distribuidor y la cantidad de la fila', async () => {
+    fetchResults.mockResolvedValue(
+      page(
+        [
+          row({ id: 'a', orgId: 'org-a', quantity: 850 }),
+          row({ id: 'b', orgId: 'org-b', quantity: 350 }),
+        ],
+        { total: 2 },
+      ),
+    );
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
+    await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    await waitFor(() => expect(sendInquiries).toHaveBeenCalledTimes(1));
+    expect(sendInquiries.mock.calls[0]![0]).toEqual(
+      expect.arrayContaining([
+        { lineId: 'a', distributorOrgId: 'org-a', quantity: 850 },
+        { lineId: 'b', distributorOrgId: 'org-b', quantity: 350 },
+      ]),
+    );
+  });
+
+  it('deja fuera del envío las filas ya consultadas, aunque estén marcadas', async () => {
+    // `Seleccionar todos` marca cualquier fila, incluidas las ya consultadas
+    // (F-039 lo anota: el botón de la fila las deshabilita, la casilla no).
+    // create_inquiry las rechazaría igual, y no tiene sentido mandarlas.
+    fetchResults.mockResolvedValue(
+      page(
+        [
+          row({ id: 'a', orgId: 'org-a', quantity: 850, consulted: false }),
+          row({ id: 'b', orgId: 'org-b', quantity: 350, consulted: true }),
+        ],
+        { total: 2 },
+      ),
+    );
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(screen.getByRole('button', { name: 'Seleccionar todos' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    await waitFor(() => expect(sendInquiries).toHaveBeenCalledTimes(1));
+    expect(sendInquiries.mock.calls[0]![0]).toEqual([{ lineId: 'a', distributorOrgId: 'org-a', quantity: 850 }]);
+  });
+
+  it('si TODO lo marcado ya estaba consultado, no llama a sendInquiries y lo dice', async () => {
+    fetchResults.mockResolvedValue(
+      page([row({ id: 'a', consulted: true }), row({ id: 'b', consulted: true })], { total: 2 }),
+    );
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(screen.getByRole('button', { name: 'Seleccionar todos' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    expect(sendInquiries).not.toHaveBeenCalled();
+    expect(await screen.findByText(/ya estaban consultadas/i)).toBeInTheDocument();
+  });
+
+  it('el mensaje de éxito es el literal de la spec, con el recuento de DISTRIBUIDORES', async () => {
+    fetchResults.mockResolvedValue(
+      page(
+        [row({ id: 'a', orgId: 'org-mismo' }), row({ id: 'b', orgId: 'org-mismo' })],
+        { total: 2 },
+      ),
+    );
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
+    await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    // Dos LÍNEAS del mismo distribuidor cuentan como UN distribuidor.
+    expect(
+      await screen.findByText('Consultas enviadas a 1 distribuidor. Las respuestas llegarán a tu bandeja de Hilos.'),
+    ).toBeInTheDocument();
+  });
+
+  it('un fallo parcial se dice, no se esconde detrás de un mensaje de éxito', async () => {
+    fetchResults.mockResolvedValue(
+      page([row({ id: 'a', orgId: 'org-a' }), row({ id: 'b', orgId: 'org-b' })], { total: 2 }),
+    );
+    sendInquiries.mockResolvedValue([
+      { lineId: 'a', distributorOrgId: 'org-a', ok: true },
+      { lineId: 'b', distributorOrgId: 'org-b', ok: false, error: 'Límite diario alcanzado' },
+    ]);
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
+    await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    expect(await screen.findByText(/Consultas enviadas a 1 distribuidor/)).toBeInTheDocument();
+    expect(screen.getByText(/Límite diario alcanzado/)).toBeInTheDocument();
+  });
+
+  it('el usuario permanece en SRCH-01: vuelve a leer la tabla, no navega a ningún sitio', async () => {
+    fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
+    pintar();
+    await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
+    await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
+    await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    // La relectura es de dónde sale de verdad "ya consultada" (F-023): una
+    // marca puesta a mano en cliente sin volver a la base sería la misma
+    // clase de fallo silencioso que ya costó en INV-01 y en SRCH-01.
+    await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeInTheDocument();
+  });
+
+  it('la selección se limpia después de enviar', async () => {
+    fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
+    await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    await waitFor(() => expect(sendInquiries).toHaveBeenCalled());
+    for (const f of filas()) expect(within(f).getByRole('checkbox')).not.toBeChecked();
+  });
+
+  it('dos clics seguidos no mandan dos tandas', async () => {
+    let resolver: (v: { lineId: string; distributorOrgId: string; ok: boolean }[]) => void = () => {};
+    sendInquiries.mockReturnValue(new Promise((r) => (resolver = r)));
+    fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(2));
+    await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
+    await userEvent.click(within(filas()[1]!).getByRole('checkbox'));
+
+    const boton = screen.getByRole('button', { name: 'Consultar seleccionados' });
+    await userEvent.click(boton);
+    expect(boton).toBeDisabled();
+    await userEvent.click(boton);
+
+    expect(sendInquiries).toHaveBeenCalledTimes(1);
+    resolver([]);
   });
 });
 

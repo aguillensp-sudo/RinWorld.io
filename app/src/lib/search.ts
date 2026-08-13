@@ -268,6 +268,55 @@ export function meetsMinQuantity(quantity: number, minQuantity: number | null): 
 }
 
 // -----------------------------------------------------------------------------
+// "Consultar seleccionados" (GAP-004)
+// -----------------------------------------------------------------------------
+
+/**
+ * Forma mínima y estructural de lo que devuelve `sendInquiries`
+ * (`lib/thread-detail.ts`), sin importar de ahí: GAP-004 dice que
+ * conversational-search "dispara la acción" y no al revés. `InquiryOutcome`
+ * encaja aquí porque tiene todos estos campos y de sobra — TypeScript lo deja
+ * pasar sin que este fichero necesite saber nada de hilos ni de cifrado.
+ */
+export interface InquirySendResult {
+  distributorOrgId: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * El mensaje de confirmación de `Rinworld_spec_SRCH-01.md`, sección
+ * *""Consultar Seleccionados" ejecutado"*: *"Consultas enviadas a X
+ * distribuidores. Las respuestas llegarán a tu bandeja de Hilos."* — VERBATIM
+ * cuando todo sale bien.
+ *
+ * Cuando algo falla, el mensaje **lo dice** en vez de sumarlo en silencio al
+ * recuento de éxitos (F-023): un fallo de un distribuidor no es una consulta
+ * enviada, y "enviadas a X" tiene que seguir siendo una cifra verdadera.
+ */
+export function consultSummary(resultados: InquirySendResult[]): string {
+  const exitos = resultados.filter((r) => r.ok);
+  const fallos = resultados.filter((r) => !r.ok);
+  const distribuidores = new Set(exitos.map((r) => r.distributorOrgId)).size;
+
+  const partes: string[] = [];
+  if (distribuidores > 0) {
+    partes.push(
+      `Consultas enviadas a ${distribuidores} distribuidor${distribuidores === 1 ? '' : 'es'}. ` +
+        'Las respuestas llegarán a tu bandeja de Hilos.',
+    );
+  }
+  if (fallos.length > 0) {
+    const motivos = [...new Set(fallos.map((f) => f.error).filter((e): e is string => Boolean(e)))];
+    partes.push(
+      `${fallos.length} ${fallos.length === 1 ? 'consulta no se pudo enviar' : 'consultas no se pudieron enviar'}` +
+        (motivos.length > 0 ? `: ${motivos.join('; ')}` : '.'),
+    );
+  }
+  return partes.join(' ');
+}
+
+// -----------------------------------------------------------------------------
 // Consultas
 // -----------------------------------------------------------------------------
 

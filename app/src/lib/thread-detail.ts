@@ -11,7 +11,8 @@ import {
   unwrapCek,
   wrapCekFor,
 } from './crypto';
-import { currentKeyPair, fetchThreadRecipients } from './keys';
+import { currentKeyPair, fetchOrgRecipients, fetchThreadRecipients, type ThreadRecipient } from './keys';
+import { errorMessage } from './session';
 
 /**
  * Capa de datos de MSG-02 · Vista de un Hilo.
@@ -618,4 +619,133 @@ export async function counterOffer(oldItemId: string, threadId: string, content:
     p_keys: claves,
   });
   if (error) throw error;
+}
+
+// -----------------------------------------------------------------------------
+// GAP-004 · "Consultar Seleccionados" (Plan §3, día 10)
+// -----------------------------------------------------------------------------
+
+/**
+ * Una línea seleccionada en SRCH-01, con lo mínimo que esta capa necesita para
+ * enviar su consulta. `conversational-search` decide QUÉ se selecciona y
+ * dispara la acción; esto es la otra mitad de GAP-004.
+ */
+export interface InquiryLine {
+  lineId: string;
+  distributorOrgId: string;
+  /**
+   * `results-row-actions · consultar seleccionados en lote` no abre ningún
+   * formulario — a diferencia de `Consultar` en una sola fila (FL-MSG-01), que
+   * sí lo hace y queda fuera de hoy. Sin ese paso no hay de dónde sacar una
+   * cantidad que el comprador haya tecleado, así que se consulta por la
+   * cantidad publicada de la línea: es "quiero saber de esto", no un pedido.
+   */
+  quantity: number;
+}
+
+export interface InquiryOutcome {
+  lineId: string;
+  distributorOrgId: string;
+  ok: boolean;
+  /** Solo si `ok` es `false`. Nunca se traga un fallo parcial (F-023). */
+  error?: string;
+}
+
+/**
+ * Envía una tarjeta de consulta por cada línea, agrupando por distribuidor.
+ *
+ * ── EL ORDEN, IGUAL QUE `sendMessage` Y `counterOffer` ──────────────────────
+ *
+ * Por línea: 1) públicas del distribuidor ANTES de cifrar (`fetchOrgRecipients`,
+ * no `fetchThreadRecipients` — el hilo puede no existir todavía); 2) sin una
+ * sola clave, no se envía ESA línea; 3) una CEK nueva por línea, envuelta para
+ * cada miembro del distribuidor incluido quien escribe; 4) una sola llamada a
+ * `create_inquiry` (0014), que encuentra o crea el hilo y deposita la tarjeta
+ * y sus claves en la misma transacción.
+ *
+ * ── POR QUÉ UN FALLO NO ABORTA LO DEMÁS ──────────────────────────────────────
+ *
+ * `resultados` es de la mismo tamaño que `lines`, una entrada por línea, nunca
+ * "todo o nada": un distribuidor sin clave publicada o que agotó su límite
+ * diario de hilos no debe impedir que las líneas de los demás se envíen. El
+ * spec de SRCH-01 dice "Consultas enviadas a X distribuidores" y eso solo se
+ * puede afirmar con honestidad si X es lo que de verdad se envió, no lo que se
+ * intentó — de ahí que quien llama tenga que mirar `ok` de cada resultado y no
+ * asumir que todo salió bien porque la función no lanzó.
+ *
+ * ── EL CACHÉ DE HILO POR DISTRIBUIDOR ES SOLO PARA LAS PÚBLICAS ─────────────
+ *
+ * `create_inquiry` ya encuentra-o-crea el hilo él solo (0014 §2) y es idempotente
+ * de sobra para llamarlo una vez por línea sin coordinación. Lo que SÍ merece
+ * cachear aquí son las públicas: pedirlas una vez por distribuidor y no una
+ * vez por línea ahorra una llamada de red por cada línea extra del mismo
+ * distribuidor en la misma tanda.
+ */
+export async function sendInquiries(lines: InquiryLine[]): Promise<InquiryOutcome[]> {
+  const keyPair = currentKeyPair();
+  if (!keyPair) {
+    throw new Error(
+      'Tu clave de cifrado no está lista en esta sesión. Vuelve a entrar antes de consultar.',
+    );
+  }
+
+  const publicasDe = new Map<string, ThreadRecipient[]>();
+  const resultados: InquiryOutcome[] = [];
+
+  for (const linea of lines) {
+    try {
+      let destinatarios = publicasDe.get(linea.distributorOrgId);
+      if (!destinatarios) {
+        destinatarios = await fetchOrgRecipients(linea.distributorOrgId);
+        publicasDe.set(linea.distributorOrgId, destinatarios);
+      }
+
+      const sinClave = destinatarios.filter((d) => d.publicKey === null);
+      if (sinClave.length > 0) {
+        throw new Error(
+          `No se puede cifrar todavía: ${sinClave.length} ${
+            sinClave.length === 1 ? 'destinatario no ha' : 'destinatarios no han'
+          } publicado su clave pública. Tienen que entrar una vez en la aplicación.`,
+        );
+      }
+      if (destinatarios.length === 0) {
+        throw new Error('Ese distribuidor no tiene miembros a los que consultar.');
+      }
+
+      const cek = await generateCek();
+      const content: InquiryContent = { kind: 'CONSULTA', quantity: linea.quantity, comment: null };
+      const { ciphertext, iv } = await encryptContent(content, cek);
+
+      const claves = await Promise.all(
+        destinatarios.map(async (d) => {
+          const w = await wrapCekFor(cek, d.publicKey!);
+          return {
+            member_id: d.memberId,
+            wrapped_cek: toHex(w.wrappedCek),
+            wrap_iv: toHex(w.wrapIv),
+            ephemeral_pubkey: toHex(w.ephemeralPublicKey),
+          };
+        }),
+      );
+
+      const { error } = await supabase.rpc('create_inquiry', {
+        p_line_id: linea.lineId,
+        p_ciphertext: toHex(ciphertext),
+        p_iv: toHex(iv),
+        p_keys: claves,
+      });
+      if (error) throw error;
+
+      resultados.push({ lineId: linea.lineId, distributorOrgId: linea.distributorOrgId, ok: true });
+    } catch (err) {
+      resultados.push({
+        lineId: linea.lineId,
+        distributorOrgId: linea.distributorOrgId,
+        ok: false,
+        error: errorMessage(err),
+      });
+    }
+  }
+
+  return resultados;
 }

@@ -167,6 +167,16 @@
   opacity: 0.87;
 }
 
+.consultBanner {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--bw-success-dark);
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  border-radius: var(--bw-radius);
+  padding: 8px 12px;
+}
+
 .cappedNotice {
   margin-top: 8px;
   font-size: 12px;

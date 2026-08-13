@@ -170,3 +170,30 @@ export async function fetchThreadRecipients(threadId: string): Promise<ThreadRec
     publicKey: r.public_key ? fromBytea(r.public_key) : null,
   }));
 }
+
+interface OrgRecipientRow {
+  member_id: string;
+  public_key: string | null;
+}
+
+/**
+ * Las públicas de los miembros de UNA organización, sin que exista ningún
+ * hilo con ella todavía (GAP-004, día 10).
+ *
+ * `fetchThreadRecipients` no sirve para el primer contacto: `thread_public_
+ * keys` (0012) exige un hilo, y "Consultar" desde SRCH-01 es exactamente el
+ * caso en el que ese hilo **todavía no existe** — se crea, si hace falta,
+ * dentro de `create_inquiry` (0014) DESPUÉS de que el cliente ya haya cifrado.
+ * Va por `org_public_keys`, con la misma condición que ya deja ver esa
+ * organización en la búsqueda (`organizations_select_approved`, 0001).
+ */
+export async function fetchOrgRecipients(orgId: string): Promise<ThreadRecipient[]> {
+  const { data, error } = await supabase.rpc('org_public_keys', { p_org_id: orgId });
+  if (error) throw error;
+
+  return ((data ?? []) as OrgRecipientRow[]).map((r) => ({
+    memberId: r.member_id,
+    orgId,
+    publicKey: r.public_key ? fromBytea(r.public_key) : null,
+  }));
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   activeChips,
+  consultSummary,
   countryName,
   DEFAULT_SORT,
   EMPTY_CRITERIA,
@@ -270,5 +271,50 @@ describe('sanitizeSearch', () => {
 
   it('se lleva los separadores del mini-lenguaje de PostgREST', () => {
     expect(sanitizeSearch('6205,2RS')).toBe('62052RS');
+  });
+});
+
+describe('consultSummary · GAP-004, el literal de "Consultar Seleccionados" ejecutado', () => {
+  it('cuenta DISTRIBUIDORES, no líneas: dos filas de uno mismo son un distribuidor', () => {
+    const resultado = consultSummary([
+      { distributorOrgId: 'org-a', ok: true },
+      { distributorOrgId: 'org-a', ok: true },
+    ]);
+    expect(resultado).toBe(
+      'Consultas enviadas a 1 distribuidor. Las respuestas llegarán a tu bandeja de Hilos.',
+    );
+  });
+
+  it('el literal es VERBATIM el de Rinworld_spec_SRCH-01.md, con dos o más en plural', () => {
+    const resultado = consultSummary([
+      { distributorOrgId: 'org-a', ok: true },
+      { distributorOrgId: 'org-b', ok: true },
+    ]);
+    expect(resultado).toBe(
+      'Consultas enviadas a 2 distribuidores. Las respuestas llegarán a tu bandeja de Hilos.',
+    );
+  });
+
+  it('un fallo parcial se dice, no se tapa detrás del mensaje de éxito (F-023)', () => {
+    const resultado = consultSummary([
+      { distributorOrgId: 'org-a', ok: true },
+      { distributorOrgId: 'org-b', ok: false, error: 'Límite diario alcanzado' },
+    ]);
+    expect(resultado).toMatch(/^Consultas enviadas a 1 distribuidor\./);
+    expect(resultado).toMatch(/1 consulta no se pudo enviar: Límite diario alcanzado/);
+  });
+
+  it('todo fallado no dice "enviadas a 0 distribuidores": esa frase mentiría', () => {
+    const resultado = consultSummary([{ distributorOrgId: 'org-a', ok: false, error: 'sin clave publicada' }]);
+    expect(resultado).not.toMatch(/enviadas a 0/i);
+    expect(resultado).toMatch(/1 consulta no se pudo enviar: sin clave publicada/);
+  });
+
+  it('dos fallos con el mismo motivo no lo repiten dos veces', () => {
+    const resultado = consultSummary([
+      { distributorOrgId: 'org-a', ok: false, error: 'Límite diario alcanzado' },
+      { distributorOrgId: 'org-b', ok: false, error: 'Límite diario alcanzado' },
+    ]);
+    expect(resultado).toBe('2 consultas no se pudieron enviar: Límite diario alcanzado');
   });
 });

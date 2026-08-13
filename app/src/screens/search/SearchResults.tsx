@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { MemberProfile } from '../../lib/session';
 import {
   EMPTY_CRITERIA,
+  consultSummary,
   fetchResults,
   meetsMinQuantity,
   metaCounterLabel,
@@ -13,6 +14,7 @@ import {
   type Sort,
   type SortColumn,
 } from '../../lib/search';
+import { sendInquiries, type InquiryLine } from '../../lib/thread-detail';
 import { FilterChips } from './FilterChips';
 import { ResultsTable } from './ResultsTable';
 import styles from './SearchResults.module.css';
@@ -52,6 +54,10 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
   const [page, setPage] = useState<SearchPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  /** El resultado de la última tanda de "Consultar seleccionados" (GAP-004).
+   *  `null` = no se ha lanzado ninguna todavía en esta pantalla. */
+  const [consultBanner, setConsultBanner] = useState<string | null>(null);
+  const [consulting, setConsulting] = useState(false);
 
   const load = useCallback(
     async (c: SearchCriteria) => {
@@ -122,10 +128,50 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
   const handleConsult = useCallback((_lineId: string) => {}, []);
   const handleContact = useCallback((_orgId: string) => {}, []);
 
-  const handleConsultSelected = useCallback(() => {
-    // GAP-004: crear/reutilizar hilos agrupados por distribuidor. Hoy no se
-    // simula ningún envío ni cambio de fila en cliente.
-  }, []);
+  /**
+   * "Consultar Seleccionados" (GAP-004, `Plan §3` día 10).
+   *
+   * El boundary de GAP-004 es literal: *"la selección y el disparo de la
+   * acción pertenecen a conversational-search; la gestión del hilo, tarjeta de
+   * consulta y cifrado E2EE pertenecen a messaging-and-negotiation"*. Esta
+   * pantalla decide QUÉ se envía —las filas marcadas, sin las ya consultadas—
+   * y `sendInquiries` (thread-detail.ts) hace el resto; SearchResults no toca
+   * `threads` ni `thread_items` ni sabe si el hilo existía.
+   *
+   * `results-row-actions · consultar seleccionados en lote` no abre ningún
+   * formulario ni redirige: *"el sistema envía... sin abrir ningún hilo en
+   * pantalla"* y *"el usuario permanece en SRCH-01"*. Por eso esto no navega a
+   * ningún sitio — solo recarga la tabla (que es de dónde sale de verdad el
+   * estado "ya consultada", nunca de una marca puesta a mano en cliente) y
+   * enseña el resultado.
+   */
+  const handleConsultSelected = useCallback(async () => {
+    if (!page || consulting) return;
+
+    // Defensivo, no solo cosmético: una fila ya consultada seguiría marcable
+    // vía "Seleccionar todos", y create_inquiry la rechazaría con el aviso de
+    // inquiry-card. Filtrar aquí evita mandar una llamada que se sabe inútil.
+    const filas = page.rows.filter((r) => selected.has(r.id) && !r.consulted);
+    if (filas.length === 0) {
+      setConsultBanner('Las filas seleccionadas ya estaban consultadas.');
+      return;
+    }
+
+    setConsulting(true);
+    try {
+      const lineas: InquiryLine[] = filas.map((r) => ({
+        lineId: r.id,
+        distributorOrgId: r.orgId,
+        quantity: r.quantity,
+      }));
+      const resultados = await sendInquiries(lineas);
+      setConsultBanner(consultSummary(resultados));
+      setSelected(new Set());
+      await load(criteria);
+    } finally {
+      setConsulting(false);
+    }
+  }, [page, selected, consulting, criteria, load]);
 
   const allSelected = page !== null && page.rows.length > 0 && page.rows.every((r) => selected.has(r.id));
 
@@ -171,10 +217,12 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
             <button
               type="button"
               className={styles.consultSelected}
-              disabled={selected.size < 2}
-              onClick={handleConsultSelected}
+              disabled={selected.size < 2 || consulting}
+              onClick={() => {
+                void handleConsultSelected();
+              }}
             >
-              Consultar seleccionados
+              {consulting ? 'Enviando…' : 'Consultar seleccionados'}
             </button>
             {/* SRCH-03 está fuera del alcance (Plan §9): no existe tabla de
                 watchers. El botón se pinta deshabilitado y con el motivo, como
@@ -189,6 +237,12 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
               Crear watcher con estos criterios
             </button>
           </div>
+
+          {consultBanner && (
+            <div className={styles.consultBanner} role="status">
+              {consultBanner}
+            </div>
+          )}
 
           <div className={styles.resultsArea} aria-busy={loading}>
             {loading ? (

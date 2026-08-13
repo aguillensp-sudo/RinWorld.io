@@ -967,4 +967,209 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- org_public_keys (0014 §1) · la pública del primer contacto, sin hilo previo
+-- -----------------------------------------------------------------------------
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    filas int;
+    pub   bytea;
+  begin
+    -- 1 · ANCLA. Alpha nunca ha tenido hilo con Gamma —de hecho todavía no lo
+    -- tiene en este punto del fichero— y aun así puede leer la pública de sus
+    -- miembros: es justo la propiedad que `thread_public_keys` (0012) no
+    -- puede dar, porque exige un hilo que en el primer contacto no existe.
+    select count(*) into filas from public.org_public_keys('33333333-3333-3333-3333-333333333333');
+    assert filas = 1, 'org_public_keys tiene que devolver el único miembro de Gamma, y devolvio ' || filas;
+
+    select public_key into pub from public.org_public_keys('33333333-3333-3333-3333-333333333333');
+    assert pub is not null and octet_length(pub) = 32,
+      'la publica de Gamma tiene que llegar completa: sin ella no se puede envolver la CEK del primer contacto';
+
+    raise notice 'OK · 0014: org_public_keys da la publica de un distribuidor sin hilo previo';
+  end
+  $$;
+commit;
+
+-- 2 · Una organización NO aprobada no es un distribuidor visible en SRCH-01, y
+-- tampoco lo es aquí: misma condición que `organizations_select_approved`.
+begin;
+  update public.organizations set status = 'PENDING_REVIEW'
+   where id = '33333333-3333-3333-3333-333333333333';
+
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.org_public_keys('33333333-3333-3333-3333-333333333333')) = 0,
+      'una organizacion no aprobada no expone la publica de sus miembros a un tercero';
+    raise notice 'OK · 0014: org_public_keys respeta organizations_select_approved';
+  end
+  $$;
+rollback;
+
+-- -----------------------------------------------------------------------------
+-- create_inquiry (0014) · GAP-004, hilo encontrado-o-creado + CONSULTA
+-- -----------------------------------------------------------------------------
+-- Línea PUBLISHED nueva de Beta, sin consultar todavía: la única otra
+-- PUBLISHED de Beta (e1000000-...-001) ya la consultó Alpha al principio de
+-- este fichero, y eso es justo lo que prueba el punto 3 de abajo.
+insert into public.inventory_lines
+  (id, org_id, part_number, brand, quantity, location_country, product_family, status)
+values
+  ('e1000000-0000-0000-0000-000000000003', :orgB, '6207-2RS', 'NSK', 400, 'DE',
+   'Rodamiento rigido de bolas', 'PUBLISHED');
+
+-- 1 · No se puede consultar el propio inventario.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_inquiry('e1000000-0000-0000-0000-000000000003',
+        repeat('aa',48), repeat('14',12),
+        jsonb_build_array(jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('14',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'Beta consultando su propio inventario');
+commit;
+
+-- 2 · Una línea no PUBLISHED no se puede consultar.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_inquiry('e1000000-0000-0000-0000-000000000002',
+        repeat('aa',48), repeat('14',12),
+        jsonb_build_array(jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('14',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'linea DRAFT (no PUBLISHED)');
+commit;
+
+-- 3 · Segunda consulta sobre una línea ya consultada: bloqueada con el
+-- literal exacto de inquiry-card, no con la excepción cruda del índice único.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_inquiry('e1000000-0000-0000-0000-000000000001',
+        repeat('aa',48), repeat('14',12),
+        jsonb_build_array(jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('14',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'segunda consulta sobre una linea ya consultada (inquiry-card)');
+commit;
+
+-- 4 · ANCLA · el hilo YA EXISTE (Alpha-Beta): create_inquiry lo tiene que
+-- ENCONTRAR, no duplicarlo, y depositar la consulta sobre la línea sin
+-- consultar todavía.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    fila record;
+  begin
+    select * into fila from public.create_inquiry(
+      'e1000000-0000-0000-0000-000000000003',
+      repeat('aa', 48), repeat('14', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('14',12),
+          'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('14',12),
+          'ephemeral_pubkey', repeat('44',32))
+      ));
+
+    assert fila.thread_id = '11110000-0000-0000-0000-000000000001',
+      'el hilo Alpha-Beta ya existia: create_inquiry lo tiene que ENCONTRAR, no crear otro';
+    assert fila.item_id is not null, 'create_inquiry tiene que devolver el id de la tarjeta creada';
+
+    assert (select item_type from public.thread_items where id = fila.item_id) = 'CONSULTA'
+       and (select estado_consulta from public.thread_items where id = fila.item_id) = 'Pendiente'
+       and (select inventory_line_id from public.thread_items where id = fila.item_id)
+             = 'e1000000-0000-0000-0000-000000000003',
+      'la tarjeta es una CONSULTA Pendiente sobre la linea correcta';
+
+    assert (select part_number from public.thread_items where id = fila.item_id) = '6207-2RS'
+       and (select brand from public.thread_items where id = fila.item_id) = 'NSK',
+      'part_number y brand se derivan de la linea, no llegan por parametro';
+
+    assert (select count(*) from public.thread_item_keys where item_id = fila.item_id) = 1,
+      'Alpha ve exclusivamente su propia CEK envuelta en la tarjeta que acaba de crear';
+
+    raise notice 'OK · 0014: create_inquiry reutiliza el hilo existente y deposita la CONSULTA';
+  end
+  $$;
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.threads
+          where org_low_id = '11111111-1111-1111-1111-111111111111'
+            and org_high_id = '22222222-2222-2222-2222-222222222222') = 1,
+    'create_inquiry no duplica el hilo cuando ya existe (single-thread-model)';
+  raise notice 'OK · 0014: single-thread-model se mantiene tras create_inquiry';
+end
+$$;
+
+-- 5 · ANCLA · el hilo NO existía: Gamma consulta a Beta por primera vez y
+-- create_inquiry lo CREA. Gamma no ha creado ningún hilo en todo este
+-- fichero, así que no puede chocar con el límite de 25/día que sí agotó
+-- Alpha más arriba — es a propósito: prueba la RAMA de creación, no la de
+-- reencontrar, sin acoplarse al rate-limiting de otro caso.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    fila record;
+  begin
+    assert not exists (
+      select 1 from public.threads
+       where org_low_id  = least('22222222-2222-2222-2222-222222222222'::uuid,
+                                  '33333333-3333-3333-3333-333333333333'::uuid)
+         and org_high_id = greatest('22222222-2222-2222-2222-222222222222'::uuid,
+                                     '33333333-3333-3333-3333-333333333333'::uuid)
+    ), 'ancla previa: Beta y Gamma todavia NO tienen hilo antes de esta consulta';
+
+    select * into fila from public.create_inquiry(
+      'e1000000-0000-0000-0000-000000000001',
+      repeat('bb', 48), repeat('15', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('15',12),
+          'ephemeral_pubkey', repeat('66',32)),
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('77',48), 'wrap_iv', repeat('15',12),
+          'ephemeral_pubkey', repeat('88',32))
+      ));
+
+    assert fila.thread_id is not null, 'create_inquiry crea el hilo cuando no existia';
+    assert (select created_by_org_id from public.threads where id = fila.thread_id)
+             = '33333333-3333-3333-3333-333333333333',
+      'quien consulta primero es quien crea el hilo';
+
+    raise notice 'OK · 0014: create_inquiry crea el hilo cuando el distribuidor es nuevo';
+  end
+  $$;
+commit;
+
+-- Las dos claves están de verdad, mirando sin RLS — mismo patrón que
+-- create_thread_item y counter_offer: quien escribe no se queda sin su copia.
+do $$
+begin
+  assert (select count(*) from public.thread_item_keys tik
+            join public.thread_items ti on ti.id = tik.item_id
+           where ti.item_type = 'CONSULTA' and ti.inventory_line_id = 'e1000000-0000-0000-0000-000000000001'
+             and ti.sender_org_id = '33333333-3333-3333-3333-333333333333') = 2,
+    'create_inquiry deposita UNA fila de CEK por destinatario, incluida la del emisor';
+  raise notice 'OK · 0014: las dos CEK de la consulta de Gamma estan, la del emisor incluida';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

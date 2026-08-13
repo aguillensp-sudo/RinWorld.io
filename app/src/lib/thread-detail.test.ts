@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   asOfferCard,
   authorLabel,
+  counterOffer,
   decryptItem,
   itemTypeLabel,
   validUntilLabel,
@@ -9,17 +10,48 @@ import {
   CREATE_OFFER_DISABLED_REASON,
   ENCRYPTED_NOTICE,
   type EncryptedBlob,
+  type OfferContent,
   type ThreadItem,
 } from './thread-detail';
 import { offerActions } from './offers';
 import {
   type SessionKeyPair,
+  decryptContent,
   encryptContent,
+  fromBytea,
   generateCek,
   generateKeyPair,
   toBytea,
+  unwrapCek,
   wrapCekFor,
 } from './crypto';
+import type { ThreadRecipient } from './keys';
+
+/**
+ * `counterOffer` toca red (RPC + destinatarios), así que necesita los dos
+ * módulos que `sendMessage` también toca: `./supabase` y `./keys`. Se mockean
+ * SOLO en este fichero de test — no afecta a `decryptItem` ni al resto, que
+ * siguen usando `./crypto` de verdad.
+ */
+const rpcLlamadas: { fn: string; args: unknown }[] = [];
+let rpcError: unknown = null;
+let llavero: SessionKeyPair | null = null;
+let destinatarios: ThreadRecipient[] = [];
+const fetchThreadRecipientsMock = vi.fn(async (_threadId: string) => destinatarios);
+
+vi.mock('./supabase', () => ({
+  supabase: {
+    rpc: (fn: string, args: unknown) => {
+      rpcLlamadas.push({ fn, args });
+      return Promise.resolve({ error: rpcError });
+    },
+  },
+}));
+
+vi.mock('./keys', () => ({
+  currentKeyPair: () => llavero,
+  fetchThreadRecipients: (threadId: string) => fetchThreadRecipientsMock(threadId),
+}));
 
 /**
  * La lógica pura de MSG-02. Igual que en `threads.test.ts`: estos tests son los
@@ -294,5 +326,108 @@ describe('asOfferCard · el puente con offers.ts', () => {
   it('una oferta terminal no ofrece acciones aunque sea recibida', () => {
     const aceptada = { ...oferta, offerState: 'Aceptada' as const };
     expect(offerActions(asOfferCard(aceptada, 'th-1')!, MIA)).toEqual([]);
+  });
+});
+
+describe('counterOffer · la fila del día 10 del Plan §3', () => {
+  /**
+   * CONTRATO DE ACEPTACIÓN, escrito antes que el wiring de pantalla. Mismo
+   * procedimiento que `sendMessage` — destinatarios antes de cifrar, ninguna
+   * clave y no se envía, una CEK por destinatario incluida la propia — pero
+   * contra `counter_offer` (0013), que además supersede la anterior en la base.
+   * Aquí no se prueba la base: eso vive en `supabase/tests/01_schema_smoke.sql`.
+   */
+
+  const CONTENIDO: OfferContent = {
+    kind: 'OFERTA',
+    unitPrice: 1.95,
+    currency: 'EUR',
+    quantity: 500,
+    leadTimeDays: 10,
+    shippingCost: null,
+    shippingCostCurrency: null,
+    validUntil: null,
+    notes: null,
+  };
+  const OLD_ITEM = 'of-vieja';
+  const HILO = 'hilo-1';
+
+  beforeEach(async () => {
+    rpcLlamadas.length = 0;
+    rpcError = null;
+    fetchThreadRecipientsMock.mockClear();
+    llavero = await generateKeyPair();
+    const otro = await generateKeyPair();
+    destinatarios = [
+      { memberId: 'yo', orgId: 'org-mia', publicKey: llavero.publicKey },
+      { memberId: 'contraparte', orgId: 'org-suya', publicKey: otro.publicKey },
+    ];
+  });
+
+  it('sin llave de sesión no llega a pedir destinatarios ni a llamar a la base', async () => {
+    llavero = null;
+    await expect(counterOffer(OLD_ITEM, HILO, CONTENIDO)).rejects.toThrow(/clave de cifrado/i);
+    expect(fetchThreadRecipientsMock).not.toHaveBeenCalled();
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('sin la clave pública de un destinatario, no se envía', async () => {
+    destinatarios = [...destinatarios, { memberId: 'sin-clave', orgId: 'org-tercera', publicKey: null }];
+    await expect(counterOffer(OLD_ITEM, HILO, CONTENIDO)).rejects.toThrow(/no ha.*publicado su clave|no han.*publicado su clave/i);
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('sin destinatarios, no se envía', async () => {
+    destinatarios = [];
+    await expect(counterOffer(OLD_ITEM, HILO, CONTENIDO)).rejects.toThrow(/no tiene destinatarios/i);
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('ANCLA · llama a counter_offer con el id de la anterior y una CEK por destinatario, incluida la propia', async () => {
+    await counterOffer(OLD_ITEM, HILO, CONTENIDO);
+
+    expect(fetchThreadRecipientsMock).toHaveBeenCalledWith(HILO);
+    expect(rpcLlamadas).toHaveLength(1);
+    expect(rpcLlamadas[0]!.fn).toBe('counter_offer');
+
+    const args = rpcLlamadas[0]!.args as {
+      p_old_item_id: string;
+      p_ciphertext: string;
+      p_iv: string;
+      p_keys: { member_id: string; wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[];
+    };
+    expect(args.p_old_item_id).toBe(OLD_ITEM);
+    // Hex pelado, sin el prefijo `\x` — es el contrato de 0012/0013.
+    expect(args.p_ciphertext).not.toMatch(/^\\x/);
+    expect(args.p_iv).not.toMatch(/^\\x/);
+    expect(args.p_keys.map((k) => k.member_id).sort()).toEqual(['contraparte', 'yo'].sort());
+  });
+
+  it('lo que llega a la base descifra exactamente al contenido cifrado', async () => {
+    // No se prueba con bytes a mano: se cifra de verdad y se vuelve a abrir con
+    // la propia clave, igual que hace `blobDe` en la costura de arriba.
+    await counterOffer(OLD_ITEM, HILO, CONTENIDO);
+    const args = rpcLlamadas[0]!.args as {
+      p_ciphertext: string;
+      p_iv: string;
+      p_keys: { member_id: string; wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[];
+    };
+
+    const propia = args.p_keys.find((k) => k.member_id === 'yo')!;
+    const cek = await unwrapCek(
+      {
+        wrappedCek: fromBytea(propia.wrapped_cek),
+        wrapIv: fromBytea(propia.wrap_iv),
+        ephemeralPublicKey: fromBytea(propia.ephemeral_pubkey),
+      },
+      llavero!,
+    );
+    const contenido = await decryptContent(fromBytea(args.p_ciphertext), fromBytea(args.p_iv), cek);
+    expect(contenido).toEqual(CONTENIDO);
+  });
+
+  it('un fallo de la base se propaga tal cual', async () => {
+    rpcError = { message: 'La oferta ya no esta Pendiente' };
+    await expect(counterOffer(OLD_ITEM, HILO, CONTENIDO)).rejects.toBeTruthy();
   });
 });

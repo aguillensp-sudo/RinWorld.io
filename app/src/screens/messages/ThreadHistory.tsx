@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ENCRYPTED_NOTICE,
   asOfferCard,
@@ -5,13 +6,22 @@ import {
   itemTypeLabel,
   validUntilLabel,
   type ItemContent,
+  type OfferContent,
   type ThreadItem,
 } from '../../lib/thread-detail';
 import { expiryNotice, offerActions, shippingLine } from '../../lib/offers';
 import { relativeTime } from '../../lib/threads';
+import { OfferCounterForm } from './OfferCounterForm';
 import styles from './ThreadHistory.module.css';
 
-const COUNTER_OFFER_REASON = 'La contraoferta (MSG-03) queda fuera del MVP.';
+/**
+ * Sin contenido descifrado no hay con qué prerellenar el formulario (D-07-05):
+ * `OfferCounterForm` necesita la oferta original para prerellenarse, y
+ * proponer una contraoferta a ciegas sobre cifras que no se pueden leer no
+ * tiene sentido de producto. No es lo mismo que "fuera del MVP" — el botón
+ * VUELVE a activarse solo con recargar la clave de sesión.
+ */
+const NO_CONTENT_REASON = 'No se puede leer esta oferta en esta sesión, así que no se puede contraofertar.';
 
 const OFFER_STATE_CLASS: Record<string, string | undefined> = {
   Pendiente: styles.statePendiente,
@@ -102,6 +112,7 @@ function Card({
   now,
   onAcceptOffer,
   onRejectOffer,
+  onCounterOffer,
 }: {
   item: ThreadItem;
   threadId: string;
@@ -109,13 +120,16 @@ function Card({
   now: Date;
   onAcceptOffer: (itemId: string) => void;
   onRejectOffer: (itemId: string) => void;
+  onCounterOffer: (itemId: string, threadId: string, content: OfferContent) => Promise<boolean>;
 }) {
+  const [contraofertando, setContraofertando] = useState(false);
   const isOffer = item.type === 'OFERTA';
   const card = asOfferCard(item, threadId);
   // Las acciones solo salen de offerActions: es lo único que sabe que sólo el
   // receptor decide. Una condición equivalente escrita aquí pondría la regla en
   // dos sitios (F-056).
   const actions = card ? offerActions(card, viewerOrgId) : [];
+  const contenidoOferta = item.content && item.content.kind === 'OFERTA' ? item.content : null;
   const stateLabel = isOffer ? item.offerState : item.inquiryState;
   const stateClass = stateLabel
     ? isOffer
@@ -163,17 +177,40 @@ function Card({
                 Rechazar
               </button>
             )}
-            {actions.includes('contraofertar') && (
-              <span className={styles.counterWrap}>
-                <button type="button" className={styles.counterButton} disabled>
+            {actions.includes('contraofertar') &&
+              (contenidoOferta ? (
+                <button
+                  type="button"
+                  className={styles.counterButton}
+                  onClick={() => setContraofertando(true)}
+                >
                   Contra-ofertar
                 </button>
-                <span className={styles.reason}>{COUNTER_OFFER_REASON}</span>
-              </span>
-            )}
+              ) : (
+                <span className={styles.counterWrap}>
+                  <button type="button" className={styles.counterButton} disabled>
+                    Contra-ofertar
+                  </button>
+                  <span className={styles.reason}>{NO_CONTENT_REASON}</span>
+                </span>
+              ))}
           </div>
         )}
       </footer>
+
+      {contraofertando && contenidoOferta && (
+        <OfferCounterForm
+          partNumber={item.partNumber ?? ''}
+          brand={item.brand ?? ''}
+          original={contenidoOferta}
+          onCancel={() => setContraofertando(false)}
+          onSubmit={async (content) => {
+            const ok = await onCounterOffer(item.id, threadId, content);
+            if (ok) setContraofertando(false);
+            return ok;
+          }}
+        />
+      )}
     </article>
   );
 }
@@ -193,6 +230,7 @@ export function ThreadHistory({
   now,
   onAcceptOffer,
   onRejectOffer,
+  onCounterOffer,
 }: {
   items: ThreadItem[];
   threadId: string;
@@ -202,6 +240,7 @@ export function ThreadHistory({
   now?: Date;
   onAcceptOffer: (itemId: string) => void;
   onRejectOffer: (itemId: string) => void;
+  onCounterOffer: (itemId: string, threadId: string, content: OfferContent) => Promise<boolean>;
 }) {
   if (items.length === 0) {
     return <div className={styles.empty}>Este hilo no tiene elementos todavía.</div>;
@@ -238,6 +277,7 @@ export function ThreadHistory({
                 now={clock}
                 onAcceptOffer={onAcceptOffer}
                 onRejectOffer={onRejectOffer}
+                onCounterOffer={onCounterOffer}
               />
             )}
             <div className={styles.meta}>

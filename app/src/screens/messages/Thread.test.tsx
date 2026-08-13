@@ -21,11 +21,13 @@ const acceptOffer = vi.fn<(i: string, o: string) => Promise<unknown>>();
 const rejectOffer = vi.fn<(i: string, o: string) => Promise<unknown>>();
 const closeThreadWithoutAgreement = vi.fn<(t: string) => Promise<void>>();
 const revertAgreement = vi.fn<(t: string) => Promise<void>>();
+const counterOffer = vi.fn<(i: string, t: string, c: unknown) => Promise<void>>();
 
 vi.mock('../../lib/thread-detail', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/thread-detail')>()),
   fetchThreadDetail: (t: string, o: string) => fetchThreadDetail(t, o),
   fetchThreadItems: (t: string, o: string) => fetchThreadItems(t, o),
+  counterOffer: (i: string, t: string, c: unknown) => counterOffer(i, t, c),
 }));
 
 vi.mock('../../lib/offers', async (importOriginal) => ({
@@ -91,6 +93,21 @@ const ofertaRecibida: ThreadItem = {
   content: null,
 };
 
+const ofertaConContenido: ThreadItem = {
+  ...ofertaRecibida,
+  content: {
+    kind: 'OFERTA',
+    unitPrice: 2.1,
+    currency: 'EUR',
+    quantity: 500,
+    leadTimeDays: 14,
+    shippingCost: null,
+    shippingCostCurrency: null,
+    validUntil: null,
+    notes: null,
+  },
+};
+
 beforeEach(() => {
   for (const m of [
     fetchThreadDetail,
@@ -99,6 +116,7 @@ beforeEach(() => {
     rejectOffer,
     closeThreadWithoutAgreement,
     revertAgreement,
+    counterOffer,
   ]) {
     m.mockReset();
   }
@@ -111,6 +129,7 @@ beforeEach(() => {
   rejectOffer.mockResolvedValue(undefined);
   closeThreadWithoutAgreement.mockResolvedValue(undefined);
   revertAgreement.mockResolvedValue(undefined);
+  counterOffer.mockResolvedValue(undefined);
 });
 
 const pinta = () => render(<Thread profile={profile} threadId={HILO} now={NOW} />);
@@ -276,6 +295,56 @@ describe('decidir una oferta', () => {
     pinta();
     await user.click(await screen.findByRole('button', { name: 'Aceptar oferta' }));
     expect(await screen.findByText(/ya no estaba pendiente/)).toBeInTheDocument();
+  });
+});
+
+describe('contraofertar (Plan §3, día 10)', () => {
+  it('envía el elemento, el hilo y el contenido nuevo, y vuelve a leer', async () => {
+    fetchThreadItems.mockResolvedValue([ofertaConContenido]);
+    const user = userEvent.setup();
+    pinta();
+
+    await user.click(await screen.findByRole('button', { name: 'Contra-ofertar' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar contraoferta' }));
+
+    await waitFor(() =>
+      expect(counterOffer).toHaveBeenCalledWith(
+        'of-1',
+        HILO,
+        expect.objectContaining({ kind: 'OFERTA', unitPrice: 2.1, quantity: 500 }),
+      ),
+    );
+    // El estado lo deriva la base (0007) tras la RPC de 0013: hay que releer,
+    // no calcularlo aquí. Mismo criterio que aceptar/rechazar (F-044).
+    await waitFor(() => expect(fetchThreadItems).toHaveBeenCalledTimes(2));
+  });
+
+  it('dos clics seguidos escriben UNA vez, mismo cerrojo que aceptar/rechazar', async () => {
+    fetchThreadItems.mockResolvedValue([ofertaConContenido]);
+    const user = userEvent.setup();
+    let resolver: (() => void) | undefined;
+    counterOffer.mockImplementation(() => new Promise<void>((r) => { resolver = () => r(); }));
+
+    pinta();
+    await user.click(await screen.findByRole('button', { name: 'Contra-ofertar' }));
+    const boton = screen.getByRole('button', { name: 'Enviar contraoferta' });
+    await user.click(boton);
+    await user.click(boton);
+
+    expect(counterOffer).toHaveBeenCalledTimes(1);
+    resolver?.();
+  });
+
+  it('un fallo de la base se enseña, no se traga', async () => {
+    fetchThreadItems.mockResolvedValue([ofertaConContenido]);
+    counterOffer.mockRejectedValue(new Error('La oferta ya no esta Pendiente'));
+    const user = userEvent.setup();
+    pinta();
+
+    await user.click(await screen.findByRole('button', { name: 'Contra-ofertar' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar contraoferta' }));
+
+    expect(await screen.findByText(/ya no esta Pendiente/)).toBeInTheDocument();
   });
 });
 

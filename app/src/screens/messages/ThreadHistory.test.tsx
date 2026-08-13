@@ -7,6 +7,12 @@ import { ENCRYPTED_NOTICE, type ItemContent, type ThreadItem } from '../../lib/t
 import { ThreadHistory } from './ThreadHistory';
 
 /**
+ * `OfferCounterForm` no se mockea aquí abajo: es el mismo criterio que
+ * `offerActions` en el fichero de arriba — es lógica real, y mockearla
+ * convertiría el contrato en una comprobación de los mocks.
+ */
+
+/**
  * CONTRATO DE ACEPTACIÓN · MSG-02 · historial de elementos.
  *
  * Escrito antes que el código y por Claude Code (`Plan §6`). El Coder no lo ve.
@@ -39,10 +45,13 @@ const hace = (h: number) => new Date(NOW.getTime() - h * 3_600_000).toISOString(
 
 const onAcceptOffer = vi.fn();
 const onRejectOffer = vi.fn();
+const onCounterOffer = vi.fn<(itemId: string, threadId: string, content: ItemContent) => Promise<boolean>>();
 
 beforeEach(() => {
   onAcceptOffer.mockReset();
   onRejectOffer.mockReset();
+  onCounterOffer.mockReset();
+  onCounterOffer.mockResolvedValue(true);
 });
 
 function item(over: Partial<ThreadItem> = {}): ThreadItem {
@@ -99,6 +108,7 @@ function pinta(items: ThreadItem[]) {
       now={NOW}
       onAcceptOffer={onAcceptOffer}
       onRejectOffer={onRejectOffer}
+      onCounterOffer={onCounterOffer}
     />,
   );
 }
@@ -301,14 +311,59 @@ describe('⚠ quién puede decidir una oferta', () => {
     },
   );
 
-  it('`Contra-ofertar` se pinta deshabilitada y con el motivo', async () => {
-    // La contraoferta es la fila del día 10 del `Plan §3` y son dos escrituras
-    // atómicas que llegarán como función en la base. Quitar el botón dejaría la
-    // tarjeta sin la tercera salida que el HTML aprobado enseña (F-023 e).
-    pinta([ofertaRecibida()]);
+  it('sin contenido descifrado, `Contra-ofertar` se pinta deshabilitada y con el motivo', () => {
+    // Sin la oferta original legible no hay con qué prerellenar el formulario
+    // (D-07-05): no es "fuera del MVP", es que esta sesión no puede leerla.
+    pinta([ofertaRecibida({ content: null })]);
     const boton = screen.getByRole('button', { name: 'Contra-ofertar' });
     expect(boton).toBeDisabled();
-    expect(screen.getByText(/día 10|fuera del MVP|no entra/i)).toBeInTheDocument();
+    expect(screen.getByText(/no se puede leer/i)).toBeInTheDocument();
+  });
+
+  it('con contenido descifrado, `Contra-ofertar` abre el formulario prerelleno', async () => {
+    const user = userEvent.setup();
+    pinta([ofertaRecibida({ content: contenidoOferta })]);
+
+    const boton = screen.getByRole('button', { name: 'Contra-ofertar' });
+    expect(boton).not.toBeDisabled();
+    await user.click(boton);
+
+    expect(screen.getByRole('dialog', { name: 'Contra-oferta' })).toBeInTheDocument();
+    // ANCLA: viene prerelleno con la oferta que se está superando, no en blanco.
+    expect(screen.getByLabelText('Precio unitario')).toHaveValue('2.1');
+    expect(screen.getByLabelText('Cantidad')).toHaveValue('500');
+    expect(screen.getByLabelText('Coste de transporte')).toHaveValue('45');
+  });
+
+  it('enviar la contraoferta llama a onCounterOffer con el elemento, el hilo y el contenido nuevo, y cierra el formulario', async () => {
+    const user = userEvent.setup();
+    pinta([ofertaRecibida({ content: contenidoOferta })]);
+
+    await user.click(screen.getByRole('button', { name: 'Contra-ofertar' }));
+    await user.clear(screen.getByLabelText('Precio unitario'));
+    await user.type(screen.getByLabelText('Precio unitario'), '1.80');
+    await user.click(screen.getByRole('button', { name: 'Enviar contraoferta' }));
+
+    await vi.waitFor(() => expect(onCounterOffer).toHaveBeenCalledTimes(1));
+    expect(onCounterOffer).toHaveBeenCalledWith(
+      'of-1',
+      HILO,
+      expect.objectContaining({ kind: 'OFERTA', unitPrice: 1.8, quantity: 500 }),
+    );
+    await vi.waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Contra-oferta' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('cancelar cierra el formulario sin llamar a onCounterOffer', async () => {
+    const user = userEvent.setup();
+    pinta([ofertaRecibida({ content: contenidoOferta })]);
+
+    await user.click(screen.getByRole('button', { name: 'Contra-ofertar' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Contra-oferta' })).not.toBeInTheDocument();
+    expect(onCounterOffer).not.toHaveBeenCalled();
   });
 
   it('un mensaje libre no tiene acciones de oferta', () => {

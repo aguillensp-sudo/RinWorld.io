@@ -557,3 +557,65 @@ export async function sendMessage(threadId: string, text: string): Promise<void>
   });
   if (error) throw error;
 }
+
+/**
+ * La contraoferta (`Plan §3`, día 10). No está en `offers.ts` a propósito: esa
+ * capa es solo metadatos (ver su cabecera) y aquí hay cifras comerciales de
+ * verdad — mismo criterio que separa `sendMessage` de `acceptOffer`.
+ *
+ * Es el mismo procedimiento que `sendMessage` paso a paso — destinatarios antes
+ * de cifrar, ninguna clave y no se envía, una CEK nueva envuelta para cada uno,
+ * una sola llamada a la base — con dos diferencias:
+ *
+ * 1. Va a `counter_offer` (0013), no a `create_thread_item`: esa RPC además
+ *    marca `oldItemId` como "Superada por contraoferta" en la MISMA
+ *    transacción. Dos llamadas sueltas podrían dejar dos ofertas Pendiente
+ *    vivas a la vez si la segunda no llegara.
+ * 2. `threadId` sale de la oferta anterior, no de un parámetro: la RPC ya lo
+ *    resuelve desde `oldItemId` en la base, así que pedirlo aquí solo abriría
+ *    la puerta a pasar un hilo que no es el de la oferta.
+ */
+export async function counterOffer(oldItemId: string, threadId: string, content: OfferContent): Promise<void> {
+  const keyPair = currentKeyPair();
+  if (!keyPair) {
+    throw new Error(
+      'Tu clave de cifrado no está lista en esta sesión. Vuelve a entrar antes de contraofertar.',
+    );
+  }
+
+  const destinatarios = await fetchThreadRecipients(threadId);
+  const sinClave = destinatarios.filter((d) => d.publicKey === null);
+  if (sinClave.length > 0) {
+    throw new Error(
+      `No se puede cifrar todavía: ${sinClave.length} ${
+        sinClave.length === 1 ? 'destinatario no ha' : 'destinatarios no han'
+      } publicado su clave pública. Tienen que entrar una vez en la aplicación.`,
+    );
+  }
+  if (destinatarios.length === 0) {
+    throw new Error('Este hilo no tiene destinatarios: vuelve a cargarlo.');
+  }
+
+  const cek = await generateCek();
+  const { ciphertext, iv } = await encryptContent(content, cek);
+
+  const claves = await Promise.all(
+    destinatarios.map(async (d) => {
+      const w = await wrapCekFor(cek, d.publicKey!);
+      return {
+        member_id: d.memberId,
+        wrapped_cek: toHex(w.wrappedCek),
+        wrap_iv: toHex(w.wrapIv),
+        ephemeral_pubkey: toHex(w.ephemeralPublicKey),
+      };
+    }),
+  );
+
+  const { error } = await supabase.rpc('counter_offer', {
+    p_old_item_id: oldItemId,
+    p_ciphertext: toHex(ciphertext),
+    p_iv: toHex(iv),
+    p_keys: claves,
+  });
+  if (error) throw error;
+}

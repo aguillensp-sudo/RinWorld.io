@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
+  counterOffer,
   fetchThreadDetail,
   fetchThreadItems,
   sendMessage,
+  type OfferContent,
   type ThreadDetail,
   type ThreadItem,
 } from '../../lib/thread-detail';
@@ -153,6 +155,20 @@ export function Thread({
   );
 
   /**
+   * La contraoferta (`Plan §3`, día 10). Va por el mismo `write` que las otras
+   * dos decisiones de oferta: hereda el cerrojo de reentrada, la relectura y el
+   * banner de error de una sola pieza. La relectura es la que hace que la
+   * tarjeta superada y la nueva Pendiente aparezcan juntas — las escribe la
+   * base en la misma transacción (0013), pero este navegador no se entera hasta
+   * que vuelve a leer.
+   */
+  const handleCounterOffer = useCallback(
+    (itemId: string, threadId: string, content: OfferContent) =>
+      write(() => counterOffer(itemId, threadId, content)),
+    [write],
+  );
+
+  /**
    * D-08-02 · el mensaje libre cifrado.
    *
    * Va por el mismo `write` que las tres acciones de oferta, y no por un camino
@@ -214,6 +230,7 @@ export function Thread({
               onRejectOffer={(itemId) => {
                 void handleRejectOffer(itemId);
               }}
+              onCounterOffer={handleCounterOffer}
             />
             {/* D-07-01: el pie se monta en los cinco estados del hilo, CERRADO
                 SIN ACUERDO incluido. La reapertura ocurre cuando alguien vuelve

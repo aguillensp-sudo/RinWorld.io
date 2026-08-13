@@ -146,11 +146,19 @@ socio.
    reales** (ver cabecera y F-083). El hilo Alpha↔Nordwälz Lager quedó con tres filas que la
    siembra no puso — decidir si se dejan o se limpian antes de la sesión ("Pendiente de
    Álvaro" #7).
-2. **El bloqueo de despliegue sigue igual que ayer** (ver "Pendiente de Álvaro" #1): sin URL
-   viva, la sesión de mañana no tiene dónde probar. Con día 10 cerrado el mismo 13-ago, el
-   colchón de calendario no ha crecido — sigue sin haber clics en la cuenta de Vercel.
+2. ✅ **Despliegue resuelto** (ver "Pendiente de Álvaro" #1): `https://bearingworld.vercel.app`
+   viva. Útil para la sesión 1 de mañana si Álvaro quiere probar la app desplegada en vez de
+   solo local — no es indispensable para esa sesión, pero sí lo será para la reunión real.
 3. El panel de vista-servidor **no se recorta nunca** (`Plan §9`): es, junto con SRCH-01 y
    Realtime, uno de los tres argumentos que no se pueden sacrificar.
+4. ⚠ **Corrección de una asunción mía, sin comprobar, repetida varias veces en este fichero
+   los últimos dos días:** el día 11 (`Plan §10`, "Sesión 1 · Cimientos") **lo ejecuta
+   Álvaro solo**, con dos perfiles de navegador para encarnar comprador y vendedor — no es
+   una reunión con el socio. La reunión real con el socio es **el 20 de agosto** (confirmado
+   por el PO, 13-ago), separada de las tres sesiones de `Plan §10` (días 11, 13 y 15), que
+   son ensayo interno. Quedan **7 días naturales**, no uno. La sesión 2 (día 13) es la que
+   el propio plan señala como el ensayo que tiene que pasar *"antes del día de la
+   reunión"* (`Plan §12`).
 
 ---
 
@@ -232,40 +240,56 @@ socio.
    - Dos tarjetas de **`CONSULTA`** nuevas de Alpha a Nordwälz Lager (`6205-2RS` SKF 1250 u.
      y NSK 1200 u.), ambas `Pendiente`, ambas legibles por las dos partes.
    - **Decidido por el PO (13-ago): se deja tal cual, no se limpia.** Es una demostración
-     real y correcta de las dos funciones del día 10; el hilo Alpha↔Nordwälz Lager se usa
-     para la sesión de mañana con este estado, no con el de la siembra original.
+     real y correcta de las dos funciones del día 10; el hilo Alpha↔Nordwälz Lager llega
+     así a la sesión 1 de Álvaro (mañana) y, salvo que algo lo cambie antes, también al
+     20-ago.
+8. **La reunión real con el socio es el 20 de agosto**, no el día 11. Corregido tras una
+   asunción mía sin comprobar — ver "Riesgo con la vista más corta".
 
 ---
 
 ## Riesgo con la vista más corta
 
-**El primero se cerró esta tarde: `https://bearingworld.vercel.app` está viva, sin login de
-Vercel por delante y con las variables de entorno correctas** (ver "Pendiente de Álvaro" #1
-y F-084). Queda un resto de riesgo, no un bloqueo: las comprobaciones 3 y 4 de
-`despliegue.md` §4 (aislamiento Beta/Alpha en remoto, cabecera por `curl`) no se repitieron
-hoy.
+**🔴 Corrección de calendario, y va primero porque cambia la lectura de todo lo demás.**
+`ESTADO.md` llevaba dos días escribiendo "la sesión de mañana" como si el día 11 fuera la
+reunión con el socio. **Es falso, y no se comprobó hasta que Álvaro preguntó directamente.**
+`Plan §10` es explícito: los días 11, 13 y 15 son *"Plan de pruebas de usuario — ejecuta
+Álvaro"*, tres ensayos internos con Álvaro haciendo de comprador y vendedor a la vez. **La
+reunión real con el socio es el 20 de agosto** (confirmado por el PO, 13-ago) — un evento
+aparte que el plan de 15 días ni fecha ni nombra directamente, solo lo referencia como *"el
+día de la reunión"* (`Plan §12`, nota sobre el riesgo de VERA). Quedan **7 días naturales**,
+no uno. Nada de lo urgente de hoy (despliegue, verificación en navegador) estaba mal hecho
+ni de más — solo mal explicado el porqué de la prisa.
 
-**El segundo se cerró esta tarde también, y con un hallazgo real de por medio.** Contraoferta y
-"Consultar Seleccionados" se verificaron en el navegador con las dos cuentas reales —la
-primera corrida de "Consultar Seleccionados" reveló F-083 (la CEK no se envolvía para quien
-escribía), arreglado y reverificado en la misma sesión. **La lección de F-082 se repitió a
-otra escala:** lo que Vitest con mocks no puede ver, a veces solo lo ve la base real; lo que
-la base real no puede ver —aquí, que el propio emisor se quedaba sin su copia de la
-clave— solo lo vio abrir la aplicación de verdad y releer lo que se acababa de escribir.
-Ninguna de las tres capas de prueba (unidad, Postgres real, navegador real) sustituye a las
-otras dos.
+**El despliegue está resuelto:** `https://bearingworld.vercel.app` viva, sin login de Vercel
+por delante y con las variables de entorno correctas (ver "Pendiente de Álvaro" #1 y F-084).
+Queda un resto menor: las comprobaciones 3 y 4 de `despliegue.md` §4 (aislamiento Beta/Alpha
+en remoto, cabecera por `curl`) no se repitieron hoy, y hay margen de sobra para hacerlas
+antes del 20-ago.
 
-**El tercero es informativo, no un riesgo: la base de demo tiene tres filas que la siembra no
-puso** (contraoferta + dos consultas sobre el hilo Alpha↔Nordwälz), y el PO decidió dejarlas
-— el guion de mañana cuenta con ellas.
+**Contraoferta y "Consultar Seleccionados" están verificadas en navegador con las dos
+cuentas reales, con un hallazgo real de por medio (F-083):** la primera corrida de
+"Consultar Seleccionados" reveló que la CEK no se envolvía para quien escribía, arreglado y
+reverificado en la misma sesión. **La lección de F-082 se repitió a otra escala:** lo que
+Vitest con mocks no puede ver, a veces solo lo ve la base real; lo que la base real no puede
+ver —aquí, que el propio emisor se quedaba sin su copia de la clave— solo lo vio abrir la
+aplicación de verdad y releer lo que se acababa de escribir. Ninguna de las tres capas de
+prueba (unidad, Postgres real, navegador real) sustituye a las otras dos.
 
-**El cuarto sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se sepa
-cuál es, cualquier pieza que dependa de una credencial es sospechosa.
+**Informativo, no un riesgo: la base de demo tiene tres filas que la siembra no puso**
+(contraoferta + dos consultas sobre el hilo Alpha↔Nordwälz), y el PO decidió dejarlas — el
+guion de la sesión 1 de mañana y, salvo cambio, el del 20-ago cuentan con ellas.
 
-> **La conclusión operativa para el día 11:** las dos piezas del día 10 están probadas de
-> punta a punta con cuentas reales, y la URL de la demo está viva. Queda repasar las dos
-> comprobaciones de `despliegue.md` §4 que no se repitieron hoy, y la clave rotada de F-081
-> — no más código.
+**Sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se sepa cuál es,
+cualquier pieza que dependa de una credencial es sospechosa. Con 7 días por delante en vez
+de uno, no es urgente hoy, pero no se debe olvidar antes del 20-ago.
+
+> **La conclusión operativa, con el calendario ya corregido:** el día 11 es el primer ensayo
+> de Álvaro, no la demo — sirve para encontrar fricción, no para llegar impecable. Con 7 días
+> hasta el 20-ago hay margen para las comprobaciones menores de despliegue, la clave rotada
+> de F-081, y lo que salga de las sesiones 1 y 2 (`Plan §10`). La próxima vez que este
+> fichero mencione una fecha límite, se comprueba contra `Plan §10`/§12 o se pregunta —no se
+> asume por el nombre de la fila del plan.
 
 ---
 

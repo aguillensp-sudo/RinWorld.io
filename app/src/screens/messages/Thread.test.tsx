@@ -91,6 +91,7 @@ const ofertaRecibida: ThreadItem = {
   respondsToItemId: null,
   supersededByItemId: null,
   content: null,
+  raw: { ciphertext: null, iv: null, wrappedKeyCount: 0 },
 };
 
 const ofertaConContenido: ThreadItem = {

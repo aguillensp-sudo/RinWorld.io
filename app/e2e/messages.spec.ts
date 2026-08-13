@@ -195,6 +195,32 @@ test.describe('MSG-02 · un hilo real', () => {
     expect(html).not.toContain('wrapped_cek');
   });
 
+  test('⚠ el panel de vista-servidor (Plan §3, día 11): las dos mitades del zero-knowledge en la misma pantalla', async ({
+    page,
+  }) => {
+    // Es la pareja del test de arriba contra la base real, no un mock: prueba
+    // que el toggle que hoy pinta el ciphertext de verdad sigue colapsado por
+    // defecto — el aserto "NO se escapa un byte cifrado" de arriba solo vale
+    // mientras nadie lo haya pulsado — y que al pulsarlo aparecen los dos lados
+    // a la vez, sin que uno tape al otro.
+    await abrirHilo(page, 'Nordwälz Lager');
+    const fila = page.getByTestId('thread-item').filter({ hasText: 'Precio por unidad para el lote completo.' });
+    await expect(fila).toBeVisible();
+
+    expect(await page.content()).not.toMatch(/\\x[0-9a-f]{16,}/i); // ancla: colapsado por defecto
+
+    await fila.getByRole('button', { name: 'Ver lo que ve el servidor' }).click();
+
+    await expect(fila.getByText(/4,82\s?€\/ud\./)).toBeVisible(); // arriba, legible
+    // Dos coincidencias a propósito: content_ciphertext Y content_iv son hex de
+    // 16+ caracteres — .first() basta para probar que al menos uno está, sin
+    // fijar cuál.
+    await expect(fila.getByText(/\\x[0-9a-f]{16,}/i).first()).toBeVisible(); // abajo, no
+
+    await fila.getByRole('button', { name: 'Ocultar lo que ve el servidor' }).click();
+    await expect(fila.getByText(/\\x[0-9a-f]{16,}/i)).toHaveCount(0);
+  });
+
   test('con la clave de la sesión NO se pinta el indicador de cifrado, y sigue sin haber botón', async ({
     page,
   }) => {

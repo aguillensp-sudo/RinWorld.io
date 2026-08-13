@@ -89,6 +89,23 @@ export type ItemContent = MessageContent | InquiryContent | OfferContent;
 // Los tipos de la pantalla
 // -----------------------------------------------------------------------------
 
+/**
+ * Lo que Postgres tiene de verdad para este elemento, sin descifrar — para el
+ * panel de vista-servidor (`Plan §3`, día 11: *"comprador vs. lo que almacena
+ * Postgres"*). `fetchThreadItems` ya trae estos tres valores en la misma
+ * consulta que arma `content` (ver más abajo); esto solo evita que se tiren.
+ *
+ * `wrappedKeyCount` es 0 o 1 y no el total de destinatarios: `item_keys_select_own`
+ * (`0003:353`) filtra por mí, así que aquí nunca baja la fila de la contraparte.
+ * Es la prueba, no la explicación: por eso el panel lo enseña como lo que RLS
+ * deja ver, no como "cuántos hay en total".
+ */
+export interface RawRow {
+  ciphertext: string | null;
+  iv: string | null;
+  wrappedKeyCount: number;
+}
+
 export interface ThreadItem {
   id: string;
   type: ItemType;
@@ -105,6 +122,7 @@ export interface ThreadItem {
   supersededByItemId: string | null;
   /** `null` = cifrado sin clave en esta sesión. Ver la costura, arriba. */
   content: ItemContent | null;
+  raw: RawRow;
 }
 
 export interface ThreadDetail {
@@ -465,6 +483,14 @@ export async function fetchThreadItems(threadId: string, orgId: string): Promise
         },
         keyPair,
       ),
+      // Mismos tres valores que acaban de entrar en `decryptItem`, retenidos en
+      // vez de tirados: es lo único que hace falta para el panel de
+      // vista-servidor, sin una consulta más (ver `RawRow`).
+      raw: {
+        ciphertext: r.content_ciphertext,
+        iv: r.content_iv,
+        wrappedKeyCount: r.thread_item_keys?.length ?? 0,
+      },
     })),
   );
 }

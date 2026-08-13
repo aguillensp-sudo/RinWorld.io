@@ -105,6 +105,49 @@ function OfferBody({ content, now }: { content: Extract<ItemContent, { kind: 'OF
   );
 }
 
+/**
+ * El panel de vista-servidor (`Plan §3`, día 11): lo que Postgres tiene de
+ * verdad para este elemento, sin descifrar, junto a lo que la tarjeta de
+ * arriba ya pinta ya legible. Un toggle y no una pantalla propia — no está en
+ * las 8 de `Plan §9`, y el único requisito cerrado (`Plan §10`, sesión 1,
+ * paso 6) es "abrir el panel... y verificar que los campos comerciales salen
+ * cifrados" desde el hilo mismo, no desde una ruta nueva.
+ *
+ * Vive a nivel de `<li>`, no dentro de `Card`: cubre MENSAJE, CONSULTA y
+ * OFERTA con una sola implementación, coherente con que
+ * `e2ee-content-encryption` habla de "cualquier elemento del hilo".
+ *
+ * `raw.ciphertext`/`raw.iv` llegan tal cual los devuelve PostgREST (hex
+ * `\x…`) — no se reformatean, porque reformatearlos sería maquillar lo que el
+ * servidor de verdad guarda.
+ */
+function RawServerView({ raw }: { raw: ThreadItem['raw'] }) {
+  const [abierto, setAbierto] = useState(false);
+
+  return (
+    <div className={styles.serverView}>
+      <button
+        type="button"
+        className={styles.serverToggle}
+        onClick={() => setAbierto((v) => !v)}
+        aria-expanded={abierto}
+      >
+        {abierto ? 'Ocultar lo que ve el servidor' : 'Ver lo que ve el servidor'}
+      </button>
+      {abierto && (
+        <dl className={styles.serverRaw}>
+          <dt>content_ciphertext</dt>
+          <dd>{raw.ciphertext ?? '—'}</dd>
+          <dt>content_iv</dt>
+          <dd>{raw.iv ?? '—'}</dd>
+          <dt>thread_item_keys visibles para ti</dt>
+          <dd>{raw.wrappedKeyCount}</dd>
+        </dl>
+      )}
+    </div>
+  );
+}
+
 function Card({
   item,
   threadId,
@@ -284,6 +327,7 @@ export function ThreadHistory({
               <span className={styles.author}>{author}</span>
               <span className={styles.timestamp}>{relativeTime(item.createdAt, clock)}</span>
             </div>
+            <RawServerView raw={item.raw} />
           </li>
         );
       })}

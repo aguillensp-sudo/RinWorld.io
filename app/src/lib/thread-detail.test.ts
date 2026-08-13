@@ -87,6 +87,7 @@ function item(over: Partial<ThreadItem> = {}): ThreadItem {
     respondsToItemId: null,
     supersededByItemId: null,
     content: null,
+    raw: { ciphertext: null, iv: null, wrappedKeyCount: 0 },
     ...over,
   };
 }

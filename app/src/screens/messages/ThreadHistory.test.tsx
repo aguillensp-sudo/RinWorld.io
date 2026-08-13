@@ -68,6 +68,7 @@ function item(over: Partial<ThreadItem> = {}): ThreadItem {
     respondsToItemId: null,
     supersededByItemId: null,
     content: null,
+    raw: { ciphertext: null, iv: null, wrappedKeyCount: 0 },
     ...over,
   };
 }
@@ -271,6 +272,78 @@ describe('las tarjetas', () => {
     ]);
     expect(screen.getByTestId('thread-item')).toBeInTheDocument();
     expect(screen.getByText(/Superada por contraoferta/i)).toBeInTheDocument();
+  });
+});
+
+describe('el panel de vista-servidor (Plan §3, día 11)', () => {
+  const filaCifrada = {
+    ciphertext: '\\x4a2f3c9de1a0b7f5238899aabbccddee',
+    iv: '\\xaabbccddeeff001122334455',
+    wrappedKeyCount: 1,
+  };
+
+  it('empieza cerrado: ningún byte cifrado en el DOM antes de pulsar el toggle', () => {
+    // Es el mismo aserto que `messages.spec.ts` hace contra la app real —"NO se
+    // escapa un byte cifrado al DOM"— pero aquí contra el componente que acaba
+    // de aprender a pintarlo: sin este test, "colapsado por defecto" sería una
+    // intención del código, no algo que un rojo pudiera cazar si se rompiera.
+    const { container } = pinta([ofertaRecibida({ raw: filaCifrada })]);
+    expect(screen.getByRole('button', { name: 'Ver lo que ve el servidor' })).toBeInTheDocument(); // ancla
+    expect(container.textContent ?? '').not.toContain('4a2f3c9de1a0b7f5');
+  });
+
+  it('al abrirlo, enseña content_ciphertext y content_iv tal cual, sin reformatear', async () => {
+    const user = userEvent.setup();
+    pinta([ofertaRecibida({ raw: filaCifrada })]);
+
+    await user.click(screen.getByRole('button', { name: 'Ver lo que ve el servidor' }));
+
+    expect(screen.getByText(filaCifrada.ciphertext)).toBeInTheDocument();
+    expect(screen.getByText(filaCifrada.iv)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ocultar lo que ve el servidor' })).toBeInTheDocument();
+  });
+
+  it('el conteo de thread_item_keys visibles se enseña literal — 0 o 1, nunca un total inventado', async () => {
+    // `wrappedKeyCount` es lo que RLS deja ver para MÍ, no cuántos destinatarios
+    // tiene el elemento en total (`item_keys_select_own`, 0003:353). Enseñar
+    // "2 destinatarios" aquí sería afirmar un dato que este componente no tiene.
+    const user = userEvent.setup();
+    pinta([ofertaRecibida({ raw: { ...filaCifrada, wrappedKeyCount: 0 } })]);
+
+    await user.click(screen.getByRole('button', { name: 'Ver lo que ve el servidor' }));
+    expect(within(screen.getByTestId('thread-item')).getByText('0')).toBeInTheDocument();
+  });
+
+  it('cerrarlo vuelve a ocultar el ciphertext', async () => {
+    const user = userEvent.setup();
+    const { container } = pinta([ofertaRecibida({ raw: filaCifrada })]);
+
+    await user.click(screen.getByRole('button', { name: 'Ver lo que ve el servidor' }));
+    expect(screen.getByText(filaCifrada.ciphertext)).toBeInTheDocument(); // ancla
+
+    await user.click(screen.getByRole('button', { name: 'Ocultar lo que ve el servidor' }));
+    expect(container.textContent ?? '').not.toContain('4a2f3c9de1a0b7f5');
+  });
+
+  it('con contenido descifrado, el toggle enseña las DOS mitades a la vez: arriba legible, abajo no', async () => {
+    // El argumento entero del producto en un solo test: la tarjeta ya pinta el
+    // texto legible y el toggle, al lado, pinta lo que Postgres de verdad tiene
+    // para esa misma fila.
+    const user = userEvent.setup();
+    pinta([item({ id: 'm', content: { kind: 'MENSAJE', text: 'Gracias por la oferta.' }, raw: filaCifrada })]);
+
+    expect(screen.getByText('Gracias por la oferta.')).toBeInTheDocument(); // ancla: lo legible sigue ahí
+    await user.click(screen.getByRole('button', { name: 'Ver lo que ve el servidor' }));
+    expect(screen.getByText(filaCifrada.ciphertext)).toBeInTheDocument();
+    expect(screen.getByText('Gracias por la oferta.')).toBeInTheDocument(); // sigue ahí tras abrir
+  });
+
+  it('un mensaje libre también tiene su toggle: la costura no es exclusiva de las tarjetas', () => {
+    // `e2ee-content-encryption` habla de "cualquier elemento del hilo", no solo
+    // de ofertas y consultas — de ahí que el toggle viva a nivel de `<li>`.
+    pinta([item({ isOwn: false, senderOrgId: SUYA, raw: filaCifrada })]);
+    expect(screen.getByTestId('thread-item')).toBeInTheDocument(); // ancla
+    expect(screen.getByRole('button', { name: 'Ver lo que ve el servidor' })).toBeInTheDocument();
   });
 });
 

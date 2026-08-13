@@ -167,7 +167,7 @@ una y no en la otra.
 4. **Un selector por rol se elige contra el nombre accesible REAL** (F-077), que se imprime
    en treinta segundos con un sondeo. No contra lo que uno cree que renderiza.
 5. **Mirar la CI antes de encadenar pushes** (F-076), no al final del día.
-6. **El día 10 no necesita el arnés**, y menos mal: la clave del Coder está rotada.
+6. **El día 10 no necesita el arnés**: sus dos filas son de Claude Code.
 
 ---
 
@@ -175,7 +175,7 @@ una y no en la otra.
 
 | # | Decisión | Dónde |
 |---|---|---|
-| Coder | `deepseek-v4-flash`. **⚠ Clave ROTADA: el arnés no puede correr hasta que el PO la reponga** | F-001 |
+| Coder | `deepseek-v4-flash`, DeepSeek oficial vía `DEEPSEEK_API_KEY`. **La clave funciona** — comprobado con `GET /models` → 200 | F-001 |
 | Modelos | **Opus 4.8 / Claude Code** para esquema, RLS, Realtime, E2EE, máquina de estados y herramientas de VERA. El **Coder** para HTML→React. **VERA en producción: Sonnet 4.6, fijo (QA-A00-06)** | Plan §1 y §7 |
 | **Las 4 herramientas** | Buscar en catálogo · Consultar mi inventario · Listar mis hilos (metadatos) · Navegar | **D-09-01** |
 | **VERA cuando no puede** | Dice que no puede **y explica por qué**, una vez, en una frase. **Parafrasea, no repite literal** | **D-09-02 (a)** |
@@ -202,8 +202,10 @@ una y no en la otra.
 
 ## Pendiente de Álvaro
 
-1. 🔴 **La `DEEPSEEK_API_KEY` está rotada.** Sin ella **el arnés no puede correr**. El día
-   10 no lo necesita —sus dos filas son de Claude Code— pero el 11 sí.
+1. ❓ **¿Qué API dijiste que estaba rotada?** Lo mencionaste sin nombrarla y yo asumí que
+   era la del Coder. **Es falso: `DEEPSEEK_API_KEY` responde 200** y el arnés había
+   corrido con ella una hora antes. Si hay alguna otra clave rotada, dilo — porque no sé
+   cuál es. Ver **F-081**.
 2. 🟠 **Despliegue · sigue esperando tus clics.** Decidido el 12-ago: **Vercel, con semilla
    de demo, la semilla solo en *Production*, URL sin indexar y muerte en V1**. El repo lleva
    las tres piezas del no-indexado y el runbook en **`openspec/mvp/despliegue.md`**. Los
@@ -229,8 +231,9 @@ sesión con el socio y la app sigue sin URL desplegada.** Vamos un día por dela
 así que hay colchón — pero el colchón no despliega nada. **Todo lo que falta son clics en
 la cuenta de Álvaro.**
 
-**El segundo es que el arnés está parado por la clave rotada.** No bloquea el día 10;
-bloquea el 11.
+**El segundo es que hay una clave rotada que no he identificado.** Álvaro la mencionó sin
+nombrarla; **no es la del Coder** —comprobado— así que sigue sin saberse cuál. Mientras no
+se sepa, cualquier pieza que dependa de una credencial es sospechosa.
 
 **El tercero es el que más enseña, y es sobre el instrumento, no sobre el modelo.** De los
 cinco defectos de PANEL-01, **cuatro fueron míos y uno del modelo — y el del modelo fue el

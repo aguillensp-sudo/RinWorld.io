@@ -6,172 +6,138 @@
 >
 > **Regla de este fichero (F-012).** Cita, no parafrasees. Los valores de estado y las
 > asignaciones de modelo se copian del spec cerrado o del plan **con el puntero al lado**.
+
+**Día 10 de 15 · cerrado 13-ago-2026 · Estado: ÁMBAR. Los DOS bloques cerrados y verdes
+en local y en la base real — pero ninguno de los dos se ha visto en un navegador, y
+mañana (`Plan §3`, día 11) es la primera sesión de pruebas con el socio.**
+
+> ⚠ **Este relevo lo escribe Sonnet 5, no Opus 4.8.** `CLAUDE.md` §3 asigna la máquina de
+> estados de la oferta a Opus 4.8/Claude Code por coste del fallo; la sesión de hoy corrió
+> en Sonnet 5. Se deja anotado en vez de atribuir el commit al modelo que "debería" haber
+> sido (autoría honesta, `CLAUDE.md` §1.6) — el PO decide si esto importa para este tipo de
+> pieza.
+
+> **Verificado, hoy:** `typecheck` limpio · **610 tests** de unidad (eran 578 al empezar el
+> día) · `check:palette` cobertura completa · `build` verde · `supabase/tests/run.sh`
+> contra Postgres real en Docker — **ESQUEMA VERDE y CATÁLOGO VERDE**, con los asertos
+> nuevos de `counter_offer` (0013) y `org_public_keys`/`create_inquiry` (0014).
 >
-> **Corolario del día 8 (F-065), que hoy volvió a costar caro:** no basta con comprobar lo
-> que no lleva puntero. Hay que comprobar **lo que uno supone que no existe**. Hoy escribí
-> en el registro que no había métricas de la corrida sin abrir el CSV. Las había — F-078.
-
-**Día 9 de 15 · cerrado 13-ago-2026 08:30 · Estado: VERDE. Los TRES bloques cerrados.
-VERA responde de verdad contra Sonnet, y el riesgo #1 del proyecto se observó, se midió
-y se cerró el mismo día.**
-
-> **⚠ EL DÍA 9 SE EJECUTÓ ENTRE LA TARDE DEL 12-AGO Y LA MAÑANA DEL 13.** El plan lo
-> situaba el 13, así que **vamos aproximadamente un día por delante del calendario**. Las
-> fechas del registro son las del reloj, no las de la etiqueta del plan, y las etiquetas
-> «día N» del `Plan §3` **no se han renumerado**.
-
-> **Verificado en local, todo hoy:** `typecheck` limpio · **578 tests** de unidad (eran
-> 457 al empezar el día) · `check:palette` cobertura completa · `build` verde ·
-> **Playwright 50/50**, la suite entera y no solo los ficheros declarados.
->
-> **En CI:** la corrida del arreglo de F-075 salió **verde**. Antes hubo **dos pushes en
-> rojo que no se miraron hasta el final del día** — F-076.
+> **NO verificado — y es la puerta que falta:** ningún click real en navegador. No hay
+> credenciales de `alpha@bearingworld.test` / `beta@bearingworld.test` en esta sesión, y el
+> único entorno de la app es el proyecto Supabase remoto (no hay réplica local): probar a
+> mano habría mutado siembra real a dos días de la demo. **CI (`schema` + `app` + `e2e` con
+> reseed de fixture) se disparó al hacer push** y es la primera vez que estos dos flujos se
+> ven correr contra cuentas y un navegador de verdad.
 
 ---
 
 ## Dónde estamos
 
-`Plan §3`, filas del día 9 — **las tres cerradas**:
+`Plan §3`, filas del día 10 — **las dos cerradas**:
 
 | Bloque | Ejecuta | Resultado |
 |---|---|---|
-| Las 4 herramientas de VERA + Edge Function proxy | Claude Code | **Desplegada (v3) y respondiendo.** Contrato 45/45 |
-| **SRCH-01** · cableado VERA↔chips | Claude Code | Escribe criterios y lleva a Comprando. 10 asertos |
-| **PANEL-01** | Arnés | **ESCALADO 3/3 · $0,030285 · 12,6 min.** Revisión a mano **+21/−3** |
+| Contraoferta / modificación de oferta | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `counter_offer` (0013) atómico, formulario inline en MSG-02 |
+| **"Consultar Seleccionados"** (GAP-004) | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `create_inquiry` + `org_public_keys` (0014) atómicos |
 
 ---
 
-## VERA está viva, y lo que costó saber que decía la verdad
+## Contraoferta, y por qué no es MSG-03
 
-**Las cuatro herramientas son las de D-09-01** — buscar en catálogo, consultar mi
-inventario, listar mis hilos (metadatos) y navegar — y **el proxy no toca la base**
-(D-09-05). Su única responsabilidad es guardar la clave de Sonnet; las herramientas se
-ejecutan en el navegador contra `search.ts`, `inventory.ts` y `threads.ts`. Así el
-*"actuando siempre con los permisos del usuario autenticado sin posibilidad de escalar
-privilegios"* de `spec.md:223` **lo impone RLS con el JWT que ya está ahí**, y no la buena
-fe del servidor. Comprometer el proxy no expone una fila de nadie.
+`offers.ts` lo dejó anotado desde el día 6: la contraoferta no es un cambio de estado, es
+una fila `OFERTA` nueva que nace `Pendiente` más la anterior movida a "Superada por
+contraoferta" con su puntero — las dos cosas o ninguna, en la misma transacción
+(`counter_offer`, 0013, mismo patrón que `create_thread_item` de 0012 §5).
 
-**Medido en la primera corrida real:**
+**MSG-03 sigue sin ser una pantalla propia** — no está en las 8 de `Plan §9` — pero su
+formulario de creación de oferta (§4.2) sí hacía falta, y entra como modal dentro de
+MSG-02: `OfferCounterForm.tsx`, prerellenado desde la oferta que se supera. `part_number` y
+`brand` se muestran de solo lectura a propósito: `counter_offer` los hereda de la oferta
+anterior **en la base**, ignorando lo que llegue por parámetro, así que un campo editable
+en el formulario habría sido mentira — parecería que cambia algo que la base no deja
+cambiar (`offer-card`: *"no editables salvo cambio explícito de referencia"*, y una
+contraoferta no lo es).
 
-- La herramienta se llama bien: *"busca 6205-2RS en Europa"* → `buscar_en_catalogo` con
-  `{referencia:"6205-2RS", zona:"EU"}`. Tradujo el continente al enum sin ayuda.
-- **D-09-02 funciona delante del socio.** Ante *"resúmeme la negociación con Anadolu"*
-  dijo que no puede, explicó por qué y **ofreció los metadatos**. No cayó en la opción (c).
-  ⚠ **Parafrasea la frase, no la reproduce literal.** El contrato comprueba que está en el
-  prompt, que es lo único comprobable.
-- **Prompt caching real y medido:** `cache_creation_input_tokens: 2119` en la primera
-  llamada y `cache_read_input_tokens: 2119` en la segunda. El bloque estático mide **2119
-  tokens**, por encima del mínimo de **1024** de Sonnet 4.6 — el que falla en silencio.
-
-### ⚠ F-075 · el riesgo #1 del proyecto, observado
-
-**En la primera corrida real VERA inventó dos datos.** Con 13 filas en la base y el tope
-en 10, el pie decía *"13 coincidencias (se listan 10)"* y contestó nombrando la marca
-`NTN` y un stock *"desde 150"*: **ninguna de las dos estaba en su retorno** — eran los
-puestos 11-13. Todo lo demás era exacto.
-
-**Lo inquietante es que los dos inventos eran valores REALES de la base**, así que no
-sonaron raros: rellenó el hueco con conocimiento del mundo que casualmente encajaba.
-
-**La causa era del contrato de la herramienta, no del modelo:** se le dio un **recuento
-cuyo contenido no podía ver**, y eso es una invitación a especular. Arreglado por los dos
-lados — `MAX_FILAS` de 10 a **25**, y cuando aun así recorta, el retorno **prohíbe
-explícitamente** mencionar marcas, cantidades, plazos o empresas que no estén en la lista;
-más un párrafo del system prompt para el caso de RESUMIR, donde la regla general no bastó.
-
-**Reverificado contra SQL:** misma pregunta, 11 filas, y los cinco subtotales por marca
-(SKF 2250, NSK 2145, FAG 1630, Koyo 540, NTN 150), los cuatro proveedores y el rango de
-plazos 2-21 **cuadran todos**. Cero invenciones.
-
-**Y el guardia del recorte también está verificado, con una consulta que sí lo dispara:**
-*"busca todos los rodamientos de la marca SKF"* devuelve **48 filas**, de las que la
-herramienta enseña 25. VERA contestó *"Hay 48 coincidencias… solo puedo mostrarte las
-primeras 25. **Las otras 23 no las tengo visibles, así que no puedo informarte sobre
-ellas**"* — declaró el límite en vez de especular. Y lo que sí dijo cuadra con SQL: **5
-organizaciones** (las cinco que nombró), **130 a 2.680 u** y **2 a 21 días**.
+El botón `Contra-ofertar` de `ThreadHistory.tsx` pasa de deshabilitado-por-día-10 a
+**activo**, o deshabilitado solo cuando esta sesión no puede descifrar la oferta original
+(D-07-05: sin contenido legible no hay con qué prerellenar, y eso no es lo mismo que
+"fuera del MVP").
 
 ---
 
-## PANEL-01, y por qué su veredicto no dice nada del modelo
+## GAP-004, y la pieza que faltaba para poder cerrarlo de verdad
 
-**Escaló 3/3.** Y como el día 8, **el veredicto no es atribuible al modelo** — esta vez por
-un mecanismo peor:
+El boundary ya estaba cerrado en spec desde junio: *"la selección y el disparo de la
+acción pertenecen a conversational-search; la gestión del hilo, tarjeta de consulta y
+cifrado E2EE pertenecen a messaging-and-negotiation"* (`conversational-search/spec.md`,
+Cross-Capability References). Lo que faltaba era la segunda mitad, y tenía un hueco de
+diseño que **0012 no había tenido que resolver**: `thread_public_keys` exige un hilo, y
+"Consultar Seleccionados" contra un distribuidor nuevo es exactamente el caso en que ese
+hilo **todavía no existe** en el momento de cifrar.
 
-**C1 corre `npm test`, o sea la suite entera, contrato incluido.** Mis cuatro selectores de
-navegación iban sin anclar (F-077), así que tiñeron de rojo **C1 y C2 a la vez, en los tres
-intentos**. Con los selectores corregidos, **el mismo artefacto pasa 20/20**.
+**`org_public_keys` (0014 §1)** resuelve eso: la pública X25519 de los miembros de una
+organización, con la misma condición de acceso que ya deja ver esa organización en SRCH-01
+(`organizations_select_approved`, 0001) — si la búsqueda ya enseña su inventario, enseñar
+la clave pública de sus miembros no abre nada nuevo.
 
-**El reparto del día, y es el dato incómodo: cuatro defectos míos y uno del modelo.**
+**`create_inquiry` (0014 §2)** encuentra-o-crea el hilo y deposita la tarjeta `CONSULTA`
+con sus claves en una transacción, derivando `part_number`/`brand`/organización de
+`inventory_lines` — nunca del parámetro — y bloqueando con el literal exacto de
+`inquiry-card` una segunda consulta sobre la misma línea.
 
-| Defecto | De quién | ¿Lo cazó C2? |
-|---|---|---|
-| Cuatro selectores sin anclar (F-077) | **mío** | sí, y por eso escaló |
-| Aserto de aislamiento sobre la página entera (F-080) | **mío** | no, lo cazó el e2e |
-| `\b0\b` sobre un `textContent` concatenado | **mío** | sí |
-| Afirmar que no había métricas sin mirar el CSV (F-078) | **mío** | — |
-| **Bucle infinito de consultas (F-079)** | **del modelo** | **NO** |
+### 🔴 F-082 · el bug que solo se veía contra Postgres real
 
-**Y el único defecto real era el grave.** El `useEffect` de carga dependía del **objeto**
-`now`, y `App.tsx` construye `now={new Date()}` en el render a propósito. Identidad nueva
-cada render ⇒ **una consulta por render, sin fallar ni avisar**, en la primera pantalla
-después del login. Medido: 5 llamadas en 5 renders. Arreglado dependiendo del **día** y
-leyendo el valor de una `ref`. **El contrato no lo cazaba porque pasa un `now` constante**;
-lleva ya el test de regresión que lo reproduce.
+El primer diseño de "encontrar o crear el hilo" era `insert ... on conflict do nothing`,
+razonando que un insert que no inserta nada es barato. **Falso:** el trigger `BEFORE
+INSERT` del límite de 25 hilos/día se dispara para la fila candidata *antes* de que
+Postgres resuelva el conflicto, con o sin `ON CONFLICT`. Contra `supabase/tests/run.sh`,
+consultar una línea de un distribuidor **ya conocido** agotaba el cupo pensado para
+distribuidores **nuevos**. Arreglado buscando antes de insertar. Ver F-082 en
+`findings-register.md` — es la clase de defecto que un catálogo de demo pequeño no
+enseña nunca, y que 25+ líneas del mismo distribuidor sí habrían enseñado delante del
+socio.
 
-**La cifra del objetivo 4: `+21 / −3` sobre 237 líneas, con `Panel.module.css` SIN TOCAR
-—1 de 2 ficheros—. Y de las 21 añadidas, 17 son el comentario: el cambio funcional son
-cuatro líneas.**
+### Lo que se dejó fuera, y por qué
 
----
-
-## Lo que PANEL-01 obligó a decidir, y es lo más transferible del día
-
-**De los diez números que pide el spec, TRES no tienen fuente de datos**, comprobado contra
-el esquema antes de escribir una línea:
-
-| Métrica | Por qué no existe |
-|---|---|
-| Visitas (30d), §4.3 | **No hay tabla de visitas.** INV-01 ya lo resolvió igual el día 3 |
-| Hilos sin leer, §4.4 | **No hay ningún registro de lectura.** Es F-027 (a) |
-| Favoritos del mes, §4.6 | `created_at` existe, pero `favorites_select_own` (`0005:67`) restringe a `member_id = auth.uid()`: **devolvería 0 en silencio** |
-
-**Van con guion, decidido por el PO.** Y el motivo importa: `RNG-PANEL-02` dice que las
-cajas se ven *"incluso en valor 0 … para reforzar que el dato está actualizado y no
-ausente"*. **Esa regla convierte un 0 en una afirmación.** Pintar 0 donde no hay fuente no
-sería un hueco: sería mentir con el respaldo del spec, en la primera pantalla que se ve al
-entrar. `panel.ts` lo impone en el **tipo** — `visits: null`, no `number`.
-
-**Y una corrección de premisa mía:** pregunté al PO cómo definir *"consulta sin
-respuesta"* dando por hecho que el esquema no lo modelaba. **Sí lo modelaba desde el día
-2**: `estado_consulta` con su índice parcial (`0003:137-139`, `0003:175`). Las dos
-definiciones daban números distintos — un `MENSAJE` de cortesía cuenta como respuesta en
-una y no en la otra.
+- **`Consultar`, fila individual** (`results-row-actions`, escenario *"consultar línea no
+  consultada previamente"*): abre la tarjeta de consulta de FL-MSG-01 con un formulario de
+  verdad (cantidad obligatoria, comentario opcional). Es una pieza más grande que la de
+  hoy — un formulario nuevo, no una llamada en lote — y **no estaba en la fila del día 10**.
+- **`Contactar`** (hilo libre, siempre disponible): requisito distinto de
+  `results-row-actions`, tampoco pedido para hoy.
+- Los dos siguen como no-ops, igual que ayer.
+- **La cantidad de "Consultar Seleccionados" es la publicada de la línea (`row.quantity`),
+  no una que el comprador teclee.** El escenario cerrado de la capability
+  (*"consultar seleccionados en lote"*) no tiene paso de formulario — *"envía... sin abrir
+  ningún hilo en pantalla"* — así que no hay de dónde sacar una cifra tecleada. Es una
+  decisión de diseño, no un hueco: "quiero saber de esto", no un pedido con cantidad
+  propia. Si el PO prefiere otra fuente (p. ej. el chip `Qty mín` de la búsqueda activa),
+  es un cambio de una línea en `thread-detail.ts::sendInquiries`.
 
 ---
 
-## Hoy toca — Día 10
+## Hoy toca — Día 11
 
-`Plan §3`, filas del día 10 — **son dos, las dos de Claude Code**:
+`Plan §3`, filas del día 11:
 
 | Trabajo | Ejecuta |
 |---|---|
-| **Contraoferta / modificación de oferta** | Claude Code |
-| **"Consultar Seleccionados": SRCH-01 → creación de hilo (GAP-004)** | Claude Code |
+| Panel de vista-servidor (comprador vs. lo que almacena Postgres) | — |
+| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro |
 
 **No lleva fichero de decisiones propio** (`CLAUDE.md` §ritual: solo los días 4, 8 y 9).
 
 **Lo que hay que tener delante antes de empezar:**
 
-1. **`handleConsultSelected` es hoy un cuerpo VACÍO** en `SearchResults.tsx`, con el hueco
-   anotado. El botón existe desde el día 6 porque está en el HTML aprobado.
-2. **La contraoferta toca la máquina de estados de la oferta**, de las piezas que
-   `CLAUDE.md` §3 asigna a Claude Code por coste del fallo. `Superada por contraoferta` ya
-   existe en `0003:132`.
-3. **Un aserto negativo y su ancla positiva van en el MISMO `it`** (F-074).
-4. **Un selector por rol se elige contra el nombre accesible REAL** (F-077), que se imprime
-   en treinta segundos con un sondeo. No contra lo que uno cree que renderiza.
-5. **Mirar la CI antes de encadenar pushes** (F-076), no al final del día.
-6. **El día 10 no necesita el arnés**: sus dos filas son de Claude Code.
+1. **Nada de lo de hoy se ha visto en un navegador.** Antes de la sesión de pruebas hace
+   falta un click-through real de contraoferta y de "Consultar Seleccionados" con las dos
+   cuentas demo — o al menos leer el resultado de la corrida de CI que se disparó al pushear
+   (`schema` + `app` + `e2e`, con reseed de fixture).
+2. **El bloqueo de despliegue sigue igual que ayer** (ver "Pendiente de Álvaro" #2): sin URL
+   viva, la sesión de mañana no tiene dónde probar. Con día 10 cerrado el mismo 13-ago, el
+   colchón de calendario no ha crecido — sigue sin haber clics en la cuenta de Vercel.
+3. El panel de vista-servidor **no se recorta nunca** (`Plan §9`): es, junto con SRCH-01 y
+   Realtime, uno de los tres argumentos que no se pueden sacrificar.
 
 ---
 
@@ -181,6 +147,12 @@ una y no en la otra.
 |---|---|---|
 | Coder | `deepseek-v4-flash`, DeepSeek oficial vía `DEEPSEEK_API_KEY`. **La clave funciona** — comprobado con `GET /models` → 200 | F-001 |
 | Modelos | **Opus 4.8 / Claude Code** para esquema, RLS, Realtime, E2EE, máquina de estados y herramientas de VERA. El **Coder** para HTML→React. **VERA en producción: Sonnet 4.6, fijo (QA-A00-06)** | Plan §1 y §7 |
+| **Contraoferta** | **Fila `OFERTA` nueva**, nunca un cambio de estado: la anterior pasa a `Superada por contraoferta` con `superseded_by_item_id`, atómico en `counter_offer` (RPC, security invoker) | **0013** |
+| **`part_number`/`brand` de la contraoferta** | Se heredan **en la base**, nunca del parámetro del cliente — un formulario que los dejara editar mentiría | `offer-card` · 0013 |
+| **Claves del primer contacto** | `org_public_keys(org_id)`: la pública de un distribuidor **sin hilo previo**, misma condición que `organizations_select_approved` | **0014 §1** |
+| **"Consultar Seleccionados": cantidad** | La publicada de la línea (`row.quantity`), no una tecleada — el escenario cerrado no tiene paso de formulario | `results-row-actions` · decisión del día 10 |
+| **"Consultar Seleccionados": qué queda fuera** | `Consultar` de fila individual (formulario FL-MSG-01) y `Contactar` (hilo libre). Dos requisitos distintos, no pedidos para el día 10 | resultsrow-actions |
+| **Encontrar-o-crear un hilo con trigger de límite** | Mirar (`select`) ANTES de `insert ... on conflict`: un `BEFORE INSERT` se dispara aunque el conflicto descarte la fila | **F-082** |
 | **Las 4 herramientas** | Buscar en catálogo · Consultar mi inventario · Listar mis hilos (metadatos) · Navegar | **D-09-01** |
 | **VERA cuando no puede** | Dice que no puede **y explica por qué**, una vez, en una frase. **Parafrasea, no repite literal** | **D-09-02 (a)** |
 | **Dónde corren las herramientas** | **En el navegador, no en el proxy.** El proxy solo guarda la clave y no toca la base | **D-09-05** |
@@ -206,51 +178,52 @@ una y no en la otra.
 
 ## Pendiente de Álvaro
 
-1. ❓ **¿Qué API dijiste que estaba rotada?** Lo mencionaste sin nombrarla y yo asumí que
-   era la del Coder. **Es falso: `DEEPSEEK_API_KEY` responde 200** y el arnés había
-   corrido con ella una hora antes. Si hay alguna otra clave rotada, dilo — porque no sé
-   cuál es. Ver **F-081**.
-2. 🟠 **Despliegue · sigue esperando tus clics.** Decidido el 12-ago: **Vercel, con semilla
-   de demo, la semilla solo en *Production*, URL sin indexar y muerte en V1**. El repo lleva
-   las tres piezas del no-indexado y el runbook en **`openspec/mvp/despliegue.md`**. Los
-   cuatro valores por defecto de Vercel están mal: Root Directory **`app`**, rama
-   **`mvp/bootstrap`**, nombre **`bearingworld`** y las tres `VITE_*`.
-   **⚠ Quedan DOS días para la sesión con el socio y sigue sin haber URL viva.**
-3. 🟠 **`npx supabase link --project-ref troxminloxkjwihwfevs`** — pide la contraseña de la
+1. 🟠 **Despliegue · sigue esperando tus clics, y mañana es la sesión de pruebas.** Decidido
+   el 12-ago: **Vercel, con semilla de demo, la semilla solo en *Production*, URL sin
+   indexar y muerte en V1**. El repo lleva las tres piezas del no-indexado y el runbook en
+   **`openspec/mvp/despliegue.md`**. Los cuatro valores por defecto de Vercel están mal:
+   Root Directory **`app`**, rama **`mvp/bootstrap`**, nombre **`bearingworld`** y las tres
+   `VITE_*`. **⚠ Con el día 10 cerrado el mismo 13-ago, no queda colchón: la sesión de
+   `Plan §3` día 11 es la próxima fila del plan y sigue sin haber URL viva.**
+2. **`npx supabase link --project-ref troxminloxkjwihwfevs`** — pide la contraseña de la
    base. **Y ojo (F-073): la CLI está logueada en la cuenta equivocada** —la de
    `web-julsaindustrial`, org `mjxnlvvrnjuuawlxkmte`—; el MVP vive en `ujatcozvbspkycepemfq`.
-   Por eso los despliegues de la Edge Function van por el MCP.
-4. ✅ **VERA con más de 25 resultados: PROBADO Y VERIFICADO.** Era lo único de F-075 que
-   quedaba. Con *"busca todos los rodamientos de la marca SKF"* (48 filas) declaró el
-   recorte y no inventó nada; los cinco proveedores, el rango de cantidades y el de plazos
-   cuadran con SQL.
-5. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
-6. **F-027 (a)** (no leídos de MSG-01) y **F-023 d** (línea eliminada en INV-01). Los dos de
-   V1 y pendientes desde hace días. **F-027 ya ha costado una caja con guion en PANEL-01.**
+   Por eso los despliegues de migraciones van por el MCP (0013 y 0014 de hoy, incluidas).
+3. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
+4. **F-027 (a)** (no leídos de MSG-01) y **F-023 d** (línea eliminada en INV-01). Los dos de
+   V1 y pendientes desde hace días.
+5. ⚠ **Sigue sin saberse qué `DEEPSEEK_API_KEY` u otra clave dijiste que estaba rotada**
+   (F-081, 13-ago). No es la del Coder — comprobado. Si sigue habiendo alguna rotada, hace
+   falta el nombre.
+6. **Verificación en navegador de los dos bloques del día 10**, si hay un hueco antes de la
+   sesión de mañana: no se hizo en esta sesión por falta de credenciales de las cuentas
+   demo (ver la cabecera de este fichero).
 
 ---
 
 ## Riesgo con la vista más corta
 
-**El primero es de calendario y ya no admite más aplazamiento: quedan DOS días para la
-sesión con el socio y la app sigue sin URL desplegada.** Vamos un día por delante del plan,
-así que hay colchón — pero el colchón no despliega nada. **Todo lo que falta son clics en
-la cuenta de Álvaro.**
+**El primero, sin cambios desde ayer y ahora sin colchón: la sesión de pruebas de mañana
+(`Plan §3`, día 11) no tiene URL desplegada.** Todo lo que falta son clics en la cuenta de
+Álvaro.
 
-**El segundo es que hay una clave rotada que no he identificado.** Álvaro la mencionó sin
-nombrarla; **no es la del Coder** —comprobado— así que sigue sin saberse cuál. Mientras no
-se sepa, cualquier pieza que dependa de una credencial es sospechosa.
+**El segundo es nuevo y es de hoy: dos piezas de negociación end-to-end —contraoferta y
+"Consultar Seleccionados"— están verdes en Vitest y en Postgres real, pero NUNCA se han
+visto en un navegador con las dos cuentas demo.** CI las ejerce por primera vez al mismo
+tiempo que se escribe esto; si algo falla ahí, es la primera señal. La lección de F-082 es
+la misma en otra escala: lo que un test de unidad con mocks no puede ver, a veces solo lo
+ve la base real — y lo que la base real no puede ver, solo lo ve un navegador de verdad.
+Ninguna de las dos cosas sustituye a la otra.
 
-**El tercero es el que más enseña, y es sobre el instrumento, no sobre el modelo.** De los
-cinco defectos de PANEL-01, **cuatro fueron míos y uno del modelo — y el del modelo fue el
-único grave, y C2 no lo vio.** El contrato de aceptación escaló la corrida por selectores
-rotos mientras dejaba pasar un bucle infinito de consultas contra la base.
+**El tercero sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se
+sepa cuál es, cualquier pieza que dependa de una credencial es sospechosa.
 
-> **La conclusión operativa, para el día 10:** el contrato de aceptación mide bien lo que se
-> le ocurrió a quien lo escribió, y nada más. **Lo que atrapó el defecto real fue leer el
-> artefacto entero a mano**, y lo que atrapó el segundo fue correr la suite e2e completa.
-> Ninguna de las dos cosas es automática. Presupuestar tiempo para las dos.
+> **La conclusión operativa para el día 11:** si hay una ventana antes de la sesión con el
+> socio, gastarla en abrir la app de verdad con `alpha@bearingworld.test` y
+> `beta@bearingworld.test` y contraofertar + consultar en lote una vez cada uno — no en
+> escribir más código. Lo que falta no es más lógica, es una comprobación que ningún test
+> de este repo puede hacer por sí solo.
 
 ---
 
-*Cerrado el 13-ago-2026 08:30 · Claude Code (Opus 5)*
+*Cerrado el 13-ago-2026 · Claude Code (Sonnet 5)*

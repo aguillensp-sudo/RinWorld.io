@@ -7,7 +7,7 @@ import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, navIndexOf } from './shell/AppShell';
 import { Login } from './screens/Login';
-import { Welcome } from './screens/Welcome';
+import { Panel } from './screens/panel/Panel';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
@@ -112,13 +112,13 @@ export function App() {
   const onSearch = nav === SEARCH_NAV;
   const onSelling = nav === SELLING_NAV;
 
+  /* PANEL-01 §5 dice `Agente de busqueda` para el Panel, igual que SRCH-01 y
+   * VND-01. Comprobado en la spec, no supuesto. */
   const veraSubtitle = onInventory
     ? INVENTORY_VERA_SUBTITLE
     : onMessages
       ? MESSAGES_VERA_SUBTITLE
-      : onSearch || onSelling
-        ? SEARCH_VERA_SUBTITLE
-        : undefined;
+      : SEARCH_VERA_SUBTITLE;
 
   /*
    * El agente se construye aquí, después de saber que hay perfil, y no en un
@@ -224,7 +224,23 @@ export function App() {
       ) : onInventory ? (
         <Inventory profile={state.profile} />
       ) : (
-        <Welcome profile={state.profile} />
+        /*
+         * PANEL-01, el punto de entrada tras el login. Sustituye al andamiaje
+         * `Welcome` del dia 2.
+         *
+         * `now` explicito y construido EN EL RENDER, mismo criterio que las
+         * otras cuatro. El propio Panel se encarga de que eso no dispare una
+         * consulta por render: depende del DIA, no del objeto (F-079).
+         *
+         * `onNavigate` recibe el NOMBRE de la pantalla y no un indice: el Coder
+         * no conoce el orden de `NAV_ITEMS` -ni tiene por que-, y traducirlo
+         * aqui deja el componente independiente del shell.
+         */
+        <Panel
+          profile={state.profile}
+          now={new Date()}
+          onNavigate={(pantalla) => navigate(navIndexOf(pantalla))}
+        />
       )}
     </AppShell>
   );

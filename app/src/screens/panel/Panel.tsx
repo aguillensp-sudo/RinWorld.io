@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   dateLabel,
@@ -24,12 +24,30 @@ export function Panel({ profile, now, onNavigate }: Props) {
   const [summary, setSummary] = useState<PanelSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+   * REVISION A MANO (F-079). El efecto dependia del OBJETO `now`, y `App.tsx`
+   * construye `now={new Date()}` EN EL RENDER a proposito -con su comentario- para
+   * que una sesion larga no pinte tiempos rancios. Eso significa identidad nueva
+   * en cada render: cada respuesta provocaba un render, cada render un `now`
+   * nuevo y cada `now` nuevo otra consulta. Bucle infinito contra la base en la
+   * primera pantalla despues del login, sin fallar ni avisar.
+   *
+   * La dependencia pasa a ser el DIA, que es la granularidad que de verdad
+   * cambia el resultado: el corte de "desactualizado" son 7 dias y el mes
+   * corriente cambia una vez al mes. El valor exacto se lee de una ref para que
+   * no quede congelado en el cierre.
+   */
+  const nowRef = useRef(now);
+  nowRef.current = now;
+  const dayKey = now ? now.toDateString() : '';
+
   useEffect(() => {
     let active = true;
     setSummary(null);
     setError(null);
 
-    const query = now ? { orgId: profile.orgId, now } : { orgId: profile.orgId };
+    const n = nowRef.current;
+    const query = n ? { orgId: profile.orgId, now: n } : { orgId: profile.orgId };
 
     fetchPanelSummary(query)
       .then((data) => {
@@ -42,7 +60,7 @@ export function Panel({ profile, now, onNavigate }: Props) {
     return () => {
       active = false;
     };
-  }, [profile.orgId, now]);
+  }, [profile.orgId, dayKey]);
 
   const subtitle = subtitleLabel(profile.fullName, profile.email, now);
 

@@ -60,15 +60,26 @@ test.describe('puerta del día 2 · dos navegadores, dos cuentas', () => {
     await expect(alphaPage.getByTestId('nav-org')).toHaveText(ALPHA.org);
     await expect(betaPage.getByTestId('nav-org')).toHaveText(BETA.org);
 
-    // Y su propio saludo.
-    await expect(alphaPage.getByTestId('welcome-greeting')).toContainText('¡Bienvenido');
-    await expect(betaPage.getByTestId('welcome-greeting')).toContainText('¡Bienvenido');
+    // Y su propio saludo. El día 9 el andamiaje `Welcome` se sustituyó por
+    // PANEL-01, que es el punto de entrada de verdad: el saludo vive ahora en su
+    // subtítulo. Es la misma comprobación, en el sitio nuevo.
+    await expect(alphaPage.getByText(/^Bienvenido,/)).toBeVisible();
+    await expect(betaPage.getByText(/^Bienvenido,/)).toBeVisible();
 
-    // Lo que de verdad prueba el aislamiento: ninguna ve a la otra en su sesión.
+    // Lo que de verdad prueba el aislamiento: cada una actúa COMO su organización.
+    //
+    // ⚠ Y se comprueba ACOTADO a la identidad -nav y usuario-, nunca sobre la
+    // página entera. Se intentó con `body` y falló con razón (F-080): PANEL-01
+    // pinta el nombre de la CONTRAPARTE en la línea de detalle -"Más reciente:
+    // 6205-2RS · Rodamientos Ibéricos"-, así que la organización ajena aparece en
+    // la pantalla de forma completamente legitima: es con quien se negocia.
+    // Confundir "no negocia con ella" con "no la ve" habría convertido un aserto
+    // de aislamiento en uno que prohibe el producto.
     await expect(alphaPage.getByTestId('nav-org')).not.toHaveText(BETA.org);
     await expect(betaPage.getByTestId('nav-org')).not.toHaveText(ALPHA.org);
-    await expect(alphaPage.getByTestId('welcome-org')).not.toContainText(BETA.org);
-    await expect(betaPage.getByTestId('welcome-org')).not.toContainText(ALPHA.org);
+    await expect(alphaPage.getByTestId('nav-user')).not.toHaveText(
+      await betaPage.getByTestId('nav-user').innerText(),
+    );
 
     await alphaCtx.close();
     await betaCtx.close();

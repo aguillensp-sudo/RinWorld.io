@@ -827,4 +827,144 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- counter_offer (0013) · fila nueva + supersesión, en una transacción
+-- -----------------------------------------------------------------------------
+-- Una oferta Pendiente nueva de Beta, limpia, para no interferir con el resto
+-- del historial de este hilo (que ya lleva ofertas Aceptada y Superada).
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, estado_oferta, content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-000000000005', '11110000-0000-0000-0000-000000000001',
+   :orgB, :b1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente',
+   decode(repeat('11', 96), 'hex'), decode(repeat('12', 12), 'hex'));
+
+-- 1 · Gamma no participa en el hilo: la fila no existe para ella, ni un error
+-- que confirme que existe. Mismo criterio que `thread_public_keys` y
+-- `create_thread_item` con un tercero.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.counter_offer('12000000-0000-0000-0000-000000000005',
+        repeat('aa',96), repeat('13',12),
+        jsonb_build_array(jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('13',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'un tercero ajeno al hilo contraofertando (la fila no es visible)');
+commit;
+
+-- 2 · El emisor no puede contraofertar su propia oferta. Beta la emitió.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.counter_offer('12000000-0000-0000-0000-000000000005',
+        repeat('aa',96), repeat('13',12),
+        jsonb_build_array(jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('13',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'offer-card: Beta contraofertando la oferta que ella misma emitio');
+commit;
+
+-- 3 · Sin ninguna CEK envuelta, ni como receptor legítimo: el caso irreparable.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.counter_offer('12000000-0000-0000-0000-000000000005',
+        repeat('aa',96), repeat('13',12), '[]'::jsonb)$$,
+    'contraoferta sin ninguna CEK envuelta (seria ilegible para siempre)');
+commit;
+
+-- 4 · ANCLA. Alpha, el receptor, contraoferta de verdad.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    nueva uuid;
+  begin
+    nueva := public.counter_offer(
+      '12000000-0000-0000-0000-000000000005',
+      repeat('aa', 96), repeat('13', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('13',12),
+          'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('13',12),
+          'ephemeral_pubkey', repeat('44',32))
+      ));
+
+    assert nueva is not null, 'counter_offer tiene que devolver el id de la nueva oferta';
+
+    assert (select item_type from public.thread_items where id = nueva) = 'OFERTA'
+       and (select estado_oferta from public.thread_items where id = nueva) = 'Pendiente'
+       and (select sender_org_id from public.thread_items where id = nueva) = '11111111-1111-1111-1111-111111111111',
+      'la nueva fila es una OFERTA Pendiente, emitida por quien contraoferta (Alpha)';
+
+    assert (select part_number from public.thread_items where id = nueva) = '6205-2RS'
+       and (select brand from public.thread_items where id = nueva) = 'SKF',
+      'part_number y brand se heredan de la oferta anterior, no llegan por parametro';
+
+    assert (select estado_oferta from public.thread_items
+             where id = '12000000-0000-0000-0000-000000000005') = 'Superada por contraoferta'
+       and (select superseded_by_item_id from public.thread_items
+             where id = '12000000-0000-0000-0000-000000000005') = nueva,
+      'la anterior queda Superada por contraoferta apuntando a la nueva, sin eliminarse';
+
+    -- Alpha ve exclusivamente su propia CEK envuelta (item_keys_select_own).
+    assert (select count(*) from public.thread_item_keys where item_id = nueva) = 1,
+      'quien contraoferta ve su propia CEK envuelta en el elemento que acaba de crear';
+
+    raise notice 'OK · 0013: counter_offer crea la fila nueva y supersede la anterior, atomico';
+  end
+  $$;
+commit;
+
+-- Las dos claves están de verdad, mirando sin RLS — igual que se comprobó para
+-- create_thread_item: el emisor no se queda sin su propia copia.
+do $$
+declare
+  nueva_id uuid;
+begin
+  select id into nueva_id from public.thread_items
+   where responds_to_item_id is null and item_type = 'OFERTA' and estado_oferta = 'Pendiente'
+     and sender_org_id = '11111111-1111-1111-1111-111111111111'
+     and part_number = '6205-2RS' and brand = 'SKF'
+   order by created_at desc limit 1;
+
+  assert (select count(*) from public.thread_item_keys where item_id = nueva_id) = 2,
+    'counter_offer deposita UNA fila de CEK por destinatario, incluida la del emisor';
+  raise notice 'OK · 0013: las dos CEK de la contraoferta estan, la del emisor incluida';
+end
+$$;
+
+-- 5 · La oferta superada es terminal: contraofertar sobre ella ahora también
+-- falla, con el mensaje de estado no-Pendiente y no con el de "no existe".
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.counter_offer('12000000-0000-0000-0000-000000000005',
+        repeat('aa',96), repeat('13',12),
+        jsonb_build_array(jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('13',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'contraofertar sobre una oferta ya Superada por contraoferta');
+commit;
+
+-- 6 · thread-lifecycle: la contraoferta no cierra el ciclo, el hilo permanece
+-- CON OFERTA PENDIENTE — ahora referido a la nueva (spec.md:214).
+do $$
+begin
+  assert (select state from public.threads
+          where id = '11110000-0000-0000-0000-000000000001') = 'CON OFERTA PENDIENTE',
+    'thread-lifecycle: tras la contraoferta el hilo sigue CON OFERTA PENDIENTE, referido a la nueva';
+  raise notice 'OK · 0013: thread-lifecycle — la contraoferta mantiene CON OFERTA PENDIENTE';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

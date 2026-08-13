@@ -449,8 +449,18 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
    * CONTRATO DE ACEPTACIÓN. Las públicas del distribuidor se piden por
    * ORGANIZACIÓN (`fetchOrgRecipients`), no por hilo: es la diferencia con
    * `counterOffer` y `sendMessage`, que ya tienen un hilo del que partir.
+   *
+   * ⚠ **`publicasPorOrg` mapea SOLO los miembros propios de cada organización,
+   * nunca 'yo' dentro de la lista de un distribuidor** — la primera versión de
+   * este test lo hacía al revés, dando por buena una llamada que en la base
+   * real es imposible (`org_public_keys(distribuidor)` jamás devuelve a
+   * alguien de otra organización), y así se coló el bug real que solo la
+   * corrida en el navegador cazó: la CEK se envolvía para el distribuidor y
+   * nunca para quien escribía. `MI_ORG` es mi propia organización y se pide
+   * por separado, igual que hace `sendInquiries` de verdad.
    */
 
+  const MI_ORG = 'org-mia';
   const NORDWALZ = 'org-nordwalz';
   const ANADOLU = 'org-anadolu';
 
@@ -463,20 +473,9 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
     const nordwalz = await generateKeyPair();
     const anadolu = await generateKeyPair();
     publicasPorOrg = new Map([
-      [
-        NORDWALZ,
-        [
-          { memberId: 'yo', orgId: NORDWALZ, publicKey: llavero.publicKey },
-          { memberId: 'nordwalz-1', orgId: NORDWALZ, publicKey: nordwalz.publicKey },
-        ],
-      ],
-      [
-        ANADOLU,
-        [
-          { memberId: 'yo', orgId: ANADOLU, publicKey: llavero.publicKey },
-          { memberId: 'anadolu-1', orgId: ANADOLU, publicKey: anadolu.publicKey },
-        ],
-      ],
+      [MI_ORG, [{ memberId: 'yo', orgId: MI_ORG, publicKey: llavero.publicKey }]],
+      [NORDWALZ, [{ memberId: 'nordwalz-1', orgId: NORDWALZ, publicKey: nordwalz.publicKey }]],
+      [ANADOLU, [{ memberId: 'anadolu-1', orgId: ANADOLU, publicKey: anadolu.publicKey }]],
     ]);
   });
 
@@ -484,19 +483,27 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
     return { lineId: 'linea-1', distributorOrgId: NORDWALZ, quantity: 800, ...over };
   }
 
+  const enviar = (lineas: InquiryLine[]) => sendInquiries(lineas, MI_ORG);
+
   it('sin llave de sesión, ni una línea se envía', async () => {
     llavero = null;
-    await expect(sendInquiries([linea()])).rejects.toThrow(/clave de cifrado/i);
+    await expect(enviar([linea()])).rejects.toThrow(/clave de cifrado/i);
     expect(fetchOrgRecipientsMock).not.toHaveBeenCalled();
     expect(rpcLlamadas).toHaveLength(0);
   });
 
   it('ANCLA · una línea llama a create_inquiry con su id y una CEK por destinatario, incluida la propia', async () => {
-    const resultados = await sendInquiries([linea({ lineId: 'l-1' })]);
+    const resultados = await enviar([linea({ lineId: 'l-1' })]);
 
     expect(resultados).toEqual([{ lineId: 'l-1', distributorOrgId: NORDWALZ, ok: true }]);
     expect(rpcLlamadas).toHaveLength(1);
     expect(rpcLlamadas[0]!.fn).toBe('create_inquiry');
+
+    // Las públicas se piden de las DOS organizaciones: la del distribuidor Y
+    // la propia. Es justo lo que la primera versión de este test no
+    // comprobaba, y es exactamente lo que faltaba en el código real.
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledWith(NORDWALZ);
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledWith(MI_ORG);
 
     const args = rpcLlamadas[0]!.args as {
       p_line_id: string;
@@ -509,7 +516,7 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
   });
 
   it('lo que llega a la base descifra a la cantidad de la línea, sin comentario', async () => {
-    await sendInquiries([linea({ lineId: 'l-1', quantity: 250 })]);
+    await enviar([linea({ lineId: 'l-1', quantity: 250 })]);
     const args = rpcLlamadas[0]!.args as {
       p_ciphertext: string;
       p_iv: string;
@@ -528,31 +535,32 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
     expect(contenido).toEqual({ kind: 'CONSULTA', quantity: 250, comment: null });
   });
 
-  it('dos líneas del MISMO distribuidor piden sus públicas UNA sola vez', async () => {
-    await sendInquiries([
+  it('dos líneas del MISMO distribuidor piden sus públicas y las propias UNA sola vez cada una', async () => {
+    await enviar([
       linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),
       linea({ lineId: 'l-2', distributorOrgId: NORDWALZ }),
     ]);
-    expect(fetchOrgRecipientsMock).toHaveBeenCalledTimes(1);
+    // Una vez por NORDWALZ + una vez por MI_ORG, no dos de cada.
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledTimes(2);
     expect(rpcLlamadas).toHaveLength(2);
   });
 
-  it('líneas de distribuidores DISTINTOS piden las públicas de cada uno', async () => {
-    const resultados = await sendInquiries([
+  it('líneas de distribuidores DISTINTOS piden las públicas de cada uno, y las propias solo una vez', async () => {
+    const resultados = await enviar([
       linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),
       linea({ lineId: 'l-2', distributorOrgId: ANADOLU }),
     ]);
-    expect(fetchOrgRecipientsMock).toHaveBeenCalledTimes(2);
+    // NORDWALZ + ANADOLU + MI_ORG (una sola vez, cacheada para toda la tanda).
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledTimes(3);
     expect(resultados.filter((r) => r.ok)).toHaveLength(2);
   });
 
   it('sin la clave pública de un miembro del distribuidor, esa línea falla y las demás no', async () => {
     publicasPorOrg.set(ANADOLU, [
-      { memberId: 'yo', orgId: ANADOLU, publicKey: llavero!.publicKey },
       { memberId: 'anadolu-1', orgId: ANADOLU, publicKey: null },
     ]);
 
-    const resultados = await sendInquiries([
+    const resultados = await enviar([
       linea({ lineId: 'l-ok', distributorOrgId: NORDWALZ }),
       linea({ lineId: 'l-falla', distributorOrgId: ANADOLU }),
     ]);
@@ -572,13 +580,25 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
     expect(rpcLlamadas).toHaveLength(1);
   });
 
+  it('sin ningún miembro propio publicado, ninguna línea se envía (sería irreparable)', async () => {
+    // El caso que el bug real dejaba pasar: si `propias` viniera vacío o sin
+    // clave, la CEK se envolvería solo para el distribuidor y quien escribe
+    // no podría releer lo que acaba de enviar. Tiene que fallar, no enviarse.
+    publicasPorOrg.set(MI_ORG, [{ memberId: 'yo', orgId: MI_ORG, publicKey: null }]);
+    const resultados = await enviar([linea({ lineId: 'l-1' })]);
+    expect(resultados).toEqual([
+      { lineId: 'l-1', distributorOrgId: NORDWALZ, ok: false, error: expect.stringMatching(/no ha publicado su clave/i) },
+    ]);
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
   it('un rechazo de la base en una línea no impide que la siguiente se intente', async () => {
     // Solo la primera llamada a create_inquiry falla (p. ej. el límite diario
     // de hilos nuevos de ese distribuidor); la segunda línea, ya con el hilo
     // encontrado en vez de creado, no tiene por qué correr la misma suerte.
     rpcErrorQueue = [{ message: 'Límite diario alcanzado' }];
 
-    const resultados = await sendInquiries([
+    const resultados = await enviar([
       linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),
       linea({ lineId: 'l-2', distributorOrgId: NORDWALZ }),
     ]);

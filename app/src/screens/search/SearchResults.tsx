@@ -164,7 +164,7 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
         distributorOrgId: r.orgId,
         quantity: r.quantity,
       }));
-      const resultados = await sendInquiries(lineas);
+      const resultados = await sendInquiries(lineas, profile.orgId);
       setConsultBanner(consultSummary(resultados));
       setSelected(new Set());
       await load(criteria);

@@ -23,7 +23,7 @@ import type { MemberProfile } from '../../lib/session';
 const fetchResults = vi.fn<(q: SearchQuery) => Promise<SearchPage>>();
 const toggleFavorite = vi.fn<(m: string, o: string, n: boolean) => Promise<void>>();
 const sendInquiries =
-  vi.fn<(lines: { lineId: string; distributorOrgId: string; quantity: number }[]) => Promise<
+  vi.fn<(lines: { lineId: string; distributorOrgId: string; quantity: number }[], ownOrgId: string) => Promise<
     { lineId: string; distributorOrgId: string; ok: boolean; error?: string }[]
   >>();
 
@@ -34,7 +34,7 @@ vi.mock('../../lib/search', async (importOriginal) => ({
 }));
 
 vi.mock('../../lib/thread-detail', () => ({
-  sendInquiries: (lines: unknown) => sendInquiries(lines as never),
+  sendInquiries: (lines: unknown, ownOrgId: unknown) => sendInquiries(lines as never, ownOrgId as string),
 }));
 
 const { SearchResults } = await import('./SearchResults');
@@ -255,6 +255,10 @@ describe('SRCH-01 · Consultar seleccionados', () => {
         { lineId: 'b', distributorOrgId: 'org-b', quantity: 350 },
       ]),
     );
+    // Mi propia organización, no la del distribuidor: sin ella,
+    // `sendInquiries` no puede envolver la CEK para quien escribe (bug real,
+    // cazado en el navegador — la CEK se envolvía solo para el distribuidor).
+    expect(sendInquiries.mock.calls[0]![1]).toBe(profile.orgId);
   });
 
   it('deja fuera del envío las filas ya consultadas, aunque estén marcadas', async () => {

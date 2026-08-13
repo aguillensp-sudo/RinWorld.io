@@ -654,14 +654,26 @@ export interface InquiryOutcome {
 /**
  * Envía una tarjeta de consulta por cada línea, agrupando por distribuidor.
  *
+ * ⚠ **`org_public_keys` devuelve SOLO los miembros de la organización que se
+ * pasa** — a propósito, es lo que la hace segura para leer sin hilo previo
+ * (0014 §1). Eso significa que `fetchOrgRecipients(distribuidor)` NUNCA trae
+ * la propia clave: `thread_public_keys` (0012) sí lo hacía porque un hilo ya
+ * tiene las dos organizaciones dentro, pero aquí no hay hilo del que partir.
+ * **Cazado contra la base real, no en el papel** (mismo origen que F-082):
+ * las dos primeras tarjetas de prueba se enviaron con la CEK envuelta solo
+ * para el distribuidor, nunca para quien escribió — irreparable, exactamente
+ * el caso que `create_thread_item` (0012 §5) existe para evitar. Por eso
+ * `ownOrgId` es un parámetro obligatorio y no un descuido: sin él, la mitad
+ * de la doble envoltura ("incluido quien escribe", 0003:263) no tiene de
+ * dónde salir.
+ *
  * ── EL ORDEN, IGUAL QUE `sendMessage` Y `counterOffer` ──────────────────────
  *
- * Por línea: 1) públicas del distribuidor ANTES de cifrar (`fetchOrgRecipients`,
- * no `fetchThreadRecipients` — el hilo puede no existir todavía); 2) sin una
- * sola clave, no se envía ESA línea; 3) una CEK nueva por línea, envuelta para
- * cada miembro del distribuidor incluido quien escribe; 4) una sola llamada a
- * `create_inquiry` (0014), que encuentra o crea el hilo y deposita la tarjeta
- * y sus claves en la misma transacción.
+ * Por línea: 1) públicas del distribuidor Y las propias ANTES de cifrar; 2) sin
+ * una sola clave, no se envía ESA línea; 3) una CEK nueva por línea, envuelta
+ * para cada miembro del distribuidor Y para quien escribe; 4) una sola llamada
+ * a `create_inquiry` (0014), que encuentra o crea el hilo y deposita la
+ * tarjeta y sus claves en la misma transacción.
  *
  * ── POR QUÉ UN FALLO NO ABORTA LO DEMÁS ──────────────────────────────────────
  *
@@ -677,11 +689,11 @@ export interface InquiryOutcome {
  *
  * `create_inquiry` ya encuentra-o-crea el hilo él solo (0014 §2) y es idempotente
  * de sobra para llamarlo una vez por línea sin coordinación. Lo que SÍ merece
- * cachear aquí son las públicas: pedirlas una vez por distribuidor y no una
- * vez por línea ahorra una llamada de red por cada línea extra del mismo
- * distribuidor en la misma tanda.
+ * cachear aquí son las públicas: pedirlas una vez por distribuidor (y las
+ * propias, una única vez para toda la tanda) ahorra una llamada de red por
+ * cada línea extra del mismo distribuidor.
  */
-export async function sendInquiries(lines: InquiryLine[]): Promise<InquiryOutcome[]> {
+export async function sendInquiries(lines: InquiryLine[], ownOrgId: string): Promise<InquiryOutcome[]> {
   const keyPair = currentKeyPair();
   if (!keyPair) {
     throw new Error(
@@ -691,14 +703,19 @@ export async function sendInquiries(lines: InquiryLine[]): Promise<InquiryOutcom
 
   const publicasDe = new Map<string, ThreadRecipient[]>();
   const resultados: InquiryOutcome[] = [];
+  let propias: ThreadRecipient[] | null = null;
 
   for (const linea of lines) {
     try {
-      let destinatarios = publicasDe.get(linea.distributorOrgId);
-      if (!destinatarios) {
-        destinatarios = await fetchOrgRecipients(linea.distributorOrgId);
-        publicasDe.set(linea.distributorOrgId, destinatarios);
+      let delDistribuidor = publicasDe.get(linea.distributorOrgId);
+      if (!delDistribuidor) {
+        delDistribuidor = await fetchOrgRecipients(linea.distributorOrgId);
+        publicasDe.set(linea.distributorOrgId, delDistribuidor);
       }
+      if (!propias) {
+        propias = await fetchOrgRecipients(ownOrgId);
+      }
+      const destinatarios = [...propias, ...delDistribuidor];
 
       const sinClave = destinatarios.filter((d) => d.publicKey === null);
       if (sinClave.length > 0) {

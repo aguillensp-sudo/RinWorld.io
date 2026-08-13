@@ -7,9 +7,10 @@
 > **Regla de este fichero (F-012).** Cita, no parafrasees. Los valores de estado y las
 > asignaciones de modelo se copian del spec cerrado o del plan **con el puntero al lado**.
 
-**Día 10 de 15 · cerrado 13-ago-2026 · Estado: ÁMBAR. Los DOS bloques cerrados y verdes
-en local y en la base real — pero ninguno de los dos se ha visto en un navegador, y
-mañana (`Plan §3`, día 11) es la primera sesión de pruebas con el socio.**
+**Día 10 de 15 · cerrado 13-ago-2026 · Estado: VERDE. Los DOS bloques cerrados, verdes en
+local, en la base real y — desde esta tarde — verificados de extremo a extremo en el
+navegador con las dos cuentas reales. Un bug de verdad apareció en la primera corrida y se
+arregló en la misma sesión (F-083).**
 
 > ⚠ **Este relevo lo escribe Sonnet 5, no Opus 4.8.** `CLAUDE.md` §3 asigna la máquina de
 > estados de la oferta a Opus 4.8/Claude Code por coste del fallo; la sesión de hoy corrió
@@ -17,17 +18,29 @@ mañana (`Plan §3`, día 11) es la primera sesión de pruebas con el socio.**
 > sido (autoría honesta, `CLAUDE.md` §1.6) — el PO decide si esto importa para este tipo de
 > pieza.
 
-> **Verificado, hoy:** `typecheck` limpio · **610 tests** de unidad (eran 578 al empezar el
+> **Verificado, hoy:** `typecheck` limpio · **611 tests** de unidad (eran 578 al empezar el
 > día) · `check:palette` cobertura completa · `build` verde · `supabase/tests/run.sh`
 > contra Postgres real en Docker — **ESQUEMA VERDE y CATÁLOGO VERDE**, con los asertos
 > nuevos de `counter_offer` (0013) y `org_public_keys`/`create_inquiry` (0014).
 >
-> **NO verificado — y es la puerta que falta:** ningún click real en navegador. No hay
-> credenciales de `alpha@bearingworld.test` / `beta@bearingworld.test` en esta sesión, y el
-> único entorno de la app es el proyecto Supabase remoto (no hay réplica local): probar a
-> mano habría mutado siembra real a dos días de la demo. **CI (`schema` + `app` + `e2e` con
-> reseed de fixture) se disparó al hacer push** y es la primera vez que estos dos flujos se
-> ven correr contra cuentas y un navegador de verdad.
+> **Y, por primera vez esta tarde, verificado en navegador con las cuentas reales
+> (`alpha@bearingworld.test` sobre la app local apuntando al Supabase remoto):**
+> contraoferta de 4,82 €/ud. a 4,50 €/ud. sobre la oferta real de Nordwälz Lager —la
+> anterior queda "SUPERADA POR CONTRAOFERTA" en el historial, la nueva "PENDIENTE",
+> comprobado en la base que `superseded_by_item_id` apunta bien y las dos partes tienen su
+> clave— y "Consultar seleccionados" sobre dos líneas de Nordwälz Lager, agrupadas en el
+> hilo existente, con el literal exacto *"Consultas enviadas a 1 distribuidor..."*.
+> **Y un fallo parcial real, esperado y correcto:** consultar líneas de las cuatro
+> organizaciones de catálogo sin cuenta (Cuscinetti Padana, Łożyska Wschód, Roulements
+> Rhône, Anadolu Rulman — ver "Decisiones vivas") dio *"Ese distribuidor no tiene miembros
+> a los que consultar"*, sin tumbar nada más.
+>
+> 🔴 **Y un bug de verdad, F-083:** la primera corrida de "Consultar seleccionados" envolvió
+> la CEK solo para el distribuidor, nunca para quien escribía — Alpha no podía releer sus
+> propias consultas. Causa y arreglo en `findings-register.md`; **es exactamente la clase de
+> fallo que ni Vitest con mocks ni el smoke test SQL podían ver**, porque el mock de los
+> tests daba por buena una llamada que la función real nunca haría. Cerrado con test de
+> regresión y reverificado con las cuentas reales tras el arreglo.
 
 ---
 
@@ -129,11 +142,11 @@ socio.
 
 **Lo que hay que tener delante antes de empezar:**
 
-1. **Nada de lo de hoy se ha visto en un navegador.** Antes de la sesión de pruebas hace
-   falta un click-through real de contraoferta y de "Consultar Seleccionados" con las dos
-   cuentas demo — o al menos leer el resultado de la corrida de CI que se disparó al pushear
-   (`schema` + `app` + `e2e`, con reseed de fixture).
-2. **El bloqueo de despliegue sigue igual que ayer** (ver "Pendiente de Álvaro" #2): sin URL
+1. ✅ **Contraoferta y "Consultar Seleccionados" ya se verificaron en navegador con cuentas
+   reales** (ver cabecera y F-083). El hilo Alpha↔Nordwälz Lager quedó con tres filas que la
+   siembra no puso — decidir si se dejan o se limpian antes de la sesión ("Pendiente de
+   Álvaro" #7).
+2. **El bloqueo de despliegue sigue igual que ayer** (ver "Pendiente de Álvaro" #1): sin URL
    viva, la sesión de mañana no tiene dónde probar. Con día 10 cerrado el mismo 13-ago, el
    colchón de calendario no ha crecido — sigue sin haber clics en la cuenta de Vercel.
 3. El panel de vista-servidor **no se recorta nunca** (`Plan §9`): es, junto con SRCH-01 y
@@ -195,9 +208,21 @@ socio.
 5. ⚠ **Sigue sin saberse qué `DEEPSEEK_API_KEY` u otra clave dijiste que estaba rotada**
    (F-081, 13-ago). No es la del Coder — comprobado. Si sigue habiendo alguna rotada, hace
    falta el nombre.
-6. **Verificación en navegador de los dos bloques del día 10**, si hay un hueco antes de la
-   sesión de mañana: no se hizo en esta sesión por falta de credenciales de las cuentas
-   demo (ver la cabecera de este fichero).
+6. ✅ **Verificación en navegador de los dos bloques del día 10: HECHA esta misma tarde**,
+   con `alpha@bearingworld.test` sobre la app local apuntando al Supabase remoto (el
+   `.env` de `app/` ya traía las credenciales). Contraoferta y "Consultar Seleccionados"
+   funcionan de extremo a extremo. Ver la cabecera de este fichero y F-083.
+7. ⚠ **La base de demo YA NO está como la dejó la siembra — la tocó esta verificación, con
+   intención pero sin guion.** Concretamente sobre el hilo Alpha↔Nordwälz Lager:
+   - La oferta sembrada de **4,82 €/ud.** quedó **"Superada por contraoferta"** por una
+     real de **4,50 €/ud.**, `Pendiente`, emitida por Alpha. Es terminal: no se puede
+     deshacer con un `update`, solo borrando filas.
+   - Dos tarjetas de **`CONSULTA`** nuevas de Alpha a Nordwälz Lager (`6205-2RS` SKF 1250 u.
+     y NSK 1200 u.), ambas `Pendiente`, ambas legibles por las dos partes.
+   - **Si el guion de la sesión de mañana daba por hecho la oferta de 4,82 € intacta y sin
+     contraofertar, hay que decidir:** dejarlo (es una demostración real y correcta de la
+     función) o que te borre las tres filas para devolver el hilo a como lo dejó
+     `demo_threads.sql`. Dilo y lo hago antes de mañana.
 
 ---
 
@@ -207,22 +232,27 @@ socio.
 (`Plan §3`, día 11) no tiene URL desplegada.** Todo lo que falta son clics en la cuenta de
 Álvaro.
 
-**El segundo es nuevo y es de hoy: dos piezas de negociación end-to-end —contraoferta y
-"Consultar Seleccionados"— están verdes en Vitest y en Postgres real, pero NUNCA se han
-visto en un navegador con las dos cuentas demo.** CI las ejerce por primera vez al mismo
-tiempo que se escribe esto; si algo falla ahí, es la primera señal. La lección de F-082 es
-la misma en otra escala: lo que un test de unidad con mocks no puede ver, a veces solo lo
-ve la base real — y lo que la base real no puede ver, solo lo ve un navegador de verdad.
-Ninguna de las dos cosas sustituye a la otra.
+**El segundo se cerró esta tarde, y con un hallazgo real de por medio.** Contraoferta y
+"Consultar Seleccionados" se verificaron en el navegador con las dos cuentas reales —la
+primera corrida de "Consultar Seleccionados" reveló F-083 (la CEK no se envolvía para quien
+escribía), arreglado y reverificado en la misma sesión. **La lección de F-082 se repitió a
+otra escala:** lo que Vitest con mocks no puede ver, a veces solo lo ve la base real; lo que
+la base real no puede ver —aquí, que el propio emisor se quedaba sin su copia de la
+clave— solo lo vio abrir la aplicación de verdad y releer lo que se acababa de escribir.
+Ninguna de las tres capas de prueba (unidad, Postgres real, navegador real) sustituye a las
+otras dos.
 
-**El tercero sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se
-sepa cuál es, cualquier pieza que dependa de una credencial es sospechosa.
+**El tercero es nuevo: la base de demo tiene ahora tres filas que la siembra no puso** (ver
+"Pendiente de Álvaro" #7). No es grave —son datos reales y correctos, no basura— pero si el
+guion de mañana asumía el hilo Alpha↔Nordwälz en su estado sembrado, hay que decidir antes
+de la sesión.
 
-> **La conclusión operativa para el día 11:** si hay una ventana antes de la sesión con el
-> socio, gastarla en abrir la app de verdad con `alpha@bearingworld.test` y
-> `beta@bearingworld.test` y contraofertar + consultar en lote una vez cada uno — no en
-> escribir más código. Lo que falta no es más lógica, es una comprobación que ningún test
-> de este repo puede hacer por sí solo.
+**El cuarto sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se sepa
+cuál es, cualquier pieza que dependa de una credencial es sospechosa.
+
+> **La conclusión operativa para el día 11:** las dos piezas del día 10 están probadas de
+> punta a punta con cuentas reales. Lo que queda es logística — el despliegue de Vercel
+> (#1) y decidir qué hacer con el hilo de prueba (#7) — no más código.
 
 ---
 

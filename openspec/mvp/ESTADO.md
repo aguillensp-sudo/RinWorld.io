@@ -83,8 +83,12 @@ más un párrafo del system prompt para el caso de RESUMIR, donde la regla gener
 (SKF 2250, NSK 2145, FAG 1630, Koyo 540, NTN 150), los cuatro proveedores y el rango de
 plazos 2-21 **cuadran todos**. Cero invenciones.
 
-> ⚠ **El arreglo se validó SIN recorte** (25 > 11). **La instrucción anti-especulación
-> para más de 25 resultados sigue sin ejercitarse.**
+**Y el guardia del recorte también está verificado, con una consulta que sí lo dispara:**
+*"busca todos los rodamientos de la marca SKF"* devuelve **48 filas**, de las que la
+herramienta enseña 25. VERA contestó *"Hay 48 coincidencias… solo puedo mostrarte las
+primeras 25. **Las otras 23 no las tengo visibles, así que no puedo informarte sobre
+ellas**"* — declaró el límite en vez de especular. Y lo que sí dijo cuadra con SQL: **5
+organizaciones** (las cinco que nombró), **130 a 2.680 u** y **2 a 21 días**.
 
 ---
 
@@ -216,8 +220,10 @@ una y no en la otra.
    base. **Y ojo (F-073): la CLI está logueada en la cuenta equivocada** —la de
    `web-julsaindustrial`, org `mjxnlvvrnjuuawlxkmte`—; el MVP vive en `ujatcozvbspkycepemfq`.
    Por eso los despliegues de la Edge Function van por el MCP.
-4. 🟠 **¿Se prueba VERA con más de 25 resultados antes del día 11?** Es lo único de F-075
-   que quedó sin ejercitar.
+4. ✅ **VERA con más de 25 resultados: PROBADO Y VERIFICADO.** Era lo único de F-075 que
+   quedaba. Con *"busca todos los rodamientos de la marca SKF"* (48 filas) declaró el
+   recorte y no inventó nada; los cinco proveedores, el rango de cantidades y el de plazos
+   cuadran con SQL.
 5. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
 6. **F-027 (a)** (no leídos de MSG-01) y **F-023 d** (línea eliminada en INV-01). Los dos de
    V1 y pendientes desde hace días. **F-027 ya ha costado una caja con guion en PANEL-01.**

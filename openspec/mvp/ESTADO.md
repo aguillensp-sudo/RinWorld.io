@@ -7,40 +7,35 @@
 > **Regla de este fichero (F-012).** Cita, no parafrasees. Los valores de estado y las
 > asignaciones de modelo se copian del spec cerrado o del plan **con el puntero al lado**.
 
-**Día 10 de 15 · cerrado 13-ago-2026 · Estado: VERDE. Los DOS bloques cerrados, verdes en
-local, en la base real y — desde esta tarde — verificados de extremo a extremo en el
-navegador con las dos cuentas reales. Un bug de verdad apareció en la primera corrida y se
-arregló en la misma sesión (F-083).**
+**Día 11 de 15 · EN CURSO, 13-ago-2026 · Estado: VERDE parcial.** El día 10 cerró VERDE (ver
+"Dónde estamos"). De las dos filas del día 11 (`Plan §3`), el **panel de vista-servidor**
+está cerrado y verificado; **la sesión de pruebas 1 de Álvaro (`Plan §10`) está por
+delante** — este fichero se actualiza justo antes de que empiece, no después.
 
-> ⚠ **Este relevo lo escribe Sonnet 5, no Opus 4.8.** `CLAUDE.md` §3 asigna la máquina de
-> estados de la oferta a Opus 4.8/Claude Code por coste del fallo; la sesión de hoy corrió
-> en Sonnet 5. Se deja anotado en vez de atribuir el commit al modelo que "debería" haber
-> sido (autoría honesta, `CLAUDE.md` §1.6) — el PO decide si esto importa para este tipo de
-> pieza.
+> ⚠ **Esta sesión también la escribe Sonnet 5, no Opus 4.8** — mismo apunte que el día 10
+> (`CLAUDE.md` §3, autoría honesta `§1.6`). El panel de vista-servidor no toca esquema, RLS
+> ni la máquina de estados de la oferta —es capa de presentación sobre datos que
+> `fetchThreadItems` ya traía—, así que el argumento de coste-del-fallo que reserva ese
+> reparto a Opus pesa menos aquí que en la contraoferta o GAP-004 del día 10.
 
-> **Verificado, hoy:** `typecheck` limpio · **611 tests** de unidad (eran 578 al empezar el
-> día) · `check:palette` cobertura completa · `build` verde · `supabase/tests/run.sh`
-> contra Postgres real en Docker — **ESQUEMA VERDE y CATÁLOGO VERDE**, con los asertos
-> nuevos de `counter_offer` (0013) y `org_public_keys`/`create_inquiry` (0014).
+> **Panel de vista-servidor (`Plan §3`, día 11, primera fila) — CERRADO.** Toggle "Ver lo
+> que ve el servidor" por elemento del hilo (MSG-02), colapsado por defecto. `ThreadItem.raw`
+> retiene `content_ciphertext`/`content_iv`/conteo de `thread_item_keys` que
+> `fetchThreadItems` ya traía y tiraba tras descifrar — **sin consulta nueva, sin RLS
+> nueva**. **Verificado:** 617 tests de unidad (eran 611) · `typecheck`/`check:palette`/
+> `build` verdes · **19/19 e2e de `messages.spec.ts` contra el Supabase real**, incluido un
+> test nuevo que abre el toggle en el hilo Alpha↔Nordwälz Lager y confirma las dos mitades a
+> la vez: `4,82 €/ud.` legible arriba, `\x…` cifrado abajo, y que no se escapa ni un byte
+> antes de pulsarlo. Commit `5bec69d`. Detalle en "Panel de vista-servidor, cómo quedó".
 >
-> **Y, por primera vez esta tarde, verificado en navegador con las cuentas reales
-> (`alpha@bearingworld.test` sobre la app local apuntando al Supabase remoto):**
-> contraoferta de 4,82 €/ud. a 4,50 €/ud. sobre la oferta real de Nordwälz Lager —la
-> anterior queda "SUPERADA POR CONTRAOFERTA" en el historial, la nueva "PENDIENTE",
-> comprobado en la base que `superseded_by_item_id` apunta bien y las dos partes tienen su
-> clave— y "Consultar seleccionados" sobre dos líneas de Nordwälz Lager, agrupadas en el
-> hilo existente, con el literal exacto *"Consultas enviadas a 1 distribuidor..."*.
-> **Y un fallo parcial real, esperado y correcto:** consultar líneas de las cuatro
-> organizaciones de catálogo sin cuenta (Cuscinetti Padana, Łożyska Wschód, Roulements
-> Rhône, Anadolu Rulman — ver "Decisiones vivas") dio *"Ese distribuidor no tiene miembros
-> a los que consultar"*, sin tumbar nada más.
+> 🟢 **Con esto, las 8 pantallas de `Plan §9` quedan completas**: shell, PANEL-01, INV-01,
+> SRCH-01, MSG-01, MSG-02, VND-01 y panel de vista-servidor. Es el alcance entero del MVP
+> construido — lo que queda de aquí al 20-ago es endurecimiento y ensayo (`Plan §5`,
+> Sprint 3), no pantallas nuevas.
 >
-> 🔴 **Y un bug de verdad, F-083:** la primera corrida de "Consultar seleccionados" envolvió
-> la CEK solo para el distribuidor, nunca para quien escribía — Alpha no podía releer sus
-> propias consultas. Causa y arreglo en `findings-register.md`; **es exactamente la clase de
-> fallo que ni Vitest con mocks ni el smoke test SQL podían ver**, porque el mock de los
-> tests daba por buena una llamada que la función real nunca haría. Cerrado con test de
-> regresión y reverificado con las cuentas reales tras el arreglo.
+> **Lo del día 10 (contraoferta, "Consultar Seleccionados", F-083, F-082) sigue tal cual
+> estaba — no se ha tocado hoy.** Ver el resto de este fichero para ese registro completo:
+> se mantiene porque la sesión de Álvaro de hoy depende de ambos días, no solo del 11.
 
 ---
 
@@ -52,6 +47,50 @@ arregló en la misma sesión (F-083).**
 |---|---|---|
 | Contraoferta / modificación de oferta | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `counter_offer` (0013) atómico, formulario inline en MSG-02 |
 | **"Consultar Seleccionados"** (GAP-004) | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `create_inquiry` + `org_public_keys` (0014) atómicos |
+
+`Plan §3`, filas del día 11 — **una cerrada, una por delante**:
+
+| Bloque | Ejecuta | Resultado |
+|---|---|---|
+| Panel de vista-servidor | Claude Code (Sonnet 5) | **Cerrado.** Toggle por elemento en MSG-02, sin consulta nueva. Ver sección dedicada |
+| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro | **Por delante.** Es la razón de esta actualización |
+
+---
+
+## Panel de vista-servidor, cómo quedó
+
+`Plan §3`, día 11, primera fila: *"panel de vista-servidor (comprador vs. lo que almacena
+Postgres)"*. No tiene spec cerrada ni existe en los 32 HTML aprobados (`Plan §9`) — es
+diseño nuevo, decidido con el PO antes de escribir una línea.
+
+**No es una pantalla ni una ruta nueva.** El único requisito cerrado es `Plan §10`, sesión
+1, paso 6: *"Abrir el panel de vista-servidor... y verificar que los campos comerciales
+salen cifrados"*, desde dentro del hilo — no desde un ítem de nav nuevo, que además no
+existe para esto (`AppShell.tsx`, 8 ítems, ninguno es este). Entra como un toggle **"Ver lo
+que ve el servidor"** por cada elemento del historial de MSG-02 (`ThreadHistory.tsx`), a
+nivel de `<li>` y no dentro de `Card` — cubre MENSAJE, CONSULTA y OFERTA con una sola
+implementación, coherente con que `e2ee-content-encryption` habla de "cualquier elemento
+del hilo", no solo de ofertas.
+
+**El hallazgo que abarató la implementación:** `fetchThreadItems` (`thread-detail.ts`) ya
+traía `content_ciphertext`, `content_iv` y el embed de `thread_item_keys` en la misma
+consulta que arma cada tarjeta, y los tiraba tras `decryptItem`. `ThreadItem.raw` los
+retiene — **cero consultas nuevas, cero RLS nueva**, y es más honesto que un fetch a
+demanda: es literalmente lo que Postgres devolvió en la misma llamada que ya pinta la
+pantalla. `wrappedKeyCount` es 0 o 1, nunca el total de destinatarios — `item_keys_select_own`
+(`0003:353`) filtra por mí, así que enseñar el conteo real y no "N destinatarios" evita
+afirmar un dato que este componente no tiene (`CLAUDE.md` §7).
+
+**Colapsado por defecto**, a propósito: el ciphertext no debe llegar al DOM salvo que
+alguien pulse el toggle. Lo comprueba un e2e nuevo en `messages.spec.ts` contra el hilo
+real Alpha↔Nordwälz Lager (la misma oferta de 4,82 €/ud. que usa el resto de la suite) —
+cerrado el toggle, cero bytes `\x…` en `page.content()`; abierto, las dos mitades a la vez.
+Un locator del primer intento coincidía con dos nodos (`content_ciphertext` Y `content_iv`
+son hex ≥16 caracteres) — bug del test, no del producto, arreglado con `.first()`.
+
+**Verificado:** 617 tests de unidad (611 + 6) · `typecheck`/`check:palette`/`build` verdes
+· **19/19 e2e de `messages.spec.ts` contra Supabase real**. Commit `5bec69d`, pusheado a
+`mvp/bootstrap`.
 
 ---
 
@@ -135,8 +174,8 @@ socio.
 
 | Trabajo | Ejecuta |
 |---|---|
-| Panel de vista-servidor (comprador vs. lo que almacena Postgres) | — |
-| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro |
+| Panel de vista-servidor (comprador vs. lo que almacena Postgres) | Claude Code (Sonnet 5) — **CERRADO**, ver sección dedicada |
+| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro — **por delante** |
 
 **No lleva fichero de decisiones propio** (`CLAUDE.md` §ritual: solo los días 4, 8 y 9).
 
@@ -147,10 +186,14 @@ socio.
    siembra no puso — decidir si se dejan o se limpian antes de la sesión ("Pendiente de
    Álvaro" #7).
 2. ✅ **Despliegue resuelto** (ver "Pendiente de Álvaro" #1): `https://bearingworld.vercel.app`
-   viva. Útil para la sesión 1 de mañana si Álvaro quiere probar la app desplegada en vez de
+   viva. Útil para la sesión 1 de hoy si Álvaro quiere probar la app desplegada en vez de
    solo local — no es indispensable para esa sesión, pero sí lo será para la reunión real.
-3. El panel de vista-servidor **no se recorta nunca** (`Plan §9`): es, junto con SRCH-01 y
-   Realtime, uno de los tres argumentos que no se pueden sacrificar.
+3. ✅ **Panel de vista-servidor: CERRADO esta tarde**, ver "Panel de vista-servidor, cómo
+   quedó" arriba. Para la sesión de Álvaro: dentro de un hilo (MSG-02), cada elemento del
+   historial lleva un enlace **"Ver lo que ve el servidor"** debajo de autor/fecha — al
+   pulsarlo enseña el `content_ciphertext`/`content_iv` en hex, al lado de lo que la tarjeta
+   ya pinta descifrado. No se recorta nunca (`Plan §9`): es, junto con SRCH-01 y Realtime,
+   uno de los tres argumentos que no se pueden sacrificar.
 4. ⚠ **Corrección de una asunción mía, sin comprobar, repetida varias veces en este fichero
    los últimos dos días:** el día 11 (`Plan §10`, "Sesión 1 · Cimientos") **lo ejecuta
    Álvaro solo**, con dos perfiles de navegador para encarnar comprador y vendedor — no es
@@ -193,7 +236,7 @@ socio.
 | Integridad | El **Coder** nunca escribe los tests que lo evalúan, **y tampoco los ve** | `CLAUDE.md` §3 |
 | Autoría | Código del Coder y código a mano **nunca en el mismo commit** | `CLAUDE.md` §1.6 |
 | Precio en SRCH-01 | **Fuera de la parrilla.** Nunca se ordena ni se filtra por precio | F-040 |
-| Alcance | **Hechas: shell, LOGIN-01, INV-01, MSG-01, SRCH-01, MSG-02, VND-01 y PANEL-01** | Plan §9 |
+| Alcance | **Hechas: shell, LOGIN-01, INV-01, MSG-01, SRCH-01, MSG-02, VND-01, PANEL-01 y panel de vista-servidor.** Las 8 de `Plan §9` completas | Plan §9 |
 
 ---
 
@@ -241,7 +284,7 @@ socio.
      y NSK 1200 u.), ambas `Pendiente`, ambas legibles por las dos partes.
    - **Decidido por el PO (13-ago): se deja tal cual, no se limpia.** Es una demostración
      real y correcta de las dos funciones del día 10; el hilo Alpha↔Nordwälz Lager llega
-     así a la sesión 1 de Álvaro (mañana) y, salvo que algo lo cambie antes, también al
+     así a la sesión 1 de Álvaro (hoy) y, salvo que algo lo cambie antes, también al
      20-ago.
 8. **La reunión real con el socio es el 20 de agosto**, no el día 11. Corregido tras una
    asunción mía sin comprobar — ver "Riesgo con la vista más corta".
@@ -278,7 +321,7 @@ prueba (unidad, Postgres real, navegador real) sustituye a las otras dos.
 
 **Informativo, no un riesgo: la base de demo tiene tres filas que la siembra no puso**
 (contraoferta + dos consultas sobre el hilo Alpha↔Nordwälz), y el PO decidió dejarlas — el
-guion de la sesión 1 de mañana y, salvo cambio, el del 20-ago cuentan con ellas.
+guion de la sesión 1 de hoy y, salvo cambio, el del 20-ago cuentan con ellas.
 
 **Sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se sepa cuál es,
 cualquier pieza que dependa de una credencial es sospechosa. Con 7 días por delante en vez
@@ -293,4 +336,5 @@ de uno, no es urgente hoy, pero no se debe olvidar antes del 20-ago.
 
 ---
 
-*Cerrado el 13-ago-2026 · Claude Code (Sonnet 5)*
+*Actualizado el 13-ago-2026, antes de la sesión de pruebas 1 de Álvaro · Claude Code (Sonnet 5)*
+*Día 11 sigue EN CURSO — no cerrar este fichero hasta que la sesión de Álvaro termine.*

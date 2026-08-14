@@ -24,6 +24,11 @@
 **los cuatro hallazgos abiertos de la sesión 1 cerrados** y **el catálogo re-anclado** contra
 la base real.
 
+> ✅ **Y esta vez está DESPLEGADO, no solo commiteado.** Edge Function de VERA en **v4** y app
+> en `bearingworld.vercel.app`, las dos **comprobadas contra la URL real** — que es la regla que
+> dejó `F-091` el día 11 y que se cumple por primera vez el mismo día del cierre. `F-090` no
+> solo está escrito: está **confirmado contra Sonnet en producción** (ver su sección).
+
 > ⚠ **Esta sesión la escribe Claude Code con Opus 5** (los días 9, 10 y 11 los escribió
 > Sonnet 5). Apunte de autoría honesta, `CLAUDE.md` §1.6.
 
@@ -67,9 +72,14 @@ a mano dura **hasta la siguiente suite e2e**.
 
 **Verificado:** **631 tests de unidad** (617 + 14) · `typecheck` / `check:palette` / `build`
 verdes · **52/52 e2e contra Supabase real** · **`bash supabase/tests/run.sh` verde**, incluida
-la fase 3 nueva.
+la fase 3 nueva · **los dos despliegues comprobados en la URL viva**.
 
 🟢 **Las 8 pantallas de `Plan §9` siguen completas**, sin cambios de alcance hoy.
+
+> **Sin fila en `harness-metrics.csv` hoy, y es correcto.** Ese CSV mide **tareas del Coder**
+> (`CLAUDE.md` §6): sus 31 filas son todas `deepseek-v4-flash`. El día 12 no tuvo ninguna —todo
+> lo de hoy lo escribió Claude Code a mano—, igual que los días 10 y 11. Inventar una fila
+> falsearía el objetivo 4, que es justamente lo que el CSV existe para medir.
 
 ---
 
@@ -191,10 +201,12 @@ Y corre siempre sobre una siembra recién hecha, donde el defecto no puede exist
 1. **Sesión de pruebas 2 — Álvaro**, flujo completo cronometrado: interrogatorio a VERA (15
    preguntas), contraoferta y modificación, el "momento clave" del precio cifrado y dos pestañas
    sobre el mismo hilo a la vez.
-   - **El "momento clave" ya tiene arreglo puesto** (`F-090`): la sesión 2 confirma si aguanta
-     contra Sonnet, que es lo que ninguna prueba de aquí puede hacer.
+   - **El "momento clave" ya está confirmado en producción** (`F-090`, una pregunta): la sesión 2
+     hace las quince y busca los que queden, en vez de descubrir este.
    - **El camino completo de contraoferta está disponible** (ver la cabecera): hay una oferta
      `Pendiente` emitida por Nordwälz y Alpha es quien decide.
+   - **Antes de empezar, correr `reanchor_freshness.sql`** o la columna Antigüedad vuelve a
+     mentir (`guion-demo-y-siembra.md` §6).
 2. **Entorno de demo aislado, con siembra congelada y reseteable.** `F-095` le da motivo medido:
    hoy el estado de demo y el de prueba comparten base, y la suite e2e se come lo que haya.
 
@@ -202,6 +214,32 @@ Y corre siempre sobre una siembra recién hecha, donde el defecto no puede exist
 tres sesiones de `Plan §10`, que son ensayo interno. Quedan **6 días naturales**.
 
 **No lleva fichero de decisiones propio** (`CLAUDE.md` §ritual: solo los días 4, 8 y 9).
+
+---
+
+## Bloqueos y riesgo más cercano
+
+**Nada bloquea el día 13.** Lo que hay son dos frenos y un riesgo con fecha.
+
+| | Qué | Quién lo quita |
+|---|---|---|
+| 🟡 **Freno 1** | **La CLI de Supabase está en la cuenta equivocada (`F-073`).** Comprobado hoy: `npx supabase projects list` solo devuelve `web-julsaindustrial` y `Base de Conocimientos`. Mientras siga así, **cada migración y cada despliegue de función tiene que ir por el MCP** — funciona, pero es un camino que solo conoce quien lea `CLAUDE.md` §10 | Álvaro: re-loguear y `supabase link` |
+| 🟡 **Freno 2** | **Nada despliega solo.** Ni la app a Vercel ni las Edge Functions salen con el push (`F-072`, `F-091`). Un "cerrado" en este fichero no implica "visible en la URL" salvo que lo diga | Se cumple cerrando con el despliegue hecho, como hoy |
+
+### 🔴 El riesgo más cercano: la sesión 2 encuentra en VERA lo que las pruebas de aquí no pueden ver
+
+Es el **riesgo #1 de `CLAUDE.md` §7** y sigue siendo el mismo: nada de lo que se prueba en
+este repo comprueba lo que Sonnet *hace*, solo lo que el prompt *dice*. Hoy se ha cerrado la
+única pregunta que ya se sabía mal (`F-090`); **quedan catorce del guion sin probar nunca contra
+el modelo**, y `F-090` demostró que la forma del fallo no es inventarse un dato —eso está bien
+defendido— sino **malinterpretar la intención y actuar**: llamar a una herramienta que navega,
+y sacar al usuario de donde estaba sin decir nada.
+
+**Por qué no es rojo hoy:** la sesión 2 es un ensayo interno del día 13, quedan seis días hasta
+el 20-ago, y el patrón ya tiene arreglo probado que sirve de plantilla si aparece otro igual.
+**Lo que lo haría rojo:** que la sesión 2 encuentre dos o tres más de la misma familia, porque
+entonces no es un caso, es que el reparto de herramientas sobregeneraliza y eso ya no se arregla
+con una frase en el prompt.
 
 ---
 
@@ -274,5 +312,21 @@ tres sesiones de `Plan §10`, que son ensayo interno. Quedan **6 días naturales
 
 ---
 
+## Ritual de cierre — qué se ha hecho hoy
+
+`CLAUDE.md` §ritual, los cuatro puntos:
+
+1. ✅ **Este fichero, sobrescrito**: día, estado, qué se cerró, qué toca mañana, decisiones
+   vivas, bloqueos y riesgo más cercano.
+2. ✅ **Hallazgos a `findings-register.md`**: `F-093`, `F-094` y `F-095` nuevos; `F-086`,
+   `F-087`, `F-088` y `F-090` actualizados a cerrado con lo que se hizo de verdad.
+   **`harness-metrics.csv` sin fila** — no hubo tarea del Coder, ver arriba.
+3. — **Sin fichero de decisiones del día**: solo lo llevan los días 4, 8 y 9.
+4. ✅ **Commit + push** a `mvp/bootstrap`, y hoy además **desplegado y verificado en la URL
+   viva**, que es lo que `F-091` dejó escrito el día 11.
+
+---
+
 *Actualizado el 14-ago-2026, cerrando el día 12 · estado de la base verificado con SQL a las
-10:5x del 14-ago · Claude Code (Opus 5)*
+10:5x · despliegues verificados contra `bearingworld.vercel.app` y la Edge Function v4 ·
+Claude Code (Opus 5)*

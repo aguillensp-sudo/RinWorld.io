@@ -119,5 +119,44 @@ echo "· fase 2 · segunda pasada de la siembra (idempotencia)"
 run "$ROOT/supabase/seed/catalog_demo.sql"          bwcatalog
 run "$ROOT/supabase/tests/04_catalog_idempotent.sql" bwcatalog
 
+# -----------------------------------------------------------------------------
+# Fase 3 · deriva de frescura y re-anclaje (día 12 · F-094)
+# -----------------------------------------------------------------------------
+# LA SIEMBRA RECIÉN CORRIDA SIEMPRE PASA LOS ASERTOS DE FRESCURA, Y POR ESO NO
+# BASTA CON CORRERLOS.
+#
+# `catalog_demo.sql` usa fechas relativas a `now()`, así que dos líneas más
+# arriba el catálogo es perfecto por construcción. El defecto que se llevó por
+# delante la columna Antigüedad no está en la siembra: está en el CALENDARIO —
+# siete días después de sembrar, 220 de 221 líneas pasaban de 7 días y ningún
+# aserto se enteró.
+#
+# Aquí se envejece el catálogo a propósito para que el defecto exista dentro de
+# la prueba, y se comprueban las dos mitades:
+#
+#   · envejecido y sin re-anclar, `05` tiene que FALLAR — si pasara, el aserto
+#     no estaría mirando lo que dice mirar (F-047 · F-058 · F-074);
+#   · re-anclado, tiene que pasar.
+#
+# El negativo y el positivo, en la misma corrida y sobre los mismos datos.
+echo
+echo "· fase 3 · se envejece el catálogo 9 días (la deriva real del 14-ago)"
+docker exec -e PGPASSWORD=postgres "$NAME" psql -U postgres -d bwcatalog -q   -c "update public.inventory_lines set last_upload_at = last_upload_at - interval '9 days'" >/dev/null
+
+echo "· fase 3 · ANCLA NEGATIVA: los asertos de frescura tienen que fallar ahora"
+if run "$ROOT/supabase/tests/05_freshness_asserts.sql" bwcatalog >/dev/null 2>&1; then
+  echo "!! 05_freshness_asserts.sql PASÓ con el catálogo envejecido 9 días." >&2
+  echo "   Ese es justo el estado que se lleva por delante la columna Antigüedad," >&2
+  echo "   así que el fichero no está comprobando lo que dice comprobar." >&2
+  exit 1
+fi
+echo "   OK · falla como debe"
+
+echo "· fase 3 · re-anclaje"
+run "$ROOT/supabase/seed/reanchor_freshness.sql" bwcatalog
+
+echo "· fase 3 · asertos de frescura"
+run "$ROOT/supabase/tests/05_freshness_asserts.sql" bwcatalog
+
 echo
 echo "CATALOGO VERDE"

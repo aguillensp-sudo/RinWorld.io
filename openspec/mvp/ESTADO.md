@@ -7,35 +7,44 @@
 > **Regla de este fichero (F-012).** Cita, no parafrasees. Los valores de estado y las
 > asignaciones de modelo se copian del spec cerrado o del plan **con el puntero al lado**.
 
-**Día 11 de 15 · EN CURSO, 13-ago-2026 · Estado: VERDE parcial.** El día 10 cerró VERDE (ver
-"Dónde estamos"). De las dos filas del día 11 (`Plan §3`), el **panel de vista-servidor**
-está cerrado y verificado; **la sesión de pruebas 1 de Álvaro (`Plan §10`) está por
-delante** — este fichero se actualiza justo antes de que empiece, no después.
+**Día 11 de 15 · CERRADO, 14-ago-2026 · Estado: VERDE.** Las dos filas de `Plan §3` para
+este día están hechas: el **panel de vista-servidor** (implementado y verificado el
+13-ago) y la **sesión de pruebas 1 de Álvaro** (`Plan §10`, ejecutada el 14-ago) — **las 6
+comprobaciones del guion, todas OK.**
 
-> ⚠ **Esta sesión también la escribe Sonnet 5, no Opus 4.8** — mismo apunte que el día 10
-> (`CLAUDE.md` §3, autoría honesta `§1.6`). El panel de vista-servidor no toca esquema, RLS
-> ni la máquina de estados de la oferta —es capa de presentación sobre datos que
-> `fetchThreadItems` ya traía—, así que el argumento de coste-del-fallo que reserva ese
-> reparto a Opus pesa menos aquí que en la contraoferta o GAP-004 del día 10.
+> ⚠ **Esta sesión también la escribe Sonnet 5, no Opus 4.8** — mismo apunte que los días 9
+> y 10 (`CLAUDE.md` §3, autoría honesta `§1.6`).
 
-> **Panel de vista-servidor (`Plan §3`, día 11, primera fila) — CERRADO.** Toggle "Ver lo
-> que ve el servidor" por elemento del hilo (MSG-02), colapsado por defecto. `ThreadItem.raw`
-> retiene `content_ciphertext`/`content_iv`/conteo de `thread_item_keys` que
-> `fetchThreadItems` ya traía y tiraba tras descifrar — **sin consulta nueva, sin RLS
-> nueva**. **Verificado:** 617 tests de unidad (eran 611) · `typecheck`/`check:palette`/
-> `build` verdes · **19/19 e2e de `messages.spec.ts` contra el Supabase real**, incluido un
-> test nuevo que abre el toggle en el hilo Alpha↔Nordwälz Lager y confirma las dos mitades a
-> la vez: `4,82 €/ud.` legible arriba, `\x…` cifrado abajo, y que no se escapa ni un byte
-> antes de pulsarlo. Commit `5bec69d`. Detalle en "Panel de vista-servidor, cómo quedó".
+> **Sesión de pruebas 1 (`Plan §10`) — resultado: 6/6 OK, 5 hallazgos nuevos.** Login y
+> aislamiento entre organizaciones, INV-01, búsqueda vía VERA en Comprando, "Consultar
+> Seleccionados" cruzado entre las dos cuentas, aceptar oferta (camino rápido) y el panel
+> de vista-servidor — verificado con `alpha@`/`beta@bearingworld.test` en dos perfiles,
+> contra `https://bearingworld.vercel.app`. **`F-086` a `F-091`** en
+> `findings-register.md`:
+> - `F-086` (`DESIGN`) — tooltip nativo invisible en Chromium sobre el botón deshabilitado
+>   de INV-01; el texto de repuesto es solo para lector de pantalla.
+> - `F-087` (`SPEC-GAP`) — "Consultar seleccionados" con selección mixta no dice cuántas
+>   filas se omitieron por ya consultadas.
+> - `F-088` (`DESIGN`) — tabla de resultados de SRCH-01 sin scroll vertical en toda la
+>   cadena de contenedores: contenido genuinamente inaccesible, no solo difícil de ver.
+> - `F-089` (`HARNESS`) — este mismo fichero afirmaba una contraoferta de 4,50 €/ud. que la
+>   base real no tiene; corregido en el momento, sin bloquear la sesión.
+> - `F-090` (`SPEC-GAP`) — VERA no sabe leer un hilo y, en vez de decirlo (`D-09-02`),
+>   malinterpreta la pregunta como búsqueda de catálogo y navega sin avisar. Adelanta el
+>   "momento clave" que `Plan §10` sesión 2 reserva para el día 13.
+> - `F-091` (`HARNESS`) — el propio commit del panel de vista-servidor no había llegado a
+>   `bearingworld.vercel.app`; redesplegado en mitad de la sesión.
 >
-> 🟢 **Con esto, las 8 pantallas de `Plan §9` quedan completas**: shell, PANEL-01, INV-01,
-> SRCH-01, MSG-01, MSG-02, VND-01 y panel de vista-servidor. Es el alcance entero del MVP
-> construido — lo que queda de aquí al 20-ago es endurecimiento y ensayo (`Plan §5`,
-> Sprint 3), no pantallas nuevas.
+> **El camino completo de contraoferta (envío + aceptación en el otro perfil) queda sin
+> verificar.** La única oferta `Pendiente` del hilo Alpha↔Nordwälz Lager se aceptó por el
+> camino rápido y quedó `Aceptada` (terminal), y `Crear oferta` sigue deshabilitado (MSG-03
+> fuera del MVP) — no hay forma de generar una oferta `Pendiente` nueva sin resembrar.
+> Pendiente para la sesión 2 (`Plan §10`, día 13) si se quiere probar antes del 20-ago.
 >
+> 🟢 **Las 8 pantallas de `Plan §9` siguen completas**, cerrado el 13-ago, sin cambios hoy.
+
 > **Lo del día 10 (contraoferta, "Consultar Seleccionados", F-083, F-082) sigue tal cual
-> estaba — no se ha tocado hoy.** Ver el resto de este fichero para ese registro completo:
-> se mantiene porque la sesión de Álvaro de hoy depende de ambos días, no solo del 11.
+> estaba.** Registro completo en `findings-register.md`, no se repite aquí.
 
 ---
 
@@ -48,12 +57,12 @@ delante** — este fichero se actualiza justo antes de que empiece, no después.
 | Contraoferta / modificación de oferta | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `counter_offer` (0013) atómico, formulario inline en MSG-02 |
 | **"Consultar Seleccionados"** (GAP-004) | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `create_inquiry` + `org_public_keys` (0014) atómicos |
 
-`Plan §3`, filas del día 11 — **una cerrada, una por delante**:
+`Plan §3`, filas del día 11 — **las dos cerradas**:
 
 | Bloque | Ejecuta | Resultado |
 |---|---|---|
 | Panel de vista-servidor | Claude Code (Sonnet 5) | **Cerrado.** Toggle por elemento en MSG-02, sin consulta nueva. Ver sección dedicada |
-| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro | **Por delante.** Es la razón de esta actualización |
+| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro | **Cerrada, 6/6 OK.** 5 hallazgos (`F-086`-`F-091`). Ver "Sesión de pruebas 1, cómo quedó" |
 
 ---
 
@@ -91,6 +100,34 @@ son hex ≥16 caracteres) — bug del test, no del producto, arreglado con `.fir
 **Verificado:** 617 tests de unidad (611 + 6) · `typecheck`/`check:palette`/`build` verdes
 · **19/19 e2e de `messages.spec.ts` contra Supabase real**. Commit `5bec69d`, pusheado a
 `mvp/bootstrap`.
+
+---
+
+## Sesión de pruebas 1 de Álvaro, cómo quedó
+
+`Plan §10`, sesión 1 (14-ago): las 6 comprobaciones del guion, ejecutadas con
+`alpha@`/`beta@bearingworld.test` en dos perfiles de navegador contra
+`https://bearingworld.vercel.app`.
+
+| # | Comprobación | Resultado |
+|---|---|---|
+| 1 | Entrar con ambas cuentas en paralelo | OK |
+| 2 | Cada una ve solo su inventario | OK (`F-086`: tooltip del botón deshabilitado invisible en Chromium) |
+| 3 | Buscar una referencia que existe en la otra organización | OK |
+| 4 | Consulta llega sola a la otra pestaña | OK (`F-087` y `F-088` encontrados en el camino) |
+| 5 | Enviar oferta → aceptarla | OK, camino rápido (`F-089`: dato de este fichero corregido en el momento) |
+| 6 | Panel de vista-servidor | OK, tras redesplegar (`F-091`); en el camino, `F-090` sobre VERA |
+
+**Nada bloqueó la sesión.** Los seis hallazgos son del producto o del relevo, no del guion
+de prueba, y los cinco quedan registrados en `findings-register.md` con su clasificación,
+causa y acción para V1 — no se repiten aquí.
+
+**Dos cosas que vale la pena que Álvaro tenga presentes de cara a la sesión 2 (día 13):**
+- El camino completo de contraoferta (envío + aceptación, no solo aceptar lo ya pendiente)
+  sigue sin probarse — la única oferta `Pendiente` del hilo de demo se gastó hoy.
+- `F-090` (VERA sin herramienta para leer un hilo) es casi literalmente el "momento clave"
+  que `Plan §10` sesión 2 reserva a propósito (*"VERA, ¿qué precio me han ofrecido?"*) — ya
+  se sabe que falla; la sesión 2 puede confirmar si el fix aguanta en vez de descubrirlo.
 
 ---
 
@@ -168,40 +205,17 @@ socio.
 
 ---
 
-## Hoy toca — Día 11
+## Día 11, cerrado — qué sigue
 
-`Plan §3`, filas del día 11:
+`Plan §3`, las dos filas del día 11 hechas. **No lleva fichero de decisiones propio**
+(`CLAUDE.md` §ritual: solo los días 4, 8 y 9).
 
-| Trabajo | Ejecuta |
-|---|---|
-| Panel de vista-servidor (comprador vs. lo que almacena Postgres) | Claude Code (Sonnet 5) — **CERRADO**, ver sección dedicada |
-| **Sesión de pruebas 1 — Álvaro** (`Plan §10`) | Álvaro — **por delante** |
-
-**No lleva fichero de decisiones propio** (`CLAUDE.md` §ritual: solo los días 4, 8 y 9).
-
-**Lo que hay que tener delante antes de empezar:**
-
-1. ✅ **Contraoferta y "Consultar Seleccionados" ya se verificaron en navegador con cuentas
-   reales** (ver cabecera y F-083). El hilo Alpha↔Nordwälz Lager quedó con tres filas que la
-   siembra no puso — decidir si se dejan o se limpian antes de la sesión ("Pendiente de
-   Álvaro" #7).
-2. ✅ **Despliegue resuelto** (ver "Pendiente de Álvaro" #1): `https://bearingworld.vercel.app`
-   viva. Útil para la sesión 1 de hoy si Álvaro quiere probar la app desplegada en vez de
-   solo local — no es indispensable para esa sesión, pero sí lo será para la reunión real.
-3. ✅ **Panel de vista-servidor: CERRADO esta tarde**, ver "Panel de vista-servidor, cómo
-   quedó" arriba. Para la sesión de Álvaro: dentro de un hilo (MSG-02), cada elemento del
-   historial lleva un enlace **"Ver lo que ve el servidor"** debajo de autor/fecha — al
-   pulsarlo enseña el `content_ciphertext`/`content_iv` en hex, al lado de lo que la tarjeta
-   ya pinta descifrado. No se recorta nunca (`Plan §9`): es, junto con SRCH-01 y Realtime,
-   uno de los tres argumentos que no se pueden sacrificar.
-4. ⚠ **Corrección de una asunción mía, sin comprobar, repetida varias veces en este fichero
-   los últimos dos días:** el día 11 (`Plan §10`, "Sesión 1 · Cimientos") **lo ejecuta
-   Álvaro solo**, con dos perfiles de navegador para encarnar comprador y vendedor — no es
-   una reunión con el socio. La reunión real con el socio es **el 20 de agosto** (confirmado
-   por el PO, 13-ago), separada de las tres sesiones de `Plan §10` (días 11, 13 y 15), que
-   son ensayo interno. Quedan **7 días naturales**, no uno. La sesión 2 (día 13) es la que
-   el propio plan señala como el ensayo que tiene que pasar *"antes del día de la
-   reunión"* (`Plan §12`).
+**Próximo hito de `Plan §10`: sesión 2, día 13** — recorrido completo cronometrado,
+interrogatorio a VERA (15 preguntas), contraoferta y modificación, el "momento clave" del
+precio cifrado (ver `F-090`, ya se sabe que falla hoy) y dos pestañas sobre el mismo hilo a
+la vez. La reunión real con el socio es **el 20 de agosto** (confirmado por el PO) —
+separada de las tres sesiones de `Plan §10`, que son ensayo interno. Quedan **6 días
+naturales**.
 
 ---
 
@@ -275,66 +289,28 @@ socio.
    con `alpha@bearingworld.test` sobre la app local apuntando al Supabase remoto (el
    `.env` de `app/` ya traía las credenciales). Contraoferta y "Consultar Seleccionados"
    funcionan de extremo a extremo. Ver la cabecera de este fichero y F-083.
-7. ⚠ **La base de demo YA NO está como la dejó la siembra — la tocó esta verificación, con
-   intención pero sin guion.** Concretamente sobre el hilo Alpha↔Nordwälz Lager:
-   - La oferta sembrada de **4,82 €/ud.** quedó **"Superada por contraoferta"** por una
-     real de **4,50 €/ud.**, `Pendiente`, emitida por Alpha. Es terminal: no se puede
-     deshacer con un `update`, solo borrando filas.
-   - Dos tarjetas de **`CONSULTA`** nuevas de Alpha a Nordwälz Lager (`6205-2RS` SKF 1250 u.
-     y NSK 1200 u.), ambas `Pendiente`, ambas legibles por las dos partes.
-   - **Decidido por el PO (13-ago): se deja tal cual, no se limpia.** Es una demostración
-     real y correcta de las dos funciones del día 10; el hilo Alpha↔Nordwälz Lager llega
-     así a la sesión 1 de Álvaro (hoy) y, salvo que algo lo cambie antes, también al
-     20-ago.
-8. **La reunión real con el socio es el 20 de agosto**, no el día 11. Corregido tras una
-   asunción mía sin comprobar — ver "Riesgo con la vista más corta".
+7. ⚠ **La base de demo sigue sin ser la de la siembra, y hoy se movió otra vez** —
+   verificado con SQL contra `troxminloxkjwihwfevs` durante la sesión de Álvaro, no de
+   memoria (ver `F-089`). Estado real ahora mismo del hilo Alpha↔Nordwälz Lager:
+   - La oferta de **4,82 €/ud.** (`6205-2RS · NSK`, la enviaba **Nordwälz Lager**, no
+     Alpha) está **`Aceptada`** — aceptada hoy por Alpha en el paso 5 de la sesión 1. Es
+     terminal: no admite contraoferta ni se puede deshacer con un `update`.
+   - **No existe ninguna contraoferta de 4,50 €/ud.** — este fichero la dio por hecha el
+     13-ago y era falso (`F-089`, corregido).
+   - Varias tarjetas `CONSULTA` nuevas, incluida una a `22215` del "Consultar seleccionados"
+     de hoy (paso 4, enviada a 5 distribuidores; solo la de Nordwälz Lager es visible desde
+     la cuenta Beta).
+   - **Sigue el mismo criterio del PO (13-ago): se deja tal cual, no se limpia.** Es
+     demostración real de las funciones del día 10 y del 11. **Efecto para la sesión 2
+     (día 13):** no queda ninguna oferta `Pendiente` en este hilo — ver "Sesión de pruebas
+     1, cómo quedó".
+8. **`F-086`** (tooltip invisible en Chromium sobre botón deshabilitado): ¿texto visible
+   siempre en vez de solo `title`, o se acepta el hueco en Chrome/Edge para V1?
+9. **`F-087`** ("Consultar seleccionados" con selección mixta, sin aviso de cuántas se
+   omitieron por ya consultadas): ¿se amplía `consultSummary` para V1, o se considera
+   menor y se deja para después de la demo del 20-ago?
 
 ---
 
-## Riesgo con la vista más corta
-
-**🔴 Corrección de calendario, y va primero porque cambia la lectura de todo lo demás.**
-`ESTADO.md` llevaba dos días escribiendo "la sesión de mañana" como si el día 11 fuera la
-reunión con el socio. **Es falso, y no se comprobó hasta que Álvaro preguntó directamente.**
-`Plan §10` es explícito: los días 11, 13 y 15 son *"Plan de pruebas de usuario — ejecuta
-Álvaro"*, tres ensayos internos con Álvaro haciendo de comprador y vendedor a la vez. **La
-reunión real con el socio es el 20 de agosto** (confirmado por el PO, 13-ago) — un evento
-aparte que el plan de 15 días ni fecha ni nombra directamente, solo lo referencia como *"el
-día de la reunión"* (`Plan §12`, nota sobre el riesgo de VERA). Quedan **7 días naturales**,
-no uno. Nada de lo urgente de hoy (despliegue, verificación en navegador) estaba mal hecho
-ni de más — solo mal explicado el porqué de la prisa.
-
-**El despliegue está resuelto:** `https://bearingworld.vercel.app` viva, sin login de Vercel
-por delante y con las variables de entorno correctas (ver "Pendiente de Álvaro" #1 y F-084).
-Queda un resto menor: las comprobaciones 3 y 4 de `despliegue.md` §4 (aislamiento Beta/Alpha
-en remoto, cabecera por `curl`) no se repitieron hoy, y hay margen de sobra para hacerlas
-antes del 20-ago.
-
-**Contraoferta y "Consultar Seleccionados" están verificadas en navegador con las dos
-cuentas reales, con un hallazgo real de por medio (F-083):** la primera corrida de
-"Consultar Seleccionados" reveló que la CEK no se envolvía para quien escribía, arreglado y
-reverificado en la misma sesión. **La lección de F-082 se repitió a otra escala:** lo que
-Vitest con mocks no puede ver, a veces solo lo ve la base real; lo que la base real no puede
-ver —aquí, que el propio emisor se quedaba sin su copia de la clave— solo lo vio abrir la
-aplicación de verdad y releer lo que se acababa de escribir. Ninguna de las tres capas de
-prueba (unidad, Postgres real, navegador real) sustituye a las otras dos.
-
-**Informativo, no un riesgo: la base de demo tiene tres filas que la siembra no puso**
-(contraoferta + dos consultas sobre el hilo Alpha↔Nordwälz), y el PO decidió dejarlas — el
-guion de la sesión 1 de hoy y, salvo cambio, el del 20-ago cuentan con ellas.
-
-**Sigue abierto: la clave rotada de F-081 no identificada.** Mientras no se sepa cuál es,
-cualquier pieza que dependa de una credencial es sospechosa. Con 7 días por delante en vez
-de uno, no es urgente hoy, pero no se debe olvidar antes del 20-ago.
-
-> **La conclusión operativa, con el calendario ya corregido:** el día 11 es el primer ensayo
-> de Álvaro, no la demo — sirve para encontrar fricción, no para llegar impecable. Con 7 días
-> hasta el 20-ago hay margen para las comprobaciones menores de despliegue, la clave rotada
-> de F-081, y lo que salga de las sesiones 1 y 2 (`Plan §10`). La próxima vez que este
-> fichero mencione una fecha límite, se comprueba contra `Plan §10`/§12 o se pregunta —no se
-> asume por el nombre de la fila del plan.
-
----
-
-*Actualizado el 13-ago-2026, antes de la sesión de pruebas 1 de Álvaro · Claude Code (Sonnet 5)*
-*Día 11 sigue EN CURSO — no cerrar este fichero hasta que la sesión de Álvaro termine.*
+*Actualizado el 14-ago-2026, cerrando el día 11 tras la sesión de pruebas 1 de Álvaro (6/6
+OK) · Claude Code (Sonnet 5)*

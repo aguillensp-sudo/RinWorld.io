@@ -1,5 +1,30 @@
 # Esquema Supabase — MVP Bearingworld.io
 
+> 🔑 **Antes de nada: `CLAUDE.md` §10.** Dónde viven las credenciales (`app/.env`), cuál es
+> el proyecto, y los nombres reales de las columnas para no adivinarlos.
+
+> ## ⛔ LEE ESTO ANTES DE LA SECCIÓN DE ABAJO — la ruta oficial está BLOQUEADA
+>
+> Lo que sigue describe la ruta que se decidió el 12-ago (F-054) y **sigue siendo la
+> correcta en cuanto se desbloquee**. Pero **hoy no se puede usar**, y este README decía lo
+> contrario que `ESTADO.md` — que es una de las razones por las que cada sesión nueva se
+> equivocaba aquí.
+>
+> **El bloqueo (F-073):** la CLI está autenticada en la cuenta de `web-julsaindustrial`,
+> org `mjxnlvvrnjuuawlxkmte`. **El MVP vive en `ujatcozvbspkycepemfq`**, proyecto
+> `troxminloxkjwihwfevs`. Un `supabase db push` desde esta máquina aplicaría migraciones
+> **al proyecto de otro cliente**.
+>
+> **Mientras tanto, y esto es lo que se ha hecho de verdad:** de la 0007 a la **0014** se
+> aplicaron **por el MCP de Supabase** (`apply_migration` / `execute_sql`). El repo sigue
+> siendo la fuente de verdad: el fichero de migración se escribe igual, en orden, y lo único
+> que cambia es el transporte.
+>
+> **Para desbloquear:** re-loguear la CLI en la cuenta buena y `npx supabase link
+> --project-ref troxminloxkjwihwfevs` (pide la contraseña de la base). Está en "Pendiente de
+> Álvaro" del relevo. **Cuando eso esté hecho, esta advertencia se borra** y manda la
+> sección de abajo tal cual.
+
 ## ⚠ Cómo se despliega una migración · **la CLI, y solo la CLI** (F-054, 12-ago)
 
 Hasta el 12-ago había **dos rutas a medias**: la CLI sin `config.toml`, que no podía

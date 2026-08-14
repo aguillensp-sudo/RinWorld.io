@@ -2,6 +2,11 @@
 
 **Aviso** El trabajo vive en C:/Users/admin/proyectos/Bearing.io/BearingWorld.io en mvp/bootstrap; si te lanzan en un worktree claude/…, opera sobre esa ruta con paths absolutos."
 
+> 🔑 **¿Vas a tocar Supabase? Lee `CLAUDE.md` §10 ANTES de la primera consulta.** Ahí está
+> dónde viven las credenciales (`app/.env`), cuál es el proyecto, por qué el SQL va por el
+> MCP y no por la CLI, y los nombres reales de las columnas. No lo deduzcas: se ha perdido
+> tiempo con esto en casi todas las sesiones.
+
 > **Fichero de relevo.** Lo primero que lee cualquier sesión nueva. Se sobrescribe al
 > cierre de cada día — no se acumula histórico aquí (el histórico vive en git,
 > `findings-register.md` y `harness-metrics.csv`).

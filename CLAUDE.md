@@ -11,11 +11,14 @@ Este fichero es el contrato de trabajo del MVP (plan de 15 días,
 
 ## 1. Reglas no negociables
 
-1. **Ninguna API key en ningún fichero, nunca.** Todas viven en variables de entorno
-   de usuario y se leen con `os.environ` / `process.env`:
-   `ANTHROPIC_API_KEY` · `LANGSMITH_API_KEY` · `DEEPSEEK_API_KEY` ·
-   `SUPABASE_URL` · `SUPABASE_ANON_KEY` · `SUPABASE_SERVICE_KEY`.
-   El repo es público/compartido: ni en código, ni en configs, ni en `.env` versionado.
+1. **Ninguna API key en ningún fichero versionado, nunca.** El repo es
+   público/compartido: ni en código, ni en configs, ni en un `.env` que se suba.
+   Las claves viven en dos sitios y solo en dos — **§10 dice cuál es cuál y no hay que
+   adivinarlo**:
+   - **`app/.env`** (ignorado por git) → todo lo del proyecto Supabase y las cuentas de
+     prueba. **Es lo primero que se mira antes de tocar Supabase.**
+   - **Entorno de usuario** (`os.environ` / `process.env`) → `SUPABASE_SERVICE_KEY` ·
+     `DEEPSEEK_API_KEY` · `LANGSMITH_API_KEY`.
 
 2. **Nomenclatura Rinworld_ ↔ Bearingworld.io.** Los ficheros se llaman `Rinworld_*`
    (herencia del repo `RinWorld.io`), pero **todo el contenido visible al usuario**
@@ -163,6 +166,90 @@ dice "no tengo ese dato" en cuanto sale de ahí.
 - `openspec/design-gui/specs y html aprobados/notas/Status_bearingworld.io a 1 de Julio de 2026.md` — handoff de la fase de prototipado.
 - `openspec/architecture/ADR-001_E2EE_Key_Backup_1.md` — decisión de cifrado (condiciona seguridad/mensajería).
 - `openspec/gaps-register.md` · `openspec/product-decisions.md` — debates cerrados y abiertos.
+
+---
+
+## 10. Supabase — dónde está todo, antes de tocar nada
+
+> **Esta sección existe porque el mismo problema se repitió ~30 veces:** cada sesión nueva
+> se ponía a buscar credenciales, a adivinar nombres de columna o a intentarlo por la CLI,
+> y el PO tenía que decir otra vez dónde estaba cada cosa. **Nada de lo de aquí se
+> deduce del código en un vistazo, así que se lee antes de la primera consulta, no
+> después del primer error.**
+>
+> Se añade como §10 y **no se renumera nada**: media docena de documentos citan
+> `CLAUDE.md §1.6`, `§3`, `§4`, `§5` y `§7`, y renumerar rompería esos punteros.
+
+### 10.1 Las credenciales — `app/.env`
+
+**`C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app\.env`.** Ignorado por git
+(`app/.gitignore`), nunca versionado, y **es la fuente de verdad** de:
+
+| Variable | Para qué |
+|---|---|
+| `VITE_SUPABASE_URL` | El proyecto. De aquí sale el `project_ref` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Clave publicable del cliente. **46 caracteres exactos** (F-050: un `;` de más costó dos días) |
+| `E2E_ALPHA_EMAIL` / `_PASSWORD` / `_ORG` | Cuenta de pruebas compradora |
+| `E2E_BETA_EMAIL` / `_PASSWORD` / `_ORG` | Cuenta de pruebas vendedora |
+| `VITE_DEMO_KEY_SEED` | Deriva las claves E2EE de demo (D-08-01, F-067) |
+| `ANTHROPIC_API_KEY` | Solo local; en producción vive en el entorno de la Edge Function |
+
+**`SUPABASE_SERVICE_KEY` NO está en `app/.env`**: vive en el entorno de usuario, y es la
+única que salta RLS. `app/.env.example` lleva la lista con marcadores, sin valores.
+
+> **Cómo se usan sin exponerlos:** se leen y se pasan por tubería o por variable de
+> entorno. **Nunca se imprimen en pantalla, nunca se pegan en un fichero, nunca se pasan
+> como argumento de línea de comandos.** Si hace falta comprobar uno, se comprueba su
+> **longitud o su efecto**, no su valor (F-038: un "ya está cambiado" no es una
+> verificación; la longitud sí).
+
+### 10.2 El proyecto, y por qué el SQL va por el MCP
+
+- **Un solo proyecto: `troxminloxkjwihwfevs`** (eu-west-1). Cualquier otro ref que
+  aparezca es de otro cliente.
+- **El SQL y las migraciones van por el MCP de Supabase** (`execute_sql`,
+  `apply_migration`), **no por `npx supabase`**. Motivo, y no es preferencia: **la CLI
+  está logueada en la cuenta equivocada** —`web-julsaindustrial`, org
+  `mjxnlvvrnjuuawlxkmte`— mientras el MVP vive en `ujatcozvbspkycepemfq` (**F-073**).
+  Hasta que eso se arregle, un `supabase db push` va al proyecto de otro.
+- **Las Edge Functions no se despliegan con el push a git** y la app tampoco llega sola a
+  Vercel (**F-091**, **F-072**). Cerrar un bloque que alguien va a probar en la URL
+  desplegada incluye redesplegarlo o decir explícitamente que falta.
+
+### 10.3 El esquema — para no adivinar nombres de columna
+
+**Fuente de verdad: `supabase/migrations/*.sql`, en orden.** Este resumen es un atajo para
+no equivocarse en la primera consulta, no un sustituto.
+
+- **Las tablas están en `public`, no en `app`.** `app` es el esquema de *funciones*
+  (`app.current_org_id()`, `app.is_active_member()`, `app.guard_offer_decider`).
+- `inventory_lines` → `location_country` (**no** `country_code`), `last_upload_at`,
+  `product_family`, `lead_time_days`, `status` ∈ `DRAFT` `PUBLISHED` `ARCHIVED` `DELETED`,
+  `unit_price_ciphertext`/`_iv` (E2EE, siempre NULL en la siembra).
+- `threads` → `org_low_id` / `org_high_id` (**no** `org_a`/`org_b`; van en orden canónico
+  `low < high`), `created_by_org_id`, `state` (**no** `status` ni `estado_hilo`) ∈
+  `ABIERTO` · `CON CONSULTA PENDIENTE` · `CON OFERTA PENDIENTE` · `ACUERDO ALCANZADO` ·
+  `CERRADO SIN ACUERDO`.
+- `thread_items` → `sender_org_id`, `item_type`, `estado_consulta`, `estado_oferta`
+  (capitalizados: `Pendiente` `Aceptada` `Rechazada` `Superada por contraoferta`),
+  `responds_to_item_id`, `superseded_by_item_id`, `content_ciphertext`/`content_iv`.
+- `thread_item_keys` → `item_id` (**no** `thread_item_id`), `recipient_member_id`,
+  `wrapped_cek`, `wrap_iv`, `ephemeral_pubkey`.
+- `members` → `public_key`, `role`, `state`. `organizations` → `name`, `country`,
+  `continent`, `status`.
+
+### 10.4 Dos cosas que la base hace y que sorprenden
+
+1. **Un estado de la base que se afirme se consulta con SQL en el momento de afirmarlo.**
+   Tres veces se ha escrito en un documento un estado que la base no tenía (**F-012**,
+   **F-089**, **F-095**). No es un fallo de memoria: es que reconstruirlo entre sesiones
+   no funciona.
+2. **El estado de demo es efímero.** `app/e2e/fixture.setup.ts` borra y repone los cinco
+   `HILO_IDS` al empezar **cada** corrida de Playwright, y `create_inquiry` es
+   encontrar-o-crear, así que lo que se haga a mano dentro de esos hilos dura **hasta la
+   siguiente suite e2e** (**F-095**). Y el catálogo envejece con el calendario: hay que
+   correr `supabase/seed/reanchor_freshness.sql` antes de cada ensayo (**F-094**,
+   `guion-demo-y-siembra.md` §6).
 
 ---
 

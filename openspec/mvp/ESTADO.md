@@ -128,10 +128,22 @@ Uno solo habría sido un ruego al modelo:
 Nueve asertos nuevos, uno de ellos estructural: **el bloque cacheado no puede contener
 interpolaciones**, o se pierde la caché sin que nada falle (`CLAUDE.md` §5).
 
-> ⚠ **Esto comprueba que la regla está ESCRITA, no que el modelo la obedezca.** La Edge Function
-> es Deno y no se importa desde vitest. **Lo segundo es la sesión 2 del día 13**, que ahora
-> confirma un arreglo en vez de descubrir un fallo. **Requiere redesplegar la función**, ver
-> "Pendiente de Álvaro" §1.
+> ✅ **DESPLEGADO Y CONFIRMADO CONTRA SONNET EL MISMO DÍA.** La función va por la **v4** en
+> `troxminloxkjwihwfevs` (desplegada por el MCP: la CLI solo ve `web-julsaindustrial`, F-073).
+> Probada contra la URL real con la sesión de `alpha@`:
+>
+> | Caso | Herramienta llamada | Respuesta |
+> |---|---|---|
+> | `pantalla: Hilos`, `hiloAbierto: true` → *"¿Qué precio me han ofrecido?"* | **ninguna** (`end_turn`) | *"No puedo leer el contenido del hilo: va cifrado extremo a extremo y el servidor no tiene la clave"* + ofrece los metadatos |
+> | `pantalla: Comprando` → *"Necesito 500 unidades de 6205-2RS en Europa"* | `buscar_en_catalogo` | *"Ahora mismo busco en el catálogo"* |
+>
+> Es exactamente `D-09-02 (a)`: lo dice, explica por qué, una vez, en una frase, **parafraseando
+> y no repitiendo el literal**. Y el control demuestra que el arreglo **no ha roto** el camino
+> principal. **La caché sigue viva** tras crecer el prompt: 2659 de escritura y luego 2659 de
+> lectura (eran 2119 antes).
+>
+> ⚠ **Es UNA pregunta, no las quince.** La sesión 2 sigue haciendo el interrogatorio completo
+> — lo que cambia es que ya no va a descubrir este fallo, va a buscar los que queden.
 
 ### `F-086` · decisión del PO: se acepta el hueco
 
@@ -235,13 +247,16 @@ tres sesiones de `Plan §10`, que son ensayo interno. Quedan **6 días naturales
 
 ## Pendiente de Álvaro
 
-1. 🔴 **REDESPLEGAR LA EDGE FUNCTION DE VERA, o el arreglo de `F-090` no existe para la sesión
-   2.** El prompt y `tools.json` viven en `supabase/functions/vera/` y **no se despliegan con el
-   push** — es el mismo patrón de `F-091`, que costó media sesión el día 11. Hace falta
-   `npx supabase functions deploy vera`, y **ojo (F-073): la CLI está logueada en la cuenta
-   equivocada**, así que puede que haya que hacerlo por el panel de Supabase.
-2. **Redesplegar la app a Vercel** (`npx vercel --prod`) por lo mismo: los arreglos de `F-087`,
-   `F-088` y `F-093` no llegan solos a `bearingworld.vercel.app`. `despliegue.md` §1b.
+1. ✅ **Edge Function de VERA · DESPLEGADA (v4) y verificada.** Por el **MCP**, no por la CLI:
+   `npx supabase projects list` solo devuelve `web-julsaindustrial` y `Base de Conocimientos`
+   —F-073 en vivo—, así que `functions deploy` no puede llegar a `troxminloxkjwihwfevs`.
+   `verify_jwt` sigue en `true`. Ver la tabla de la sección de `F-090`.
+2. ✅ **App desplegada a Vercel y comprobada en el alias**, que es lo que falló el día 11
+   (F-091). `bearingworld.vercel.app` → `200`, y el bundle servido lleva los tres marcadores del
+   día 12: `hiloAbierto`, el literal de `F-087` y las dos reglas CSS de `F-088`/`F-093`
+   (`._page_u1035_9{…min-height:0}` y `._page_1mia6_39{…overflow-y:auto}`). **Ningún secreto en
+   el bundle** — la única coincidencia de `sb_secret_` es un literal de la propia librería
+   supabase-js, que clasifica prefijos de clave; `service_role` no aparece.
 3. **Correr `reanchor_freshness.sql` otra vez antes de la sesión 2 y el 20-ago.** Comando en
    `guion-demo-y-siembra.md` §6. Hoy ya está corrido.
 4. **`npx supabase link --project-ref troxminloxkjwihwfevs`** — pide la contraseña de la base. Y

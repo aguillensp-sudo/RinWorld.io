@@ -182,5 +182,45 @@ usarlo, no de tocar el esquema.
 
 ---
 
+---
+
+## 6 · Curación del día 12 — el catálogo envejece solo
+
+**El catálogo no se degrada por uso: se degrada por calendario, y eso no lo veía nadie.**
+
+Las fechas se siembran relativas (`now() - interval 'N days'`), que sigue siendo la decisión
+correcta. Pero la base se sembró el **7-ago** y no se ha vuelto a sembrar. Medido con SQL el
+14-ago: **220 de las 221 líneas pasaban ya de 7 días**, y las 14 de `6205-2RS` también — la más
+fresca por 8 días. Como SRCH-01 pinta en naranja todo lo que pase de 7, el 20-ago la columna
+Antigüedad habría salido **entera en naranja**, que es justo lo contrario de lo que pide §2.1:
+naranja como excepción, con una sola línea en rojo.
+
+Los asertos del día 3 no lo cazaron porque estaban escritos **solo por abajo** (*"al menos dos
+líneas con más de 7 días"*), y un suelo lo cumple también el caso contrario al deseado. Ver F-094.
+
+**Cómo se cura, y cuándo hay que correrlo:**
+
+```bash
+psql "$DATABASE_URL" -f supabase/seed/reanchor_freshness.sql
+```
+
+Desplaza `last_upload_at` de todas las líneas por un delta constante, el que devuelve la más
+reciente a `now()`. Conserva la distribución entera —el orden entre líneas, la de 34 días a 34,
+la de más de 30 que pinta en rojo— y **se verifica a sí mismo**: si el resultado no cumple el
+guion, falla en voz alta en vez de dejar la demo rota y callada.
+
+> **Córrelo antes de cada ensayo de `Plan §10` y otra vez el 20-ago por la mañana.** Es
+> idempotente dentro del mismo día. No hace falta re-sembrar — y además no conviene: las
+> tarjetas `CONSULTA` de los días 10 y 11 apuntan a `inventory_lines.id` concretos.
+
+**El contrato nuevo** vive en `supabase/tests/05_freshness_asserts.sql`, y `run.sh` lo prueba en
+las dos direcciones: envejece el catálogo 9 días, comprueba que los asertos **fallan** así,
+re-ancla y comprueba que pasan.
+
+Estado tras la curación del 14-ago, contra `troxminloxkjwihwfevs`: **159 de 221 líneas frescas ·
+11 de las 14 de `6205-2RS` frescas · 3 en naranja · 9 en rojo · 0 en el futuro.**
+
+---
+
 *Redactado el 7-ago-2026 (día 3) · **confirmado por el PO el 7-ago-2026**: `6205-2RS` y seis
-organizaciones*
+organizaciones · §6 añadida el 14-ago-2026 (día 12), curación hacia el guion*

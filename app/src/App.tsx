@@ -42,6 +42,22 @@ const SEARCH_NAV = navIndexOf('Comprando');
 const SELLING_NAV = navIndexOf('Vendiendo');
 const HOME_NAV = navIndexOf('Panel');
 
+/**
+ * De índice de nav al nombre de pantalla que entiende VERA (F-090).
+ *
+ * Es el inverso de `navIndexOf` y se escribe a mano, no se deriva de
+ * `NAV_ITEMS`: los ítems del menú aprobado son ocho y las pantallas construidas
+ * cinco (`vera-tools.ts` SCREENS). Derivarlo borraría esa diferencia, que es
+ * justo la que hace que VERA no prometa pantallas que no existen.
+ */
+const NAV_SCREEN: Record<number, Screen> = {
+  [HOME_NAV]: 'Panel',
+  [INVENTORY_NAV]: 'Inventario',
+  [MESSAGES_NAV]: 'Hilos',
+  [SEARCH_NAV]: 'Comprando',
+  [SELLING_NAV]: 'Vendiendo',
+};
+
 /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
 const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
 
@@ -147,12 +163,26 @@ export function App() {
      * El token se pide en cada llamada, no al montar: el de acceso caduca y se
      * renueva solo, y uno congelado empezaría a dar 401 a mitad de sesión.
      */
+    /*
+     * El contexto lleva la PANTALLA además del perfil (F-090).
+     *
+     * Se construye en cada render y no se memoriza a propósito: si se congelara
+     * al montar, VERA seguiría creyendo que el usuario está en el Panel media
+     * hora después, y la regla que distingue "qué me han ofrecido en este hilo"
+     * de una búsqueda de catálogo dejaría de tener con qué decidir. `VeraPanel`
+     * usa `agent.call` del render vivo, así que esto llega fresco.
+     */
     call: createProxyCall(
       async () => {
         const { data } = await supabase.auth.getSession();
         return data.session?.access_token ?? null;
       },
-      { orgName: state.profile.orgName, fullName: state.profile.fullName },
+      {
+        orgName: state.profile.orgName,
+        fullName: state.profile.fullName,
+        pantalla: NAV_SCREEN[nav] ?? 'Panel',
+        hiloAbierto: openThreadId !== null,
+      },
     ),
   };
 

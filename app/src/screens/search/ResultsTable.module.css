@@ -1,6 +1,11 @@
 .tableOuter {
   flex: 1;
   overflow-x: auto;
+  /* Explícito y no heredado del `auto` de arriba (F-088). Con un solo eje en
+     `auto` el otro computa a `auto` también, así que esto ya "funcionaba" — pero
+     dependía de una regla de cascada que nadie leía, y lo que la pantalla
+     necesita es que el scroll vertical de la tabla sea una decisión escrita. */
+  overflow-y: auto;
   background: white;
   border: 1px solid var(--bw-line-steel);
   border-radius: 8px; /* no hay token para 8px; --bw-radius es 3px y el HTML aprobado usa 8px aquí */

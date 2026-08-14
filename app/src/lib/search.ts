@@ -293,8 +293,17 @@ export interface InquirySendResult {
  * Cuando algo falla, el mensaje **lo dice** en vez de sumarlo en silencio al
  * recuento de éxitos (F-023): un fallo de un distribuidor no es una consulta
  * enviada, y "enviadas a X" tiene que seguir siendo una cifra verdadera.
+ *
+ * **`omitidas` cierra F-087.** La pantalla descarta las filas ya consultadas
+ * antes de enviar —`create_inquiry` las rechazaría—, pero hasta hoy solo lo
+ * decía cuando la selección entera lo estaba. Con "Seleccionar todos", que es
+ * como se va a usar en la demo, el caso normal es el MIXTO: se envían unas y se
+ * callan otras, y el usuario solo podía deducirlo del sombreado de la fila. El
+ * recuento de éxitos nunca fue falso; lo que faltaba era decir qué pasó con el
+ * resto. Va **después** del literal de la spec §6, que se conserva palabra por
+ * palabra, y no en lugar de él.
  */
-export function consultSummary(resultados: InquirySendResult[]): string {
+export function consultSummary(resultados: InquirySendResult[], omitidas = 0): string {
   const exitos = resultados.filter((r) => r.ok);
   const fallos = resultados.filter((r) => !r.ok);
   const distribuidores = new Set(exitos.map((r) => r.distributorOrgId)).size;
@@ -304,6 +313,13 @@ export function consultSummary(resultados: InquirySendResult[]): string {
     partes.push(
       `Consultas enviadas a ${distribuidores} distribuidor${distribuidores === 1 ? '' : 'es'}. ` +
         'Las respuestas llegarán a tu bandeja de Hilos.',
+    );
+  }
+  if (omitidas > 0) {
+    partes.push(
+      omitidas === 1
+        ? '1 fila de la selección ya estaba consultada y no se ha vuelto a enviar.'
+        : `${omitidas} filas de la selección ya estaban consultadas y no se han vuelto a enviar.`,
     );
   }
   if (fallos.length > 0) {

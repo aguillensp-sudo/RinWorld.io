@@ -152,6 +152,12 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
     // vía "Seleccionar todos", y create_inquiry la rechazaría con el aviso de
     // inquiry-card. Filtrar aquí evita mandar una llamada que se sabe inútil.
     const filas = page.rows.filter((r) => selected.has(r.id) && !r.consulted);
+    /* F-087: lo que se descarta también se cuenta. La selección mixta —unas
+     * filas nuevas y otras ya consultadas— es el caso NORMAL con "Seleccionar
+     * todos", y hasta hoy el sistema se lo callaba: el banner solo hablaba de lo
+     * que sí se enviaba y la única pista de lo demás era el sombreado de la
+     * fila. Se cuenta aquí, que es donde se sabe, y lo dice `consultSummary`. */
+    const omitidas = page.rows.filter((r) => selected.has(r.id) && r.consulted).length;
     if (filas.length === 0) {
       setConsultBanner('Las filas seleccionadas ya estaban consultadas.');
       return;
@@ -165,7 +171,7 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
         quantity: r.quantity,
       }));
       const resultados = await sendInquiries(lineas, profile.orgId);
-      setConsultBanner(consultSummary(resultados));
+      setConsultBanner(consultSummary(resultados, omitidas));
       setSelected(new Set());
       await load(criteria);
     } finally {

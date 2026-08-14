@@ -59,6 +59,11 @@ Por eso NO PUEDES resumir un hilo, ni decir qué se ofreció, ni a cuánto. Cuan
 
 No lo repitas en cada respuesta, no te disculpes y no lo intentes con lo que tengas a mano: responder con los metadatos como si fueran el contenido es exactamente la forma que toma inventar. Después de decirlo, ofrece lo que sí puedes: el estado, la contraparte, la fecha.
 
+Y OJO CON CONFUNDIR LA PREGUNTA, QUE ES POR DONDE SE ESCAPA DE VERDAD:
+"¿Qué precio me han ofrecido?", "¿cuánto piden?", "¿qué me han contestado?", "¿qué condiciones hay?", "resúmeme esto" — lleven delante una referencia de rodamiento o no — son preguntas sobre el CONTENIDO DE UNA NEGOCIACIÓN. No son búsquedas de catálogo. NO llames a buscar_en_catalogo para contestarlas: además de no responder a lo que se te pregunta, buscar CAMBIA LA PANTALLA, y el usuario se queda fuera del hilo que estaba mirando sin que le hayas dicho que no puedes leerlo. Di la frase de arriba primero, y solo después ofrece buscar en el catálogo si crees que es lo que quería.
+
+buscar_en_catalogo sirve para saber QUIÉN VENDE algo. Si la pregunta es qué se ha dicho, ofrecido, pedido o acordado, no es esa herramienta — y no tienes ninguna otra que lo sepa.
+
 TAMPOCO PUEDES:
 - Actuar por encima de los permisos del usuario. Trabajas con los suyos y no hay forma de ampliarlos.
 - Ver ni deducir precios del catálogo. El precio no está en la búsqueda: se negocia dentro de un hilo, cifrado.
@@ -86,8 +91,16 @@ function json(cuerpo: unknown, status: number): Response {
 
 interface Entrada {
   messages?: unknown;
-  /** Nombre y organización de quien pregunta. Va al bloque DINÁMICO. */
-  contexto?: { orgName?: string; fullName?: string };
+  /**
+   * Quién pregunta y DESDE DÓNDE. Va al bloque DINÁMICO.
+   *
+   * `pantalla` y `hiloAbierto` entran con F-090: sin saber dónde está el
+   * usuario, *"¿qué precio me han ofrecido?"* es ambigua de verdad —puede ser el
+   * hilo que tiene delante o el mercado— y el modelo resolvía la ambigüedad por
+   * el lado malo. Con el sitio dicho, la regla del bloque estático tiene contra
+   * qué aplicarse.
+   */
+  contexto?: { orgName?: string; fullName?: string; pantalla?: string; hiloAbierto?: boolean };
 }
 
 Deno.serve(async (peticion: Request) => {
@@ -136,6 +149,10 @@ Deno.serve(async (peticion: Request) => {
   const dinamico = [
     entrada.contexto?.fullName ? `Hablas con ${entrada.contexto.fullName}.` : '',
     entrada.contexto?.orgName ? `Trabaja en ${entrada.contexto.orgName}.` : '',
+    entrada.contexto?.pantalla ? `Ahora mismo está en la pantalla ${entrada.contexto.pantalla}.` : '',
+    entrada.contexto?.hiloAbierto
+      ? 'Tiene un hilo de negociación ABIERTO en pantalla, así que cualquier pregunta sobre lo ofrecido, lo pedido o lo acordado se refiere a ese hilo y no al catálogo.'
+      : '',
   ]
     .filter(Boolean)
     .join(' ');

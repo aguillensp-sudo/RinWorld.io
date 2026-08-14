@@ -1,6 +1,25 @@
+/*
+ * `min-height: 0` NO ES COSMÉTICO — es lo que hacía a esta pantalla perder
+ * contenido (F-088).
+ *
+ * `.page` es hijo flex de `.bwcnt`, que sí acota su alto (`overflow: hidden`,
+ * `AppShell.module.css`). Pero un ítem flex con `overflow: visible` conserva
+ * `min-height: auto`, o sea, **no encoge por debajo de su contenido**: la tabla
+ * crecía, `.page` crecía con ella y `.bwcnt` recortaba lo que sobraba. Las filas
+ * que no cabían no eran difíciles de ver: eran inalcanzables, sin barra de
+ * desplazamiento en ningún punto de la cadena.
+ *
+ * Con el alto acotado aquí, el `flex: 1; min-height: 0` que `.resultsArea` y
+ * `.tableOuter` ya traían desde el día 6 empieza a significar algo y el scroll
+ * cae donde estaba diseñado: dentro de la tabla, con la cabecera `sticky`
+ * quieta encima. INV-01 y VND-01 no lo sufren porque su raíz sí lleva
+ * `overflow-y: auto` (`Inventory.module.css` .body, `SentOffers.module.css`
+ * .content); SRCH-01 era la única de las cuatro sin acotar.
+ */
 .page {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }

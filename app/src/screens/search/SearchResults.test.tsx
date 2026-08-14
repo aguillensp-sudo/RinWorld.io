@@ -283,6 +283,30 @@ describe('SRCH-01 · Consultar seleccionados', () => {
     expect(sendInquiries.mock.calls[0]![0]).toEqual([{ lineId: 'a', distributorOrgId: 'org-a', quantity: 850 }]);
   });
 
+  it('y AVISA de cuántas dejó fuera: la selección mixta ya no se calla (F-087)', async () => {
+    // El defecto que Álvaro encontró en la sesión 1: se enviaba lo correcto,
+    // pero el banner solo hablaba de lo enviado. La única pista de que dos
+    // filas se habían quedado atrás era el sombreado, no el sistema.
+    fetchResults.mockResolvedValue(
+      page(
+        [
+          row({ id: 'a', orgId: 'org-a', quantity: 850, consulted: false }),
+          row({ id: 'b', orgId: 'org-b', quantity: 350, consulted: true }),
+          row({ id: 'c', orgId: 'org-c', quantity: 120, consulted: true }),
+        ],
+        { total: 3 },
+      ),
+    );
+    pintar();
+    await waitFor(() => expect(filas()).toHaveLength(3));
+    await userEvent.click(screen.getByRole('button', { name: 'Seleccionar todos' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
+
+    expect(
+      await screen.findByText(/2 filas de la selección ya estaban consultadas y no se han vuelto a enviar\./),
+    ).toBeInTheDocument();
+  });
+
   it('si TODO lo marcado ya estaba consultado, no llama a sendInquiries y lo dice', async () => {
     fetchResults.mockResolvedValue(
       page([row({ id: 'a', consulted: true }), row({ id: 'b', consulted: true })], { total: 2 }),

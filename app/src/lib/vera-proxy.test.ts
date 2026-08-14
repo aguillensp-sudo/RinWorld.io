@@ -95,6 +95,59 @@ describe('el system prompt lleva las reglas que deciden el riesgo #1', () => {
   });
 });
 
+/**
+ * F-090 · LA PREGUNTA SOBRE UN HILO NO ES UNA BUSQUEDA DE CATALOGO.
+ *
+ * Encontrado por Álvaro en la sesión 1 (`Plan §10`), dos días antes de que la
+ * sesión 2 lo reservara como "momento clave": preguntando dentro de MSG-02, el
+ * modelo llamaba a `buscar_en_catalogo` en vez de decir que no puede leer el
+ * hilo, y la búsqueda **navega** — el usuario salía de la pantalla sin haber
+ * recibido la negativa de D-09-02.
+ *
+ * Igual que el resto de este fichero: esto comprueba que la regla está ESCRITA,
+ * no que el modelo la obedezca. Lo segundo es la sesión 2 (día 13), que ahora
+ * confirma un arreglo en vez de descubrir el fallo.
+ */
+describe('el system prompt distingue el contenido de un hilo de una búsqueda (F-090)', () => {
+  it('prohíbe expresamente llamar a la herramienta de catálogo para eso', () => {
+    expect(fuente).toContain('NO llames a buscar_en_catalogo');
+  });
+
+  it('nombra la pregunta exacta del guion de la sesión 2', () => {
+    // `Plan §10`: *"VERA, ¿qué precio me han ofrecido?"*. Si el prompt no la
+    // nombra, la regla se queda en abstracto justo en el caso que la motivó.
+    expect(fuente).toContain('¿Qué precio me han ofrecido?');
+  });
+
+  it('dice el motivo por el que además es grave: buscar cambia de pantalla', () => {
+    expect(fuente).toContain('CAMBIA LA PANTALLA');
+  });
+
+  it('el bloque DINÁMICO recibe la pantalla y si hay hilo abierto', () => {
+    // Va en el dinámico y no en el estático a propósito: el estático tiene que
+    // ser byte a byte idéntico o se pierde la caché (`CLAUDE.md` §5).
+    expect(fuente).toContain('entrada.contexto?.pantalla');
+    expect(fuente).toContain('entrada.contexto?.hiloAbierto');
+  });
+
+  it('lo variable NO se ha colado en el bloque cacheado', () => {
+    // Ancla estructural: el trozo del prompt que lleva `cache_control` no puede
+    // contener interpolaciones del contexto. Si alguien mete `${...}` con datos
+    // del usuario ahí dentro, el prefijo cambia en cada petición y la caché
+    // deja de existir sin que nada falle.
+    const estatico = fuente.slice(
+      fuente.indexOf('const PROMPT_ESTATICO'),
+      fuente.indexOf('/** CORS'),
+    );
+    expect(estatico.length).toBeGreaterThan(500);
+    expect(estatico).not.toContain('${');
+  });
+
+  it('la herramienta de catálogo se descarta a sí misma para ese caso', () => {
+    expect(toolsJson).toContain('NO LA USES para preguntas sobre lo que se ha dicho');
+  });
+});
+
 describe('las herramientas vienen de tools.json, no duplicadas a mano', () => {
   const NOMBRES = ['buscar_en_catalogo', 'consultar_mi_inventario', 'listar_mis_hilos'];
 

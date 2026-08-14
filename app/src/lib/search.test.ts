@@ -317,4 +317,43 @@ describe('consultSummary · GAP-004, el literal de "Consultar Seleccionados" eje
     ]);
     expect(resultado).toBe('2 consultas no se pudieron enviar: Límite diario alcanzado');
   });
+
+  // ---------------------------------------------------------------------------
+  // F-087 · la selección mixta
+  // ---------------------------------------------------------------------------
+
+  it('sin omitidas el literal de la spec §6 sigue SOLO, sin coletilla añadida', () => {
+    // El aserto que protege el arreglo de F-087 de sí mismo: el mensaje verbatim
+    // de la spec no puede crecer en el caso normal, que es el que ve la demo.
+    expect(consultSummary([{ distributorOrgId: 'org-a', ok: true }], 0)).toBe(
+      'Consultas enviadas a 1 distribuidor. Las respuestas llegarán a tu bandeja de Hilos.',
+    );
+  });
+
+  it('la selección mixta dice cuántas se omitieron por ya consultadas (F-087)', () => {
+    const resultado = consultSummary([{ distributorOrgId: 'org-a', ok: true }], 3);
+    expect(resultado).toMatch(
+      /^Consultas enviadas a 1 distribuidor\. Las respuestas llegarán a tu bandeja de Hilos\./,
+    );
+    expect(resultado).toContain('3 filas de la selección ya estaban consultadas y no se han vuelto a enviar.');
+  });
+
+  it('una sola omitida va en singular', () => {
+    expect(consultSummary([{ distributorOrgId: 'org-a', ok: true }], 1)).toContain(
+      '1 fila de la selección ya estaba consultada y no se ha vuelto a enviar.',
+    );
+  });
+
+  it('omitidas y fallos conviven: ninguno de los dos tapa al otro', () => {
+    const resultado = consultSummary(
+      [
+        { distributorOrgId: 'org-a', ok: true },
+        { distributorOrgId: 'org-b', ok: false, error: 'sin clave publicada' },
+      ],
+      2,
+    );
+    expect(resultado).toMatch(/enviadas a 1 distribuidor/);
+    expect(resultado).toMatch(/2 filas de la selección ya estaban consultadas/);
+    expect(resultado).toMatch(/1 consulta no se pudo enviar: sin clave publicada/);
+  });
 });

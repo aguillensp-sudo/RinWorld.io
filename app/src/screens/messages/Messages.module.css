@@ -10,9 +10,18 @@
    sin padding y el contenido quedaba pegado al borde izquierdo del panel: no lo
    ve C2, que mira comportamiento, ni C3, que mira color, ni C4, que es mecánico.
    Es de C5, y C5 lo da el PO. */
+/* `flex: 1; min-height: 0; overflow-y: auto` en vez de `min-height: 100%`, por
+   lo mismo que SRCH-01 (F-088, y aquí F-093): con `min-height: 100%` y overflow
+   visible, una lista de hilos más alta que la ventana se salía de `.bwcnt` y
+   `overflow: hidden` la recortaba sin dejar barra. No se vio en la sesión 1
+   porque el hilo de demo era corto; el 20-ago la lista lleva ya las CONSULTA de
+   los cinco distribuidores. Misma forma que `Inventory.module.css` .body y
+   `SentOffers.module.css` .content, que son las dos que sí lo tenían bien. */
 .page {
   background: var(--bw-cold-white);
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 40px 48px 56px;
 }
 

@@ -131,7 +131,18 @@ type Bloque = BloqueTexto | BloqueHerramienta | { type: string };
  */
 export function createProxyCall(
   getToken: () => Promise<string | null>,
-  contexto: { orgName: string; fullName: string | null },
+  /**
+   * `pantalla` y `hiloAbierto` entran con F-090.
+   *
+   * Sin ellos, *"¿qué precio me han ofrecido?"* preguntado dentro de un hilo es
+   * ambigua de verdad, y el modelo la resolvía como búsqueda de catálogo: se
+   * llevaba al usuario a Comprando sin haber dicho que el contenido del hilo va
+   * cifrado y no puede leerlo (D-09-02). El sitio desde el que se pregunta es
+   * el dato que faltaba, y va al bloque DINÁMICO del system prompt — el
+   * estático no puede cambiar entre peticiones o se pierde la caché
+   * (`CLAUDE.md` §5).
+   */
+  contexto: { orgName: string; fullName: string | null; pantalla?: string; hiloAbierto?: boolean },
 ): ProxyCall {
   return async ({ messages }) => {
     const accessToken = await getToken();

@@ -199,3 +199,88 @@ test.describe('SRCH-01 · resultados reales', () => {
     await expect(page.getByText(/te avisaremos/i)).toHaveCount(0);
   });
 });
+
+/**
+ * F-088 · LA TABLA TIENE QUE PODER DESPLAZARSE, Y ESTO SOLO SE VE EN NAVEGADOR.
+ *
+ * Ningún test de unidad puede cazarlo: jsdom no calcula layout, así que
+ * `SearchResults.test.tsx` pinta las 200 filas y las encuentra todas aunque en
+ * un navegador de verdad la mitad quede fuera del contenedor recortado. Ningún
+ * check del arnés lo mira tampoco —C2 mira comportamiento, C3 color, C4 es
+ * mecánico—, y el resto de e2e corre en el viewport por defecto, que es lo
+ * bastante alto como para que el desbordamiento no llegue a ocurrir.
+ *
+ * De ahí el viewport bajo a propósito: es la única forma de que el defecto
+ * exista dentro del test. Álvaro lo encontró en la sesión 1 con una ventana
+ * normal y "Seleccionar todos", sin saber si había más filas debajo.
+ *
+ * El aserto es "la última fila se puede llegar a ver", no "existe un elemento
+ * con overflow": lo segundo lo pasa cualquier `overflow-y: auto` puesto en el
+ * sitio equivocado.
+ */
+test.describe('SRCH-01 · la tabla se desplaza en una ventana baja (F-088)', () => {
+  test.skip(!haveCreds, 'sin credenciales E2E_*');
+  test.use({ storageState: ALPHA_STORAGE, viewport: { width: 1280, height: 480 } });
+
+  /**
+   * ⚠ EL PRIMER INTENTO DE ESTE TEST PASABA CON EL DEFECTO PUESTO, Y LA RAZÓN
+   * MERECE QUEDAR ESCRITA.
+   *
+   * Decía `scrollIntoViewIfNeeded()` y luego `toBeInViewport()`, que es lo que
+   * uno escribe sin pensarlo. Pero **`overflow: hidden` sigue siendo un
+   * contenedor de scroll**: lo que quita es la barra y el gesto del usuario, no
+   * la capacidad de desplazarlo por script. Así que Playwright desplazaba
+   * `.bwcnt` a mano, la fila entraba en el viewport y el aserto se ponía verde
+   * sobre contenido al que una persona no puede llegar de ninguna manera.
+   *
+   * Medido con el defecto puesto: `.page` ocupa 11521px dentro de un `.bwcnt` de
+   * 384px, y la última de las 186 filas cae a y=11555. Nada en la cadena tiene
+   * `overflow-y: auto`.
+   *
+   * De ahí que lo que se compruebe sea la CADENA DE CONTENEDORES, que es lo que
+   * el hallazgo nombra, y en sus dos mitades:
+   *
+   *   · negativa — ningún ancestro puede estar recortando con `overflow: hidden`
+   *     contenido que le desborda: eso es contenido inalcanzable, por definición;
+   *   · positiva — y alguno tiene que desbordar con `auto`/`scroll`, o sea, el
+   *     scroll existe de verdad y no es que la tabla quepa entera.
+   *
+   * Las dos juntas: la primera sola la pasaría una tabla que cupiera en pantalla,
+   * y la segunda sola no dice nada de lo que se recorta más arriba.
+   */
+  test('ningún contenedor recorta filas sin dejar cómo llegar a ellas', async ({ page }) => {
+    await page.goto('/');
+    await topNav(page).getByRole('button', { name: 'Comprando' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+
+    // Con 480px de alto tiene que sobrar tabla; si no sobrara, este test no
+    // estaría probando nada y hay que enterarse.
+    expect(await page.getByRole('row').count()).toBeGreaterThan(20);
+
+    const cadena = await page.evaluate(() => {
+      const ultima = document.querySelector('tbody tr:last-child');
+      if (!ultima) return { error: 'sin filas', recortan: [], desplazables: [] };
+      const recortan: string[] = [];
+      const desplazables: string[] = [];
+      let el: Element | null = ultima;
+      while (el) {
+        const h = el as HTMLElement;
+        const overflowY = getComputedStyle(h).overflowY;
+        // +1 de tolerancia: los redondeos subpíxel del navegador producen
+        // diferencias de una unidad que no son desbordamiento de nada.
+        if (h.scrollHeight > h.clientHeight + 1) {
+          const nombre = `${el.tagName}.${String(el.className).slice(0, 30)}`;
+          if (overflowY === 'hidden') recortan.push(nombre);
+          if (overflowY === 'auto' || overflowY === 'scroll') desplazables.push(nombre);
+        }
+        el = el.parentElement;
+      }
+      return { error: null, recortan, desplazables };
+    });
+
+    expect(cadena.error).toBeNull();
+    expect(cadena.recortan).toEqual([]);
+    expect(cadena.desplazables.length).toBeGreaterThan(0);
+  });
+});

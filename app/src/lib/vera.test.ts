@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import type { MemberProfile } from './session';
 import type { Screen, ToolContext } from './vera-tools';
-import { MAX_STEPS, ask, proxyUrl, type ProxyCall, type ProxyTurn } from './vera';
+import { MAX_STEPS, ask, createProxyCall, proxyUrl, type ProxyCall, type ProxyTurn } from './vera';
 
 /**
  * Contrato del bucle de VERA (D-09-05: el proxy no toca la base; las
@@ -57,6 +57,71 @@ describe('proxyUrl', () => {
   it('tolera la barra final sin duplicarla', () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://troxminloxkjwihwfevs.supabase.co/');
     expect(proxyUrl()).not.toContain('//functions');
+  });
+});
+
+// -----------------------------------------------------------------------------
+// El contexto que viaja al proxy · F-090
+// -----------------------------------------------------------------------------
+
+describe('createProxyCall · el contexto dice DESDE DÓNDE se pregunta (F-090)', () => {
+  /** Devuelve el cuerpo con el que se llamó a `fetch`, ya parseado. */
+  async function cuerpoEnviado(ctx: Parameters<typeof createProxyCall>[1]): Promise<{
+    contexto?: { pantalla?: string; hiloAbierto?: boolean; orgName?: string };
+  }> {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://troxminloxkjwihwfevs.supabase.co');
+    // El doble se tipa con la firma de `fetch` a mano: sin los parámetros
+    // declarados, vitest infiere la tupla vacía y `calls[0][1]` no existe para
+    // TypeScript. `npm run typecheck` lo deja pasar y `npm run build` no.
+    const fetchSpy = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response(JSON.stringify({ stop_reason: 'end_turn', content: [] }), { status: 200 }),
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+    const call = createProxyCall(async () => 'jwt-de-prueba', ctx);
+    await call({ messages: [{ role: 'user', content: 'hola' }] });
+    const init = fetchSpy.mock.calls[0]?.[1];
+    expect(init?.body).toBeTypeOf('string');
+    return JSON.parse(init!.body as string) as never;
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /**
+   * El defecto de la sesión 1: dentro de un hilo, *"¿qué precio me han
+   * ofrecido?"* se resolvía como búsqueda de catálogo y sacaba al usuario de
+   * MSG-02 sin decirle que el contenido va cifrado. Aquí no se puede probar qué
+   * contesta el modelo —eso es una corrida real contra Sonnet— pero sí que **el
+   * dato con el que puede distinguirlo llega**. Sin este campo, la regla nueva
+   * del system prompt no tiene contra qué aplicarse.
+   */
+  it('lleva la pantalla y si hay un hilo abierto', async () => {
+    const cuerpo = await cuerpoEnviado({
+      orgName: 'Alpha Rodamientos',
+      fullName: 'Alpha Uno',
+      pantalla: 'Hilos',
+      hiloAbierto: true,
+    });
+    expect(cuerpo.contexto?.pantalla).toBe('Hilos');
+    expect(cuerpo.contexto?.hiloAbierto).toBe(true);
+  });
+
+  it('fuera de un hilo lo dice también, y no lo omite: `false` no es lo mismo que ausente', async () => {
+    const cuerpo = await cuerpoEnviado({
+      orgName: 'Alpha Rodamientos',
+      fullName: 'Alpha Uno',
+      pantalla: 'Comprando',
+      hiloAbierto: false,
+    });
+    expect(cuerpo.contexto?.pantalla).toBe('Comprando');
+    expect(cuerpo.contexto?.hiloAbierto).toBe(false);
+  });
+
+  it('sigue llevando el perfil: lo nuevo no ha desplazado a lo de antes', async () => {
+    const cuerpo = await cuerpoEnviado({ orgName: 'Alpha Rodamientos', fullName: 'Alpha Uno' });
+    expect(cuerpo.contexto?.orgName).toBe('Alpha Rodamientos');
   });
 });
 

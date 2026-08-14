@@ -7,7 +7,7 @@
 > **Regla de este fichero (F-012).** Cita, no parafrasees. Los valores de estado y las
 > asignaciones de modelo se copian del spec cerrado o del plan **con el puntero al lado**.
 
-**Día 11 de 15 · CERRADO, 14-ago-2026 · Estado: VERDE.** Las dos filas de `Plan §3` para
+**Día 11 de 15 · CERRADO, 14-ago-2026 · Estado: VERDE.** Las dos filas de `Plan §5` para
 este día están hechas: el **panel de vista-servidor** (implementado y verificado el
 13-ago) y la **sesión de pruebas 1 de Álvaro** (`Plan §10`, ejecutada el 14-ago) — **las 6
 comprobaciones del guion, todas OK.**
@@ -50,14 +50,14 @@ comprobaciones del guion, todas OK.**
 
 ## Dónde estamos
 
-`Plan §3`, filas del día 10 — **las dos cerradas**:
+`Plan §4`, filas del día 10 — **las dos cerradas**:
 
 | Bloque | Ejecuta | Resultado |
 |---|---|---|
 | Contraoferta / modificación de oferta | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `counter_offer` (0013) atómico, formulario inline en MSG-02 |
 | **"Consultar Seleccionados"** (GAP-004) | Claude Code (Sonnet 5) | **Cableada de extremo a extremo.** `create_inquiry` + `org_public_keys` (0014) atómicos |
 
-`Plan §3`, filas del día 11 — **las dos cerradas**:
+`Plan §5`, filas del día 11 — **las dos cerradas**:
 
 | Bloque | Ejecuta | Resultado |
 |---|---|---|
@@ -68,7 +68,7 @@ comprobaciones del guion, todas OK.**
 
 ## Panel de vista-servidor, cómo quedó
 
-`Plan §3`, día 11, primera fila: *"panel de vista-servidor (comprador vs. lo que almacena
+`Plan §5`, día 11, primera fila: *"panel de vista-servidor (comprador vs. lo que almacena
 Postgres)"*. No tiene spec cerrada ni existe en los 32 HTML aprobados (`Plan §9`) — es
 diseño nuevo, decidido con el PO antes de escribir una línea.
 
@@ -207,8 +207,16 @@ socio.
 
 ## Día 11, cerrado — qué sigue
 
-`Plan §3`, las dos filas del día 11 hechas. **No lleva fichero de decisiones propio**
+`Plan §5`, las dos filas del día 11 hechas. **No lleva fichero de decisiones propio**
 (`CLAUDE.md` §ritual: solo los días 4, 8 y 9).
+
+> **Por qué es "día 11" y no "día 12", aunque hoy sea un día de calendario distinto del
+> 13-ago:** `Plan §5` asigna **dos** tareas a la misma fila "11" — panel de vista-servidor y
+> sesión de pruebas 1 — sin atarlas a un único día de calendario. Ya pasó lo mismo con el
+> día 9 (`F-074`-`F-076` el 12-ago, `F-077`-`F-080` el 13-ago): un "día" del plan es una
+> etiqueta de hito, no un contador de jornadas. **El día 12** (`Plan §5`) es tarea distinta
+> y todavía no ha empezado: *"Correcciones de la sesión 1. Curación del catálogo hacia el
+> guion"* — ahí es donde entran los hallazgos de hoy (`F-086`-`F-091`).
 
 **Próximo hito de `Plan §10`: sesión 2, día 13** — recorrido completo cronometrado,
 interrogatorio a VERA (15 preguntas), contraoferta y modificación, el "momento clave" del

@@ -17,200 +17,190 @@
 > **en el momento de escribirlo**, y se dice cuándo. Hoy hay una forma corta de hacerlo:
 > `select public.demo_state();` — devuelve catálogo, referencia y los cinco hilos.
 
-**Día 13 de 15 · CERRADO, 16-ago-2026 · Estado: ÁMBAR · Riesgo #1: 🔴 ROJO.** Las dos filas
-de `Plan §5` están hechas. Lo que cambia el color no es el trabajo del día: es lo que la
-sesión de pruebas encontró.
+> ⚠ **El aviso de la línea 3 se gana su sitio: NO lo borres al sobrescribir este fichero.**
+> Hoy la sesión arrancó otra vez en un worktree sacado de `main`, ocho commits por detrás y
+> **sin `app/`, sin `supabase/` y sin `CLAUDE.md`** (`F-108`). Esa línea es lo único que
+> convirtió un arranque roto en un rodeo de dos minutos.
 
-> 🔴 **PRIMERO EL CALENDARIO, PORQUE EL RELEVO ANTERIOR LO TENÍA MAL.** El día 12 cerró el
-> **14-ago** y el día 13 es el **16-ago**: se perdió el 15. `ESTADO.md` de ayer decía *"quedan
-> 6 días naturales"* hasta la reunión del 20-ago. **Quedan 4.** Con el día 14 de congelación
-> y el 15 de ensayo general, el margen real es el **19**.
+**Día 14 de 15 · CERRADO, 17-ago-2026 · Estado: ÁMBAR · Riesgo #1: 🟠 vuelve a ÁMBAR.**
+El día 13 fijó el umbral por escrito —*"lo que lo devolvería a ámbar: `F-102` arreglado y
+verificado contra Sonnet, y las frases del prompt desplegadas en v5 y comprobadas"*—. **Las
+dos cosas están hechas y medidas contra el modelo desplegado**, no solo contra el código.
+
+**Quedan 3 días naturales** hasta la reunión del 20-ago. Mañana es el día 15: ensayo general.
 
 ---
 
 ## Lo que hay que saber antes de nada
 
-🟢 **La base está en su estado congelado.** `npm run demo:reset` corrido al cerrar,
-verificado a las **13:58:14 UTC**: 221 líneas · 159 frescas · 53 naranja · 9 rojas · 0 en el
-futuro · `6205-2RS` 11/2/1 · **cinco hilos con cinco estados distintos**, Anadolu de vuelta en
-`CERRADO SIN ACUERDO`.
+🟢 **La base está en su estado congelado.** `npm run demo:reset` corrido al cerrar, verificado
+a las **15:00:02 UTC**: 221 líneas · 159 frescas · 53 naranja · 9 rojas · 0 en el futuro ·
+`6205-2RS` 11/2/1 · **cinco hilos con cinco estados distintos**, Anadolu en `CERRADO SIN
+ACUERDO`. Corrido **después** de la suite e2e, así que es el estado con el que amanece el 15.
 
-🔴 **VERA no inventa datos. Hace otra cosa, y es lo que hay que arreglar mañana.** Cinco
-sondeos contra la Edge Function **v4 desplegada** con sesión real de `alpha@`, más la sesión
-completa del PO. **Ni una cifra falsa en todo el día** — se contrastaron fila a fila contra la
-base, incluida una que parecía un error y no lo era (un `6305-2RS` de Roulements Rhône que
-sale en **Bélgica** teniendo sede en Francia: `location_country` es dónde está el stock).
+🟢 **Los dos despliegues están hechos y comprobados en la URL viva** — que es la condición que
+`F-072` y `F-091` llevan imponiendo desde el día 11, y hoy sí se tocaron las dos cosas:
 
-Lo que sí hace, tres veces y siempre igual: **le falta un dato o una regla, y rellena o
-recorta sin decirlo.**
+| Qué | Cómo se comprobó |
+|---|---|
+| **Edge Function `vera` v5** | Desplegada por el MCP (`version: 5`, `ACTIVE`). Verificada con **una sonda real contra Sonnet**: sesión de `alpha@`, `POST` a `/functions/v1/vera`, **7 de 7**, y cada respuesta contrastada fila a fila contra SQL |
+| **App en Vercel** | `npx vercel --prod` desde `app/`. `bearingworld.vercel.app` sirve **el bundle que se acaba de construir** (`index-BSSPeP7F.js`), la cabecera `X-Robots-Tag: noindex, nofollow, noarchive` sigue puesta, y el CSS desplegado lleva `white-space:pre-wrap;overflow-wrap:anywhere` |
 
-| | Qué hizo | Qué le faltaba |
-|---|---|---|
-| `F-101` | Refinas una búsqueda y te devuelve el catálogo entero | El turno anterior — es de un solo turno |
-| `F-102` | Te manda a responder una consulta que enviaste tú | Quién envió el último elemento |
-| `F-105` | Te oculta las dos filas de más stock del resultado | Una regla que prohíba filtrar en silencio |
+🟢 **VERA ya no afirma lo contrario de lo que dice la base.** El fallo del día 13, palabra por
+palabra, era: *"tienes dos hilos que requieren tu atención… Cuscinetti Padana — consulta
+pendiente"*, cuando esa consulta la había enviado el propio usuario. Hoy, misma pregunta:
 
-**Esa es la buena noticia del día**, aunque no lo parezca: los tres se arreglan desde nuestro
-lado —uno con una columna en un `select`, dos con frases en el prompt— y ninguno depende de
-que Sonnet cambie de comportamiento.
+> *"Tienes **una** negociación donde te toca responder: Nordwälz Lager · Alemania · CON OFERTA
+> PENDIENTE · te han enviado una oferta sobre 6205-2RS. El resto no requiere acción tuya ahora
+> mismo: en Cuscinetti Padana **fuiste tú** quien envió la última consulta, y en Łożyska Wschód
+> **tú** enviaste el último mensaje, así que en ambos estás esperando respuesta."*
+
+**Coincide con SQL en los cinco hilos.** Y en inglés también, que es donde se reprodujo.
 
 ---
 
 ## Dónde estamos
 
-`Plan §5`, las dos filas del día 13 — **cerradas**:
+`Plan §5`, día 14 — *"correcciones finales y congelación de código"*:
 
-| Bloque | Ejecuta | Resultado |
-|---|---|---|
-| **Sesión de pruebas 2, flujo completo** | Álvaro | Recorrido completo, contraoferta, dos pestañas y el interrogatorio. **Siete hallazgos: `F-099` a `F-105`** |
-| ↳ *el guion, que no existía* | Claude Code (Opus 5) | `Plan §10` pedía *"15 preguntas preparadas"* desde el 5-ago y **no estaban escritas en ninguna parte del repo** (`F-097`). Escritas hoy en `guion-sesion-2.md`, con la verdad verificada por SQL contra la que se contrasta cada respuesta |
-| **Entorno de demo con siembra congelada y reseteable** | Claude Code (Opus 5) | `npm run demo:reset` + teardown de Playwright + migración `0015`. **Aislamiento no — decisión del PO, `F-098`** |
-
-**Verificado:** **631 tests de unidad** · `typecheck` · **53 e2e en verde** (los 52 más el
-teardown nuevo) · `demo_state()` consultado **después** de la corrida, con Anadolu de vuelta en
-`CERRADO SIN ACUERDO` tras haberlo reabierto la propia suite — que es la prueba de que el
-teardown hace lo que dice.
-
-🟢 **Las 8 pantallas de `Plan §9` siguen completas**, sin cambios de alcance hoy.
-
-> **Sin fila en `harness-metrics.csv`, y es correcto por cuarto día.** Ese CSV mide **tareas
-> del Coder** (`CLAUDE.md` §6): sus 31 filas son todas `deepseek-v4-flash`. Los días 10, 11, 12
-> y 13 no tuvieron ninguna. Inventar una fila falsearía el objetivo 4.
-
----
-
-## El entorno de demo reseteable · `F-096`
-
-**El hallazgo que lo motiva se midió antes de tocar nada.** El hilo de Anadolu estaba en
-`ABIERTO` con dos `MENSAJE` en vez de `CERRADO SIN ACUERDO` con uno. No lo rompió nadie: lo
-dejó así `messages.spec.ts`, el test que comprueba que un elemento nuevo reabre un hilo cerrado
-(`D-07-01`). **`F-095` describió que la suite repone al arrancar; lo que faltaba por ver es que
-reponer al arrancar significa irse dejándola rota.** Consecuencia: MSG-01 con **cuatro estados
-en vez de cinco**, que es la primera pantalla que ve el socio.
-
-| Pieza | Qué es |
+| Bloque | Resultado |
 |---|---|
-| `app/scripts/demo-reset.mjs` | Módulo **y** comando (`npm run demo:reset`). Repone la siembra congelada, re-ancla la frescura y **se verifica**: cinco hilos, cinco estados, un elemento cada uno, cero fechas futuras. Falla en voz alta |
-| `app/e2e/restore.teardown.ts` | Colgado del proyecto `fixture` por `teardown:`. La suite repone **también al terminar** |
-| `supabase/migrations/0015` | `public.demo_reanchor_freshness()` y `public.demo_state()`. En `public` porque PostgREST solo expone ese esquema, con `revoke` de `anon`/`authenticated` y `grant` solo a `service_role` |
+| **`F-102`** · el más grave | **Cerrado.** `sender_org_id` al `select`, `isOwn` en `LastItem`, dirección en cada fila y el aviso de que el estado no dice de quién es el turno. Verificado contra Sonnet |
+| **`F-104`** · markdown en crudo | **Cerrado, las dos piezas** — `pre-wrap` en el CSS y la prohibición en el prompt |
+| **`F-105`** · descartar filas en silencio | **Cerrado con reserva.** La regla está desplegada; **no se ha podido provocar el recorte** (ver abajo) |
+| **`F-101`** · refinamiento sin contexto | **Mitigado.** Ahora repregunta en vez de buscar. **El arreglo de verdad sigue siendo de V1** |
+| **`F-100`** · los dos botones muertos | **Cerrado.** `disabled` + motivo, y el masivo baja a **≥1** |
+| **`F-103`** · idioma y estados | **Cerrado.** Idioma del interlocutor, estados en español y tal cual |
+| **`B3`** · conocimiento técnico general | **Decidido y desplegado.** Permitido con la costura visible |
+| ↳ **la pregunta de `F-102` a las otras tres herramientas** | **`F-106`: cuatro huecos más, arreglados el mismo día** |
 
-Los tres llaman **al mismo código**, que es la mitad del asunto: `fixture.setup.ts`,
-`restore.teardown.ts` y el comando no pueden divergir. `seed/reanchor_freshness.sql` pasa a ser
-la llamada a la función, no una segunda copia del algoritmo.
+**Verificado:** **642 tests de unidad** (los 631 más 11 nuevos) · `typecheck` · **53 e2e en
+verde** · **7/7 de la sonda contra el modelo desplegado** · `demo_state()` después de todo.
 
-**Lo que NO devuelve el reseteo:** `inventory_lines.status` (si archivas una línea desde INV-01
-sigue archivada) y los hilos que no sean los cinco. Ese segundo caso **lo detecta y no se
-calla**: `demo_state()` cuenta todos los hilos y el reseteo falla con *"hay 6 y tienen que ser
-5"*.
+🟢 **Las 8 pantallas de `Plan §9` siguen completas.** Sin cambios de alcance hoy.
 
----
-
-## Los siete hallazgos de la sesión 2
-
-Ordenados por lo que hay que hacer mañana, no por número.
-
-| # | Qué | Arreglo | Coste |
-|---|---|---|---|
-| **`F-102`** | 🔴 **El más grave.** `listar_mis_hilos` no dice quién envió el último elemento y VERA rellena: *"tienes dos hilos que requieren tu atención"* incluyendo una `CONSULTA` que envió el propio usuario. **Reproducido en inglés y en español** | `sender_org_id` al `select` de `fetchLastItems` (`threads.ts:263`), un campo en `LastItem` (`threads.ts:38`), y que la fila diga *"lo enviaste tú"* / *"lo envió X"*. Más el aserto negativo | app · pequeño |
-| **`F-104`** | VERA responde en markdown y el panel lo pinta en crudo — asteriscos y tablas como tira de pipes. `VeraPanel.tsx:221` es `{m.text}` y `.bwbub` no lleva `pre-wrap`. **Nunca se especificó el formato**: ni la spec de `vera-agent` ni el sistema de diseño dicen nada | `white-space: pre-wrap` **y** una frase en el prompt: nada de markdown. Los dos, no uno — el CSS es la red por si el modelo desobedece | CSS + prompt |
-| **`F-105`** | Ve 13 filas, enseña 8 y descarta 5 bajo criterio propio no declarado — entre ellas **las dos de más stock** (`6208-2RS`, 2.680 u y 2.140 u). Y se contradice: escribe *"40 mm → 6208"* y no pone ni una fila de 6208 | Frase en el bloque estático: *"si enseñas menos filas de las que recibes, dilo y di con qué criterio"*. Es el reverso de F-075 y falta desde el principio | prompt |
-| **`F-101`** | VERA es de **un solo turno** (`vera.ts:62`): un refinamiento se ejecuta como búsqueda nueva. Y `criteriaFromInput` reemplaza los criterios enteros — son dos capas. **La spec lo pide**: `conversational-search/spec.md:36` | Mitigación: que una frase que parezca continuación se pregunte, no se busque. El arreglo de verdad (historial + fusión de criterios) es V1 | prompt |
-| **`F-100`** | `Consultar` y `Contactar` de fila en SRCH-01 están **habilitados y son funciones vacías**. Y como el masivo exige ≥2 filas y su comentario remite al de fila, **consultar UNA línea no se puede por ningún camino** | `disabled` + `title` con el motivo, como el de watchers (`F-023 e`). **Y decidir si el masivo baja a ≥1** | app · pequeño |
-| **`F-103`** | VERA contesta en el idioma de quien pregunta contra su propio prompt, y **traduce los valores de enum del estado**: diría *"Agreement reached"* junto a una pantalla que dice `ACUERDO ALCANZADO` | **El idioma ya no es problema** (ver más abajo). Lo que sí hay que forzar: *"los estados del hilo se citan en español y tal cual, aunque respondas en otro idioma"* | prompt |
-| **`F-099`** | **No existe forma de originar una oferta.** Solo `counter_offer`, que exige una previa. Las dos `OFERTA` de la demo las puso la siembra. `messaging-and-negotiation/spec.md:134` lo pide | **No se construye.** Decidido por el PO. Guion adaptado: Alpha contraoferta, Beta acepta | ninguno |
-
-**Los cuatro de prompt van en un solo redespliegue (v5)** y se verifican con la misma sonda que
-se usó hoy: sesión de `alpha@`, `POST` a `/functions/v1/vera`, comparar contra SQL. Ninguno
-toca base, ni migración, ni máquina de estados.
+> **Sin fila en `harness-metrics.csv`, y es correcto por quinto día.** Ese CSV mide **tareas
+> del Coder** (`CLAUDE.md` §6): sus 31 filas son todas `deepseek-v4-flash`. Del día 10 al 14 no
+> ha habido ninguna. Inventar una fila falsearía el objetivo 4.
 
 ---
 
-## Lo que salió y no estaba en el guion: el socio no lee español
+## Lo que sale de aplicarle a las otras tres herramientas la pregunta de `F-102` · `F-106`
 
-⚠ **Descubierto al final de la sesión, y es lo más grande del día en consecuencias.** Toda la
-interfaz está en español y **el socio de la reunión del 20-ago no lo entiende**.
+La pregunta era: *¿qué pregunta razonable no puede contestarse con lo que devuelvo, y qué va a
+inventar el modelo para taparlo?* **Salieron cuatro huecos, y lo revelador es que ninguno era
+un dato que faltara en la base: los cuatro ya se pedían, ya se pintaban en pantalla y se
+tiraban antes de llegar al modelo.**
 
-**Medido antes de opinar:** no hay ninguna infraestructura de i18n, 20 componentes `.tsx`, y
-—esto es lo que pesa— **536 asertos de texto en los tests** (388 unitarios + 148 e2e).
-Traducir cadenas es mecánico; reescribir medio arnés de pruebas el día de la congelación no.
+| Herramienta | Qué no podía contestarse | Arreglo |
+|---|---|---|
+| `buscar_en_catalogo` | *"¿ese stock está actualizado?"* — `lastUploadAt` venía en la fila y no llegaba | `actualizada hace N días, al día/desactualizada/muy desactualizada`. **Con el nivel, no solo los días:** los umbrales (>7, >30) son del proyecto, y sin ellos el modelo se inventa uno |
+| `buscar_en_catalogo` | *"¿a cuáles ya les he preguntado?"* — `consulted` igual | `YA CONSULTADA por tu organización`, **más la leyenda de qué significa que una fila no la lleve** |
+| `consultar_mi_inventario` | *"¿14 líneas de qué?"* — el recuento no decía de qué filtro era | Declara el filtro antes del recuento |
+| `buscar_en_catalogo` | Que **cambia la pantalla** al usuario (`App.tsx:157`) y no lo decía | Lo dice en el retorno |
 
-> 🟢 **Decisión del PO, 16-ago: no entra en el MVP. Se hace después, como un fork.**
-> Literal: *"vamos a terminar este MVP y… le metemos mano en 2 días ya como un FORK al
-> proyecto para no joder más la marrana"*. **No lo replantees desde cero en la próxima
-> sesión: está decidido y el motivo está medido.**
+**`navegar` es la única sin hueco:** devuelve una confirmación y su error ya enumera lo que
+existe.
 
-**Y hay media solución gratis:** VERA en inglés **ya funciona**. Preguntada
-*"HOWMANY INVENTORY LINES I HAVE PUBLISHED?"* responde *"You have 14 published inventory
-lines, spanning brands like SKF, FAG, NTN, NSK, Koyo, and Timken"* — **14 es correcto y las
-seis marcas son exactamente las que tiene Alpha**. Eso convierte `F-103` de fallo en función:
-lo único que hay que impedir es que traduzca los estados.
+**Y funciona:** VERA dijo por su cuenta *"todas están al día salvo una, la 22210 de NSK (55 u),
+que lleva 8 días sin actualizar"* — y en la base esa es **exactamente** la única línea publicada
+de Alpha por encima de 7 días, con esa marca, esa cantidad y esos 8 días.
+
+> **La lección, y es `F-075` una vuelta más arriba:** el riesgo no es solo lo que la
+> herramienta calla, es **lo que ya sabe y no propaga**. Un dato que existe y no llega es peor
+> que uno que no existe, porque el modelo no puede saber que le falta.
+
+---
+
+## Dos cosas que hay que leer antes de sacar conclusiones
+
+### 🟠 `F-105` está desplegado y NO se ha podido ejercitar
+
+La regla *"si enseñas menos filas de las que recibes, dilo y di con qué criterio"* está viva en
+el prompt v5. Pero **la pregunta del hallazgo ya no llega a recortar nada**: al avisar en
+`tools.json` de que `2RS` es un sufijo y no una referencia, el modelo dejó de buscar por él y
+ahora pide el diámetro del eje. Forzándolo con `6205-2RS` + *"dame las mejores opciones para
+500 unidades"*, la herramienta devolvió 8 filas y **VERA enseñó las 8**, exactas contra SQL.
+
+**No hay recorte que declarar, así que la regla no se ha visto actuar.** Está verificada como
+texto desplegado, no como comportamiento observado. **Para mañana:** una pregunta del guion que
+fuerce de verdad el descarte.
+
+### 🟠 El test que pasa por el motivo equivocado · `F-107`
+
+Escribiendo la sonda, **dos versiones seguidas del aserto de `F-105` pasaron en verde sin
+comprobar nada**: la primera casó con *"criterio general"* —que es la costura de `B3`, otra
+regla— y la segunda exigía un `12` y casó con *"Anadolu Rulman · FAG · 830 u · Turquía · **12**
+días"*, un plazo de entrega.
+
+Es el fallo que `F-105` describe en el modelo, cometido en el test. Corregido sustituyendo la
+búsqueda de palabras por un invariante medido: **total declarado vs. filas pintadas**.
+
+> **Regla para el día 15:** un aserto sobre una respuesta de modelo que pueda satisfacerse con
+> un número que significa otra cosa no es un aserto, es una coincidencia. Se comprueban
+> relaciones entre magnitudes, no presencias de cadenas.
+
+---
+
+## La sonda, que ahora es un fichero y no una sesión a mano
+
+**`app/src/lib/vera.probe.test.ts`**, apagada por defecto:
+
+```bash
+VERA_PROBE=1 npx vitest run src/lib/vera.probe.test.ts
+```
+
+Habla con la **función desplegada** y la **base real** con sesión de `alpha@`, e **imprime cada
+respuesta** para contrastarla contra SQL. Usa `ask()` y `runTool()` **de producción**: las
+herramientas de VERA corren en el cliente (`D-09-05`), así que una sonda que hablara solo con la
+función recibiría `tool_use` y nunca una respuesta final.
+
+**Por qué existe:** es el procedimiento con el que se verificó `F-090` y con el que se encontró
+`F-102`, y las dos veces se hizo a mano sin dejar rastro ejecutable. `F-097` ya cobró ese peaje:
+*"una instrucción que no se ha ejecutado nunca es una hipótesis, no un procedimiento"*.
+
+**No comprueba que la respuesta sea VERDAD.** Eso lo hace quien la corre, leyendo lo que imprime
+y contrastándolo con SQL. Los asertos solo fijan las reglas de v5.
 
 ---
 
 ## Bloqueos y riesgo más cercano
 
-**Nada bloquea el día 14.** Siguen los dos frenos de siempre y el riesgo cambia de color.
+**Nada bloquea el día 15.** Siguen los dos frenos de siempre.
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟡 **Freno 1** | **La CLI de Supabase sigue en la cuenta equivocada (`F-073`).** Cada migración y cada despliegue de función va por el MCP. Hoy se aplicó `0015` así, sin problema | Álvaro: re-loguear y `supabase link` |
-| 🟡 **Freno 2** | **Nada despliega solo** (`F-072`, `F-091`). Hoy no hizo falta: no se tocó código de la app ni la Edge Function. **Mañana sí**, y hay que redesplegar las dos cosas | Se cumple cerrando con el despliegue hecho |
+| 🟡 **Freno 1** | **La CLI de Supabase sigue en la cuenta equivocada (`F-073`).** El despliegue de la función v5 fue por el MCP, sin problema | Álvaro: re-loguear y `supabase link` |
+| 🟡 **Freno 2** | **Nada despliega solo** (`F-072`, `F-091`). Hoy se han hecho los dos y están comprobados en la URL viva. **Si mañana se toca código, hay que repetirlos** | Se cumple cerrando con el despliegue hecho |
 
-### 🔴 El riesgo #1 pasa a ROJO, por el umbral que este fichero fijó
+### 🟠 El riesgo #1 vuelve a ÁMBAR, y por qué no a verde
 
-El día 12 quedó escrito: *"lo que lo haría rojo: que la sesión 2 encuentre **dos o tres más de
-la misma familia**, porque entonces no es un caso suelto sino que el reparto de herramientas
-sobregeneraliza"*. La familia es **actuar sobre una lectura equivocada sin decirlo**. Han
-salido **dos** —`F-101` y `F-102`— más `F-105`, que es la misma raíz por el otro lado.
+**Lo que lo baja:** el caso que lo puso rojo —`F-102`— está arreglado y **verificado contra el
+modelo**, no contra el código; las cinco reglas de v5 están desplegadas y medidas; y `F-106`
+atacó la causa raíz de la familia entera (herramientas que devuelven menos de lo que la pregunta
+necesita) en vez de rogarle al modelo.
 
-**Pero el diagnóstico es mejor que el pronóstico.** No es que el reparto de herramientas
-sobregeneralice: es que **tres herramientas devuelven menos de lo que la pregunta necesita**, y
-el modelo tapa el hueco. Eso es `F-075` otra vez —*"un recuento sin contenido es un hueco, y
-este modelo rellena huecos con fluidez"*— y `F-075` se arregló cambiando la herramienta, no
-rogándole al modelo.
+**Lo que impide el verde, y son tres cosas concretas:**
 
-**Por qué no es catastrófico:** ni una cifra inventada en todo el día, con datos contrastados
-contra la base. La defensa del `CLAUDE.md` §7 —responder solo desde el retorno de las
-herramientas— **aguanta**. Lo que falla es lo que las herramientas no dicen.
+1. **`F-101` está mitigado, no arreglado.** VERA sigue siendo de un solo turno. Hoy repregunta
+   en vez de mentir, que es todo lo que se pedía para el 20 — pero el refinamiento sigue sin
+   existir, y es lo primero que hace cualquier comprador.
+2. **`F-105` no se ha visto actuar** (arriba).
+3. **Una sola pasada de sonda no es una medición.** Son 7 preguntas contra un modelo no
+   determinista. Mañana hay que repetirlas con el guion completo.
 
-**Lo que lo devolvería a ámbar:** `F-102` arreglado y verificado contra Sonnet, y las tres
-frases del prompt desplegadas en v5 y comprobadas. Es el trabajo de mañana por la mañana.
-
-**Lo que lo empeoraría:** que al arreglar `F-102` aparezca la misma forma en
-`consultar_mi_inventario` o en `buscar_en_catalogo`. Por eso el día 14 incluye pasarles a las
-cuatro herramientas la misma pregunta: *¿qué pregunta razonable no puede contestarse con lo que
-devuelvo, y qué va a inventar el modelo para taparlo?*
+**Lo que lo empeoraría:** tocar código mañana sin repetir los dos despliegues.
 
 ---
 
-## Decisiones pendientes del PO, y bloquean el trabajo de mañana
+## Decisiones del PO tomadas hoy
 
-1. **`F-104` · formato de VERA.** Nunca se especificó. Recomendación registrada: **texto
-   plano**, no renderizar markdown. Motivo: el panel ocupa un tercio del ancho y colapsa a 32px
-   (`design-system.md:190`), una tabla de seis columnas no cabe — y **la tabla ya existe en
-   SRCH-01**, que VERA rellena ella misma con `setCriteria`. Su papel es narrar, no tabular.
-2. **`F-100` · ¿el botón masivo baja a `≥1`?** Si se apagan los de fila, una selección de una
-   sola fila se queda sin ninguna acción posible. El `≥2` de `F-039` se sostenía delegando en un
-   botón que no existe.
-3. **`F-103` · ¿se fuerza español o se acepta el idioma del interlocutor?** Con el socio en
-   inglés, lo segundo parece lo obvio — pero decídelo, porque cambia la frase del prompt.
-4. **`B3` · ¿VERA contesta conocimiento técnico general?** Contestó *2RS vs ZZ* impecablemente
-   y sin llamar a ninguna herramienta. Recomendación: **permitirlo con la costura visible** —
-   *"por lo general…", "confírmalo con tu ficha"*— porque en la pregunta mixta mezcló una tabla
-   de filas reales con dos afirmaciones de entrenamiento (*"eje 25 mm"*) sin distinguirlas.
-
----
-
-## Una limitación honesta de la sesión de hoy
-
-**No hay hoja de registro pregunta por pregunta.** El guion (`guion-sesion-2.md` §8) pedía
-anotar herramienta, veredicto y nota para cada una de las quince; lo que existe es lo que fue
-saliendo, capturado en `F-099`…`F-105` según aparecía. El PO cerró con *"casi éxito total"*.
-
-**Por qué importa para el día 15:** `guion-sesion-2.md` §4 dice que las preguntas se reutilizan
-**con el literal exacto** en la sesión 3, o los resultados dejan de ser comparables. Sin la hoja
-de la sesión 2, la del día 15 será la primera medición completa en vez de la segunda. **No es
-un problema hoy; es un dato para no sacar conclusiones de tendencia el día 15.**
+| # | Decisión | Consecuencia |
+|---|---|---|
+| **`F-104`** | **Texto plano, no se renderiza markdown** | CSS + prompt. El renderizador de markdown queda anotado para V1 |
+| **`F-100`** | **El masivo baja a `≥1`** | **Revierte `F-039`** y se actualiza `conversational-search/spec.md`, para que la capability no contradiga al código |
+| **`F-103`** | **VERA sigue el idioma del interlocutor** | Es lo único de la aplicación que puede hablarle en inglés al socio. Los estados **no se traducen** |
+| **`B3`** | **Conocimiento técnico general permitido, con la costura visible** | *"por lo general…", "confírmalo con la ficha"*, y **nunca mezclado sin costura** con filas de una herramienta |
 
 ---
 
@@ -218,39 +208,57 @@ un problema hoy; es un dato para no sacar conclusiones de tendencia el día 15.*
 
 | # | Decisión | Dónde |
 |---|---|---|
-| **i18n** | **Fuera del MVP. Fork después, ~2 días.** No hay infraestructura y hay 536 asertos de texto en los tests | **PO, 16-ago** |
-| **Reseteo de la demo** | `npm run demo:reset` desde `app/`. Antes de cada ensayo, el 20-ago por la mañana, y al cerrar el día. **No correr la suite e2e durante un ensayo** | **F-096** · `guion-sesion-2.md` §0 |
+| **i18n** | **Fuera del MVP. Fork después, ~2 días.** No hay infraestructura y hay **536 asertos de texto** en los tests. **No lo replantees: está decidido y el motivo está medido** | **PO, 16-ago** |
+| **Reseteo de la demo** | `npm run demo:reset` desde `app/`. Antes de cada ensayo, el 20-ago por la mañana, y al cerrar. **No correr la suite e2e durante un ensayo** | **F-096** · `guion-sesion-2.md` §0 |
+| **La sonda de VERA** | `VERA_PROBE=1 npx vitest run src/lib/vera.probe.test.ts`. **Apagada en `npm test`** — toca red, base y cuota | **F-107** |
 | **Aislamiento de la demo** | **No se hace.** Demo y pruebas comparten base; el reseteo delante y detrás lo hace sobrevivible | **F-098** |
 | **Originar una oferta** | **No existe y no se construye.** Solo contraoferta. Si el socio pregunta cómo responde el vendedor: es V1 | **F-099** |
-| **Un hilo es por PAREJA DE ORGANIZACIONES** | No por rodamiento. `create_inquiry` es encontrar-o-crear con `on conflict (org_low_id, org_high_id)`. Por eso una consulta de SKF cae en el mismo hilo que una oferta de NSK, y **ninguna pantalla lo dice en voz alta** | `0014:167` |
-| Frescura del catálogo | Se **re-ancla**, no se re-siembra. Delta constante; conserva la distribución | **F-094** |
-| El estado de demo es efímero | La suite repone los cinco `HILO_IDS`. **Desde hoy, también al terminar** | **F-095** · **F-096** |
-| VERA y el contenido de un hilo | Preguntar por lo ofrecido **no es una búsqueda**. Confirmado contra Sonnet el 14-ago y **no ha reaparecido hoy** | **F-090** · D-09-02 |
+| **Acciones de fila en SRCH-01** | **Apagadas con el motivo dicho.** El wiring (`FL-MSG-01`) es de V1 | **F-100** · F-023 e |
+| **Un hilo es por PAREJA DE ORGANIZACIONES** | No por rodamiento. `create_inquiry` es encontrar-o-crear con `on conflict (org_low_id, org_high_id)`. **Ninguna pantalla lo dice en voz alta** | `0014:167` |
+| Frescura del catálogo | Se **re-ancla**, no se re-siembra. Delta constante; conserva la distribución. **Desde hoy, VERA la ve** | **F-094** · **F-106** |
+| El estado de demo es efímero | La suite repone los cinco `HILO_IDS` al empezar **y al terminar** | **F-095** · **F-096** |
+| VERA y el contenido de un hilo | Preguntar por lo ofrecido **no es una búsqueda**. No ha reaparecido | **F-090** · D-09-02 |
 | Contraoferta | **Fila `OFERTA` nueva**, la anterior a `Superada por contraoferta`. `part_number`/`brand` **se heredan en la base** (`0013:112`) | **0013** |
 | Quién decide una oferta | **El receptor, nunca el emisor** (`offers.ts:101`, `app.guard_offer_decider`) | F-051 · F-056 |
 | Modelos | **Opus 4.8 / Claude Code** para esquema, RLS, E2EE y herramientas de VERA. **Coder** para HTML→React. **VERA en producción: Sonnet 4.6, fijo (QA-A00-06)** | Plan §1 y §7 |
 | Coder | `deepseek-v4-flash` vía `DEEPSEEK_API_KEY` | F-001 |
 | Dónde corren las herramientas | **En el navegador, no en el proxy.** El proxy solo guarda la clave | **D-09-05** |
-| Tope de filas al modelo | **25**, y al recortar **prohíbe** hablar de lo que no ve. **No cubre descartar lo que sí ve** (`F-105`) | **F-075** |
+| Tope de filas al modelo | **25**, y al recortar **prohíbe** hablar de lo que no ve. **Y desde v5, descartar lo que sí ve obliga a declararlo** | **F-075** · **F-105** |
 | Dónde cae el scroll | `.bwcnt` acota el alto; la raíz de la pantalla scrollea | **F-088** · F-093 |
 | Claves de sesión | **En memoria, se pierden al recargar. Sin `localStorage`** | `CLAUDE.md` §4 |
-| Estados de oferta | `Pendiente` · `Aceptada` · `Rechazada` · `Superada por contraoferta`. **Capitalizados** | `0003:132` |
+| Estados de oferta | `Pendiente` · `Aceptada` · `Rechazada` · `Superada por contraoferta`. **Capitalizados, y VERA no los traduce** | `0003:132` · **F-103** |
 | Cierre del hilo | **Reversible: un elemento nuevo lo reabre** | **D-07-01** · `0009` |
 | Autoría | Código del Coder y código a mano **nunca en el mismo commit** | `CLAUDE.md` §1.6 |
 | Alcance | **Las 8 pantallas de `Plan §9` completas** | Plan §9 |
 
 ---
 
+## Qué toca mañana · día 15, ensayo general
+
+1. **`npm run demo:reset` antes de empezar**, y **no correr la suite e2e mientras dure el
+   ensayo** (`F-098`: es un ruego, no una barrera — una corrida concurrente se lleva la demo
+   por delante).
+2. **Las 15 preguntas de `guion-sesion-2.md`, con el literal exacto** y **anotando pregunta por
+   pregunta**. La sesión 2 no dejó hoja de registro, así que **la de mañana es la primera
+   medición completa, no la segunda**: no saques conclusiones de tendencia.
+3. **Añadir al guion una pregunta que fuerce el recorte de verdad** (`F-105`).
+4. **Si se toca código: redesplegar app Y función, y comprobarlo en la URL viva.**
+5. **La sonda antes y después**, que ahora es un comando.
+
+---
+
 ## Pendiente de Álvaro
 
-1. **Las cuatro decisiones de la sección de arriba.** Bloquean el redespliegue v5 de mañana.
-2. **`npx supabase link --project-ref troxminloxkjwihwfevs`** — sigue `F-073`: la CLI está en la
-   cuenta de `web-julsaindustrial`. Por eso las migraciones van por el MCP.
-3. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
-4. **F-027 (a)** (no leídos de MSG-01) y **F-023 d** (línea eliminada en INV-01). De V1.
-5. ⚠ **Sigue sin saberse qué clave dijiste que estaba rotada** (F-081, 13-ago). No es la del
+1. **`npx supabase link --project-ref troxminloxkjwihwfevs`** — sigue `F-073`: la CLI está en la
+   cuenta de `web-julsaindustrial`. Por eso todo va por el MCP.
+2. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
+3. **F-027 (a)** (no leídos de MSG-01) y **F-023 d** (línea eliminada en INV-01). De V1.
+4. ⚠ **Sigue sin saberse qué clave dijiste que estaba rotada** (F-081, 13-ago). No es la del
    Coder — comprobado. Si sigue habiendo alguna, hace falta el nombre.
-6. **Comprobaciones 3 y 4 de `despliegue.md` §4** sin repetir desde el 13-ago.
+5. **Comprobaciones 2 y 3 de `despliegue.md` §4** —hilo cifrado legible, y las dos
+   organizaciones sin verse— **sin repetir desde el 13-ago**. La 1 y la 4 se han hecho hoy.
+6. **`@tabler/icons-webfont@latest` sigue sin fijar** (`despliegue.md` §7.1): la versión puede
+   cambiar sola entre hoy y el día 20 y romper el shell sin que nadie toque nada.
 
 ---
 
@@ -260,14 +268,16 @@ un problema hoy; es un dato para no sacar conclusiones de tendencia el día 15.*
 
 1. ✅ **Este fichero, sobrescrito**: día, estado, qué se cerró, qué toca mañana, decisiones
    vivas, bloqueos y riesgo más cercano. Estado de la base **verificado con SQL al escribirlo**.
-2. ✅ **Hallazgos a `findings-register.md`**: `F-096` a `F-105`, diez nuevos.
-   **`harness-metrics.csv` sin fila** — no hubo tarea del Coder, cuarto día seguido.
-3. — **Sin fichero de decisiones del día**: solo lo llevan los días 4, 8 y 9.
-4. ✅ **Commit + push** a `mvp/bootstrap`. **Sin despliegue hoy y no hace falta**: no se tocó
-   código de la app ni la Edge Function; la migración `0015` se aplicó por el MCP y está viva.
+2. ✅ **Hallazgos a `findings-register.md`**: `F-100` a `F-105` cerrados o mitigados con su
+   verificación, y **tres nuevos — `F-106`, `F-107`, `F-108`**. **`harness-metrics.csv` sin
+   fila** — no hubo tarea del Coder, quinto día seguido.
+3. — **Sin fichero de decisiones del día**: solo lo llevan los días 4, 8 y 9. Las cuatro del PO
+   quedan en la tabla de arriba.
+4. ✅ **Commit + push** a `mvp/bootstrap`, **y los dos despliegues hechos y comprobados en la
+   URL viva** — app y Edge Function v5.
 
 ---
 
-*Actualizado el 16-ago-2026, cerrando el día 13 · estado de la base verificado con
-`select public.demo_state()` a las 13:58:14 UTC, después de correr `npm run demo:reset` ·
-sondeos de VERA contra la Edge Function v4 desplegada con sesión real · Claude Code (Opus 5)*
+*Actualizado el 17-ago-2026, cerrando el día 14 · estado de la base verificado con
+`npm run demo:reset` a las 15:00:02 UTC, después de la suite e2e · Edge Function v5 verificada
+con sonda real contra Sonnet y contrastada contra SQL · Claude Code (Opus 5)*

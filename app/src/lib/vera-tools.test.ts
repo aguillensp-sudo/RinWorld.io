@@ -119,7 +119,7 @@ beforeEach(() => {
         counterpartyCountry: 'TR',
         state: 'CON OFERTA PENDIENTE',
         lastItemAt: '2026-08-12T09:00:00Z',
-        lastItem: { type: 'OFERTA', partNumber: '6205-2RS' },
+        lastItem: { type: 'OFERTA', partNumber: '6205-2RS', isOwn: false },
       },
     ],
     total: 1,
@@ -306,6 +306,82 @@ describe('listar_mis_hilos es metadata-only, y eso es la mitad del producto', ()
     expect(arg.orgId).toBe(PERFIL.orgId);
     expect(arg.search).toBe('Anadolu');
   });
+
+  /*
+   * F-102 · EL ASERTO QUE FALTABA, Y SU AUSENCIA ERA EXACTAMENTE EL FALLO.
+   *
+   * Los tres asertos de arriba comprueban que la herramienta no deja salir
+   * contenido cifrado —lo que NO debe decir— y ninguno comprobaba si lo que sí
+   * dice basta para contestar la pregunta que el usuario hace de verdad:
+   * «¿tengo algo pendiente de responder?». No bastaba. Faltaba la dirección del
+   * último elemento, y el modelo la rellenó mandando a responder una CONSULTA
+   * que había enviado el propio usuario. Un hueco no se ve mirando lo que hay.
+   */
+  describe('la dirección del último elemento va en la fila (F-102)', () => {
+    it('nombra a la contraparte cuando el último elemento lo envió ella', async () => {
+      const r = await runTool('listar_mis_hilos', {}, contexto());
+      expect(r.content).toContain('lo envió Anadolu Rulman');
+      expect(r.content).not.toContain('lo enviaste tú');
+    });
+
+    it('dice «lo enviaste tú» cuando el último elemento es mío', async () => {
+      // La reproducción literal del hallazgo: esa CONSULTA la emitió Rodamientos
+      // Ibéricos —el propio usuario—, así que ahí no hay nada que responder; se
+      // está esperando respuesta. VERA afirmaba lo contrario.
+      fetchThreadPage.mockResolvedValueOnce({
+        threads: [
+          {
+            id: 'thread-2',
+            counterpartyName: 'Cuscinetti Padana',
+            counterpartyCountry: 'IT',
+            state: 'CON CONSULTA PENDIENTE',
+            lastItemAt: '2026-08-12T09:00:00Z',
+            lastItem: { type: 'CONSULTA', partNumber: 'NU2210-E-TVP2', isOwn: true },
+          },
+        ],
+        total: 1,
+      });
+      const r = await runTool('listar_mis_hilos', {}, contexto());
+      expect(r.content).toContain('lo enviaste tú');
+      expect(r.content).not.toContain('lo envió Cuscinetti Padana');
+    });
+
+    it('NINGUNA fila con último elemento se queda sin dirección', async () => {
+      // Estructural a propósito: no ancla un literal, ancla que el hueco no
+      // pueda reabrirse en una fila cualquiera de una página cualquiera.
+      fetchThreadPage.mockResolvedValueOnce({
+        threads: [
+          {
+            id: 'thread-1',
+            counterpartyName: 'Nordwälz Lager',
+            counterpartyCountry: 'DE',
+            state: 'CON OFERTA PENDIENTE',
+            lastItemAt: '2026-08-12T09:00:00Z',
+            lastItem: { type: 'OFERTA', partNumber: '6205-2RS', isOwn: false },
+          },
+          {
+            id: 'thread-2',
+            counterpartyName: 'Cuscinetti Padana',
+            counterpartyCountry: 'IT',
+            state: 'CON CONSULTA PENDIENTE',
+            lastItemAt: '2026-08-11T09:00:00Z',
+            lastItem: { type: 'CONSULTA', partNumber: 'NU2210-E-TVP2', isOwn: true },
+          },
+        ],
+        total: 2,
+      });
+      const r = await runTool('listar_mis_hilos', {}, contexto());
+      const filas = r.content.split('\n').filter((l) => l.includes('último:'));
+      expect(filas).toHaveLength(2);
+      for (const fila of filas) expect(fila).toMatch(/lo enviaste tú|lo envió \S/);
+    });
+
+    it('desactiva el nombre del estado, que por sí solo empuja al error', async () => {
+      // `CON CONSULTA PENDIENTE` se lee como "tienes una consulta que responder".
+      const r = await runTool('listar_mis_hilos', {}, contexto());
+      expect(r.content).toContain('no de quién es el turno');
+    });
+  });
 });
 
 // -----------------------------------------------------------------------------
@@ -336,5 +412,121 @@ describe('navegar', () => {
     const r = await runTool('navegar', {}, contexto());
     expect(r.isError).toBe(true);
     expect(navegadoA).toEqual([]);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// La revisión de F-102 aplicada a las otras tres herramientas
+// -----------------------------------------------------------------------------
+
+/**
+ * ⚠ MISMO CRITERIO QUE DESTAPÓ `F-102`, PASADO A LAS DEMÁS: *¿qué pregunta
+ * razonable no puede contestarse con lo que devuelvo, y qué va a inventar el
+ * modelo para taparlo?*
+ *
+ * Los huecos encontrados el 17-ago no eran de datos que faltaran en la base:
+ * los cuatro campos ya venían en la fila, se pagaban a PostgREST y se pintaban
+ * en pantalla — y se tiraban antes de llegar al modelo. Un dato que existe y no
+ * se propaga es peor que uno que no existe: el modelo no sabe que le falta.
+ */
+describe('los huecos de las otras tres herramientas (revisión de F-102)', () => {
+  /** Una fecha a N días exactos de ahora: la frescura es relativa al reloj, así
+   *  que el test la fija por diferencia y no por literal. */
+  const haceDias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+
+  describe('buscar_en_catalogo · «¿ese stock está actualizado?»', () => {
+    it('toda fila dice de cuándo es el dato y si eso es un aviso', async () => {
+      const r = await runTool('buscar_en_catalogo', { referencia: '6205-2RS' }, contexto());
+      const filas = r.content.split('\n').filter((l) => l.includes('6205-2RS'));
+      expect(filas.length).toBeGreaterThan(0);
+      for (const fila of filas) {
+        expect(fila).toMatch(/actualizada /);
+        expect(fila).toMatch(/al día|desactualizada/);
+      }
+    });
+
+    it('una línea de 12 días sale como desactualizada, no como una fecha suelta', async () => {
+      // El umbral (>7 naranja, >30 rojo) es del proyecto. Sin él, "hace 12 días"
+      // obliga al modelo a decidir por su cuenta si eso es mucho.
+      fetchResults.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'line-1',
+            partNumber: '6205-2RS',
+            brand: 'SKF',
+            quantity: 1200,
+            leadTimeDays: 5,
+            orgId: 'org-nsk',
+            orgName: 'NSK Europe Ltd',
+            country: 'DE',
+            lastUploadAt: haceDias(12),
+            favoriteCount: 3,
+            isFavorite: false,
+            consulted: false,
+          },
+        ],
+        total: 1,
+        capped: false,
+      });
+      const r = await runTool('buscar_en_catalogo', {}, contexto());
+      expect(r.content).toContain('desactualizada');
+      expect(r.content).not.toContain('al día');
+    });
+
+    it('marca la fila ya consultada Y explica qué significa que otra no lo lleve', async () => {
+      fetchResults.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'line-1',
+            partNumber: '6205-2RS',
+            brand: 'SKF',
+            quantity: 1200,
+            leadTimeDays: 5,
+            orgId: 'org-nsk',
+            orgName: 'NSK Europe Ltd',
+            country: 'DE',
+            lastUploadAt: haceDias(1),
+            favoriteCount: 3,
+            isFavorite: false,
+            consulted: true,
+          },
+        ],
+        total: 1,
+        capped: false,
+      });
+      const r = await runTool('buscar_en_catalogo', {}, contexto());
+      expect(r.content).toContain('YA CONSULTADA');
+      // La leyenda importa tanto como la marca: sin ella, la AUSENCIA de la
+      // marca no dice nada y el modelo la interpretaría como quisiera.
+      expect(r.content).toMatch(/no llevan «YA CONSULTADA»/);
+    });
+
+    it('avisa de que la búsqueda ha movido al usuario de pantalla', async () => {
+      // `App.tsx:157`: escribir criterios navega a Comprando. La herramienta
+      // tenía ese efecto y no lo contaba.
+      const r = await runTool('buscar_en_catalogo', { referencia: '6205-2RS' }, contexto());
+      expect(r.content).toContain('Comprando');
+      expect(criteriosEscritos).toHaveLength(1);
+    });
+  });
+
+  describe('consultar_mi_inventario · «¿14 líneas de qué?»', () => {
+    it('dice a qué filtro pertenece el recuento, que sin eso es ambiguo', async () => {
+      const r = await runTool('consultar_mi_inventario', { filtro: 'publicados' }, contexto());
+      expect(r.content).toContain('publicados');
+      expect(r.content).toMatch(/SOLO de lo que cumple ese filtro/);
+    });
+
+    it('sin filtro explícito declara «todos», no se calla el criterio', async () => {
+      const r = await runTool('consultar_mi_inventario', {}, contexto());
+      expect(r.content).toContain('todos');
+    });
+
+    it('toda línea propia dice de cuándo es, que es lo que se pregunta al mirarlo', async () => {
+      const r = await runTool('consultar_mi_inventario', {}, contexto());
+      const filas = r.content.split('\n').filter((l) => l.includes('6205-2RS'));
+      expect(filas.length).toBeGreaterThan(0);
+      for (const fila of filas) expect(fila).toMatch(/actualizada .*(al día|desactualizada)/);
+    });
   });
 });

@@ -66,7 +66,7 @@ function thread(over: Partial<ThreadSummary> = {}): ThreadSummary {
     counterpartyCountry: 'DE',
     state: 'CON OFERTA PENDIENTE',
     lastItemAt: new Date(NOW.getTime() - 2 * 3600_000).toISOString(),
-    lastItem: { type: 'OFERTA', partNumber: '6205-2RS' },
+    lastItem: { type: 'OFERTA', partNumber: '6205-2RS', isOwn: false },
     ...over,
   };
 }

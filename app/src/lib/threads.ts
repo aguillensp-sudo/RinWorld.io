@@ -38,6 +38,25 @@ export type ItemType = 'MENSAJE' | 'CONSULTA' | 'OFERTA';
 export interface LastItem {
   type: ItemType;
   partNumber: string | null;
+  /**
+   * Si lo envió **mi** organización. Es metadato en claro (`sender_org_id`), no
+   * sale de descifrar nada, así que no rompe la regla de arriba.
+   *
+   * ⚠ **Se deriva aquí y no en cada consumidor, y eso es todo el arreglo de
+   * `F-102`.** Sin este campo, la única pista que le llegaba a VERA era el
+   * estado del hilo, y `CON CONSULTA PENDIENTE` se lee como *"tienes una
+   * consulta que responder"* cuando significa *"hay una consulta esperando
+   * respuesta, de cualquiera de los dos lados"*. El modelo rellenó el hueco y
+   * mandó al usuario a contestar una consulta que había enviado él mismo —
+   * F-075 palabra por palabra, aplicado a un campo en vez de a unas filas.
+   *
+   * Va como `isOwn` y no como `senderOrgId` a propósito: un id suelto obliga a
+   * cada consumidor a acordarse de compararlo contra el suyo, y olvidarlo es
+   * exactamente el fallo que costó este hallazgo. Aquí `orgId` ya se conoce.
+   * Quién es «el otro» no hace falta guardarlo: un hilo es por **pareja** de
+   * organizaciones (`0014:167`), así que si no es mío es de la contraparte.
+   */
+  isOwn: boolean;
 }
 
 export interface ThreadSummary {
@@ -229,7 +248,7 @@ export async function fetchThreadPage({ orgId, search, page }: ThreadQuery): Pro
   if (error) throw error;
 
   const rows = (data ?? []) as unknown as ThreadRow[];
-  const lastItems = await fetchLastItems(rows.map((r) => r.id));
+  const lastItems = await fetchLastItems(rows.map((r) => r.id), orgId);
 
   return {
     threads: rows.map((r) => {
@@ -250,17 +269,23 @@ export async function fetchThreadPage({ orgId, search, page }: ThreadQuery): Pro
 /**
  * El último elemento de cada hilo de la página, en una sola consulta.
  *
- * Se piden solo las tres columnas de metadatos. `content_ciphertext` no se trae:
- * no se puede enseñar, así que traerlo solo sería mover bytes cifrados a un
+ * Se piden solo las cuatro columnas de metadatos. `content_ciphertext` no se
+ * trae: no se puede enseñar, así que traerlo solo sería mover bytes cifrados a un
  * navegador que no tiene con qué abrirlos.
+ *
+ * `sender_org_id` entra el 17-ago por `F-102` y `orgId` con ella: sin comparar
+ * las dos aquí, la dirección del último elemento no llega a ningún consumidor.
  */
-async function fetchLastItems(threadIds: string[]): Promise<Map<string, LastItem>> {
+async function fetchLastItems(
+  threadIds: string[],
+  orgId: string,
+): Promise<Map<string, LastItem>> {
   const out = new Map<string, LastItem>();
   if (threadIds.length === 0) return out;
 
   const { data, error } = await supabase
     .from('thread_items')
-    .select('thread_id, item_type, part_number, created_at')
+    .select('thread_id, item_type, part_number, sender_org_id, created_at')
     .in('thread_id', threadIds)
     .order('created_at', { ascending: false });
 
@@ -270,10 +295,15 @@ async function fetchLastItems(threadIds: string[]): Promise<Map<string, LastItem
     thread_id: string;
     item_type: ItemType;
     part_number: string | null;
+    sender_org_id: string;
   }[]) {
     // Vienen ordenados descendente: el primero de cada hilo es el último elemento.
     if (!out.has(row.thread_id)) {
-      out.set(row.thread_id, { type: row.item_type, partNumber: row.part_number });
+      out.set(row.thread_id, {
+        type: row.item_type,
+        partNumber: row.part_number,
+        isOwn: row.sender_org_id === orgId,
+      });
     }
   }
   return out;

@@ -9,7 +9,15 @@ import {
   type SearchCriteria,
   type Zone,
 } from './search';
-import { FILTERS, fetchPage, type Filter } from './inventory';
+import {
+  FILTERS,
+  ageLabel,
+  ageLevel,
+  daysSince,
+  fetchPage,
+  type AgeLevel,
+  type Filter,
+} from './inventory';
 import { fetchThreadPage } from './threads';
 
 /**
@@ -152,6 +160,35 @@ function recorte(mostradas: number, total: number, singular: string, plural: str
   );
 }
 
+/**
+ * La antigüedad del dato, con su nivel dicho y no solo los días.
+ *
+ * ⚠ **ENTRA EL 17-AGO POR LA PREGUNTA DE `F-102` HECHA A LAS OTRAS TRES
+ * HERRAMIENTAS:** *¿qué pregunta razonable no puede contestarse con lo que
+ * devuelvo, y qué va a inventar el modelo para taparlo?*.
+ *
+ * *"¿Ese stock está actualizado?"* es lo que pregunta cualquier comprador antes
+ * de fiarse de una cifra, y la frescura es media demo —221 líneas, 159 frescas,
+ * 53 naranja, 9 rojas (`F-094`)—. `search.ts` e `inventory.ts` ya traían
+ * `lastUploadAt` en cada fila: se pedía a la base, se pintaba en pantalla **y se
+ * tiraba antes de llegar al modelo**. Misma familia que `F-102`: el dato existe,
+ * está pagado y no se propaga; el modelo solo puede callarse o suponer.
+ *
+ * Va el nivel además del literal porque *"hace 12 días"* no le dice al modelo si
+ * eso es normal o es un aviso: los umbrales (>7 y >30) son del proyecto, no
+ * suyos, y sin ellos tendría que inventarse uno.
+ */
+const NIVEL_FRESCURA: Record<AgeLevel, string> = {
+  fresh: 'al día',
+  stale: 'desactualizada',
+  critical: 'muy desactualizada',
+};
+
+function frescura(iso: string): string {
+  const dias = daysSince(iso);
+  return `${ageLabel(dias).toLowerCase()}, ${NIVEL_FRESCURA[ageLevel(dias)]}`;
+}
+
 // -----------------------------------------------------------------------------
 // Las cuatro
 // -----------------------------------------------------------------------------
@@ -180,17 +217,27 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
       leadTimeLabel(r.leadTimeDays),
       countryName(r.country),
       r.orgName,
+      // Los dos campos que ya venían en la fila y no llegaban al modelo.
+      `actualizada ${frescura(r.lastUploadAt)}`,
+      ...(r.consulted ? ['YA CONSULTADA por tu organización'] : []),
     ].join(' · '),
   );
 
   const cabecera = recorte(filas.length, page.total, 'coincidencia', 'coincidencias');
   return {
-    // El aviso final no es de cortesía: sin él, el modelo puede leer la ausencia
-    // de esa columna como "es gratis" o inventarse una cifra plausible.
+    // Los avisos finales no son de cortesía: sin ellos, el modelo lee la ausencia
+    // de una columna como un hecho —"es gratis", "nadie ha preguntado", "estas
+    // son las mejores"— y lo dice con aplomo.
     content: [
       cabecera,
       ...filas,
       'Ninguna de estas filas incluye condiciones económicas: eso se negocia cifrado dentro de un hilo.',
+      'Las filas que no llevan «YA CONSULTADA» son las que tu organización todavía no ha consultado.',
+      'Este orden no es un ranking de idoneidad. Si eliges unas cuantas para recomendar, di cuántas había y con qué criterio has elegido.',
+      // Cuarto hueco de la misma revisión: la herramienta MUEVE al usuario
+      // (`App.tsx:157` navega a Comprando al escribir criterios) y no lo decía.
+      // El usuario cambia de pantalla mientras lee una respuesta que no lo menciona.
+      'Esta búsqueda ha llevado al usuario a la pantalla Comprando con estos filtros ya puestos: dilo en tu respuesta, porque acaba de cambiar de pantalla.',
     ].join('\n'),
     isError: false,
   };
@@ -206,21 +253,43 @@ async function consultarMiInventario(input: unknown, ctx: ToolContext): Promise<
   }
   const filter = (filtroCrudo || 'todos') as Filter;
 
+  const busqueda = texto(input, 'referencia');
   const page = await fetchPage({
     orgId: ctx.profile.orgId,
     filter,
-    search: texto(input, 'referencia'),
+    search: busqueda,
     page: 1,
   });
 
   const filas = page.lines
     .slice(0, MAX_FILAS)
     .map((l) =>
-      [l.partNumber, l.brand, `${quantityLabel(l.quantity)} u`, l.status].join(' · '),
+      [
+        l.partNumber,
+        l.brand,
+        `${quantityLabel(l.quantity)} u`,
+        l.status,
+        // Misma revisión que arriba: "¿qué tengo que actualizar?" es LA pregunta
+        // de quien mira su propio inventario, y `lastUploadAt` ya venía en la
+        // línea. Sin él, el modelo solo puede callarse o estimar.
+        `actualizada ${frescura(l.lastUploadAt)}`,
+      ].join(' · '),
     );
 
   return {
-    content: [recorte(filas.length, page.total, 'línea', 'líneas'), ...filas].join('\n'),
+    content: [
+      /*
+       * ⚠ EL RECUENTO SIN DECIR SOBRE QUÉ SE HA CONTADO ES UN HUECO (`F-102`).
+       * "14 líneas" no significa lo mismo con el filtro `todos` que con
+       * `publicados`, y cuando el modelo redacta la respuesta ya no tiene
+       * delante con qué argumentos llamó: puede decir "tienes 14 líneas" de un
+       * recuento que era solo de las publicadas. Se dice aquí, que es donde se
+       * sabe.
+       */
+      `Esto es tu propio inventario, filtro «${filter}»${busqueda ? ` y búsqueda «${busqueda}»` : ''}. El recuento de abajo es SOLO de lo que cumple ese filtro.`,
+      recorte(filas.length, page.total, 'línea', 'líneas'),
+      ...filas,
+    ].join('\n'),
     isError: false,
   };
 }
@@ -238,9 +307,19 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
    * previa nunca muestra contenido descifrado), así que lo único que hay que no
    * hacer es añadirlo. `leaksCiphertext` comprueba que sigue siendo verdad.
    */
+  /*
+   * ⚠ LA DIRECCIÓN DEL ÚLTIMO ELEMENTO VA EN LA FILA, Y NO ES ADORNO (`F-102`).
+   * Sin ella, el único indicio que le quedaba al modelo era el estado del hilo,
+   * y afirmó —con datos por lo demás correctos y con todo el aplomo— que el
+   * usuario tenía dos hilos «que requieren tu atención», incluyendo una CONSULTA
+   * que había enviado él mismo. Quién envió el último elemento es lo que decide
+   * de quién es el turno; el estado, por sí solo, no lo dice.
+   */
   const filas = page.threads.slice(0, MAX_FILAS).map((t) => {
     const ultimo = t.lastItem
-      ? `último: ${t.lastItem.type}${t.lastItem.partNumber ? ` sobre ${t.lastItem.partNumber}` : ''}`
+      ? `último: ${t.lastItem.type}` +
+        `${t.lastItem.partNumber ? ` sobre ${t.lastItem.partNumber}` : ''}` +
+        `, ${t.lastItem.isOwn ? 'lo enviaste tú' : `lo envió ${t.counterpartyName}`}`
       : 'sin elementos';
     return [t.counterpartyName, countryName(t.counterpartyCountry), t.state, ultimo].join(' · ');
   });
@@ -249,6 +328,13 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
     content: [
       recorte(filas.length, page.total, 'negociación', 'negociaciones'),
       ...filas,
+      /*
+       * El nombre del estado empuja al error por sí mismo, así que se desactiva
+       * aquí: `CON CONSULTA PENDIENTE` describe el hilo, no de quién es el turno.
+       */
+      'El estado describe el hilo, no de quién es el turno: «CON CONSULTA PENDIENTE» significa ' +
+        'que hay una consulta esperando respuesta, la enviara quien la enviara. Quién tiene que ' +
+        'responder se deduce SOLO de quién envió el último elemento, que va dicho en cada fila.',
       'Solo metadatos: el contenido de estos hilos va cifrado y no se puede leer desde aquí.',
     ].join('\n'),
     isError: false,

@@ -24,23 +24,25 @@ const hace = (ms: number) => new Date(NOW.getTime() - ms).toISOString();
 
 describe('previewLabel · solo metadatos', () => {
   it('un mensaje libre no dice nada de su contenido', () => {
-    expect(previewLabel({ type: 'MENSAJE', partNumber: null })).toBe('Mensaje libre');
+    expect(previewLabel({ type: 'MENSAJE', partNumber: null, isOwn: false })).toBe('Mensaje libre');
   });
 
   it('una consulta lleva tipo y referencia', () => {
-    expect(previewLabel({ type: 'CONSULTA', partNumber: 'NU2210-E-TVP2' })).toBe(
+    expect(previewLabel({ type: 'CONSULTA', partNumber: 'NU2210-E-TVP2', isOwn: false })).toBe(
       'Tarjeta de consulta · NU2210-E-TVP2',
     );
   });
 
   it('una oferta lleva tipo y referencia', () => {
-    expect(previewLabel({ type: 'OFERTA', partNumber: '6205-2RS' })).toBe(
+    expect(previewLabel({ type: 'OFERTA', partNumber: '6205-2RS', isOwn: false })).toBe(
       'Tarjeta de oferta · 6205-2RS',
     );
   });
 
   it('sin referencia se queda en el tipo, no cuelga un separador suelto', () => {
-    expect(previewLabel({ type: 'OFERTA', partNumber: null })).toBe('Tarjeta de oferta');
+    expect(previewLabel({ type: 'OFERTA', partNumber: null, isOwn: true })).toBe(
+      'Tarjeta de oferta',
+    );
   });
 
   it('un hilo sin elementos lo dice, no finge actividad', () => {
@@ -53,9 +55,9 @@ describe('previewLabel · solo metadatos', () => {
     // que tapar. Se resuelve a favor de §7 — ver F-027.
     const casos: (LastItem | null)[] = [
       null,
-      { type: 'MENSAJE', partNumber: null },
-      { type: 'CONSULTA', partNumber: '6205-2RS' },
-      { type: 'OFERTA', partNumber: '6205-2RS' },
+      { type: 'MENSAJE', partNumber: null, isOwn: false },
+      { type: 'CONSULTA', partNumber: '6205-2RS', isOwn: true },
+      { type: 'OFERTA', partNumber: '6205-2RS', isOwn: false },
     ];
     for (const c of casos) expect(previewLabel(c)).not.toMatch(/•/);
   });

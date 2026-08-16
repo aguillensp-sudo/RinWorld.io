@@ -35,7 +35,7 @@ function thread(over: Partial<ThreadSummary> = {}): ThreadSummary {
     counterpartyCountry: 'DE',
     state: 'ABIERTO',
     lastItemAt: new Date(NOW.getTime() - 2 * 3600_000).toISOString(),
-    lastItem: { type: 'MENSAJE', partNumber: null },
+    lastItem: { type: 'MENSAJE', partNumber: null, isOwn: false },
     ...over,
   };
 }
@@ -89,7 +89,9 @@ describe('MSG-01 · ThreadList', () => {
     it('una consulta enseña tipo y referencia', () => {
       render(
         <ThreadList
-          threads={[thread({ lastItem: { type: 'CONSULTA', partNumber: 'NU2210-E-TVP2' } })]}
+          threads={[
+            thread({ lastItem: { type: 'CONSULTA', partNumber: 'NU2210-E-TVP2', isOwn: false } }),
+          ]}
           now={NOW}
           onOpen={vi.fn()}
         />,
@@ -103,7 +105,9 @@ describe('MSG-01 · ThreadList', () => {
       // estaría rota en la pantalla de entrada a la mensajería.
       render(
         <ThreadList
-          threads={[thread({ lastItem: { type: 'OFERTA', partNumber: '6205-2RS' } })]}
+          threads={[
+            thread({ lastItem: { type: 'OFERTA', partNumber: '6205-2RS', isOwn: false } }),
+          ]}
           now={NOW}
           onOpen={vi.fn()}
         />,

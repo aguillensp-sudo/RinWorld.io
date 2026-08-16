@@ -1,13 +1,13 @@
 [
   {
     "name": "buscar_en_catalogo",
-    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores, precios de mercado o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco rodamientos SKF en Europa', 'necesito 500 unidades'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Devuelve filas con referencia, marca, cantidad, plazo, país y organización. NO devuelve precios: el precio va cifrado y se negocia en un hilo. NO LA USES para preguntas sobre lo que se ha dicho, ofrecido, pedido o acordado en una negociación ('¿qué precio me han ofrecido?', '¿qué condiciones piden?', 'resume este hilo'): eso es contenido cifrado de un hilo, no lo lee ninguna herramienta, y llamarla aquí además SACA AL USUARIO de la pantalla en la que está.",
+    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores, precios de mercado o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco rodamientos SKF en Europa', 'necesito 500 unidades'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Devuelve filas con referencia, marca, cantidad, plazo, país, organización, DE CUÁNDO ES EL DATO (y si eso lo hace poco fiable) y si tu organización YA le ha consultado esa línea a ese proveedor. NO devuelve precios: el precio va cifrado y se negocia en un hilo. NO LA USES para preguntas sobre lo que se ha dicho, ofrecido, pedido o acordado en una negociación ('¿qué precio me han ofrecido?', '¿qué condiciones piden?', 'resume este hilo'): eso es contenido cifrado de un hilo, no lo lee ninguna herramienta, y llamarla aquí además SACA AL USUARIO de la pantalla en la que está.",
     "input_schema": {
       "type": "object",
       "properties": {
         "referencia": {
           "type": "string",
-          "description": "Referencia del rodamiento, total o parcial. Ej: '6205-2RS', '6205'."
+          "description": "Referencia del rodamiento, total o parcial. Ej: '6205-2RS', '6205'. OJO: un sufijo suelto como '2RS' o 'ZZ' NO es una referencia — solo dice el tipo de sellado, y buscar por él mezcla familias de rodamientos con diámetros de eje distintos, así que el resultado no responde a lo que te han preguntado. Si el usuario describe una aplicación pero no te da la referencia, no la deduzcas del sellado: pregúntale el diámetro del eje, o busca por lo que sí tengas (marca, cantidad, zona) y di que has buscado por eso."
         },
         "marca": {
           "type": "string",
@@ -36,7 +36,7 @@
   },
   {
     "name": "consultar_mi_inventario",
-    "description": "Consulta el inventario de la PROPIA organización del usuario: lo que él vende, no lo que compra. Llámala cuando pregunte por 'mi stock', 'mis líneas', 'lo que tengo publicado', 'qué tengo desactualizado'. No la uses para buscar proveedores — para eso es buscar_en_catalogo.",
+    "description": "Consulta el inventario de la PROPIA organización del usuario: lo que él vende, no lo que compra. Llámala cuando pregunte por 'mi stock', 'mis líneas', 'lo que tengo publicado', 'qué tengo desactualizado'. Devuelve referencia, marca, cantidad, estado y de cuándo es el dato de cada línea. El recuento que devuelve es SOLO de lo que cumple el filtro que hayas pedido: si preguntas con filtro 'publicados' no digas 'tengo N líneas' a secas, di 'N publicadas'. No la uses para buscar proveedores — para eso es buscar_en_catalogo.",
     "input_schema": {
       "type": "object",
       "properties": {
@@ -55,7 +55,7 @@
   },
   {
     "name": "listar_mis_hilos",
-    "description": "Lista los hilos de negociación del usuario. IMPORTANTE: devuelve SOLO METADATOS — contraparte, estado, fecha y tipo del último elemento. NO devuelve el contenido de los mensajes, ni cantidades, ni precios, ni condiciones: todo eso va cifrado extremo a extremo y el servidor no tiene la clave. Llámala para '¿cuántas negociaciones tengo abiertas?', '¿en qué estado está lo de Anadolu?', '¿tengo ofertas pendientes?'. Si el usuario pide RESUMIR o LEER un hilo, no puedes: díselo y explica por qué.",
+    "description": "Lista los hilos de negociación del usuario. IMPORTANTE: devuelve SOLO METADATOS — contraparte, estado, fecha, tipo del último elemento y QUIÉN LO ENVIÓ. NO devuelve el contenido de los mensajes, ni cantidades, ni precios, ni condiciones: todo eso va cifrado extremo a extremo y el servidor no tiene la clave. Llámala para '¿cuántas negociaciones tengo abiertas?', '¿en qué estado está lo de Anadolu?', '¿tengo ofertas pendientes?', '¿tengo algo pendiente de responder?'. Para esa última: EL ESTADO NO DICE DE QUIÉN ES EL TURNO. 'CON CONSULTA PENDIENTE' significa que hay una consulta esperando respuesta, la enviara quien la enviara — si la envió el propio usuario, él no tiene nada que responder, está esperando. Quién debe responder se deduce SOLO de quién envió el último elemento, que va escrito en cada fila. Si el usuario pide RESUMIR o LEER un hilo, no puedes: díselo y explica por qué.",
     "input_schema": {
       "type": "object",
       "properties": {

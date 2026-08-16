@@ -190,17 +190,21 @@ describe('SRCH-01 · metabarra', () => {
 
 describe('SRCH-01 · Consultar seleccionados', () => {
   /**
-   * ⚠ El umbral es **dos**, y las dos fuentes no dicen lo mismo.
+   * ⚠ EL UMBRAL BAJA A **UNO** EL 17-AGO. DECISIÓN DEL PO, `F-100`.
    *
-   * `Rinworld_spec_SRCH-01.md` §3 escribe *"se habilita con ≥ 1 checkbox
-   * marcado"*; `conversational-search · results-row-actions` es normativo y dice
-   * *"SHALL habilitar la acción en lote 'Consultar Seleccionados' cuando hay al
-   * menos DOS filas marcadas"*. Manda la capability: `openspec/specs/` es la
-   * fuente de verdad del proyecto (`CLAUDE.md` §2) y la spec de pantalla es de la
-   * fase de prototipado. Además es coherente: con una sola fila marcada ya está
-   * el botón `Consultar` de esa fila, y la acción en lote no aporta nada.
+   * Lo que había aquí hasta hoy: `Rinworld_spec_SRCH-01.md` §3 escribe *"se
+   * habilita con ≥ 1 checkbox marcado"* y `conversational-search ·
+   * results-row-actions` decía *"al menos DOS filas marcadas"*. Mandaba la
+   * capability (`CLAUDE.md` §2) y el ≥2 se justificaba además por coherencia:
+   * *"con una sola fila marcada ya está el botón `Consultar` de esa fila"*.
    *
-   * Ver F-039. Si el PO decide ≥ 1, cambia este test y solo este.
+   * **Ese botón nunca hizo nada** (`F-100`): `SearchResults` le pasaba una
+   * función vacía. La coherencia que sostenía el ≥2 apuntaba a un hueco, así que
+   * el ≥2 dejaba «consultar una sola línea» sin ningún camino en toda la
+   * aplicación. Apagado el botón de fila, el umbral vuelve al ≥1 de la spec §3.
+   *
+   * El comentario anterior decía *"si el PO decide ≥ 1, cambia este test y solo
+   * este"*. Se cumplió: esto y la línea del `disabled`.
    */
   it('deshabilitado sin selección', async () => {
     pintar();
@@ -208,15 +212,15 @@ describe('SRCH-01 · Consultar seleccionados', () => {
     expect(screen.getByRole('button', { name: 'Consultar seleccionados' })).toBeDisabled();
   });
 
-  it('sigue deshabilitado con una sola fila marcada', async () => {
+  it('se habilita con UNA sola fila marcada, que es el caso que F-100 dejaba huérfano', async () => {
     fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
     pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await userEvent.click(within(filas()[0]!).getByRole('checkbox'));
-    expect(screen.getByRole('button', { name: 'Consultar seleccionados' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Consultar seleccionados' })).toBeEnabled();
   });
 
-  it('se habilita a partir de dos', async () => {
+  it('sigue habilitado con dos', async () => {
     fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
     pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));

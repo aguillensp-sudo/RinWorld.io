@@ -184,17 +184,35 @@ export function ResultsTable({
                     </button>
                   </td>
                   <td className={styles.td}>
+                    {/* F-100: los dos van APAGADOS Y CON EL MOTIVO, como el de
+                        watchers (F-023 e). Su wiring quedó fuera del día 10, pero
+                        el botón se quedó vivo: clic y silencio. Delante de alguien
+                        que no conoce la aplicación, un botón que no responde
+                        parece una aplicación rota; uno apagado que explica por qué
+                        parece una versión con alcance. `onConsult`/`onContact` se
+                        conservan —un botón deshabilitado no los dispara— porque
+                        son el contrato del componente para cuando exista FL-MSG-01. */}
                     <div className={styles.actions}>
                       <button
                         type="button"
                         className={styles.consult}
-                        disabled={row.consulted}
-                        title={row.consulted ? 'Ya consultada anteriormente' : undefined}
+                        disabled
+                        title={
+                          row.consulted
+                            ? 'Ya consultada anteriormente'
+                            : 'La consulta de una sola línea llega en la próxima versión. Marca la fila y usa «Consultar seleccionados».'
+                        }
                         onClick={() => onConsult(row.id)}
                       >
                         Consultar
                       </button>
-                      <button type="button" className={styles.contact} onClick={() => onContact(row.orgId)}>
+                      <button
+                        type="button"
+                        className={styles.contact}
+                        disabled
+                        title="El hilo libre con el proveedor está fuera del alcance de esta versión"
+                        onClick={() => onContact(row.orgId)}
+                      >
                         Contactar
                       </button>
                     </div>

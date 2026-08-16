@@ -54,8 +54,8 @@ por cantidad disponible descendente.
 El sistema SHALL ofrecer en cada fila de resultados las acciones "Consultar"
 y "Contactar", con "Consultar" deshabilitado y la fila visualmente diferenciada
 cuando esa línea ya ha sido consultada anteriormente por el comprador, y SHALL
-habilitar la acción en lote "Consultar Seleccionados" cuando hay al menos dos
-filas marcadas con el checkbox de selección múltiple.
+habilitar la acción en lote "Consultar Seleccionados" cuando hay al menos una
+fila marcada con el checkbox de selección múltiple.
 [Origen: Módulo 03 v1.6, sección 4.2; CA-SRCH-05, CA-SRCH-06, CA-SRCH-07]
 
 #### Scenario: consultar línea no consultada previamente
@@ -80,7 +80,7 @@ filas marcadas con el checkbox de selección múltiple.
   de consulta de la fila
 
 #### Scenario: consultar seleccionados en lote
-- GIVEN un miembro en SRCH-01 que ha marcado al menos dos filas de uno
+- GIVEN un miembro en SRCH-01 que ha marcado al menos una fila de uno
   o varios distribuidores con el checkbox de selección múltiple
 - WHEN pulsa "Consultar Seleccionados"
 - THEN el sistema envía una tarjeta de consulta a cada distribuidor de las

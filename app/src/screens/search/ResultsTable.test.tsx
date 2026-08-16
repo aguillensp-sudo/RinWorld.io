@@ -245,29 +245,50 @@ describe('SRCH-01 · ordenación por cabecera', () => {
   });
 });
 
-describe('SRCH-01 · acciones de fila', () => {
-  it('Consultar avisa con el id de la línea', async () => {
-    const h = pintar([row({ id: 'linea-1' })]);
-    await userEvent.click(within(filas()[0]!).getByRole('button', { name: 'Consultar' }));
-    expect(h.onConsult).toHaveBeenCalledWith('linea-1');
+/**
+ * ⚠ ESTE BLOQUE CAMBIA DE SIGNO EL 17-AGO POR `F-100`, Y CONVIENE SABER POR QUÉ.
+ *
+ * Hasta hoy comprobaba que los dos botones **avisaban** —`onConsult` con el id de
+ * la línea, `onContact` con el de la organización— y los dos asertos pasaban en
+ * verde mientras la pantalla real no hacía nada: `SearchResults` pasaba
+ * `useCallback((_) => {}, [])` en los dos. El test medía el cable, no la luz.
+ *
+ * La decisión del PO es apagarlos con el motivo dicho, como el de watchers
+ * (`F-023 e`), así que lo que hay que fijar ahora es lo contrario: que **no**
+ * estén vivos, y que digan por qué. El wiring vuelve en V1 con `FL-MSG-01`.
+ */
+describe('SRCH-01 · acciones de fila — apagadas y con el motivo (F-100)', () => {
+  it('Consultar está deshabilitado y remite a la acción que sí existe', () => {
+    pintar([row({ id: 'linea-1' })]);
+    const boton = within(filas()[0]!).getByRole('button', { name: 'Consultar' });
+    expect(boton).toBeDisabled();
+    expect(boton).toHaveAccessibleDescription(/próxima versión/i);
+    expect(boton).toHaveAccessibleDescription(/Consultar seleccionados/i);
   });
 
-  it('Contactar avisa con el id de la organización, que es con quien se habla', async () => {
-    const h = pintar([row({ orgId: 'org-9' })]);
-    await userEvent.click(within(filas()[0]!).getByRole('button', { name: 'Contactar' }));
-    expect(h.onContact).toHaveBeenCalledWith('org-9');
+  it('Contactar está deshabilitado y dice que está fuera de alcance', () => {
+    pintar([row({ orgId: 'org-9' })]);
+    const boton = within(filas()[0]!).getByRole('button', { name: 'Contactar' });
+    expect(boton).toBeDisabled();
+    expect(boton).toHaveAccessibleDescription(/fuera del alcance/i);
   });
 
-  it('una fila ya consultada deshabilita Consultar y dice por qué', () => {
+  it('NINGUNA acción de fila queda viva sin motivo escrito', () => {
+    // El aserto estructural de F-100: lo que falló no fue un botón concreto,
+    // fue que un botón sin wiring se quedara indistinguible de uno que funciona.
+    pintar([row({ id: 'a' })]);
+    for (const nombre of ['Consultar', 'Contactar']) {
+      const boton = within(filas()[0]!).getByRole('button', { name: nombre });
+      expect(boton).toBeDisabled();
+      expect(boton.getAttribute('title') ?? '').not.toHaveLength(0);
+    }
+  });
+
+  it('una fila ya consultada mantiene su motivo, que es más específico', () => {
     pintar([row({ consulted: true })]);
     const boton = within(filas()[0]!).getByRole('button', { name: 'Consultar' });
     expect(boton).toBeDisabled();
     expect(boton).toHaveAccessibleDescription(/consultada/i);
-  });
-
-  it('Contactar sigue habilitado en una fila ya consultada, sin excepción (spec §7)', () => {
-    pintar([row({ consulted: true })]);
-    expect(within(filas()[0]!).getByRole('button', { name: 'Contactar' })).toBeEnabled();
   });
 
   it('la fila consultada se distingue de forma permanente', () => {

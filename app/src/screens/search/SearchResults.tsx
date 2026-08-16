@@ -218,12 +218,16 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
                 {allSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
               </button>
             )}
-            {/* F-039: la capability manda >=2, no el >=1 de la spec §3. Con una
-                sola fila marcada la acción correcta es "Consultar" de esa fila. */}
+            {/* F-100 · BAJA A >=1 EL 17-AGO, DECISIÓN DEL PO, Y REVIERTE F-039.
+                El >=2 de la capability se sostenía sobre una frase —"con una sola
+                fila marcada la acción correcta es «Consultar» de esa fila"— que
+                remitía a un botón que no hacía nada. Apagado ese botón, mantener
+                el >=2 dejaría una selección de una sola fila sin ninguna acción
+                posible en toda la pantalla. Vuelve al >=1 de la spec §3. */}
             <button
               type="button"
               className={styles.consultSelected}
-              disabled={selected.size < 2 || consulting}
+              disabled={selected.size < 1 || consulting}
               onClick={() => {
                 void handleConsultSelected();
               }}

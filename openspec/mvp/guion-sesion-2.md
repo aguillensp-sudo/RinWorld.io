@@ -134,6 +134,14 @@ Ese par —la referencia sí, el precio no— es exactamente la frontera que A9 
 
 Se cronometra **cada tramo**, no el total. El total no dice dónde está el problema.
 
+> 🔴 **CORRECCIÓN DEL 16-AGO, A MITAD DE SESIÓN.** Este recorrido decía antes
+> *"Beta responde con una `OFERTA`"*, **y eso no se puede hacer: la aplicación no tiene forma
+> de originar una oferta.** Comprobado en el código — hay exactamente tres caminos que crean
+> algo en un hilo: `MENSAJE` desde el campo de texto, `CONSULTA` desde SRCH-01, y `OFERTA`
+> **solo** por `counter_offer`, que exige una oferta anterior. Las dos ofertas de la demo las
+> puso la siembra. Es `F-099`, y el paso estaba mal copiado de la lista de la sesión 1 sin
+> comprobar que la pantalla lo soportara. El recorrido de abajo es el que **sí** existe.
+
 | # | Tramo | 1.ª vuelta | 2.ª vuelta | Objetivo |
 |---|---|---|---|---|
 | 1 | Entrar con Alpha hasta ver el Panel | | | < 15 s |
@@ -141,10 +149,19 @@ Se cronometra **cada tramo**, no el total. El total no dice dónde está el prob
 | 3 | Filtrar por cantidad ≥ 500 y Europa | | | < 10 s |
 | 4 | Seleccionar filas y «Consultar Seleccionados» | | | < 15 s |
 | 5 | **La consulta aparece sola en la pestaña de Beta** | | | < 5 s, **sin refrescar** |
-| 6 | Beta responde con una `OFERTA` | | | < 60 s |
-| 7 | **La oferta aparece sola en la pestaña de Alpha** | | | < 5 s, **sin refrescar** |
-| 8 | Alpha la acepta → `ACUERDO ALCANZADO` en las dos | | | < 10 s |
+| 6 | **Alpha** abre el hilo de Nordwälz y **contraoferta** la oferta pendiente | | | < 60 s |
+| 7 | **La contraoferta aparece sola en la pestaña de Beta** | | | < 5 s, **sin refrescar** |
+| 8 | **Beta** la acepta → `ACUERDO ALCANZADO` en las dos | | | < 10 s |
 | 9 | Abrir el panel de vista-servidor y ver el cifrado | | | < 15 s |
+
+> ⚠ **Entre la primera y la segunda vuelta hay que correr `npm run demo:reset` otra vez.** El
+> paso 8 deja el hilo en `ACUERDO ALCANZADO` y la oferta pendiente ya no existe, así que la
+> segunda vuelta no tendría de dónde contraofertar. Tarda unos segundos y no cuenta para el
+> cronómetro.
+>
+> Los pasos 6-8 son los mismos de la §5. Aquí se **cronometran**; allí se **examinan** —quién
+> puede decidir, qué campos se heredan, qué le pasa a la oferta superada—. Si vas justo de
+> tiempo, hazlos bien una vez en la §5 y cronometra solo la primera vuelta aquí.
 
 **Qué anotar además del tiempo:** cualquier punto donde tengas que **refrescar**, esperar más
 de **2 segundos** sin señal de que algo está pasando, o **dudar de qué hacer a continuación**.
@@ -309,6 +326,17 @@ Aquí no hay herramienta que valga. Lo que se mide es **si lo dice o si improvis
 ## 5 · Contraoferta y modificación
 
 **Disponible porque la oferta pendiente la emitió Nordwälz** y Alpha es la receptora (§2.4).
+
+> ⚠ **Corre `npm run demo:reset` antes de este bloque** si ya hiciste la §3: allí el paso 8
+> acepta la contraoferta y deja el hilo en `ACUERDO ALCANZADO`, sin oferta pendiente de la que
+> partir.
+>
+> 🔴 **Y esto es lo único que hay.** No existe forma de crear una oferta desde cero — ni
+> respondiendo a una consulta ni sin consulta previa (`F-099`). La contraoferta es el **único**
+> camino por el que la aplicación emite una `OFERTA`, y solo funciona porque la siembra deja
+> una pendiente. Si en la demo del 20-ago el socio pregunta *"¿y cómo responde el vendedor a mi
+> consulta?"*, la respuesta honesta es que eso es V1.
+
 Camino completo:
 
 | # | Quién | Acción | Qué tiene que pasar |

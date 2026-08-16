@@ -160,6 +160,19 @@
   font-size: 14px;
   line-height: 1.5;
   max-width: 92%;
+  /*
+   * F-104 · LA RED, NO EL ARREGLO. El arreglo es la frase del prompt que le
+   * prohíbe a VERA usar markdown; esto es lo que salva la respuesta si el
+   * modelo desobedece. Sin `pre-wrap` los saltos de línea se colapsan y una
+   * enumeración de siete filas llega al panel como un párrafo único.
+   *
+   * `anywhere` va con ello porque el panel ocupa un tercio del ancho y colapsa
+   * a 32px (`design-system.md:190`): una referencia larga sin espacios —o una
+   * tira de pipes, si el modelo se salta la regla— desbordaría la burbuja en
+   * lugar de partirse.
+   */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .bwmsg.u .bwbub {

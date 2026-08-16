@@ -201,17 +201,34 @@ líneas con más de 7 días"*), y un suelo lo cumple también el caso contrario 
 **Cómo se cura, y cuándo hay que correrlo:**
 
 ```bash
-psql "$DATABASE_URL" -f supabase/seed/reanchor_freshness.sql
+npm run demo:reset
 ```
+
+Desde `app/`. **Sustituye desde el día 13 al `psql -f seed/reanchor_freshness.sql` que decía
+aquí**, y el motivo no es comodidad: *no hay `psql` en la máquina de desarrollo* —es el mismo
+hueco por el que `e2e/fixture.setup.ts` repone la siembra por `supabase-js` y no por SQL—, así
+que el comando documentado no se podía ejecutar tal cual. El `.sql` sigue existiendo y sigue
+valiendo por el editor de Supabase o por el MCP; lo que hace ahora es llamar a
+`public.demo_reanchor_freshness()`, que es donde vive el algoritmo desde `0015`.
 
 Desplaza `last_upload_at` de todas las líneas por un delta constante, el que devuelve la más
 reciente a `now()`. Conserva la distribución entera —el orden entre líneas, la de 34 días a 34,
 la de más de 30 que pinta en rojo— y **se verifica a sí mismo**: si el resultado no cumple el
 guion, falla en voz alta en vez de dejar la demo rota y callada.
 
+**Y hace además lo que el re-anclaje solo no hacía: repone los cinco hilos congelados.** El
+día 13 se midió que la suite e2e deja la base sucia al terminar —el hilo de Anadolu reabierto,
+MSG-01 con cuatro estados en vez de cinco (**F-096**)—, así que el reseteo comprueba también
+que están los cinco estados, con un elemento cada uno, antes de decir que ha terminado.
+
 > **Córrelo antes de cada ensayo de `Plan §10` y otra vez el 20-ago por la mañana.** Es
-> idempotente dentro del mismo día. No hace falta re-sembrar — y además no conviene: las
-> tarjetas `CONSULTA` de los días 10 y 11 apuntan a `inventory_lines.id` concretos.
+> idempotente dentro del mismo día. No hace falta re-sembrar el catálogo — y además no conviene:
+> las tarjetas `CONSULTA` de los días 10 y 11 apuntan a `inventory_lines.id` concretos.
+>
+> ⚠ **Y no corras la suite e2e mientras dure un ensayo.** Desde el día 13 la suite repone la
+> siembra al terminar además de al empezar, así que ya no deja la base rota — pero si corre **a
+> la vez** que el ensayo, se lo lleva por delante igual. Demo y pruebas comparten base y así se
+> quedan hasta V1 (**F-098**).
 
 **El contrato nuevo** vive en `supabase/tests/05_freshness_asserts.sql`, y `run.sh` lo prueba en
 las dos direcciones: envejece el catálogo 9 días, comprueba que los asertos **fallan** así,

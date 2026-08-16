@@ -42,14 +42,24 @@ export default defineConfig({
      * Va ANTES de `setup` porque publica `members.public_key` de las dos cuentas,
      * y sin esa clave el envío se niega (0012 §3).
      */
-    { name: 'fixture', testMatch: /fixture\.setup\.ts/ },
+    /**
+     * ⚠ Y `teardown` LA REPONE OTRA VEZ AL TERMINAR — día 13, y no es simetría.
+     *
+     * Reponer solo al arrancar significa **irse dejándola rota**. Medido el
+     * 16-ago: el hilo de Anadolu estaba `ABIERTO` con dos elementos en vez de
+     * `CERRADO SIN ACUERDO` con uno, residuo del test que comprueba que un
+     * elemento nuevo reabre un hilo cerrado. MSG-01 —la primera pantalla de la
+     * demo— enseñaba cuatro estados en vez de cinco. Ver `restore.teardown.ts`.
+     */
+    { name: 'fixture', testMatch: /fixture\.setup\.ts/, teardown: 'restore' },
+    { name: 'restore', testMatch: /restore\.teardown\.ts/ },
     // Autentica una vez y guarda el estado; el proyecto principal lo reutiliza.
     { name: 'setup', testMatch: /auth\.setup\.ts/, dependencies: ['fixture'] },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: ALPHA_STORAGE },
       dependencies: ['setup'],
-      testIgnore: /(auth|fixture)\.setup\.ts/,
+      testIgnore: /(auth|fixture)\.setup\.ts|restore\.teardown\.ts/,
     },
   ],
   // `preview` sobre el build, no `dev`: la puerta se prueba contra lo que se

@@ -40,70 +40,21 @@
 --
 -- No lleva metacomandos de psql a propósito: así corre tal cual por `psql`, por
 -- el editor SQL de Supabase y por `execute_sql` del MCP.
+--
+-- ⚠ EL CUERPO SE MUDÓ A `public.demo_reanchor_freshness()` EL DÍA 13, Y ESTO
+-- PASÓ A SER UNA LLAMADA. Motivo: el reseteo del entorno de demo
+-- (`app/scripts/demo-reset.mjs`) corre desde Node con `supabase-js`, que **no
+-- ejecuta SQL suelto** — solo tablas y RPC. Con el algoritmo aquí dentro habría
+-- hecho falta reimplementarlo en JavaScript, y entonces existirían dos
+-- definiciones del mismo contrato divergiendo en silencio. Este repo tiene tres
+-- hallazgos que son esa misma forma (F-012, F-089, F-095).
+--
+-- Los umbrales, el porqué de cada uno y la verificación siguen siendo los del
+-- día 12, palabra por palabra: están en `supabase/migrations/0015_demo_reset_helpers.sql`.
+-- Lo único que cambia es que la función **devuelve** el recuento además de
+-- lanzar si no cumple, porque un `raise notice` no llega hasta `supabase-js`.
+--
+-- Se sigue corriendo igual y sigue fallando en voz alta igual.
 -- =============================================================================
 
-do $$
-declare
-  delta      interval;
-  movidas    integer;
-  total      integer;
-  frescas    integer;
-  ref_frescas integer;
-  ref_viejas  integer;
-  viejas30   integer;
-begin
-  select now() - max(last_upload_at) into delta from public.inventory_lines;
-
-  if delta is null then
-    raise exception 'RE-ANCLAJE ABORTADO · no hay ni una línea en inventory_lines. ¿Base equivocada?';
-  end if;
-
-  if delta >= interval '12 hours' then
-    update public.inventory_lines
-       set last_upload_at = last_upload_at + delta;
-    get diagnostics movidas = row_count;
-    raise notice 'RE-ANCLADO · % líneas desplazadas +% (la más reciente vuelve a now())', movidas, delta;
-  else
-    raise notice 'SIN CAMBIOS · el catálogo ya estaba anclado (desfase de solo %)', delta;
-  end if;
-
-  -- ---------------------------------------------------------------------------
-  -- Verificación · los umbrales salen de `guion-demo-y-siembra.md` §2.1 y de la
-  -- distribución que el propio `catalog_demo.sql` diseña (153 de 215 por debajo
-  -- de 7 días, 9 de la referencia por debajo, 9 del catálogo por encima de 30).
-  -- Se piden con margen: son un suelo, no una copia exacta del artefacto.
-  -- ---------------------------------------------------------------------------
-  select count(*),
-         count(*) filter (where last_upload_at >= now() - interval '7 days')
-    into total, frescas
-    from public.inventory_lines;
-
-  select count(*) filter (where last_upload_at >= now() - interval '7 days'),
-         count(*) filter (where last_upload_at <  now() - interval '7 days')
-    into ref_frescas, ref_viejas
-    from public.inventory_lines
-   where part_number = '6205-2RS';
-
-  select count(*) into viejas30
-    from public.inventory_lines
-   where last_upload_at < now() - interval '30 days';
-
-  if frescas * 100 < total * 60 then
-    raise exception 'RE-ANCLAJE FALLIDO · solo % de % líneas bajan de 7 días (hace falta 60%%). La columna Antigüedad seguiría casi toda en naranja.', frescas, total;
-  end if;
-
-  if ref_frescas < 6 then
-    raise exception 'RE-ANCLAJE FALLIDO · solo % líneas de 6205-2RS bajan de 7 días (hacen falta 6). Es la tabla que ve el socio en el paso 1 del guion.', ref_frescas;
-  end if;
-
-  if ref_viejas < 2 then
-    raise exception 'RE-ANCLAJE FALLIDO · % líneas de 6205-2RS por encima de 7 días (hacen falta 2). Sin ninguna en naranja, el indicador tampoco se ve.', ref_viejas;
-  end if;
-
-  if viejas30 < 1 then
-    raise exception 'RE-ANCLAJE FALLIDO · ninguna línea pasa de 30 días. El rojo de antigüedad no aparecería en toda la demo.';
-  end if;
-
-  raise notice 'VERIFICADO · % de % líneas frescas · 6205-2RS: % frescas y % en naranja · % en rojo',
-    frescas, total, ref_frescas, ref_viejas, viejas30;
-end $$;
+select public.demo_reanchor_freshness() as resultado;

@@ -15,6 +15,11 @@
 !.env.example
 **/.claude/settings.local.json
 
+# Worktrees de sesión. `F-108` dejó uno colgando en `openspec/mvp/.claude/`, y un
+# árbol de git dentro del propio repo aparece como un directorio sin seguir que
+# alguien acaba añadiendo con un `git add .`. No se versionan nunca.
+**/.claude/worktrees/
+
 # Artefactos de Python
 __pycache__/
 *.pyc

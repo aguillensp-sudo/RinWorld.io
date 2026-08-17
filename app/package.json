@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
-    "demo:reset": "node scripts/demo-reset.mjs"
+    "demo:reset": "node scripts/demo-reset.mjs",
+    "demo:verdad": "node scripts/verdad-demo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

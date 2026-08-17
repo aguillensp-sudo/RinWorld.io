@@ -31,128 +31,53 @@
  */
 
 import { beforeAll, describe, expect, it } from 'vitest';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { supabase } from './supabase';
 import { ask, createProxyCall } from './vera';
 import type { SearchCriteria } from './search';
-import type { MemberProfile } from './session';
 import type { Screen, ToolContext } from './vera-tools';
+/*
+ * El arranque de sesión se mudó a `vera.sonda.ts` el día 15, cuando el ensayo
+ * general pasó a necesitarlo también. Tenerlo dos veces era la forma exacta de
+ * F-012/F-089/F-095: dos copias del mismo contrato divergiendo en silencio.
+ */
+import {
+  TIMEOUT,
+  cargarEnv,
+  contarFilas,
+  entrarComoAlpha,
+  espiar,
+  invarianteDeRecorte,
+  tokenVigente,
+} from './vera.sonda';
 
 /** Apagada salvo que se pida a propósito: toca red, base y cuota del modelo. */
 const ACTIVA = process.env.VERA_PROBE === '1';
 
-/** Generoso: son varias vueltas de modelo con herramientas por medio. */
-const TIMEOUT = 120_000;
-
 let ctx: ToolContext;
-let llamar: ReturnType<typeof createProxyCall>;
+let espia: ReturnType<typeof espiar>;
 let navegadoA: Screen[] = [];
 let criteriosEscritos: SearchCriteria[] = [];
 
 async function preguntar(pregunta: string) {
   navegadoA = [];
   criteriosEscritos = [];
-  const r = await ask(pregunta, ctx, llamar);
+  espia.reiniciar();
+  const r = await ask(pregunta, ctx, espia.call);
+  const filasRecibidas = espia.retornos.reduce((n, t) => n + contarFilas(t), 0);
+  const filasPintadas = contarFilas(r.text);
   // Se imprime SIEMPRE: la sonda vale por lo que deja leer, no por el verde.
   console.log(
     `\n──────── ${pregunta}\n${r.text}\n   · herramientas: ${
       r.toolsUsed.join(', ') || 'ninguna'
-    } · vueltas: ${r.steps} · navegó a: ${navegadoA.join(', ') || '—'}`,
+    } · vueltas: ${r.steps} · navegó a: ${navegadoA.join(', ') || '—'}` +
+      ` · filas ${filasRecibidas} → ${filasPintadas}`,
   );
-  return r;
-}
-
-/**
- * El invariante de `F-105`, medido sobre el texto: cuántas filas dice que hay,
- * cuántas pinta, y si declara el criterio cuando pinta menos.
- *
- * Se cuenta una fila por llevar separador `·` **y** una cantidad en unidades,
- * que es la forma que tienen las filas del retorno de `buscar_en_catalogo`. Una
- * frase de prosa no casa las dos cosas a la vez.
- */
-function coherenciaDeRecorte(texto: string): {
-  total: number | null;
-  filas: number;
-  declara: boolean;
-} {
-  const m = texto.match(
-    /\b(?:hay|tengo|encontrad[oa]s?|existen|son)\s+(\d+)\s+(?:filas|coincidencias|l[íi]neas|opciones|resultados|proveedores)/i,
-  );
-  return {
-    total: m ? Number(m[1]) : null,
-    filas: texto.split('\n').filter((l) => l.includes('·') && /\d+\s*u\b/.test(l)).length,
-    declara:
-      /de (las |los )?\d+|te (enseño|muestro)|he (seleccionado|elegido|filtrado|descartado)|las \d+ (más|mejores)|solo te/i.test(
-        texto,
-      ),
-  };
+  return { ...r, filasRecibidas, filasPintadas };
 }
 
 describe.skipIf(!ACTIVA)('SONDA v5 contra Sonnet desplegado', () => {
   beforeAll(async () => {
-    const dotenv = await import('dotenv');
-    dotenv.default.config({
-      path: join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.env'),
-      quiet: true,
-    });
-
-    const email = process.env.E2E_ALPHA_EMAIL;
-    const password = process.env.E2E_ALPHA_PASSWORD;
-    if (!email || !password) {
-      throw new Error('Faltan E2E_ALPHA_EMAIL / E2E_ALPHA_PASSWORD en app/.env.');
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(`No se ha podido entrar como alpha@: ${error.message}`);
-
-    /*
-     * El perfil se arma aquí porque `session.ts` solo lo expone por el hook de
-     * React. Es pegamento de la sonda, no una segunda copia de nada: las
-     * herramientas siguen siendo las de producción.
-     */
-    /*
-     * En DOS consultas y sin embed, a propósito. Con `organizations(...)` esto
-     * devuelve `PGRST201` —*"more than one relationship was found"*— porque
-     * `members` llega a `organizations` por más de un camino; es exactamente lo
-     * que documenta `threads.ts` sobre sus tres claves ajenas (F-020). Nombrar
-     * la FK funcionaría, pero aquí la sonda no gana nada acoplándose a su
-     * nombre: dos lecturas se leen mejor y no se rompen si la FK se renombra.
-     */
-    const { data: m, error: eM } = await supabase
-      .from('members')
-      .select('id, org_id, email, full_name, role, state')
-      .eq('email', email)
-      .single();
-    if (eM) throw new Error(`No se ha podido leer el miembro: ${eM.message}`);
-
-    const fila = m as unknown as {
-      id: string;
-      org_id: string;
-      email: string;
-      full_name: string | null;
-      role: 'ADMIN' | 'EDITOR';
-      state: string;
-    };
-
-    const { data: o, error: eO } = await supabase
-      .from('organizations')
-      .select('name, country')
-      .eq('id', fila.org_id)
-      .single();
-    if (eO) throw new Error(`No se ha podido leer la organización: ${eO.message}`);
-    const org = o as unknown as { name: string; country: string };
-
-    const profile: MemberProfile = {
-      id: fila.id,
-      email: fila.email,
-      fullName: fila.full_name,
-      role: fila.role,
-      state: fila.state,
-      orgId: fila.org_id,
-      orgName: org.name,
-      orgCountry: org.country,
-    };
+    await cargarEnv();
+    const profile = await entrarComoAlpha();
 
     ctx = {
       profile,
@@ -160,9 +85,17 @@ describe.skipIf(!ACTIVA)('SONDA v5 contra Sonnet desplegado', () => {
       setCriteria: (c) => criteriosEscritos.push(c),
     };
 
-    llamar = createProxyCall(
-      async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
-      { orgName: profile.orgName, fullName: profile.fullName, pantalla: 'Panel' },
+    /*
+     * `pantalla: 'Panel'` fijo para todas: a la sonda le da igual desde dónde se
+     * pregunta —comprueba reglas del prompt, no encuadres—. El que sí varía la
+     * pantalla por pregunta es `vera.ensayo.test.ts`, porque el guion lo exige.
+     */
+    espia = espiar(
+      createProxyCall(tokenVigente, {
+        orgName: profile.orgName,
+        fullName: profile.fullName,
+        pantalla: 'Panel',
+      }),
     );
 
     console.log(`\nSesión: ${profile.orgName} · miembro ${profile.id.slice(0, 8)}…`);
@@ -219,29 +152,39 @@ describe.skipIf(!ACTIVA)('SONDA v5 contra Sonnet desplegado', () => {
    * avisa— y se pide explícitamente una recomendación, que es lo que empuja al
    * modelo a quedarse con unas pocas. Ahí es donde F-105 vive.
    */
+  /*
+   * ⚠ TERCERA VERSIÓN DE ESTE ASERTO, Y LAS DOS ANTERIORES PASARON EN VERDE SIN
+   * COMPROBAR NADA.
+   *
+   * La v1 buscaba palabras y casó con el *"criterio general"* de la costura de
+   * B3. La v2 exigía un `12` y casó con *"Anadolu Rulman · FAG · 830 u ·
+   * Turquía · **12** días"*, un plazo de entrega — las dos, en `F-107`.
+   *
+   * La v3 —el 17-ago, al cerrar— **falló por fragilidad**: sacaba el total de la
+   * prosa con un regex y esa pasada lo dijo de otra forma, así que `total` salió
+   * `null` y el test se puso rojo sin que VERA hubiera hecho nada mal. Un
+   * instrumento que da falsos positivos Y falsos negativos no es un instrumento.
+   *
+   * Ahora el total **no se infiere del texto: se mide del retorno de la
+   * herramienta** con el espía, y las tres cotas viven en `invarianteDeRecorte`,
+   * compartidas con `vera.ensayo.test.ts` para que no vuelvan a divergir. La
+   * pregunta también cambia: pide **tres** sobre **una** referencia, que es la
+   * única forma medida de provocar un recorte de verdad (`F-110`).
+   */
   it('F-105 · si enseña menos filas de las que recibe, lo dice y con qué criterio', async () => {
     const r = await preguntar(
-      '¿Quién tiene 6205-2RS? Dame las mejores opciones para comprar 500 unidades.',
+      'Necesito 6205-2RS para un pedido grande esta semana. Dame solo las tres mejores opciones.',
     );
     expect(r.toolsUsed).toContain('buscar_en_catalogo');
+    expect(r.filasRecibidas).toBeGreaterThanOrEqual(5);
 
-    /*
-     * ⚠ SE COMPARA EL TOTAL DECLARADO CON LAS FILAS PINTADAS, Y NO SE BUSCA UNA
-     * PALABRA. La primera versión de este aserto exigía que apareciera un "12" y
-     * pasó en verde casando con *"Anadolu Rulman · FAG · 830 u · Turquía · 12
-     * días"* — un plazo de entrega. Un aserto que puede acertar por un número que
-     * significa otra cosa no comprueba nada; es el mismo fallo, en el test, que
-     * F-105 describe en el modelo.
-     */
-    const { total, filas, declara } = coherenciaDeRecorte(r.text);
-    expect(total).not.toBeNull();
-    if (total !== null && filas < total) {
-      // Ha recortado: la regla nueva obliga a decirlo y a decir con qué criterio.
-      expect(declara).toBe(true);
-    } else {
-      // No ha recortado: entonces lo pintado tiene que ser lo declarado.
-      expect(filas).toBe(total);
-    }
+    const { huboRecorte, declaraTotal } = invarianteDeRecorte(
+      r.filasRecibidas,
+      r.filasPintadas,
+      r.text,
+    );
+    expect(huboRecorte).toBe(true);
+    expect(declaraTotal).toBe(true);
   }, TIMEOUT);
 
   /*

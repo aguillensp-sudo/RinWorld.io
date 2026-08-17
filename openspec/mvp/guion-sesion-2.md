@@ -11,6 +11,74 @@ con dos navegadores de perfil distinto. Este fichero es lo que hay que tener del
 
 ---
 
+## 0 bis · Si solo vas a trastear · **empieza por aquí**
+
+**Sí, este es el fichero.** Pero el resto del documento es una sesión de medición de 90
+minutos con cronómetro y hoja de registro. Si lo que quieres es abrir la plataforma y jugar,
+esto es todo lo que necesitas.
+
+### Dónde se entra
+
+**https://bearingworld.vercel.app** — es producción y está viva. No la indexa nadie
+(`X-Robots-Tag: noindex, nofollow, noarchive`, `despliegue.md` §3).
+
+| Cuenta | Organización | Qué es en la demo |
+|---|---|---|
+| `alpha@bearingworld.test` | **Rodamientos Ibéricos** (ES) | **La compradora, y la que habla con VERA.** Empieza por aquí |
+| `beta@bearingworld.test` | **Nordwälz Lager** (DE) | La vendedora. Es quien tiene la oferta pendiente sobre `6205-2RS` |
+
+> 🔑 **Las contraseñas están en `app/.env`** (`E2E_ALPHA_PASSWORD` / `E2E_BETA_PASSWORD`).
+> No se escriben aquí ni en ningún fichero versionado — `CLAUDE.md` §1.1.
+
+### Cuatro cosas que te van a pasar y no son fallos
+
+1. **Si recargas la página, te pide entrar otra vez.** Las claves E2EE viven en memoria de
+   sesión y se pierden al recargar. **Es correcto y es del MVP** (`CLAUDE.md` §4). En V1 hay
+   backup de claves; aquí no, a propósito.
+2. **Para ver los dos lados de una negociación necesitas dos navegadores** —o uno normal y
+   otro de incógnito—, uno con cada cuenta. Con la misma sesión no puedes ser las dos partes.
+3. **VERA no recuerda la pregunta anterior.** Si le dices *"¿y de Timken?"* después de otra
+   búsqueda, te va a repreguntar. **No está rota**: es de un solo turno en el MVP (`F-101`).
+4. **Hay tres pantallas en el menú que no existen** — Empresas, Foros y Contacto. Solo están
+   construidas Panel, Vendiendo, Comprando, Hilos e Inventario.
+
+### Lo único que puede estropear la demo
+
+**No corras la suite e2e** (`npm run e2e` / `npx playwright test`) mientras estés jugando: te
+borra y repone los cinco hilos por debajo (`F-095`).
+
+**Si algo se ve raro** —hilos que no cuadran, la columna Antigüedad entera en naranja, un
+estado que no esperabas—, no lo investigues: devuelve la demo a su sitio con un comando desde
+`app/`.
+
+```bash
+npm run demo:reset
+```
+
+Tiene que decir **cinco estados distintos** y **«N líneas desplazadas»**. Si dice
+`movidas: 0` habiendo pasado más de 12 h, párate y lee `F-109`.
+
+### Por dónde empezar, en cinco minutos
+
+1. Entra con **alpha@** y quédate en el Panel.
+2. Pregúntale a VERA **«¿Quién tiene 6205-2RS?»**. Tienen que salir **doce líneas de cinco
+   organizaciones**, sin ningún precio. Ibéricos no sale: uno no se encuentra a sí mismo.
+3. Desde Comprando, **«Necesito 500 unidades de 6205-2RS en Europa»** → **siete**. Si aparece
+   Anadolu Rulman, algo va mal: tiene 830 unidades pero está en Turquía.
+4. Ve a Hilos y pregunta **«¿Cuántas negociaciones tengo?»** → **cinco, con cinco estados
+   distintos**.
+5. Abre el hilo de Nordwälz y pregunta **«¿qué precio me han ofrecido?»**. **Tiene que decir
+   que no puede leerlo**, porque va cifrado. Eso no es un fallo: es el producto.
+
+**Si quieres intentar romperlo**, la §4 son dieciséis preguntas con la respuesta correcta al
+lado, y la §2 es la verdad de la base contra la que se comprueban. Para tenerla al día:
+
+```bash
+npm run demo:verdad
+```
+
+---
+
 ## 0 · Antes de empezar, y no es opcional
 
 | | Qué | Por qué |

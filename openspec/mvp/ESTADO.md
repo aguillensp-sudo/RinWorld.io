@@ -76,12 +76,19 @@ final de la jornada apareció el **MCP de Supabase**, que **sí alcanza la org c
 (`ujatcozvbspkycepemfq`), y con el visto bueno del PO se subió. Antes de subir se comprobó que
 el **único diff** entre el repo y la v5 desplegada era ese arreglo, para no colar nada de paso.
 
-⚠ **La app tiene un cambio construido y SIN DESPLEGAR.** `app/index.html` fija ahora
-`@tabler/icons-webfont@3.46.0` en vez de `@latest` (`despliegue.md` §7.1). El bundle JS y CSS
-**no cambia** —mismos hashes—, pero `index.html` sí se sirve, así que **hace falta un
-`npx vercel --prod`**. Comprobado que las dos URL del iconfont sirven el mismo fichero
-(sha256 `40d8d8fd…`, 211 022 bytes): fijarlo no cambia nada hoy, solo impide que cambie solo
-antes del 20.
+🟢 **La app está desplegada y comprobada en la URL viva, con el iconfont ya fijado.**
+`app/index.html` usa `@tabler/icons-webfont@3.46.0` en vez de `@latest` (`despliegue.md`
+§7.1) — con `@latest` la fuente de iconos podía cambiar sola entre dos cargas y dejar el
+shell con los iconos rotos sin que nadie tocara nada. Comprobado que las dos URL sirven **el
+mismo fichero** (sha256 `40d8d8fd…`, 211 022 bytes): fijarlo no cambia nada hoy, solo impide
+que cambie mañana.
+
+**Verificado contra `bearingworld.vercel.app` después del despliegue**, no supuesto:
+`icons-webfont@3.46.0`, `index-BSSPeP7F.js` y `index-C03rGVao.css` —los mismos hashes que
+produce `npm run build`— y `X-Robots-Tag: noindex, nofollow, noarchive` en su sitio.
+
+> **Nada del repo se queda sin desplegar hoy.** Es la primera vez en el proyecto que el día
+> cierra con las dos mitades vivas y las dos comprobadas en su URL (`F-072`, `F-091`).
 
 ---
 
@@ -236,7 +243,7 @@ Y dos más por el camino, los dos del mismo instrumento:
 | A9 aislada | **3 de 3** contra v6, después de fallar **4 de 4** contra v5 |
 | Estado de la base | `demo:reset` al cerrar, después de la e2e |
 | Edge Function | **`vera` v6 ACTIVE**, desplegada por el MCP y verificada contra el modelo |
-| App desplegada | Hash del bundle **idéntico** al construido; `X-Robots-Tag` puesta. ⚠ **`index.html` cambió después: falta un `vercel --prod`** |
+| App desplegada | **`vercel --prod` hecho y comprobado en la URL**: `icons-webfont@3.46.0`, `index-BSSPeP7F.js` y `index-C03rGVao.css` —los hashes que produce el build— y `X-Robots-Tag` puesta |
 
 > **Sin fila en `harness-metrics.csv`, y es correcto por sexto día.** Ese CSV mide **tareas
 > del Coder** (`CLAUDE.md` §6): sus 31 filas son todas `deepseek-v4-flash`. Del día 10 al 15
@@ -276,9 +283,8 @@ nadie lo viera, porque A9 no estaba en la sonda.
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 **Freno 1** | **La app tiene un cambio construido y sin desplegar**: `index.html` con el iconfont fijado. Un `npx vercel --prod` desde `app/`. **Es lo único del repo que no está vivo** | Un despliegue |
-| 🟡 **Freno 2** | **`F-073` sigue abierto pero ha dejado de bloquear.** La CLI ve solo la org `mjxnlvvrnjuuawlxkmte` y da 403 sobre el proyecto del MVP; **el MCP de Supabase sí llega**, y por ahí fueron hoy la migración y el despliegue de v6. Conviene arreglarlo igual: depender de que el MCP esté cargado en la sesión es depender de la suerte | **Álvaro**, cuando quiera: re-loguear la CLI y `supabase link --project-ref troxminloxkjwihwfevs` |
-| 🟡 **Freno 3** | **Nada despliega solo** (`F-072`, `F-091`). Hoy se ha desplegado la función y **se ha comprobado**; la app está a un comando | Se cumple desplegando |
+| 🟡 **Freno 1** | **`F-073` sigue abierto pero ha dejado de bloquear.** La CLI ve solo la org `mjxnlvvrnjuuawlxkmte` y da 403 sobre el proyecto del MVP; **el MCP de Supabase sí llega**, y por ahí fueron hoy la migración y el despliegue de v6. Conviene arreglarlo igual: depender de que el MCP esté cargado en la sesión es depender de la suerte | **Álvaro**, cuando quiera: re-loguear la CLI y `supabase link --project-ref troxminloxkjwihwfevs` |
+| 🟡 **Freno 2** | **Nada despliega solo** (`F-072`, `F-091`). Hoy se han desplegado **las dos** —función v6 y app— y **las dos están comprobadas en su URL**. Sigue siendo un freno para mañana: si se toca código, hay que repetirlo | Se cumple cerrando con el despliegue hecho, como hoy |
 
 ---
 
@@ -319,17 +325,16 @@ nadie lo viera, porque A9 no estaba en la sonda.
 
 ## Qué toca el 20-ago, por la mañana y en este orden
 
-1. **`npx vercel --prod` desde `app/`**, si no se ha hecho antes. Es lo único del repo que no
-   está vivo, y comprobarlo es abrir la URL y ver los iconos.
-2. **`npm run demo:reset`**, y comprobar que dice **«N líneas desplazadas»** y cinco estados.
+1. **`npm run demo:reset`**, y comprobar que dice **«N líneas desplazadas»** y cinco estados.
    Si dice `movidas: 0` con más de 12 h desde el último anclaje, párate: es `F-109`.
-3. **`npm run demo:verdad`**, y tener la salida delante durante la demo.
-4. **`VERA_ENSAYO=1 npx vitest run src/lib/vera.ensayo.test.ts`, DOS VECES.** Es lo que separa
+2. **`npm run demo:verdad`**, y tener la salida delante durante la demo.
+3. **`VERA_ENSAYO=1 npx vitest run src/lib/vera.ensayo.test.ts`, DOS VECES.** Es lo que separa
    el riesgo #1 del verde: v6 solo tiene una pasada encima. Si las dieciséis aguantan las dos
    veces, **el riesgo #1 pasa a verde y se puede decir en la reunión**.
-5. **No correr la suite e2e** durante la demo (`F-098`: es un ruego, no una barrera).
-6. **Si se toca el prompt, se vuelve a medir.** Sin excepción: `F-111` existió porque v5 metió
-   cinco reglas buenas y una se sobregeneralizó sin que nadie mirara A9.
+4. **No correr la suite e2e** durante la demo (`F-098`: es un ruego, no una barrera).
+5. **Si se toca código o prompt, redesplegar Y comprobarlo en la URL.** Sin excepción:
+   `F-111` existió porque v5 metió cinco reglas buenas y una se sobregeneralizó sin que nadie
+   mirara A9.
 
 ---
 
@@ -370,9 +375,10 @@ La lista se vació el 17-ago preguntándosela punto por punto. Queda esto:
 3. — **Sin fichero de decisiones del día**: solo lo llevan los días 4, 8 y 9. Las tres del PO
    —no encender el interruptor de Auth, no hubo clave rotada, `PENDIENTE-PO.md` desfasado—
    quedan en la tabla de «Pendiente de Álvaro».
-4. ✅ **Commit + push** a `mvp/bootstrap`. **Edge Function: desplegada en v6 y verificada
-   contra el modelo.** **App: falta el `vercel --prod`** del iconfont fijado — es el único
-   cabo suelto del día y está dicho arriba en rojo.
+4. ✅ **Commit + push** a `mvp/bootstrap`, y **los dos despliegues hechos y comprobados en su
+   URL**: Edge Function **v6** verificada contra el modelo (A9 3/3, ensayo 16/16) y app en
+   Vercel verificada contra `bearingworld.vercel.app`. **No queda nada del repo sin
+   desplegar.**
 
 ---
 

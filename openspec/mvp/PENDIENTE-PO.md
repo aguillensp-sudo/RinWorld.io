@@ -1,5 +1,15 @@
 # Pendiente del PO · cerrado el día 8 (12-ago-2026)
 
+> ⛔ **FICHERO DESFASADO. NO ES LA LISTA VIVA — no actúes sobre nada de lo de abajo.**
+> Lo declaró el PO el **17-ago (día 15)**: *"PENDIENTE-PO olvídalo, es fichero desfasado"*.
+>
+> Dice de sí mismo que se sobrescribe a diario y lleva **desde el día 8 sin tocarse**, siete
+> jornadas. Eso lo convierte en una trampa para quien lo abra buscando qué hay pendiente:
+> lo de abajo está cerrado, caducado o superado.
+>
+> **La lista viva es `ESTADO.md`, sección «Pendiente de Álvaro».** Esto se queda como
+> histórico del día 8 y por nada más.
+
 > **Fichero de una sola cara.** Se sobrescribe cada día como `ESTADO.md`. Lo de ayer vive en git;
 > tus respuestas del día 7 están en `PENDIENTE-PO-respuesta.md`.
 

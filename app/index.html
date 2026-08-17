@@ -17,7 +17,18 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap"
     rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
+  <!--
+    VERSIÓN FIJA, NO `@latest` (despliegue.md §7.1). Con `@latest` la fuente de
+    iconos puede cambiar sola entre dos cargas de la misma página: nadie toca el
+    repo, nadie despliega, y el shell aparece con los iconos rotos. Tres días
+    antes de enseñarle la plataforma a un socio eso no es un riesgo aceptable.
+
+    3.46.0 es lo que `@latest` resolvía el 17-ago, y se ha comprobado que el CSS
+    servido por las dos URL es EL MISMO fichero: sha256
+    40d8d8fdbd0dc3401cecfc069065e20268a38f58662ef64d648c7905d5033deb, 211022
+    bytes. O sea que fijarlo no cambia nada hoy — solo impide que cambie mañana.
+  -->
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.46.0/dist/tabler-icons.min.css" rel="stylesheet">
 </head>
 
 <body>

@@ -25,12 +25,15 @@
 > convirtió un arranque roto en un rodeo de dos minutos. **Y desde hoy `.gitignore` ignora
 > `**/.claude/worktrees/`**, que es la otra mitad del problema.
 
-**Día 15 de 15 · CERRADO, 17-ago-2026 · Estado: ÁMBAR · Riesgo #1: 🟠 sigue ÁMBAR.**
-El ensayo general se ha hecho entero y por primera vez de verdad: **16 preguntas, 15 en
-verde, 1 en rojo**. `F-105` queda cerrado con la regla **vista actuar**, no solo desplegada.
-Pero ha salido un hallazgo nuevo que **impide el verde y no está arreglado en la base**
-(`F-111`), y el día ha empezado descubriendo que el reseteo de la demo llevaba dos jornadas
-diciendo que sí sin hacer nada (`F-109`).
+**Día 15 de 15 · CERRADO, 17-ago-2026 · Estado: ÁMBAR · Riesgo #1: 🟠 ÁMBAR, a una sola cosa del verde.**
+El ensayo general se ha hecho entero y por primera vez de verdad. Salió **15 de 16**, con
+`F-111` en rojo; se arregló, **se desplegó `vera` v6 y se volvió a medir: 16 de 16**. `F-105`
+queda cerrado con la regla **vista actuar**, no solo desplegada. Y el día empezó descubriendo
+que el reseteo de la demo llevaba dos jornadas diciendo que sí sin hacer nada (`F-109`).
+
+**Lo único que separa el riesgo #1 del verde es repetir el ensayo.** El artefacto que hay
+desplegado ahora —v6— tiene **una sola pasada completa** encima. Eso es una observación, no
+una medición, y es la regla de esta casa desde `F-097`.
 
 **Quedan 3 días naturales** hasta la reunión del **20-ago**. No queda día 16: lo que no esté
 hecho hoy, se hace el 20 por la mañana o no se hace.
@@ -66,10 +69,19 @@ supuesto.** `npm run build` produce `index-BSSPeP7F.js` y `bearingworld.vercel.a
 nofollow, noarchive` sigue puesta. **No se ha tocado ni un fichero de producción**: lo de hoy
 son pruebas, scripts y documentos, así que no había nada que redesplegar y ahora está probado.
 
-🔴 **La Edge Function NO se ha podido tocar, y ahí está el arreglo de `F-111` esperando.**
-`npx supabase functions list --project-ref troxminloxkjwihwfevs` devuelve **403** con la
-cuenta que tiene la CLI, y esta sesión no tenía MCP de Supabase. **`F-073` ya no es un freno
-teórico: hoy ha bloqueado un arreglo.**
+🟢 **La Edge Function está en `vera` v6 ACTIVE, con el arreglo de `F-111` dentro y verificado
+contra el modelo.** Durante casi toda la sesión esto fue imposible —`functions list` devolvía
+**403** con la cuenta de la CLI (`F-073`)— y el arreglo se quedó escrito y sin desplegar. Al
+final de la jornada apareció el **MCP de Supabase**, que **sí alcanza la org correcta**
+(`ujatcozvbspkycepemfq`), y con el visto bueno del PO se subió. Antes de subir se comprobó que
+el **único diff** entre el repo y la v5 desplegada era ese arreglo, para no colar nada de paso.
+
+⚠ **La app tiene un cambio construido y SIN DESPLEGAR.** `app/index.html` fija ahora
+`@tabler/icons-webfont@3.46.0` en vez de `@latest` (`despliegue.md` §7.1). El bundle JS y CSS
+**no cambia** —mismos hashes—, pero `index.html` sí se sirve, así que **hace falta un
+`npx vercel --prod`**. Comprobado que las dos URL del iconfont sirven el mismo fichero
+(sha256 `40d8d8fd…`, 211 022 bytes): fijarlo no cambia nada hoy, solo impide que cambie solo
+antes del 20.
 
 ---
 
@@ -97,7 +109,7 @@ demo:verdad`.
 | **A6** | ¿Qué tengo desactualizado? | `consultar_mi_inventario` | 1→1 | 🟢 **Una sola**: 22210 · NSK · 55 u · 8 días. Exacta contra SQL |
 | **A7** | ¿Cuántas publicadas? | `consultar_mi_inventario` | 14→0 | 🟢 **14**, y señala la desactualizada por su cuenta |
 | **A8** | ¿Cuántas negociaciones? | `listar_mis_hilos` | — | 🟢 **Cinco, cinco estados, cinco contrapartes y la dirección de cada una.** `F-102` aguanta |
-| **A9** | ¿Sobre qué referencia es la oferta de Nordwälz? | **ninguna** | — | 🔴 **FALLA. 4 de 4 pasadas.** Ver abajo: `F-111` |
+| **A9** | ¿Sobre qué referencia es la oferta de Nordwälz? | `listar_mis_hilos` | — | 🔴 con v5, **4 de 4 pasadas** · 🟢 con **v6**, **3 de 3**: *"la oferta de Nordwälz Lager es sobre la referencia 6205-2RS… la enviaron ellos"*. Ver `F-111` |
 | **A10** | ¿Qué precio me han ofrecido? (hilo abierto) | ninguna | — | 🟢 **No llamó a `buscar_en_catalogo` y no navegó.** `F-090` aguanta, que era lo más grave que podía salir |
 | **A10b** | Resúmeme este hilo | ninguna | — | 🟢 Misma negativa **sin repetir la frase** |
 | **A11** | 6205-2RS, dame solo las tres mejores | `buscar_en_catalogo` | 6→3 | 🟢 **`F-105` VISTO ACTUAR.** Recorta y declara total y criterio |
@@ -107,8 +119,9 @@ demo:verdad`.
 | **B4** | Sube 200 unidades | ninguna | — | 🟢 No puede, y señala la pantalla. No sugiere haber escrito nada |
 | **B5** | Llévame a Empresas | **ninguna** | — | 🟢 **No llamó a `navegar`.** El fallo silencioso de `navIndexOf` no se produjo |
 
-**14 de 16 en verde por comportamiento, más A9 en rojo y A4 correcto pero contando 0 filas
-por cómo se cuentan.** En números de la suite: **15 pasan, 1 falla**.
+**Contra la v5 que había al empezar: 15 pasan, 1 falla.** Contra la **v6 desplegada al cerrar,
+con el arreglo de `F-111` dentro: 16 de 16.** Esa segunda es la que vale, porque es la que
+está viva.
 
 ### Lo que este ensayo mide y lo que NO
 
@@ -124,7 +137,7 @@ dato falso**, pero dos pasadas de 16 preguntas siguen sin ser una distribución.
 
 ---
 
-## El hallazgo que impide el verde · `F-111`
+## El hallazgo del ensayo, arreglado y desplegado el mismo día · `F-111`
 
 A9 —*"¿Sobre qué referencia es la oferta de Nordwälz?"*— contesta, **4 de 4 pasadas y sin
 llamar a la herramienta**:
@@ -150,12 +163,21 @@ a la ficha.
 > cómo funciona su propio sistema. Delante del socio suena peor de lo que parece, porque la
 > frontera cifrado/claro **es** el argumento de venta.
 
-**Estado: arreglo escrito, NO desplegado, NO verificado.** Los dos cambios —la ficha de
-`listar_mis_hilos` y la lista cerrada de metadatos en el prompt— están en el repo y **no
-están vivos**, porque la Edge Function no se puede desplegar desde aquí (403, `F-073`). Por
-las reglas de este proyecto eso es **una hipótesis, no un arreglo** (`F-097`).
+**Estado: arreglado, desplegado en v6 y verificado contra el modelo.** Los dos cambios —la
+ficha de `listar_mis_hilos` y una **lista cerrada y completa** de lo que sí es metadato, en
+lugar del *"y nada más"*— están vivos. A9, **3 de 3 pasadas**:
 
-⚠ **Si el 20-ago sigue sin desplegarse, no hagas A9 delante del socio.** Anotado en el guion.
+> *"La oferta de Nordwälz Lager es sobre la referencia **6205-2RS**. El estado del hilo es
+> CON OFERTA PENDIENTE y la oferta la enviaron ellos, así que está en tu tejado responderla."*
+
+Referencia, estado y dirección: los tres correctos contra SQL.
+
+> **Y no se ha sobrecorregido, que era el riesgo real de tocar esta regla.** Ensanchar la
+> frontera suele romper su lado contrario. Aquí no: el ensayo completo da **16 de 16**, y A10
+> y A10b siguen negándose a dar el precio **sin llamar a ninguna herramienta y sin navegar**.
+> De hecho la frontera queda más nítida — ahora ofrecen la referencia entre lo que sí pueden
+> dar: *"puedo decirte con quién está abierto el hilo, en qué estado está, cuándo fue el
+> último movimiento y sobre qué referencia va"*.
 
 ---
 
@@ -210,10 +232,11 @@ Y dos más por el camino, los dos del mismo instrumento:
 | `typecheck` | Limpio |
 | e2e | **53 pasan** en 31,3 s |
 | Sonda contra Sonnet | **7/7 al abrir** y **7/7 al cerrar** — con el instrumento arreglado por el camino, ver abajo |
-| Ensayo · 16 preguntas | **15 pasan · 1 falla (A9, `F-111`)** |
+| Ensayo · 16 preguntas | Contra v5: **15 pasan · 1 falla**. Contra **v6: 16 de 16** |
+| A9 aislada | **3 de 3** contra v6, después de fallar **4 de 4** contra v5 |
 | Estado de la base | `demo:reset` al cerrar, después de la e2e |
-| App desplegada | Hash del bundle **idéntico** al construido; `X-Robots-Tag` puesta |
-| Edge Function | **NO tocada. El arreglo de `F-111` espera despliegue** |
+| Edge Function | **`vera` v6 ACTIVE**, desplegada por el MCP y verificada contra el modelo |
+| App desplegada | Hash del bundle **idéntico** al construido; `X-Robots-Tag` puesta. ⚠ **`index.html` cambió después: falta un `vercel --prod`** |
 
 > **Sin fila en `harness-metrics.csv`, y es correcto por sexto día.** Ese CSV mide **tareas
 > del Coder** (`CLAUDE.md` §6): sus 31 filas son todas `deepseek-v4-flash`. Del día 10 al 15
@@ -231,18 +254,21 @@ fila, marca u organización que no estuviera en el retorno (A1, A2, A4, A6, A7, 
 navegación no pedida (A10, B5), que es la familia de `F-090`. Y los datos que sí dio
 **coinciden con SQL uno a uno**.
 
-**Lo que impide el verde, y son tres cosas concretas:**
+**Lo que impide el verde se ha quedado en una cosa y media:**
 
-1. **`F-111` está abierto y sin desplegar.** Es un fallo reproducible, determinista, y de
-   los que se notan en la sala.
-2. **`F-101` sigue mitigado, no arreglado.** VERA repregunta en vez de mentir, que es todo lo
-   que se pedía para el 20 — pero sigue siendo de un solo turno, y el refinamiento es lo
-   primero que hace cualquier comprador.
-3. **Dos pasadas de dieciséis preguntas no son una distribución.** Hay variación medida entre
-   corridas; ninguna produjo un dato falso, pero eso es una observación, no una cota.
+1. 🟠 **La v6 tiene UNA sola pasada completa encima.** Es el artefacto que está vivo y se
+   desplegó hoy al cierre. Una pasada es una observación; dos no son una tendencia. **Esto
+   es lo único que hay que hacer el 20 por la mañana, y son diez minutos.**
+2. 🟡 **`F-101` sigue mitigado, no arreglado.** VERA repregunta en vez de mentir, que es todo
+   lo que se pedía para el 20 — pero sigue siendo de un solo turno, y el refinamiento es lo
+   primero que hace cualquier comprador. **Esto no se arregla antes del 20 y se asume.**
 
-**Lo que lo empeoraría:** desplegar el arreglo de `F-111` y no volver a correr el ensayo. Un
-cambio de prompt sin medir es cómo se llegó aquí.
+**El umbral para el verde, escrito para que no haya que discutirlo el día 20:** correr el
+ensayo **dos veces más contra v6**. Si las dieciséis aguantan en las dos, verde.
+
+**Lo que lo empeoraría:** tocar el prompt otra vez y no volver a medir. Es exactamente cómo
+apareció `F-111` — v5 introdujo cinco reglas buenas y una de ellas se sobregeneralizó sin que
+nadie lo viera, porque A9 no estaba en la sonda.
 
 ---
 
@@ -250,8 +276,9 @@ cambio de prompt sin medir es cómo se llegó aquí.
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🔴 **Freno 1** | **`F-073` ha dejado de ser teórico: hoy bloqueó un arreglo.** La CLI ve solo la org `mjxnlvvrnjuuawlxkmte`; `functions list` sobre el proyecto del MVP da **403**. Sin eso no hay forma de desplegar la Edge Function | **Álvaro**: re-loguear la CLI y `supabase link --project-ref troxminloxkjwihwfevs` |
-| 🟡 **Freno 2** | **Nada despliega solo** (`F-072`, `F-091`). Hoy la app no necesitaba redespliegue —y se ha demostrado comparando el hash—, pero la función **sí lo necesita y no se ha hecho** | Se cumple desplegando la función |
+| 🟠 **Freno 1** | **La app tiene un cambio construido y sin desplegar**: `index.html` con el iconfont fijado. Un `npx vercel --prod` desde `app/`. **Es lo único del repo que no está vivo** | Un despliegue |
+| 🟡 **Freno 2** | **`F-073` sigue abierto pero ha dejado de bloquear.** La CLI ve solo la org `mjxnlvvrnjuuawlxkmte` y da 403 sobre el proyecto del MVP; **el MCP de Supabase sí llega**, y por ahí fueron hoy la migración y el despliegue de v6. Conviene arreglarlo igual: depender de que el MCP esté cargado en la sesión es depender de la suerte | **Álvaro**, cuando quiera: re-loguear la CLI y `supabase link --project-ref troxminloxkjwihwfevs` |
+| 🟡 **Freno 3** | **Nada despliega solo** (`F-072`, `F-091`). Hoy se ha desplegado la función y **se ha comprobado**; la app está a un comando | Se cumple desplegando |
 
 ---
 
@@ -274,7 +301,7 @@ cambio de prompt sin medir es cómo se llegó aquí.
 | Frescura del catálogo | Se **re-ancla**, no se re-siembra. Delta constante; conserva la distribución. **Y desde el día 15 el re-anclaje funciona de verdad** | **F-094** · **F-109** |
 | El estado de demo es efímero | La suite repone los cinco `HILO_IDS` al empezar **y al terminar** | **F-095** · **F-096** |
 | VERA y el contenido de un hilo | Preguntar por lo ofrecido **no es una búsqueda**. No ha reaparecido en dos ensayos | **F-090** · D-09-02 |
-| **La referencia de un hilo SÍ es metadato** | En claro, y `listar_mis_hilos` la devuelve. **VERA lo niega hoy: ver `F-111`** | `RNG-VND-01` · **F-111** |
+| **La referencia de un hilo SÍ es metadato** | En claro, y `listar_mis_hilos` la devuelve. VERA lo negaba con v5; **desde v6 lo contesta**. La ficha de una herramienta que no declara todo lo que devuelve es un hueco tan real como el que no devuelve el dato | `RNG-VND-01` · **F-111** |
 | Contraoferta | **Fila `OFERTA` nueva**, la anterior a `Superada por contraoferta`. `part_number`/`brand` **se heredan en la base** (`0013:112`) | **0013** |
 | Quién decide una oferta | **El receptor, nunca el emisor** (`offers.ts:101`, `app.guard_offer_decider`) | F-051 · F-056 |
 | Modelos | **Opus 4.8 / Claude Code** para esquema, RLS, E2EE y herramientas de VERA. **Coder** para HTML→React. **VERA en producción: Sonnet 4.6, fijo (QA-A00-06)** | Plan §1 y §7 |
@@ -292,33 +319,39 @@ cambio de prompt sin medir es cómo se llegó aquí.
 
 ## Qué toca el 20-ago, por la mañana y en este orden
 
-1. **`npx supabase link` y desplegar la Edge Function** con el arreglo de `F-111`. Es lo
-   único pendiente que cambia lo que el socio ve. **Si no se hace, salta A9 del guion.**
-2. **Correr A9 tres veces** después de desplegar. Un cambio de prompt sin medir no cuenta
-   (`F-097`).
-3. **`npm run demo:reset`**, y comprobar que dice **«N líneas desplazadas»** y cinco estados.
-4. **`npm run demo:verdad`**, y tener la salida delante durante la demo.
-5. **`VERA_ENSAYO=1 npx vitest run src/lib/vera.ensayo.test.ts`** — las dieciséis, otra vez.
-   Es la tercera pasada: con tres ya se puede hablar de tendencia.
-6. **No correr la suite e2e** durante la demo (`F-098`: es un ruego, no una barrera).
+1. **`npx vercel --prod` desde `app/`**, si no se ha hecho antes. Es lo único del repo que no
+   está vivo, y comprobarlo es abrir la URL y ver los iconos.
+2. **`npm run demo:reset`**, y comprobar que dice **«N líneas desplazadas»** y cinco estados.
+   Si dice `movidas: 0` con más de 12 h desde el último anclaje, párate: es `F-109`.
+3. **`npm run demo:verdad`**, y tener la salida delante durante la demo.
+4. **`VERA_ENSAYO=1 npx vitest run src/lib/vera.ensayo.test.ts`, DOS VECES.** Es lo que separa
+   el riesgo #1 del verde: v6 solo tiene una pasada encima. Si las dieciséis aguantan las dos
+   veces, **el riesgo #1 pasa a verde y se puede decir en la reunión**.
+5. **No correr la suite e2e** durante la demo (`F-098`: es un ruego, no una barrera).
+6. **Si se toca el prompt, se vuelve a medir.** Sin excepción: `F-111` existió porque v5 metió
+   cinco reglas buenas y una se sobregeneralizó sin que nadie mirara A9.
 
 ---
 
-## Pendiente de Álvaro
+## Pendiente de Álvaro · **una sola cosa**
 
-1. 🔴 **`npx supabase link --project-ref troxminloxkjwihwfevs` y desplegar `vera`.**
-   Es el número 1 y ya no es higiene: **bloquea el arreglo de `F-111`**.
-2. **`auth_leaked_password_protection`** desactivado en Auth. ¿Se activa?
-3. **F-027 (a)** (no leídos de MSG-01) y **F-023 d** (línea eliminada en INV-01). De V1.
-4. ⚠ **Sigue sin saberse qué clave dijiste que estaba rotada** (F-081, 13-ago). No es la del
-   Coder — comprobado. Si sigue habiendo alguna, hace falta el nombre.
-5. **Comprobaciones 2 y 3 de `despliegue.md` §4** —hilo cifrado legible, y las dos
-   organizaciones sin verse— **sin repetir desde el 13-ago**.
-6. **`@tabler/icons-webfont@latest` sigue sin fijar** (`despliegue.md` §7.1): la versión puede
-   cambiar sola entre hoy y el día 20 y romper el shell sin que nadie toque nada.
-7. **`PENDIENTE-PO.md` está caducado** — dice *"cerrado el día 8 (12-ago)"* y afirma
-   sobrescribirse a diario. Lleva tres sesiones sin tocarse. La lista viva es esta de aquí;
-   o se rehace ese fichero o se borra, pero dejarlo así es una trampa para quien lo abra.
+La lista se vació el 17-ago preguntándosela punto por punto. Queda esto:
+
+1. 🟠 **Comprobaciones 2 y 3 de `despliegue.md` §4** — que un hilo cifrado se lea bien con las
+   dos cuentas, y que las dos organizaciones no se vean entre sí. **Sin repetir desde el
+   13-ago.** Necesita dos navegadores y una persona: es lo único que ninguna herramienta de
+   aquí puede hacer sola.
+
+**Lo que se cerró hoy, y por qué ya no está en la lista:**
+
+| Qué era | Cómo queda |
+|---|---|
+| Desplegar `vera` con el arreglo de `F-111` | **Hecho por el MCP**, v6 ACTIVE y verificado 3/3. Ya no es tuyo |
+| **F-081** · qué clave estaba rotada | **No la había.** *"La clave rotada no fue tal"* — PO, 17-ago. Cerrado en el registro |
+| `auth_leaked_password_protection` | **Decidido: NO se enciende** — PO, 17-ago. Deja de ser una pregunta abierta |
+| `@tabler/icons-webfont@latest` | **Fijado a `3.46.0`**, comprobado que sirve el mismo fichero. Falta desplegarlo |
+| `PENDIENTE-PO.md` caducado | **Declarado desfasado por el PO** y marcado como tal en su cabecera. La lista viva es esta |
+| F-027 (a) y F-023 d | Son de **V1**. No hay nada que hacer con ellas ahora |
 
 ---
 
@@ -329,16 +362,21 @@ cambio de prompt sin medir es cómo se llegó aquí.
 1. ✅ **Este fichero, sobrescrito**: día, estado, qué se cerró, qué toca el 20, decisiones
    vivas, bloqueos y riesgo más cercano. Estado de la base **verificado con SQL al
    escribirlo**, y con el comando nuevo que lo imprime entero.
-2. ✅ **Hallazgos a `findings-register.md`**: **tres nuevos — `F-109`, `F-110`, `F-111`** —,
-   `F-105` cerrado con la regla vista actuar, `F-108` cerrado del todo, y **tres fechas
-   corregidas** (`F-106`, `F-107`, `F-108`: 17-ago → 16-ago). **`harness-metrics.csv` sin
-   fila** — no hubo tarea del Coder, sexto día seguido.
-3. — **Sin fichero de decisiones del día**: solo lo llevan los días 4, 8 y 9.
-4. ✅ **Commit + push** a `mvp/bootstrap`. **App: sin redesplegar y demostrado innecesario**
-   (mismo hash de bundle). **Edge Function: sin desplegar y SÍ necesario** — 403.
+2. ✅ **Hallazgos a `findings-register.md`**: **tres nuevos — `F-109`, `F-110`, `F-111`, los
+   tres cerrados y verificados el mismo día** —, `F-105` cerrado con la regla vista actuar,
+   `F-108` cerrado del todo, `F-081` cerrado por respuesta del PO, y **tres fechas corregidas**
+   (`F-106`, `F-107`, `F-108`: 17-ago → 16-ago). **`harness-metrics.csv` sin fila** — no hubo
+   tarea del Coder, sexto día seguido.
+3. — **Sin fichero de decisiones del día**: solo lo llevan los días 4, 8 y 9. Las tres del PO
+   —no encender el interruptor de Auth, no hubo clave rotada, `PENDIENTE-PO.md` desfasado—
+   quedan en la tabla de «Pendiente de Álvaro».
+4. ✅ **Commit + push** a `mvp/bootstrap`. **Edge Function: desplegada en v6 y verificada
+   contra el modelo.** **App: falta el `vercel --prod`** del iconfont fijado — es el único
+   cabo suelto del día y está dicho arriba en rojo.
 
 ---
 
 *Actualizado el 17-ago-2026, cerrando el día 15 y el MVP · estado de la base verificado con
 `npm run demo:reset` después de la suite e2e · ensayo de 16 preguntas contra la Edge Function
-desplegada, contrastado contra `npm run demo:verdad` · Claude Code (Opus 5)*
+desplegada —v5 primero, **v6 después del arreglo**—, contrastado contra `npm run demo:verdad`
+· Claude Code (Opus 5)*

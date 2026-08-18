@@ -58,6 +58,29 @@ npm run demo:reset
 Tiene que decir **cinco estados distintos** y **«N líneas desplazadas»**. Si dice
 `movidas: 0` habiendo pasado más de 12 h, párate y lee `F-109`.
 
+> ⚠ **`npm run` hay que lanzarlo DESDE `app/`, y el error que da si no lo haces no se parece
+> en nada a un fallo de la demo.** No hay `package.json` por encima de `app/` en todo el árbol
+> —comprobado hasta `C:\Users\admin`—, así que desde la raíz del repo npm no encuentra el
+> proyecto y contesta `npm error enoent Could not read package.json`. La base no se ha tocado:
+> npm ni siquiera arrancó el script.
+>
+> **Cómo distinguirlo de un problema de verdad:** los errores del script empiezan **siempre**
+> por `RESETEO ABORTADO ·` o `RESETEO FALLIDO en «paso» ·`. Si no ves ninguna de las dos, el
+> fallo está antes de llegar a la base.
+>
+> **Y si no quieres acordarte del directorio, estas dos funcionan desde cualquier sitio** —el
+> script resuelve `.env` y sus dependencias relativas a sí mismo, no al directorio actual:
+>
+> ```
+> npm --prefix "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app" run demo:reset
+> node "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app\scripts\demo-reset.mjs"
+> ```
+>
+> **Otra causa que da error sin que nada esté roto:** si la ventana de terminal lleva abierta
+> desde antes de que se configurara `SUPABASE_SERVICE_KEY`, no la ve — las variables de
+> entorno no entran en las terminales ya abiertas. Ahí el mensaje sí es del script:
+> `RESETEO ABORTADO · faltan SUPABASE_SERVICE_KEY`. Se arregla cerrando y abriendo otra.
+
 ### Por dónde empezar, en cinco minutos
 
 1. Entra con **alpha@** y quédate en el Panel.

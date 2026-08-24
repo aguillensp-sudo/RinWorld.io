@@ -11,6 +11,7 @@ de intentos hasta verde, que es la que decide si el arnes es viable (`Plan §11`
 
 Uso:  python -m harness.tests.test_checks
 """
+import datetime
 import json
 import pathlib
 import sys
@@ -140,11 +141,20 @@ def test_metrics():
     print("\nCoste y CSV")
 
     # La aritmetica de F-011 con los numeros reales de SP-1, que estan en el CSV:
-    # 18688 hit + 79 miss + 12563 out -> 0.003581, y en frio 0.006145.
-    real = pricing.cost_usd(18688, 79, 12563)
-    frio = pricing.cost_usd_cold(18767, 12563)
-    check("reproduce el coste real de SP-1", round(real, 6) == 0.003581, round(real, 6))
-    check("reproduce el equivalente en frio de SP-1",
+    # 18688 hit + 79 miss + 12563 out -> 0.003581, y en frio 0.006145. SP-1 se
+    # pago con la tabla vieja (deepseek-chat), asi que la prueba fija esa tabla a
+    # proposito en vez de heredar los defectos del modulo — si no, cada vez que
+    # se actualice la tarifa vigente esta prueba historica se rompe sin motivo.
+    old = (pricing.PRICE_IN_HIT, pricing.PRICE_IN_MISS, pricing.PRICE_OUT)
+    pricing.PRICE_IN_HIT, pricing.PRICE_IN_MISS, pricing.PRICE_OUT = 0.0028, 0.14, 0.28
+    try:
+        real = pricing.cost_usd(18688, 79, 12563)
+        frio = pricing.cost_usd_cold(18767, 12563)
+    finally:
+        pricing.PRICE_IN_HIT, pricing.PRICE_IN_MISS, pricing.PRICE_OUT = old
+    check("reproduce el coste real de SP-1 con la tabla de entonces",
+          round(real, 6) == 0.003581, round(real, 6))
+    check("reproduce el equivalente en frio de SP-1 con la tabla de entonces",
           round(frio, 6) == 0.006145, round(frio, 6))
     check("y el cache hit del 99.58%", pricing.cache_hit_pct(18688, 18767) == 99.58)
 
@@ -187,6 +197,24 @@ def test_pricing_guard():
         check("y nombra el hallazgo", "F-010" in str(e))
     finally:
         pricing.PRICE_OUT = original
+
+
+def test_pricing_date_guard():
+    print("\nF-010 (una vuelta mas arriba) · caducidad de la tabla de precios")
+    original = pricing.PRICE_TABLE_DATE
+    try:
+        pricing.PRICE_TABLE_DATE = str(
+            datetime.date.today() - datetime.timedelta(days=100))
+        aviso = pricing.check_prices()
+        check("avisa (no peta) con una tabla de 100 dias", aviso is not None)
+        check("el aviso nombra el hallazgo", bool(aviso) and "F-010" in aviso)
+
+        pricing.PRICE_TABLE_DATE = str(
+            datetime.date.today() - datetime.timedelta(days=10))
+        check("no avisa con una tabla de 10 dias",
+              pricing.check_prices() is None)
+    finally:
+        pricing.PRICE_TABLE_DATE = original
 
 
 def test_parse():
@@ -462,6 +490,7 @@ def main() -> int:
     test_idiomatic()
     test_metrics()
     test_pricing_guard()
+    test_pricing_date_guard()
     test_parse()
     test_toolchain()
     test_c2_paths()

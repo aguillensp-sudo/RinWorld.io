@@ -1,0 +1,9 @@
+# Dependencia real del arnes: la unica cosa de terceros que se importa en todo
+# harness/ es `langgraph.graph` (run.py). Todo lo demas —llm.py incluido— es
+# stdlib a proposito (ver docstring de core/llm.py).
+#
+# Fijada a la version EXACTA instalada el 25-ago-2026, no a un rango: como nota
+# test_runner.py junto a `historico`, el harness depende de como LangGraph pasa
+# el estado entre nodos, y eso es precisamente el tipo de detalle interno que
+# cambia entre versiones sin avisar en el changelog.
+langgraph==1.2.6

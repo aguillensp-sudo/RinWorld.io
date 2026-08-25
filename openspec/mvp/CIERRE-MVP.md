@@ -16,6 +16,47 @@ como quedó** el 17-ago.
 
 ---
 
+> ## ⚠ CORRECCIÓN · 25-ago-2026
+>
+> **Tres afirmaciones de este acta eran falsas cuando se escribió, y llevaban seis días
+> siéndolo. El cuerpo del documento se deja intacto a propósito — un acta no se
+> reescribe — pero no se puede leer sin esto.**
+>
+> **1 · `B-008`, `B-009` y `B-010` no estaban pendientes: se cerraron el 12-ago-2026 a
+> las 10:12** en `e58fa9b`, *«fix(harness): B-008, B-009 y B-010 — el bucle de reintento
+> deja de mentir»*. Verificado en el código de la punta, no por el mensaje del commit:
+> `test_runner.py` pone `NO_COLOR=1` y `FORCE_COLOR=0` en el subproceso más el filtro
+> `_ANSI` defensivo; `coder.py` tiene `build_messages(task, files, feedback)` que
+> inserta un turno de asistente con el artefacto anterior; `metrics.py` guarda
+> `sources` con el contenido y no solo las rutas.
+>
+> **2 · La remedición también se hizo**, diez minutos después, en `8e8beae`. Se corrió
+> **VND-01 y no MSG-02**, y el commit dice por qué: `D-08-02` había cambiado el
+> contrato de MSG-02 y su tarea seguía declarando `SEND_DISABLED_REASON`, así que
+> relanzarlo habría medido el bucle **y** una tarea rancia a la vez. VND-01 era del día
+> anterior: misma tarea, mismo contrato, mismo repo. **Es un control mejor que el que
+> pedía el backlog.**
+>
+> **Resultado, en dos filas consecutivas de `harness-metrics.csv`:** VND-01 con el bucle
+> roto **escala en 3**; VND-01 con el bucle arreglado **pasa 4/4 en 2**.
+>
+> **3 · Por tanto la columna `intentos` SÍ es válida** a partir del 12-ago 10:22. Lo que
+> no es válido son las filas anteriores a esa hora. El §2 de este acta dice lo contrario.
+>
+> **4 · Y en consecuencia, el §4.1 no es el punto de entrada de V1.** De sus cinco
+> puntos, los tres primeros están hechos. Quedan `B-007` y la tabla de precios, más el
+> manifiesto de dependencias, que no estaba en la lista.
+>
+> **Cómo se descubrió, porque la lección importa más que el hallazgo:** un agente al que
+> se le encargó arreglar `B-008` y `B-009` leyó el código antes de tocarlo y se negó a
+> «arreglar» lo que ya estaba arreglado. El encargo llevaba escrita la instrucción de
+> pararse si el diagnóstico no cuadraba con el código. Esa instrucción es lo que evitó
+> un verde falso más.
+>
+> *Corrección verificada contra `mvp/bootstrap` el 25-ago-2026.*
+
+---
+
 ## 1 · Qué queda vivo, y dónde
 
 | Qué | Dónde | Comprobado |

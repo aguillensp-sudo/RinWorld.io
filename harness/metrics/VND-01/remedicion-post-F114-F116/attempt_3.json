@@ -1,0 +1,34 @@
+{
+  "attempt": 3,
+  "task": "VND-01",
+  "screen": "VND-01",
+  "model": "deepseek-v4-flash",
+  "finish_reason": "stop",
+  "api_calls": 1,
+  "truncated_at": [],
+  "tokens_in": 31728,
+  "tokens_out": 19900,
+  "cache_hit": 27520,
+  "cache_miss": 4208,
+  "cache_hit_pct": 86.74,
+  "seconds": 132.2,
+  "cost_usd": 0.028505,
+  "cost_usd_cold_equivalent": 0.040228,
+  "price_table": {
+    "in_hit": 0.014,
+    "in_miss": 0.44,
+    "out": 1.32,
+    "date": "2026-08-25"
+  },
+  "files": [],
+  "sources": {},
+  "checks": [
+    {
+      "id": "C0",
+      "ok": false,
+      "estado": "inejecutable",
+      "detail": "el Coder no devolvio ningun fichero parseable. Revisa el formato ===FILE: ruta=== / ===ENDFILE==="
+    }
+  ],
+  "escalated_to_human": true
+}

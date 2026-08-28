@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { MemberProfile } from '../../lib/session';
-import { THREAD_STATES, type ThreadState } from '../../lib/threads';
+import { THREAD_STATES } from '../../lib/threads';
 import type { ThreadDetail, ThreadItem } from '../../lib/thread-detail';
+import {
+  HILO, NOW, detail, ofertaConContenido, ofertaRecibida, profile,
+} from './Thread.fixtures';
 
 /**
  * CONTRATO DE ACEPTACIÓN · MSG-02 · la pantalla.
  *
  * Escrito antes que el código y por Claude Code (`Plan §6`). El Coder no lo ve.
+ *
+ * ⚠ **Todo lo que hay aquí se le pide al Coder en `MSG-02.json`, y nada más.** Lo
+ * que queda fuera —Realtime, el cableado de `onBack`— vive en
+ * `Thread.fuera-de-contrato.test.tsx`, que el arnés no puntúa (`F-116`,
+ * `B-011`). Un rótulo dentro de un `describe` no es una frontera; un fichero sí.
  *
  * Se mockean **solo** las funciones que tocan red. La lógica pura —`offerActions`,
  * `canCloseThread`, `canRevertAgreement`, `asOfferCard`— sigue siendo la de
@@ -52,62 +59,6 @@ vi.mock('../../lib/realtime', () => ({
 
 const { Thread } = await import('./Thread');
 const { ENCRYPTED_NOTICE } = await import('../../lib/thread-detail');
-
-const NOW = new Date('2026-08-11T12:00:00Z');
-const HILO = 't1000000-0000-4000-8000-000000000001';
-const SUYA = 'b2000000-0000-4000-8000-000000000002';
-
-const profile: MemberProfile = {
-  id: 'a1000000-0000-4000-8000-00000000000a',
-  email: 'alpha@bearingworld.test',
-  fullName: 'Juan Martínez',
-  role: 'ADMIN',
-  state: 'ACTIVE',
-  orgId: 'a1000000-0000-4000-8000-000000000001',
-  orgName: 'Rodamientos del Sur SL',
-  orgCountry: 'ES',
-};
-
-function detail(state: ThreadState = 'CON OFERTA PENDIENTE'): ThreadDetail {
-  return {
-    id: HILO,
-    counterpartyId: SUYA,
-    counterpartyName: 'NSK Europe Ltd',
-    counterpartyCountry: 'DE',
-    state,
-  };
-}
-
-const ofertaRecibida: ThreadItem = {
-  id: 'of-1',
-  type: 'OFERTA',
-  senderOrgId: SUYA,
-  isOwn: false,
-  createdAt: '2026-08-11T10:00:00Z',
-  partNumber: '6205-2RS',
-  brand: 'NSK',
-  offerState: 'Pendiente',
-  inquiryState: null,
-  respondsToItemId: null,
-  supersededByItemId: null,
-  content: null,
-  raw: { ciphertext: null, iv: null, wrappedKeyCount: 0 },
-};
-
-const ofertaConContenido: ThreadItem = {
-  ...ofertaRecibida,
-  content: {
-    kind: 'OFERTA',
-    unitPrice: 2.1,
-    currency: 'EUR',
-    quantity: 500,
-    leadTimeDays: 14,
-    shippingCost: null,
-    shippingCostCurrency: null,
-    validUntil: null,
-    notes: null,
-  },
-};
 
 beforeEach(() => {
   for (const m of [
@@ -346,54 +297,6 @@ describe('contraofertar (Plan §3, día 10)', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar contraoferta' }));
 
     expect(await screen.findByText(/ya no esta Pendiente/)).toBeInTheDocument();
-  });
-});
-
-describe('Realtime — FUERA del contrato del arnés', () => {
-  it('se suscribe a ESTE hilo, por su id', async () => {
-    pinta();
-    await waitFor(() => expect(onThreadChanged).toHaveBeenCalledWith(HILO, expect.any(Function)));
-  });
-
-  it('un evento vuelve a leer el hilo y sus elementos', async () => {
-    pinta();
-    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalledTimes(1));
-
-    // Señal, no datos: ni el estado del hilo ni los elementos salen del payload.
-    // El estado lo deriva la base (0007) y dos navegadores que lo mezclaran a
-    // mano acabarían discrepando, ganando el último que escriba (F-044).
-    onThreadChanged.mock.calls[0]![1]!();
-
-    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalledTimes(2));
-    expect(fetchThreadItems).toHaveBeenCalledTimes(2);
-  });
-
-  it('⚠ se da de baja al desmontar', async () => {
-    const { unmount } = pinta();
-    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalled());
-    unmount();
-    expect(desuscribir).toHaveBeenCalled();
-  });
-});
-
-describe('cableado — FUERA del contrato del arnés', () => {
-  /**
-   * Estos dos no los midió el Coder: `onBack` es opcional y llegó en el cableado
-   * a mano del día 7, después de la corrida. Van aquí y no mezclados arriba para
-   * que la frontera de qué se le pidió al modelo siga siendo legible.
-   */
-  it('el breadcrumb vuelve a la lista de hilos', async () => {
-    const user = userEvent.setup();
-    const onBack = vi.fn();
-    render(<Thread profile={profile} threadId={HILO} now={NOW} onBack={onBack} />);
-    await user.click(await screen.findByRole('button', { name: 'Hilos' }));
-    expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('sin `onBack` el breadcrumb no revienta', () => {
-    // La prop es opcional justamente para que el contrato del arnés compile sin
-    // ella. Un `onBack()` a secas sobre `undefined` sería un TypeError en el clic.
-    expect(() => pinta()).not.toThrow();
   });
 });
 

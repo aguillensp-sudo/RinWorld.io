@@ -255,9 +255,19 @@ def _check_c1(runner) -> dict:
     code, out = runner(["npm", "run", "typecheck"], APP)
     if code != 0:
         return _rojo("C1", _detalle(f"npm run typecheck (exit {code})", out), code, out)
-    code, out = runner(["npm", "test"], APP)
+    # `test:arnes`, no `test`: la suite entera MENOS los
+    # `*.fuera-de-contrato.test.*` (`vitest.config.arnes.ts`). Son tests
+    # obligatorios del producto que ninguna tarea del corpus le pide al Coder
+    # —Realtime, el cableado entre pantallas—, y hasta el 28-ago se le puntuaban:
+    # tres de los seis rojos de MSG-01 en la corrida de ese dia, y encima los que
+    # dominaban el recorte del feedback. F-116 / B-011, opcion (b) del PO.
+    #
+    # ⚠ Lo que NO cambia es por que C1 corre la suite entera y no solo la
+    # pantalla: eso es F-070, y sigue en pie. Se quita lo que nadie encargo, no
+    # lo de al lado.
+    code, out = runner(["npm", "run", "test:arnes"], APP)
     if code != 0:
-        return _rojo("C1", _detalle(f"npm test (exit {code})", out), code, out)
+        return _rojo("C1", _detalle(f"npm run test:arnes (exit {code})", out), code, out)
     return {"id": "C1", "ok": True, "estado": VERDE,
             "detail": "typecheck limpio y suite de unidad en verde"}
 

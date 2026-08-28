@@ -14,6 +14,7 @@ Uso:  python -m harness.tests.test_checks
 import datetime
 import json
 import pathlib
+import re
 import sys
 
 from ..core import metrics, parse, pricing
@@ -552,6 +553,69 @@ def test_el_feedback_no_esconde_fallos():
     check("y el recorte sigue estando", "algo peto" in c1x["detail"])
 
 
+def test_fuera_de_contrato_no_puntua():
+    """B-011 / F-116 · lo que la tarea no pide no puede puntuar contra el Coder.
+
+    `Messages.test.tsx` tenía dentro dos `describe` rotulados *«FUERA del
+    contrato del arnés»* —Realtime y el cableado a MSG-02, cinco tests— y C2
+    corría el fichero entero. En la corrida del 28-ago **tres de los seis rojos
+    de MSG-01 eran esos**, y encima los que dominaban el recorte del feedback
+    (F-114): lo último que se le pedía arreglar era lo único que su tarea no le
+    manda construir. `MSG-01.json` no menciona realtime en ninguna parte.
+
+    Opción (b) del PO: la frontera pasa a ser un fichero, no una cadena de texto
+    dentro de un nombre de test. Esta prueba la fija por los tres sitios por los
+    que se puede deshacer sin querer.
+
+    ⚠ La tercera es la que de verdad importa. `test_c2_paths` demostró que una
+    decisión sin prueba que la fije dura hasta el primer despiste: se decidió el
+    12-ago y el test se quedó dieciséis días en rojo sin que nadie lo notara."""
+    print("\nB-011 · lo fuera de contrato no puntua en el arnes")
+
+    fuera = sorted((ROOT / "app" / "src").rglob("*.fuera-de-contrato.test.tsx"))
+    check("existen los ficheros fuera de contrato", len(fuera) == 2,
+          str([f.name for f in fuera]))
+
+    # 1 · Ninguna tarea los declara como contrato de aceptación (C2).
+    declarados = set()
+    for t in (ROOT / "harness" / "tasks").glob("*.json"):
+        tarea = json.loads(t.read_text(encoding="utf-8"))
+        declarados |= set((tarea.get("acceptance") or {}).get("unit") or [])
+    check("⚠ ninguna tarea declara un fichero fuera de contrato en acceptance.unit",
+          not [d for d in declarados if "fuera-de-contrato" in d], str(declarados))
+
+    # 2 · Y ya no queda ningún rótulo suelto en el NOMBRE de un bloque de un
+    # fichero que sí se mide. Se mira `describe(`/`it(` y no el fichero entero a
+    # propósito: la nota que explica por qué se partieron cita el rótulo, y una
+    # prueba que prohíba nombrar el problema deja el fichero sin memoria.
+    rotulo = re.compile(r"^\s*(?:describe|it)\(\s*['\"`].*FUERA del contrato", re.M)
+    con_rotulo = [
+        p.name for p in (ROOT / "app" / "src").rglob("*.test.tsx")
+        if "fuera-de-contrato" not in p.name
+        and rotulo.search(p.read_text(encoding="utf-8"))
+    ]
+    check("⚠ ningun fichero medido lleva ya un describe rotulado a mano",
+          not con_rotulo, str(con_rotulo))
+
+    # 3 · Y C1 mide la suite del arnés, no la del producto.
+    vistos = []
+    _check_c1(lambda cmd, cwd: (vistos.append(cmd), (0, ""))[1])
+    check("C1 lanza typecheck y una suite", len(vistos) == 2, str(vistos))
+    check("⚠ y la suite es `test:arnes`, no `npm test`",
+          vistos[-1] == ["npm", "run", "test:arnes"], str(vistos[-1]))
+
+    arnes = ROOT / "app" / "vitest.config.arnes.ts"
+    check("`vitest.config.arnes.ts` existe y excluye el patron",
+          arnes.exists() and "fuera-de-contrato" in arnes.read_text(encoding="utf-8"))
+
+    # Y la otra mitad: el producto NO recorta. Si alguien mueve la exclusion al
+    # config por defecto, la CI perderia esos tests en silencio.
+    base = (ROOT / "app" / "vitest.config.ts").read_text(encoding="utf-8")
+    en_exclude = base.split("exclude:")[1].split("]")[0] if "exclude:" in base else ""
+    check("⚠ y `vitest.config.ts` NO los excluye: la CI mide el producto entero",
+          "fuera-de-contrato" not in en_exclude, en_exclude.strip())
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -582,6 +646,7 @@ def main() -> int:
     test_metricas_guardan_el_artefacto()
     test_estado_de_check()
     test_el_feedback_no_esconde_fallos()
+    test_fuera_de_contrato_no_puntua()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

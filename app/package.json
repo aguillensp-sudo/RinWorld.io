@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "check:palette": "node scripts/check-palette.mjs",
     "test": "vitest run",
+    "test:arnes": "vitest run --config vitest.config.arnes.ts",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",

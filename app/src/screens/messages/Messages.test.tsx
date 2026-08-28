@@ -1,13 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ThreadPage, ThreadQuery, ThreadSummary } from '../../lib/threads';
-import type { MemberProfile } from '../../lib/session';
+import type { ThreadPage, ThreadQuery } from '../../lib/threads';
+import { NOW, page, profile, thread } from './Messages.fixtures';
 
 /**
  * CONTRATO DE ACEPTACIÓN · MSG-01 · pantalla.
  *
  * Escrito antes que el código y por Claude Code (`Plan §6`). El Coder no lo ve.
+ *
+ * ⚠ **Todo lo que hay en este fichero se le pide al Coder en `MSG-01.json`, y
+ * nada más.** Lo que queda fuera de esa tarea —Realtime, el cableado a MSG-02—
+ * vive en `Messages.fuera-de-contrato.test.tsx`, que el arnés no puntúa. Hasta
+ * el 28-ago estaba aquí abajo, rotulado *«FUERA del contrato del arnés»* en el
+ * nombre de un `describe` que no leía nadie más que un humano: C2 corría el
+ * fichero entero y le puntuaba al Coder tres tests que su tarea no le manda
+ * construir (`F-116`, `B-011`). Un rótulo no es una frontera; un fichero sí.
  *
  * Se mockea **solo** la función que toca red. La lógica pura de `lib/threads`
  * (vista previa, tono del badge, tiempo relativo, paginación) sigue siendo la de
@@ -45,35 +53,6 @@ vi.mock('../../lib/realtime', () => ({
 }));
 
 const { Messages } = await import('./Messages');
-
-const NOW = new Date('2026-08-08T12:00:00Z');
-
-const profile: MemberProfile = {
-  id: 'a1000000-0000-4000-8000-00000000000a',
-  email: 'alpha@bearingworld.test',
-  fullName: 'Alvaro Alpha',
-  role: 'ADMIN',
-  state: 'ACTIVE',
-  orgId: 'a1000000-0000-4000-8000-000000000001',
-  orgName: 'Rodamientos Ibéricos',
-  orgCountry: 'ES',
-};
-
-function thread(over: Partial<ThreadSummary> = {}): ThreadSummary {
-  return {
-    id: '10000000-0000-4000-8000-000000000001',
-    counterpartyName: 'Nordwälz Lager',
-    counterpartyCountry: 'DE',
-    state: 'CON OFERTA PENDIENTE',
-    lastItemAt: new Date(NOW.getTime() - 2 * 3600_000).toISOString(),
-    lastItem: { type: 'OFERTA', partNumber: '6205-2RS', isOwn: false },
-    ...over,
-  };
-}
-
-function page(threads: ThreadSummary[], total = threads.length): ThreadPage {
-  return { threads, total };
-}
 
 beforeEach(() => {
   fetchThreadPage.mockReset();
@@ -249,64 +228,4 @@ describe('MSG-01 · pantalla', () => {
     });
   });
 
-  describe('Realtime — FUERA del contrato del arnés', () => {
-    it('se suscribe a los cambios de hilos al montar', async () => {
-      pintar();
-      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
-      expect(onThreadsChanged).toHaveBeenCalled();
-    });
-
-    it('un evento vuelve a leer la página', async () => {
-      pintar();
-      await waitFor(() => expect(fetchThreadPage).toHaveBeenCalledTimes(1));
-
-      // Lo que el canal entrega es una SEÑAL, no datos: la pantalla pregunta otra
-      // vez en vez de mezclar el payload. La lista está paginada y ordenada por
-      // `last_item_at` en el servidor, así que insertar a mano lo que llega la
-      // pondría en una página que a lo mejor no es la que se está viendo.
-      const avisar = onThreadsChanged.mock.calls[0]![0];
-      avisar();
-
-      await waitFor(() => expect(fetchThreadPage).toHaveBeenCalledTimes(2));
-    });
-
-    it('⚠ se da de baja al desmontar', async () => {
-      // Sin esto, cada visita a Hilos deja un canal abierto y una relectura que
-      // apunta a un componente que ya no está.
-      const { unmount } = pintar();
-      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
-      unmount();
-      expect(desuscribir).toHaveBeenCalled();
-    });
-  });
-
-  describe('cableado a MSG-02 — FUERA del contrato del arnés', () => {
-    /**
-     * `onOpenThread` llegó en el cableado a mano del día 7, cuando MSG-02 pasó a
-     * existir. Va aparte para que la frontera de qué se le pidió al Coder de
-     * MSG-01 siga siendo legible: hasta ayer, abrir un hilo no llevaba a ningún
-     * sitio y esa era la respuesta correcta.
-     */
-    it('abrir un hilo avisa con su id', async () => {
-      const user = userEvent.setup();
-      const onOpenThread = vi.fn();
-      render(<Messages profile={profile} now={NOW} onOpenThread={onOpenThread} />);
-
-      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
-      await user.click(screen.getByRole('button', { name: /Nordwälz Lager/ }));
-
-      expect(onOpenThread).toHaveBeenCalledWith('10000000-0000-4000-8000-000000000001');
-    });
-
-    it('sin `onOpenThread` el clic no revienta', async () => {
-      // La prop es opcional para que el contrato de MSG-01 compile sin ella. Un
-      // `onOpenThread(id)` a secas sobre `undefined` sería un TypeError en el clic.
-      const user = userEvent.setup();
-      pintar();
-      await waitFor(() => expect(screen.getByRole('listitem')).toBeInTheDocument());
-      await expect(
-        user.click(screen.getByRole('button', { name: /Nordwälz Lager/ })),
-      ).resolves.not.toThrow();
-    });
-  });
 });

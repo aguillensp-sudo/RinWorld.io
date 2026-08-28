@@ -46,6 +46,9 @@ jobs:
         # escribir un hex, y C3 falla por un hueco nuestro y no por fallo suyo.
         run: npm run check:palette
       - name: Vitest
+        # `npm test` a secas, y es la suite ENTERA. El que recorta es el arnes
+        # (`npm run test:arnes`, F-116 / B-011), no el producto: aqui tienen que
+        # correr tambien los `*.fuera-de-contrato.test.*`.
         run: npm test
       - name: Build
         run: npm run build

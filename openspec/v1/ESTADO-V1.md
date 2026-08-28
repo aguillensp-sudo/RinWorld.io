@@ -50,11 +50,13 @@ fecharon tres días atrás. **`date -u` antes de escribir la cabecera.**
 
 ---
 
-**Día 1 de V1 · 25-ago-2026 · Corriente A arrancada · Estado: VERDE**
+**Día 2 de V1 · 28-ago-2026 · Instrumento cerrado del todo, medición en n=4 · Estado: VERDE**
 
-Primer día operativo de V1 después del cierre del MVP (18-ago). Se han cerrado las dos
-piezas que quedaban del instrumento y se ha corregido un error de medición que venía del
-MVP. No se ha tocado producto: esto es todavía fábrica.
+Segundo día operativo de V1 (el 26 y el 27 no hubo sesión). Se cerró la última pieza
+pendiente del instrumento (`B-007`) y se amplió la medición del bucle arreglado de una
+tarea a cuatro: dos pasan a verde, dos repiten el fallo exacto de antes del arreglo. Es
+señal real, no ruido, y no está diagnosticada. No se ha tocado producto: sigue siendo
+fábrica.
 
 ---
 
@@ -62,23 +64,13 @@ MVP. No se ha tocado producto: esto es todavía fábrica.
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Tabla de precios actualizada | `harness/core/pricing.py` en la punta | `0.014 / 0.44 / 1.32` + `PRICE_TABLE_DATE = 2026-08-25` |
-| El aviso de caducidad funciona | Test `test_pricing_date_guard` | Avisa a 100 días, calla a 10, **no bloquea** |
-| Manifiesto existe y fija versión | `harness/requirements.txt` | `langgraph==1.2.6`, versión exacta instalada |
-| El arnés arranca desde entorno limpio | `python -m harness.graph.run … --seco` en venv nuevo | Exit 0, cero llamadas al modelo |
-| El CSV histórico sigue intacto | `git log -- openspec/mvp/harness-metrics.csv` | Último cambio 13-ago. No se ha tocado |
-| `B-008`, `B-009`, `B-010` cerrados | Código de `coder.py`, `test_runner.py`, `metrics.py` | Cerrados el **12-ago 10:12** en `e58fa9b` |
-| La remedición se hizo | `harness-metrics.csv`, dos filas consecutivas | VND-01: escalado en 3 → **verde 4/4 en 2** |
-
-**El dato del día, y hay dos métodos independientes que coinciden:** las 30 filas
-históricas, recalculadas con la tabla vigente, suman **1,884333 USD** frente a los
-**0,411464** registrados. Factor **4,58×**. Calculado por el agente reconstruyendo
-`cache_hit`/`cache_miss` desde el CSV, y por separado por la Dirección Técnica: **1,8843**.
-Coinciden a la cuarta cifra.
-
-> **El CSV histórico NO se recalcula.** Se queda con la tabla con la que se midió, y ahora
-> cada JSON nuevo lleva su `price_table` con fecha. La trazabilidad vale más que la
-> coherencia cosmética.
+| Fecha de máquina | `date -u`, dos veces, más `python -c "datetime.now()"` | `2026-08-28`. Una lectura suelta anterior en la sesión dio 25-ago; descartada, no se escribió nada con ella |
+| El worktree activo era el correcto | `ls`, `harness/` `app/` `supabase/` presentes | Se empezó en un worktree `claude/…` sin esos tres — el error que la línea 3 describe, cuarta vez, en vivo |
+| `git worktree prune` | `git worktree list` antes/después | Sin cambios: los tres worktrees `claude/…` siguen vivos como directorios, no son prunables |
+| Aviso de la línea 3 restaurado | `git diff` sobre este fichero antes de comitear | Edición ya presente sin comitear en el repo (no la escribió esta sesión); comiteada en `fcafa70`, empujada |
+| Medición del bucle arreglado, 3 tareas nuevas | `harness-metrics.csv`, 9 filas nuevas, fecha `2026-08-28` | `PANEL-01` **verde en 3** (antes escalaba con el mismo fallo repetido); `SRCH-01` y `MSG-01` **escalan en 3**, feedback del intento 3 indistinguible del histórico. Commit `f60a163`. Detalle en `F-112` |
+| Working tree tras las corridas | `git status`, `git diff --stat -- app/` | El Coder escribió sobre `app/src/screens/{panel,search,messages}/*` (1219+/1393−). Descartado por decisión del PO — solo queda el CSV |
+| `B-007` (`--seco` ignoraba la tarea) | `harness/tests/dry_run.py` en la punta, contra las 6 tareas reales + 1 tarea rota a propósito | Las 6 reales pasan limpias; la rota cazó los 4 tipos de problema (`inputs`, `acceptance`, `outputs`, `component_api`) sin llamar al grafo. Cerrado en `dfa8c74`, registros en `bbed0e1` |
 
 ---
 
@@ -93,8 +85,9 @@ Coinciden a la cuarta cifra.
 | `B-010` el JSON guarda el contenido, no solo rutas | ✅ 12-ago · `e58fa9b` |
 | Tabla de precios con vigencia | ✅ 25-ago · `ecb792c` |
 | Manifiesto de dependencias | ✅ 25-ago · `f47e11a` |
+| `B-007` `--seco` valida la tarea que recibe | ✅ 28-ago · `dfa8c74` |
 | **Instrumentar el coste de orquestación** | 🟠 **Pendiente — y sigue sin diseño** |
-| **Convertir la observación en medición** | 🟠 **Pendiente** |
+| **Convertir la observación en medición** | 🟡 **En curso — n=4** (`VND-01` y `PANEL-01` verdes, `SRCH-01` y `MSG-01` escalados con el mismo fallo de antes del arreglo). Sigue sin ser tendencia; ahora es una discrepancia sin diagnosticar (`F-112`) |
 | Fundación V1 (entornos, ADR-002, índice, residencia) | ⚪ No empezada |
 
 ### Corriente B · Fábrica — NO ABIERTA
@@ -111,17 +104,19 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **La medición, que es lo único que bloquea el Hito 1.** El bucle arreglado tiene **una**
-   observación a favor —VND-01— y `F-097` dice que una pasada no es una tendencia. Correr
-   dos o tres tareas del corpus con el bucle actual y comparar contra sus filas históricas.
-   Céntimos. **No relanzar MSG-02**: `D-08-02` le cambió el contrato y su tarea sigue
-   declarando `SEND_DISABLED_REASON`, así que mediría el bucle y una tarea rancia a la vez.
-2. **Decidir cómo se instrumenta el coste de orquestación.** Es una conversación, no un
-   encargo: hay que elegir entre consola de facturación, envoltorio propio, o estimación
-   declarada. Hasta entonces, la partida de 1.500–4.500 € del plan es la cifra más floja
-   que contiene.
-3. **`B-007`** — `--seco` tiene que correr la tarea que recibe, o dejar de aceptar el
-   argumento.
+1. **Decidir cómo se instrumenta el coste de orquestación.** Sigue siendo lo único que
+   bloquea el Hito 1. Es una conversación, no un encargo: hay que elegir entre consola de
+   facturación, envoltorio propio, o estimación declarada. Hasta entonces, la partida de
+   1.500–4.500 € del plan es la cifra más floja que contiene.
+2. **`F-112`, antes de correr más tareas del corpus.** `SRCH-01` y `MSG-01` no mejoraron
+   con el bucle arreglado y fallan igual que antes — descartar que sea el mismo tipo de
+   defecto que `F-058` (un contrato con un hueco, no un límite del modelo) antes de gastar
+   en medir más sin saber qué se está midiendo.
+3. **`F-113`, delegado a sesión aparte** (`inputs.decisions` no llega al prompt del Coder
+   en `MSG-02`, `PANEL-01`, `VND-01`). No es bloqueante hoy — ninguna de las tres se
+   reconstruye mañana.
+4. **Fundación V1** sigue sin empezar y ya no tiene nada barato por delante salvo el punto
+   1.
 
 ---
 
@@ -159,12 +154,17 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
 - **Cuánto cuesta realmente la orquestación.** No se mide en ninguna parte. Es la cifra más
   floja del plan y lo dice el propio plan.
-- **Si el bucle arreglado mejora de verdad la métrica.** Hay una observación, no una
-  medición.
+- **Por qué el bucle arreglado resuelve `PANEL-01` y `VND-01` pero no `SRCH-01` ni
+  `MSG-01`.** Con n=4 ya no es "una observación, no una medición" — es una discrepancia
+  real y sin diagnosticar. `F-112`.
+- **Si `inputs.decisions` importa para lo que construye el Coder.** Tres tareas lo declaran
+  y ninguna lo recibe (`F-113`); no se sabe si el contenido de esos ficheros es del tipo
+  que el Coder no puede reinventar o si el campo nunca debió estar ahí.
 - **Si `visibility_scope` y la lista derivada de conversaciones aguantan bajo carga.** Se
   mide en el Hito 6 y no antes. El riesgo está escrito en ADR-002 §D-1.
 - **Qué pasó en la reunión con el socio del 20-ago.** No hay ni una línea en el repo.
-- **El estado de la CI.** No se ha comprobado hoy contra Actions.
+- **El estado de la CI.** No se ha comprobado hoy contra Actions — segundo día seguido sin
+  comprobarlo.
 
 ---
 
@@ -199,5 +199,6 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 1 de V1 · 25-ago-2026 · fecha leída de la máquina · estado del arnés verificado
-contra el código de `mvp/bootstrap` el mismo día · Dirección Técnica, Nortex Systems*
+*Día 2 de V1 · 28-ago-2026 · fecha leída de la máquina (dos veces, tras una lectura suelta
+que no cuadraba) · estado del arnés verificado contra el código de `mvp/bootstrap` el mismo
+día · Dirección Técnica, Nortex Systems*

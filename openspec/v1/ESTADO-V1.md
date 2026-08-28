@@ -1,9 +1,22 @@
 # ESTADO · V1 Bearingworld.io
 
-**Aviso** El trabajo vive en `C:/Users/admin/proyectos/Bearing.io/BearingWorld.io`, rama
-`mvp/bootstrap`. Si te lanzan en un worktree `claude/…`, **comprueba que tiene `harness/`,
-`app/` y `supabase/` antes de nada** — un worktree de una rama antigua parece el repo bueno
-y no lo es. Pasó el 25-ago.
+**Aviso** El trabajo vive en `C:/Users/admin/proyectos/Bearing.io/BearingWorld.io` en
+`mvp/bootstrap`; si te lanzan en un worktree `claude/…`, **opera sobre esa ruta con paths
+absolutos.**
+
+> ⚠ **Esa línea se gana su sitio: NO la reescribas al sobrescribir este fichero, ni siquiera
+> para «mejorarla».** Ha pasado **cuatro veces** (`F-108` las tres primeras). La cuarta fue el
+> 25-ago y la causó este documento: alguien cambió la instrucción —*«opera sobre esa ruta»*—
+> por una comprobación —*«comprueba que tiene harness/»*—, y el agente detectó el problema y
+> se quedó parado sin saber qué hacer. **Una instrucción resuelve; una comprobación solo
+> avisa.**
+>
+> **Y la otra mitad, que nunca se arregló:** el 25-ago `git worktree list` mostraba **tres
+> worktrees prunables** anclados a `43bb222`, viviendo en `openspec/mvp/.claude/worktrees/`.
+> Que `.gitignore` los ignore desde el día 15 no impide que se creen. Dos cosas:
+> **`git worktree prune`** limpia los registros muertos, y **lanzar Code desde la raíz del
+> repo y no desde `openspec/mvp/`** parece cortar la causa — hipótesis por confirmar, porque
+> es ahí donde aparecen.
 
 > 🔑 **¿Vas a tocar Supabase? Lee `CLAUDE.md` §10 ANTES de la primera consulta.**
 

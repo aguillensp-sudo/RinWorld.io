@@ -259,7 +259,17 @@ def test_c2_paths():
     ejecutado: la tarea declara los tests con ruta de repo (`app/src/...`) y los
     dos procesos arrancan con `cwd=app/`, asi que vitest respondia "No test files
     found" y salia con 1. La rama del e2e lo hacia bien desde el dia 4 y la de
-    unidad no, de modo que C2 no se habia ejecutado nunca."""
+    unidad no, de modo que C2 no se habia ejecutado nunca.
+
+    ⚠ **Los dos procesos ya no quieren lo mismo, y esta prueba llevaba desde el
+    12-ago exigiendoselo a los dos.** `D-09-03(a)`, decidido por el PO ese dia,
+    manda que Playwright corra la suite e2e ENTERA y sin rutas: LOGIN-01 salio
+    4/4 verde colgando la suite completa porque su tarea no declaraba e2e y esa
+    rama no se ejecutaba (F-070). El bucle de aqui pedia rutas a los dos, asi que
+    esta prueba fallaba **siempre** desde el mismo dia de la decision — no se
+    actualizo con ella, y una suite con un rojo fijo no avisa del siguiente.
+    Ahora cada proceso se comprueba contra lo que se decidio para el: vitest con
+    las rutas declaradas, Playwright sin ninguna."""
     print("\nC2 · las rutas llegan bien a los dos procesos")
 
     task = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json").read_text(encoding="utf-8"))
@@ -272,11 +282,19 @@ def test_c2_paths():
     _check_c2(task, espia)
     check("C2 lanza los dos procesos", len(vistos) == 2, vistos)
 
-    for cmd, cwd in vistos:
-        rutas = [a for a in cmd if a.endswith((".ts", ".tsx"))]
-        check(f"`{cmd[1]}` recibe rutas y no cero", bool(rutas), cmd)
-        for r in rutas:
-            check(f"{r} existe desde {cwd.name}", (cwd / r).exists(), str(cwd / r))
+    por_programa = {cmd[1]: (cmd, cwd) for cmd, cwd in vistos}
+
+    cmd, cwd = por_programa["vitest"]
+    rutas = [a for a in cmd if a.endswith((".ts", ".tsx"))]
+    check("`vitest` recibe las rutas declaradas y no cero",
+          len(rutas) == len(task["acceptance"]["unit"]), cmd)
+    for r in rutas:
+        check(f"{r} existe desde {cwd.name}", (cwd / r).exists(), str(cwd / r))
+
+    # La otra mitad de F-070: que nadie devuelva el e2e a correr por rutas.
+    cmd, _ = por_programa["playwright"]
+    check("⚠ `playwright` NO recibe rutas: corre la suite entera (D-09-03(a))",
+          not [a for a in cmd if a.endswith((".ts", ".tsx"))], cmd)
 
 
 def test_prompt_inputs():
@@ -470,6 +488,70 @@ def test_estado_de_check():
           metrics.COLUMNS.index("checks_inejecutables") < metrics.COLUMNS.index("resultado"))
 
 
+def test_el_feedback_no_esconde_fallos():
+    """F-114 · el Coder tiene que enterarse de CUANTOS fallos hay, no solo del ultimo.
+
+    Es la respuesta a F-112, y hasta el 28-ago se leia como un limite del modelo:
+    el bucle arreglado (B-008/B-009) sacaba adelante PANEL-01 y VND-01 y no
+    SRCH-01 ni MSG-01. La diferencia no estaba en las pantallas — estaba en el
+    numero de fallos:
+
+      PANEL-01 · 1 test rojo  -> cabe entero en las 40 lineas -> converge
+      VND-01   · 1 de 27      -> cabe entero                  -> converge
+      MSG-01   · 6 rojos      -> el recorte solo enseña [4/6], [5/6] y [6/6]
+      SRCH-01  · 13 rojos     -> el recorte solo enseña [12/13] y [13/13]
+
+    En SRCH-01 los dos que se veian decian `sendInquiries` llamado **0** veces:
+    sintomas de algo que reventaba once fallos mas arriba y que el Coder no vio
+    en ninguno de los tres intentos. Un canal de feedback cuyo contenido depende
+    del tamaño de la salida no mide al modelo.
+
+    Los dos bloques de abajo son la salida REAL de esa corrida, recuperada de las
+    transcripciones porque los JSON por intento se perdieron (F-115)."""
+    print("\nF-114 · el feedback lleva el inventario, no solo el recorte")
+
+    def runner_fijo(code, out):
+        return lambda cmd, cwd: (code, out)
+
+    # 13 fallos, y las cabeceras de los 11 primeros lejos del final.
+    relleno = "\n".join(f"    linea de ruido {i}" for i in range(60))
+    vitest = "\n".join([
+        " FAIL  src/screens/search/SearchResults.test.tsx > SRCH-01 · carga de datos > busca con mi organizacion",
+        relleno,
+        " FAIL  src/screens/search/SearchResults.test.tsx > SRCH-01 · Consultar seleccionados > la seleccion se limpia despues de enviar",
+        "⎯⎯⎯[12/13]⎯",
+        " FAIL  src/screens/search/SearchResults.test.tsx > SRCH-01 · Consultar seleccionados > dos clics seguidos no mandan dos tandas",
+        'AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times',
+        "⎯⎯⎯[13/13]⎯",
+    ])
+    task = {"acceptance": {"unit": ["app/src/screens/messages/ThreadList.test.tsx"]}}
+    c2 = _check_c2(task, runner_fijo(1, vitest))
+    d = c2["detail"]
+
+    check("dice cuantos fallos hay en total", "13 fallo(s) en total" in d, d[:120])
+    check("⚠ y nombra el primero, que el recorte de 40 lineas se comia",
+          "SRCH-01 · carga de datos" in d)
+    check("sin perder el ultimo, que es el que trae el detalle",
+          "dos clics seguidos no mandan dos tandas" in d)
+    check("ni el detalle en si", "but got 0 times" in d)
+
+    # tsc: el recorte SI funcionaba aqui, y el inventario no puede estropearlo.
+    tsc = "\n".join([
+        "src/screens/messages/ThreadList.tsx(7,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.",
+        relleno,
+        "src/screens/messages/ThreadList.tsx(11,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.",
+    ])
+    c1 = _check_c1(runner_fijo(2, tsc))
+    check("con tsc lista los errores de los dos extremos",
+          "ThreadList.tsx(7,3)" in c1["detail"] and "ThreadList.tsx(11,3)" in c1["detail"])
+
+    # Y la salida que no reconoce: recorte a secas, sin cabecera que mienta.
+    c1x = _check_c1(runner_fijo(2, "algo peto y no se parece a nada conocido"))
+    check("una salida irreconocible no se adorna con un inventario vacio",
+          "fallo(s) en total" not in c1x["detail"], c1x["detail"])
+    check("y el recorte sigue estando", "algo peto" in c1x["detail"])
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -499,6 +581,7 @@ def main() -> int:
     test_reintento_ensena_el_artefacto()
     test_metricas_guardan_el_artefacto()
     test_estado_de_check()
+    test_el_feedback_no_esconde_fallos()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

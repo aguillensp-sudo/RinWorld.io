@@ -1,0 +1,103 @@
+# Salida de la corrida del 28-ago-2026 de MSG-01, RECUPERADA
+#
+# Origen: transcripcion de Claude Code
+#   ~/.claude/projects/...-bearing-mvp-bootstrap-3bc0fc/
+#   6d222cfd-c958-4d35-ae22-c79c9db12eab.jsonl, linea 225
+#   timestamp del registro: 2026-08-28T13:58:05.310Z
+#
+# No es el artefacto original: los `attempt_N.json` de esta corrida se
+# perdieron al descartar el working tree (F-115). Esto es lo que el arnes
+# imprimio por consola, que es lo unico que sobrevivio, y de aqui sale el
+# diagnostico de F-112 y F-114. Codigos de color ya retirados.
+# ---------------------------------------------------------------------
+[intento 1] llamando a deepseek-v4-flash ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 19319/44788   cache: 0.0% hit
+  coste real: $0.067621   en frio: $0.067621
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+[intento 2] llamando a deepseek-v4-flash ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 25134/41648   cache: 76.39% hit
+  coste real: $0.057855   en frio: $0.066034
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+[intento 3] llamando a deepseek-v4-flash ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 25962/21832   cache: 73.95% hit
+  coste real: $0.032062   en frio: $0.040242
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  CSV: 2026-08-28,MSG-01,MSG-01,deepseek-v4-flash,19319,44788,0.067621,1,5.4,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,0.00,no,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-28,MSG-01,MSG-01,deepseek-v4-flash,25134,41648,0.057855,2,4.7,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,76.39,no,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-28,MSG-01,MSG-01,deepseek-v4-flash,25962,21832,0.032062,3,2.8,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,73.95,si,-,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run typecheck (exit 2)
+> bearingworld-app@0.1.0 typecheck
+> tsc --noEmit
+
+src/screens/messages/ThreadList.tsx(7,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/messages/ThreadList.tsx(8,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/messages/ThreadList.tsx(9,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/messages/ThreadList.tsx(10,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/messages/ThreadList.tsx(11,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+    218|       expect(info.textContent).toContain((1247).toLocaleString('es-ES'…
+    219|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > Realtime — FUERA del contrato del arnés > se suscribe a los cambios de hilos al montar
+AssertionError: expected "vi.fn()" to be called at least once
+ ❯ src/screens/messages/Messages.test.tsx:256:32
+    254|       pintar();
+    255|       await waitFor(() => expect(screen.getByRole('listitem')).toBeInT…
+    256|       expect(onThreadsChanged).toHaveBeenCalled();
+       |                                ^
+    257|     });
+    258|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > Realtime — FUERA del contrato del arnés > un evento vuelve a leer la página
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ src/screens/messages/Messages.test.tsx:267:52
+    265|       // `last_item_at` en el servidor, así que insertar a mano lo que…
+    266|       // pondría en una página que a lo mejor no es la que se está vie…
+    267|       const avisar = onThreadsChanged.mock.calls[0]![0];
+       |                                                    ^
+    268|       avisar();
+    269|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > Realtime — FUERA del contrato del arnés > ⚠ se da de baja al desmontar
+AssertionError: expected "vi.fn()" to be called at least once
+ ❯ src/screens/messages/Messages.test.tsx:279:27
+    277|       await waitFor(() => expect(screen.getByRole('listitem')).toBeInT…
+    278|       unmount();
+    279|       expect(desuscribir).toHaveBeenCalled();
+       |                           ^
+    280|     });
+    281|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+[exited with code 2]
+91

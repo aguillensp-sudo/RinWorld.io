@@ -138,6 +138,73 @@ def _tail(text: str, lines: int = 40) -> str:
     return "\n".join((text or "").strip().split("\n")[-lines:])
 
 
+# -----------------------------------------------------------------------------
+# F-114 · el recorte de 40 lineas decide CUAL de los fallos ve el Coder, y con
+# mas de dos elige por posicion en el fichero, no por importancia.
+#
+# El docstring de `_tail` justifica recortar por el final diciendo que "el
+# resumen de vitest va abajo". **Para tsc es cierto; para vitest es falso:**
+# abajo va el ULTIMO fallo, no el resumen. En la remedicion del 28-ago eso costo
+# dos tareas del corpus enteras —evidencia recuperada de las transcripciones,
+# porque los JSON por intento se perdieron (F-115):
+#
+#   SRCH-01, intento 3 · **13 fallos**. El Coder vio el [12/13] y el [13/13], que
+#   son los dos sintomas mas aguas abajo (`sendInquiries` llamado **0** veces, no
+#   2). Los once que explican por que nunca llego a llamarse no salieron del
+#   recorte en ninguno de los tres intentos.
+#   MSG-01, intento 3 · **6 fallos**. Los tres que dominan el recorte —[4/6],
+#   [5/6], [6/6]— son el bloque rotulado `Realtime — FUERA del contrato del
+#   arnes`. Lo ultimo que se le pidio arreglar es lo unico que su tarea no le
+#   manda construir (F-116).
+#
+# Y esto contesta la pregunta que abrio F-112. PANEL-01 y VND-01 fallaban por UN
+# test, que cabe entero en 40 lineas, y con el bucle arreglado convergieron;
+# SRCH-01 y MSG-01 fallaban por seis y por trece. **La discrepancia no estaba en
+# el modelo: estaba en cuanto le contabamos.** Un feedback que depende del numero
+# de fallos no mide al Coder, mide el tamaño de la salida.
+#
+# El inventario va DELANTE del recorte y no lo sustituye: el detalle del ultimo
+# fallo sigue sirviendo; lo que faltaba era saber que no era el unico.
+# -----------------------------------------------------------------------------
+_FAIL = re.compile(r"^\s*FAIL\s+(\S.*)$", re.M)
+_ERROR_TSC = re.compile(r"^\s*(\S+\(\d+,\d+\): error TS\d+: .*)$", re.M)
+_CONTADOR = re.compile(r"\[(\d+)/(\d+)\]")
+
+
+def _inventario(out: str, maximo: int = 30) -> str:
+    """La lista COMPLETA de lo que fallo, para ir delante del recorte.
+
+    Devuelve cadena vacia si no reconoce ningun fallo: entonces el recorte a
+    secas es lo unico que hay y no se le añade una cabecera que mienta.
+    """
+    texto = out or ""
+    fallos = []
+    for patron in (_FAIL, _ERROR_TSC):
+        for m in patron.finditer(texto):
+            linea = m.group(1).strip()
+            if linea not in fallos:
+                fallos.append(linea)
+    if not fallos:
+        return ""
+
+    # vitest numera cada fallo `[n/m]`, y `m` es el total: mejor fuente que
+    # nuestras cabeceras, porque no depende de que sepamos reconocerlas todas.
+    totales = [int(m.group(2)) for m in _CONTADOR.finditer(texto)]
+    total = max(totales + [len(fallos)])
+
+    cuerpo = "\n".join("  - " + f for f in fallos[:maximo])
+    if len(fallos) > maximo:
+        cuerpo += f"\n  - ...y {len(fallos) - maximo} mas"
+    return (f"{total} fallo(s) en total, no solo el ultimo. Lista completa:\n"
+            f"{cuerpo}\n\n--- ultimas lineas de la salida ---")
+
+
+def _detalle(cabecera: str, out: str) -> str:
+    """Cabecera, inventario completo y recorte, en ese orden: primero QUE fallo,
+    despues el detalle de lo ultimo. F-114."""
+    return "\n".join(p for p in (cabecera, _inventario(out), _tail(out)) if p)
+
+
 def _dependencies() -> set:
     pkg = json.loads((APP / "package.json").read_text(encoding="utf-8"))
     return set(pkg.get("dependencies", {})) | set(pkg.get("devDependencies", {}))
@@ -187,10 +254,10 @@ def _rojo(check_id: str, detail: str, code: int = 0, out: str = "") -> dict:
 def _check_c1(runner) -> dict:
     code, out = runner(["npm", "run", "typecheck"], APP)
     if code != 0:
-        return _rojo("C1", f"npm run typecheck (exit {code})\n{_tail(out)}", code, out)
+        return _rojo("C1", _detalle(f"npm run typecheck (exit {code})", out), code, out)
     code, out = runner(["npm", "test"], APP)
     if code != 0:
-        return _rojo("C1", f"npm test (exit {code})\n{_tail(out)}", code, out)
+        return _rojo("C1", _detalle(f"npm test (exit {code})", out), code, out)
     return {"id": "C1", "ok": True, "estado": VERDE,
             "detail": "typecheck limpio y suite de unidad en verde"}
 
@@ -228,7 +295,7 @@ def _check_c2(task, runner) -> dict:
     if unit:
         code, out = runner(["npx", "vitest", "run", *rel(unit)], APP)
         if code != 0:
-            return _rojo("C2", f"vitest de aceptacion (exit {code})\n{_tail(out)}", code, out)
+            return _rojo("C2", _detalle(f"vitest de aceptacion (exit {code})", out), code, out)
         partes.append(f"unidad {len(unit)} fichero(s)")
     # D-09-03 (a), decidido por el PO el 12-ago: **C2 corre SIEMPRE la suite e2e
     # ENTERA**, declare la tarea ficheros o no.
@@ -248,7 +315,7 @@ def _check_c2(task, runner) -> dict:
     # un artefacto descargable (F-038 + F-070).
     code, out = runner(["npx", "playwright", "test"], APP)
     if code != 0:
-        return _rojo("C2", f"suite e2e COMPLETA (exit {code})\n{_tail(out)}", code, out)
+        return _rojo("C2", _detalle(f"suite e2e COMPLETA (exit {code})", out), code, out)
     partes.append("suite e2e completa" + (f" (cubre los {len(e2e)} declarados)" if e2e else ""))
 
     return {"id": "C2", "ok": True, "estado": VERDE,

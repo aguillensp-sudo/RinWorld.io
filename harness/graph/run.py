@@ -85,11 +85,59 @@ def record_metrics(state: HarnessState, task: dict, metrics_dir: pathlib.Path,
     return filas
 
 
+# -----------------------------------------------------------------------------
+# F-115 · una corrida puede borrar su propia evidencia sin que nadie se entere.
+#
+# El 28-ago se remidieron tres tareas con el bucle arreglado. Se comitearon las
+# nueve filas del CSV (`f60a163`) y **nada mas**: los `attempt_N.json` viven bajo
+# `harness/metrics/`, o sea DENTRO del working tree, y el descarte del codigo
+# generado —decision del PO, correcta en si misma— se los llevo por delante. De
+# la unica corrida que motivo F-112 quedo una columna que dice `rojo: C1;C2` y
+# ni una linea de por que.
+#
+# El diagnostico de F-112 se pudo hacer el 28-ago porque la salida seguia en las
+# transcripciones de Claude Code. **Eso es suerte, no diseño**: el arnes lo
+# imprime, no lo guarda, y ese rastro no esta en el repo.
+#
+# Y hay una segunda mitad, la que casi manda el diagnostico al lado contrario:
+# los JSON se escriben PLANOS, `attempt_1..3.json` por tarea, asi que una corrida
+# pisa a la anterior — pero solo hasta donde llegue. `VND-01/attempt_3.json` es
+# de una corrida del 12-ago que escalo; la del mismo dia que paso 4/4 en el
+# intento 2 sobrescribio el 1 y el 2 y dejo el 3 viejo ahi, con su fecha de
+# fichero actualizada por git y con toda la pinta de ser el ultimo intento de la
+# ultima corrida. `harness/metrics/MSG-01/` ya usaba subcarpetas por corrida
+# —`corrida-01-checks-ciegos`, `-02-c2-ciego`, `-03-la-buena`— desde el dia 4.
+# La solucion estaba escrita en el propio directorio y nunca se generalizo.
+# -----------------------------------------------------------------------------
+def _avisar_de_los_artefactos(metrics_dir: pathlib.Path, intentos: int,
+                              previos: list, usa_corrida: bool) -> None:
+    escritos = [metrics_dir / f"attempt_{i}.json" for i in range(1, intentos + 1)]
+    print("\nArtefactos de esta corrida:")
+    for p in escritos:
+        print(f"  {p.relative_to(ROOT)}")
+    print("  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que "
+          "paso. Comitealos ANTES de descartar el working tree (F-115).")
+
+    huerfanos = [p for p in previos if p not in escritos]
+    if huerfanos:
+        print("\n  ⚠ Y estos son de una corrida ANTERIOR, no de esta:")
+        for p in huerfanos:
+            print(f"      {p.relative_to(ROOT)}")
+        print("      Quien los lea mañana los leera como si fueran de hoy.")
+    if not usa_corrida:
+        print("\n  (Con `--corrida NOMBRE` cada corrida escribe en su propia "
+              "subcarpeta y deja de pisar a la de al lado.)")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("task", help="ruta al JSON de la tarea")
     ap.add_argument("--seco", action="store_true",
                     help="corrida en seco: Coder y checks simulados, cero coste")
+    ap.add_argument("--corrida", metavar="NOMBRE", default=None,
+                    help="subcarpeta bajo harness/metrics/<tarea>/ para los JSON "
+                         "de esta corrida. Sin esto se escriben planos y una "
+                         "corrida pisa a la anterior (F-115)")
     args = ap.parse_args(argv)
 
     pricing.check_prices_or_exit()  # F-010, antes de nada
@@ -106,8 +154,15 @@ def main(argv=None) -> int:
                        {"recursion_limit": MAX_ATTEMPTS * 4})
 
     metrics_dir = ROOT / "harness" / "metrics" / task["task_id"]
+    if args.corrida:
+        metrics_dir = metrics_dir / args.corrida
+    previos = sorted(metrics_dir.glob("attempt_*.json")) if metrics_dir.is_dir() else []
+
     for fila in record_metrics(final, task, metrics_dir):
         print("  CSV: " + fila)
+
+    _avisar_de_los_artefactos(metrics_dir, final.get("attempt") or 0, previos,
+                              usa_corrida=bool(args.corrida))
 
     veredicto = final.get("verdict")
     print(f"\nVEREDICTO: {veredicto.upper()} en {final.get('attempt')} intento(s)")

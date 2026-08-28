@@ -1,0 +1,130 @@
+# Salida de la corrida del 28-ago-2026 de SRCH-01, RECUPERADA
+#
+# Origen: transcripcion de Claude Code
+#   ~/.claude/projects/...-bearing-mvp-bootstrap-3bc0fc/
+#   6d222cfd-c958-4d35-ae22-c79c9db12eab.jsonl, linea 206
+#   timestamp del registro: 2026-08-28T13:44:04.883Z
+#
+# No es el artefacto original: los `attempt_N.json` de esta corrida se
+# perdieron al descartar el working tree (F-115). Esto es lo que el arnes
+# imprimio por consola, que es lo unico que sobrevivio, y de aqui sale el
+# diagnostico de F-112 y F-114. Codigos de color ya retirados.
+# ---------------------------------------------------------------------
+[intento 1] llamando a deepseek-v4-flash ...
+  ficheros: ['app/src/screens/search/FilterChips.module.css', 'app/src/screens/search/FilterChips.tsx', 'app/src/screens/search/ResultsTable.module.css', 'app/src/screens/search/ResultsTable.tsx', 'app/src/screens/search/SearchResults.module.css', 'app/src/screens/search/SearchResults.tsx']
+  tokens in/out: 32763/46802   cache: 0.0% hit
+  coste real: $0.076194   en frio: $0.076194
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+[intento 2] llamando a deepseek-v4-flash ...
+  ficheros: ['app/src/screens/search/FilterChips.module.css', 'app/src/screens/search/FilterChips.tsx', 'app/src/screens/search/ResultsTable.module.css', 'app/src/screens/search/ResultsTable.tsx', 'app/src/screens/search/SearchResults.module.css', 'app/src/screens/search/SearchResults.tsx']
+  tokens in/out: 42043/32460   cache: 77.63% hit
+  coste real: $0.047441   en frio: $0.061346
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+[intento 3] llamando a deepseek-v4-flash ...
+  ficheros: ['app/src/screens/search/FilterChips.module.css', 'app/src/screens/search/FilterChips.tsx', 'app/src/screens/search/ResultsTable.module.css', 'app/src/screens/search/ResultsTable.tsx', 'app/src/screens/search/SearchResults.module.css', 'app/src/screens/search/SearchResults.tsx']
+  tokens in/out: 41670/20644   cache: 78.64% hit
+  coste real: $0.031626   en frio: $0.045585
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  CSV: 2026-08-28,SRCH-01,SRCH-01,deepseek-v4-flash,32763,46802,0.076194,1,5.3,app/src/screens/search/FilterChips.module.css;app/src/screens/search/FilterChips.tsx;app/src/screens/search/ResultsTable.module.css;app/src/screens/search/ResultsTable.tsx;app/src/screens/search/SearchResults.module.css;app/src/screens/search/SearchResults.tsx,0.00,no,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-28,SRCH-01,SRCH-01,deepseek-v4-flash,42043,32460,0.047441,2,4.1,app/src/screens/search/FilterChips.module.css;app/src/screens/search/FilterChips.tsx;app/src/screens/search/ResultsTable.module.css;app/src/screens/search/ResultsTable.tsx;app/src/screens/search/SearchResults.module.css;app/src/screens/search/SearchResults.tsx,77.63,no,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-28,SRCH-01,SRCH-01,deepseek-v4-flash,41670,20644,0.031626,3,2.6,app/src/screens/search/FilterChips.module.css;app/src/screens/search/FilterChips.tsx;app/src/screens/search/ResultsTable.module.css;app/src/screens/search/ResultsTable.tsx;app/src/screens/search/SearchResults.module.css;app/src/screens/search/SearchResults.tsx,78.64,si,-,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm test (exit 1)
+                  class="_tdCheck_f6dd0d"
+                >
+                  <input
+                    aria-label="Seleccionar 6205-2RS"
+                    class="_rowCheckbox_f6dd0d"
+                    type="checkbox"
+                  />
+                </td>
+                <td>
+                  <span
+                    class="_cellRef_f6dd0d"
+                  >
+                    6205-2RS
+                  </span>
+                </td>
+ ...
+ ❯ src/screens/search/SearchResults.test.tsx:387:47
+    385|     await userEvent.click(screen.getByRole('button', { name: 'Consulta…
+    386|
+    387|     await waitFor(() => expect(sendInquiries).toHaveBeenCalled());
+       |                                               ^
+    388|     for (const f of filas()) expect(within(f).getByRole('checkbox')).n…
+    389|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/screens/search/SearchResults.test.tsx > SRCH-01 · Consultar seleccionados > dos clics seguidos no mandan dos tandas
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/screens/search/SearchResults.test.tsx:405:27
+    403|     await userEvent.click(boton);
+    404|
+    405|     expect(sendInquiries).toHaveBeenCalledTimes(1);
+       |                           ^
+    406|     resolver([]);
+    407|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+                  class="_tdCheck_f6dd0d"
+                >
+                  <input
+                    aria-label="Seleccionar 6205-2RS"
+                    class="_rowCheckbox_f6dd0d"
+                    type="checkbox"
+                  />
+                </td>
+                <td>
+                  <span
+                    class="_cellRef_f6dd0d"
+                  >
+                    6205-2RS
+                  </span>
+                </td>
+ ...
+ ❯ src/screens/search/SearchResults.test.tsx:387:47
+    385|     await userEvent.click(screen.getByRole('button', { name: 'Consulta…
+    386|
+    387|     await waitFor(() => expect(sendInquiries).toHaveBeenCalled());
+       |                                               ^
+    388|     for (const f of filas()) expect(within(f).getByRole('checkbox')).n…
+    389|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/screens/search/SearchResults.test.tsx > SRCH-01 · Consultar seleccionados > dos clics seguidos no mandan dos tandas
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/screens/search/SearchResults.test.tsx:405:27
+    403|     await userEvent.click(boton);
+    404|
+    405|     expect(sendInquiries).toHaveBeenCalledTimes(1);
+       |                           ^
+    406|     resolver([]);
+    407|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+[exited with code 2]
+118

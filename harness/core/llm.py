@@ -15,6 +15,7 @@ intentos es el grafo, no este modulo.
 """
 import json
 import os
+import socket
 import time
 import urllib.error
 import urllib.request
@@ -46,7 +47,43 @@ def accumulate(usage: dict, acc: dict) -> dict:
     return acc
 
 
-def call(messages: list, max_tokens: int) -> tuple:
+# -----------------------------------------------------------------------------
+# F-119 · un fallo de transporte NO es un intento del modelo, y una corrida
+# colgada no puede ser indistinguible de una lenta.
+#
+# El 28-ago la remedicion perdio DOS de las cuatro tareas sin dejar ni una fila:
+#
+#   MSG-01 · `ConnectionResetError [WinError 10054]` en el intento 1. El grafo
+#     murio con la excepcion y se llevo la corrida entera: cero metricas de algo
+#     que ya se habia pagado a medias.
+#   VND-01 · **tres horas** colgada en la primera llamada, con el log a cero
+#     bytes. El `timeout` estaba en 1800 s POR LLAMADA, asi que media hora de
+#     silencio era comportamiento nominal y no habia forma de distinguirla de
+#     una respuesta lenta sin mirar el reloj.
+#
+# El criterio es el que ya fijo F-005 para el truncado y aqui faltaba: lo que
+# falla por debajo del modelo no gasta intento. Un corte de conexion se
+# reintenta con espera creciente; lo que el servidor conteste —un HTTP 4xx, una
+# clave mala— no, porque reintentar eso es gastar sin cambiar nada.
+#
+# El timeout baja de 1800 a 300 s. Una respuesta del Coder tardo como mucho 6,4
+# minutos de intento COMPLETO (PANEL-01, 28-ago) y eso incluye los checks; cinco
+# minutos de silencio en una sola llamada ya es un cuelgue, no una espera.
+# -----------------------------------------------------------------------------
+TIMEOUT = int(os.environ.get("HARNESS_CODER_TIMEOUT", "300"))
+TRANSPORT_RETRIES = 3
+TRANSPORT_BACKOFF = (5, 20, 60)
+
+
+def _es_de_transporte(e: Exception) -> bool:
+    """Se cayo la conexion, no contesto el servidor. `HTTPError` NO entra: eso
+    es una respuesta, y una respuesta no se reintenta a ciegas."""
+    return isinstance(e, (urllib.error.URLError, TimeoutError, ConnectionError,
+                          socket.timeout, OSError)) and not isinstance(
+                              e, urllib.error.HTTPError)
+
+
+def call(messages: list, max_tokens: int, aviso=None) -> tuple:
     key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
     if not key:
         raise LLMError("DEEPSEEK_API_KEY no esta en el entorno.")
@@ -57,16 +94,29 @@ def call(messages: list, max_tokens: int) -> tuple:
     req = urllib.request.Request(
         BASE + "/chat/completions", data=body, method="POST",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+
     t0 = time.time()
-    try:
-        with urllib.request.urlopen(req, timeout=1800) as r:
-            data = json.load(r)
-    except urllib.error.HTTPError as e:
-        raise LLMError(f"HTTP {e.code} {e.read().decode()[:500]}") from e
-    return data, time.time() - t0
+    for vuelta in range(TRANSPORT_RETRIES):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+                return json.load(r), time.time() - t0
+        except urllib.error.HTTPError as e:
+            raise LLMError(f"HTTP {e.code} {e.read().decode()[:500]}") from e
+        except Exception as e:                                  # noqa: BLE001
+            if not _es_de_transporte(e) or vuelta == TRANSPORT_RETRIES - 1:
+                raise LLMError(
+                    f"transporte: {type(e).__name__}: {e}. "
+                    f"{vuelta + 1} intento(s) de conexion, ninguno llego") from e
+            espera = TRANSPORT_BACKOFF[vuelta]
+            if aviso:
+                aviso(f"  ⚠ {type(e).__name__}: {e}. No es un intento del modelo "
+                      f"(F-119): reintento en {espera}s")
+            time.sleep(espera)
+    raise LLMError("transporte: bucle de reintentos agotado sin respuesta")
 
 
-def complete(messages: list, max_tokens: int = None, on_truncation=None) -> dict:
+def complete(messages: list, max_tokens: int = None, on_truncation=None,
+             aviso=None) -> dict:
     """Una respuesta completa del modelo, reintentando si se trunca (F-005).
 
     Devuelve el bloque con todo lo que el grafo necesita para decidir y para
@@ -81,7 +131,7 @@ def complete(messages: list, max_tokens: int = None, on_truncation=None) -> dict
     finish = None
 
     for _ in range(TRUNCATION_RETRIES):
-        data, secs = call(messages, maxtok)
+        data, secs = call(messages, maxtok, aviso=aviso)
         secs_total += secs
         choice = data["choices"][0]
         content = choice["message"]["content"] or ""

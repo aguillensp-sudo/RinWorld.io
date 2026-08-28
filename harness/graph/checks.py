@@ -114,7 +114,26 @@ def check_idiomatic(files: dict, allowed_outputs: list, dependencies: set) -> di
                 if pattern.search(line):
                     problems.append(f"{name}:{line_no} {message}")
 
-        for m in re.finditer(r"""(?:import[^'"]*|from\s*)['"]([^'"]+)['"]""", clean):
+        # ⚠ F-117 · DOS ARREGLOS, Y LOS DOS SON LA MISMA EQUIVOCACION: dar por
+        # hecho que todo fichero es codigo.
+        #
+        # 1 · `\b` delante de `import`. Sin el, **`!important` contiene la
+        #     subcadena `import`**; y como `[^'"]*` cruza saltos de linea, un
+        #     `!important` empareja con la PRIMERA cadena entrecomillada que
+        #     venga despues, aunque este 160 lineas mas abajo.
+        # 2 · Solo `.ts` y `.tsx`. Un CSS no tiene dependencias de npm: la
+        #     familia entera del check no le aplica.
+        #
+        # Medido en la remedicion de SRCH-01 del 28-ago: el intento 1 salio con
+        # *"dependencia nueva ` ↑`"* —de un `content: ' ↑'`— y el 3 con
+        # *"dependencia nueva `true`"* —de un `.cellFav[aria-pressed='true']`—.
+        # Ninguna existe. La tarea puntuo 1/4 en vez de 2/4 por esto.
+        #
+        # Es F-033 otra vez, un rojo del arnes cobrado como rojo del Coder, y el
+        # mas enganoso de los vistos: el mensaje suena a defecto real.
+        codigo = name.endswith((".ts", ".tsx"))
+        for m in re.finditer(r"""(?:\bimport[^'"]*|\bfrom\s*)['"]([^'"]+)['"]""",
+                             clean if codigo else ""):
             mod = m.group(1)
             if mod.startswith(".") or mod.startswith("/"):
                 continue

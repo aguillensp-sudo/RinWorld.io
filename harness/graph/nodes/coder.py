@@ -251,8 +251,12 @@ def coder_node(state: HarnessState) -> dict:
     def on_truncation(nuevo):
         print(f"  TRUNCADO (finish_reason=length). Reintento con max_tokens={nuevo} (F-005)")
 
-    print(f"[intento {attempt}] llamando a {llm.MODEL} ...")
-    out = llm.complete(messages, on_truncation=on_truncation)
+    # `aviso=print` para que un corte de conexion se vea EN EL MOMENTO. F-119:
+    # VND-01 estuvo tres horas colgada con el log a cero bytes y nadie pudo
+    # distinguirla de una respuesta lenta.
+    print(f"[intento {attempt}] llamando a {llm.MODEL} "
+          f"(timeout {llm.TIMEOUT}s por llamada) ...")
+    out = llm.complete(messages, on_truncation=on_truncation, aviso=print)
     files = parse.parse_files(out["content"])
 
     for name, code in files.items():

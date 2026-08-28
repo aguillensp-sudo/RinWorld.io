@@ -6,11 +6,25 @@ import { EMPTY_CRITERIA, type SearchCriteria, type SearchPage } from '../../lib/
 import type { MemberProfile } from '../../lib/session';
 
 /**
- * El cableado VERA↔chips del día 9.
+ * El cableado VERA↔chips del día 9. **Ninguna tarea del corpus lo pide.**
  *
  * **Fichero aparte a propósito:** `SearchResults.test.tsx` es el contrato de
  * aceptación contra el que se midió al Coder el día 6, y no se toca — si se
  * ampliara, la medida del objetivo 4 dejaría de significar lo que dice.
+ *
+ * ⚠ **Renombrado a `*.fuera-de-contrato.test.tsx` el 28-ago-2026.** La intención
+ * de arriba era correcta desde el día 9; lo que faltaba es que el arnés la
+ * conociera. `C1` corre la suite entera, así que al regenerar
+ * `SearchResults.tsx` el Coder de `SRCH-01` suspendía por estos tests —de un
+ * cableado que su tarea pone explícitamente fuera de alcance— y por los errores
+ * que eso arrastraba a `App.tsx`, un fichero que él no escribe. Tres intentos
+ * sin una salida posible (`F-118`). Con el sufijo, `vitest.config.arnes.ts` lo
+ * excluye y `npm test` lo sigue corriendo: el producto no pierde nada y la
+ * medida deja de mentir. Misma regla que `B-011`, aplicada donde la medición
+ * demostró que hacía falta.
+ *
+ * Cuando exista la tarea del día 9 que sí encargue este cableado, este fichero
+ * es su contrato de aceptación y hay que quitarle el sufijo.
  *
  * Lo que se prueba aquí es la costura nueva: VERA escribe **criterios**, y los
  * chips salen de ellos. `search.ts:154` lo dejó dicho hace tres días — si los

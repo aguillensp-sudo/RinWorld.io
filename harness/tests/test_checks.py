@@ -12,12 +12,15 @@ de intentos hasta verde, que es la que decide si el arnes es viable (`Plan §11`
 Uso:  python -m harness.tests.test_checks
 """
 import datetime
+import io
 import json
+import os
 import pathlib
 import re
 import sys
+import urllib.error
 
-from ..core import metrics, parse, pricing
+from ..core import llm, metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
 from ..graph.nodes.coder import build_messages, build_system
 from ..graph.nodes.test_runner import (
@@ -572,8 +575,11 @@ def test_fuera_de_contrato_no_puntua():
     12-ago y el test se quedó dieciséis días en rojo sin que nadie lo notara."""
     print("\nB-011 · lo fuera de contrato no puntua en el arnes")
 
+    # Un suelo, no un numero exacto: la lista crece cuando la medicion descubre
+    # otro sitio donde el arnes cobraba lo que nadie encargo. Ya paso el mismo
+    # dia -- `SearchResults.vera.*` se sumo tras la remedicion (F-118).
     fuera = sorted((ROOT / "app" / "src").rglob("*.fuera-de-contrato.test.tsx"))
-    check("existen los ficheros fuera de contrato", len(fuera) == 2,
+    check("existen los ficheros fuera de contrato", len(fuera) >= 2,
           str([f.name for f in fuera]))
 
     # 1 · Ninguna tarea los declara como contrato de aceptación (C2).
@@ -616,6 +622,113 @@ def test_fuera_de_contrato_no_puntua():
           "fuera-de-contrato" not in en_exclude, en_exclude.strip())
 
 
+def test_important_no_es_un_import():
+    """F-117 · C4 leía `!important` como un `import` y cobraba la diferencia.
+
+    El patrón de dependencias nuevas no tenía frontera de palabra y se aplicaba a
+    todos los ficheros. `!important` contiene `import`, y `[^'"]*` cruza saltos de
+    línea: así que un `!important` emparejaba con la primera cadena entrecomillada
+    que hubiera después, aunque estuviera 160 líneas más abajo.
+
+    Los dos CSS de abajo son los de la remedición de SRCH-01 del 28-ago, reducidos
+    a lo que hacía falta para dispararlo. Costaron un `1/4` que debía ser `2/4`, y
+    con un mensaje que suena a defecto real: *"Solo lo que ya está en
+    package.json"*. Es F-033 por enésima vez — un rojo del arnés cobrado como rojo
+    del Coder."""
+    print("\nF-117 · `!important` no es un `import`")
+
+    salidas = ["a.tsx", "a.module.css"]
+
+    css = ("\n".join([
+        ".th { padding: 10px 8px !important; }",
+        *["  /* relleno */" for _ in range(40)],
+        ".cellFav[aria-pressed='true'] .favStar { opacity: 1; }",
+    ]))
+    r = check_idiomatic({"a.module.css": css}, salidas, DEPS)
+    check("⚠ un `!important` seguido de una cadena ya no inventa una dependencia",
+          r["ok"], r["detail"])
+
+    css2 = ".sortAsc::after { content: ' ↑' !important; }"
+    r = check_idiomatic({"a.module.css": css2}, salidas, DEPS)
+    check("ni un `content:` con comillas", r["ok"], r["detail"])
+
+    # Y lo que SI tiene que seguir cazando, que es de lo que va el check.
+    r = check_idiomatic({"a.tsx": "import { z } from 'zod';\n"}, salidas, DEPS)
+    check("una dependencia nueva de verdad sigue en rojo", not r["ok"])
+    check("y dice cual", "`zod`" in r["detail"], r["detail"])
+
+    r = check_idiomatic({"a.tsx": "import { useState } from 'react';\n"}, salidas, DEPS)
+    check("una que ya esta en package.json no", r["ok"], r["detail"])
+
+    # La trampa del arreglo: `!important` dentro de un .tsx (un style inline) no
+    # puede volver a colarse por el otro lado.
+    tsx = "const s = { color: 'red' };\n// x !important\nconst t = 'hola';\n"
+    r = check_idiomatic({"a.tsx": tsx}, salidas, DEPS)
+    check("⚠ y `!important` dentro de un .tsx tampoco lo dispara", r["ok"], r["detail"])
+
+
+def test_transporte_no_gasta_intento():
+    """F-119 · lo que falla por debajo del modelo no gasta intento del modelo.
+
+    El 28-ago la remedición perdió dos de cuatro tareas sin dejar una sola fila:
+    `MSG-01` murió con `ConnectionResetError [WinError 10054]` en el intento 1 y
+    se llevó la corrida entera; `VND-01` se quedó **tres horas** colgada en la
+    primera llamada con el log a cero bytes, porque el timeout era de 1800 s por
+    llamada y media hora de silencio era comportamiento nominal.
+
+    Es el criterio de F-005 aplicado un piso más abajo: allí el truncado no
+    gastaba intento porque era bug del arnés; aquí un corte de conexión tampoco,
+    porque el modelo no llegó a contestar.
+
+    ⚠ La segunda comprobación es la que evita el arreglo ingenuo: **un HTTP 4xx
+    NO se reintenta.** Eso sí es una respuesta —una clave mala, un modelo que no
+    existe— y reintentarla tres veces es gastar tiempo sin cambiar nada."""
+    print("\nF-119 · un corte de conexion no es un intento del modelo")
+
+    check("el timeout por llamada ya no es media hora",
+          llm.TIMEOUT <= 300, f"{llm.TIMEOUT}s")
+
+    reset = ConnectionResetError(10054, "forzada la interrupcion")
+    check("⚠ un ConnectionResetError cuenta como transporte",
+          llm._es_de_transporte(reset))
+    check("y un timeout de socket tambien",
+          llm._es_de_transporte(TimeoutError("agotado")))
+
+    http = urllib.error.HTTPError("u", 401, "Unauthorized", {}, None)
+    check("⚠ pero un HTTP 401 NO: es una respuesta, no un corte",
+          not llm._es_de_transporte(http))
+
+    # El bucle: dos cortes y a la tercera contesta. Una sola llamada al final.
+    vueltas = []
+    esperas = []
+
+    class _Resp:
+        def read(self): return b'{"ok": 1}'
+        def __enter__(self): return io.BytesIO(b'{"ok": 1}')
+        def __exit__(self, *a): return False
+
+    def urlopen_falso(req, timeout=None):
+        vueltas.append(timeout)
+        if len(vueltas) < 3:
+            raise ConnectionResetError(10054, "forzada la interrupcion")
+        return _Resp()
+
+    original_open, original_sleep = llm.urllib.request.urlopen, llm.time.sleep
+    llm.urllib.request.urlopen = urlopen_falso
+    llm.time.sleep = esperas.append
+    os.environ.setdefault("DEEPSEEK_API_KEY", "de-mentira")
+    try:
+        data, _ = llm.call([{"role": "user", "content": "x"}], 10)
+    finally:
+        llm.urllib.request.urlopen, llm.time.sleep = original_open, original_sleep
+
+    check("reintenta el corte y acaba contestando", data == {"ok": 1}, str(data))
+    check("hicieron falta tres vueltas", len(vueltas) == 3, str(len(vueltas)))
+    check("con espera creciente entre medias", esperas == [5, 20], str(esperas))
+    check("y el timeout que se pasa es el nuevo",
+          set(vueltas) == {llm.TIMEOUT}, str(vueltas))
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -647,6 +760,8 @@ def main() -> int:
     test_estado_de_check()
     test_el_feedback_no_esconde_fallos()
     test_fuera_de_contrato_no_puntua()
+    test_important_no_es_un_import()
+    test_transporte_no_gasta_intento()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

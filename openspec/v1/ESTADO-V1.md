@@ -71,6 +71,7 @@ fábrica.
 | Medición del bucle arreglado, 3 tareas nuevas | `harness-metrics.csv`, 9 filas nuevas, fecha `2026-08-28` | `PANEL-01` **verde en 3** (antes escalaba con el mismo fallo repetido); `SRCH-01` y `MSG-01` **escalan en 3**, feedback del intento 3 indistinguible del histórico. Commit `f60a163`. Detalle en `F-112` |
 | Working tree tras las corridas | `git status`, `git diff --stat -- app/` | El Coder escribió sobre `app/src/screens/{panel,search,messages}/*` (1219+/1393−). Descartado por decisión del PO — solo queda el CSV |
 | `B-007` (`--seco` ignoraba la tarea) | `harness/tests/dry_run.py` en la punta, contra las 6 tareas reales + 1 tarea rota a propósito | Las 6 reales pasan limpias; la rota cazó los 4 tipos de problema (`inputs`, `acceptance`, `outputs`, `component_api`) sin llamar al grafo. Cerrado en `dfa8c74`, registros en `bbed0e1` |
+| Coste de orquestación instrumentado | `python -m harness.core.orchestration_metrics` contra las transcripciones reales de los 3 worktrees con sesiones | 9 sesiones, **$331,58 de coste-sombra** (13-ago→hoy), a `openspec/mvp/orchestration-metrics.csv`. Fórmula probada a mano contra los 5 componentes de precio. Commit `ae8448d` |
 
 ---
 
@@ -86,7 +87,7 @@ fábrica.
 | Tabla de precios con vigencia | ✅ 25-ago · `ecb792c` |
 | Manifiesto de dependencias | ✅ 25-ago · `f47e11a` |
 | `B-007` `--seco` valida la tarea que recibe | ✅ 28-ago · `dfa8c74` |
-| **Instrumentar el coste de orquestación** | 🟠 **Pendiente — y sigue sin diseño** |
+| Instrumentar el coste de orquestación | ✅ 28-ago · `ae8448d` — precio-sombra, ver §4 |
 | **Convertir la observación en medición** | 🟡 **En curso — n=4** (`VND-01` y `PANEL-01` verdes, `SRCH-01` y `MSG-01` escalados con el mismo fallo de antes del arreglo). Sigue sin ser tendencia; ahora es una discrepancia sin diagnosticar (`F-112`) |
 | Fundación V1 (entornos, ADR-002, índice, residencia) | ⚪ No empezada |
 
@@ -104,19 +105,20 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **Decidir cómo se instrumenta el coste de orquestación.** Sigue siendo lo único que
-   bloquea el Hito 1. Es una conversación, no un encargo: hay que elegir entre consola de
-   facturación, envoltorio propio, o estimación declarada. Hasta entonces, la partida de
-   1.500–4.500 € del plan es la cifra más floja que contiene.
-2. **`F-112`, antes de correr más tareas del corpus.** `SRCH-01` y `MSG-01` no mejoraron
+1. **`F-112`, antes de correr más tareas del corpus.** `SRCH-01` y `MSG-01` no mejoraron
    con el bucle arreglado y fallan igual que antes — descartar que sea el mismo tipo de
    defecto que `F-058` (un contrato con un hueco, no un límite del modelo) antes de gastar
    en medir más sin saber qué se está midiendo.
-3. **`F-113`, delegado a sesión aparte** (`inputs.decisions` no llega al prompt del Coder
-   en `MSG-02`, `PANEL-01`, `VND-01`). No es bloqueante hoy — ninguna de las tres se
+2. **`F-113`, delegado a sesión aparte** (`inputs.decisions` no llega al prompt del Coder
+   en `MSG-02`, `PANEL-01`, `VND-01`). No es bloqueante — ninguna de las tres se
    reconstruye mañana.
-4. **Fundación V1** sigue sin empezar y ya no tiene nada barato por delante salvo el punto
-   1.
+3. **Fundación V1** sigue sin empezar. Ya no tiene el coste de orquestación por delante
+   —eso se cerró hoy, ver §4—, así que es el candidato más barato que queda.
+4. **Con el coste-sombra ya instrumentado, decidir qué hacer con el número.** $331,58 en
+   9 sesiones no es una cifra para publicar sola: falta separar cuánto de eso es MVP
+   (13→18-ago) de cuánto es V1 (22-ago en adelante), y decidir si esta cifra sustituye o
+   solo informa la partida "tecnología" del plan (`Plan_V1…v2.3.docx`, Tabla 5, 3.000–7.000
+   €). Es una lectura del número, no ingeniería.
 
 ---
 
@@ -134,6 +136,7 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 | **Cuatro agentes máximo** | En construcción concurrente. Los de verificación no cuentan | Plan §6.2 |
 | **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió | 25-ago |
 | **Precios del generador** | `0.014 / 0.44 / 1.32`, vigentes a 25-ago. `check_prices()` avisa a los 90 días | `pricing.py` |
+| **Coste de orquestación: envoltorio propio, precio-sombra** | Claude Code va por suscripción (confirmado con el PO): no hay € marginal por sesión. Se mide **tokens reales × tarifa pública de la API**, mismo criterio que el Coder — no consola de facturación (no aplica bajo suscripción) ni estimación a ojo | `orchestration_pricing.py` / `orchestration_metrics.py`, 28-ago |
 
 ---
 
@@ -152,8 +155,9 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Cuánto cuesta realmente la orquestación.** No se mide en ninguna parte. Es la cifra más
-  floja del plan y lo dice el propio plan.
+- **Cuánto de los $331,58 de coste-sombra es MVP y cuánto es V1**, y si esa cifra debe
+  sustituir o solo informar la partida "tecnología" del plan. El número ya existe
+  (`orchestration-metrics.csv`); la lectura, no.
 - **Por qué el bucle arreglado resuelve `PANEL-01` y `VND-01` pero no `SRCH-01` ni
   `MSG-01`.** Con n=4 ya no es "una observación, no una medición" — es una discrepancia
   real y sin diagnosticar. `F-112`.

@@ -91,6 +91,7 @@ a hoy dice nada del modelo.** No se ha tocado producto: sigue siendo fábrica.
 | Que el rótulo `FUERA del contrato del arnés` no lo honra nadie | `grep` en `harness/`, en el registro y en `app/src` | Aparece **solo** en `Messages.test.tsx` y `Thread.test.tsx`. Cero veces en el código del arnés. `MSG-01.json` no menciona realtime en ninguna parte |
 | El arreglo de `F-114` no rompe nada | `python -m harness.tests.test_checks` y `--seco` contra las 6 tareas reales | Suite **entera en verde por primera vez** (incluida `test_c2_paths`, la deuda 🟠 de §5, arreglada hoy). Las 6 tareas pasan el seco |
 | El worktree, quinta vez | `ls` del directorio en el que se lanzó la sesión | Sin `harness/`, `app/`, `supabase/` ni `CLAUDE.md`. Se operó sobre la ruta real con paths absolutos, que es lo que manda la línea 3 |
+| **El estado de la CI** — pendiente desde hace dos días | `gh run watch 33203910148`, esperada a que terminara | **Verde, los tres jobs** (esquema, app, Playwright 53/53). Y el hallazgo de mirarla: **la CI no corre la suite del arnés**, ver §6 |
 
 ---
 
@@ -197,8 +198,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Si `visibility_scope` y la lista derivada de conversaciones aguantan bajo carga.** Se
   mide en el Hito 6 y no antes. El riesgo está escrito en ADR-002 §D-1.
 - **Qué pasó en la reunión con el socio del 20-ago.** No hay ni una línea en el repo.
-- **El estado de la CI.** No se ha comprobado hoy contra Actions — segundo día seguido sin
-  comprobarlo.
+- **Por qué la suite del arnés no está en la CI.** Sí se comprobó hoy —run `33203910148`,
+  los tres jobs en verde— y ahí está el hueco: la CI corre el esquema, la app y Playwright,
+  y **no corre `harness/tests/test_checks.py`**. Por eso `test_c2_paths` pudo estar
+  dieciséis días en rojo sin que nadie se enterara. Nadie ha decidido que sea así; se
+  quedó así.
 
 ---
 

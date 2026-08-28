@@ -37,6 +37,13 @@ Antes de gastar un token, en seco — Coder y npm simulados, cero coste:
 python -m harness.graph.run harness/tasks/MSG-01.json --seco
 ```
 
+`--seco` valida primero **la tarea que recibió**, no un fixture propio (`B-007`,
+`F-042`): que los ficheros de `inputs` y de `acceptance` existan en el repo, que
+`outputs` no esté vacío y que `component_api` cubra cada `.tsx` de `outputs`. Si
+algo falta, para ahí — código 1, cero llamadas al grafo — antes de que una tarea
+mal formada revienta con el modelo ya pagado. Solo si la tarea es válida sigue con
+los tres escenarios de siempre (ciclo, tope de intentos, CSV).
+
 Y las piezas puras, que no tocan ni red ni npm:
 
 ```bash

@@ -15,6 +15,17 @@ Tres escenarios, que son los tres caminos del diagrama de §1:
   B · malo y luego bueno         -> ROJO -> reintento -> VERDE en el 2
   C · siempre malo               -> ESCALADO en el 3, y ni uno mas
 
+**B-007 (F-042, 12-ago):** hasta hoy los tres escenarios de arriba eran TODO lo
+que hacia `--seco`, y corrian contra un fixture propio sin mirar la tarea real
+que se le paso por linea de comandos — `run_dry(task)` recibia `task` y lo
+ignoraba. Eso prueba el grafo (sigue probandolo, es valido) pero no prueba nada
+de una tarea nueva: un `data_layer` inexistente o un `component_api` sin cubrir
+un output pasaban el seco igual y reventaban con el modelo ya pagado. Ahora,
+cuando se recibe una tarea real, `validar_tarea()` corre primero contra ella y
+para en seco si algo falta — es el minimo que F-042 dejo escrito: los ficheros de
+`inputs` y de `acceptance` existen, `outputs` no esta vacio, `component_api`
+cubre cada `.tsx` de `outputs`.
+
 Uso:  python -m harness.tests.dry_run
 """
 import json
@@ -159,7 +170,55 @@ def escenario(nombre, guion, esperado_verdicto, esperado_intentos, csv_tmp):
     return final
 
 
+def validar_tarea(task: dict) -> list:
+    """Los cuatro chequeos que F-042 dejo escritos como el minimo, sin gastar un
+    token: los ficheros de `inputs` y de `acceptance` existen en el repo,
+    `outputs` no esta vacio, `component_api` cubre cada `.tsx` de `outputs`.
+    Devuelve la lista de problemas -vacia si la tarea esta bien formada."""
+    problemas = []
+
+    for clave, valor in task.get("inputs", {}).items():
+        if clave.startswith("_") or clave == "design_system":
+            continue  # notas y secciones de spec (p.ej. "§1.1"), no rutas
+        for ruta in (valor if isinstance(valor, list) else [valor]):
+            if ruta and not (ROOT / ruta).exists():
+                problemas.append(f"inputs.{clave}: no existe {ruta!r}")
+
+    outputs = task.get("outputs") or []
+    if not outputs:
+        problemas.append("outputs: vacio")
+
+    api = {k for k in (task.get("component_api") or {}) if not k.startswith("_")}
+    for ruta in outputs:
+        if ruta.endswith(".tsx") and ruta not in api:
+            problemas.append(f"component_api: falta la firma de {ruta!r}")
+
+    for clave, valor in task.get("acceptance", {}).items():
+        if clave.startswith("_"):
+            continue
+        for ruta in (valor if isinstance(valor, list) else [valor]):
+            if ruta and not (ROOT / ruta).exists():
+                problemas.append(f"acceptance.{clave}: no existe {ruta!r}")
+
+    return problemas
+
+
 def run_dry(task=None) -> int:
+    if task is not None:
+        problemas = validar_tarea(task)
+        if problemas:
+            print(f"TAREA INVALIDA ({task.get('task_id', '?')}): "
+                  f"{len(problemas)} problema(s)\n")
+            for p in problemas:
+                print(f"  - {p}")
+            print("\nNo se ha llamado al grafo. Corrige la tarea antes de gastar "
+                  "un token.")
+            return 1
+        n_outputs = len(task.get("outputs") or [])
+        print(f"[{task.get('task_id', '?')}] tarea valida: "
+              f"{len(task.get('inputs', {}))} inputs, {n_outputs} outputs, "
+              f"component_api cubre cada .tsx, ficheros de aceptacion en su sitio.")
+
     csv_tmp = pathlib.Path(tempfile.mkdtemp()) / "harness-metrics.csv"
     csv_tmp.write_text(",".join(metrics.COLUMNS) + "\n", encoding="utf-8")
 

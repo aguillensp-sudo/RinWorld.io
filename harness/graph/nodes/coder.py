@@ -82,6 +82,27 @@ estas funciones es un fallo del intento**, aunque el resultado parezca equivalen
 
 """
 
+    # `inputs.decisions`, si la tarea lo declara, NO se lee aqui, y es a proposito
+    # -no es el bug del bloque de arriba otra vez (F-113, 28-ago). Verificado leyendo
+    # las tres tareas que lo usan (MSG-02, PANEL-01, VND-01) y el prompt que arman hoy:
+    # en MSG-02 y VND-01, cada decision que de verdad cambia el artefacto -D-07-01,
+    # D-07-02, D-07-03, D-07-04, D-07-05- ya esta citada por su numero y con su
+    # sustancia completa dentro de `out_of_scope` o `component_api`, puestas ahi a
+    # mano por quien escribio la tarea. `inputs.decisions` es la ruta que esa persona
+    # tuvo que leer ANTES de escribir esos campos -lo dice `_nota_decisiones`-, no un
+    # fichero que el Coder necesite ver: son actas de varios dias que cubren VARIAS
+    # pantallas a la vez (Dia-07 habla de MSG-01, MSG-02 y VND-01 en la misma pagina),
+    # y volcar el fichero entero meteria en el prompt de una pantalla las decisiones
+    # de las otras dos. En PANEL-01 la comprobacion dio lo contrario: ninguna de las
+    # cinco decisiones de `Dia-09_decisiones_vera.md` -las cuatro herramientas de
+    # VERA, como se niega, el proxy en el navegador- afecta a las seis tarjetas de
+    # resumen que construye esta tarea, y el campo se retiro de esa tarea por eso
+    # (segun este mismo commit). Si una tarea nueva declara `decisions`, la lectura
+    # sigue siendo trabajo de quien la escribe, no de este nodo: lo que hay que
+    # comprobar antes de lanzarla es que las reglas relevantes ya viajen citadas en
+    # `out_of_scope` o `component_api`, con su codigo de decision al lado, igual que
+    # aqui.
+
     # La firma publica de cada componente. Va aparte de `outputs` porque los tests
     # de aceptacion fijan nombres de prop y el Coder no los ve nunca: sin esto
     # tiene que adivinarlos, y adivinar mal suspende C1 sin medir nada. Es la

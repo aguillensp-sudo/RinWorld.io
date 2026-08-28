@@ -87,6 +87,35 @@ tienen valor por defecto de agosto de 2026 y **el arnés no arranca si alguna es
 
 ---
 
+## Coste de orquestación (28-ago, ESTADO-V1 §3)
+
+`harness/core/orchestration_metrics.py` mide lo que este arnés no mide: el coste de las
+sesiones de Claude Code que diseñan el esquema, escriben el cifrado y revisan cada
+entrega — lo que la Tabla 5 del plan (v2.3) llama **"el modelo de orquestación… no está
+instrumentado en ninguna parte"**.
+
+```bash
+python -m harness.core.orchestration_metrics
+```
+
+Escanea las transcripciones de `~/.claude/projects/` de **todos los worktrees vivos de
+este repo** (vía `git worktree list`, no un directorio supuesto) y escribe
+`openspec/mvp/orchestration-metrics.csv`, una fila por (sesión, modelo).
+
+**Es un precio-sombra, no una factura.** El proyecto paga Claude Code por suscripción
+(Max/Pro): no hay coste marginal real por sesión. Lo que calcula este módulo es "cuánto
+costaría facturado por token, a la tarifa pública de la API" — la tarifa vive en
+`harness/core/orchestration_pricing.py`, con el mismo `PRICE_TABLE_DATE` y aviso de
+caducidad que `pricing.py`. Es la única cifra que permite comparar "cuánto costó
+orquestar esta pieza" con "cuánto costó generarla" (`harness-metrics.csv`), medidos con
+el mismo criterio.
+
+⚠ `fecha` es el día del primer turno de la sesión, no cada día que abarcó — una sesión
+larga que sigue abierta días después de empezar concentra su coste en el día de
+arranque. Vale para comparar sesión contra sesión; no para una serie diaria fiable.
+
+---
+
 ## Los dos registros de medida, y cuál responde a qué (F-033, 12-ago)
 
 | Fichero | Una fila por | Responde a |

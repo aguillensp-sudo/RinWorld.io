@@ -801,6 +801,64 @@ def test_dos_corridas_no_caben_a_la_vez():
         runner.soltar_cerrojo()
 
 
+def test_el_guardia_cruza_tarea_y_contrato():
+    """El guardia de `--seco`: lo que el contrato BUSCA contra lo que el Coder RECIBE.
+
+    Cinco veces en tres días el contrato exigió algo que la tarea no decía
+    —`F-116`, `F-118`, `F-123`, `F-125`, `F-126`—, y cada una costó una corrida
+    entera en descubrirse. No es mala suerte: la tarea y el contrato se escriben
+    una vez y el repo sigue andando, y nadie los vuelve a cruzar.
+
+    ⚠ **Las dos comprobaciones que de verdad importan son las de los falsos
+    positivos.** La primera versión de este guardia miraba solo el JSON de la
+    tarea y cantaba seis problemas en `SRCH-01`, de los que **cuatro estaban en
+    la spec**, que es un input que el Coder sí recibe. Un guardia que grita en
+    falso más de lo que acierta se desactiva en una semana, y entonces no protege
+    de nada.
+
+    Y lo que no puede hacer, dicho aquí para que nadie confunda verde con
+    completo: `F-123` era una **contradicción semántica** —la tarea decía «nunca
+    con una» y el contrato exigía «con una»— y `F-126` era una **forma de tipo**.
+    Ninguna regla de presencia caza esas dos."""
+    print("\nEl guardia · tarea contra contrato")
+
+    from .dry_run import _declarado, cruzar_con_el_contrato
+
+    tareas = sorted((ROOT / "harness" / "tasks").glob("*.json"))
+    sucias = {}
+    for t in tareas:
+        errores, _ = cruzar_con_el_contrato(json.loads(t.read_text(encoding="utf-8")))
+        if errores:
+            sucias[t.stem] = errores
+
+    check("⚠ calla en las tareas que se han medido bien",
+          not (set(sucias) & {"LOGIN-01", "PANEL-01", "VND-01", "SRCH-01", "MSG-01"}),
+          str(sorted(sucias)))
+    check("y habla en MSG-02, que es la del contrato rancio (D-08-02)",
+          "MSG-02" in sucias, str(sorted(sucias)))
+
+    # Los dos falsos positivos que costo calibrar.
+    srch = json.loads((ROOT / "harness" / "tasks" / "SRCH-01.json").read_text(encoding="utf-8"))
+    errores, _ = cruzar_con_el_contrato(srch)
+    check("⚠ no canta un literal que vive en la spec, no en el JSON",
+          not [e for e in errores if "Seleccionar todos" in e], str(errores))
+
+    tarea = "el boton lleva `Quitar filtro <etiqueta>` y ya esta"
+    check("⚠ ni un nombre generado de una plantilla declarada",
+          _declarado("Quitar filtro Marca", tarea))
+    check("pero uno que no sale de esa plantilla sigue cantando",
+          not _declarado("Vaciar la tabla entera", tarea))
+
+    # Y la deteccion de verdad: un espia ASERTADO que la tarea no nombra.
+    falsa = {
+        "acceptance": {"unit": ["app/src/screens/search/SearchResults.test.tsx"]},
+        "inputs": {}, "component_api": {},
+    }
+    errores, _ = cruzar_con_el_contrato(falsa)
+    check("⚠ caza `sendInquiries` cuando no se enseña por ningun lado (F-126)",
+          any("sendInquiries" in e for e in errores), str(errores[:2]))
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -835,6 +893,7 @@ def main() -> int:
     test_important_no_es_un_import()
     test_transporte_no_gasta_intento()
     test_dos_corridas_no_caben_a_la_vez()
+    test_el_guardia_cruza_tarea_y_contrato()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

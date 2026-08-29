@@ -174,19 +174,76 @@ def _avisar_de_los_artefactos(metrics_dir: pathlib.Path, intentos: int,
 CERROJO = ROOT / "harness" / ".corrida-en-curso"
 
 
+def _pid_vivo(pid: int) -> bool:
+    """¿Sigue existiendo ese proceso? En Windows **no vale `os.kill(pid, 0)`**:
+    Python lo traduce a `TerminateProcess`, o sea que preguntar si esta vivo lo
+    mataria. Se abre un handle y se mira su codigo de salida."""
+    if os.name != "nt":
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True        # existe, es de otro usuario
+        return True
+
+    import ctypes
+    PROCESS_QUERY_LIMITED_INFORMATION, STILL_ACTIVE = 0x1000, 259
+    k32 = ctypes.windll.kernel32
+    h = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not h:
+        return False
+    try:
+        code = ctypes.c_ulong()
+        if not k32.GetExitCodeProcess(h, ctypes.byref(code)):
+            return False
+        return code.value == STILL_ACTIVE
+    finally:
+        k32.CloseHandle(h)
+
+
+# -----------------------------------------------------------------------------
+# ⚠ F-124 · el cerrojo tiene que saber cuando su dueño ya no esta.
+#
+# `soltar_cerrojo()` vive en un `finally`, y un `finally` protege de una
+# excepcion — **no de un `SIGKILL`**. Y el plazo de pared que F-122 puso por
+# fuera mata justamente asi (`timeout --signal=KILL`). O sea que los dos
+# arreglos se peleaban: **el plazo garantizaba que el cerrojo se quedara puesto**,
+# y la corrida siguiente no arrancaba hasta que alguien borrara un fichero a
+# mano. Un cerrojo que hay que limpiar a mano acaba borrandose por costumbre, y
+# el dia que se borre con la otra corrida viva vuelve F-121.
+#
+# Pasó el 29-ago con SRCH-01, a la primera que el plazo hizo su trabajo.
+#
+# Un cerrojo cuyo dueño ya no existe no protege de nada: se caduca solo, se dice
+# en voz alta, y se sigue.
+# -----------------------------------------------------------------------------
 def tomar_cerrojo() -> None:
     if CERROJO.exists():
         try:
             quien = CERROJO.read_text(encoding="utf-8").strip()
         except OSError:
             quien = "(ilegible)"
-        print("HAY OTRA CORRIDA EN CURSO y comparte `app/src` con esta:\n"
-              f"  {quien}\n"
-              "Dos corridas a la vez se pisan el artefacto y las dos escriben "
-              "numeros que no miden nada (F-121). Si estas seguro de que aquella "
-              "murio, borra:\n"
-              f"  {CERROJO.relative_to(ROOT)}", file=sys.stderr)
-        raise SystemExit(3)
+
+        pid = None
+        if quien.startswith("pid "):
+            trozo = quien.split(None, 2)[1] if len(quien.split()) > 1 else ""
+            pid = int(trozo) if trozo.isdigit() else None
+
+        if pid is not None and not _pid_vivo(pid):
+            print(f"  ⚠ cerrojo caducado, su dueño ya no existe: {quien}\n"
+                  f"    Lo mas probable es que la corrida muriera por el plazo de "
+                  f"pared (F-122 mata con KILL y eso no deja limpiar). Sigo. F-124.",
+                  file=sys.stderr)
+            CERROJO.unlink(missing_ok=True)
+        else:
+            print("HAY OTRA CORRIDA EN CURSO y comparte `app/src` con esta:\n"
+                  f"  {quien}\n"
+                  "Dos corridas a la vez se pisan el artefacto y las dos escriben "
+                  "numeros que no miden nada (F-121). Espera a que acabe.",
+                  file=sys.stderr)
+            raise SystemExit(3)
+
     CERROJO.write_text(
         f"pid {os.getpid()} · {time.strftime('%Y-%m-%d %H:%M:%S')} · "
         f"{' '.join(sys.argv[1:])}\n", encoding="utf-8")

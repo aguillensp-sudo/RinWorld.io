@@ -781,6 +781,25 @@ def test_dos_corridas_no_caben_a_la_vez():
           "harness/.corrida-en-curso" in
           (ROOT / ".gitignore").read_text(encoding="utf-8"))
 
+    # ⚠ F-124 · y el caso que el `finally` NO cubre, que es el que paso de verdad:
+    # el plazo de pared de F-122 mata con KILL, un KILL no se puede capturar, y el
+    # cerrojo se queda puesto para siempre. Los dos arreglos se peleaban.
+    check("un pid imposible se ve como muerto", not runner._pid_vivo(999_999_998))
+    check("y el propio proceso se ve como vivo", runner._pid_vivo(os.getpid()))
+
+    runner.CERROJO.write_text("pid 999999998 · 2026-08-29 10:30:35 · huerfano\n",
+                              encoding="utf-8")
+    try:
+        runner.tomar_cerrojo()
+        check("⚠ un cerrojo cuyo dueño ya no existe caduca solo y no bloquea",
+              runner.CERROJO.exists() and
+              str(os.getpid()) in runner.CERROJO.read_text(encoding="utf-8"))
+    except SystemExit:
+        check("⚠ un cerrojo cuyo dueño ya no existe caduca solo y no bloquea", False,
+              "bloqueo con un dueño muerto")
+    finally:
+        runner.soltar_cerrojo()
+
 
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en

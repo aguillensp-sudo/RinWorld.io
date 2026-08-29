@@ -31,10 +31,29 @@ import sys
 # patron de F-028..F-032: **el veredicto sobrevive y la razon no**. Con `replace`,
 # un caracter fuera de tabla sale como '?' y no se lleva por delante el informe.
 # Ver F-046.
+#
+# -----------------------------------------------------------------------------
+# ⚠ Y `line_buffering=True`, que es F-120 y es el mismo patron una vez mas.
+#
+# Python bloquea la salida en bloques de 8 KB cuando stdout NO es una consola, y
+# una corrida del arnes SIEMPRE se lanza redirigida a un fichero. Resultado: los
+# `print` de progreso —incluido el aviso de reintento que F-119 acababa de
+# añadir para que un corte se viera en el momento— **se quedan en el buffer**. Si
+# el proceso se mata, el buffer se pierde entero.
+#
+# El 29-ago costo una noche: `SRCH-01` estuvo NUEVE HORAS con el log a cero
+# bytes. Cero bytes se leyo como "no ha hecho nada", y lo que significaba era
+# "no ha llenado 8 KB". Que ademas estuviera colgada fue casualidad: el log
+# habria estado igual de vacio corriendo perfectamente.
+#
+# Es exactamente el patron de F-028..F-032 otra vez —**el veredicto sobrevive y
+# la razon no**— pero por un camino nuevo: aqui no se pierde por una excepcion,
+# se pierde por no haberse escrito todavia. Una señal de vida que solo aparece
+# cuando el proceso termina bien no es una señal de vida.
 # -----------------------------------------------------------------------------
 for _flujo in (sys.stdout, sys.stderr):
     if hasattr(_flujo, "reconfigure"):
-        _flujo.reconfigure(encoding="utf-8", errors="replace")
+        _flujo.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 from langgraph.graph import END, StateGraph
 

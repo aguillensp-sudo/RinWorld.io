@@ -230,6 +230,22 @@ _NOMBRE = re.compile(
     r"""(?:getBy|findBy|queryBy|getAllBy|findAllBy)(?:Role\([^)]*?name:\s*|"""
     r"""LabelText\(|Label\()\s*['"]([^'"]+)['"]""")
 
+# ⚠ Los roles que NO salen gratis del HTML. `button`, `heading`, `listitem`,
+# `table`, `checkbox`... los da el elemento y el Coder los acierta sin que nadie
+# se los diga. Estos hay que **escribirlos** con un `role=`, y si la tarea no lo
+# pide, el Coder pinta un `<p>` con el mensaje correcto y el test no lo encuentra.
+#
+# El guardia nacio sin esto y se le escapo a la primera: `Messages.test.tsx`
+# hace `findByRole('alert')` SIN `name`, asi que el patron de nombres accesibles
+# ni lo miraba. Es el sexto caso del mismo patron -- y el primero que se le cuela
+# al propio guardia.
+_ROLES_QUE_HAY_QUE_PONER = {
+    "alert", "alertdialog", "status", "progressbar", "dialog", "tablist",
+    "tab", "tabpanel", "tooltip", "log", "marquee", "timer", "region",
+}
+_ROL = re.compile(
+    r"""(?:getBy|findBy|queryBy|getAllBy|findAllBy)Role\(\s*['"](\w+)['"]""")
+
 
 def _pide_el_contrato(rutas: list) -> tuple:
     """Lo que el Coder TIENE que llamar, y con que nombre se le busca en pantalla.
@@ -240,7 +256,7 @@ def _pide_el_contrato(rutas: list) -> tuple:
     que si obliga es un espia sobre el que se ASERTA: si el contrato dice
     `expect(sendInquiries).toHaveBeenCalledWith(...)`, la pantalla tiene que
     llamar a `sendInquiries`, y entonces la tarea esta obligada a nombrarlo."""
-    exigidos, nombres = set(), set()
+    exigidos, nombres, roles = set(), set(), set()
     for ruta in rutas:
         f = ROOT / ruta
         if not f.exists():
@@ -248,7 +264,8 @@ def _pide_el_contrato(rutas: list) -> tuple:
         txt = f.read_text(encoding="utf-8")
         exigidos |= set(_ESPIA.findall(txt)) & set(_ASERTADO.findall(txt))
         nombres |= set(_NOMBRE.findall(txt))
-    return exigidos, nombres
+        roles |= set(_ROL.findall(txt)) & _ROLES_QUE_HAY_QUE_PONER
+    return exigidos, nombres, roles
 
 
 def _declarado(nombre: str, tarea: str) -> bool:
@@ -292,7 +309,21 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
     acc = task.get("acceptance") or {}
     errores, avisos = [], []
 
-    exig_u, nombres_u = _pide_el_contrato(acc.get("unit") or [])
+    exig_u, nombres_u, roles_u = _pide_el_contrato(acc.get("unit") or [])
+    # ⚠ AVISO Y NO ERROR, y la razon es una medida, no una preferencia: `VND-01`
+    # tampoco declara `role="alert"` y **sale VERDE** — el Coder lo eligio solo,
+    # porque para un mensaje de error es lo idiomatico. En `MSG-01` no lo eligio
+    # y le costo la corrida. O sea: es una omision real que a veces se sobrevive,
+    # y bloquear por ella pararia una tarea que demostrablemente funciona. El
+    # guardia lo dice antes de gastar, que es su trabajo; decidir es de quien lee.
+    for r in sorted(roles_u):
+        if f'role="{r}"' not in declarado and f"`{r}`" not in declarado:
+            avisos.append(
+                f"el contrato de unidad busca `getByRole({r!r})` y la tarea no pide "
+                f"ese rol: `{r}` NO sale gratis del HTML, hay que escribir "
+                f"`role=\"{r}\"`. Sin decirlo el Coder puede pintar el mensaje "
+                f"correcto en un elemento que el test no encuentra — le paso a "
+                f"MSG-01; VND-01 lo acerto solo")
     for x in sorted(exig_u):
         if x not in declarado:
             errores.append(
@@ -306,7 +337,7 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
                 f"el contrato de unidad busca el nombre accesible {n!r} y la tarea "
                 f"no lo declara: el Coder elegira otro, legitimamente (F-125)")
 
-    exig_e, nombres_e = _pide_el_contrato(acc.get("e2e") or [])
+    exig_e, nombres_e, _roles_e = _pide_el_contrato(acc.get("e2e") or [])
     for x in sorted(exig_e - exig_u):
         if x not in declarado:
             avisos.append(f"el e2e aserta sobre `{x}`, sin declarar")

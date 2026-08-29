@@ -50,25 +50,24 @@ fecharon tres días atrás. **`date -u` antes de escribir la cabecera.**
 
 ---
 
-**Día 2 de V1 · 28-ago-2026 · La medición en n=4 estaba midiendo el arnés · Estado: VERDE**
+**Día 3 de V1 · 29-ago-2026 · El corpus ya se mide sin el arnés dentro · Estado: VERDE**
 
-Segundo día operativo de V1 (el 26 y el 27 no hubo sesión). Tres sesiones: la primera
-cerró `B-007` e instrumentó el coste de orquestación; la segunda cerró `F-113`; la
-tercera diagnosticó `F-112`, que era lo que §3 mandaba hacer antes de gastar en medir
-más.
+Tercer día operativo. El día 2 diagnosticó `F-112` —el 2 de 4 medía el arnés, no al
+Coder—; hoy se han quitado las siete cosas que se interponían y se ha remedido el
+corpus **cuatro veces**, tres de ellas tiradas a la basura por fallos de la propia
+instrumentación. **La cuarta es la primera medición limpia del proyecto.**
 
-**Y la respuesta cambia lo que significa el n=4.** El 2 de 4 no era el modelo: el
-feedback que vuelve al Coder es el recorte de las últimas 40 líneas de la salida, así
-que las tareas que fallan por **un** test lo ven entero y convergen, y las que fallan
-por seis o por trece solo ven las dos o tres últimas. `PANEL-01` y `VND-01` fallaban
-por una cosa; `SRCH-01` por trece y `MSG-01` por seis. **La variable que separa verde
-de escalado era cuántos fallos caben en el recorte** (`F-114`). Encima, tres de los
-seis rojos de `MSG-01` son tests que su propio fichero rotula *«FUERA del contrato del
-arnés»* y que C2 puntúa igual (`F-116`).
+El marcador sigue siendo **2 de 4 en verde**. Lo que ha cambiado es todo lo demás: los
+rojos de `SRCH-01` pasaron de **13 a un solo check**, los de `MSG-01` de **6 a 3
+tests**, y ya no queda ni uno en un fichero que el Coder no escriba, ni en un bloque
+rotulado fuera de contrato, ni una dependencia inventada. No se ha tocado producto:
+sigue siendo fábrica.
 
-Arreglado el recorte y fijado con prueba. `F-116` **no** se arregla sin el PO: cambia
-la vara de medir a mitad del corpus. **Ninguna cifra de "intentos hasta verde" anterior
-a hoy dice nada del modelo.** No se ha tocado producto: sigue siendo fábrica.
+**Y el hallazgo del día no es el marcador.** Cuatro veces en tres días el contrato
+exigía algo que la tarea no decía (`F-116`, `F-118`, `F-123`, `F-125`). No es mala
+suerte: es que **la tarea y el contrato se escriben una vez y el repo sigue andando**,
+y nadie los vuelve a cruzar. Mientras eso no tenga un guardia, cada medición vuelve a
+empezar con este trabajo.
 
 ---
 
@@ -76,22 +75,15 @@ a hoy dice nada del modelo.** No se ha tocado producto: sigue siendo fábrica.
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u`, dos veces, más `python -c "datetime.now()"` | `2026-08-28`. Una lectura suelta anterior en la sesión dio 25-ago; descartada, no se escribió nada con ella |
-| El worktree activo era el correcto | `ls`, `harness/` `app/` `supabase/` presentes | Se empezó en un worktree `claude/…` sin esos tres — el error que la línea 3 describe, cuarta vez, en vivo |
-| `git worktree prune` | `git worktree list` antes/después | Sin cambios: los tres worktrees `claude/…` siguen vivos como directorios, no son prunables |
-| Aviso de la línea 3 restaurado | `git diff` sobre este fichero antes de comitear | Edición ya presente sin comitear en el repo (no la escribió esta sesión); comiteada en `fcafa70`, empujada |
-| Medición del bucle arreglado, 3 tareas nuevas | `harness-metrics.csv`, 9 filas nuevas, fecha `2026-08-28` | `PANEL-01` **verde en 3** (antes escalaba con el mismo fallo repetido); `SRCH-01` y `MSG-01` **escalan en 3**, feedback del intento 3 indistinguible del histórico. Commit `f60a163`. Detalle en `F-112` |
-| Working tree tras las corridas | `git status`, `git diff --stat -- app/` | El Coder escribió sobre `app/src/screens/{panel,search,messages}/*` (1219+/1393−). Descartado por decisión del PO — solo queda el CSV |
-| `B-007` (`--seco` ignoraba la tarea) | `harness/tests/dry_run.py` en la punta, contra las 6 tareas reales + 1 tarea rota a propósito | Las 6 reales pasan limpias; la rota cazó los 4 tipos de problema (`inputs`, `acceptance`, `outputs`, `component_api`) sin llamar al grafo. Cerrado en `dfa8c74`, registros en `bbed0e1` |
-| Coste de orquestación instrumentado | `python -m harness.core.orchestration_metrics` contra las transcripciones reales de los 3 worktrees con sesiones | 9 sesiones, **$331,58 de coste-sombra** (13-ago→hoy), a `openspec/mvp/orchestration-metrics.csv`. Fórmula probada a mano contra los 5 componentes de precio. Commit `ae8448d` |
-| **Sesión 3 · el estado que este fichero daba por pendiente** | `git log` de `c1d6db6` + la fila de `F-113` en el registro | **`F-113` estaba CERRADO** y el §3.2 de este fichero lo daba por delegado a otra sesión. Desfase de horas, no de días, pero es la regla 2 otra vez |
-| Qué falló de verdad en `SRCH-01` y `MSG-01` | La salida de las corridas, recuperada de `~/.claude/projects/…/6d222cfd….jsonl` líneas 206 y 225 | `SRCH-01`: **13 tests rojos**, el Coder solo vio `[12/13]` y `[13/13]`. `MSG-01`: **6 rojos**, y los tres del recorte son el bloque `FUERA del contrato del arnés` |
-| Que los `attempt_N.json` de esa corrida no existen | `git log` por fichero + `ls harness/metrics/MSG-01/` | Son de commits del 11 y el 12-ago; su fecha de fichero (28-ago 15:11) es de git. `f60a163` comiteó **solo las 9 filas del CSV**. `F-115` |
-| `sendInquiries` llamado 0 veces, no 2 | La aserción real, `SearchResults.test.tsx:405`, en la salida recuperada | No faltaba el guardia del doble envío: la llamada no llegaba a ocurrir. El síntoma que este fichero citaba ayer estaba mal leído |
-| Que el rótulo `FUERA del contrato del arnés` no lo honra nadie | `grep` en `harness/`, en el registro y en `app/src` | Aparece **solo** en `Messages.test.tsx` y `Thread.test.tsx`. Cero veces en el código del arnés. `MSG-01.json` no menciona realtime en ninguna parte |
-| El arreglo de `F-114` no rompe nada | `python -m harness.tests.test_checks` y `--seco` contra las 6 tareas reales | Suite **entera en verde por primera vez** (incluida `test_c2_paths`, la deuda 🟠 de §5, arreglada hoy). Las 6 tareas pasan el seco |
-| El worktree, quinta vez | `ls` del directorio en el que se lanzó la sesión | Sin `harness/`, `app/`, `supabase/` ni `CLAUDE.md`. Se operó sobre la ruta real con paths absolutos, que es lo que manda la línea 3 |
-| **El estado de la CI** — pendiente desde hace dos días | `gh run watch 33203910148`, esperada a que terminara | **Verde, los tres jobs** (esquema, app, Playwright 53/53). Y el hallazgo de mirarla: **la CI no corre la suite del arnés**, ver §6 |
+| Fecha de máquina | `date -u` y `datetime.now()` | `2026-08-29` |
+| El feedback ya lleva el inventario (`F-114`) | La salida real de las corridas | `19 fallo(s) en total, no solo el ultimo. Lista completa:` — y con la lista delante se vio a la primera que los errores que mandaban estaban en `App.tsx`, un fichero que el Coder no escribe |
+| El reintento de transporte (`F-119`) funciona contra la API real | `SRCH-01.log`, corrida 04 | `⚠ TimeoutError… No es un intento del modelo (F-119): reintento en 5s`. **Ese mismo cuelgue, el día anterior, costó nueve horas en silencio** |
+| Las dos suites miden cosas distintas y ninguna pierde cobertura | `npm test` / `npm run test:arnes` | **642** el producto, **627** el arnés. La diferencia son los tests fuera de contrato |
+| El corpus, remedido limpio | 4 tareas × 3 intentos, corridas 03 y 04 | `PANEL-01` verde en 3 · `VND-01` verde en 2 · `MSG-01` escalado 2/4 · `SRCH-01` escalado **3/4** |
+| Que la medición de la mañana **no** valía | Marcas de tiempo de los commits del CSV | `abf4733` (09:53) y `f3daddf` (09:57) se solapan, y así tres pares: **dos corridas midiendo a la vez sobre el mismo `app/src`**, y ninguna dio error (`F-121`) |
+| Que el cerrojo sobrevivía a su dueño | `ls harness/.corrida-en-curso` tras un corte por plazo | Seguía puesto: un `finally` no corre con `SIGKILL` (`F-124`) |
+| Que el plazo de pared dispara tarde | Reloj contra el arranque | 25 min configurados, **34m45s reales** (`F-122`) |
+| Estado del árbol y del cerrojo al cerrar | `git status`, `ls` | Limpio y suelto |
 
 ---
 
@@ -101,18 +93,20 @@ a hoy dice nada del modelo.** No se ha tocado producto: sigue siendo fábrica.
 
 | Pieza | Estado |
 |---|---|
-| `B-009` ruido en el feedback al generador | ✅ 12-ago · `e58fa9b` |
-| `B-008` el reintento enseña el código anterior | ✅ 12-ago · `e58fa9b` |
-| `B-010` el JSON guarda el contenido, no solo rutas | ✅ 12-ago · `e58fa9b` |
-| Tabla de precios con vigencia | ✅ 25-ago · `ecb792c` |
-| Manifiesto de dependencias | ✅ 25-ago · `f47e11a` |
 | `B-007` `--seco` valida la tarea que recibe | ✅ 28-ago · `dfa8c74` |
-| Instrumentar el coste de orquestación | ✅ 28-ago · `ae8448d` — precio-sombra, ver §4 |
-| `F-112` diagnosticado | ✅ 28-ago — no era el modelo. `F-114` (el recorte de 40 líneas) y `F-116` (C2 puntúa lo que el contrato excluye) |
-| `F-114` el feedback lleva el inventario de fallos | ✅ 28-ago · `_inventario()` delante del recorte, con prueba |
-| `F-115` una corrida ya no borra su evidencia | ✅ 28-ago · `--corrida`, aviso al cerrar, y la salida del 28-ago rescatada al repo |
-| Deuda 🟠 `test_c2_paths` | ✅ 28-ago · pedía rutas a Playwright contra `D-09-03(a)`. La suite del arnés está entera en verde |
-| **Convertir la observación en medición** | 🔴 **Parada, y a propósito.** El n=4 medía el arnés, no al Coder: hay que rehacerla con el feedback arreglado. **No antes de que el PO decida `F-116`** (`B-011`), o `MSG-01` se vuelve a medir mal |
+| Coste de orquestación instrumentado | ✅ 28-ago · `ae8448d` — $331,58, ver §3.5 |
+| `F-114` el feedback lleva el inventario de fallos | ✅ 28-ago · `ecd5952` |
+| `F-115` una corrida ya no borra su evidencia | ✅ 28-ago · `ecd5952` |
+| `B-011`/`F-116` lo fuera de contrato no puntúa | ✅ 29-ago · `28aa31b` |
+| `F-117` C4 deja de leer `!important` como un `import` | ✅ 29-ago · `1183a38` |
+| `F-118` corpus congelado: alcance intacto, firma al día | ✅ 29-ago · `1183a38` |
+| `F-119` un corte de conexión no gasta intento | ✅ 29-ago · `1183a38` — visto funcionar |
+| `F-120` la señal de vida llega al log | ✅ 29-ago · `cf917cc` |
+| `F-121` dos corridas no caben en el mismo árbol | ✅ 29-ago · `9c47960` |
+| `F-123` la tarea de `SRCH-01` deja de contradecir su contrato | ✅ 29-ago · `dbfd49c` |
+| `F-124` el cerrojo caduca cuando su dueño ya no existe | ✅ 29-ago · `34f85b4` |
+| **Medición del corpus** | 🟡 **Tres de cuatro medidas de verdad.** `SRCH-01` a un `aria-label` de estarlo (`F-125`) |
+| `F-122` reloj de pared dentro de `run.py` | 🔴 Abierto. El plazo de fuera dispara tarde y al matar pierde los intentos ya pagados |
 | Fundación V1 (entornos, ADR-002, índice, residencia) | ⚪ No empezada |
 
 ### Corriente B · Fábrica — NO ABIERTA
@@ -129,21 +123,21 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **`B-011` es una decisión del PO y bloquea volver a medir.** `F-116`: C2 puntúa cinco
-   tests que el propio fichero rotula *«FUERA del contrato del arnés»*. Dos caminos —(a)
-   que el arnés honre el rótulo, (b) mover esos bloques a un fichero que la tarea no
-   declare, que es la recomendada— y hasta que se elija uno, el `C2` de `MSG-01` no dice
-   nada del modelo. **Es media hora de conversación, no de ingeniería.**
-2. **Rehacer la medición, ya con el feedback arreglado.** Las cuatro tareas otra vez,
-   `--corrida remedicion-post-F114`, y **comitear los `attempt_N.json` antes de descartar
-   nada** (`F-115`). ~$0,4 y media hora. Esta vez sí mide al Coder. No antes del punto 1.
-3. **Fundación V1** sigue sin empezar. Ya no tiene el coste de orquestación por delante
-   —eso se cerró hoy, ver §4—, así que es el candidato más barato que queda.
-4. **Con el coste-sombra ya instrumentado, decidir qué hacer con el número.** $331,58 en
-   9 sesiones no es una cifra para publicar sola: falta separar cuánto de eso es MVP
-   (13→18-ago) de cuánto es V1 (22-ago en adelante), y decidir si esta cifra sustituye o
-   solo informa la partida "tecnología" del plan (`Plan_V1…v2.3.docx`, Tabla 5, 3.000–7.000
-   €). Es una lectura del número, no ingeniería.
+1. **`F-125`, y es una línea.** Declarar en `component_api` de `FilterChips.tsx` que el
+   botón que despliega el formulario lleva nombre accesible `Añadir filtro`. Con eso
+   `SRCH-01` queda medido: hoy llegó a `C1`, `C3` y `C4` verdes y la aceptación de
+   unidad entera en verde, y lo único rojo es el e2e por ese nombre. ~$0,24 y 20 min.
+2. **Un guardia que cruce tarea contra contrato.** Cuatro veces en tres días el
+   contrato exigió algo que la tarea no decía. `--seco` ya comprueba que los ficheros
+   existan; lo que falta es cruzar **lo que el contrato busca** —nombres accesibles,
+   literales— contra **lo que la tarea declara**. Es la deuda que de verdad importa:
+   sin ella, la próxima medición vuelve a empezar por aquí.
+3. **`F-122`**, el reloj de pared dentro de `run.py`, escribiendo cada intento en
+   cuanto termina. Hoy un corte por plazo tira los intentos ya pagados.
+4. **Fundación V1** sigue sin empezar. Es el candidato más barato que queda.
+5. **Leer el coste-sombra.** $331,58 en 9 sesiones: falta separar MVP de V1 y decidir
+   si sustituye o solo informa la partida "tecnología" del plan (`Plan_V1…v2.3.docx`,
+   Tabla 5, 3.000–7.000 €).
 
 ---
 
@@ -155,13 +149,15 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 | **El hilo no es concepto visible** | El usuario ve «mi conversación con tal empresa». MSG-01 y MSG-02 no se titulan por hilo | ADR-002 §6 |
 | **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. No DeepSeek: sin acuerdo de tratamiento y entrena por defecto | Plan §4.2 |
 | **Generador de código** | DeepSeek V4 Flash **vía Microsoft Foundry, zona UE**. Nunca toca criptografía, reglas de acceso, claves ni datos de cliente | Plan §4.3 |
-| **Revisión multiagente** | Sobre esquema, criptografía y capa de datos. **Nunca sobre cada pantalla** — el coste por pasada lo desaconseja | Plan §5.4 |
+| **Revisión multiagente** | Sobre esquema, criptografía y capa de datos. **Nunca sobre cada pantalla** | Plan §5.4 |
 | **Utillaje externo** | Modo aislado, commit fijado, interruptores apagados. Nunca modo equipo | Plan §5.4 |
 | **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código | Plan, Anexo B |
 | **Cuatro agentes máximo** | En construcción concurrente. Los de verificación no cuentan | Plan §6.2 |
-| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió | 25-ago |
+| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió. **Por eso las filas inválidas de `F-121` se marcan, no se borran** | 25-ago |
 | **Precios del generador** | `0.014 / 0.44 / 1.32`, vigentes a 25-ago. `check_prices()` avisa a los 90 días | `pricing.py` |
-| **Coste de orquestación: envoltorio propio, precio-sombra** | Claude Code va por suscripción (confirmado con el PO): no hay € marginal por sesión. Se mide **tokens reales × tarifa pública de la API**, mismo criterio que el Coder — no consola de facturación (no aplica bajo suscripción) ni estimación a ojo | `orchestration_pricing.py` / `orchestration_metrics.py`, 28-ago |
+| **Coste de orquestación: precio-sombra** | Tokens reales × tarifa pública de la API. No consola de facturación —Claude Code va por suscripción— ni estimación a ojo | `orchestration_pricing.py`, 28-ago |
+| **El corpus se congela en ALCANCE, no en git** | 29-ago, PO. Restaurar `app/` a un commit viejo congelaría también los arreglos del arnés. Se congela lo que se le pide al Coder; la **firma** se declara al día | `F-118` |
+| **El recorte lo hace quien mide, no el producto** | `npm test` y la CI corren la suite entera; el que excluye es C1 (`test:arnes`). Al revés, olvidar una bandera perdería cobertura del producto en silencio | `F-116` |
 
 ---
 
@@ -169,8 +165,8 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🔵 | ~~**`test_c2_paths` falla siempre**~~ · **Cerrado el 28-ago.** Pedía rutas a los dos procesos y `D-09-03(a)` había decidido que Playwright corra la suite entera sin ninguna. Ahora cada proceso se comprueba contra lo que se decidió para él, y el caso de Playwright fija la otra mitad de `F-070`. **Llevaba dieciséis días en rojo fijo: una suite que siempre falla no avisa del fallo siguiente** | Hecho |
-| 🟠 | **`B-011` / `F-116` espera decisión del PO** y bloquea la remedición. Ver §3.1 | Álvaro: elegir (a) o (b) |
+| 🟠 | **Nada cruza tarea contra contrato.** Cuatro veces en tres días el contrato exigió lo que la tarea no decía. Es la causa raíz de casi todo lo de hoy | Un encargo propio, ver §3.2 |
+| 🟠 | **`F-122`: el plazo vive fuera del proceso.** Dispara tarde y al matar pierde los intentos ya pagados | Reloj de pared en `run.py` |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. No bloquea porque el MCP llega, pero depender de eso es depender de la suerte | Álvaro: re-loguear y `link` |
 | 🟡 | **Nada despliega solo.** Si se toca código, se despliega **y se comprueba en la URL** | Se cumple cerrando con el despliegue hecho |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial. Riesgo aceptado por el PO el 18-ago hasta después de la reunión. **Sigue abierto** | Álvaro: 20 $/mes |
@@ -181,28 +177,23 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Cuánto de los $331,58 de coste-sombra es MVP y cuánto es V1**, y si esa cifra debe
-  sustituir o solo informar la partida "tecnología" del plan. El número ya existe
-  (`orchestration-metrics.csv`); la lectura, no.
-- **Qué hacía fallar de verdad a `SRCH-01`.** Se sabe que fueron 13 tests y que el Coder
-  solo vio dos, y que los dos que vio eran síntomas —`sendInquiries` ni se llamaba—. **Los
-  once de arriba no se han leído**: el recorte se los comió y los `attempt_N.json` no
-  existen. Sale gratis en la próxima corrida, ya con el inventario puesto; no antes.
-- **Cuánto del 2/4 sobrevive al arreglo.** `F-114` explica por qué la medición no medía;
-  **no dice que las cuatro vayan a salir verdes.** El defecto de tipos de `MSG-01` bajo
-  `noUncheckedIndexedAccess` lleva sin cerrarse desde el 10-ago y ese sí es del modelo.
-  Predecir el resultado sería exactamente el error que costó los diez días de agosto.
-- **Cuántas corridas más del corpus tienen su evidencia perdida.** Se comprobó el 28-ago
-  para `SRCH-01` y `MSG-01`. **No se ha auditado el resto del CSV** — 40 filas, y el
-  `attempt_3.json` rancio de `VND-01` dice que el patrón no es de hoy (`F-115`).
-- **Si `visibility_scope` y la lista derivada de conversaciones aguantan bajo carga.** Se
-  mide en el Hito 6 y no antes. El riesgo está escrito en ADR-002 §D-1.
-- **Qué pasó en la reunión con el socio del 20-ago.** No hay ni una línea en el repo.
-- **Por qué la suite del arnés no está en la CI.** Sí se comprobó hoy —run `33203910148`,
-  los tres jobs en verde— y ahí está el hueco: la CI corre el esquema, la app y Playwright,
-  y **no corre `harness/tests/test_checks.py`**. Por eso `test_c2_paths` pudo estar
-  dieciséis días en rojo sin que nadie se enterara. Nadie ha decidido que sea así; se
-  quedó así.
+- **Si `MSG-01` escala por el modelo o por lo mismo de siempre.** Sus tres rojos están
+  dentro de su contrato de unidad —estado de error, botón sin motivo, `Intl`— y eso
+  **parece** una medida limpia del Coder. Pero eso mismo parecían los dos de `SRCH-01`
+  hace seis horas, y resultaron ser `F-123`. **No se han leído uno por uno.**
+- **Por qué la API se cuelga en la segunda tarea de una tanda y nunca en la primera.**
+  Cuatro cortes en cuatro tandas, ninguno en la que abre. Puede ser el proveedor
+  limitando peticiones seguidas, puede ser reutilización de conexión, puede ser
+  casualidad con n=4. No hay datos para decidirlo y no se ha adivinado.
+- **Cuánto de los $331,58 de coste-sombra es MVP y cuánto es V1.**
+- **Cuánto costó de verdad medir hoy.** Cuatro corridas del corpus, tres inválidas.
+  Los números están en el CSV y nadie los ha sumado — y es el dato que dice si esta
+  forma de medir sale a cuenta.
+- **Si `visibility_scope` y la lista derivada aguantan bajo carga.** Hito 6, no antes.
+- **Qué pasó en la reunión con el socio del 20-ago.** Ni una línea en el repo.
+- **Por qué la suite del arnés no está en la CI.** La CI corre esquema, app y
+  Playwright, y no `harness/tests/test_checks.py`. Por eso `test_c2_paths` estuvo
+  dieciséis días en rojo fijo sin que saltara nada.
 
 ---
 
@@ -237,7 +228,7 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 2 de V1 · 28-ago-2026 · tercera sesión del mismo día, el fichero se actualiza y no se
-cierra un día nuevo · fecha leída de la máquina dos veces (`date -u` + `datetime.now()`) ·
-estado del arnés verificado contra el código de `mvp/bootstrap` y contra la salida real de
-las corridas, no contra otro documento · Dirección Técnica, Nortex Systems*
+*Día 3 de V1 · 29-ago-2026 · fecha leída de la máquina (`date -u` + `datetime.now()`) ·
+estado verificado contra el código de `mvp/bootstrap` y contra la salida real de las
+corridas, no contra otro documento · **cuatro corridas del corpus, tres invalidadas por
+la propia instrumentación y dichas como tales** · Dirección Técnica, Nortex Systems*

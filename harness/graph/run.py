@@ -16,8 +16,10 @@ Uso:
 """
 import argparse
 import json
+import os
 import pathlib
 import sys
+import time
 
 # -----------------------------------------------------------------------------
 # La consola de Windows es cp1252 y el feedback lleva caracteres que no estan en
@@ -148,6 +150,55 @@ def _avisar_de_los_artefactos(metrics_dir: pathlib.Path, intentos: int,
               "subcarpeta y deja de pisar a la de al lado.)")
 
 
+# -----------------------------------------------------------------------------
+# F-121 · DOS CORRIDAS A LA VEZ SOBRE EL MISMO ARBOL, y ninguna de las dos lo sabe.
+#
+# El 29-ago se midieron tres tareas dos veces en paralelo sin querer. Un script
+# de tanda se quedo huerfano —matar el proceso que lanza la corrida NO mata al
+# `python` que corre el grafo, y matar ese `python` deja al bucle de `bash`
+# seguir con la tarea siguiente— y se lanzo otra tanda encima. Durante 17
+# minutos las dos hicieron `git checkout -- app/src` y `git clean` mientras la
+# otra tenia al Coder escribiendo justo ahi, y las dos volcaron en el mismo
+# directorio de corrida.
+#
+# **Ninguna de las dos dio error.** Salieron veredictos, filas de CSV y commits
+# con toda la pinta de ser una medicion, y solo se descubrio reconstruyendo la
+# secuencia por las marcas de tiempo de los commits. Es la peor forma del fallo
+# que persigue todo este arnes: no un rojo mal atribuido, sino un numero entero
+# que no mide lo que dice.
+#
+# El cerrojo va AQUI y no en el script de tanda: quien no puede coexistir es el
+# grafo, porque el artefacto vive en un `app/src` unico. Un guardia en el script
+# solo protege de los scripts que se acuerden de llamarlo.
+# -----------------------------------------------------------------------------
+CERROJO = ROOT / "harness" / ".corrida-en-curso"
+
+
+def tomar_cerrojo() -> None:
+    if CERROJO.exists():
+        try:
+            quien = CERROJO.read_text(encoding="utf-8").strip()
+        except OSError:
+            quien = "(ilegible)"
+        print("HAY OTRA CORRIDA EN CURSO y comparte `app/src` con esta:\n"
+              f"  {quien}\n"
+              "Dos corridas a la vez se pisan el artefacto y las dos escriben "
+              "numeros que no miden nada (F-121). Si estas seguro de que aquella "
+              "murio, borra:\n"
+              f"  {CERROJO.relative_to(ROOT)}", file=sys.stderr)
+        raise SystemExit(3)
+    CERROJO.write_text(
+        f"pid {os.getpid()} · {time.strftime('%Y-%m-%d %H:%M:%S')} · "
+        f"{' '.join(sys.argv[1:])}\n", encoding="utf-8")
+
+
+def soltar_cerrojo() -> None:
+    try:
+        CERROJO.unlink()
+    except OSError:
+        pass
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("task", help="ruta al JSON de la tarea")
@@ -167,10 +218,17 @@ def main(argv=None) -> int:
         return run_dry(task)
 
     check_toolchain_or_exit()  # dia 5: y esto tambien, antes de gastar
+    tomar_cerrojo()             # F-121, y antes de la primera llamada pagada
 
-    app = build_graph()
-    final = app.invoke({"task": task, "attempt": 0, "metrics": []},
-                       {"recursion_limit": MAX_ATTEMPTS * 4})
+    try:
+        app = build_graph()
+        final = app.invoke({"task": task, "attempt": 0, "metrics": []},
+                           {"recursion_limit": MAX_ATTEMPTS * 4})
+    finally:
+        # En `finally` a proposito: si la corrida revienta —y F-119 es justo eso,
+        # un `ConnectionResetError` que se llevo una tarea entera— el cerrojo no
+        # puede quedarse puesto bloqueando a la siguiente.
+        soltar_cerrojo()
 
     metrics_dir = ROOT / "harness" / "metrics" / task["task_id"]
     if args.corrida:

@@ -729,6 +729,59 @@ def test_transporte_no_gasta_intento():
           set(vueltas) == {llm.TIMEOUT}, str(vueltas))
 
 
+def test_dos_corridas_no_caben_a_la_vez():
+    """F-121 · dos corridas sobre el mismo `app/src` y ninguna se entera.
+
+    El 29-ago se midieron tres tareas dos veces en paralelo sin querer: un script
+    de tanda se quedó huérfano —matar el proceso que lanza la corrida no mata al
+    `python` del grafo, y matar ese `python` deja al bucle de `bash` seguir con
+    la tarea siguiente— y se lanzó otra tanda encima. Durante 17 minutos las dos
+    hicieron `git checkout -- app/src` mientras la otra tenía al Coder
+    escribiendo ahí.
+
+    ⚠ **Ninguna de las dos dio error.** Salieron veredictos, filas de CSV y
+    commits con toda la pinta de una medición, y se descubrió reconstruyendo la
+    secuencia por las marcas de tiempo de los commits. Es la peor forma del fallo
+    que persigue este arnés entero: no un rojo mal atribuido, sino un número que
+    no mide lo que dice.
+
+    La última comprobación es la que importa de verdad: **el cerrojo se suelta
+    aunque la corrida reviente.** Un cerrojo que sobrevive a su dueño convierte
+    un fallo de red en un bloqueo permanente, y eso lo arregla alguien borrando
+    ficheros a mano — que es como se pierden las mediciones."""
+    print("\nF-121 · dos corridas no caben en el mismo arbol")
+
+    from ..graph import run as runner
+
+    assert not runner.CERROJO.exists(), "hay una corrida de verdad en curso"
+    try:
+        runner.tomar_cerrojo()
+        check("el cerrojo queda puesto", runner.CERROJO.exists())
+        check("y dice quien lo tiene",
+              str(os.getpid()) in runner.CERROJO.read_text(encoding="utf-8"))
+
+        codigo = None
+        try:
+            runner.tomar_cerrojo()
+        except SystemExit as e:
+            codigo = e.code
+        check("⚠ una segunda corrida NO arranca", codigo == 3, str(codigo))
+    finally:
+        runner.soltar_cerrojo()
+
+    check("y al soltarlo la siguiente puede", not runner.CERROJO.exists())
+
+    # Que se suelte aunque la corrida reviente: `soltar_cerrojo` va en `finally`.
+    fuente = pathlib.Path(runner.__file__).read_text(encoding="utf-8")
+    cuerpo = fuente.split("tomar_cerrojo()             #")[1]
+    check("⚠ se suelta en un `finally`, no en el camino feliz",
+          "finally:" in cuerpo.split("soltar_cerrojo()")[0])
+
+    check("y el cerrojo esta en .gitignore: es estado de corrida, no del repo",
+          "harness/.corrida-en-curso" in
+          (ROOT / ".gitignore").read_text(encoding="utf-8"))
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -762,6 +815,7 @@ def main() -> int:
     test_fuera_de_contrato_no_puntua()
     test_important_no_es_un_import()
     test_transporte_no_gasta_intento()
+    test_dos_corridas_no_caben_a_la_vez()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

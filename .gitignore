@@ -30,3 +30,7 @@ __pycache__/
 # Logs de servidor de desarrollo local
 serve.log
 *.log
+
+# El cerrojo de corrida del arnes (F-121): es estado de una corrida viva,
+# nunca del repo.
+harness/.corrida-en-curso

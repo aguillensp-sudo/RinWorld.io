@@ -1,0 +1,151 @@
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 20047/38677   cache: 3.19% hit
+  coste real: $0.059602   en frio: $0.059874
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\MSG-01\remedicion-08-msg-con-F128\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 26662/12512   cache: 74.89% hit
+  coste real: $0.019741   en frio: $0.028247
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\MSG-01\remedicion-08-msg-con-F128\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 26420/11528   cache: 75.58% hit
+  coste real: $0.018335   en frio: $0.026842
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\MSG-01\remedicion-08-msg-con-F128\attempt_3.json (F-122)
+  CSV: 2026-08-30,MSG-01,MSG-01,deepseek-v4-flash,20047,38677,0.059602,1,3.9,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,3.19,no,-,remedicion-08-msg-con-F128,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-30,MSG-01,MSG-01,deepseek-v4-flash,26662,12512,0.019741,2,1.5,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,74.89,no,-,remedicion-08-msg-con-F128,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-30,MSG-01,MSG-01,deepseek-v4-flash,26420,11528,0.018335,3,1.3,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,75.58,si,-,remedicion-08-msg-con-F128,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\MSG-01\remedicion-08-msg-con-F128\attempt_1.json
+  harness\metrics\MSG-01\remedicion-08-msg-con-F128\attempt_2.json
+  harness\metrics\MSG-01\remedicion-08-msg-con-F128\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run test:arnes (exit 1)
+10 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > carga > pinta lo que devuelve la consulta
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > barra de acciones > "Nuevo contacto" está deshabilitado y dice por qué
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > paginación > con 30 hilos o menos no se pinta
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > paginación > el recuento se formatea con Intl, no a mano
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > frontera E2EE > no enseña ninguna cifra de la negociación
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > frontera E2EE > no pinta datos de ejemplo del HTML aprobado
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > pinta una fila por hilo
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > respeta el orden que recibe y no reordena por su cuenta
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > enseña la contraparte con su badge de país
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > vista previa — solo metadatos, nunca contenido descifrado > una oferta enseña tipo y referencia, y ni una cifra
+
+--- ultimas lineas de la salida ---
+          class="_tsRow_f58206"
+        >
+          <span
+            class="_timestamp_f58206"
+          >
+            hace 2 h
+          </span>
+        </div>
+        <div
+          class="_bottomRow_f58206"
+        >
+          <span
+            class="_preview_f58206"
+          >
+            Tarjeta de oferta · 6205-2RS
+          </span>
+          <span
+            class="_stateBadge_f58206 _stateNeutral_f58206"
+          >
+            ABIERTO
+          </span>
+        </div>
+        <div />
+      </li>
+    </ul>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/messages/ThreadList.test.tsx:115:27
+    113|         />,
+    114|       );
+    115|       const fila = screen.getByRole('listitem');
+       |                           ^
+    116|       expect(within(fila).getByText('Tarjeta de oferta · 6205-2RS')).t…
+    117|       expect(within(fila).queryByText(/\d+\s*(u|unidades|€|EUR)/)).not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+10 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > carga > pinta lo que devuelve la consulta
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > barra de acciones > "Nuevo contacto" está deshabilitado y dice por qué
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > paginación > con 30 hilos o menos no se pinta
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > paginación > el recuento se formatea con Intl, no a mano
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > frontera E2EE > no enseña ninguna cifra de la negociación
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > frontera E2EE > no pinta datos de ejemplo del HTML aprobado
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > pinta una fila por hilo
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > respeta el orden que recibe y no reordena por su cuenta
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > enseña la contraparte con su badge de país
+  - src/screens/messages/ThreadList.test.tsx > MSG-01 · ThreadList > vista previa — solo metadatos, nunca contenido descifrado > una oferta enseña tipo y referencia, y ni una cifra
+
+--- ultimas lineas de la salida ---
+          class="_tsRow_f58206"
+        >
+          <span
+            class="_timestamp_f58206"
+          >
+            hace 2 h
+          </span>
+        </div>
+        <div
+          class="_bottomRow_f58206"
+        >
+          <span
+            class="_preview_f58206"
+          >
+            Tarjeta de oferta · 6205-2RS
+          </span>
+          <span
+            class="_stateBadge_f58206 _stateNeutral_f58206"
+          >
+            ABIERTO
+          </span>
+        </div>
+        <div />
+      </li>
+    </ul>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/messages/ThreadList.test.tsx:115:27
+    113|         />,
+    114|       );
+    115|       const fila = screen.getByRole('listitem');
+       |                           ^
+    116|       expect(within(fila).getByText('Tarjeta de oferta · 6205-2RS')).t…
+    117|       expect(within(fila).queryByText(/\d+\s*(u|unidades|€|EUR)/)).not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯

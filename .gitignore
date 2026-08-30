@@ -31,6 +31,24 @@ __pycache__/
 serve.log
 *.log
 
+# ⚠ EXCEPCION: los logs de corrida del arnes SI se versionan, y es F-115 sin
+# terminar. La regla `*.log` de arriba es de ruido local; estos no son ruido,
+# son la EVIDENCIA de una medicion que se pago. El 30-ago el relevo del dia 3
+# citaba `SRCH-01.log` como prueba de que el reintento de F-119 funcionaba, y
+# esa prueba no la podia comprobar nadie mas: vivia solo en la maquina donde se
+# corrio. Los JSON de al lado guardan los checks y el artefacto (B-010); el log
+# guarda el ORDEN y los TIEMPOS --los avisos de reintento, los del reloj de
+# pared, en que momento se volco cada intento-- y eso no esta en ningun otro
+# sitio.
+#
+# La excepcion es lo mas estrecha que se puede: solo bajo `harness/metrics/`,
+# que es donde vive lo medido, y no toca la regla ancha ni un milimetro.
+# Comprobado antes de abrirla: el log de la corrida 08 son 151 lineas, 8,5 KB,
+# y cero coincidencias de `sk-`, `api_key`, `Bearer `, `password` o
+# `SUPABASE_SERVICE`. El color va apagado en origen desde B-009 (F-068), asi
+# que tampoco entran secuencias ANSI.
+!harness/metrics/**/*.log
+
 # El cerrojo de corrida del arnes (F-121): es estado de una corrida viva,
 # nunca del repo.
 harness/.corrida-en-curso

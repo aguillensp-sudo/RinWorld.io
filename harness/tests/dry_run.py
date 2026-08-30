@@ -230,6 +230,22 @@ _NOMBRE = re.compile(
     r"""(?:getBy|findBy|queryBy|getAllBy|findAllBy)(?:Role\([^)]*?name:\s*|"""
     r"""LabelText\(|Label\()\s*['"]([^'"]+)['"]""")
 
+# ⚠ Y lo mismo buscado con una EXPRESION REGULAR, que es el segundo agujero del
+# guardia y F-130. `_NOMBRE` exige comillas, asi que
+# `getByRole('button', { name: /Ir al Directorio/ })` y
+# `getByText(/fuera del MVP/i)` -las dos mitades de F-128- le pasaban por
+# delante sin que las viera. Es el mismo patron que F-127 por tercera vez: el
+# guardia siempre acaba siendo una muesca mas estrecho que el contrato.
+_NOMBRE_REGEX = re.compile(
+    r"""(?:getBy|findBy|queryBy|getAllBy|findAllBy)(?:Role\([^)]*?name:\s*|"""
+    r"""Text\(|LabelText\(|Label\()\s*/([^/\n]+)/[gimsuy]*""")
+
+# Solo se acepta el cuerpo de la regex si es TEXTO LLANO. `/Ir al Directorio/`
+# lo es; `/^\d+ (resultados?)$/` no, y de ahi no se puede sacar un nombre que
+# comparar contra la tarea sin inventarselo. Un guardia que grita en falso se
+# desactiva en una semana (F-003), asi que lo que no se entiende se calla.
+_TEXTO_LLANO = re.compile(r"^[\w ÁÉÍÓÚÜÑáéíóúüñÀ-ÿ'’·.,!?¿¡:-]+$")
+
 # ⚠ Los roles que NO salen gratis del HTML. `button`, `heading`, `listitem`,
 # `table`, `checkbox`... los da el elemento y el Coder los acierta sin que nadie
 # se los diga. Estos hay que **escribirlos** con un `role=`, y si la tarea no lo
@@ -256,7 +272,7 @@ def _pide_el_contrato(rutas: list) -> tuple:
     que si obliga es un espia sobre el que se ASERTA: si el contrato dice
     `expect(sendInquiries).toHaveBeenCalledWith(...)`, la pantalla tiene que
     llamar a `sendInquiries`, y entonces la tarea esta obligada a nombrarlo."""
-    exigidos, nombres, roles = set(), set(), set()
+    exigidos, nombres, roles, porregex = set(), set(), set(), set()
     for ruta in rutas:
         f = ROOT / ruta
         if not f.exists():
@@ -264,8 +280,11 @@ def _pide_el_contrato(rutas: list) -> tuple:
         txt = f.read_text(encoding="utf-8")
         exigidos |= set(_ESPIA.findall(txt)) & set(_ASERTADO.findall(txt))
         nombres |= set(_NOMBRE.findall(txt))
+        # F-130 · y los buscados por regex, siempre que sean texto llano.
+        porregex |= {n.strip() for n in _NOMBRE_REGEX.findall(txt)
+                     if _TEXTO_LLANO.match(n.strip())}
         roles |= set(_ROL.findall(txt)) & _ROLES_QUE_HAY_QUE_PONER
-    return exigidos, nombres, roles
+    return exigidos, nombres, roles, porregex
 
 
 def _declarado(nombre: str, tarea: str) -> bool:
@@ -309,7 +328,7 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
     acc = task.get("acceptance") or {}
     errores, avisos = [], []
 
-    exig_u, nombres_u, roles_u = _pide_el_contrato(acc.get("unit") or [])
+    exig_u, nombres_u, roles_u, regex_u = _pide_el_contrato(acc.get("unit") or [])
     # ⚠ AVISO Y NO ERROR, y la razon es una medida, no una preferencia: `VND-01`
     # tampoco declara `role="alert"` y **sale VERDE** — el Coder lo eligio solo,
     # porque para un mensaje de error es lo idiomatico. En `MSG-01` no lo eligio
@@ -324,6 +343,27 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
                 f"`role=\"{r}\"`. Sin decirlo el Coder puede pintar el mensaje "
                 f"correcto en un elemento que el test no encuentra — le paso a "
                 f"MSG-01; VND-01 lo acerto solo")
+    # ⚠ F-130 · los buscados por REGEX van a AVISO y no a error, y otra vez es una
+    # medida y no una preferencia. Al encenderlo salieron siete nombres nuevos en
+    # tareas MEDIDAS: `'22316-E'` en VND-01 y `'afina'`, `'te avisaremos'` y
+    # `'caduca en 30 dias'` en SRCH-01 — y las dos han salido VERDES con esos
+    # nombres sin declarar. No son nombres que el Coder invente: son fragmentos de
+    # frase, o datos del fixture, buscados con un `/trozo/i` que casa DENTRO de un
+    # texto mas largo. Un literal entrecomillado dice "esto se llama asi"; una
+    # regex parcial dice "esto aparece por aqui", y no es lo mismo.
+    #
+    # De los siete, uno era de verdad —`'fuera del MVP'`, la segunda mitad de
+    # F-128— y ese es el que justifica que el guardia mire aqui. Bloquear con esta
+    # precision pararia tres tareas que funcionan para cazar una que no; decirlo
+    # antes de gastar cuesta cero y lo lee quien decide.
+    for n in sorted(regex_u - nombres_u):
+        if not _declarado(n, declarado):
+            avisos.append(
+                f"el contrato de unidad busca {n!r} con una EXPRESION REGULAR y la "
+                f"tarea no lo declara. Puede ser un fragmento de frase o un dato "
+                f"del fixture —y entonces no es cosa del Coder—, o puede ser un "
+                f"literal que hay que pintar y nadie ha pedido (F-128, F-130). "
+                f"Miralo antes de pagar la corrida")
     for x in sorted(exig_u):
         if x not in declarado:
             errores.append(
@@ -337,7 +377,8 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
                 f"el contrato de unidad busca el nombre accesible {n!r} y la tarea "
                 f"no lo declara: el Coder elegira otro, legitimamente (F-125)")
 
-    exig_e, nombres_e, _roles_e = _pide_el_contrato(acc.get("e2e") or [])
+    exig_e, nombres_e, _roles_e, regex_e = _pide_el_contrato(acc.get("e2e") or [])
+    nombres_e = nombres_e | regex_e      # el e2e ya va entero a avisos
     for x in sorted(exig_e - exig_u):
         if x not in declarado:
             avisos.append(f"el e2e aserta sobre `{x}`, sin declarar")

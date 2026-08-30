@@ -1034,6 +1034,33 @@ def test_el_guardia_cruza_tarea_y_contrato():
     check("⚠ caza `sendInquiries` cuando no se enseña por ningun lado (F-126)",
           any("sendInquiries" in e for e in errores), str(errores[:2]))
 
+    # ⚠ F-130 · y lo que se busca con una REGEX y no con un literal, que era el
+    # segundo agujero. `getByText(/fuera del MVP/i)` —la segunda mitad de F-128—
+    # le pasaba por delante porque el patron de nombres exigia comillas.
+    err_m, av_m = cruzar_con_el_contrato(
+        json.loads((ROOT / "harness" / "tasks" / "MSG-01.json")
+                   .read_text(encoding="utf-8")))
+    check("⚠ ve `fuera del MVP`, que se busca con una regex (F-128 / F-130)",
+          any("fuera del MVP" in a for a in av_m), str(av_m[:2]))
+    # Y la medida que decide que sea aviso: SRCH-01 y VND-01 salen VERDES con
+    # cuatro de estos sin declarar, asi que bloquear por ellos pararia tareas que
+    # demostrablemente funcionan. Es la misma decision que F-127 tomo con los
+    # roles, por la misma razon y medida igual.
+    check("⚠ pero no BLOQUEA: es aviso, como los roles de F-127",
+          not any("fuera del MVP" in e for e in err_m), str(err_m[:2]))
+    for tarea in ("SRCH-01", "VND-01", "PANEL-01"):
+        e, _ = cruzar_con_el_contrato(
+            json.loads((ROOT / "harness" / "tasks" / f"{tarea}.json")
+                       .read_text(encoding="utf-8")))
+        check(f"y {tarea}, que se ha medido bien, sigue sin un solo error",
+              not e, str(e[:1]))
+    # Una regex con metacaracteres no da un nombre: de ahi no se saca nada que
+    # comparar sin inventarselo, y un guardia que grita en falso se desactiva.
+    from .dry_run import _TEXTO_LLANO
+    check("⚠ y calla ante una regex que no es texto llano (F-003)",
+          not _TEXTO_LLANO.match(r"^\d+ (resultados?)$")
+          and bool(_TEXTO_LLANO.match("fuera del MVP")))
+
 
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en

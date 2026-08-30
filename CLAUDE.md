@@ -210,8 +210,16 @@ dice "no tengo ese dato" en cuanto sale de ahí.
 - **El SQL y las migraciones van por el MCP de Supabase** (`execute_sql`,
   `apply_migration`), **no por `npx supabase`**. Motivo, y no es preferencia: **la CLI
   está logueada en la cuenta equivocada** —`web-julsaindustrial`, org
-  `mjxnlvvrnjuuawlxkmte`— mientras el MVP vive en `ujatcozvbspkycepemfq` (**F-073**).
-  Hasta que eso se arregle, un `supabase db push` va al proyecto de otro.
+  `mjxnlvvrnjuuawlxkmte`— mientras el MVP vive en la org `ujatcozvbspkycepemfq`
+  (**F-073**). Hasta que eso se arregle, un `supabase db push` va al proyecto de otro.
+  > ⚠ **Corregido el 30-ago:** esta línea decía *«el MVP vive en
+  > `ujatcozvbspkycepemfq`»* a secas, y eso contradecía el punto de arriba. Los dos son
+  > ciertos y hablan de cosas distintas: `ujatcozvbspkycepemfq` es la **organización** y
+  > `troxminloxkjwihwfevs` es el **proyecto** dentro de ella. Comprobado con
+  > `list_projects` por el MCP —`MVP_RinWorld.io`, `eu-west-1`, `ACTIVE_HEALTHY`, org
+  > `ujatcozvbspkycepemfq`— y contra `VITE_SUPABASE_URL` de `app/.env`. Un ref de
+  > organización usado como ref de proyecto en la sección que se lee **antes de la primera
+  > consulta** es exactamente el error que esta §10 existe para evitar.
 - **Las Edge Functions no se despliegan con el push a git** y la app tampoco llega sola a
   Vercel (**F-091**, **F-072**). Cerrar un bloque que alguien va a probar en la URL
   desplegada incluye redesplegarlo o decir explícitamente que falta.

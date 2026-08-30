@@ -1037,11 +1037,24 @@ def test_el_guardia_cruza_tarea_y_contrato():
     # ⚠ F-130 · y lo que se busca con una REGEX y no con un literal, que era el
     # segundo agujero. `getByText(/fuera del MVP/i)` —la segunda mitad de F-128—
     # le pasaba por delante porque el patron de nombres exigia comillas.
-    err_m, av_m = cruzar_con_el_contrato(
-        json.loads((ROOT / "harness" / "tasks" / "MSG-01.json")
-                   .read_text(encoding="utf-8")))
-    check("⚠ ve `fuera del MVP`, que se busca con una regex (F-128 / F-130)",
-          any("fuera del MVP" in a for a in av_m), str(av_m[:2]))
+    #
+    # Se prueba contra MSG-01 **con la declaracion de F-128 quitada**, y no
+    # contra el fichero de hoy: hoy ya esta declarada, asi que el guardia calla —
+    # que es justo lo que se queria—. Un guardia solo se puede probar contra la
+    # tarea rota que tenia que haber cazado, y dejar el repo roto para que la
+    # prueba pase es la forma de que el arreglo no se pueda hacer nunca.
+    msg01 = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json")
+                       .read_text(encoding="utf-8"))
+    err_m, av_m = cruzar_con_el_contrato(msg01)
+    check("⚠ con F-128 ya declarada, calla: eso es que la declaracion llego",
+          not any("fuera del MVP" in x for x in av_m + err_m), str(av_m[:2]))
+
+    antes = json.loads(json.dumps(msg01))
+    for ruta, firma in antes["component_api"].items():
+        antes["component_api"][ruta] = firma.split(" EL ESTADO VACIO")[0]
+    _err_a, av_a = cruzar_con_el_contrato(antes)
+    check("⚠ y sobre la tarea de ANTES lo habria visto (F-128 / F-130)",
+          any("fuera del MVP" in a for a in av_a), str(av_a[:2]))
     # Y la medida que decide que sea aviso: SRCH-01 y VND-01 salen VERDES con
     # cuatro de estos sin declarar, asi que bloquear por ellos pararia tareas que
     # demostrablemente funcionan. Es la misma decision que F-127 tomo con los

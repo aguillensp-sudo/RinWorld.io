@@ -1074,6 +1074,39 @@ def test_el_guardia_cruza_tarea_y_contrato():
           not _TEXTO_LLANO.match(r"^\d+ (resultados?)$")
           and bool(_TEXTO_LLANO.match("fuera del MVP")))
 
+    # ⚠ F-131 · el tercer agujero, y el simetrico de F-127. Aquel preguntaba
+    # «¿la tarea PIDE este rol?»; este pregunta «¿la tarea dice que este rol
+    # tiene que SOBREVIVIR?». El guardia de ayer solo sabia lo primero y
+    # descartaba `listitem` —«lo da el elemento gratis»— en la misma corrida en
+    # la que el Coder lo borro escribiendo `<li role="button">` encima.
+    #
+    # Misma disciplina que arriba: se prueba contra la tarea ROTA —la de ayer,
+    # sin la declaracion— y no dejando el repo roto para que la prueba pase.
+    ruta_tl = "app/src/screens/messages/ThreadList.tsx"
+    check("⚠ con `listitem` ya declarado, calla",
+          not any("`listitem`" in x for x in av_m + err_m), str(av_m[:2]))
+
+    sin_f131 = json.loads(json.dumps(msg01))
+    sin_f131["component_api"][ruta_tl] = \
+        sin_f131["component_api"][ruta_tl].split(" LA FILA CONSERVA")[0]
+    err_s, av_s = cruzar_con_el_contrato(sin_f131)
+    check("⚠ y sobre la tarea de AYER lo habria visto (F-131)",
+          any("`listitem`" in a and "F-131" in a for a in av_s), str(av_s[:2]))
+    check("⚠ pero tampoco BLOQUEA: SRCH-01 y VND-01 salen VERDES con cuatro sin "
+          "declarar", not any("F-131" in e for e in err_s), str(err_s[:2]))
+
+    # Y la calibracion, que es lo que separa esto de un aviso inutil: si entrara
+    # CUALQUIER rol implicito, `button` cantaria en las seis tareas —17 avisos— y
+    # el guardia se desactivaria en una semana (F-003). Entran solo los
+    # ESTRUCTURALES: los que viven en un contenedor al que se le atornilla
+    # interactividad encima.
+    from .dry_run import _ROLES_ESTRUCTURALES, _ROLES_QUE_HAY_QUE_PONER
+    check("⚠ `button`, `textbox` y `link` NO entran: nadie pisa un `<button>`",
+          not ({"button", "textbox", "link", "checkbox", "heading", "option"}
+               & _ROLES_ESTRUCTURALES))
+    check("y las dos listas no se solapan: una es poner, la otra es no pisar",
+          not (_ROLES_ESTRUCTURALES & _ROLES_QUE_HAY_QUE_PONER))
+
 
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en

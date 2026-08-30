@@ -259,6 +259,30 @@ _ROLES_QUE_HAY_QUE_PONER = {
     "alert", "alertdialog", "status", "progressbar", "dialog", "tablist",
     "tab", "tabpanel", "tooltip", "log", "marquee", "timer", "region",
 }
+
+# ⚠ Y LA OTRA MITAD, QUE ES F-131: los roles que el elemento da GRATIS y que un
+# `role=` encima **BORRA**. El comentario de arriba dice que `listitem` «lo da el
+# elemento y el Coder lo acierta sin que nadie se lo diga», y eso es falso en
+# cuanto el Coder escribe un `role` encima: un rol explicito no se SUMA al
+# implicito, lo SUSTITUYE. En la corrida 08 el Coder hizo la fila pulsable con
+# `<li role="button">` —la lista se pintaba perfecta— y se llevo NUEVE pruebas de
+# 34 por delante: ocho por `Unable to find role="listitem"` y una novena por
+# `Found multiple elements with the role "button"`, porque el `<li>` pisado pasa
+# a ser un segundo boton con el mismo nombre accesible que el de dentro.
+#
+# No entra aqui cualquier rol implicito. Entran los **estructurales**: los que
+# viven en un contenedor al que se le puede atornillar interactividad encima
+# —una fila, una celda, una cabecera de columna—. `button`, `textbox`, `link` o
+# `checkbox` no entran: nadie escribe `role="button"` sobre un `<button>`, y
+# meterlos convertiria esto en un aviso en las seis tareas, o sea en ruido.
+# Medido antes de encenderlo: con esta lista salta en 5 sitios de 6 tareas
+# —`listitem` en MSG-01, `row`/`columnheader` en SRCH-01, `table`/`columnheader`
+# en VND-01—; con todos los implicitos serian 17. La proporcion es la de F-130 y
+# la decision la misma: **aviso, no error.**
+_ROLES_ESTRUCTURALES = {
+    "listitem", "list", "row", "rowgroup", "table", "grid", "cell",
+    "gridcell", "columnheader", "rowheader", "article",
+}
 _ROL = re.compile(
     r"""(?:getBy|findBy|queryBy|getAllBy|findAllBy)Role\(\s*['"](\w+)['"]""")
 
@@ -283,7 +307,12 @@ def _pide_el_contrato(rutas: list) -> tuple:
         # F-130 · y los buscados por regex, siempre que sean texto llano.
         porregex |= {n.strip() for n in _NOMBRE_REGEX.findall(txt)
                      if _TEXTO_LLANO.match(n.strip())}
-        roles |= set(_ROL.findall(txt)) & _ROLES_QUE_HAY_QUE_PONER
+        # ⚠ Sin filtrar. Antes de F-131 aqui se intersecaba ya con
+        # `_ROLES_QUE_HAY_QUE_PONER` y el resto se tiraba en el sitio donde
+        # todavia se sabia que existia; los estructurales se perdian aqui, tres
+        # lineas antes de que nadie pudiera preguntar por ellos. Filtra quien
+        # decide, no quien lee.
+        roles |= set(_ROL.findall(txt))
     return exigidos, nombres, roles, porregex
 
 
@@ -335,7 +364,7 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
     # y le costo la corrida. O sea: es una omision real que a veces se sobrevive,
     # y bloquear por ella pararia una tarea que demostrablemente funciona. El
     # guardia lo dice antes de gastar, que es su trabajo; decidir es de quien lee.
-    for r in sorted(roles_u):
+    for r in sorted(roles_u & _ROLES_QUE_HAY_QUE_PONER):
         if f'role="{r}"' not in declarado and f"`{r}`" not in declarado:
             avisos.append(
                 f"el contrato de unidad busca `getByRole({r!r})` y la tarea no pide "
@@ -343,6 +372,24 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
                 f"`role=\"{r}\"`. Sin decirlo el Coder puede pintar el mensaje "
                 f"correcto en un elemento que el test no encuentra — le paso a "
                 f"MSG-01; VND-01 lo acerto solo")
+    # ⚠ F-131 · y el simetrico: los roles que NO hay que escribir, pero que hay
+    # que NO PISAR. El bucle de arriba pregunta «¿la tarea pide este rol?»; este
+    # pregunta «¿la tarea dice que este rol tiene que sobrevivir?», y son cosas
+    # distintas. El guardia de ayer solo sabia hacer la primera, y por eso
+    # descartaba `listitem` —«lo da el elemento»— justo en la corrida donde el
+    # Coder se lo cargo. Cuarta vez que este guardia es una muesca mas estrecho
+    # que el contrato (F-127, F-130, F-131): cada version cubre las formas de
+    # aserto que habia delante, no las que hay.
+    for r in sorted(roles_u & _ROLES_ESTRUCTURALES):
+        if f'role="{r}"' not in declarado and f"`{r}`" not in declarado:
+            avisos.append(
+                f"el contrato de unidad consulta el rol `{r}`, que el elemento da "
+                f"GRATIS, y la tarea no dice en ningun sitio que haya que "
+                f"CONSERVARLO. Un `role=` explicito no se suma al implicito: lo "
+                f"SUSTITUYE, y en cuanto el Coder hace pulsable ese contenedor con "
+                f"un `role` encima, el rol `{r}` desaparece con la pantalla pintada "
+                f"correctamente (F-131). El patron es un boton DENTRO, no un `role` "
+                f"encima. Declaralo antes de pagar la corrida")
     # ⚠ F-130 · los buscados por REGEX van a AVISO y no a error, y otra vez es una
     # medida y no una preferencia. Al encenderlo salieron siete nombres nuevos en
     # tareas MEDIDAS: `'22316-E'` en VND-01 y `'afina'`, `'te avisaremos'` y

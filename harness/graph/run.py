@@ -91,7 +91,8 @@ def build_graph(coder=coder_node, test_runner=test_runner_node):
 
 
 def record_metrics(state: HarnessState, task: dict, metrics_dir: pathlib.Path,
-                   csv_path: pathlib.Path = CSV, write_csv: bool = True) -> list:
+                   csv_path: pathlib.Path = CSV, write_csv: bool = True,
+                   corrida: str = None) -> list:
     """Un JSON y una fila de CSV **por intento** (`CLAUDE.md` §6). La fila se
     deriva del JSON: F-010, para que la copia a mano no pueda divergir."""
     escalado = state.get("verdict") == "escalado"
@@ -99,6 +100,7 @@ def record_metrics(state: HarnessState, task: dict, metrics_dir: pathlib.Path,
     for i, rec in enumerate(state.get("metrics") or [], 1):
         # Solo el ultimo intento puede ser el que escalo.
         rec["escalated_to_human"] = escalado and i == len(state["metrics"])
+        rec["corrida"] = corrida or "-"      # F-129, y al JSON antes que al CSV
         metrics.write_record(metrics_dir, rec)
         resultado = metrics.resultado_from_checks(
             rec.get("checks") or [], rec["escalated_to_human"])
@@ -374,8 +376,9 @@ class Volcado:
     decidirlo— y perderlas es exactamente el fallo que se esta arreglando."""
 
     def __init__(self, metrics_dir: pathlib.Path, task: dict,
-                 csv_path: pathlib.Path = CSV):
+                 csv_path: pathlib.Path = CSV, corrida: str = None):
         self.metrics_dir, self.task, self.csv_path = metrics_dir, task, csv_path
+        self.corrida = corrida or "-"
         self._en_disco = set()
 
     @staticmethod
@@ -386,6 +389,7 @@ class Volcado:
         for rec in self.completos(state):
             if rec["attempt"] in self._en_disco:
                 continue
+            rec["corrida"] = self.corrida          # F-129
             ruta = metrics.write_record(self.metrics_dir, rec)
             self._en_disco.add(rec["attempt"])
             print(f"  · intento {rec['attempt']} ya en disco: "
@@ -397,6 +401,7 @@ class Volcado:
 
         for rec in completos:
             rec["escalated_to_human"] = False
+            rec["corrida"] = self.corrida
             resultado = metrics.resultado_from_checks(rec["checks"], False)
             # La marca va en la columna de texto libre y no en una columna nueva:
             # nadie que agregue el CSV puede confundir estas filas con una
@@ -477,7 +482,7 @@ def main(argv=None) -> int:
 
     tomar_cerrojo()             # F-121, y antes de la primera llamada pagada
 
-    volcado = Volcado(metrics_dir, task)
+    volcado = Volcado(metrics_dir, task, corrida=args.corrida)
     final = {"task": task, "attempt": 0, "metrics": []}
 
     def al_vencer(paso, esperado):
@@ -513,7 +518,8 @@ def main(argv=None) -> int:
         # puede quedarse puesto bloqueando a la siguiente.
         soltar_cerrojo()
 
-    for fila in record_metrics(final, task, metrics_dir):
+    for fila in record_metrics(final, task, metrics_dir,
+                               corrida=args.corrida):
         print("  CSV: " + fila)
 
     _avisar_de_los_artefactos(metrics_dir, final.get("attempt") or 0, previos,

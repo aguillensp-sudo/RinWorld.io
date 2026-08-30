@@ -27,11 +27,25 @@ from . import pricing
 # Orden congelado. `resultado` va **ultima** a proposito: es la unica columna de
 # texto libre y una columna libre en medio del fichero es una trampa para el
 # siguiente que lo parsee. Las dos nuevas (F-011 y Plan §11) entran antes de ella.
+#
+# ⚠ Y `corrida`, que es la tercera y entra por la misma puerta (F-129, 30-ago,
+# decision del PO). Hasta hoy **a que medicion pertenecia una fila solo se sabia
+# reconstruyendo commits**, y eso es literalmente lo que costo descubrir F-121:
+# doce filas de dos corridas que se pisaron, mezcladas con las buenas y sin nada
+# que las distinguiera. `run.py` ya recibia `--corrida NOMBRE` y lo usaba para las
+# subcarpetas de los JSON — no llegaba aqui. Y `harness-review.csv`, el fichero de
+# al lado, tiene columna `corrida` desde el 9-ago: la solucion volvia a estar
+# escrita en el directorio de al lado sin generalizar, igual que las subcarpetas
+# en F-115.
+#
+# Las 85 filas historicas llevan `-`. No se reconstruyen: «el CSV historico no se
+# recalcula» (25-ago), y `-` dice lo unico cierto, que es que no se sabe.
 COLUMNS = [
     "fecha", "tarea", "pantalla", "modelo",
     "tokens_in", "tokens_out", "coste_usd",
     "intentos", "minutos", "ficheros",
-    "cache_hit_pct", "escalado_a_humano", "checks_inejecutables", "resultado",
+    "cache_hit_pct", "escalado_a_humano", "checks_inejecutables",
+    "corrida", "resultado",
 ]
 
 # F-033 · los tres estados de un check. `rojo` e `inejecutable` se registraban
@@ -124,6 +138,11 @@ def csv_row(rec: dict, resultado: str, fecha: str = None) -> list:
         # punto entero del hallazgo: el dato crudo estaba, lo que faltaba era poder
         # contarlo.
         ";".join(inexecutables(rec.get("checks") or [])) or "-",
+        # F-129 · sale del JSON como todo lo demas, no de un parametro suelto:
+        # F-010 dice que la fila se DERIVA del registro y que nada se vuelve a
+        # teclear, y una columna que llegara por otra via seria la unica que
+        # podria divergir del artefacto que la corrida dejo en disco.
+        rec.get("corrida") or "-",
         resultado,
     ]
 

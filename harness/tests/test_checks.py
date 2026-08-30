@@ -180,6 +180,18 @@ def test_metrics():
     check("los ficheros multiples van con ';'",
           fila[metrics.COLUMNS.index("ficheros")] == "a.tsx;b.tsx")
 
+    # F-129 · la corrida sale del JSON como todo lo demas (F-010: la fila se
+    # deriva del registro), y `-` cuando no se dijo cual. Hasta el 30-ago no
+    # existia esta columna y a que medicion pertenecia una fila solo se sabia
+    # reconstruyendo commits — que es lo que costo descubrir F-121.
+    check("sin --corrida la columna dice `-` y no se la inventa",
+          fila[metrics.COLUMNS.index("corrida")] == "-")
+    con = metrics.csv_row(dict(rec, corrida="remedicion-08"), "PASA")
+    check("⚠ y con ella, la que dijo la corrida",
+          con[metrics.COLUMNS.index("corrida")] == "remedicion-08")
+    check("y `resultado` sigue siendo la ultima: una columna libre en medio es "
+          "una trampa", metrics.COLUMNS[-1] == "resultado")
+
     # CLAUDE.md §6: ningun valor lleva coma. Una coma colada rompe tambien las
     # tres filas historicas, asi que se peta al escribir, no al leer.
     rec_malo = dict(rec, task="tarea, con coma")

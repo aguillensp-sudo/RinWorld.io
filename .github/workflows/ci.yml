@@ -119,3 +119,40 @@ jobs:
           name: playwright-report
           path: app/playwright-report/
           retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # El arnés, que llevaba fuera de aquí desde que existe.
+  #
+  # La CI corría esquema, app y Playwright, y `harness/tests/test_checks.py` no.
+  # Por eso `test_c2_paths` estuvo DIECISÉIS DÍAS en rojo fijo sin que saltara
+  # nada: la única forma de enterarse era que alguien lo lanzara a mano, y nadie
+  # lo lanza cuando no está tocando el arnés.
+  #
+  # Es el mismo patrón que persigue el arnés entero —un veredicto que nadie mira
+  # no es un veredicto—, cometido con el arnés mismo.
+  #
+  # ⚠ Corre en Linux y el arnés se desarrolla en Windows, y eso es una
+  # característica, no un problema: `resolve()` existe porque en Windows `npm` es
+  # `npm.CMD`, y `_pid_vivo()` tiene dos ramas porque `os.kill(pid, 0)` en
+  # Windows MATA el proceso. Las dos ramas se escribieron mirando solo una. Aquí
+  # se ejecuta la otra.
+  arnes:
+    name: Arnés · piezas puras (sin red, sin coste)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Sin `npm ci`: `test_toolchain` solo necesita que `npm` y `npx` existan y
+      # arranquen. Instalar las dependencias de la app aquí sería pagar dos
+      # minutos por una comprobación que no las mira.
+      - name: Dependencias del arnés
+        run: pip install -r harness/requirements.txt
+      - name: Piezas puras
+        # Ni red ni coste: no hay clave del modelo en este job A PROPÓSITO. Si
+        # alguna prueba empieza a necesitarla, es que ha dejado de ser pura.
+        run: python -m harness.tests.test_checks

@@ -19,6 +19,7 @@ import json
 import os
 import pathlib
 import sys
+import threading
 import time
 
 # -----------------------------------------------------------------------------
@@ -256,6 +257,193 @@ def soltar_cerrojo() -> None:
         pass
 
 
+# -----------------------------------------------------------------------------
+# ⚠ F-122 · EL PLAZO DE PARED, Y POR QUE TIENE QUE VIVIR AQUI DENTRO.
+#
+# Tres plazos se han intentado ya y los dos primeros no sirven:
+#
+#   1. `urlopen(timeout=300)` (F-119) acota cada OPERACION de socket, no la
+#      llamada entera. Un extremo que ni cierra ni envia deja la llamada colgada
+#      indefinidamente sin que el timeout llegue a dispararse nunca. El 29-ago
+#      `SRCH-01` estuvo NUEVE HORAS parada con este codigo puesto: 2,3 segundos
+#      de CPU en nueve horas, o sea bloqueada en E/S, no trabajando.
+#
+#   2. `timeout --signal=KILL 25m` por fuera, en el script de tanda. Dos defectos
+#      medidos la primera vez que hizo su trabajo: **disparo tarde** —25 min
+#      configurados, 34m45s reales, porque el `timeout` de coreutils bajo Git
+#      Bash no entrega la señal a un proceso nativo de Windows hasta que este
+#      sale de una llamada bloqueante—, y **matar con KILL se llevo por delante
+#      los intentos ya medidos**, porque `record_metrics()` corria al final del
+#      grafo. `SRCH-01` perdio los intentos 1 y 2, completos y PAGADOS, por morir
+#      en el 3. Cambio un cuelgue por una perdida total de datos.
+#
+#   3. Este. Un hilo de este mismo proceso. **Y funciona justamente porque el
+#      cuelgue es de E/S:** Python suelta el GIL mientras espera en el socket,
+#      asi que el hilo del reloj corre aunque el principal lleve nueve horas
+#      parado. No hay señal que entregar ni proceso ajeno al que llegar.
+#
+# El plazo va POR PASO del grafo —una llamada al modelo, o una tanda de checks—
+# y no por corrida entera: lo que se persigue es un paso que no vuelve, y un
+# presupuesto total castigaria a una corrida lenta pero viva. La llamada mas
+# larga medida son **781 s** (`SRCH-01`, remedicion 04, intento 1), asi que 1200
+# deja un 54 % de margen sobre lo peor visto.
+#
+# Al vencer no se lanza una excepcion: no hay a quien lanzarsela. El hilo
+# principal esta bloqueado en el socket y no la recogeria. Se vuelca lo medido,
+# se suelta el cerrojo —F-124: un `finally` no corre con `os._exit`, igual que no
+# corre con SIGKILL, asi que se suelta A MANO aqui— y se sale.
+# -----------------------------------------------------------------------------
+PLAZO_POR_PASO = 1200
+
+#: Salida del proceso cuando el reloj de pared corta la corrida. Ni 0 (verde),
+#: ni 2 (escalado), ni 3 (cerrojo): quien lea el codigo tiene que poder
+#: distinguir "el Coder no lo consiguio" de "el arnes se colgo y lo cortamos".
+SALIDA_POR_PLAZO = 4
+
+
+def _corto(p: pathlib.Path) -> str:
+    """La ruta relativa al repo si esta dentro, y la entera si no. Las pruebas
+    vuelcan en un temporal, y que un `print` de progreso pete por eso seria el
+    arnes rompiendose por decir donde escribio."""
+    try:
+        return str(p.relative_to(ROOT))
+    except ValueError:
+        return str(p)
+
+
+class RelojDePared:
+    """El plazo de un paso del grafo, contado en un hilo aparte de este proceso.
+
+    `arrancar()` es idempotente y REARMA: cada paso empieza con el contador a
+    cero. `parar()` al terminar, para que el hilo no sobreviva a la corrida."""
+
+    def __init__(self, segundos: int, al_vencer):
+        self.segundos = segundos
+        self.al_vencer = al_vencer
+        self._timer = None
+        self._paso = "(sin arrancar)"
+        self._desde = time.time()
+        self._venciendo = threading.Lock()
+
+    def arrancar(self, paso: str) -> None:
+        if not self.segundos:
+            return
+        self.parar()
+        self._paso, self._desde = paso, time.time()
+        self._timer = threading.Timer(self.segundos, self._vencer)
+        self._timer.daemon = True
+        self._timer.start()
+
+    def parar(self) -> None:
+        if self._timer is not None:
+            self._timer.cancel()
+            self._timer = None
+
+    def _vencer(self) -> None:
+        # Sin `return` posible: quien entra aqui no sale del proceso.
+        self._venciendo.acquire()
+        esperado = time.time() - self._desde
+        print(f"\n⚠ PLAZO DE PARED VENCIDO (F-122): «{self._paso}» lleva "
+              f"{esperado / 60:.1f} min y el plazo son {self.segundos / 60:.1f}. "
+              f"Corto la corrida.", file=sys.stderr)
+        try:
+            self.al_vencer(self._paso, esperado)
+        except BaseException as e:                       # noqa: BLE001
+            # Que el volcado reviente no puede impedir que el proceso muera: si
+            # no sale, el cuelgue sigue ahi y esto no ha arreglado nada.
+            print(f"  ⚠ y el volcado de lo medido fallo: {e!r}", file=sys.stderr)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(SALIDA_POR_PLAZO)
+
+
+class Volcado:
+    """Escribe el JSON de cada intento EN CUANTO termina, no al final del grafo.
+
+    Esta es la segunda mitad de F-122 y es la que de verdad dolio: un intento
+    completo y pagado que muere sin dejar rastro porque `record_metrics()`
+    corria despues de `app.invoke()`. Un intento esta terminado cuando el
+    Test-runner le ha metido sus `checks` — antes de eso el registro existe pero
+    aun no dice nada de si paso.
+
+    El CSV NO se escribe al vuelo en el camino feliz: `escalado_a_humano` solo se
+    sabe al acabar, y una fila del CSV no se reescribe («el CSV historico no se
+    recalcula», 25-ago). El JSON si, porque es la evidencia y se puede corregir
+    en sitio. Si la corrida muere por plazo, entonces si se escriben las filas de
+    los intentos completos: ninguno de ellos escalo —la corrida ni llego a
+    decidirlo— y perderlas es exactamente el fallo que se esta arreglando."""
+
+    def __init__(self, metrics_dir: pathlib.Path, task: dict,
+                 csv_path: pathlib.Path = CSV):
+        self.metrics_dir, self.task, self.csv_path = metrics_dir, task, csv_path
+        self._en_disco = set()
+
+    @staticmethod
+    def completos(state: dict) -> list:
+        return [r for r in (state.get("metrics") or []) if r.get("checks")]
+
+    def al_vuelo(self, state: dict) -> None:
+        for rec in self.completos(state):
+            if rec["attempt"] in self._en_disco:
+                continue
+            ruta = metrics.write_record(self.metrics_dir, rec)
+            self._en_disco.add(rec["attempt"])
+            print(f"  · intento {rec['attempt']} ya en disco: "
+                  f"{_corto(ruta)} (F-122)")
+
+    def cerrar_por_plazo(self, state: dict, paso: str, esperado: float) -> None:
+        completos = self.completos(state)
+        self.al_vuelo(state)
+
+        for rec in completos:
+            rec["escalated_to_human"] = False
+            resultado = metrics.resultado_from_checks(rec["checks"], False)
+            # La marca va en la columna de texto libre y no en una columna nueva:
+            # nadie que agregue el CSV puede confundir estas filas con una
+            # medicion terminada, y las historicas no se tocan.
+            fila = metrics.append_csv(
+                self.csv_path, rec,
+                resultado + " · CORRIDA CORTADA POR PLAZO DE PARED (F-122)")
+            print("  CSV: " + fila)
+
+        # ⚠ El intento en vuelo NO lleva fila. Se pago y no se midio, y sus
+        # columnas de tokens y coste no se pueden rellenar sin inventarlas — que
+        # es literalmente F-010, el hallazgo donde el fichero de maquina mintio
+        # con un `cost_usd: 0.0`. Se deja dicho aparte, con su motivo.
+        aviso = self.metrics_dir / "ABORTADA-POR-PLAZO.txt"
+        en_vuelo = len(state.get("metrics") or []) - len(completos)
+        try:
+            self.metrics_dir.mkdir(parents=True, exist_ok=True)
+            aviso.write_text(
+                f"Corrida cortada por el plazo de pared (F-122).\n\n"
+                f"  tarea         {self.task['task_id']}\n"
+                f"  cuando        {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"  paso colgado  {paso}\n"
+                f"  llevaba       {esperado / 60:.1f} min\n"
+                f"  intentos completos volcados   {len(completos)}\n"
+                f"  intentos pagados SIN MEDIR    {en_vuelo}\n\n"
+                f"Los completos tienen su JSON y su fila de CSV, marcada.\n"
+                f"El que estaba en vuelo no lleva fila a proposito: se pago y no\n"
+                f"se supo cuanto, y rellenar sus columnas con ceros seria mentir\n"
+                f"en el fichero de maquina (F-010).\n", encoding="utf-8")
+            print(f"  · motivo escrito en {_corto(aviso)}")
+        except OSError as e:
+            print(f"  ⚠ no se pudo escribir {aviso}: {e!r}", file=sys.stderr)
+
+        print(f"\nCORRIDA CORTADA POR PLAZO: {len(completos)} intento(s) "
+              f"salvados, {en_vuelo} pagado(s) sin medir.", file=sys.stderr)
+
+
+def _proximo_paso(state: dict) -> str:
+    """Que va a hacer el grafo a continuacion, para que el reloj lo diga al
+    vencer. Se deduce del estado: un registro sin `checks` es un intento cuyo
+    Coder ya volvio y al que le faltan los checks."""
+    registros = state.get("metrics") or []
+    if registros and not registros[-1].get("checks"):
+        return f"intento {registros[-1]['attempt']} · checks del Test-runner"
+    return f"intento {len(registros) + 1} · llamada al modelo"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("task", help="ruta al JSON de la tarea")
@@ -265,6 +453,10 @@ def main(argv=None) -> int:
                     help="subcarpeta bajo harness/metrics/<tarea>/ para los JSON "
                          "de esta corrida. Sin esto se escriben planos y una "
                          "corrida pisa a la anterior (F-115)")
+    ap.add_argument("--plazo", type=int, default=PLAZO_POR_PASO, metavar="SEGUNDOS",
+                    help=f"plazo de pared por paso del grafo (F-122). Por defecto "
+                         f"{PLAZO_POR_PASO}s; la llamada mas larga medida son 781s. "
+                         f"0 lo desactiva, y entonces un cuelgue no tiene limite")
     args = ap.parse_args(argv)
 
     pricing.check_prices_or_exit()  # F-010, antes de nada
@@ -275,22 +467,51 @@ def main(argv=None) -> int:
         return run_dry(task)
 
     check_toolchain_or_exit()  # dia 5: y esto tambien, antes de gastar
-    tomar_cerrojo()             # F-121, y antes de la primera llamada pagada
 
-    try:
-        app = build_graph()
-        final = app.invoke({"task": task, "attempt": 0, "metrics": []},
-                           {"recursion_limit": MAX_ATTEMPTS * 4})
-    finally:
-        # En `finally` a proposito: si la corrida revienta —y F-119 es justo eso,
-        # un `ConnectionResetError` que se llevo una tarea entera— el cerrojo no
-        # puede quedarse puesto bloqueando a la siguiente.
-        soltar_cerrojo()
-
+    # El directorio se decide ANTES de arrancar el grafo y no despues: el reloj
+    # de pared tiene que saber donde volcar sin que nadie se lo pase (F-122).
     metrics_dir = ROOT / "harness" / "metrics" / task["task_id"]
     if args.corrida:
         metrics_dir = metrics_dir / args.corrida
     previos = sorted(metrics_dir.glob("attempt_*.json")) if metrics_dir.is_dir() else []
+
+    tomar_cerrojo()             # F-121, y antes de la primera llamada pagada
+
+    volcado = Volcado(metrics_dir, task)
+    final = {"task": task, "attempt": 0, "metrics": []}
+
+    def al_vencer(paso, esperado):
+        # ⚠ El orden importa: primero se suelta el cerrojo. Si el volcado se
+        # atasca —el CSV en un disco que no responde es el mismo tipo de cuelgue
+        # que nos ha traido aqui—, al menos la corrida siguiente puede arrancar.
+        soltar_cerrojo()
+        volcado.cerrar_por_plazo(final, paso, esperado)
+
+    reloj = RelojDePared(args.plazo, al_vencer)
+    if args.plazo:
+        print(f"Plazo de pared: {args.plazo}s por paso del grafo (F-122).")
+    else:
+        print("⚠ SIN plazo de pared (--plazo 0): un cuelgue no tiene limite (F-122).")
+
+    try:
+        app = build_graph()
+        reloj.arrancar(_proximo_paso(final))
+        # `stream` y no `invoke` **por una sola razon**: `invoke` no devuelve nada
+        # hasta el final, asi que no hay ningun momento en el que volcar un
+        # intento terminado ni en el que rearmar el reloj. Con `values` el grafo
+        # emite el estado entero tras cada paso y las dos cosas caben.
+        for estado in app.stream({"task": task, "attempt": 0, "metrics": []},
+                                 {"recursion_limit": MAX_ATTEMPTS * 4},
+                                 stream_mode="values"):
+            final = estado
+            volcado.al_vuelo(final)
+            reloj.arrancar(_proximo_paso(final))
+    finally:
+        reloj.parar()
+        # En `finally` a proposito: si la corrida revienta —y F-119 es justo eso,
+        # un `ConnectionResetError` que se llevo una tarea entera— el cerrojo no
+        # puede quedarse puesto bloqueando a la siguiente.
+        soltar_cerrojo()
 
     for fila in record_metrics(final, task, metrics_dir):
         print("  CSV: " + fila)

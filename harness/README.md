@@ -50,6 +50,27 @@ Y las piezas puras, que no tocan ni red ni npm:
 python -m harness.tests.test_checks
 ```
 
+### El plazo de pared (`--plazo`)
+
+Cada **paso** del grafo —una llamada al modelo, o una tanda de checks— corre bajo un plazo
+de **1200 s** contado por un hilo de este mismo proceso. Al vencer, el arnés vuelca lo que
+ya tenía medido, suelta el cerrojo y sale con **código 4**, que no es ninguno de los otros:
+0 verde, 2 escalado, 3 cerrojo ocupado.
+
+```bash
+python -m harness.graph.run harness/tasks/MSG-01.json --plazo 900
+python -m harness.graph.run harness/tasks/MSG-01.json --plazo 0   # sin límite
+```
+
+Los 1200 s no son redondos: la llamada más larga medida son **781 s** (`SRCH-01`,
+remedición 04, intento 1), así que dejan un 54 % de margen sobre lo peor visto. Si se sube
+una tarea que legítimamente tarde más, hay que subir esto — un plazo que corta una corrida
+sana es peor que no tenerlo.
+
+⚠ **`--plazo 0` deja un cuelgue sin límite.** El 29-ago `SRCH-01` estuvo nueve horas parada
+en la primera llamada, con `urlopen(timeout=300)` puesto y sin que saltara: un timeout de
+socket acota cada operación de socket, no la llamada entera (`F-119`, `F-122`).
+
 ## Lo que hay que saber antes de tocar nada
 
 **El ciclo.** `coder → test_runner → ¿verde?`. Verde sale; rojo vuelve al Coder con el

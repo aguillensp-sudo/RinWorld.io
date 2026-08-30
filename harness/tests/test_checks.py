@@ -18,6 +18,7 @@ import os
 import pathlib
 import re
 import sys
+import time
 import urllib.error
 
 from ..core import llm, metrics, parse, pricing
@@ -772,10 +773,21 @@ def test_dos_corridas_no_caben_a_la_vez():
     check("y al soltarlo la siguiente puede", not runner.CERROJO.exists())
 
     # Que se suelte aunque la corrida reviente: `soltar_cerrojo` va en `finally`.
+    #
+    # ⚠ Y por los DOS caminos que no son el feliz, no solo por uno. Desde F-122
+    # hay dos formas de que esta corrida acabe sin llegar al final del grafo —una
+    # excepcion, que si pasa por el `finally`, y el plazo de pared, que sale con
+    # `os._exit` y NO pasa por el— y las dos tienen que soltar el cerrojo. Es
+    # literalmente el fallo de F-124: dos arreglos correctos por separado que
+    # juntos dejaban el cerrojo puesto para siempre.
     fuente = pathlib.Path(runner.__file__).read_text(encoding="utf-8")
     cuerpo = fuente.split("tomar_cerrojo()             #")[1]
+    tras_finally = cuerpo.split("finally:")[1] if "finally:" in cuerpo else ""
     check("⚠ se suelta en un `finally`, no en el camino feliz",
-          "finally:" in cuerpo.split("soltar_cerrojo()")[0])
+          "soltar_cerrojo()" in tras_finally.split("for fila in record_metrics")[0])
+    check("⚠ y tambien al vencer el plazo, que no pasa por el `finally` (F-122)",
+          "soltar_cerrojo()" in
+          cuerpo.split("def al_vencer")[1].split("reloj = RelojDePared")[0])
 
     check("y el cerrojo esta en .gitignore: es estado de corrida, no del repo",
           "harness/.corrida-en-curso" in
@@ -799,6 +811,158 @@ def test_dos_corridas_no_caben_a_la_vez():
               "bloqueo con un dueño muerto")
     finally:
         runner.soltar_cerrojo()
+
+
+def test_el_plazo_de_pared_no_tira_lo_pagado():
+    """F-122 · el plazo vive DENTRO del proceso y lo medido sobrevive al corte.
+
+    Dos plazos anteriores no valieron. El `urlopen(timeout=300)` de F-119 acota
+    cada operacion de socket y no la llamada entera: el 29-ago `SRCH-01` estuvo
+    **nueve horas** parada con ese codigo puesto —2,3 s de CPU en nueve horas— y
+    el timeout no se disparo nunca. El `timeout --signal=KILL 25m` de fuera si
+    corto, pero **tarde** —34m45s reales— y **se llevo por delante los intentos
+    1 y 2, completos y pagados**, porque `record_metrics()` corria al final del
+    grafo.
+
+    Las dos mitades que se comprueban aqui son exactamente esas dos:
+
+      1. **Que el reloj corra aunque el hilo principal este bloqueado.** Es lo
+         unico que hacia falta y lo que ninguno de los dos anteriores daba: como
+         el cuelgue es de E/S, Python suelta el GIL y el hilo del reloj sigue
+         contando. Se comprueba en un subproceso de verdad —el reloj sale con
+         `os._exit`, asi que no se puede probar dentro de este— con el principal
+         durmiendo 30 s y un plazo de 0,3.
+      2. **Que un intento terminado este en disco antes de que la corrida acabe.**
+         Sin esto el plazo solo cambia un cuelgue por una perdida total de datos,
+         que es mejor pero no es lo correcto."""
+    print("\nF-122 · el plazo de pared, y que lo pagado no se tire")
+
+    import subprocess
+    import tempfile
+
+    from ..graph import run as runner
+
+    # -- 1. el reloj vence con el hilo principal bloqueado, y sale con su codigo
+    guion = (
+        "import sys, time\n"
+        f"sys.path.insert(0, {str(ROOT)!r})\n"
+        "from harness.graph.run import RelojDePared\n"
+        "def al_vencer(paso, esperado):\n"
+        "    print('VOLCADO:' + paso)\n"
+        "r = RelojDePared(0.3, al_vencer)\n"
+        "r.arrancar('intento 1 · llamada al modelo')\n"
+        "time.sleep(30)\n"                 # el cuelgue: bloqueado, no trabajando
+        "print('NO DEBERIA LLEGAR AQUI')\n"
+    )
+    t0 = time.time()
+    p = subprocess.run([sys.executable, "-c", guion], capture_output=True,
+                       text=True, timeout=60)
+    tardo = time.time() - t0
+    check("⚠ el reloj vence con el hilo principal bloqueado en un `sleep`",
+          tardo < 20, f"tardo {tardo:.1f}s de los 30 del sleep")
+    check("y mata el proceso con su propio codigo de salida",
+          p.returncode == runner.SALIDA_POR_PLAZO,
+          f"salio {p.returncode}, esperaba {runner.SALIDA_POR_PLAZO}")
+    check("volcando antes de morir, y diciendo que paso se colgo",
+          "VOLCADO:intento 1" in p.stdout, p.stdout.strip()[-120:])
+    check("y no sigue por el camino feliz",
+          "NO DEBERIA LLEGAR AQUI" not in p.stdout)
+
+    # -- 2. lo pagado esta en disco antes de que la corrida termine
+    def registro(n, con_checks):
+        r = metrics.build_record(
+            task_id="T-01", screen="T-01", model="m", attempt=n,
+            acc={"tokens_in": 100, "tokens_out": 50, "cache_hit": 0,
+                 "cache_miss": 100, "calls": 1},
+            seconds=60.0, finish_reason="stop", truncated_at=[], files=["a.tsx"])
+        if con_checks:
+            r["checks"] = [{"id": "C1", "ok": False, "detail": "x"},
+                           {"id": "C2", "ok": True, "detail": ""}]
+        return r
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        csv_tmp = tmp / "m.csv"
+        csv_tmp.write_text(",".join(metrics.COLUMNS) + "\n", encoding="utf-8")
+        volcado = runner.Volcado(tmp / "T-01", {"task_id": "T-01"}, csv_tmp)
+
+        # El Coder del intento 1 ya volvio y el Test-runner aun no: pagado, sin medir.
+        estado = {"metrics": [registro(1, con_checks=False)]}
+        volcado.al_vuelo(estado)
+        check("un intento a medias NO se da por terminado",
+              not (tmp / "T-01" / "attempt_1.json").exists())
+
+        # Y en cuanto el Test-runner le mete los checks, a disco. Sin esperar al grafo.
+        estado = {"metrics": [registro(1, con_checks=True)]}
+        volcado.al_vuelo(estado)
+        check("⚠ en cuanto termina, a disco — sin esperar al final del grafo",
+              (tmp / "T-01" / "attempt_1.json").exists())
+
+        # El corte: el 1 terminado, el 2 pagado y en vuelo. Es el caso de SRCH-01.
+        estado = {"metrics": [registro(1, True), registro(2, con_checks=False)]}
+        volcado.cerrar_por_plazo(estado, "intento 2 · llamada al modelo", 1234.0)
+        filas = csv_tmp.read_text(encoding="utf-8").splitlines()[1:]
+        check("⚠ el intento completo conserva su fila de CSV al cortar",
+              len(filas) == 1, f"{len(filas)} filas")
+        check("y la fila dice que la corrida se corto, para no leerse como medida",
+              filas and "CORTADA POR PLAZO DE PARED" in filas[0])
+        check("y NO se marca como escalada: la corrida no llego a decidirlo",
+              filas and ",si," not in filas[0])
+        # F-010 · el fichero de maquina que miente es peor que el que falta.
+        check("⚠ el intento en vuelo no lleva fila: se pago y no se supo cuanto",
+              all("2" != f.split(",")[metrics.COLUMNS.index("intentos")]
+                  for f in filas))
+        aviso = (tmp / "T-01" / "ABORTADA-POR-PLAZO.txt")
+        check("pero queda dicho aparte, con el paso y el motivo",
+              aviso.exists() and "intento 2 · llamada al modelo" in
+              aviso.read_text(encoding="utf-8"))
+
+    # -- 3. y el grafo se recorre de forma que exista un momento donde volcar.
+    #
+    # Se mira el codigo de `main` y no el fichero entero a proposito: el fichero
+    # nombra `app.invoke()` en la prosa que explica por que ya no se usa, y un
+    # guardia que confunda un comentario con una llamada es un guardia que canta
+    # cuando se documenta el arreglo.
+    import inspect
+    cuerpo_main = inspect.getsource(runner.main)
+    check("⚠ el grafo se recorre con `stream`: `invoke` no devuelve hasta el final",
+          "app.stream(" in cuerpo_main and "app.invoke(" not in cuerpo_main)
+    check("y el reloj se rearma en cada paso, no solo al empezar",
+          cuerpo_main.count("reloj.arrancar(") >= 2)
+
+    # -- 4. y el mecanismo entero sobre un grafo de verdad, con nodos falsos.
+    #
+    # Las tres partes de arriba prueban las piezas por separado, y eso es
+    # exactamente como se colaron F-121 y F-124: dos arreglos correctos que
+    # juntos hacian un tercer fallo. Aqui se recorre el grafo entero y se
+    # comprueba lo unico que importa de verdad — **que el intento 1 esta en disco
+    # mientras el 2 todavia se esta pagando**—, que es el dato que `SRCH-01`
+    # perdio el 29-ago por morir en el 3.
+    from ..graph.state import MAX_ATTEMPTS
+    from .dry_run import TAREA, coder_falso, test_runner_seco
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        app = runner.build_graph(coder=coder_falso([False, False, True]),
+                                 test_runner=test_runner_seco)
+        volcado = runner.Volcado(tmp, TAREA, None)
+        salvado_a_tiempo, pasos = None, 0
+        for estado in app.stream({"task": TAREA, "attempt": 0, "metrics": []},
+                                 {"recursion_limit": MAX_ATTEMPTS * 4},
+                                 stream_mode="values"):
+            pasos += 1
+            volcado.al_vuelo(estado)
+            if estado.get("attempt") == 2 and salvado_a_tiempo is None:
+                salvado_a_tiempo = (tmp / "attempt_1.json").exists()
+
+        check("`stream` emite paso a paso y no de una sola vez", pasos > 3, pasos)
+        check("⚠ el intento 1 esta en disco mientras el 2 se esta pagando",
+              salvado_a_tiempo is True, repr(salvado_a_tiempo))
+        check("y al acabar estan los tres, sin que nadie llame a record_metrics",
+              all((tmp / f"attempt_{n}.json").exists() for n in (1, 2, 3)))
+        check("con su veredicto dentro, no solo el numero",
+              json.loads((tmp / "attempt_1.json").read_text(encoding="utf-8"))
+              ["checks"])
 
 
 def test_el_guardia_cruza_tarea_y_contrato():
@@ -893,6 +1057,7 @@ def main() -> int:
     test_important_no_es_un_import()
     test_transporte_no_gasta_intento()
     test_dos_corridas_no_caben_a_la_vez()
+    test_el_plazo_de_pared_no_tira_lo_pagado()
     test_el_guardia_cruza_tarea_y_contrato()
     print()
     if fallos:

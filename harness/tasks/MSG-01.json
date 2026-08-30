@@ -37,8 +37,12 @@
       "app/e2e/messages.spec.ts"
     ],
     "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea (Plan §6). El Coder no los ve: si los ve, escribe para el test. El e2e va contra el Supabase real porque los tests de unidad mockean la capa de datos y no pueden cazar una lectura mal filtrada por org (ESTADO.md, aviso de RLS de INV-01).",
-    "_nota_e2e_fuera_de_contrato": "F-134. C2 sigue corriendo la suite e2e ENTERA (D-09-03 a, y su motivo -F-070- sigue en pie): lo unico que cambia es a quien se le apunta cada fallo. Los seis de aqui son del bloque `MSG-02 · un hilo real` y ninguno es de MSG-01. NO se excusa el bloque ni el fichero: se excusa test por test, con su motivo, y una exclusion que deje de hacer falta se canta sola en la salida de C2. ⚠ Los `test` van en ASCII a proposito -sin acentos, aunque el titulo real los lleve-: se casan por subcadena contra la salida de playwright, y un acento mal decodificado convertiria una exclusion en una caducada silenciosa. ⚠ Y los DOS del bloque que hoy PASAN no se excusan, porque hoy no fallan: pasan sin que MSG-02 se abra (F-135), que es un problema distinto y de su propio contrato. El dia que se arreglen, empezaran a fallar aqui y habra que decidirlos uno a uno.",
+    "_nota_e2e_fuera_de_contrato": "F-134. C2 sigue corriendo la suite e2e ENTERA (D-09-03 a, y su motivo -F-070- sigue en pie): lo unico que cambia es a quien se le apunta cada fallo. Los OCHO de aqui son el bloque `MSG-02 · un hilo real` al completo y ninguno es de MSG-01. NO se excusa el bloque ni el fichero: se excusa test por test, con su motivo, y una exclusion que deje de hacer falta se canta sola en la salida de C2. ⚠ Los `test` van en ASCII a proposito -sin acentos, aunque el titulo real los lleve-: se casan por subcadena contra la salida de playwright, y un acento mal decodificado convertiria una exclusion en una caducada silenciosa. ⚠ Fueron SEIS hasta el 30-ago por la tarde: los otros dos PASABAN sin que MSG-02 llegara a abrirse (F-135), cumpliendo sus asertos contra la lista de MSG-01 que se queda debajo. Arreglado eso, fallan como los demas y entran aqui. Que la lista pasara de 6 a 8 al arreglar un test es la prueba de que los dos no median nada.",
     "e2e_fuera_de_contrato": [
+      {
+        "test": "la cabecera resuelve la contraparte",
+        "motivo": "cuelga de `abrirHilo()`, que abre MSG-02 pulsando una fila de ESTA lista. Esta tarea le ORDENA al Coder no cablear ese clic -`onOpenThread` \"la recibes y la IGNORAS\", congelado por F-118 cuando App.tsx aun no la pasaba-, asi que el hilo no se abre y el test no puede pasar HAGA LO QUE HAGA EL CODER. ⚠ Este NO estaba en la lista del 30-ago por la manana, y no porque no lo mereciera: es que PASABA sin que MSG-02 se abriera -el boton de la fila tambien se llama como la contraparte-. Arreglado F-135, el ancla `thread-body` de `abrirHilo()` lo pone a fallar como los demas, que es lo correcto."
+      },
       {
         "test": "NO se escapa un byte cifrado al DOM",
         "motivo": "cuelga de `abrirHilo()` (messages.spec.ts:151-155), que abre MSG-02 pulsando una fila de ESTA lista. Esta tarea le ORDENA al Coder no cablear ese clic -`onOpenThread` \"la recibes y la IGNORAS\", congelado por F-118 cuando App.tsx aun no la pasaba-, asi que el hilo no se abre y el test no puede pasar HAGA LO QUE HAGA EL CODER. Ademas mira el historial descifrado de MSG-02, que esta tarea no escribe."
@@ -62,6 +66,10 @@
       {
         "test": "el hilo cerrado SE REABRE",
         "motivo": "cuelga de `abrirHilo()` (messages.spec.ts:151-155), que abre MSG-02 pulsando una fila de ESTA lista. Esta tarea le ORDENA al Coder no cablear ese clic -`onOpenThread` \"la recibes y la IGNORAS\", congelado por F-118 cuando App.tsx aun no la pasaba-, asi que el hilo no se abre y el test no puede pasar HAGA LO QUE HAGA EL CODER. Escribe y relee dentro de MSG-02 (D-08-02)."
+      },
+      {
+        "test": "el breadcrumb vuelve a la lista",
+        "motivo": "cuelga de `abrirHilo()`, que abre MSG-02 pulsando una fila de ESTA lista. Esta tarea le ORDENA al Coder no cablear ese clic -`onOpenThread` \"la recibes y la IGNORAS\", congelado por F-118 cuando App.tsx aun no la pasaba-, asi que el hilo no se abre y el test no puede pasar HAGA LO QUE HAGA EL CODER. ⚠ El otro que PASABA sin abrir nada (F-135): en la lista ya se ve el encabezado `Hilos`, asi que su aserto se cumplia sin haberse movido de sitio. Y ademas pulsaba el `Hilos` de la barra superior y no el del breadcrumb. Con las dos mitades arregladas, falla aqui."
       }
     ]
   },

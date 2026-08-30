@@ -1127,8 +1127,8 @@ def test_c2_reparte_las_culpas_del_e2e():
     msg01 = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json")
                        .read_text(encoding="utf-8"))
     excusas = _excusas_de_la_tarea(msg01)
-    check("MSG-01 declara sus exclusiones y todas llevan motivo",
-          len(excusas) == 6 and all(d.get("motivo") for d in excusas),
+    check("MSG-01 declara sus ocho exclusiones y todas llevan motivo",
+          len(excusas) == 8 and all(d.get("motivo") for d in excusas),
           str(len(excusas)))
 
     # ⚠ Contra la salida REAL de la corrida 09a, no contra una inventada. Es el
@@ -1140,9 +1140,19 @@ def test_c2_reparte_las_culpas_del_e2e():
               json.loads(real.read_text(encoding="utf-8"))["checks"]
               if c["id"] == "C2"][0]
     imp, exs, muertas, se_pudo = _repartir_culpas(salida, excusas)
-    check("⚠ sobre la corrida 09a: los 6 fallos son los 6 excusados, cero del Coder",
-          se_pudo and not imp and len(exs) == 6 and not muertas,
-          f"imputables={imp} muertas={muertas}")
+    check("⚠ sobre la corrida 09a: los 6 fallos son excusados, cero del Coder",
+          se_pudo and not imp and len(exs) == 6, f"imputables={imp}")
+
+    # ⚠ Y las DOS caducadas de aquí no son un descuido: son `F-135` visto desde
+    # el otro lado. La corrida 09a se midió ANTES de anclar `abrirHilo()`, así
+    # que en esa salida `la cabecera resuelve la contraparte` y `el breadcrumb
+    # vuelve a la lista` **pasaban sin que MSG-02 se abriera** y por eso no
+    # aparecen entre los fallos. Hoy la tarea los excusa —porque hoy fallan— y el
+    # guardia lo dice contra aquella salida vieja. Es exactamente el trabajo de
+    # la cerradura 4, hecho sobre datos reales y no sobre un caso inventado.
+    check("⚠ y canta 2 caducadas contra la salida VIEJA: es F-135 por el reverso",
+          sorted(muertas) == ["el breadcrumb vuelve a la lista",
+                              "la cabecera resuelve la contraparte"], str(muertas))
 
     # Cerradura 1 · lo excusado se escribe SIEMPRE, con nombre y motivo.
     parte = _parte_de_excusas(exs, muertas)
@@ -1171,7 +1181,8 @@ def test_c2_reparte_las_culpas_del_e2e():
     inventada = excusas + [{"test": "un test que hoy ya no falla", "motivo": "x"}]
     _i4, _e4, muertas4, _ok4 = _repartir_culpas(salida, inventada)
     check("⚠ y una exclusión CADUCADA se canta, no se duerme",
-          muertas4 == ["un test que hoy ya no falla"], str(muertas4))
+          "un test que hoy ya no falla" in muertas4
+          and len(muertas4) == len(muertas) + 1, str(muertas4))
     check("y sale en el parte con su aviso",
           "CADUCADAS" in _parte_de_excusas([], muertas4))
 

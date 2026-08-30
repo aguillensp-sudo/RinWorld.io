@@ -46,13 +46,22 @@ export function ThreadHeader({
 
   return (
     <div className={styles.header}>
-      <div className={styles.breadcrumb}>
+      {/*
+        F-135 · el breadcrumb es un `nav` CON NOMBRE, y no es cosmética. En la
+        aplicación entera hay TRES botones que se llaman `Hilos` —la barra
+        superior, el menú lateral y este—, y sin nada que los separe el e2e solo
+        podía cogerlo por `.first()`, que en orden de DOM es el de la barra: el
+        test `el breadcrumb vuelve a la lista` llevaba desde que se escribió sin
+        pulsar el breadcrumb ni una vez. Un landmark con `aria-label` es además
+        el patrón estándar de un breadcrumb, así que se paga solo.
+      */}
+      <nav className={styles.breadcrumb} aria-label="Ruta">
         <button type="button" className={styles.crumbLink} onClick={onBack}>
           Hilos
         </button>
         <span className={styles.crumbSep}>›</span>
         <span className={styles.crumbCurrent}>{detail.counterpartyName}</span>
-      </div>
+      </nav>
 
       <div className={styles.eyebrow}>Módulo 04 · Mensajería E2EE</div>
 

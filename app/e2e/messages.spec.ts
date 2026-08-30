@@ -148,11 +148,34 @@ test.describe('MSG-02 · un hilo real', () => {
    *     —es lo que hace real la costura de D-07-05—, así que por primera vez hay
    *     bytes cifrados en el navegador y hay que mirar que no lleguen a pintarse.
    */
+  /**
+   * ⚠ F-135 · EL ANCLA DE QUE LA PANTALLA SE HA ABIERTO. Está aquí, en el
+   * ayudante, y no en cada test a propósito: sin ella un test de este bloque
+   * puede pasar **sin que MSG-02 llegue a abrirse nunca**, cumpliendo sus
+   * asertos contra la lista de MSG-01 que se queda debajo.
+   *
+   * No es hipotético. En las corridas 07, 08 y 09 del arnés la tarea de MSG-01
+   * le prohíbe al Coder cablear el clic que abre el hilo (`F-134`), y **dos de
+   * los ocho tests de aquí salían VERDES igual**: el del breadcrumb, porque en
+   * la lista ya se ve el encabezado `Hilos`; y el de la cabecera, porque el
+   * botón de la fila también se llama como la contraparte. Los dos habrían
+   * seguido verdes **con MSG-02 borrada del repo**, que es la definición
+   * operativa de un test que no mira nada — y son peores que un rojo: un rojo
+   * se investiga, y estos sostuvieron durante tres corridas la impresión de que
+   * la navegación funcionaba.
+   *
+   * Se ancla en `thread-body`, el contenedor de MSG-02, que no existe en ninguna
+   * otra pantalla. **Y no en `thread-item`**, que es lo que usan los seis que sí
+   * fallaban, porque un hilo puede no tener elementos —el de Anadolu Rulman está
+   * cerrado— y ahí el ancla sería un fallo legítimo disfrazado. Se mira que la
+   * PANTALLA está, no que tenga cosas dentro.
+   */
   const abrirHilo = async (page: Page, org: string) => {
     await page.goto('/');
     await topNav(page).getByRole('button', { name: 'Hilos' }).click();
     await expect(page.getByRole('listitem').first()).toBeVisible();
     await page.getByRole('button', { name: new RegExp(org) }).click();
+    await expect(page.getByTestId('thread-body')).toBeVisible();
   };
 
   test('la cabecera resuelve la contraparte, y no soy yo', async ({ page }) => {
@@ -267,8 +290,20 @@ test.describe('MSG-02 · un hilo real', () => {
 
   test('el breadcrumb vuelve a la lista', async ({ page }) => {
     await abrirHilo(page, 'Nordwälz Lager');
-    await page.getByRole('button', { name: 'Hilos' }).first().click();
+    // ⚠ F-135, segunda mitad · EL BREADCRUMB, no el primero que se llame igual.
+    // Hay TRES botones `Hilos` en la aplicación —barra superior, menú lateral y
+    // breadcrumb— y este test cogía `.first()`, que en orden de DOM es el de la
+    // barra: el test del breadcrumb no había pulsado el breadcrumb ni una vez.
+    // El landmark `Ruta` lo separa de los otros dos (`ThreadHeader.tsx`).
+    await page
+      .getByRole('navigation', { name: 'Ruta' })
+      .getByRole('button', { name: 'Hilos' })
+      .click();
     await expect(page.getByRole('heading', { level: 1, name: 'Hilos' })).toBeVisible();
+    // Y que se ha SALIDO, no solo que se ve el título de la lista: ese encabezado
+    // también estaba visible sin haberse movido de sitio, que es exactamente por
+    // lo que este test pasaba sin abrir nada.
+    await expect(page.getByTestId('thread-body')).toHaveCount(0);
   });
 
   test('⚠ D-08-02 · se envía cifrado, se lee descifrado, y el hilo cerrado SE REABRE', async ({

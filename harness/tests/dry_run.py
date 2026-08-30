@@ -197,6 +197,23 @@ def validar_tarea(task: dict) -> list:
     for clave, valor in task.get("acceptance", {}).items():
         if clave.startswith("_"):
             continue
+        # F-134 · no es una lista de rutas: son los tests del e2e que la tarea
+        # declara imposibles para el Coder. Se valida su FORMA, y con dureza: una
+        # exclusion sin motivo escrito es una exclusion que nadie podra revisar
+        # dentro de un mes, y entonces vuelve a ser el hueco de F-070.
+        if clave == "e2e_fuera_de_contrato":
+            for i, d in enumerate(valor or []):
+                if not isinstance(d, dict) or not d.get("test"):
+                    problemas.append(
+                        f"acceptance.e2e_fuera_de_contrato[{i}]: hace falta "
+                        f"`test` con un trozo del titulo del test que se excusa")
+                elif not d.get("motivo"):
+                    problemas.append(
+                        f"acceptance.e2e_fuera_de_contrato[{i}] ({d['test']!r}): "
+                        f"falta `motivo`. Excusar un fallo sin decir por que es "
+                        f"abrir el hueco de F-070 y no dejar rastro de quien lo "
+                        f"abrio")
+            continue
         for ruta in (valor if isinstance(valor, list) else [valor]):
             if ruta and not (ROOT / ruta).exists():
                 problemas.append(f"acceptance.{clave}: no existe {ruta!r}")
@@ -433,6 +450,17 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
         if not _declarado(n, declarado):
             avisos.append(f"el e2e busca {n!r}, sin declarar "
                           f"(¿es del shell, como 'Comprando'?)")
+
+    # ⚠ F-134 · las exclusiones del e2e se dicen EN ALTO antes de gastar, siempre.
+    # Son lo unico de la tarea que hace a C2 mas indulgente, asi que nunca pueden
+    # estar solo en el JSON: quien paga la corrida las lee primero y decide si
+    # siguen valiendo. Que caduquen sin que nadie mire es como esto se pudre.
+    for d in (acc.get("e2e_fuera_de_contrato") or []):
+        if isinstance(d, dict) and d.get("test"):
+            avisos.append(
+                f"C2 NO le apuntara al Coder el fallo e2e {d['test']!r} — la tarea "
+                f"lo excusa: {d.get('motivo') or '(sin motivo)'}. La suite se "
+                f"correra entera igual. Si esto ya no es cierto, quitalo (F-134)")
     return errores, avisos
 
 

@@ -195,4 +195,13 @@ def resultado_from_checks(checks: list, escalated: bool) -> str:
         # F-033 · se nombra aparte. Un `FALLA 1/4 (rojo: C1;C2;C4)` con `npm` fuera
         # del PATH se leia como "el Coder fallo" cuando el arnes no evaluo nada.
         detalle += f" / INEJECUTABLE: {';'.join(ciegos)}"
+    # F-134 · un verde CON EXCUSAS no se agrega como un verde limpio. La suite e2e
+    # fallo de verdad; lo que cambia es a quien se le apunta. Quien sume esta
+    # columna para decir "cuantas pantallas salen a la primera" tiene que verlo en
+    # la FILA, no en el JSON de al lado. Es la leccion de F-129 aplicada antes de
+    # que muerda: si una fila no se puede agregar como las demas, se MARCA.
+    excusados = sum(c.get("excusados") or 0 for c in checks)
+    if excusados:
+        detalle += (f" / e2e con {excusados} excusado(s) por la tarea (F-134): "
+                    f"verde a efectos del Coder; la suite NO estaba limpia")
     return f"{cabeza} {len(verdes)}/{len(checks)} ({detalle}). C5 lo da el PO"

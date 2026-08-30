@@ -272,6 +272,91 @@ def _check_c1(runner) -> dict:
             "detail": "typecheck limpio y suite de unidad en verde"}
 
 
+# -----------------------------------------------------------------------------
+# F-134 · A QUIEN SE LE APUNTA UN FALLO DEL E2E
+#
+# `D-09-03 (a)` (PO, 12-ago) dice que **C2 corre SIEMPRE la suite e2e ENTERA**, y
+# su motivo sigue entero: `F-070`, `LOGIN-01` salio 4/4 verde colgando la suite
+# completa. **Eso no se toca: se sigue corriendo entera y se sigue mirando.**
+#
+# Lo que se arregla es otra cosa: A QUIEN SE LE APUNTA el fallo. La tarea de
+# `MSG-01` le ORDENA al Coder no cablear `onOpenThread` —«la recibes y la
+# IGNORAS», congelado por `F-118` cuando `App.tsx` todavia no la pasaba—, y seis
+# tests del bloque `MSG-02 · un hilo real` necesitan justo ese cable para abrir
+# la pantalla. Resultado: `MSG-01` no podia sacar 4/4 **por construccion**, y
+# tres corridas lo apuntaron como fallo del artefacto. C2 decia la verdad sobre
+# la APLICACION y una mentira sobre el CODER, y solo habia una casilla para las
+# dos.
+#
+# Es `F-116` llevado al e2e, y con la misma forma: **el recorte lo hace quien
+# mide.** Alli fue `vitest.config.arnes.ts` sacando los `*.fuera-de-contrato.*`
+# —tests obligatorios del producto, «Realtime, el cableado entre pantallas», que
+# ninguna tarea del corpus encarga—. Aqui no vale un fichero aparte, porque esos
+# seis tests **SI son del contrato de `MSG-02`**: solo estan fuera del de
+# `MSG-01`. Asi que la exclusion es por TAREA, y va donde va todo en este
+# proyecto desde hace nueve veces: **declarada en la tarea**, test por test y con
+# su motivo escrito.
+#
+# ⚠ LAS CUATRO CERRADURAS, porque una exclusion mal hecha ES el hueco de F-070:
+#   1. La suite corre ENTERA igual, y cada fallo excusado se imprime con su
+#      nombre y su motivo. Nada se calla; lo que cambia es a quien se le cobra.
+#   2. Se excusa por TEST, nunca por fichero ni por bloque. Un `MSG-02` entero
+#      excusado de un plumazo seria el agujero otra vez, con permiso.
+#   3. Si playwright dice «N failed» y no se saben leer N lineas, **no se reparte
+#      nada**: rojo entero. La duda se resuelve siempre contra el Coder. Cobrar
+#      de mas se descubre leyendo; cobrar de menos es F-070.
+#   4. Una exclusion que ya no usa nadie —porque el test que excusaba pasa, o le
+#      han cambiado el titulo— se CANTA. Una exclusion caducada es un hueco
+#      abierto que nadie esta mirando, y es exactamente por donde esto se
+#      pudriria dentro de tres semanas.
+_E2E_FALLO = re.compile(r"^\s*\[[^\]\n]+\]\s*›\s*(\S.*?)\s*$", re.M)
+_E2E_CUANTOS = re.compile(r"^\s*(\d+)\s+failed\s*$", re.M)
+
+
+def _excusas_de_la_tarea(task: dict) -> list:
+    """Los tests del e2e que la TAREA declara imposibles para el Coder."""
+    acc = task.get("acceptance") or {}
+    return [d for d in (acc.get("e2e_fuera_de_contrato") or [])
+            if isinstance(d, dict) and d.get("test")]
+
+
+def _repartir_culpas(out: str, excusas: list) -> tuple:
+    """(imputables, excusados, exclusiones_muertas, se_pudo_repartir)."""
+    fallos = _E2E_FALLO.findall(out or "")
+    dice = [int(n) for n in _E2E_CUANTOS.findall(out or "")]
+    # Cerradura 3.
+    if not fallos or (dice and max(dice) != len(fallos)):
+        return fallos, [], [], False
+    imputables, excusados, usadas = [], [], set()
+    for f in fallos:
+        d = next((d for d in excusas if d["test"] in f), None)
+        if d is None:
+            imputables.append(f)
+        else:
+            excusados.append((f, d.get("motivo") or "sin motivo declarado"))
+            usadas.add(d["test"])
+    muertas = [d["test"] for d in excusas if d["test"] not in usadas]
+    return imputables, excusados, muertas, True
+
+
+def _parte_de_excusas(excusados: list, muertas: list) -> str:
+    """Lo excusado, siempre por escrito. Cerraduras 1 y 4."""
+    trozos = []
+    if excusados:
+        trozos.append(
+            f"{len(excusados)} fallo(s) de la suite e2e NO se le apuntan al Coder: la "
+            f"tarea los declara fuera de su contrato (F-134). La suite se corrio "
+            f"ENTERA y aqui estan, uno por uno:\n"
+            + "\n".join(f"  · {t}\n      motivo: {m}" for t, m in excusados))
+    if muertas:
+        trozos.append(
+            "⚠ EXCLUSIONES CADUCADAS: la tarea excusa test(s) que hoy no fallan, o a "
+            "los que les han cambiado el titulo — " + "; ".join(repr(t) for t in muertas)
+            + ". Una exclusion que no usa nadie es un hueco abierto sin vigilar: "
+              "quitala de la tarea.")
+    return "\n".join(trozos)
+
+
 def _check_c2(task, runner) -> dict:
     """Los tests de aceptacion. F-015: si la tarea no declara ninguno, es ROJO —
     una pantalla sin contrato ejecutable no puede darse por buena."""
@@ -324,12 +409,41 @@ def _check_c2(task, runner) -> dict:
     # El coste son minutos de CPU por intento. El del hueco fue una contrasena en
     # un artefacto descargable (F-038 + F-070).
     code, out = runner(["npx", "playwright", "test"], APP)
-    if code != 0:
-        return _rojo("C2", _detalle(f"suite e2e COMPLETA (exit {code})", out), code, out)
-    partes.append("suite e2e completa" + (f" (cubre los {len(e2e)} declarados)" if e2e else ""))
+    excusas = _excusas_de_la_tarea(task)
+    imputables, excusados, muertas, se_pudo = _repartir_culpas(out, excusas) \
+        if code != 0 else ([], [], [d["test"] for d in excusas], True)
+    parte = _parte_de_excusas(excusados, muertas)
 
-    return {"id": "C2", "ok": True, "estado": VERDE,
-            "detail": "aceptacion en verde: " + " + ".join(partes)}
+    if code != 0:
+        if not se_pudo or imputables:
+            # F-114 · primero QUE se le apunta, y despues el detalle crudo. Si no
+            # se pudo repartir (cerradura 3), va entero y se dice por que.
+            cabecera = f"suite e2e COMPLETA (exit {code})"
+            if not se_pudo and excusas:
+                cabecera += (f" · ⚠ la tarea declara {len(excusas)} exclusion(es) y NO "
+                             f"se han podido repartir las culpas: el recuento de "
+                             f"playwright no cuadra con los fallos legibles, asi que "
+                             f"se cobra ENTERO (F-134, cerradura 3)")
+            elif imputables:
+                cabecera += (f" · {len(imputables)} fallo(s) SI son de este artefacto:\n"
+                             + "\n".join(f"  · {t}" for t in imputables))
+            return _rojo("C2", _detalle(cabecera, out) + ("\n" + parte if parte else ""),
+                         code, out)
+        # Fallo la suite y NINGUNO de los fallos es imputable al Coder. Verde —
+        # pero un verde que lleva escrito de que se le ha perdonado y por que, y
+        # que queda contado en la fila del CSV (`excusados`), porque un verde con
+        # asterisco que se agrega como un verde limpio es F-129 otra vez.
+        return {"id": "C2", "ok": True, "estado": VERDE, "excusados": len(excusados),
+                "detail": "aceptacion en verde CON EXCUSAS: "
+                          + " + ".join(partes + ["suite e2e completa"]) + "\n" + parte}
+
+    partes.append("suite e2e completa" + (f" (cubre los {len(e2e)} declarados)" if e2e else ""))
+    salida = {"id": "C2", "ok": True, "estado": VERDE,
+              "detail": "aceptacion en verde: " + " + ".join(partes)}
+    if muertas:
+        # La suite entera en verde con exclusiones declaradas: sobran TODAS.
+        salida["detail"] += "\n" + parte
+    return salida
 
 
 def test_runner_node(state: HarnessState, runner=run_cmd) -> dict:

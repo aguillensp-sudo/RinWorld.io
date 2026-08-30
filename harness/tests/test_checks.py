@@ -1108,6 +1108,97 @@ def test_el_guardia_cruza_tarea_y_contrato():
           not (_ROLES_ESTRUCTURALES & _ROLES_QUE_HAY_QUE_PONER))
 
 
+def test_c2_reparte_las_culpas_del_e2e():
+    """F-134 · C2 corre la suite entera igual, pero deja de cobrarle al Coder lo
+    que la tarea le prohibió hacer.
+
+    ⚠ **Lo que de verdad se prueba aquí son las cerraduras**, no el caso feliz.
+    Una exclusión mal puesta ES el hueco de `F-070` —`LOGIN-01` salió 4/4 verde
+    colgando la suite entera—, así que lo que hay que demostrar es que el hueco
+    sigue cerrado: que un fallo sin excusar tiñe la corrida de rojo aunque haya
+    otros excusados, que si no se pueden repartir las culpas se cobra entero, y
+    que una exclusión caducada se canta en vez de dormirse."""
+    print("\nF-134 · a quién se le apunta un fallo del e2e")
+
+    from ..graph.nodes.test_runner import (
+        _excusas_de_la_tarea, _parte_de_excusas, _repartir_culpas)
+    from .dry_run import validar_tarea
+
+    msg01 = json.loads((ROOT / "harness" / "tasks" / "MSG-01.json")
+                       .read_text(encoding="utf-8"))
+    excusas = _excusas_de_la_tarea(msg01)
+    check("MSG-01 declara sus exclusiones y todas llevan motivo",
+          len(excusas) == 6 and all(d.get("motivo") for d in excusas),
+          str(len(excusas)))
+
+    # ⚠ Contra la salida REAL de la corrida 09a, no contra una inventada. Es el
+    # unico intento de la serie con C1 verde, o sea el unico donde C2 se pudo
+    # leer solo, y es el caso que motivo todo esto.
+    real = (ROOT / "harness" / "metrics" / "MSG-01" /
+            "remedicion-09a-msg-con-F131" / "attempt_3.json")
+    salida = [c["detail"] for c in
+              json.loads(real.read_text(encoding="utf-8"))["checks"]
+              if c["id"] == "C2"][0]
+    imp, exs, muertas, se_pudo = _repartir_culpas(salida, excusas)
+    check("⚠ sobre la corrida 09a: los 6 fallos son los 6 excusados, cero del Coder",
+          se_pudo and not imp and len(exs) == 6 and not muertas,
+          f"imputables={imp} muertas={muertas}")
+
+    # Cerradura 1 · lo excusado se escribe SIEMPRE, con nombre y motivo.
+    parte = _parte_de_excusas(exs, muertas)
+    check("y queda por escrito, uno por uno y con su motivo",
+          parte.count("motivo:") == 6 and "panel de vista-servidor" in parte)
+
+    # Cerradura 2 · un fallo NO excusado tiñe la corrida, haya los que haya
+    # excusados. Es el hueco de F-070 y es lo único que no puede fallar.
+    con_uno_mio = salida.replace(
+        "6 failed", "7 failed") + (
+        "\n    [chromium] › e2e\\messages.spec.ts:64:3 › MSG-01 · hilos reales › "
+        "pinta hilos de la base, no los datos de ejemplo del mock\n")
+    imp2, exs2, _m2, ok2 = _repartir_culpas(con_uno_mio, excusas)
+    check("⚠ un fallo de MSG-01 sin excusar SIGUE siendo imputable",
+          ok2 and len(imp2) == 1 and "pinta hilos de la base" in imp2[0]
+          and len(exs2) == 6, f"imputables={imp2}")
+
+    # Cerradura 3 · si el recuento de playwright no cuadra con las líneas
+    # legibles, no se reparte nada. La duda se resuelve contra el Coder.
+    imp3, exs3, _m3, ok3 = _repartir_culpas(salida.replace("6 failed", "9 failed"),
+                                            excusas)
+    check("⚠ si playwright dice 9 y solo se leen 6, NO se reparte: se cobra entero",
+          not ok3 and not exs3, f"se_pudo={ok3} excusados={len(exs3)}")
+
+    # Cerradura 4 · una exclusión que ya no la usa nadie se canta.
+    inventada = excusas + [{"test": "un test que hoy ya no falla", "motivo": "x"}]
+    _i4, _e4, muertas4, _ok4 = _repartir_culpas(salida, inventada)
+    check("⚠ y una exclusión CADUCADA se canta, no se duerme",
+          muertas4 == ["un test que hoy ya no falla"], str(muertas4))
+    check("y sale en el parte con su aviso",
+          "CADUCADAS" in _parte_de_excusas([], muertas4))
+
+    # Una exclusión sin motivo no entra en el repo: `--seco` la para antes de
+    # gastar. Excusar sin decir por qué es abrir el hueco sin dejar firma.
+    rota = json.loads(json.dumps(msg01))
+    rota["acceptance"]["e2e_fuera_de_contrato"] = [{"test": "algo"}]
+    check("⚠ `--seco` para una exclusión sin motivo",
+          any("motivo" in p for p in validar_tarea(rota)),
+          str(validar_tarea(rota)[:1]))
+    check("y la tarea de verdad pasa `--seco` sin un problema",
+          not validar_tarea(msg01), str(validar_tarea(msg01)[:1]))
+
+    # Y la fila del CSV lo marca: un verde con excusas no se agrega como limpio.
+    fila = metrics.resultado_from_checks(
+        [{"id": "C1", "ok": True, "estado": "verde"},
+         {"id": "C2", "ok": True, "estado": "verde", "excusados": 6},
+         {"id": "C3", "ok": True, "estado": "verde"},
+         {"id": "C4", "ok": True, "estado": "verde"}], escalated=False)
+    check("⚠ la fila del CSV marca el verde con excusas (F-129 aplicado antes)",
+          "PASA 4/4" in fila and "6 excusado(s)" in fila, fila)
+    limpia = metrics.resultado_from_checks(
+        [{"id": "C1", "ok": True, "estado": "verde"}], escalated=False)
+    check("y una fila sin excusas no lleva la coletilla",
+          "excusado" not in limpia, limpia)
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -1144,6 +1235,7 @@ def main() -> int:
     test_dos_corridas_no_caben_a_la_vez()
     test_el_plazo_de_pared_no_tira_lo_pagado()
     test_el_guardia_cruza_tarea_y_contrato()
+    test_c2_reparte_las_culpas_del_e2e()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

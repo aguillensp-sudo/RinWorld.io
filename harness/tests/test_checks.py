@@ -18,6 +18,7 @@ import os
 import pathlib
 import re
 import sys
+import tempfile
 import time
 import urllib.error
 
@@ -1210,6 +1211,65 @@ def test_c2_reparte_las_culpas_del_e2e():
           "excusado" not in limpia, limpia)
 
 
+def test_la_corrida_escribe_su_propio_log():
+    """F-115 · el log lo escribe la corrida, no quien la lanza.
+
+    ⚠ La cabecera de `run.py` decía que «una corrida del arnés SIEMPRE se lanza
+    redirigida a un fichero», y el 30-ago se cayó: las tres corridas con las que
+    se hizo la primera medida con `n>1` del proyecto se lanzaron con un
+    `| tail -45` delante y no dejaron ni un log. Ese mismo día se había abierto
+    el hueco de `.gitignore` para versionarlos, con el argumento de que eran la
+    evidencia de esa medida. **Una evidencia que solo existe si el operador se
+    acuerda de redirigir no es evidencia: es suerte.**"""
+    print("\nF-115 · la corrida escribe su propio log")
+
+    from ..graph.run import abrir_log, cerrar_log
+
+    stdout, stderr = sys.stdout, sys.stderr
+    with tempfile.TemporaryDirectory() as tmp:
+        d = pathlib.Path(tmp) / "MSG-01" / "corrida-de-prueba"
+        try:
+            destino = abrir_log(d, "MSG-01", ["harness/tasks/MSG-01.json"])
+            print("una linea de progreso cualquiera")
+            print("y una por el otro flujo", file=sys.stderr)
+        finally:
+            cerrar_log()
+            sys.stdout, sys.stderr = stdout, stderr
+
+        check("crea el fichero en la carpeta de la corrida",
+              destino is not None and destino.exists(), str(destino))
+        texto = destino.read_text(encoding="utf-8")
+        check("con la cabecera de arranque y la orden con la que se lanzó",
+              "corrida arrancada" in texto and "MSG-01.json" in texto)
+        check("⚠ y lo que se imprime DESPUÉS acaba dentro, por los dos flujos",
+              "una linea de progreso cualquiera" in texto
+              and "y una por el otro flujo" in texto)
+
+        # ⚠ APPEND, y es lo único que no puede fallar: relanzar una corrida con
+        # el mismo nombre borrando el log de la anterior es literalmente F-115.
+        try:
+            abrir_log(d, "MSG-01", ["otra vez"])
+            print("segunda vuelta")
+        finally:
+            cerrar_log()
+            sys.stdout, sys.stderr = stdout, stderr
+        texto2 = destino.read_text(encoding="utf-8")
+        check("⚠ y NO trunca: la evidencia de la corrida anterior sigue ahí",
+              "una linea de progreso cualquiera" in texto2 and "segunda vuelta" in texto2)
+
+    # Y si el log no se puede abrir, la corrida sigue: un log que falla no puede
+    # tumbar una llamada pagada. Se avisa y se sigue.
+    try:
+        roto = abrir_log(pathlib.Path("\0 ruta imposible"), "MSG-01", [])
+    except Exception as e:                                   # no debe llegar aquí
+        roto, e = "excepcion", e
+    finally:
+        cerrar_log()
+        sys.stdout, sys.stderr = stdout, stderr
+    check("⚠ si el log no se puede abrir, avisa y NO revienta la corrida",
+          roto is None, repr(roto))
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -1247,6 +1307,7 @@ def main() -> int:
     test_el_plazo_de_pared_no_tira_lo_pagado()
     test_el_guardia_cruza_tarea_y_contrato()
     test_c2_reparte_las_culpas_del_e2e()
+    test_la_corrida_escribe_su_propio_log()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

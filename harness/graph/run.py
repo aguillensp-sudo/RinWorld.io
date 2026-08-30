@@ -15,6 +15,7 @@ Uso:
     python -m harness.graph.run harness/tasks/MSG-01.json --seco   # sin gastar tokens
 """
 import argparse
+import datetime
 import json
 import os
 import pathlib
@@ -449,6 +450,104 @@ def _proximo_paso(state: dict) -> str:
     return f"intento {len(registros) + 1} · llamada al modelo"
 
 
+# -----------------------------------------------------------------------------
+# F-115 · EL LOG LO ESCRIBE LA CORRIDA, NO QUIEN LA LANZA
+#
+# La cabecera de este fichero dice, treinta lineas mas arriba, que «una corrida
+# del arnes SIEMPRE se lanza redirigida a un fichero». **Era un supuesto, y el
+# 30-ago se cayo:** las tres corridas de MSG-01 con las que se hizo la primera
+# medida con n>1 del proyecto se lanzaron con un `| tail -45` por delante, y de
+# las tres no quedo un solo log. Los JSON guardaron los checks, el coste y el
+# artefacto (`B-010`); el ORDEN y los TIEMPOS —los avisos de reintento de F-119,
+# los del reloj de pared de F-122, en que momento se volco cada intento— no los
+# tiene nadie.
+#
+# Y ese mismo dia se habia abierto un hueco en `.gitignore` para que estos logs
+# se versionaran, con el argumento de que eran la evidencia de esa medida. La
+# regla estaba bien y la evidencia se perdio igual, **porque dependia de como se
+# invocara**. Una evidencia que solo existe si el operador se acuerda de
+# redirigir no es evidencia: es suerte.
+#
+# Asi que la corrida escribe su propio log, en la carpeta donde ya viven sus
+# JSON, y lo que haga quien lanza deja de importar.
+#
+#   · APPEND, no truncado. Relanzar una corrida con el mismo nombre no puede
+#     borrar la evidencia de la anterior: eso es literalmente F-115.
+#   · Flush en cada escritura. El reloj de pared sale por `os._exit` (F-122),
+#     que no ejecuta cierres ni vacia buffers: lo que no este en disco cuando
+#     corte, no existe. Es F-120 otra vez, y por el mismo sitio.
+#   · Se abre DESPUES de decidir el directorio y ANTES del cerrojo, o sea antes
+#     de la primera llamada pagada.
+#   · `--seco` no pasa por aqui, y esta bien: cero coste, cero evidencia que
+#     guardar.
+class _Tee:
+    """Escribe en el flujo de siempre y ademas en el log. No sustituye a
+    redirigir: si quien lanza redirige, la salida sale por los dos sitios."""
+
+    def __init__(self, flujo, fichero):
+        self._flujo, self._fichero = flujo, fichero
+
+    def write(self, texto):
+        n = self._flujo.write(texto)
+        try:
+            self._fichero.write(texto)
+            self._fichero.flush()
+        except Exception:
+            pass        # un log que falla no puede tumbar una corrida pagada
+        return n
+
+    def flush(self):
+        self._flujo.flush()
+        try:
+            self._fichero.flush()
+        except Exception:
+            pass
+
+    def cerrar(self):
+        """Devuelve el flujo original y suelta el fichero. En una corrida de
+        verdad no hace falta —el proceso acaba y el sistema cierra—, pero sin
+        esto una prueba no puede borrar su directorio temporal en Windows, y una
+        pieza que no se puede probar acaba sin probar."""
+        try:
+            self._fichero.close()
+        except Exception:
+            pass
+        return self._flujo
+
+    def __getattr__(self, nombre):
+        return getattr(self._flujo, nombre)
+
+
+def cerrar_log():
+    """Deshace lo que hizo `abrir_log`. Idempotente."""
+    for nombre in ("stdout", "stderr"):
+        flujo = getattr(sys, nombre)
+        if isinstance(flujo, _Tee):
+            setattr(sys, nombre, flujo.cerrar())
+
+
+def abrir_log(metrics_dir: pathlib.Path, task_id: str, argv=None) -> pathlib.Path:
+    try:
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        destino = metrics_dir / f"{task_id}.log"
+        fichero = destino.open("a", encoding="utf-8", errors="replace")
+    except Exception as e:
+        print(f"⚠ no se pudo abrir el log de la corrida: {e!r}. Sigue sin el, "
+              f"pero esta corrida no dejara rastro de su orden ni de sus tiempos "
+              f"(F-115).", file=sys.stderr)
+        return None
+    sys.stdout = _Tee(sys.stdout, fichero)
+    sys.stderr = _Tee(sys.stderr, fichero)
+    print(f"\n{'=' * 78}\n· corrida arrancada {datetime.datetime.now():%Y-%m-%d %H:%M:%S} "
+          f"· {' '.join(argv or sys.argv[1:])}\n{'=' * 78}")
+    # `_corto` y no `relative_to` a secas: su docstring ya avisa de por que —una
+    # prueba vuelca en un temporal— y reventar una corrida PAGADA al decir donde
+    # escribe seria el arnes rompiendose por hablar.
+    print(f"Log de esta corrida: {_corto(destino)} (F-115). Lo escribe ella, no "
+          f"quien la lanza.")
+    return destino
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("task", help="ruta al JSON de la tarea")
@@ -479,6 +578,8 @@ def main(argv=None) -> int:
     if args.corrida:
         metrics_dir = metrics_dir / args.corrida
     previos = sorted(metrics_dir.glob("attempt_*.json")) if metrics_dir.is_dir() else []
+
+    abrir_log(metrics_dir, task["task_id"], argv)   # F-115, y antes de gastar
 
     tomar_cerrojo()             # F-121, y antes de la primera llamada pagada
 

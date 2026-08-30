@@ -17,6 +17,11 @@ absolutos.**
 > **`git worktree prune`** limpia los registros muertos, y **lanzar Code desde la raíz del
 > repo y no desde `openspec/mvp/`** parece cortar la causa — hipótesis por confirmar, porque
 > es ahí donde aparecen.
+>
+> **30-ago, comprobado: `git worktree prune` NO los quita.** Los tres siguen ahí y sus
+> directorios existen, así que no hay ningún registro muerto que limpiar — `prune --dry-run`
+> no dice nada. Haría falta `git worktree remove`, y uno de los tres es la sesión desde la
+> que se escribe esto. La primera mitad de la receta era falsa; la segunda sigue sin probar.
 
 > 🔑 **¿Vas a tocar Supabase? Lee `CLAUDE.md` §10 ANTES de la primera consulta.**
 
@@ -39,35 +44,41 @@ del documento cerrado **con el puntero al lado** (`F-012`).
 **2 · Un estado que este fichero afirme se comprueba EL DÍA que se escribe, contra el
 código o contra la base — no contra otro documento.** El 25-ago se descubrió que tres
 documentos llevaban **diez días** diciendo que `B-008`, `B-009` y `B-010` estaban
-pendientes cuando se habían cerrado el 12-ago. El error se propagó al acta de cierre, al
-plan de V1 y a un encargo que estuvo a punto de lanzarse. **Ningún documento es fuente de
-verdad sobre el código. Solo el código lo es.**
+pendientes cuando se habían cerrado el 12-ago. **Y el 30-ago volvió a morder, desde
+dentro:** la §4 de este fichero afirmaba como decisión cerrada que las filas inválidas de
+`F-121` «se marcan, no se borran», y **no se habían marcado** — `grep -i F-121` sobre el
+CSV daba cero (`F-129`). **Ningún documento es fuente de verdad sobre el código. Este
+tampoco.**
 
 **3 · La fecha se lee de la máquina, nunca de memoria.** El día 14 del MVP se fechó a sí
 mismo un día por delante y esa hora de diferencia es exactamente lo que ocultó `F-109`
 durante dos jornadas. El 25-ago volvió a pasar por el otro lado: tres documentos se
 fecharon tres días atrás. **`date -u` antes de escribir la cabecera.**
 
+**4 · Este fichero se cierra CUANDO SE ACABA, no cuando parece que se acaba.** El día 3 se
+cerró a las 12:33 y el trabajo siguió hasta las 13:45: `F-125`, el guardia de tarea contra
+contrato, `F-126` y `F-127` se cerraron **después** de escribirlo, y `F-128` se descubrió.
+El día 4 arrancó leyendo un relevo que ya estaba desfasado por una tarde y que mandaba
+hacer dos cosas que ya estaban hechas.
+
 ---
 
-**Día 3 de V1 · 29-ago-2026 · El corpus ya se mide sin el arnés dentro · Estado: VERDE**
+**Día 4 de V1 · 30-ago-2026 · Lo que vigila siempre es una muesca más estrecho que lo
+vigilado · Estado: VERDE**
 
-Tercer día operativo. El día 2 diagnosticó `F-112` —el 2 de 4 medía el arnés, no al
-Coder—; hoy se han quitado las siete cosas que se interponían y se ha remedido el
-corpus **cuatro veces**, tres de ellas tiradas a la basura por fallos de la propia
-instrumentación. **La cuarta es la primera medición limpia del proyecto.**
+Cuarto día operativo. Se cierra `F-122` —el último punto abierto de la fiabilidad del
+propio arnés— y el arnés **entra por fin en la CI**. Con eso, la corriente A no tiene
+ninguna pieza de instrumentación pendiente.
 
-El marcador sigue siendo **2 de 4 en verde**. Lo que ha cambiado es todo lo demás: los
-rojos de `SRCH-01` pasaron de **13 a un solo check**, los de `MSG-01` de **6 a 3
-tests**, y ya no queda ni uno en un fichero que el Coder no escriba, ni en un bloque
-rotulado fuera de contrato, ni una dependencia inventada. No se ha tocado producto:
-sigue siendo fábrica.
+**Y el hallazgo del día es que tres cosas escritas para vigilar resultaron ser, cada una,
+una muesca más estrechas que lo que vigilaban.** Una decisión afirmaba una marca que no
+existía (`F-129`). El guardia escrito **ayer** leía literales entrecomillados y el contrato
+buscaba con expresiones regulares, que es exactamente por lo que no cazó `F-128`
+(`F-130`). Y el guardia comprueba los roles que hay que **poner** y ninguno de los que no
+hay que **quitar**, que es lo que se llevó la corrida 08 por delante (`F-131`).
 
-**Y el hallazgo del día no es el marcador.** Cuatro veces en tres días el contrato
-exigía algo que la tarea no decía (`F-116`, `F-118`, `F-123`, `F-125`). No es mala
-suerte: es que **la tarea y el contrato se escriben una vez y el repo sigue andando**,
-y nadie los vuelve a cruzar. Mientras eso no tenga un guardia, cada medición vuelve a
-empezar con este trabajo.
+**El marcador no se mueve: sigue 2 de 4.** `MSG-01` volvió a escalar. Pero por primera vez
+se sabe exactamente por qué, y no es el modelo.
 
 ---
 
@@ -75,14 +86,20 @@ empezar con este trabajo.
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` y `datetime.now()` | `2026-08-29` |
-| El feedback ya lleva el inventario (`F-114`) | La salida real de las corridas | `19 fallo(s) en total, no solo el ultimo. Lista completa:` — y con la lista delante se vio a la primera que los errores que mandaban estaban en `App.tsx`, un fichero que el Coder no escribe |
-| El reintento de transporte (`F-119`) funciona contra la API real | `SRCH-01.log`, corrida 04 | `⚠ TimeoutError… No es un intento del modelo (F-119): reintento en 5s`. **Ese mismo cuelgue, el día anterior, costó nueve horas en silencio** |
-| Las dos suites miden cosas distintas y ninguna pierde cobertura | `npm test` / `npm run test:arnes` | **642** el producto, **627** el arnés. La diferencia son los tests fuera de contrato |
-| El corpus, remedido limpio | 4 tareas × 3 intentos, corridas 03 y 04 | `PANEL-01` verde en 3 · `VND-01` verde en 2 · `MSG-01` escalado 2/4 · `SRCH-01` escalado **3/4** |
-| Que la medición de la mañana **no** valía | Marcas de tiempo de los commits del CSV | `abf4733` (09:53) y `f3daddf` (09:57) se solapan, y así tres pares: **dos corridas midiendo a la vez sobre el mismo `app/src`**, y ninguna dio error (`F-121`) |
-| Que el cerrojo sobrevivía a su dueño | `ls harness/.corrida-en-curso` tras un corte por plazo | Seguía puesto: un `finally` no corre con `SIGKILL` (`F-124`) |
-| Que el plazo de pared dispara tarde | Reloj contra el arranque | 25 min configurados, **34m45s reales** (`F-122`) |
+| Fecha de máquina | `date -u` y `datetime.now()` | `2026-08-30` |
+| El relevo del día 3 estaba desfasado | `git log --date=format` sobre `mvp/bootstrap` | Se cerró en `ed859b7` (12:33) y siguieron **nueve commits** hasta las 13:45. Los puntos 1 y 2 de su §3 ya estaban hechos |
+| `F-122`: el reloj corre con el hilo principal bloqueado | Subproceso real, hilo principal en un `sleep(30)`, plazo 0,3 s | Sale en **menos de un segundo**, con código 4 y habiendo volcado. El GIL se suelta en la E/S y el hilo del reloj sigue contando |
+| `F-122`: lo pagado ya no se tira | Grafo entero con nodos falsos, `stream(stream_mode="values")` | **El intento 1 está en disco mientras el 2 se está pagando.** Es el dato exacto que `SRCH-01` perdió el 29-ago |
+| …y en una corrida de verdad | `remedicion-08-msg-con-F128/MSG-01.log` | `· intento 1 ya en disco … (F-122)` tras cada intento, antes de que el grafo terminara |
+| El arnés corre en la CI, y en Linux | Log del job `Arnés · piezas puras`, run `33303797454` | `Todas en verde`. **La rama POSIX de `_pid_vivo` se ejecutó por primera vez** — se escribió mirando solo Windows |
+| `F-129`: las filas inválidas de `F-121` nunca se marcaron | `grep -i "F-121" openspec/mvp/harness-metrics.csv` | **Cero.** La §4 de ayer lo daba por decidido el 25-ago |
+| …y cuáles son exactamente las doce | `git show` de los cinco commits de la tanda (09:53 → 10:21) y búsqueda literal en el fichero de hoy | **12 de 12**, en orden y sin ambigüedad. Marcadas. Cabecera intacta, 85 filas, 14 columnas |
+| `F-130`: el guardia no ve lo que se busca por regex | `cruzar_con_el_contrato` sobre las seis tareas, antes y después | `'fuera del MVP'` era invisible; ahora sale. **Y siete nombres más en tareas que están VERDES**, por eso va a aviso |
+| `F-128` llegó al Coder | Corrida 08 contra corrida 07, fallo a fallo | Los **dos** objetivos de `F-128` arreglados: el aviso enseña el error de verdad y el estado vacío sale con su botón y su motivo |
+| `F-131`: por qué la 08 empeoró | `ThreadList.tsx:75` del artefacto, y `npx vitest run` a mano contra él | `<li role="button">`. Un `role` explícito **sustituye** al implícito: `Unable to find an accessible element with the role "listitem"`, y el contrato lo consulta **siete veces** |
+| Fundación V1 sigue sin empezar | `ls openspec/v1/` y `git log --since=2026-08-26` | Solo los tres `.docx` del plan, este fichero y el script de gstack. Nada de entornos, índice ni residencia |
+| Utillaje externo sigue fijado | `openspec/v1/gstack-instalacion-endurecida.sh:33` | `SHA_AUDITADO="85fd9db554ae…"`, v1.68.3.0 del 21-ago. Modo aislado |
+| Los worktrees no son prunables | `git worktree prune --dry-run` | **No dice nada.** Los directorios existen; no hay registro muerto que limpiar |
 | Estado del árbol y del cerrojo al cerrar | `git status`, `ls` | Limpio y suelto |
 
 ---
@@ -94,20 +111,19 @@ empezar con este trabajo.
 | Pieza | Estado |
 |---|---|
 | `B-007` `--seco` valida la tarea que recibe | ✅ 28-ago · `dfa8c74` |
-| Coste de orquestación instrumentado | ✅ 28-ago · `ae8448d` — $331,58, ver §3.5 |
-| `F-114` el feedback lleva el inventario de fallos | ✅ 28-ago · `ecd5952` |
-| `F-115` una corrida ya no borra su evidencia | ✅ 28-ago · `ecd5952` |
+| `F-114`/`F-115` feedback con inventario, y la evidencia no se borra | ✅ 28-ago · `ecd5952` |
 | `B-011`/`F-116` lo fuera de contrato no puntúa | ✅ 29-ago · `28aa31b` |
-| `F-117` C4 deja de leer `!important` como un `import` | ✅ 29-ago · `1183a38` |
-| `F-118` corpus congelado: alcance intacto, firma al día | ✅ 29-ago · `1183a38` |
-| `F-119` un corte de conexión no gasta intento | ✅ 29-ago · `1183a38` — visto funcionar |
-| `F-120` la señal de vida llega al log | ✅ 29-ago · `cf917cc` |
-| `F-121` dos corridas no caben en el mismo árbol | ✅ 29-ago · `9c47960` |
-| `F-123` la tarea de `SRCH-01` deja de contradecir su contrato | ✅ 29-ago · `dbfd49c` |
-| `F-124` el cerrojo caduca cuando su dueño ya no existe | ✅ 29-ago · `34f85b4` |
-| **Medición del corpus** | 🟡 **Tres de cuatro medidas de verdad.** `SRCH-01` a un `aria-label` de estarlo (`F-125`) |
-| `F-122` reloj de pared dentro de `run.py` | 🔴 Abierto. El plazo de fuera dispara tarde y al matar pierde los intentos ya pagados |
-| Fundación V1 (entornos, ADR-002, índice, residencia) | ⚪ No empezada |
+| `F-117`/`F-118`/`F-119` `!important`, corpus congelado, corte de conexión | ✅ 29-ago · `1183a38` |
+| `F-120`/`F-121`/`F-124` señal de vida, cerrojo, y que caduque solo | ✅ 29-ago · `cf917cc`, `9c47960`, `34f85b4` |
+| `F-123`/`F-125`/`F-126`/`F-127` cuatro tareas que contradecían su contrato | ✅ 29-ago · `dbfd49c`, `904d1f7`, `85eb991`, `38edd66` |
+| **Guardia que cruza tarea contra contrato** | ✅ 29-ago · `ae670fb`, `debb576` — **y ya se le han escapado dos cosas**, ver `F-130` y `F-131` |
+| **`F-122` reloj de pared dentro de `run.py`** | ✅ **30-ago · `343d559`** — visto funcionar en la corrida 08 |
+| **El arnés en la CI** | ✅ **30-ago · `6fc7c7f`** — verde en Linux a la primera |
+| **`F-129` filas inválidas marcadas + columna `corrida`** | ✅ **30-ago · `d672326`, `762e4de`** |
+| **`F-128`/`F-130`** | ✅ **30-ago · `65099d9`, `2f841bd`** |
+| **Medición del corpus** | 🟡 **Sigue 2 de 4.** `SRCH-01` verde en la corrida 06; `MSG-01` escaló otra vez y ahora se sabe por qué (`F-131`) |
+| `F-131` la tarea no protege los roles implícitos | 🔴 **Abierto.** Es el único rojo que separa a `MSG-01` de ser medible |
+| Fundación V1 (entornos, ADR-002, índice, residencia) | ⚪ **No empezada.** Comprobado hoy contra el directorio, no contra el §2 de ayer |
 
 ### Corriente B · Fábrica — NO ABIERTA
 
@@ -117,27 +133,31 @@ cuatro agentes de construcción concurrentes**.
 ### Corriente C · Verificación — NO ABIERTA
 
 Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado en
-`85fd9db5`, los cinco interruptores de red apagados.
+`85fd9db5`, los cinco interruptores de red apagados. Verificado hoy en el script.
 
 ---
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **`F-125`, y es una línea.** Declarar en `component_api` de `FilterChips.tsx` que el
-   botón que despliega el formulario lleva nombre accesible `Añadir filtro`. Con eso
-   `SRCH-01` queda medido: hoy llegó a `C1`, `C3` y `C4` verdes y la aceptación de
-   unidad entera en verde, y lo único rojo es el e2e por ese nombre. ~$0,24 y 20 min.
-2. **Un guardia que cruce tarea contra contrato.** Cuatro veces en tres días el
-   contrato exigió algo que la tarea no decía. `--seco` ya comprueba que los ficheros
-   existan; lo que falta es cruzar **lo que el contrato busca** —nombres accesibles,
-   literales— contra **lo que la tarea declara**. Es la deuda que de verdad importa:
-   sin ella, la próxima medición vuelve a empezar por aquí.
-3. **`F-122`**, el reloj de pared dentro de `run.py`, escribiendo cada intento en
-   cuanto termina. Hoy un corte por plazo tira los intentos ya pagados.
-4. **Fundación V1** sigue sin empezar. Es el candidato más barato que queda.
-5. **Leer el coste-sombra.** $331,58 en 9 sesiones: falta separar MVP de V1 y decidir
-   si sustituye o solo informa la partida "tecnología" del plan (`Plan_V1…v2.3.docx`,
-   Tabla 5, 3.000–7.000 €).
+1. **`F-131`, y es la misma receta de siempre.** Declarar en `component_api` de
+   `ThreadList.tsx` que la fila **conserva su rol `listitem`** y que hacerla pulsable no
+   puede costárselo — el patrón correcto es un botón **dentro** del `<li>`, no un `role`
+   **encima**. Con eso `MSG-01` se queda a dos rojos —`Nuevo contacto` deshabilitado con
+   motivo, y el recuento con `Intl`—, que son los dos que llevan tres corridas seguidas
+   fallando **y sí están declarados**: esos dos, por primera vez, parecen del modelo.
+   Corrida 09, ~$0,10.
+2. **La otra mitad de `F-131`: que el guardia lea los roles IMPLÍCITOS.** Hoy solo mira los
+   que hay que escribir a mano y descarta `listitem` *porque el elemento lo da gratis* —
+   supuesto que es falso en cuanto el Coder escribe un `role` encima. **Es la cuarta vez que
+   el guardia es una muesca más estrecho que el contrato** (`F-127`, `F-130`, `F-131`), y a
+   la cuarta ya no es mala suerte: cada versión cubre las formas de aserto que había
+   delante, no las que hay.
+3. **Decidir qué se hace con el 57 a 1.** Ver §5. Es la cifra que más debería mover el plan
+   y no tiene dueño.
+4. **Fundación V1.** Sigue sin empezar y ahora es lo único que queda en la corriente A
+   además de la medición. Es el candidato más barato.
+5. **Medir algo con n>1.** Ver §6: la pregunta «¿esto ha mejorado?» no es contestable con
+   una corrida por configuración, y hoy ha vuelto a hacer falta.
 
 ---
 
@@ -153,11 +173,14 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 | **Utillaje externo** | Modo aislado, commit fijado, interruptores apagados. Nunca modo equipo | Plan §5.4 |
 | **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código | Plan, Anexo B |
 | **Cuatro agentes máximo** | En construcción concurrente. Los de verificación no cuentan | Plan §6.2 |
-| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió. **Por eso las filas inválidas de `F-121` se marcan, no se borran** | 25-ago |
-| **Precios del generador** | `0.014 / 0.44 / 1.32`, vigentes a 25-ago. `check_prices()` avisa a los 90 días | `pricing.py` |
-| **Coste de orquestación: precio-sombra** | Tokens reales × tarifa pública de la API. No consola de facturación —Claude Code va por suscripción— ni estimación a ojo | `orchestration_pricing.py`, 28-ago |
-| **El corpus se congela en ALCANCE, no en git** | 29-ago, PO. Restaurar `app/` a un commit viejo congelaría también los arreglos del arnés. Se congela lo que se le pide al Coder; la **firma** se declara al día | `F-118` |
-| **El recorte lo hace quien mide, no el producto** | `npm test` y la CI corren la suite entera; el que excluye es C1 (`test:arnes`). Al revés, olvidar una bandera perdería cobertura del producto en silencio | `F-116` |
+| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió. Las filas inválidas de `F-121` **se marcan, no se borran** — y desde el 30-ago **están marcadas de verdad**, que es lo que esta línea llevaba cinco días afirmando en falso | 25-ago · `F-129` |
+| **Columna `corrida` en el CSV** | 30-ago, PO. Entra **antes de `resultado`**, que es la convención escrita en `metrics.py`; las 85 filas históricas llevan `-` y no se reconstruyen. La escribe `--corrida` | `F-129` |
+| **El guardia AVISA de lo que busca por regex, no bloquea** | 30-ago, y es una **medida**: al encenderlo salieron siete nombres nuevos en tareas que están **VERDES** con ellos sin declarar. Uno de los siete era real. Misma decisión que `F-127` con los roles | `F-130` |
+| **Precios del generador** | `0.014 / 0.44 / 1.32`, vigentes a 25-ago. `check_prices()` avisa a los 90 días | `pricing.py:33-40` |
+| **Coste de orquestación: precio-sombra** | Tokens reales × tarifa pública de la API. No consola de facturación —Claude Code va por suscripción— ni estimación a ojo | `orchestration_pricing.py` |
+| **El corpus se congela en ALCANCE, no en git** | 29-ago, PO. Se congela lo que se le pide al Coder; la **firma** se declara al día | `F-118` |
+| **El recorte lo hace quien mide, no el producto** | `npm test` y la CI corren la suite entera; el que excluye es C1 (`test:arnes`) | `F-116` |
+| **Lo que el contrato exige, la tarea lo dice** | Ocho veces en cuatro días. La vía elegida ha sido siempre la misma: **declararlo en `component_api`**, sin tocar ni un aserto | `F-116`, `F-118`, `F-123`, `F-125`, `F-126`, `F-127`, `F-128`, `F-131` |
 
 ---
 
@@ -165,11 +188,13 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **Nada cruza tarea contra contrato.** Cuatro veces en tres días el contrato exigió lo que la tarea no decía. Es la causa raíz de casi todo lo de hoy | Un encargo propio, ver §3.2 |
-| 🟠 | **`F-122`: el plazo vive fuera del proceso.** Dispara tarde y al matar pierde los intentos ya pagados | Reloj de pared en `run.py` |
+| 🔴 | **`F-131`: la tarea dice qué roles escribir y ninguno que no se pueda pisar.** Es el único rojo que separa a `MSG-01` de ser medible | §3.1 y §3.2 |
+| 🟠 | **El guardia va cuatro veces por detrás del contrato.** `F-127`, `F-130`, `F-131`. Cada versión cubre las formas de aserto que había delante | §3.2 |
+| 🟠 | **57 a 1, y sin dueño.** El Coder de los días 2 y 3 costó **$2,64**; la orquestación atribuida a esos días, **$150,48**. ⚠ Es precio-**sombra** a tarifa pública y Claude Code va por suscripción, así que no es lo que se paga — pero es el número que el proyecto eligió seguir, y dice que **el coste de una pantalla lo domina la orquestación, no la generación.** Eso, si se sostiene, cambia la premisa de la fábrica | Álvaro, con §3.3 |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. No bloquea porque el MCP llega, pero depender de eso es depender de la suerte | Álvaro: re-loguear y `link` |
-| 🟡 | **Nada despliega solo.** Si se toca código, se despliega **y se comprueba en la URL** | Se cumple cerrando con el despliegue hecho |
+| 🟡 | **Nada despliega solo.** Si se toca código, se despliega **y se comprueba en la URL**. Hoy no se ha tocado producto: el artefacto de la corrida 08 se descarta, como siempre | Se cumple cerrando con el despliegue hecho |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial. Riesgo aceptado por el PO el 18-ago hasta después de la reunión. **Sigue abierto** | Álvaro: 20 $/mes |
+| 🟡 | **Los tres worktrees no se van con `prune`.** Comprobado hoy: sus directorios existen, no hay registro muerto. Haría falta `git worktree remove`, y uno es la sesión desde la que se escribe | Fuera de sesión, desde la raíz del repo |
 
 ---
 
@@ -177,23 +202,36 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Si `MSG-01` escala por el modelo o por lo mismo de siempre.** Sus tres rojos están
-  dentro de su contrato de unidad —estado de error, botón sin motivo, `Intl`— y eso
-  **parece** una medida limpia del Coder. Pero eso mismo parecían los dos de `SRCH-01`
-  hace seis horas, y resultaron ser `F-123`. **No se han leído uno por uno.**
-- **Por qué la API se cuelga en la segunda tarea de una tanda y nunca en la primera.**
-  Cuatro cortes en cuatro tandas, ninguno en la que abre. Puede ser el proveedor
-  limitando peticiones seguidas, puede ser reutilización de conexión, puede ser
-  casualidad con n=4. No hay datos para decidirlo y no se ha adivinado.
-- **Cuánto de los $331,58 de coste-sombra es MVP y cuánto es V1.**
-- **Cuánto costó de verdad medir hoy.** Cuatro corridas del corpus, tres inválidas.
-  Los números están en el CSV y nadie los ha sumado — y es el dato que dice si esta
-  forma de medir sale a cuenta.
+- **Si `F-128` causó los ocho fallos nuevos de la corrida 08, o es varianza.** El mecanismo
+  de `F-131` es seguro —un `role` explícito tapa al implícito, reproducido a mano—, pero
+  **por qué el Coder escribió `role="button"` en la 08 y no en la 07 no se sabe**. Las dos
+  únicas menciones de `role=` que tiene la tarea son las que metieron `F-127` y `F-128`, las
+  dos diciendo «escribe este rol», y es tentador leer ahí la causa. **Con n=1 por
+  configuración eso no es distinguible de una diferencia de tirada, y no se ha adivinado.**
+- **Y por eso mismo: la pregunta «¿esto ha mejorado?» no es contestable hoy.** Cada corrida
+  es n=1. Es la primera vez que hace falta de verdad y ha sido hoy.
+- **Si los dos rojos que le quedan a `MSG-01` son del modelo.** `Nuevo contacto` con motivo y
+  el recuento con `Intl` llevan **tres corridas seguidas** fallando y **sí están
+  declarados**. Eso ya parece medida limpia — pero eso mismo parecía `SRCH-01` antes de
+  `F-123`, así que no se afirma hasta leerlos uno por uno.
+- **Por qué la API se cuelga en la segunda tarea de una tanda y nunca en la primera.** Sigue
+  sin datos. Hoy no ha pasado: la corrida 08 fue tarea única y el reloj de pared no llegó a
+  dispararse, así que **`F-122` sigue sin haberse probado en el caso que lo motivó.**
+- **Cuánto del coste-sombra es una sesión larga y cuánto son muchas.** El total son
+  **$501,69**, no los $331,58 que decía el relevo de ayer: la cifra llevaba parada desde el
+  25-ago. Por fecha, $337,51 cae en el MVP y $164,18 en V1 — pero el propio módulo avisa de
+  que una sesión larga concentra su coste en el día que arrancó, así que la frontera es
+  borrosa justo donde importa.
+- **Qué se pierde por no versionar los logs de corrida.** `.gitignore:32` ignora `*.log` y
+  **hay cero logs de `harness/metrics/` en el repo**. El §1 de ayer citaba `SRCH-01.log`
+  como prueba de que el reintento de `F-119` funcionaba, y esa prueba **no la puede
+  comprobar nadie más**: vive solo en la máquina donde se corrió. Los JSON guardan los
+  checks y el artefacto (`B-010`); el log guarda el **orden y los tiempos** — los avisos de
+  reintento, los del reloj de pared, en qué momento se volcó cada intento— y eso no está en
+  ningún otro sitio. Es `F-115` sin terminar. No se ha tocado `.gitignore` hoy porque `*.log`
+  es una regla ancha y quitarla a medias es peor que dejarla.
 - **Si `visibility_scope` y la lista derivada aguantan bajo carga.** Hito 6, no antes.
-- **Qué pasó en la reunión con el socio del 20-ago.** Ni una línea en el repo.
-- **Por qué la suite del arnés no está en la CI.** La CI corre esquema, app y
-  Playwright, y no `harness/tests/test_checks.py`. Por eso `test_c2_paths` estuvo
-  dieciséis días en rojo fijo sin que saltara nada.
+- **Qué pasó en la reunión con el socio del 20-ago.** Ni una línea en el repo. Diez días.
 
 ---
 
@@ -206,10 +244,14 @@ Cinco pasos. Se ejecutan **todos** o el relevo no vale.
    contra». Si no puedes escribir contra qué lo comprobaste, no lo escribas.
 3. **Revisar §2 contra el código**, no contra el §2 de ayer. Toda pieza marcada como
    pendiente se comprueba en el fichero real ese mismo día. Es la regla 2 y costó diez días
-   descubrir por qué existe.
+   descubrir por qué existe — y el 30-ago volvió a morder desde dentro (`F-129`).
 4. **Rellenar §6.** Si está vacía, no se ha pensado lo suficiente.
 5. **Hallazgos a `findings-register.md`, métricas a `harness-metrics.csv`, commit y push.**
    Si se tocó código, desplegar **y comprobarlo en su URL**.
+
+⚠ **Y el paso cero, que es la regla 4: no cierres hasta que se acabe.** El día 3 se cerró a
+las 12:33 y siguió trabajando hasta las 13:45. Si después del cierre se toca algo, este
+fichero se vuelve a tocar.
 
 ---
 
@@ -224,11 +266,12 @@ Orden de lectura, y el orden importa:
 4. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
 5. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
 6. **`findings-register.md`** nunca de corrido: por identificador, cuando algo te mande a
-   uno.
+   uno. Hoy: `F-129`, `F-130`, `F-131`.
 
 ---
 
-*Día 3 de V1 · 29-ago-2026 · fecha leída de la máquina (`date -u` + `datetime.now()`) ·
-estado verificado contra el código de `mvp/bootstrap` y contra la salida real de las
-corridas, no contra otro documento · **cuatro corridas del corpus, tres invalidadas por
-la propia instrumentación y dichas como tales** · Dirección Técnica, Nortex Systems*
+*Día 4 de V1 · 30-ago-2026 · fecha leída de la máquina (`date -u` + `datetime.now()`) ·
+estado verificado contra el código de `mvp/bootstrap`, contra los logs de la CI y contra la
+salida real de la corrida 08, no contra otro documento · **una corrida del corpus, y el
+fallo que la explica reproducido a mano contra el artefacto antes de escribirlo aquí** ·
+Dirección Técnica, Nortex Systems*

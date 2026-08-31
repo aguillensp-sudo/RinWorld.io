@@ -1,0 +1,138 @@
+
+==============================================================================
+· corrida arrancada 2026-08-31 13:51:50 · harness/tasks/MSG-01.json --corrida remedicion-10a-msg-post-fixes
+==============================================================================
+Log de esta corrida: harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\MSG-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 20367/55970   cache: 99.93% hit
+  coste real: $0.074172   en frio: $0.082842
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 26060/15394   cache: 78.1% hit
+  coste real: $0.023117   en frio: $0.031786
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 26300/26003   cache: 77.38% hit
+  coste real: $0.037226   en frio: $0.045896
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\attempt_3.json (F-122)
+  CSV: 2026-08-31,MSG-01,MSG-01,deepseek-v4-flash,20367,55970,0.074172,1,6.9,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,99.93,no,-,remedicion-10a-msg-post-fixes,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-31,MSG-01,MSG-01,deepseek-v4-flash,26060,15394,0.023117,2,1.9,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,78.10,no,-,remedicion-10a-msg-post-fixes,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-31,MSG-01,MSG-01,deepseek-v4-flash,26300,26003,0.037226,3,3.7,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,77.38,si,-,remedicion-10a-msg-post-fixes,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\attempt_1.json
+  harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\attempt_2.json
+  harness\metrics\MSG-01\remedicion-10a-msg-post-fixes\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run test:arnes (exit 1)
+1 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > barra de acciones > "Nuevo contacto" está deshabilitado y dice por qué
+
+--- ultimas lineas de la salida ---
+          id="nuevo-contacto-motivo"
+        >
+          El Directorio queda fuera del MVP
+        </span>
+        <span
+          class="_threadCount_74b881"
+          data-testid="pag-info"
+        >
+          0
+           
+          hilos
+           · Página
+           
+          1
+           de 
+          1
+        </span>
+      </div>
+      <p
+        class="_status_74b881"
+        role="status"
+      >
+        Cargando hilos…
+      </p>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/messages/Messages.test.tsx:167:21
+    165|       const boton = screen.getByRole('button', { name: /Nuevo contacto…
+    166|       expect(boton).toBeDisabled();
+    167|       expect(screen.getByTestId('directorio-scope').textContent).toMat…
+       |                     ^
+    168|     });
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+1 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > barra de acciones > "Nuevo contacto" está deshabilitado y dice por qué
+
+--- ultimas lineas de la salida ---
+          id="nuevo-contacto-motivo"
+        >
+          El Directorio queda fuera del MVP
+        </span>
+        <span
+          class="_threadCount_74b881"
+          data-testid="pag-info"
+        >
+          0
+           
+          hilos
+           · Página
+           
+          1
+           de 
+          1
+        </span>
+      </div>
+      <p
+        class="_status_74b881"
+        role="status"
+      >
+        Cargando hilos…
+      </p>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/messages/Messages.test.tsx:167:21
+    165|       const boton = screen.getByRole('button', { name: /Nuevo contacto…
+    166|       expect(boton).toBeDisabled();
+    167|       expect(screen.getByTestId('directorio-scope').textContent).toMat…
+       |                     ^
+    168|     });
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

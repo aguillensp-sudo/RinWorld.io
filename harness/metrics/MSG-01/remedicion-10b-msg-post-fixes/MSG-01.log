@@ -1,0 +1,108 @@
+
+==============================================================================
+· corrida arrancada 2026-08-31 14:07:38 · harness/tasks/MSG-01.json --corrida remedicion-10b-msg-post-fixes
+==============================================================================
+Log de esta corrida: harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\MSG-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ⚠ ConnectionResetError: [WinError 10054] Se ha forzado la interrupción de una conexión existente por el host remoto. No es un intento del modelo (F-119): reintento en 5s
+  ⚠ URLError: <urlopen error [Errno 11001] getaddrinfo failed>. No es un intento del modelo (F-119): reintento en 20s
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 20367/50572   cache: 99.93% hit
+  coste real: $0.067047   en frio: $0.075717
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 25897/29089   cache: 78.59% hit
+  coste real: $0.041122   en frio: $0.049792
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 26258/25737   cache: 77.51% hit
+  coste real: $0.036856   en frio: $0.045526
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\attempt_3.json (F-122)
+  CSV: 2026-08-31,MSG-01,MSG-01,deepseek-v4-flash,20367,50572,0.067047,1,72.6,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,99.93,no,-,remedicion-10b-msg-post-fixes,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-31,MSG-01,MSG-01,deepseek-v4-flash,25897,29089,0.041122,2,3.7,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,78.59,no,-,remedicion-10b-msg-post-fixes,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-08-31,MSG-01,MSG-01,deepseek-v4-flash,26258,25737,0.036856,3,3.1,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,77.51,si,-,remedicion-10b-msg-post-fixes,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\attempt_1.json
+  harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\attempt_2.json
+  harness\metrics\MSG-01\remedicion-10b-msg-post-fixes\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run typecheck (exit 2)
+1 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/messages/Messages.tsx(139,10): error TS2375: Type '{ threads: ThreadSummary[]; onOpen: () => void; now: Date | undefined; }' is not assignable to type 'Props' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+--- ultimas lineas de la salida ---
+> bearingworld-app@0.1.0 typecheck
+> tsc --noEmit
+
+src/screens/messages/Messages.tsx(139,10): error TS2375: Type '{ threads: ThreadSummary[]; onOpen: () => void; now: Date | undefined; }' is not assignable to type 'Props' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'now' are incompatible.
+    Type 'Date | undefined' is not assignable to type 'Date'.
+      Type 'undefined' is not assignable to type 'Date'.
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+2 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > barra de acciones > "Nuevo contacto" está deshabilitado y dice por qué
+  - src/screens/messages/Messages.test.tsx > MSG-01 · pantalla > paginación > el recuento se formatea con Intl, no a mano
+
+--- ultimas lineas de la salida ---
+        </button>
+        <button
+          class="_pageBtn_74b881 "
+          type="button"
+        >
+          40
+        </button>
+        <button
+          class="_pageBtn_74b881 "
+          type="button"
+        >
+          41
+        </button>
+        <button
+          class="_pageBtn_74b881 "
+          type="button"
+        >
+          42
+        </button>
+        <button
+          class="_pageBtn_74b881 _pageCtrl_74b881"
+          type="button"
+        >
+          ›
+        </button>
+      </nav>
+    </section>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/screens/messages/Messages.test.tsx:196:33
+    194|       fetchThreadPage.mockResolvedValue(page([thread()], 1247));
+    195|       pintar();
+    196|       const info = await screen.findByTestId('pag-info');
+       |                                 ^
+    197|       expect(info.textContent).toContain((1247).toLocaleString('es-ES'…
+    198|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯

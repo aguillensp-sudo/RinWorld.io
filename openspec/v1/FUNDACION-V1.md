@@ -10,6 +10,12 @@ del repo en `mvp/bootstrap` **y la base de datos de verdad** (`information_schem
 > 0, `thread_items.quantity` 0, los cuatro campos de respaldo 4 de 4, índices GIN 2 —,
 > pero eso hay que **verlo**, no suponerlo: un fichero de migración dice lo que alguien
 > escribió, no lo que se aplicó.
+>
+> ⚠ **Corregido el 1-sep-2026:** el `visibility_scope` 0 de arriba es la foto del
+> 30-ago. Ese mismo día, más tarde, `0018_members_visibility_scope.sql` añadió la
+> columna, el check y el trigger — ver §1 fila 2 y §2 fila 2, las dos comprobadas hoy
+> contra `information_schema`, `pg_constraint` y los datos reales del proyecto, no
+> contra este párrafo.
 
 > **Por qué existe este fichero.** `ESTADO-V1.md` §2 lleva cuatro días diciendo
 > *«Fundación V1 (entornos, ADR-002, índice, residencia) — ⚪ No empezada»*, y hoy dice
@@ -70,7 +76,7 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
 | Objeto de `ADR-002` §5 | Cambio que pide | Estado | Verificado contra |
 |---|---|---|---|
 | `thread_items` | **+ columna `quantity`** (D-3) | 🔴 | `grep -rn quantity supabase/migrations/` solo la encuentra en `inventory_lines` (`0002:77`). En `thread_items`, no existe |
-| `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | 🔴 | `grep -rn visibility_scope supabase/ app/src` → **cero apariciones en todo el repo** |
+| `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ **HECHO — 1-sep-2026** | `0018_members_visibility_scope.sql`, aplicada al proyecto real por el MCP. Comprobado contra `information_schema` (columna `not null`), `pg_constraint` (`members_visibility_scope_chk` existe) y contra los datos reales: los 2 miembros sembrados son `ADMIN` con `visibility_scope = 'ORG_METADATA'`, sin una sola fila fuera de ese patrón. `guard_member_privileges` (0001) bloquea la columna por `UPDATE` desde el cliente, probado local antes de aplicar (`supabase/tests/run.sh`, fase 1) |
 | `thread_public_keys(t_id)` | Deja de devolver todos los miembros; devuelve el conjunto de D-1 | 🔴 | `0012:92-95` sigue diciendo, en su propio comentario, que *«los dos lados del hilo significa literalmente todos los miembros de las dos organizaciones»* |
 | `thread_items_select_participant` | Pasa a considerar el ámbito | 🔴 | `0003:329` sigue siendo `app.can_access_thread(thread_id)`, sin ámbito |
 | Lista de hilos | Deja de ser consulta directa a `threads`; se deriva de `thread_item_keys` | 🔴 | `0003:312-314`: la política sigue siendo `app.current_org_id() in (org_low_id, org_high_id)` — **cualquier miembro de la organización ve cualquier hilo de la organización**, que es exactamente lo que ADR-002 viene a quitar |
@@ -93,9 +99,14 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
    mitad de ADR-002 — `0017_thread_derivation_index.sql`, aplicada. **Sigue pendiente
    la otra mitad de esa misma fila:** la política `threads_select_participant` no usa
    el índice todavía, porque nadie ha reescrito la consulta que deriva la lista de
-   `thread_item_keys`. `visibility_scope` es el siguiente entregable y es el que cambia
-   el comportamiento visible.
-4. **Lo que este fichero NO sabe:** cuál es exactamente «el índice de búsqueda» del plan
+   `thread_item_keys`.
+4. **`visibility_scope` (D-4), hecho el mismo 1-sep-2026, más tarde el mismo día:**
+   columna, check y trigger aplicados — `0018_members_visibility_scope.sql`. **Todavía
+   no cambia ningún comportamiento visible:** la rellena el trigger, la protege la
+   guardia, pero ninguna política de RLS ni ninguna pantalla la consultan aún. Eso
+   llega con la fila "Lista de hilos" de ADR-002 §5, que sigue 🔴 — es la pieza que de
+   verdad activa el ámbito por usuario, y usa el índice de `0017` en cuanto se escriba.
+5. **Lo que este fichero NO sabe:** cuál es exactamente «el índice de búsqueda» del plan
    —el plan lo dice en singular y no lo nombra—, y si «aislamiento de la base de
    demostración» significa proyecto Supabase aparte o esquema aparte. Las dos son
    preguntas de alcance, no de código, y las contesta el PO.

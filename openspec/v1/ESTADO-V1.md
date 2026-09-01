@@ -72,47 +72,47 @@ distrae.**
 
 ---
 
-**Día 4 de V1 · 30-ago-2026 · SEGUNDO CIERRE, y esa es la primera noticia · Estado: VERDE**
+**Día 5 de V1 · 1-sep-2026 · Estado: VERDE**
 
-Este fichero se cerró hoy a las 11:22 con `F-131` abierto y una lista de cinco cosas para
-mañana. **Mañana empezó a las 11:32 del mismo día.** Lo que sigue es la segunda mitad del
-día 4: `F-131` cerrado y medido, y detrás de él **cinco hallazgos nuevos** (`F-132` a
-`F-136`) que no estaban en ninguna lista.
+Este fichero se abrió hoy leyendo el segundo cierre del día 4, con `F-131` a `F-136`
+cerrados y cinco tareas para hoy: desplegar `ThreadHeader.tsx`, remedir `MSG-01`,
+decidir la Fundación V1, decidir el 57 a 1, y lo que saliera de mirar los tres artefactos
+de "Nuevo contacto". **Las cinco se hicieron.** Y una de ellas escondía una sexta que no
+estaba en ninguna lista.
 
-**El hallazgo del día, y no es `F-131`: cuatro de las cinco cosas que se dieron por buenas
-esta mañana no lo eran, y ninguna era del modelo.** «Siete asertos» eran nueve. «Fundación
-no empezada» tenía un entregable entero hecho desde el día 1. «`MSG-01`: 2 de 4» llevaba
-tres corridas midiendo un choque entre dos decisiones propias. Y dos tests que llevaban
-semanas en verde **pasaban sin que la pantalla llegara a abrirse**.
-
-**Y el marcador se mueve, con una condición.** `MSG-01` llegó a **`C1` verde** en dos de
-tres corridas —primera vez en la serie— y con la `C2` de `F-134` esos dos intentos habrían
-sido **4/4**. Se dice como contrafactual, no como resultado: la `C2` nueva se escribió
-después de medir.
+**El hallazgo del día no es que `MSG-01` se remidiera peor de lo previsto, aunque también
+pasó: `10c` pasó 4/4, pero `10a` y `10b` no solo repitieron el mismo rojo — con `n=3` real
+fue 1 de 3, no las 2 de 3 que el contrafactual de ayer preveía.** El hallazgo es que
+**arreglar uno de los hallazgos de hoy rompió la CI de otro, y nadie lo notó durante casi
+una hora.** `F-139` explicaba un `data-testid` citando, sin darse cuenta, el mismo literal
+que `F-128` tiene protegido en un test de regresión — `cruzar_con_el_contrato()` mira la
+tarea entera como una sola cadena, así que una explicación nueva en un fichero pisó,
+literalmente, la evidencia que otro test necesita en un fichero distinto. **Las tres CI
+siguientes salieron rojas** (`9f09522`, `f47f026`, `087962b`) y ninguna corrección
+posterior lo arregló, porque ninguna volvía a tocar esa frase. Se encontró al revisar la
+CI job a job antes de cerrar — el mismo paso del §7 que ayer también se saltó nadie, y hoy
+sí se hizo. **Un JSON válido y un test local en verde no bastan cuando el test que importa
+es otro** (`F-140`).
 
 ---
 
-## 1 · Qué se ha comprobado en esta segunda mitad, y contra qué
+## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-08-30`, 11:31 UTC al escribir esto |
-| `F-131`: el mecanismo, y cuánto cuesta | Defecto inyectado a mano en el `ThreadList.tsx` bueno + `npx vitest run` | **9 rojas de 34.** Ocho por `Unable to find role="listitem"` y **una novena por `Found multiple elements`** — el `<li>` pisado es un segundo botón con el mismo nombre accesible que el de dentro. La cifra de esta mañana («siete») era corta. Inyección revertida |
-| `F-131`: el guardia lo habría cazado | `cruzar_con_el_contrato` sobre `MSG-01` con la declaración quitada | Lo ve. Sobre la tarea de hoy, **calla** — que es la prueba de que la declaración llegó |
-| `F-131`: la lista estructural está calibrada | El guardia sobre las seis tareas, con y sin el filtro | **5 avisos en 6 tareas** con los estructurales; **17** con todos los implícitos. `button` cantaría en las seis, y eso es un guardia que se desactiva en una semana (`F-003`) |
-| El guardia, después de declarar las tres tareas | Las seis tareas, contadas | **Cero avisos de `F-131`.** No es que calle: es que no le queda nada que decir |
-| `F-132`: la Fundación V1 no estaba sin empezar | `supabase/migrations/*.sql` **y** `information_schema` del proyecto real, por el MCP | Los **cuatro** campos del respaldo de clave están en `0001:78-81` y en la base (4 de 4), con tres restricciones que el hito ni pedía. `visibility_scope` 0, `thread_items.quantity` 0, índices GIN 2 |
-| `F-133`: `CLAUDE.md` §10.2 se contradecía | `list_projects` por el MCP + `VITE_SUPABASE_URL` de `app/.env` | `troxminloxkjwihwfevs` es el **proyecto** (`MVP_RinWorld.io`, `eu-west-1`, `ACTIVE_HEALTHY`); `ujatcozvbspkycepemfq` es la **organización**. El texto los enfrentaba |
-| `F-134`: por qué `C2` llevaba tres corridas en rojo | El detalle de `C2` del intento 3 de `09a` —el único con `C1` verde— y el artefacto guardado en su JSON | Los **6 fallos son los 6 del bloque `MSG-02`**. Causa: `Messages.tsx:152` del artefacto pinta `onOpen={noop}`, que es lo que la tarea le **ordena** («la recibes y la IGNORAS», `F-118`) |
-| `F-134`: el reparto de culpas funciona | `_repartir_culpas` sobre la salida real de `09a` | 6 excusados, **0 imputables**, y contra esa salida vieja **2 caducadas** — que son los dos de `F-135`, o sea la cerradura 4 trabajando sobre datos reales |
-| `F-135`: los dos tests medían aire | Navegación neutralizada a mano + `npx playwright test` | Los fallos de `MSG-02` pasan de **6 a 8**. Contra el repo intacto, **20 de 20**. Inyección revertida |
-| `F-136`: el log lo escribe la corrida | `abrir_log` sobre un directorio temporal | Crea, encabeza con la orden de lanzamiento, captura los dos flujos, **no trunca** al relanzar, y ante una ruta imposible **avisa sin reventar** |
-| La suite del arnés | `python -m harness.tests.test_checks` | **Todas en verde**, con 12 comprobaciones nuevas |
-| La suite del producto | `npm test` | **642 pasan**, 23 saltadas, 0 fallos |
-| El e2e completo | `npx playwright test e2e/messages.spec.ts` | **20 de 20** |
-| El CSV, después de nueve filas nuevas | `csv.DictReader` sobre el fichero | **97 filas, 15 columnas**, cabecera intacta. Las 9 de la corrida 09 suman **$0,3171** y las tres escalaron |
-| Estado del árbol y del cerrojo al cerrar | `git status`, `ls harness/.corrida-en-curso` | Limpio y suelto |
-| CI del último commit del día | `gh run view` sobre `99f746d`, job a job | **Los cuatro en verde**: `Esquema`, `App · typecheck/Vitest/build`, `Arnés · piezas puras` y `Playwright · puerta de las dos cuentas`. `baff9ef` figura **cancelada**, no roja: la reemplazó el push siguiente |
+| Fecha de máquina | `date -u` | `2026-09-01`, 09:15 UTC al escribir esto |
+| Despliegue de `ThreadHeader.tsx` (`F-135`), pendiente desde ayer | `bearingworld.vercel.app`, tras `npx vercel --prod` | Desplegado y comprobado: `navigation "Ruta"` en el árbol de accesibilidad del hilo con Nordwälz Lager, y `X-Robots-Tag: noindex, nofollow, noarchive` presente |
+| `MSG-01`, tres corridas más (`10a`/`10b`/`10c`) con `F-131`/`F-134`/`F-135` ya puestos | Los 9 `attempt_N.json` guardados | **1 de 3 en 4/4**, no las 2 de 3 que preveía el contrafactual de ayer. `10a` y `10b` escalan 2/4 — con causas DISTINTAS entre sí—; `10c` pasa 4/4 (marcado: e2e con 8 excusados por `F-134`) |
+| `F-137`: por qué `10b` rompió `C1` con un `TS2375` | `relativeTime()` en `app/src/lib/threads.ts:133`, y los 9 artefactos | El tipo declarado `now?: Date` castigaba una omisión de default que nunca llegaba a causar un bug real — `relativeTime` ya tiene su propio respaldo. Ensanchado a `Date \| undefined` |
+| `F-138`: por qué `10b` rompió `C2` en el contador de resultados | `harness/tasks/MSG-01.json` entero, buscando el literal | `data-testid="pag-info"` no estaba declarado en ningún sitio; `10a`/`10c` lo escribieron por costumbre, `10b` no. Declarado |
+| `F-139`: por qué "Nuevo contacto" falla 9 de 9 | Los 9 `attempt_N.json`, no solo los 3 finales | No es del modelo: `directorio-scope` tampoco estaba declarado, y el único intento que lo acertó (`10c`) lo copió de un literal que se filtró por casualidad en el feedback truncado de `C2` — es `F-114` confirmado con nombre y apellido, no un hallazgo aparte |
+| El índice de la derivación de la lista (`ADR-002` §5, última fila) | `pg_indexes` del proyecto real (`troxminloxkjwihwfevs`), antes y después, por el MCP | `thread_item_keys_recipient_idx (recipient_member_id)` sustituido por `thread_item_keys_recipient_item_idx (recipient_member_id, item_id)`, vía `apply_migration`. Solo el índice: la política sigue sin reescribirse |
+| El 57 a 1 (Coder vs. orquestación, días 2-3 de V1) | Re-corrido `orchestration_metrics.py` contra las transcripciones reales + `harness-metrics.csv` | Confirmado exacto: $150,48 / $2,64 = 57,0. Decisión del PO: se acepta como patrón esperado del precio-sombra, sin acción |
+| `F-140`: la CI del día, job a job | `gh run list` / `gh run view` sobre los cinco commits de hoy | **Tres corridas rojas** (`9f09522`, `f47f026`, `087962b`) por el literal de `F-128` citado sin querer al escribir `F-139`. Corregido en `025002a`: las cuatro piezas en verde |
+| La suite del producto | `npm test` | **642 pasan, 23 saltadas** — igual que ayer; ninguno de los cambios de hoy tocó `app/` |
+| La suite del arnés | `python -m harness.tests.test_checks` | **Todas en verde**, tras el arreglo de `F-140` |
+| Los worktrees | `git worktree list` | Siguen siendo los mismos cuatro de ayer + la raíz. Ninguno nuevo hoy |
+| Estado del árbol al cerrar | `git status` | Limpio tras el commit de cierre |
 
 ---
 
@@ -122,49 +122,44 @@ después de medir.
 
 | Pieza | Estado |
 |---|---|
-| `B-007`, `F-114`–`F-121`, `F-123`–`F-128`, `F-130` | ✅ 28 y 29-ago, y la mañana del 30 · ver el cierre anterior en `git show ebd5d5b` |
-| **`F-131` un `role` explícito sustituye al implícito** | ✅ **30-ago · `ec0cce0`, `2c55b93`** — declarado en las **tres** tareas afectadas, no solo en la que lo sufrió |
-| **`F-132` la Fundación V1, comprobada de verdad** | ✅ **30-ago · `ecc966a`** — `openspec/v1/FUNDACION-V1.md` |
-| **`F-133` `CLAUDE.md` §10.2** | ✅ **30-ago · `ecc966a`** |
-| **`F-134` `C2` reparte culpas sin dejar de mirar** | ✅ **30-ago · `0efe6a0`** — decisión (b) del PO |
-| **`F-135` dos tests e2e que no miraban nada** | ✅ **30-ago · `baff9ef`** |
-| **`F-136` la corrida escribe su propio log** | ✅ **30-ago · `99f746d`** |
-| **Medición del corpus** | 🟡 **Sigue 2 de 4 en el marcador**, pero por primera vez con `n=3` debajo. Ver §3.1: mover el marcador ya solo depende de volver a correr |
-| Fundación V1 | 🟡 **1 de 6 entregables hecho** (el respaldo de clave, desde `0001`), 2 a medias, 3 sin empezar. **ADR-002 a cero**: sus siete objetos, ninguno. Detalle en `FUNDACION-V1.md` |
-| `MSG-01` a 4/4 | 🟡 **Un solo rojo lo separa**, y es del modelo: `Nuevo contacto`. Ver §3.1 |
+| `F-114`, `F-131`–`F-136` | ✅ ver cierre anterior en `git show 2982d44` |
+| **`F-137` tipo `now?: Date \| undefined` en `component_api`** | ✅ **1-sep · `b6e8d62`** |
+| **`F-138` `data-testid="pag-info"` declarado** | ✅ **1-sep · `8c8becb`** |
+| **`F-139` `data-testid="directorio-scope"` declarado — y es `F-114` confirmado** | ✅ **1-sep · `9f09522`, `f47f026`** |
+| **`F-140` el arreglo de `F-139` rompió la CI de `F-128`, corregido** | ✅ **1-sep · `025002a`** |
+| Medición del corpus | 🟡 **1 de 3 en 4/4** hoy, pero con un corpus que cambió A MITAD de medir: los tres arreglos se descubrieron corriendo estas mismas corridas, no se aplicaron antes de ellas. La cifra de mañana es la primera que mide el corpus ya arreglado |
+| `MSG-01` a 4/4 | 🟡 Ya no queda un rojo conocido sin explicar, pero falta la corrida que lo confirme |
+
+### Fundación V1
+
+| Pieza | Estado |
+|---|---|
+| Índice de la derivación de la lista (entregable 5 + `ADR-002` §5, última fila) | ✅ **1-sep · `087962b`**, `0017_thread_derivation_index.sql` |
+| Resto de la Fundación (entregables 1-3, 6; `visibility_scope`; el resto de `ADR-002` §5) | 🟡 Sin cambios — ver `FUNDACION-V1.md`, actualizado hoy en el punto del índice |
 
 ### Corriente B · Fábrica — NO ABIERTA
 
-Se abre cuando la corriente A publique los contratos de datos. Límite escrito: **máximo
-cuatro agentes de construcción concurrentes**.
+Sin cambios. Se abre cuando la corriente A publique los contratos de datos.
 
 ### Corriente C · Verificación — NO ABIERTA
 
-Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado en
-`85fd9db5`, los cinco interruptores de red apagados. Sin cambios hoy.
+Sin cambios.
 
 ---
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **Correr `MSG-01` otra vez, y es lo más barato que hay sobre la mesa.** Todo lo que la
-   bloqueaba está arreglado y ninguna corrida lo ha visto todavía junto: `F-131`
-   declarado, la `C2` de `F-134` repartiendo culpas, `F-135` anclado y el log
-   escribiéndose solo. **Con lo medido hoy, dos de cada tres tiradas deberían dar 4/4.**
-   Si sale, el marcador pasa a **3 de 4** con `n=3` detrás, que es la primera cifra
-   defendible del `Plan §11`. ~$0,10 por tirada; **tres, no una** — hoy se ha visto por qué.
-2. **`Nuevo contacto`, que es el único rojo que queda y ahora sí es medida.** Falla en
-   **9 de 9** intentos, en tres corridas independientes, con el requisito declarado en la
-   tarea desde `F-128`. Ya no es «parece del modelo»: es del modelo, con `n=3`. La
-   pregunta ya no es de quién es, es qué se hace — ¿se acepta como techo, se reescribe la
-   declaración, o se cambia el aserto?
-3. **Fundación V1, y ahora se sabe por dónde.** El candidato barato es el **índice de la
-   derivación de la lista** (entregable 5 + última fila de ADR-002 §5): es **una
-   migración** y desbloquea media ADR-002. `visibility_scope` es la siguiente, y es la que
-   cambia el comportamiento visible.
-4. **Decidir qué se hace con el 57 a 1.** Sin tocar desde ayer. Ver §5.
-5. **Desplegar `ThreadHeader.tsx`.** Ver §5, y es lo primero de la lista si alguien va a
-   mirar la URL.
+1. **Re-correr `MSG-01` una vez más (n=3), con `F-137`/`F-138`/`F-139` ya en el corpus
+   desde el principio.** La corrida de hoy fue la que los descubrió; esta es la primera
+   que puede decir de verdad si el marcador sube. ~$0,10 por tirada, tres tiradas.
+2. **`visibility_scope` (D-4 de `ADR-002`), el siguiente entregable de la Fundación.**
+   Cambia comportamiento visible, y con el índice de hoy ya puesto no bloquea nada.
+3. **Auditar si `SRCH-01`, `VND-01`, `PANEL-01` y `LOGIN-01` tienen el mismo riesgo que
+   `F-140` acaba de mostrar hoy:** una explicación nueva en `component_api` pisando sin
+   querer un literal que un test de regresión de otro hallazgo usa como ancla. No
+   auditado todavía en ninguna de las cuatro.
+4. **(sigue abierto) Qué pasó en la reunión con el socio del 20-ago.** Ni una línea en
+   el repo. Van ya doce días.
 
 ---
 
@@ -172,26 +167,28 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 | # | Decisión | Dónde |
 |---|---|---|
-| **ADR-002** | Ámbito de visibilidad por usuario. **Diez decisiones, seis invariantes.** Entra en la fundación, no después. ⚠ **Comprobado el 30-ago: sus siete objetos de esquema están a cero** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
+| **ADR-002** | Ámbito de visibilidad por usuario. **Diez decisiones, seis invariantes.** Entra en la fundación, no después. El índice de la derivación de la lista ya está hecho (§2); el resto de sus siete objetos de esquema sigue a cero | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
 | **El hilo no es concepto visible** | El usuario ve «mi conversación con tal empresa». MSG-01 y MSG-02 no se titulan por hilo | ADR-002 §6 |
-| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. No DeepSeek: sin acuerdo de tratamiento y entrena por defecto. ⚠ **Lo desplegado hoy no es eso** —`api.anthropic.com` sin `baseURL`, `claude-sonnet-4-6`—: la decisión es de V1 y ese cambio **es** el entregable 6 de la Fundación | Plan §4.2, `FUNDACION-V1.md` §1 |
+| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. No DeepSeek: sin acuerdo de tratamiento y entrena por defecto. Lo desplegado sigue sin ser eso —`api.anthropic.com` sin `baseURL`—: sigue siendo el entregable 6 de la Fundación, sin fecha | Plan §4.2, `FUNDACION-V1.md` §1 |
 | **Generador de código** | DeepSeek V4 Flash **vía Microsoft Foundry, zona UE**. Nunca toca criptografía, reglas de acceso, claves ni datos de cliente | Plan §4.3 |
 | **Revisión multiagente** | Sobre esquema, criptografía y capa de datos. **Nunca sobre cada pantalla** | Plan §5.4 |
 | **Utillaje externo** | Modo aislado, commit fijado, interruptores apagados. Nunca modo equipo | Plan §5.4 |
 | **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código | Plan, Anexo B |
 | **Cuatro agentes máximo** | En construcción concurrente. Los de verificación no cuentan | Plan §6.2 |
-| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió. Las filas inválidas de `F-121` se marcan, no se borran — y desde el 30-ago **están marcadas de verdad** | 25-ago · `F-129` |
-| **Columna `corrida` en el CSV** | Entra **antes de `resultado`**. Las 85 filas históricas llevan `-`. La escribe `--corrida` | `F-129` |
-| **El guardia AVISA, no bloquea** | Vale para los roles (`F-127`), para lo buscado por regex (`F-130`) y para los roles estructurales (`F-131`). Las tres veces es una **medida**, no una preferencia: bloquear pararía tareas que demostrablemente funcionan | `F-127`, `F-130`, `F-131` |
-| **`C2` corre SIEMPRE la suite e2e ENTERA** | `D-09-03 (a)`, 12-ago. **NO se ha tocado hoy**, y su motivo (`F-070`) sigue en pie | `test_runner.py` |
-| **…pero no le cobra al Coder lo que la tarea le prohibió** | 30-ago, PO, opción (b) de `F-134`. Exclusión **por tarea y por test**, con motivo escrito. Cuatro cerraduras: la suite corre entera, se excusa test a test, si no cuadra el recuento se cobra entero, y una exclusión caducada se canta | `F-134` |
-| **Un verde con excusas se MARCA en el CSV** | 30-ago. `e2e con N excusado(s)… la suite NO estaba limpia`. Un verde con asterisco agregado como verde limpio es `F-129` otra vez | `F-134` |
-| **Los logs de corrida se versionan, y los escribe la corrida** | 30-ago. `!harness/metrics/**/*.log`, y `run.py` los escribe él mismo: en append, con flush, antes del cerrojo | `F-115`, `F-136` |
+| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió. Las filas inválidas se marcan, no se borran | 25-ago · `F-129` |
+| **Columna `corrida` en el CSV** | Entra antes de `resultado`. La escribe `--corrida` | `F-129` |
+| **El guardia AVISA, no bloquea** | Vale para los roles (`F-127`), lo buscado por regex (`F-130`) y los roles estructurales (`F-131`). Es una **medida**, no una preferencia | `F-127`, `F-130`, `F-131` |
+| **`C2` corre SIEMPRE la suite e2e ENTERA** | `D-09-03 (a)`, 12-ago. Su motivo (`F-070`) sigue en pie | `test_runner.py` |
+| **…pero no le cobra al Coder lo que la tarea le prohibió** | 30-ago, PO, opción (b) de `F-134`. Exclusión por tarea y por test, con motivo escrito | `F-134` |
+| **Un verde con excusas se MARCA en el CSV** | 30-ago. Un verde con asterisco agregado como verde limpio es `F-129` otra vez | `F-134` |
+| **Los logs de corrida se versionan, y los escribe la corrida** | 30-ago. `run.py` los escribe él mismo: en append, con flush, antes del cerrojo | `F-115`, `F-136` |
 | **Precios del generador** | `0.014 / 0.44 / 1.32`, vigentes a 25-ago. `check_prices()` avisa a los 90 días | `pricing.py:33-40` |
-| **Coste de orquestación: precio-sombra** | Tokens reales × tarifa pública de la API | `orchestration_pricing.py` |
-| **El corpus se congela en ALCANCE, no en git** | Se congela lo que se le pide al Coder; la **firma** se declara al día. ⚠ Hoy se ha usado tres veces (`F-131` en `MSG-01`, `SRCH-01` y `VND-01`) | `F-118` |
-| **El recorte lo hace quien mide, no el producto** | `npm test` y la CI corren la suite entera; el que excluye es C1 (`test:arnes`) — y desde hoy también C2, con la misma forma | `F-116`, `F-134` |
-| **Lo que el contrato exige, la tarea lo dice** | **Once veces en cinco días.** La vía elegida ha sido siempre la misma: declararlo en `component_api` —o, desde hoy, en `acceptance`—, sin tocar ni un aserto | `F-116`, `F-118`, `F-123`, `F-125`–`F-128`, `F-131`, `F-134` |
+| **Coste de orquestación: precio-sombra** | Tokens reales × tarifa pública de la API. **No es factura: Claude Code va por suscripción** | `orchestration_pricing.py` |
+| **El 57 a 1 se acepta, sin acción** | 1-sep-2026, PO. El coste de una pantalla lo domina orquestar, no generar; sin presión de coste marginal real, se sigue midiendo pero no se optimiza | `F-113`, hoy |
+| **El recorte posicional del feedback (`F-114`) se acepta como coste conocido** | 1-sep-2026, PO, opción (a). No se toca `test_runner.py`: el arreglo real sigue siendo declarar en `component_api` en cuanto se descubre, no hacer más listo el canal de feedback | `F-114`, `F-139` |
+| **El corpus se congela en ALCANCE, no en git** | Se congela lo que se le pide al Coder; la firma se declara al día | `F-118` |
+| **El recorte lo hace quien mide, no el producto** | `npm test` y la CI corren la suite entera; el que excluye es C1 (`test:arnes`) y C2, con la misma forma | `F-116`, `F-134` |
+| **Lo que el contrato exige, la tarea lo dice** | **Trece veces en seis días.** La vía elegida ha sido siempre la misma: declararlo en `component_api` —o, en `acceptance`—, sin tocar ni un aserto | `F-116`, `F-118`, `F-123`, `F-125`–`F-128`, `F-131`, `F-134`, `F-138`, `F-139` |
 
 ---
 
@@ -199,14 +196,13 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🔴 | **`ThreadHeader.tsx` se tocó y NO se ha desplegado.** El `<div>` del breadcrumb pasó a `<nav aria-label="Ruta">` (`F-135`). Es producto, y el §7 de este fichero dice que si se toca código se despliega **y se comprueba en la URL**. No se ha hecho: desplegar es una acción hacia fuera y no se hizo por cuenta propia. **Nada más de hoy toca producto** — el resto es arnés, tareas y documentos | Álvaro, o autorizar el despliegue |
-| 🟠 | **`Nuevo contacto`: 9 de 9.** Ya no es sospecha, es medida con `n=3`. Es el único rojo que separa a `MSG-01` de 4/4 | §3.2 |
-| 🟠 | **57 a 1, y sin dueño.** El Coder de los días 2 y 3 costó **$2,64**; la orquestación atribuida a esos días, **$150,48**. ⚠ Es precio-**sombra** a tarifa pública y Claude Code va por suscripción, así que no es lo que se paga — pero es el número que el proyecto eligió seguir, y dice que **el coste de una pantalla lo domina la orquestación, no la generación** | Álvaro, con §3.4 |
-| 🟠 | **La Fundación V1 tiene un entregable con reloj: la residencia.** Lo desplegado llama a `api.anthropic.com`. No incumple ninguna decisión cerrada —la de §4 es de V1— pero es el único punto del hito con consecuencias legales, y nadie le ha puesto fecha | Álvaro |
-| 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. No bloquea porque el MCP llega, pero depender de eso es depender de la suerte | Álvaro: re-loguear y `link` |
-| 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial. Riesgo aceptado por el PO el 18-ago hasta después de la reunión. **Sigue abierto** | Álvaro: 20 $/mes |
-| 🟡 | **Los worktrees: ya son CINCO, y la hipótesis de la cabecera queda tocada.** Esa nota dice que lanzar Code desde la raíz «parece cortar la causa, porque es en `openspec/mvp/` donde aparecen». Hoy ha aparecido uno nuevo en **`openspec/v1/.claude/worktrees/`**, que no es `openspec/mvp/`. No se toca esa nota —se gana su sitio— pero el dato va aquí | Fuera de sesión, desde la raíz |
-| 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Hoy se perdieron dos ficheros a medio escribir: la tanda de corridas cierra cada una con `git checkout -- app/` y se llevó por delante lo que no estaba commiteado. Se rehízo, no costó nada, y la próxima vez puede costar más | Se cumple mirando el cerrojo antes de tocar `app/` |
+| 🟡 | **`MSG-01` sin remedir con los tres arreglos de hoy ya puestos desde el principio.** `F-137`, `F-138` y `F-139` cierran los rojos conocidos, pero la corrida de hoy fue la que los DESCUBRIÓ, no una que los mida ya aplicados | §3.1 de mañana |
+| 🟠 | **La Fundación V1 tiene un entregable con reloj: la residencia.** Sin cambios hoy — sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
+| 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
+| 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial. Sin cambios | Álvaro: 20 $/mes |
+| 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro), comprobado hoy con `git worktree list` — los mismos cuatro de ayer, ninguno nuevo. La hipótesis de la cabecera sigue sin confirmarse ni descartarse | Fuera de sesión, desde la raíz |
+| 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
+| 🟡 | **Un corpus de tareas en prosa densa puede romper un test de regresión de OTRO hallazgo sin que nadie lo note (`F-140`).** Auditar `SRCH-01`, `VND-01`, `PANEL-01`, `LOGIN-01` | §3.3 de mañana |
 
 ---
 
@@ -214,29 +210,22 @@ Utillaje externo instalado y endurecido el 22-ago: modo aislado, commit fijado e
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Si el reparto de culpas de `F-134` aguanta una salida de playwright que no sea esta.**
-  Se ha probado contra **una** salida real y contra tres variantes construidas a mano. El
-  formato de las líneas de fallo es de playwright y puede cambiar al actualizarlo; la
-  cerradura 3 —si el recuento no cuadra, se cobra entero— está puesta exactamente para que
-  ese día el fallo sea caro y visible en vez de silencioso y barato.
-- **Si `Nuevo contacto` falla por el modelo o por cómo está redactada su declaración.**
-  `n=3` dice que falla siempre; no dice por qué. Están declarados el literal, el `disabled`
-  y el motivo, y el Coder pinta otra cosa. **Nadie ha leído todavía qué pinta exactamente
-  en los tres artefactos**, y eso es una tarde de trabajo sin gastar un token.
-- **Cuánto de la varianza entre corridas es el modelo y cuánto el prompt.** `09a` y `09b`
-  convergieron idénticas; `09c` arrancó con cinco errores de tipos que las otras no
-  tuvieron y no convergió, costando un 52 % más. Con `n=3` se ve que la varianza existe y
-  es cara; no se ve de dónde sale.
-- **Qué se pierde por no versionar los artefactos de las corridas 09.** Los JSON llevan las
-  fuentes (`sources`), así que esta vez sí está — pero nadie las ha comparado entre sí. Las
-  tres escribieron un `ThreadList.tsx` distinto y **en qué se parecen es la pregunta del
-  punto anterior**.
+- **Si el marcador de `MSG-01` sube de verdad con los tres arreglos ya puestos desde el
+  principio.** Hoy los descubrió la misma corrida que medía; mañana es la primera vez que
+  se mide con ellos ya en el corpus, y hasta entonces es una expectativa, no un dato.
+- **Si `SRCH-01`, `VND-01`, `PANEL-01` o `LOGIN-01` tienen el mismo riesgo que `F-140`
+  acaba de mostrar en `MSG-01`.** No se ha revisado ninguna de las cuatro contra sus
+  propios tests de regresión.
+- **Cuánto de la varianza entre corridas es el modelo y cuánto el prompt.** `F-137` añade
+  un dato —el modelo a veces omite un default que la tarea ya pide literal— pero no dice
+  por qué esa omisión ocurre en un intento y no en otro.
 - **Por qué la API se cuelga en la segunda tarea de una tanda y nunca en la primera.**
-  Sigue sin datos. Hoy se lanzaron **tres corridas seguidas** y no pasó ni una vez, que es
-  el primer dato en contra de que sea «la segunda de una tanda». `F-122` sigue sin haberse
-  disparado en el caso que lo motivó.
-- **Si `visibility_scope` y la lista derivada aguantan bajo carga.** Hito 6, no antes.
-- **Qué pasó en la reunión con el socio del 20-ago.** Ni una línea en el repo. Diez días.
+  Sin datos nuevos hoy.
+- **Si `visibility_scope` y la lista derivada aguantan bajo carga.** Hito 6. Con el
+  índice de hoy puesto, es lo primero que se puede medir cuando llegue ese hito.
+- **Si el reparto de culpas de `F-134` aguanta una salida de playwright que no sea esta.**
+  Sin tocar hoy.
+- **Qué pasó en la reunión con el socio del 20-ago.** Ni una línea en el repo. Doce días.
 
 ---
 
@@ -256,8 +245,8 @@ Cinco pasos. Se ejecutan **todos** o el relevo no vale.
 
 ⚠ **Y el paso cero, que es la regla 4: no cierres hasta que se acabe.** El día 3 se cerró a
 las 12:33 y siguió hasta las 13:45. El día 4 se cerró a las 11:22 y siguió hasta las 12:31.
-**Dos días seguidos, y el segundo con la regla ya escrita.** Si después del cierre se toca
-algo, este fichero se vuelve a tocar — que es lo que ha pasado hoy.
+**El día 5 lo cumplió: la CI se revisó job a job antes de escribir este cierre, y por eso
+`F-140` está aquí en vez de descubrirse mañana.**
 
 ---
 
@@ -266,21 +255,21 @@ algo, este fichero se vuelve a tocar — que es lo que ha pasado hoy.
 Orden de lectura, y el orden importa:
 
 1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
-2. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Es nuevo de hoy y desmonta el
-   «no empezada» que este fichero repitió cuatro días.
+2. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado hoy en el punto
+   del índice de la derivación de la lista.
 3. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**: el cuerpo
    del acta contiene tres afirmaciones falsas que la corrección desmonta.
 4. **`docs/ADR-001` y `docs/ADR-002`** si vas a tocar criptografía, roles o mensajería.
 5. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
 6. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
 7. **`findings-register.md`** nunca de corrido: por identificador, cuando algo te mande a
-   uno. Hoy: `F-131` a `F-136`.
+   uno. Hoy: `F-137` a `F-140`.
 
 ---
 
-*Día 4 de V1 · 30-ago-2026, segundo cierre (11:31 UTC) · fecha leída de la máquina
-(`date -u`) · estado verificado contra el código de `mvp/bootstrap`, contra
-`information_schema` del proyecto real y contra la salida de tres corridas pagadas, no
-contra otro documento · **la primera medida del proyecto con `n>1`, y el fallo que la
-explicaba reproducido a mano en las dos direcciones antes de escribirlo aquí** · Dirección
-Técnica, Nortex Systems*
+*Día 5 de V1 · 1-sep-2026 (09:15 UTC) · fecha leída de la máquina (`date -u`) · estado
+verificado contra el código de `mvp/bootstrap`, contra `pg_indexes` del proyecto real,
+contra `bearingworld.vercel.app` desplegado, contra la CI job a job de los cinco commits
+del día y contra la salida de tres corridas pagadas más — no contra otro documento ·
+**el hallazgo del día no lo dio una medida, lo dio revisar la CI antes de cerrar** ·
+Dirección Técnica, Nortex Systems*

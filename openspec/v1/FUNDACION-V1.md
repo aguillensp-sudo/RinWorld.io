@@ -48,7 +48,7 @@ la fábrica».
 | **2** | **Despliegue sin interrupción** | 🔴 **No empezado** | No hay nada de despliegue en `ci.yml`. Y es peor que «falta»: `CLAUDE.md` §10.2 deja escrito que **las Edge Functions no se despliegan con el push a git y la app tampoco llega sola a Vercel** (`F-091`, `F-072`). Hoy el despliegue es manual, así que no hay una interrupción que quitar: hay un paso humano que automatizar primero |
 | **3** | **Aislamiento de la base de demostración** | 🟡 **A medias, y la mitad que hay es la de reponer** | `supabase/migrations/0015_demo_reset_helpers.sql` existe desde el día 13 del MVP y hace el **reseteo** —dos funciones que re-anclan la frescura de la siembra—. Lo que NO hay es el **aislamiento**: la demo vive en el mismo proyecto `troxminloxkjwihwfevs` que todo lo demás. Resetear no es aislar |
 | **4** | **Los cuatro campos del respaldo de clave en la primera migración** | ✅ **HECHO, y desde el día 1** | `0001_organizations_and_members.sql:78-81`: `encrypted_key_blob`, `key_iv`, `argon2_salt`, `kdf_params`. **Y con más de lo que el hito pedía:** `members_key_iv_len_chk` (IV de 12 bytes), `members_salt_len_chk` (salt de 32) y `members_backup_all_or_none_chk`, que impone que estén **los cuatro o ninguno**. El comentario del fichero lo llama `schema-desde-dia-uno · server-blind-storage` |
-| **5** | **Índice de búsqueda** | 🟡 **A medias, y falta saber cuál pedía el hito** | Hay dos índices trigrama GIN, con `pg_trgm` habilitado en `0001:23`: `organizations_name_trgm` (`0001:50`) e `inventory_lines` sobre `part_number` (`0002:123`). Lo que **no** hay es el índice que ADR-002 §5 pide para derivar la lista de hilos. ⚠ **El plan dice «índice de búsqueda» en singular y no dice cuál**, así que este 🟡 es tanto de código como de alcance |
+| **5** | **Índice de búsqueda** | 🟡 **A medias, y la mitad de ADR-002 ya está hecha** | Hay dos índices trigrama GIN, con `pg_trgm` habilitado en `0001:23`: `organizations_name_trgm` (`0001:50`) e `inventory_lines` sobre `part_number` (`0002:123`). **El índice que ADR-002 §5 pide para derivar la lista de hilos ya existe** (`0017_thread_derivation_index.sql`, 1-sep-2026 — ver §2). ⚠ **Lo que sigue sin resolver es de alcance, no de código:** el plan dice «índice de búsqueda» en singular y no dice si se refiere a este o a los dos trigrama de arriba. La contesta el PO |
 | **6** | **Residencia europea del agente** | 🔴 **No empezado, y hoy va en la dirección contraria** | `supabase/functions/vera/index.ts:1` importa `npm:@anthropic-ai/sdk` y la línea 184 construye el cliente **sin `baseURL`**: sale contra `api.anthropic.com`. Cero apariciones de `vertex`, `europe`, `eu-west` o `region` en toda la carpeta de funciones. Y `index.ts:28` fija `MODELO = 'claude-sonnet-4-6'` |
 
 > ⚠ **El punto 6, dicho con precisión, porque es fácil pasarse de frenada.** `ESTADO-V1.md`
@@ -75,7 +75,7 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
 | `thread_items_select_participant` | Pasa a considerar el ámbito | 🔴 | `0003:329` sigue siendo `app.can_access_thread(thread_id)`, sin ámbito |
 | Lista de hilos | Deja de ser consulta directa a `threads`; se deriva de `thread_item_keys` | 🔴 | `0003:312-314`: la política sigue siendo `app.current_org_id() in (org_low_id, org_high_id)` — **cualquier miembro de la organización ve cualquier hilo de la organización**, que es exactamente lo que ADR-002 viene a quitar |
 | `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 | `0014_create_inquiry.sql:187` sigue insertando en `thread_item_keys` con el reparto viejo |
-| Índices | Nuevo índice para la derivación de la lista, en la dirección que filtra primero | 🔴 | No existe; es el mismo hueco que el 🟡 del entregable 5 |
+| Índices | Nuevo índice para la derivación de la lista, en la dirección que filtra primero | ✅ **HECHO — 1-sep-2026** | `0017_thread_derivation_index.sql`, aplicado al proyecto real por el MCP y comprobado contra `pg_indexes`: `thread_item_keys_recipient_item_idx (recipient_member_id, item_id)` sustituye a `thread_item_keys_recipient_idx (recipient_member_id)`, que quedaba corto — de una sola columna, no cubría `item_id` y obligaba a un viaje al heap por cada fila. **Solo el índice:** la fila de arriba, "Lista de hilos", sigue 🔴 — nadie ha reescrito todavía `threads_select_participant` para que lo use |
 
 ---
 
@@ -88,10 +88,13 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
 2. **Y era optimista en el 6.** «No empezada» suena a folio en blanco; en residencia hay
    código desplegado que llama a un proveedor fuera de la UE, y eso no es un folio en
    blanco: es un cambio con una fecha límite implícita que nadie ha puesto.
-3. **El orden barato, si se quiere empezar por algo hoy:** el índice de la derivación de
-   la lista (entregable 5 + última fila de ADR-002 §5) es **una migración** y desbloquea
-   la mitad de ADR-002. `visibility_scope` es la siguiente y es la que cambia el
-   comportamiento visible.
+3. **El orden barato, hecho el 1-sep-2026:** el índice de la derivación de la lista
+   (entregable 5 + última fila de ADR-002 §5) era **una migración** y desbloqueaba la
+   mitad de ADR-002 — `0017_thread_derivation_index.sql`, aplicada. **Sigue pendiente
+   la otra mitad de esa misma fila:** la política `threads_select_participant` no usa
+   el índice todavía, porque nadie ha reescrito la consulta que deriva la lista de
+   `thread_item_keys`. `visibility_scope` es el siguiente entregable y es el que cambia
+   el comportamiento visible.
 4. **Lo que este fichero NO sabe:** cuál es exactamente «el índice de búsqueda» del plan
    —el plan lo dice en singular y no lo nombra—, y si «aislamiento de la base de
    demostración» significa proyecto Supabase aparte o esquema aparte. Las dos son

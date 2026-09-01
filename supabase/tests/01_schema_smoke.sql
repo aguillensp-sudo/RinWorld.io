@@ -45,8 +45,27 @@ begin
   assert (select role from public.members where id = '0a000002-0000-0000-0000-000000000002') = 'EDITOR',
     'role-auto-assignment: los adicionales tienen que ser EDITOR';
   raise notice 'OK · role-auto-assignment (ADMIN al primero, EDITOR al resto)';
+
+  -- ADR-002 D-4: visibility_scope está soldado al rol en V1, lo pone el mismo
+  -- trigger que asigna el rol.
+  assert (select visibility_scope from public.members where id = '0a000001-0000-0000-0000-000000000001') = 'ORG_METADATA',
+    'D-4: el ADMIN tiene que salir con visibility_scope = ORG_METADATA';
+  assert (select visibility_scope from public.members where id = '0a000002-0000-0000-0000-000000000002') = 'OWN',
+    'D-4: el EDITOR tiene que salir con visibility_scope = OWN';
+  raise notice 'OK · ADR-002 D-4: visibility_scope derivado del rol (ORG_METADATA / OWN)';
 end
 $$;
+
+-- D-4: "ningún cliente puede pedirlo, igual que hoy con el rol" — misma
+-- guardia que ya protege role/state/org_id (0001:222-247).
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$update public.members set visibility_scope = 'ORG_METADATA'
+      where id = '0a000002-0000-0000-0000-000000000002'$$,
+    'ADR-002 D-4: un EDITOR no puede auto-concederse ORG_METADATA');
+commit;
 
 -- El backup es atómico: los cuatro campos o ninguno.
 select public.expect_fail(

@@ -279,7 +279,7 @@ falla si se rompe.** Rozar uno es VIOLA automático, no RIESGO.
 
 | Objeto | Cambio | Estado |
 |---|---|---|
-| `thread_items` | **+ columna `quantity`** (D-3) | 🔴 |
+| `thread_items` | **+ columna `quantity`** (D-3) | ✅ `0020`, 3-sep-2026 — solo `create_inquiry` (CONSULTA); `OFERTA` queda para cuando `create_thread_item`/`counter_offer` la conozcan |
 | `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ `0018`, 1-sep-2026 |
 | `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 | 🔴 |
 | `thread_items_select_participant` | Hoy `app.can_access_thread(thread_id)` (`0003:329`). Pasa a considerar el ámbito | ✅ `0019`, 3-sep-2026 |
@@ -379,4 +379,4 @@ nombre:
 Y de cerrarlas salió §6, que no estaba en el borrador.
 
 
-*ADR-002 · v1.2, 3-sep-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día que se escribió (25-ago) · adenda del 3-sep-2026 en D-7 y §5: octavo objeto de esquema (`organizations.visibility_scope_enabled`) que la lista original no tenía · estado del esquema verificado contra las migraciones `0001`, `0003`, `0012`, `0014` el 25-ago, y contra `0017`, `0018`, `0019` y `information_schema`/`pg_policies` del proyecto real el 1-sep y el 3-sep · Dirección Técnica, Nortex Systems*
+*ADR-002 · v1.3, 3-sep-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día que se escribió (25-ago) · adenda del 3-sep-2026 en D-7 y §5: octavo objeto de esquema (`organizations.visibility_scope_enabled`) que la lista original no tenía; D-3 (`thread_items.quantity`) cerrado el mismo día, solo para `CONSULTA` · estado del esquema verificado contra las migraciones `0001`, `0003`, `0012`, `0014` el 25-ago, y contra `0017`, `0018`, `0019`, `0020` y `information_schema`/`pg_policies` del proyecto real el 1-sep y el 3-sep · Dirección Técnica, Nortex Systems*

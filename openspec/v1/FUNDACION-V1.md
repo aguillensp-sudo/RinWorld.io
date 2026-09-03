@@ -82,16 +82,16 @@ la fábrica».
 ## 2 · ADR-002, entregable por entregable
 
 El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en siete objetos.
-**Ninguno de los siete está tocado.** Comprobado uno por uno:
+**El 25-ago, ninguno de los siete estaba tocado. El 3-sep-2026, cuatro de los siete lo están, más el octavo objeto que apareció por el camino (D-7).** Comprobado uno por uno:
 
 | Objeto de `ADR-002` §5 | Cambio que pide | Estado | Verificado contra |
 |---|---|---|---|
-| `thread_items` | **+ columna `quantity`** (D-3) | 🔴 | `grep -rn quantity supabase/migrations/` solo la encuentra en `inventory_lines` (`0002:77`). En `thread_items`, no existe |
+| `thread_items` | **+ columna `quantity`** (D-3) | ✅ **HECHO — 3-sep-2026, solo `CONSULTA`** | `0020_thread_items_quantity.sql`, aplicada al proyecto real por el MCP. `information_schema.columns`: `integer`, nullable. `thread_items_shape_chk` extendida: `MENSAJE` sigue prohibiéndola, `CONSULTA`/`OFERTA` quedan libres a propósito — `create_thread_item` y `counter_offer` (las dos vías de `OFERTA`) todavía no la conocen, y exigírsela hoy les rompería el INSERT |
 | `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ **HECHO — 1-sep-2026** | `0018_members_visibility_scope.sql`, aplicada al proyecto real por el MCP. Comprobado contra `information_schema` (columna `not null`), `pg_constraint` (`members_visibility_scope_chk` existe) y contra los datos reales: los 2 miembros sembrados son `ADMIN` con `visibility_scope = 'ORG_METADATA'`, sin una sola fila fuera de ese patrón. `guard_member_privileges` (0001) bloquea la columna por `UPDATE` desde el cliente, probado local antes de aplicar (`supabase/tests/run.sh`, fase 1) |
 | `thread_public_keys(t_id)` | Deja de devolver todos los miembros; devuelve el conjunto de D-1 | 🔴 | `0012:92-95` sigue diciendo, en su propio comentario, que *«los dos lados del hilo significa literalmente todos los miembros de las dos organizaciones»* |
 | `thread_items_select_participant` | Pasa a considerar el ámbito | ✅ **HECHO — 3-sep-2026** | `0019_threads_visibility_scope_toggle.sql`, aplicada al proyecto real por el MCP. `pg_policies.qual` comprobado contra `information_schema`: la política llama a `app.caller_bypasses_visibility_scope()` y, si no aplica, exige `exists(... thread_item_keys ... recipient_member_id = auth.uid())` por ELEMENTO — no por hilo |
 | Lista de hilos (`threads_select_participant`) | Deja de ser consulta directa a `threads`; se deriva de `thread_item_keys` | ✅ **HECHO — 3-sep-2026** | Misma migración. `pg_policies.qual` comprobado: con el ámbito encendido, un `OWN` necesita al menos un elemento con clave envuelta en el hilo; un `ORG_METADATA` lo bypasea (D-2). Probado local (`supabase/tests/run.sh`, fase 1) antes de aplicar remoto |
-| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 | `0014_create_inquiry.sql:187` sigue insertando en `thread_item_keys` con el reparto viejo |
+| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 | `0014_create_inquiry.sql:187` sigue insertando en `thread_item_keys` con el reparto viejo. **`0020` sí tocó `create_inquiry`, pero para D-3** (un quinto parámetro, `p_quantity`, con default para no romper al llamador de siempre) — el reparto de destinatarios de esta fila sigue exactamente igual |
 | Índices | Nuevo índice para la derivación de la lista, en la dirección que filtra primero | ✅ **HECHO — 1-sep-2026** | `0017_thread_derivation_index.sql`, aplicado al proyecto real por el MCP y comprobado contra `pg_indexes`: `thread_item_keys_recipient_item_idx (recipient_member_id, item_id)` sustituye a `thread_item_keys_recipient_idx (recipient_member_id)`, que quedaba corto — de una sola columna, no cubría `item_id` y obligaba a un viaje al heap por cada fila |
 | **`organizations.visibility_scope_enabled`** (D-7, octavo objeto — no estaba en la lista original de ADR-002 §5 del 25-ago; ver adenda del 3-sep-2026 en el ADR) | Interruptor por organización, apagado por defecto | ✅ **HECHO — 3-sep-2026** | `0019_threads_visibility_scope_toggle.sql`. `information_schema.columns`: `boolean not null default false`. Datos reales del proyecto (`troxminloxkjwihwfevs`): las 6 organizaciones sembradas, las 6 con `visibility_scope_enabled = false` — nadie lo activó sin querer |
 
@@ -132,6 +132,18 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
    25-ago: `organizations.visibility_scope_enabled`, que activa el ADMIN de la propia
    organización. Probado local (`supabase/tests/run.sh`) con dos organizaciones —una que
    enciende el ámbito, otra que nunca lo toca— antes de aplicar al proyecto real.
+7. **`D-3` (`thread_items.quantity`), hecho el mismo 3-sep-2026, después de "Lista de
+   hilos":** `0020_thread_items_quantity.sql` añade la columna y la usa en
+   `create_inquiry` — el único sitio que el relevo de hoy pedía. **A propósito no
+   toca `OFERTA`:** `create_thread_item` y `counter_offer` son las dos vías por las
+   que hoy se crea una oferta, ninguna sabe todavía de `quantity`, y `OfferContent`
+   ya lleva un campo `quantity` propio en `app/src/lib/thread-detail.ts` sin
+   relación con esta columna — cuando se conecten, es la siguiente pieza, no esta.
+8. **Lo desplegado en Vercel sigue siendo el código de ANTES de `create_inquiry`
+   ganando `p_quantity`** (Vercel no redespliega solo con el push, `CLAUDE.md`
+   §10.2). El cliente real todavía manda 4 parámetros: la base los acepta igual
+   (el quinto tiene default), así que nada se rompe, pero ninguna consulta nueva
+   escribirá `quantity` en claro hasta que alguien redespliegue `app/`.
 
 ---
 

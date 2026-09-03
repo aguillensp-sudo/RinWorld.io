@@ -511,9 +511,14 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
       p_ciphertext: string;
       p_iv: string;
       p_keys: { member_id: string }[];
+      p_quantity: number;
     };
     expect(args.p_line_id).toBe('l-1');
     expect(args.p_keys.map((k) => k.member_id).sort()).toEqual(['nordwalz-1', 'yo']);
+    // ADR-002 D-3: la cantidad viaja tambien en claro, ademas de cifrada en
+    // el contenido -- es la mitad que hace falta para que el ADMIN y VERA
+    // la lean sin descifrar nada (D-2/D-6).
+    expect(args.p_quantity).toBe(800);
   });
 
   it('lo que llega a la base descifra a la cantidad de la línea, sin comentario', async () => {

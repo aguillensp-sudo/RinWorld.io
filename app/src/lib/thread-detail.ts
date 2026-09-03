@@ -776,6 +776,7 @@ export async function sendInquiries(lines: InquiryLine[], ownOrgId: string): Pro
         p_ciphertext: toHex(ciphertext),
         p_iv: toHex(iv),
         p_keys: claves,
+        p_quantity: linea.quantity,
       });
       if (error) throw error;
 

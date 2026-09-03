@@ -1192,6 +1192,105 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- thread_items.quantity (0020, ADR-002 D-3) · create_inquiry la deposita en
+-- claro, ademas de cifrada en content_ciphertext
+-- -----------------------------------------------------------------------------
+-- MENSAJE la sigue prohibiendo (thread_items_shape_chk extendida en 0020).
+select public.expect_fail(
+  $$insert into public.thread_items
+      (thread_id, sender_org_id, sender_member_id, item_type, quantity, content_ciphertext, content_iv)
+    values ('11110000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111111',
+            '0a000001-0000-0000-0000-000000000001','MENSAJE', 10,
+            decode('aa','hex'), decode(repeat('04',12),'hex'))$$,
+  'D-3: un MENSAJE no lleva quantity (forma de tarjeta en un mensaje libre)');
+
+-- Gamma consulta la OTRA línea PUBLISHED de Beta (la de e1000000...003, que
+-- Gamma todavía no había tocado) con una cantidad real -- ANCLA: la columna
+-- en claro tiene que traer exactamente lo que se mandó, no lo que había en
+-- el ciphertext ni en el stock de la línea.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    fila record;
+  begin
+    select * into fila from public.create_inquiry(
+      'e1000000-0000-0000-0000-000000000003',
+      repeat('cc', 48), repeat('17', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('17',12),
+          'ephemeral_pubkey', repeat('66',32)),
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('77',48), 'wrap_iv', repeat('17',12),
+          'ephemeral_pubkey', repeat('88',32))
+      ),
+      42);
+
+    assert (select quantity from public.thread_items where id = fila.item_id) = 42,
+      'D-3: create_inquiry deposita quantity en claro, tal cual se mandó';
+    raise notice 'OK · D-3: create_inquiry escribe quantity en claro (42)';
+  end
+  $$;
+commit;
+
+-- Una tercera línea PUBLISHED de Beta, fresca -- las dos originales (001,
+-- 003) ya las consultaron Alpha Y Gamma en los bloques de arriba, y el
+-- índice único es por (línea, organización compradora): no queda ningún par
+-- reutilizable para lo que falta comprobar.
+insert into public.inventory_lines
+  (id, org_id, part_number, brand, quantity, location_country, product_family, status)
+values
+  ('e1000000-0000-0000-0000-000000000004', :orgB, '6208-2RS', 'SKF', 300, 'DE',
+   'Rodamiento rigido de bolas', 'PUBLISHED');
+
+-- Sin mandar p_quantity, la firma de 5 parametros sigue aceptando la llamada
+-- de siempre (default null) -- el llamador de ayer no se rompe.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    fila record;
+  begin
+    select * into fila from public.create_inquiry(
+      'e1000000-0000-0000-0000-000000000004',
+      repeat('dd', 48), repeat('18', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('18',12),
+          'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('18',12),
+          'ephemeral_pubkey', repeat('44',32))
+      ));
+
+    assert (select quantity from public.thread_items where id = fila.item_id) is null,
+      'D-3: sin p_quantity, la llamada de 4 parametros de siempre sigue funcionando y guarda NULL';
+    raise notice 'OK · D-3: create_inquiry retrocompatible, p_quantity default null';
+  end
+  $$;
+commit;
+
+-- Negativa, bloqueada -- mismo criterio que inventory_lines.quantity (0002).
+-- Gamma, no Alpha: la misma línea 004 ya la consultó Alpha arriba, y el
+-- índice único es por organización compradora -- Gamma todavía no la ha
+-- tocado, así que llega limpia hasta la comprobación de la cantidad.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_inquiry('e1000000-0000-0000-0000-000000000004',
+        repeat('ee',48), repeat('19',12),
+        jsonb_build_array(jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('19',12),
+          'ephemeral_pubkey', repeat('22',32))),
+        -5)$$,
+    'D-3: create_inquiry rechaza una cantidad negativa');
+commit;
+
+-- -----------------------------------------------------------------------------
 -- organizations.visibility_scope_enabled (0019, ADR-002 D-7) · activa "Lista
 -- de hilos" (threads_select_participant / thread_items_select_participant)
 -- -----------------------------------------------------------------------------

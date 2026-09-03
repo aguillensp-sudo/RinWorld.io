@@ -1050,9 +1050,20 @@ def test_el_guardia_cruza_tarea_y_contrato():
     check("⚠ con F-128 ya declarada, calla: eso es que la declaracion llego",
           not any("fuera del MVP" in x for x in av_m + err_m), str(av_m[:2]))
 
+    # ⚠ F-144 · el mismo literal `fuera del MVP` vive en DOS component_api
+    # distintos desde el 3-sep-2026 (ThreadList.tsx por F-128, Messages.tsx
+    # por F-144 -otro nodo, `directorio-scope`, misma frase exigida por otro
+    # test-). Reconstruir "antes de F-128" truncando solo ThreadList.tsx ya
+    # no basta: la mencion de Messages.tsx sobrevive intacta y el guardia
+    # sigue viendo el literal en algun sitio, así que la fila de abajo
+    # dejaria de probar lo que dice probar. Se trunca TAMBIEN el segundo
+    # sitio, por la misma razon que el primero.
     antes = json.loads(json.dumps(msg01))
     for ruta, firma in antes["component_api"].items():
-        antes["component_api"][ruta] = firma.split(" EL ESTADO VACIO")[0]
+        antes["component_api"][ruta] = (
+            firma.split(" EL ESTADO VACIO")[0]
+                 .split(" SU TEXTO TIENE QUE CONTENER EL LITERAL")[0]
+        )
     _err_a, av_a = cruzar_con_el_contrato(antes)
     check("⚠ y sobre la tarea de ANTES lo habria visto (F-128 / F-130)",
           any("fuera del MVP" in a for a in av_a), str(av_a[:2]))

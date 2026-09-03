@@ -16,6 +16,17 @@ del repo en `mvp/bootstrap` **y la base de datos de verdad** (`information_schem
 > columna, el check y el trigger — ver §1 fila 2 y §2 fila 2, las dos comprobadas hoy
 > contra `information_schema`, `pg_constraint` y los datos reales del proyecto, no
 > contra este párrafo.
+>
+> ⚠ **Corregido el 3-sep-2026:** `thread_items_select_participant` y "Lista de
+> hilos" (`threads_select_participant`), las dos últimas filas rojas de la tabla de
+> §2 que dependían solo de `visibility_scope`, están hechas —
+> `0019_threads_visibility_scope_toggle.sql`, aplicada al proyecto real y
+> comprobada contra `pg_policies.qual`, no contra el fichero de la migración. Y
+> apareció un octavo objeto de esquema que ADR-002 §5 no tenía el 25-ago:
+> `organizations.visibility_scope_enabled` (D-7), el interruptor por
+> organización sin el cual `visibility_scope` se habría aplicado al 100% de las
+> organizaciones sin que nadie lo pidiera. Ver la adenda del 3-sep-2026 en el
+> propio ADR-002, D-7 y §5.
 
 > **Por qué existe este fichero.** `ESTADO-V1.md` §2 lleva cuatro días diciendo
 > *«Fundación V1 (entornos, ADR-002, índice, residencia) — ⚪ No empezada»*, y hoy dice
@@ -78,10 +89,11 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
 | `thread_items` | **+ columna `quantity`** (D-3) | 🔴 | `grep -rn quantity supabase/migrations/` solo la encuentra en `inventory_lines` (`0002:77`). En `thread_items`, no existe |
 | `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ **HECHO — 1-sep-2026** | `0018_members_visibility_scope.sql`, aplicada al proyecto real por el MCP. Comprobado contra `information_schema` (columna `not null`), `pg_constraint` (`members_visibility_scope_chk` existe) y contra los datos reales: los 2 miembros sembrados son `ADMIN` con `visibility_scope = 'ORG_METADATA'`, sin una sola fila fuera de ese patrón. `guard_member_privileges` (0001) bloquea la columna por `UPDATE` desde el cliente, probado local antes de aplicar (`supabase/tests/run.sh`, fase 1) |
 | `thread_public_keys(t_id)` | Deja de devolver todos los miembros; devuelve el conjunto de D-1 | 🔴 | `0012:92-95` sigue diciendo, en su propio comentario, que *«los dos lados del hilo significa literalmente todos los miembros de las dos organizaciones»* |
-| `thread_items_select_participant` | Pasa a considerar el ámbito | 🔴 | `0003:329` sigue siendo `app.can_access_thread(thread_id)`, sin ámbito |
-| Lista de hilos | Deja de ser consulta directa a `threads`; se deriva de `thread_item_keys` | 🔴 | `0003:312-314`: la política sigue siendo `app.current_org_id() in (org_low_id, org_high_id)` — **cualquier miembro de la organización ve cualquier hilo de la organización**, que es exactamente lo que ADR-002 viene a quitar |
+| `thread_items_select_participant` | Pasa a considerar el ámbito | ✅ **HECHO — 3-sep-2026** | `0019_threads_visibility_scope_toggle.sql`, aplicada al proyecto real por el MCP. `pg_policies.qual` comprobado contra `information_schema`: la política llama a `app.caller_bypasses_visibility_scope()` y, si no aplica, exige `exists(... thread_item_keys ... recipient_member_id = auth.uid())` por ELEMENTO — no por hilo |
+| Lista de hilos (`threads_select_participant`) | Deja de ser consulta directa a `threads`; se deriva de `thread_item_keys` | ✅ **HECHO — 3-sep-2026** | Misma migración. `pg_policies.qual` comprobado: con el ámbito encendido, un `OWN` necesita al menos un elemento con clave envuelta en el hilo; un `ORG_METADATA` lo bypasea (D-2). Probado local (`supabase/tests/run.sh`, fase 1) antes de aplicar remoto |
 | `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 | `0014_create_inquiry.sql:187` sigue insertando en `thread_item_keys` con el reparto viejo |
-| Índices | Nuevo índice para la derivación de la lista, en la dirección que filtra primero | ✅ **HECHO — 1-sep-2026** | `0017_thread_derivation_index.sql`, aplicado al proyecto real por el MCP y comprobado contra `pg_indexes`: `thread_item_keys_recipient_item_idx (recipient_member_id, item_id)` sustituye a `thread_item_keys_recipient_idx (recipient_member_id)`, que quedaba corto — de una sola columna, no cubría `item_id` y obligaba a un viaje al heap por cada fila. **Solo el índice:** la fila de arriba, "Lista de hilos", sigue 🔴 — nadie ha reescrito todavía `threads_select_participant` para que lo use |
+| Índices | Nuevo índice para la derivación de la lista, en la dirección que filtra primero | ✅ **HECHO — 1-sep-2026** | `0017_thread_derivation_index.sql`, aplicado al proyecto real por el MCP y comprobado contra `pg_indexes`: `thread_item_keys_recipient_item_idx (recipient_member_id, item_id)` sustituye a `thread_item_keys_recipient_idx (recipient_member_id)`, que quedaba corto — de una sola columna, no cubría `item_id` y obligaba a un viaje al heap por cada fila |
+| **`organizations.visibility_scope_enabled`** (D-7, octavo objeto — no estaba en la lista original de ADR-002 §5 del 25-ago; ver adenda del 3-sep-2026 en el ADR) | Interruptor por organización, apagado por defecto | ✅ **HECHO — 3-sep-2026** | `0019_threads_visibility_scope_toggle.sql`. `information_schema.columns`: `boolean not null default false`. Datos reales del proyecto (`troxminloxkjwihwfevs`): las 6 organizaciones sembradas, las 6 con `visibility_scope_enabled = false` — nadie lo activó sin querer |
 
 ---
 
@@ -110,6 +122,16 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
    —el plan lo dice en singular y no lo nombra—, y si «aislamiento de la base de
    demostración» significa proyecto Supabase aparte o esquema aparte. Las dos son
    preguntas de alcance, no de código, y las contesta el PO.
+6. **"Lista de hilos" y `thread_items_select_participant`, hechas el 3-sep-2026:**
+   `0019_threads_visibility_scope_toggle.sql` usa el índice de `0017` y la columna de
+   `0018` — las dos piezas que llevaban dos días construidas sin que nada las leyera.
+   **Antes de escribirlas apareció un hueco real, no teórico:** D-7 de ADR-002 exige que
+   el ámbito sea opcional y apagado por defecto, y nada en el esquema lo permitía —
+   `visibility_scope` (D-4) estaba soldado al rol para el 100% de las organizaciones,
+   sin interruptor. Resuelto con un octavo objeto de esquema que ADR-002 §5 no tenía el
+   25-ago: `organizations.visibility_scope_enabled`, que activa el ADMIN de la propia
+   organización. Probado local (`supabase/tests/run.sh`) con dos organizaciones —una que
+   enciende el ámbito, otra que nunca lo toca— antes de aplicar al proyecto real.
 
 ---
 

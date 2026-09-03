@@ -206,6 +206,21 @@ que decide si se abre el siguiente anillo geográfico.
 Y comercialmente es mejor: la privacidad interna pasa a ser algo que el cliente
 **elige**, no algo que sufre.
 
+> ⚠ **Adenda del 3-sep-2026.** Esta decisión llevaba nueve días aceptada sin
+> un objeto de esquema que la sostuviera: §5 (Impacto en el esquema) lista
+> los siete objetos que el 25-ago ya se habían identificado, y ninguno es un
+> interruptor por organización. `visibility_scope` (D-4, `0018`, 1-sep) quedó
+> soldado al rol **sin condición, para el 100% de las organizaciones**, y
+> nada en el esquema decidía si ese ámbito debía aplicarse. Detectado el
+> 3-sep-2026, antes de escribir la política de "Lista de hilos" —no después—
+> porque reescribirla tal cual pedía D-1/D-8 habría encendido el ámbito para
+> todo el mundo, exactamente lo que este punto prohíbe. Resuelto en la misma
+> sesión: `organizations.visibility_scope_enabled boolean not null default
+> false` (`0019_threads_visibility_scope_toggle.sql`), octavo objeto de
+> esquema, añadido a §5. Lo activa el ADMIN de la propia organización, por la
+> misma política que ya gobierna `inventory_visibility_mode` (INV-07,
+> `0002`).
+
 ---
 
 ### D-8 · Un EDITOR no ve nada de sus compañeros
@@ -262,15 +277,16 @@ falla si se rompe.** Rozar uno es VIOLA automático, no RIESGO.
 
 ## 5 · Impacto en el esquema
 
-| Objeto | Cambio |
-|---|---|
-| `thread_items` | **+ columna `quantity`** (D-3) |
-| `members` | **+ columna `visibility_scope`** con check y trigger (D-4) |
-| `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 |
-| `thread_items_select_participant` | Hoy `app.can_access_thread(thread_id)` (`0003:329`). Pasa a considerar el ámbito |
-| Lista de hilos | Deja de ser consulta directa a `threads` (`0003:312`); se deriva de `thread_item_keys` |
-| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» |
-| Índices | Nuevo índice para la derivación de la lista de hilos, en la dirección que filtra primero |
+| Objeto | Cambio | Estado |
+|---|---|---|
+| `thread_items` | **+ columna `quantity`** (D-3) | 🔴 |
+| `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ `0018`, 1-sep-2026 |
+| `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 | 🔴 |
+| `thread_items_select_participant` | Hoy `app.can_access_thread(thread_id)` (`0003:329`). Pasa a considerar el ámbito | ✅ `0019`, 3-sep-2026 |
+| Lista de hilos (`threads_select_participant`) | Deja de ser consulta directa a `threads` (`0003:312`); se deriva de `thread_item_keys` | ✅ `0019`, 3-sep-2026 |
+| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 |
+| Índices | Nuevo índice para la derivación de la lista de hilos, en la dirección que filtra primero | ✅ `0017`, 1-sep-2026 |
+| **`organizations.visibility_scope_enabled`** (D-7, octavo objeto — no estaba en la lista original del 25-ago; ver adenda del 3-sep-2026 en D-7) | Interruptor por organización, apagado por defecto. Sin él, `visibility_scope` (D-4) se aplicaría al 100% de las organizaciones sin que D-7 lo permitiera | ✅ `0019`, 3-sep-2026 |
 
 **No cambia:** la jerarquía de claves, las primitivas criptográficas, el modelo de
 hilo por pareja de organizaciones, ni ninguno de los tres invariantes de ADR-001.
@@ -363,5 +379,4 @@ nombre:
 Y de cerrarlas salió §6, que no estaba en el borrador.
 
 
-*ADR-002 · v1.1, 25-ago-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día · estado del esquema verificado contra las migraciones
-`0001`, `0003`, `0012` y `0014` el mismo día · Dirección Técnica, Nortex Systems*
+*ADR-002 · v1.2, 3-sep-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día que se escribió (25-ago) · adenda del 3-sep-2026 en D-7 y §5: octavo objeto de esquema (`organizations.visibility_scope_enabled`) que la lista original no tenía · estado del esquema verificado contra las migraciones `0001`, `0003`, `0012`, `0014` el 25-ago, y contra `0017`, `0018`, `0019` y `information_schema`/`pg_policies` del proyecto real el 1-sep y el 3-sep · Dirección Técnica, Nortex Systems*

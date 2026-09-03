@@ -1191,4 +1191,203 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- organizations.visibility_scope_enabled (0019, ADR-002 D-7) · activa "Lista
+-- de hilos" (threads_select_participant / thread_items_select_participant)
+-- -----------------------------------------------------------------------------
+do $$
+begin
+  assert (select visibility_scope_enabled from public.organizations
+          where id = '11111111-1111-1111-1111-111111111111') = false,
+    'D-7: visibility_scope_enabled tiene que venir apagado por defecto';
+  raise notice 'OK · D-7: el ambito viene apagado por defecto';
+end
+$$;
+
+-- Guardia, ANTES de tocar nada de Alpha: el ADMIN de una organizacion no
+-- activa el ambito de OTRA. La fila ajena queda fuera de
+-- organizations_update_visibility_admin (0002): el UPDATE no la toca, no
+-- hace falta una excepcion nueva para probarlo.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  update public.organizations set visibility_scope_enabled = true
+    where id = '33333333-3333-3333-3333-333333333333';
+commit;
+
+do $$
+begin
+  assert (select visibility_scope_enabled from public.organizations
+          where id = '33333333-3333-3333-3333-333333333333') = false,
+    'D-7: el ADMIN de Beta no puede activar el ambito de Gamma';
+  raise notice 'OK · D-7: el interruptor de una organizacion no lo toca el ADMIN de otra';
+end
+$$;
+
+-- Y dentro de la MISMA organizacion, un EDITOR tampoco: is_org_admin() ya
+-- acota organizations_update_visibility_admin al rol, aqui se confirma para
+-- la columna nueva.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  update public.organizations set visibility_scope_enabled = true
+    where id = '11111111-1111-1111-1111-111111111111';
+commit;
+
+do $$
+begin
+  assert (select visibility_scope_enabled from public.organizations
+          where id = '11111111-1111-1111-1111-111111111111') = false,
+    'D-7: un EDITOR no puede activar el ambito de su propia organizacion, solo el ADMIN';
+  raise notice 'OK · D-7: el interruptor es del ADMIN, no de cualquier miembro activo';
+end
+$$;
+
+-- Segundo hilo de Alpha, con Gamma, creado por Gamma (Alpha ya agoto su
+-- limite diario en el bloque de thread-rate-limiting, arriba). Solo a2 y c1
+-- tienen clave aqui -- a1 nunca es destinatario -- para poder distinguir
+-- OWN de ORG_METADATA en las comprobaciones de abajo.
+insert into public.threads (id, org_low_id, org_high_id, created_by_org_id)
+values ('11110000-0000-0000-0000-000000000002',
+        least(:orgA::uuid, :orgC::uuid), greatest(:orgA::uuid, :orgC::uuid), :orgC);
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    creado uuid;
+  begin
+    creado := public.create_thread_item(
+      '11110000-0000-0000-0000-000000000002', 'MENSAJE',
+      repeat('12', 32), repeat('16', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('16',12),
+          'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('16',12),
+          'ephemeral_pubkey', repeat('44',32))
+      ));
+    assert creado is not null, 'a2 abre el hilo Alpha-Gamma con su primer mensaje';
+    raise notice 'OK · a2 abre Alpha-Gamma; a1 no participa en ningun elemento de este hilo';
+  end
+  $$;
+commit;
+
+-- Ancla PRE-interruptor: con el ambito todavia apagado, a2 sigue viendo TODO
+-- lo de Alpha -- comportamiento actual, tal como exige D-7 por defecto. Se
+-- calcula la verdad de fondo sin RLS (como postgres) para no acoplar el
+-- aserto a un recuento fijo de hilos/elementos de bloques anteriores del
+-- fichero.
+-- Los dos totales viajan por `current_setting()`, no por `:variable` de psql:
+-- la interpolacion de psql no entra dentro de un cuerpo `do $$ ... $$`
+-- (lo lee el servidor tal cual, y ahi ":total_hilos_alpha" es solo texto).
+select count(*) as total_hilos_alpha from public.threads
+  where :orgA::uuid in (org_low_id, org_high_id) \gset
+select count(*) as total_items_alpha from public.thread_items ti
+  where exists (select 1 from public.threads t where t.id = ti.thread_id
+                  and :orgA::uuid in (t.org_low_id, t.org_high_id)) \gset
+select set_config('test.total_hilos_alpha', :'total_hilos_alpha', false);
+select set_config('test.total_items_alpha', :'total_items_alpha', false);
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    esperado_hilos int := current_setting('test.total_hilos_alpha')::int;
+    esperado_items int := current_setting('test.total_items_alpha')::int;
+  begin
+    assert (select count(*) from public.threads) = esperado_hilos,
+      'D-7: con el ambito apagado a2 sigue viendo TODOS los hilos de Alpha, como hoy';
+    assert (select count(*) from public.thread_items) = esperado_items,
+      'D-7: con el ambito apagado a2 sigue viendo TODOS los elementos de Alpha, como hoy';
+    raise notice 'OK · D-7: apagado por defecto, comportamiento identico al de hoy (% hilos, % elementos)', esperado_hilos, esperado_items;
+  end
+  $$;
+commit;
+
+-- Se enciende el ambito para Alpha -- lo hace el propio ADMIN (a1), la via
+-- real (organizations_update_visibility_admin, ya existente desde INV-07).
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  update public.organizations set visibility_scope_enabled = true where id = :orgA;
+commit;
+
+do $$
+begin
+  assert (select visibility_scope_enabled from public.organizations
+          where id = '11111111-1111-1111-1111-111111111111') = true,
+    'D-7: el ADMIN de la propia organizacion SI puede activar su interruptor';
+  raise notice 'OK · D-7: a1 activa el ambito de Alpha por la via real (ADMIN, propia organizacion)';
+end
+$$;
+
+-- a2 (EDITOR/OWN): a partir de aqui, solo lo suyo -- por hilo (D-1/D-8) y
+-- por elemento (D-1: "el ambito es por ELEMENTO, no por hilo").
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.threads) = 1,
+      'D-1/D-8: con el ambito encendido, a2 ve exactamente 1 hilo -- el suyo con Gamma';
+    assert exists (select 1 from public.threads where id = '11110000-0000-0000-0000-000000000002'),
+      'D-1: el hilo donde a2 tiene una clave envuelta esta en su lista';
+    assert not exists (select 1 from public.threads where id = '11110000-0000-0000-0000-000000000001'),
+      'D-8: a2 deja de ver el hilo Alpha-Beta en cuanto se enciende el ambito -- nunca tuvo clave ahi';
+    assert (select count(*) from public.thread_items) = 1,
+      'D-1: el ambito es por ELEMENTO -- a2 ve exactamente el suyo, no el hilo entero';
+    raise notice 'OK · D-1/D-8: a2 (OWN) pasa de ver todo a ver solo lo suyo en cuanto se activa';
+  end
+  $$;
+commit;
+
+-- a1 (ADMIN/ORG_METADATA): el plano completo, sin ser destinatario de
+-- ninguna clave del hilo nuevo (D-2).
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    esperado_hilos int := current_setting('test.total_hilos_alpha')::int;
+    esperado_items int := current_setting('test.total_items_alpha')::int;
+  begin
+    assert (select count(*) from public.threads) = esperado_hilos,
+      'D-2: el ADMIN (ORG_METADATA) sigue viendo TODOS los hilos de Alpha con el ambito encendido';
+    assert (select count(*) from public.thread_items) = esperado_items,
+      'D-2: el ADMIN (ORG_METADATA) sigue viendo TODOS los elementos de Alpha con el ambito encendido';
+    assert exists (select 1 from public.threads where id = '11110000-0000-0000-0000-000000000002'),
+      'D-2: a1 ve el hilo Alpha-Gamma aunque nunca le envolvieron una clave ahi';
+    raise notice 'OK · D-2: a1 (ORG_METADATA) ve el plano completo sin ser destinatario criptografico';
+  end
+  $$;
+commit;
+
+-- Beta nunca activo el interruptor: b1 sigue viendo lo de siempre. La
+-- regresion que demuestra que D-7 es de verdad opcional, no solo en teoria.
+-- Ground truth de nuevo por SQL, no a mano: Beta acumulo un segundo hilo
+-- propio (con Gamma, bloque `create_inquiry` §5 mas arriba) ademas del de
+-- Alpha, y contarlo de memoria es exactamente el error que la regla 2 del
+-- relevo (ESTADO-V1.md) existe para evitar.
+select count(*) as total_hilos_beta from public.threads
+  where :orgB::uuid in (org_low_id, org_high_id) \gset
+select set_config('test.total_hilos_beta', :'total_hilos_beta', false);
+
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    esperado_hilos int := current_setting('test.total_hilos_beta')::int;
+  begin
+    assert (select count(*) from public.threads) = esperado_hilos,
+      'D-7: Beta nunca activo el ambito -- b1 sigue viendo todos sus hilos, sin cambios';
+    raise notice 'OK · D-7: una organizacion que no activa el ambito no nota ningun cambio (% hilos)', esperado_hilos;
+  end
+  $$;
+commit;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

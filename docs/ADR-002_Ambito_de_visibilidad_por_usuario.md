@@ -34,6 +34,14 @@ diferenciador:
 > No es alcanzar al competidor. Es ganarle en el único eje donde ya somos
 > estructuralmente distintos.
 
+> ⚠ **Matizado el 4-sep-2026, y hay que leerlo aquí y no solo en D-2.** Al cerrar
+> Q-1 (§10) el PO decidió que **el ADMIN recibe copia envuelta de todo**. El
+> párrafo de arriba sigue siendo cierto frente al competidor —nuestro servidor no
+> puede leer la negociación, el suyo sí— pero **dentro de la organización la frase
+> correcta ya no es «el compañero de al lado no puede verla», sino «solo tu
+> administrador puede»**. Quien use este documento para escribir la promesa
+> comercial tiene que usar la segunda.
+
 **Se decide en la semana 0 de V1 y no más tarde** porque el reparto de claves se fija
 en la fundación. Meterlo después es migración de datos cifrados — *«la peor clase de
 migración»*, en palabras del propio día 2 (`0003:265`).
@@ -107,6 +115,25 @@ mensaje. Todo eso vive en `content_ciphertext` y ahí se queda.
 
 **Esto es más limpio que darle la clave:** el ADMIN obtiene supervisión **sin ser
 destinatario criptográfico**. La frontera se mantiene intacta.
+
+> ⚠ **REVOCADO EN SU SEGUNDA MITAD el 4-sep-2026, por decisión del PO al cerrar
+> Q-1 (§10).** Lo de arriba sigue describiendo lo que el ADMIN ve **sin clave**, y
+> eso no cambia: el plano de metadatos es suyo por rol. Lo que cambia es el
+> techo. **El ADMIN pasa a recibir copia envuelta de TODOS los elementos de las
+> conversaciones de su organización**, así que lee también el precio, el coste de
+> transporte, la divisa y el texto.
+>
+> El motivo del PO, textual: *«el administrador siempre debe ver todo»*. Y la
+> contrapartida que compra, que no es menor: **desaparece la consecuencia 7.1** —
+> una salida abrupta deja de costarle a la empresa el precio y la conversación,
+> porque el ADMIN conserva su propia copia.
+>
+> **Lo que esto cuesta, dicho sin adornos:** el argumento diferencial del §1 pasa
+> de *«el compañero de al lado no puede verlo»* a *«solo tu ADMIN puede verlo»*.
+> Sigue siendo más fuerte que el filtro de presentación del competidor —el
+> servidor sigue sin poder leer nada— pero ya no es la frontera absoluta que
+> describía este punto. Y **el riesgo se concentra**: si quien se va de golpe es
+> el ADMIN, se va con la única copia que la organización tenía de todo.
 
 ---
 
@@ -266,12 +293,12 @@ falla si se rompe.** Rozar uno es VIOLA automático, no RIESGO.
 
 | # | Invariante | Cómo se prueba |
 |---|---|---|
-| **V-1** | Un miembro con `visibility_scope = OWN` **nunca** recibe una copia envuelta de la clave de un elemento en el que no participa | Se siembran dos editores y un elemento; se afirma que `thread_item_keys` no tiene fila para el no participante |
-| **V-2** | El ADMIN **nunca** recibe copia envuelta por el hecho de ser ADMIN | Se afirma que ninguna fila de `thread_item_keys` tiene como destinatario a un ADMIN que no participó |
+| **V-1** | Un miembro con `visibility_scope = OWN` **nunca** recibe una copia envuelta de la clave de un elemento en el que no participa, **salvo el primer elemento ENTRANTE de una conversación** (§10 Q-1: llega a todos los miembros de la organización que recibe, o no lo puede asumir nadie) | Se siembran dos editores y un elemento **de respuesta**; se afirma que `thread_item_keys` no tiene fila para el no participante. Y su contrario: para una CONSULTA entrante, se afirma que **sí** la tiene |
+| **V-2** | ~~El ADMIN **nunca** recibe copia envuelta por el hecho de ser ADMIN~~ → **INVERTIDO el 4-sep-2026 (§10 Q-1):** el ADMIN de una organización recibe copia envuelta de **todos** los elementos de las conversaciones de su organización, participe o no | Se afirma que **toda** fila de `thread_items` de un hilo tiene su fila en `thread_item_keys` para **cada ADMIN activo** de las dos organizaciones. El aserto de antes —que probaba lo contrario— se retira con su fecha, no se edita en silencio |
 | **V-3** | El precio, el coste de transporte, la divisa y el texto **nunca** salen de `content_ciphertext` a metadato | Volcado de todas las columnas legibles por el servidor; se afirma que ninguna es un campo comercial de esos cuatro |
 | **V-4** | VERA **nunca** devuelve una fila fuera del ámbito de quien pregunta | Banco de preguntas con un EDITOR preguntando por hilos de un compañero; la verdad se computa por SQL |
 | **V-5** | El traspaso de D-5 **solo** puede originarlo el propio titular de la clave | Se intenta desde la sesión del ADMIN; el servidor lo rechaza |
-| **V-6** | Un EDITOR **no obtiene ni un metadato** de un hilo en el que no participa — ni por consulta directa, ni por la lista derivada, ni por VERA | Dos editores con hilos distintos contra la misma contraparte; se afirma que la lista de cada uno es disjunta y que ninguna consulta devuelve filas del otro |
+| **V-6** | Un EDITOR **no obtiene ni un metadato** de un hilo en el que no participa — ni por consulta directa, ni por la lista derivada, ni por VERA. **Precisión del 4-sep-2026:** «participa» incluye haber recibido el elemento entrante que abrió la conversación, así que un EDITOR sigue viendo esa consulta y sus metadatos aunque la asumiera un compañero; lo que no ve es **nada de lo que venga después** | Dos editores con hilos distintos contra la misma contraparte; se afirma que la lista de cada uno es disjunta salvo por el elemento entrante compartido, y que ningún elemento POSTERIOR del otro le aparece |
 
 ---
 
@@ -281,10 +308,10 @@ falla si se rompe.** Rozar uno es VIOLA automático, no RIESGO.
 |---|---|---|
 | `thread_items` | **+ columna `quantity`** (D-3) | ✅ **Completo.** `0020`, 3-sep-2026 (`CONSULTA`, vía `create_inquiry`) y `0021`, 4-sep-2026 (`OFERTA`, vía `counter_offer`). `create_thread_item` no la lleva y no le falta: rechaza `OFERTA` por diseño (`0012:185`) y solo crea `MENSAJE`, que tiene `quantity is null` obligatorio. La cantidad **no se hereda** de la oferta anterior — ver el §2 de `0021` |
 | `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ `0018`, 1-sep-2026 |
-| `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 | 🔴 **BLOQUEADA por Q-1 (§10)** — el lado del emisor está claro, el del receptor no lo decide este documento |
+| `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 | 🟡 **DESBLOQUEADA el 4-sep-2026** (§10 Q-1). Conjunto: participantes de la conversación **+ ADMIN de las dos organizaciones** |
 | `thread_items_select_participant` | Hoy `app.can_access_thread(thread_id)` (`0003:329`). Pasa a considerar el ámbito | ✅ `0019`, 3-sep-2026 |
 | Lista de hilos (`threads_select_participant`) | Deja de ser consulta directa a `threads` (`0003:312`); se deriva de `thread_item_keys` | ✅ `0019`, 3-sep-2026 |
-| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 **BLOQUEADA por Q-1 (§10)**, y depende de la fila de arriba |
+| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🟡 **DESBLOQUEADA el 4-sep-2026** (§10 Q-1) — y en el primer contacto **sigue siendo todos los de la organización receptora**, más el ADMIN de la emisora. Lo que cambia es el lado del emisor: sus compañeros EDITOR dejan de recibir copia |
 | Índices | Nuevo índice para la derivación de la lista de hilos, en la dirección que filtra primero | ✅ `0017`, 1-sep-2026 |
 | **`organizations.visibility_scope_enabled`** (D-7, octavo objeto — no estaba en la lista original del 25-ago; ver adenda del 3-sep-2026 en D-7) | Interruptor por organización, apagado por defecto. Sin él, `visibility_scope` (D-4) se aplicaría al 100% de las organizaciones sin que D-7 lo permitiera | ✅ `0019`, 3-sep-2026 |
 
@@ -328,15 +355,20 @@ nombre:
 
 ## 7 · Consecuencias aceptadas
 
-1. **Salida abrupta = pérdida de contenido.** Si alguien se va sin ejecutar el
-   traspaso de D-5 —despido, baja médica, conflicto—, la organización conserva **con
-   quién, qué referencia, qué cantidad y en qué estado**, y pierde **para siempre** el
-   precio y la conversación. Es irreversible por diseño y **debe decirse en la
-   interfaz**, no en la letra pequeña.
+1. ~~**Salida abrupta = pérdida de contenido.**~~ **Resuelta el 4-sep-2026 al cerrar
+   Q-1**, y por el camino más simple: si el ADMIN recibe copia de todo (D-2, adenda),
+   una salida abrupta ya no le cuesta a la organización ni el precio ni la
+   conversación. **Pero el riesgo no desaparece, se concentra:** si quien se va de
+   golpe es el ADMIN —o pierde su frase de respaldo—, se va con la única copia que
+   quedaba de todo lo que sus editores ya no tienen. La recomendación operativa que
+   sale de aquí es tener **más de un ADMIN**, y eso **debe decirse en la interfaz**,
+   no en la letra pequeña.
 2. **La cantidad entra en la superficie de metadatos** (D-3), con lo que implica.
-3. **Coste de escritura.** Cada elemento se cifra para N destinatarios. Con cinco
-   usuarios por organización, hasta diez filas por elemento. Es almacenamiento y
-   latencia de escritura que hoy no existe.
+3. **Coste de escritura, y ahora un poco más alto.** Cada elemento se cifra para N
+   destinatarios: los participantes **más el ADMIN de las dos organizaciones**, y en
+   el elemento entrante, todos los miembros de la que recibe. Con cinco usuarios por
+   organización, hasta diez filas para ese primer elemento y cuatro para cada
+   respuesta. Es almacenamiento y latencia de escritura que hoy no existe.
 4. **Riesgo de liquidez**, mitigado por D-7.
 
 ---
@@ -380,7 +412,7 @@ Y de cerrarlas salió §6, que no estaba en el borrador.
 
 ---
 
-### ⚠ Q-1 · ¿A quién se envuelve la CEK de un elemento que ENTRA en una organización con el ámbito encendido? — ABIERTA desde el 4-sep-2026
+### ✅ Q-1 · ¿A quién se envuelve la CEK de un elemento que ENTRA en una organización con el ámbito encendido? — ABIERTA y CERRADA el 4-sep-2026
 
 **Detectada antes de escribir SQL, no después**, al empezar la fila
 `thread_public_keys(t_id)` de §5. El PO decidió el mismo día **parar y decidirlo
@@ -425,11 +457,57 @@ objetos que cambian y **no incluye `org_public_keys`** (`0014` §1), que es
 precisamente la función del primer contacto y la que hoy devuelve todos los
 miembros de la organización consultada.
 
-**Qué bloquea:** las dos filas rojas de §5 — `thread_public_keys(t_id)` y el
-reparto de destinatarios de `create_inquiry`. Nada más: `quantity` en `OFERTA`
-(`0021`) es independiente y se hizo el 4-sep-2026.
+**Qué bloqueaba:** las dos filas rojas de §5 — `thread_public_keys(t_id)` y el
+reparto de destinatarios de `create_inquiry`. Ya no.
+
+---
+
+#### La decisión, 4-sep-2026 · PO
+
+**Buzón abierto, y el ADMIN como destinatario criptográfico permanente.** En
+palabras del PO: *«cuando se recibe una consulta, todo el mundo la recibe por
+igual, el administrador y los editores; luego que la propia organización decida
+quién responde, y a partir de ahí el contenido es del editor que la asumió y del
+administrador, que siempre debe ver todo»*.
+
+**La regla completa, que es lo que se implementa.** Para cada elemento, la CEK se
+envuelve para la unión de estos tres conjuntos:
+
+| # | Conjunto | Por qué |
+|---|---|---|
+| 1 | **Quien participa en la conversación** — quien escribe y quien ya tiene clave en ella | D-1: el ámbito es por elemento |
+| 2 | **El ADMIN (`visibility_scope = ORG_METADATA`) de las DOS organizaciones**, participe o no | D-2 adenda: *«el administrador siempre debe ver todo»*. Si hay varios ADMIN, todos |
+| 3 | **Solo en el primer elemento ENTRANTE de una conversación: todos los miembros de la organización que lo recibe** | Sin esto no lo puede leer nadie allí, y nadie puede asumirlo. Es la única excepción, y por eso V-1 la nombra |
+
+**Cómo se asume una conversación: no se asigna, se responde.** No hay acción de
+reparto ni campo de asignación. Quien contesta se convierte en participante y, a
+partir de ahí, los elementos siguientes solo se envuelven para los conjuntos 1 y
+2. **El reparto del trabajo lo decide la organización con su forma de trabajar, no
+el esquema.**
+
+**Qué le queda al resto de la organización.** Lo entregado, entregado está: los
+demás **siguen viendo esa consulta entrante y sus metadatos para siempre**, porque
+una copia envuelta no se retira —hoy `thread_item_keys` solo tiene políticas de
+`SELECT` e `INSERT` (`0003:351`, `0003:356`), no hay forma de borrar una fila—.
+Lo que no ven es **nada de lo que venga después**. La conversación les seguirá
+apareciendo en la lista con ese primer elemento y nada más, porque la lista se
+deriva de tener al menos un elemento legible (`0019`).
+
+**Lo que NO cambia con esta decisión, y conviene que quede dicho:**
+
+- **D-6 sigue intacto: VERA no devuelve contenido a nadie**, tampoco al ADMIN. Su
+  acceso nuevo es el de la interfaz, no el del agente. Si algún día se quiere un
+  ADMIN preguntándole a VERA por precios, es otra decisión y otro análisis.
+- **El servidor sigue sin poder leer nada.** Lo que cambia es cuántas personas de
+  la propia organización pueden, no qué puede la plataforma.
+- **D-9 sigue en pie:** apagar el ámbito no retira copias ya envueltas, y por eso
+  esta decisión tampoco se deshace hacia atrás.
+- **D-5 y D-10 siguen teniendo sentido** —un editor que se va puede traspasar sus
+  hilos— pero dejan de ser la última línea de defensa: el ADMIN ya tiene copia.
 
 
-*ADR-002 · v1.4, 4-sep-2026 · **§10 deja de estar vacía: Q-1, el reparto de la CEK en el lado que RECIBE, abierta y bloqueando las dos últimas filas rojas de §5 por decisión del PO** · `quantity` cerrada del todo el 4-sep (`0021`, `OFERTA`) ·*
+*ADR-002 · v1.5, 4-sep-2026 · **Q-1 abierta y cerrada el mismo día: buzón abierto para el elemento entrante, y el ADMIN pasa a ser destinatario criptográfico permanente de las conversaciones de su organización.** Eso INVIERTE V-2, precisa V-1 y V-6, revoca la segunda mitad de D-2 y resuelve la consecuencia 7.1 concentrando su riesgo en el ADMIN · las dos últimas filas de §5 quedan desbloqueadas ·*
+
+*v1.4, 4-sep-2026 · §10 dejó de estar vacía · `quantity` cerrada del todo (`0021`, `OFERTA`) ·*
 
 *v1.3, 3-sep-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día que se escribió (25-ago) · adenda del 3-sep-2026 en D-7 y §5: octavo objeto de esquema (`organizations.visibility_scope_enabled`) que la lista original no tenía; D-3 (`thread_items.quantity`) cerrado el mismo día, solo para `CONSULTA` · estado del esquema verificado contra las migraciones `0001`, `0003`, `0012`, `0014` el 25-ago, y contra `0017`, `0018`, `0019`, `0020` y `information_schema`/`pg_policies` del proyecto real el 1-sep y el 3-sep · Dirección Técnica, Nortex Systems*

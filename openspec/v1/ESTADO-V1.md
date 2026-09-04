@@ -223,8 +223,8 @@ el contrato no distingue. Declarado con la serie ya cerrada, no a mitad.
 | Índice de la derivación de la lista (entregable 5 + `ADR-002` §5) | ✅ **1-sep · `087962b`** |
 | `visibility_scope` (D-4) · `organizations.visibility_scope_enabled` (D-7) · Lista de hilos · `thread_items_select_participant` | ✅ **1-sep y 3-sep · `f5ea8fc`, `804dfe9`** |
 | `D-3` (`thread_items.quantity`) | ✅ **COMPLETO** — `CONSULTA` el 3-sep (`0020`), **`OFERTA` el 4-sep (`0021`, `ce78a72`→`098ba19`)** |
-| **`thread_public_keys(t_id)`** (reparto de destinatarios) | ⛔ **BLOQUEADA por Q-1** (`ADR-002` §10), decisión del PO del 4-sep |
-| **`create_inquiry`** (reparto de destinatarios de la CEK) | ⛔ **BLOQUEADA por Q-1**, y depende de la de arriba |
+| **`thread_public_keys(t_id)`** (reparto de destinatarios) | 🟡 **DESBLOQUEADA 4-sep** — Q-1 cerrada. Sin escribir todavía |
+| **`create_inquiry`** (reparto de destinatarios de la CEK) | 🟡 **DESBLOQUEADA 4-sep** — Q-1 cerrada. Sin escribir todavía |
 | Resto de la Fundación (entregables 1-3, 6) | 🔴 Sin cambios |
 
 ### Corriente B · Fábrica — NO ABIERTA
@@ -239,13 +239,15 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **Q-1 de `ADR-002` §10, con el ADR delante.** Es lo que el PO dejó parado hoy y lo que
-   desbloquea las dos últimas filas rojas de §5. Las cuatro salidas están escritas con lo
-   que cuesta cada una; no hace falta reconstruir el análisis, solo decidir. **Media hora
-   de lectura vale más que media pieza escrita.**
-2. **`thread_public_keys(t_id)` y `create_inquiry`**, en cuanto Q-1 esté cerrada. El lado
-   del emisor no depende de la respuesta y está claro desde hoy: con el ámbito encendido,
-   la CEK deja de envolverse para los compañeros de quien escribe.
+1. **`thread_public_keys(t_id)` y `create_inquiry`, con la regla de Q-1 ya escrita.** Para
+   cada elemento, la CEK se envuelve para: participantes de la conversación **+ el ADMIN de
+   las dos organizaciones, siempre + (solo en el elemento entrante) todos los miembros de la
+   organización que recibe**. Son las dos últimas filas de `ADR-002` §5 que no están hechas.
+2. **Y con ellas, los asertos que la decisión obliga a cambiar en `supabase/tests/`:** `V-2`
+   se INVIRTIÓ —el ADMIN ahora sí recibe copia de todo— así que su prueba pasa a afirmar lo
+   contrario de lo que afirmaba, y `V-1` y `V-6` necesitan la excepción del elemento
+   entrante. **Cambiar el aserto sin cambiar la prueba sería dejar el invariante sin
+   guardia.**
 3. **Vercel sigue sin redesplegar, y ahora arrastra DOS cambios de cliente**, no uno:
    `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (hoy). La base acepta las dos y
    producción no manda ninguna (`CLAUDE.md` §10.2).
@@ -267,7 +269,8 @@ Sin cambios.
 | # | Decisión | Dónde |
 |---|---|---|
 | **ADR-002** | Ámbito de visibilidad por usuario. Diez decisiones, seis invariantes, ocho objetos de esquema — **seis hechos, dos bloqueados por Q-1** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
-| **Q-1 se decide con el ADR delante, no sobre la marcha** | 4-sep-2026, PO. El reparto de la CEK en el lado que RECIBE no lo dice el ADR, y las salidas posibles cambian el producto, no solo el SQL | `ADR-002` §10 |
+| **Q-1 · CERRADA: buzón abierto + el ADMIN recibe copia de todo** | 4-sep-2026, PO. El elemento entrante llega a **todos** los miembros de la receptora; asume quien responde, sin acción de reparto; y el ADMIN de las dos organizaciones es destinatario criptográfico permanente | `ADR-002` §10 Q-1, D-2 (adenda) |
+| **V-2 queda INVERTIDO y V-1/V-6 precisados** | 4-sep-2026, consecuencia directa de Q-1. El ADMIN pasa de «nunca recibe copia por ser ADMIN» a «recibe copia de todo». La promesa interna deja de ser «el compañero no puede verlo» y pasa a «solo tu ADMIN puede» | `ADR-002` §4, §1 (matiz) |
 | **`quantity` NO se hereda de la oferta anterior** | 4-sep-2026. Copiar la cantidad vieja escribiría en claro una cifra que el ciphertext puede desmentir. `NULL` dice «no se sabe» | `0021` §2 |
 | **D-7 se implementa con interruptor, no se difiere** | 3-sep-2026, PO. `organizations.visibility_scope_enabled`, apagado por defecto | `0019`, adenda en `ADR-002` D-7 |
 | **Lo que se afirme sobre privilegios se comprueba contra el catálogo, no contra el `.sql`** | 4-sep-2026, `F-146`. La plataforma añade concesiones que ninguna migración escribió | `0022`, regla 2 de este fichero |
@@ -293,7 +296,7 @@ Sin cambios.
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| ⛔ | **Q-1 de `ADR-002` §10 bloquea las dos últimas filas rojas de §5.** No es deuda: es una decisión pendiente, tomada a propósito | Álvaro (PO), con el ADR delante |
+| 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj.** Sin cambios hoy: `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
 | 🟡 | **Vercel no redesplegó, y ahora son DOS cambios de cliente sin desplegar** (`quantity` de `CONSULTA` y de `OFERTA`) | Redesplegar `app/` (manual, `CLAUDE.md` §10.2) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
@@ -323,6 +326,10 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Desde cuándo `anon` podía ejecutar esas cinco funciones, y si alguien lo hizo.** El
   agujero existía desde `0012` (12-ago). **No se han mirado los logs de PostgREST** para ver
   si hubo llamadas anónimas a `org_public_keys` — se puede, y no se ha hecho hoy.
+- **Cuántos ADMIN va a tener de verdad una organización.** Q-1 hace del ADMIN el único
+  depositario de todo lo que sus editores dejen de tener, y hoy las dos organizaciones con
+  miembros tienen **exactamente uno** (comprobado el 4-sep contra `members`). Con un solo
+  ADMIN, la consecuencia 7.1 no se ha resuelto: se ha mudado de sitio.
 - **Cuántas funciones de `public` van a nacer fuera de nuestras migraciones.** `0022` cierra
   la *default privilege* del rol `postgres`; la de `supabase_admin` sigue abierta y es de la
   plataforma. Si algún día la plataforma crea una función en `public`, nacerá con `anon`.

@@ -254,12 +254,6 @@ Sin cambios.
 2. **Lo que `F-148` deja abierto y no se ha mirado:** si queda algún OTRO camino de
    escritura que dependa de una política de lectura. Se revisaron los tres de mensajería;
    `inventory_lines`, `favorite_distributors` y las funciones de demo **no**.
-5. **Vercel sigue sin redesplegar, y arrastra DOS cambios de cliente**, no uno:
-   `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (hoy). La base acepta las dos y
-   producción no manda ninguna (`CLAUDE.md` §10.2).
-6. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
-   (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
-   seis tareas: si canta en todas, se desactiva solo, que es `F-003`.
 3. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
    no distingue el corpus de la suerte (3 de 3 y 1 de 3 sobre lo mismo). O se mide con más
    tiradas por serie, o se acepta que el marcador es ruidoso y se usa solo para **encontrar
@@ -267,6 +261,14 @@ Sin cambios.
 4. **Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.** El
    `TS6133` de `16a` costó un reintento y no se repitió, así que no se declaró — pero el
    flag lleva en `app/tsconfig.json:11` desde el día 2 y la tarea no lo menciona.
+5. **Vercel sigue sin redesplegar, y arrastra DOS cambios de cliente**, no uno:
+   `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (hoy). La base acepta las dos y
+   producción no manda ninguna (`CLAUDE.md` §10.2).
+6. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
+   (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
+   seis tareas: si canta en todas, se desactiva solo, que es `F-003`. **Este es el sexto:
+   los cinco de arriba son los que el PO dio por lista de mañana el 4-sep; este se queda
+   detrás a propósito, porque es el único que no bloquea nada.**
 
 ---
 

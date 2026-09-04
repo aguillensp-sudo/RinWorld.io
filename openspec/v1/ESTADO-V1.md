@@ -141,6 +141,13 @@ más duele arreglada también: **el banco de pruebas local era más ESTRICTO que
 —no copiaba esas *default privileges*— así que cualquier aserto sobre esto habría pasado
 **en vacío**.
 
+**Y el día no se acabó donde este fichero decía que se acababa — hoy para bien, y es la
+regla 4 por el lado que no duele.** Con el cierre ya escrito y empujado, el PO pidió lanzar
+la serie 15, que en el §3 estaba puesta para mañana. **`15a`, `15b` y `15c` pasan 4/4 al
+primer intento: 3 de 3, la primera serie limpia del proyecto**, y la primera desde `F-137`
+que **no encuentra ningún hueco nuevo**. `15a` además corrió en frío (3,53% de caché), así
+que el resultado no se lo debe a un prompt ya calentado. $0,1865 las tres.
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -166,7 +173,10 @@ más duele arreglada también: **el banco de pruebas local era más ESTRICTO que
 | La copia sin trackear de este fichero en la raíz | `diff` contra `git show HEAD:openspec/v1/ESTADO-V1.md` antes de borrarla | Era la de ayer **menos** los párrafos sobre sí misma: ni una línea propia. Borrada, con respaldo fuera del repo. Ver la caja de arriba |
 | Los worktrees | `git worktree list` | Los mismos cuatro prunables + la raíz, hoy en `71b803b`. Cuarta comprobación seguida sin un cambio |
 | Estado del árbol al cerrar | `git status` | Limpio salvo `openspec/design-gui/Ingles/`, sin tocar hoy y ajeno a esta sesión |
-| Artefactos crudos del Coder (`app/src/screens/messages/*`) | `git status` tras cada corrida | Descartados con `git checkout --` antes de cada commit, tres veces (`14a`, `14b`, `14c`) |
+| Artefactos crudos del Coder (`app/src/screens/messages/*`) | `git status` tras cada corrida | Descartados con `git checkout --` antes de cada commit, **seis veces** (`14a`-`14c`, `15a`-`15c`) |
+| `MSG-01`, serie `15a`/`15b`/`15c` (corpus con `F-145`) | Los tres `attempt_1.json` y las tres filas de `harness-metrics.csv` | **3 de 3 a 4/4 al primer intento.** Ninguna repitió el `aria-label` de `14a` ni ningún síntoma ya cerrado. $0,1865 |
+| El marcador por series, contado y no recordado | `harness-metrics.csv`, contando **filas por corrida** (una fila = un intento) | Corridas que pasan 4/4 en el intento 1: **09 = 0/3 · 10 = 0/3 · 11 = 2/3 · 12 = 0/2** (`12c` no se lanzó) **· 13 = 1/3 · 14 = 2/3 · 15 = 3/3** |
+| Que el 3 de 3 no se lo debe al caché | `cache_hit_pct` de las tres filas | `15a` corrió con **3,53%** —en frío— y salió igual de limpia que `15b` y `15c`, las dos al 99,88% |
 
 ---
 
@@ -179,8 +189,8 @@ más duele arreglada también: **el banco de pruebas local era más ESTRICTO que
 | `F-114`, `F-131`–`F-144` | ✅ ver cierres anteriores en `git show 7abbc33` |
 | **`F-145` los botones de página se buscan por su número y un `aria-label` lo sustituye** | ✅ **4-sep · `71b803b`** |
 | **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
-| `MSG-01` a 4/4 sin reintentos | 🟡 **2 de 3** en la serie 14 (`14b`, `14c`), contra 1 de 3 en la 13 |
-| Medición del corpus de `MSG-01` con `F-145` ya puesto | 🔴 Sin medir — la serie 14 es la que ENCONTRÓ `F-145`; la 15 sería la primera que lo mide |
+| `MSG-01` a 4/4 sin reintentos | ✅ **3 de 3 · serie 15** (`a2a691c`) — la primera limpia del proyecto |
+| Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · serie 15**, hecha el mismo día tras el cierre. Sin huecos nuevos |
 
 ### Fundación V1
 
@@ -212,15 +222,16 @@ Sin cambios.
 2. **`thread_public_keys(t_id)` y `create_inquiry`**, en cuanto Q-1 esté cerrada. El lado
    del emisor no depende de la respuesta y está claro desde hoy: con el ámbito encendido,
    la CEK deja de envolverse para los compañeros de quien escribe.
-3. **Remedir `MSG-01` (serie 15, `n=3`) con `F-145` ya en el corpus.** La 14 es la que lo
-   encontró, así que el 2 de 3 de hoy **no** es la medida del corpus completo. ~$0,07 por
-   tirada, tres tiradas.
-4. **Vercel sigue sin redesplegar, y ahora arrastra DOS cambios de cliente**, no uno:
+3. **Vercel sigue sin redesplegar, y ahora arrastra DOS cambios de cliente**, no uno:
    `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (hoy). La base acepta las dos y
    producción no manda ninguna (`CLAUDE.md` §10.2).
-5. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
+4. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
    (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
    seis tareas: si canta en todas, se desactiva solo, que es `F-003`.
+5. **Y la pregunta que abre el 3 de 3: ¿se sigue remidiendo `MSG-01`?** Ocho series y quince
+   huecos después, la 15 es la primera que sale limpia entera. Una serie 16 diría si se
+   sostiene o fueron tres tiradas afortunadas; darlo por bueno libera ~$0,19 y un rato de
+   cada sesión para la Fundación. **Es decisión del PO, no del arnés.**
 
 ---
 
@@ -273,12 +284,13 @@ Sin cambios.
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Si el marcador de `MSG-01` sube con `F-145` puesto.** El 2 de 3 de hoy se midió sobre
-  el corpus que todavía no lo tenía. Hasta la serie 15, es una expectativa.
-- **Cuántos huecos de la familia `F-116`–`F-145` quedan.** Quince en ocho días, y cada
-  serie desde `F-137` ha encontrado al menos uno nuevo. `F-145` además es de una clase que
-  no se había visto: el Coder **aplicó** una convención (accesibilidad) en vez de saltársela.
-  No hay forma de saber si la 15 sale limpia sin medir.
+- **Si el 3 de 3 de la serie 15 se sostiene.** Con `n=3` no se distingue «el corpus ya está
+  completo» de «tres tiradas afortunadas»: la 11 dio 2 de 3 y la 12 volvió a 0 de 2 en cuanto
+  cambió el corpus. Una serie 16 lo diría; hasta entonces es un dato, no una tendencia.
+- **Cuántos huecos de la familia `F-116`–`F-145` quedan.** Quince en ocho días, y **la serie
+  15 es la primera desde `F-137` que no encuentra ninguno** — lo que no dice que no queden:
+  dice que estas tres tiradas no los tocaron. `F-145` fue además de una clase que no se había
+  visto, el Coder **aplicó** una convención en vez de saltársela.
 - **Desde cuándo `anon` podía ejecutar esas cinco funciones, y si alguien lo hizo.** El
   agujero existía desde `0012` (12-ago). **No se han mirado los logs de PostgREST** para ver
   si hubo llamadas anónimas a `org_public_keys` — se puede, y no se ha hecho hoy.
@@ -313,7 +325,9 @@ Cinco pasos. Se ejecutan **todos** o el relevo no vale.
 las 12:33 y siguió hasta las 13:45. El día 4 se cerró a las 11:22 y siguió hasta las 12:31.
 El día 6 lo cumplió dos veces corriendo `test_checks.py` antes de commitear. **El día 7 lo
 cumplió tres veces: `test_checks` antes de commitear `F-145`, el ancla negativa de `0022`
-antes de darlo por bueno, y la CI job a job antes de escribir esto.**
+antes de darlo por bueno, y la CI job a job antes de escribir esto. Y luego el día siguió
+igualmente: la serie 15 entera se corrió DESPUÉS de este cierre y este fichero se reescribió
+para meterla. Cerrar no es terminar.**
 
 ⚠ **Y este fichero se escribe en `openspec/v1/ESTADO-V1.md`, no en la raíz del repo.** La
 copia de la raíz se borró el 4-sep y **no** está en `.gitignore`: si reaparece, saldrá como
@@ -339,9 +353,9 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 7 de V1 · 4-sep-2026 (09:08 UTC) · fecha leída de la máquina (`date -u`) · estado
+*Día 7 de V1 · 4-sep-2026 (cerrado a las 09:08 UTC, reabierto y actualizado a las 09:41 con la serie 15) · fecha leída de la máquina (`date -u`) · estado
 verificado contra el código de `mvp/bootstrap`, contra `pg_proc`/`pg_default_acl`/
 `list_migrations` del proyecto `troxminloxkjwihwfevs`, contra una llamada real como `anon`,
-contra la CI job a job de `71b803b` y contra la salida de tres corridas pagadas — no contra
-otro documento · **dos paradas a tiempo: Q-1 antes de escribir SQL, y `F-146` antes de dar
+contra la CI job a job de `71b803b` y contra la salida de **seis** corridas pagadas — no
+contra otro documento · **dos paradas a tiempo: Q-1 antes de escribir SQL, y `F-146` antes de dar
 `0021` por terminada** · Dirección Técnica, Nortex Systems*

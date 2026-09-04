@@ -1489,4 +1489,165 @@ begin;
   $$;
 commit;
 
+-- -----------------------------------------------------------------------------
+-- counter_offer con quantity (0021, ADR-002 D-3) · la mitad de OFERTA que 0020
+-- dejo a proposito
+-- -----------------------------------------------------------------------------
+-- Tres ofertas Pendiente nuevas de Alpha, una por caso: cada contraoferta
+-- supersede a la suya, asi que no se pueden encadenar sobre la misma fila.
+-- Beta las contraoferta -- Beta nunca activo el ambito (bloque de arriba), asi
+-- que b1 ve el hilo con el criterio de siempre y esto no mide D-7 de rebote.
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, estado_oferta, quantity, content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-000000000007', '11110000-0000-0000-0000-000000000001',
+   :orgA, :a1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente', null,
+   decode(repeat('21', 96), 'hex'), decode(repeat('22', 12), 'hex')),
+  ('12000000-0000-0000-0000-000000000008', '11110000-0000-0000-0000-000000000001',
+   :orgA, :a1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente', 500,
+   decode(repeat('23', 96), 'hex'), decode(repeat('24', 12), 'hex')),
+  ('12000000-0000-0000-0000-000000000009', '11110000-0000-0000-0000-000000000001',
+   :orgA, :a1, 'OFERTA', '6205-2RS', 'SKF', 'Pendiente', null,
+   decode(repeat('25', 96), 'hex'), decode(repeat('26', 12), 'hex'));
+
+-- 1 · ANCLA. La cantidad llega en claro tal cual se mando, y NO sale del
+-- ciphertext ni de la oferta anterior.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    nueva uuid;
+  begin
+    nueva := public.counter_offer(
+      '12000000-0000-0000-0000-000000000007',
+      repeat('bb', 96), repeat('27', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('27',12),
+          'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('27',12),
+          'ephemeral_pubkey', repeat('44',32))
+      ),
+      250);
+
+    assert (select quantity from public.thread_items where id = nueva) = 250,
+      'D-3: counter_offer deposita quantity en claro, tal cual se mando';
+    assert (select part_number from public.thread_items where id = nueva) = '6205-2RS',
+      'D-3: lo que se heredaba (part_number) se sigue heredando';
+    raise notice 'OK · D-3: counter_offer escribe quantity en claro (250)';
+  end
+  $$;
+commit;
+
+-- 2 · La cantidad NO se hereda de la oferta anterior. Es el aserto que sostiene
+-- el §2 de 0021: la anterior tiene 500 en claro, el llamador viejo no manda
+-- nada, y la nueva guarda NULL -- no 500. Heredarla escribiria en el plano en
+-- claro una cifra que el ciphertext de la contraoferta puede desmentir, y un
+-- ADMIN leyendo D-2 no tendria como saberlo (F-010 con otra ropa).
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    nueva uuid;
+  begin
+    nueva := public.counter_offer(
+      '12000000-0000-0000-0000-000000000008',
+      repeat('cc', 96), repeat('28', 12),
+      jsonb_build_array(
+        jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('28',12),
+          'ephemeral_pubkey', repeat('66',32))
+      ));
+
+    assert (select quantity from public.thread_items where id = nueva) is null,
+      'D-3: sin p_quantity la contraoferta guarda NULL, NO hereda la cantidad de la anterior';
+    assert (select quantity from public.thread_items
+             where id = '12000000-0000-0000-0000-000000000008') = 500,
+      'D-3: la oferta superada conserva su propia cantidad, la contraoferta no la reescribe';
+    raise notice 'OK · D-3: counter_offer retrocompatible y sin herencia de quantity';
+  end
+  $$;
+commit;
+
+-- 3 · Negativa, bloqueada con mensaje propio antes de que salte el check.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.counter_offer('12000000-0000-0000-0000-000000000009',
+        repeat('dd',96), repeat('29',12),
+        jsonb_build_array(jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('77',48), 'wrap_iv', repeat('29',12),
+          'ephemeral_pubkey', repeat('88',32))),
+        -5)$$,
+    'D-3: una contraoferta con cantidad negativa');
+commit;
+
+-- La firma vieja de cuatro parametros ya no existe: 0021 la borra antes de
+-- crear la de cinco, para que la llamada de siempre resuelva al default y no
+-- quede ambigua entre dos funciones ("function is not unique").
+do $$
+begin
+  assert (select count(*) from pg_proc p
+           join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = 'public' and p.proname = 'counter_offer') = 1,
+    '0021: counter_offer tiene UNA sola firma, la de cinco parametros';
+  raise notice 'OK · 0021: una sola firma de counter_offer';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
+-- -----------------------------------------------------------------------------
+-- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde
+-- 0012. Mide de verdad desde que `00_auth_stub.sql` copia las DEFAULT
+-- PRIVILEGES de la plataforma: sin eso, ninguna funcion local nacia ejecutable
+-- por `anon` y esto habria pasado en vacio.
+--
+-- `expect_fail` se excluye porque no es esquema: la crea este mismo banco de
+-- pruebas y no existe en el proyecto real.
+do $$
+declare
+  abiertas text;
+begin
+  select string_agg(p.proname, ', ' order by p.proname) into abiertas
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+     and p.proname <> 'expect_fail'
+     and exists (select 1 from aclexplode(p.proacl) a
+                   join pg_roles r on r.oid = a.grantee
+                  where r.rolname = 'anon' and a.privilege_type = 'EXECUTE');
+
+  assert abiertas is null,
+    'F-146: estas funciones de public las puede ejecutar anon: ' || coalesce(abiertas, '');
+  raise notice 'OK · F-146: ninguna funcion de public es ejecutable por anon';
+end
+$$;
+
+-- Y que una funcion NUEVA tampoco nazca abierta -- la segunda mitad de 0022,
+-- la default privilege. Sin este aserto, la proxima migracion reintroduce el
+-- agujero y solo se veria al revocar a mano una por una.
+create or replace function public.f146_canaria() returns int
+  language sql immutable as $$ select 1 $$;
+
+do $$
+begin
+  assert not exists (select 1 from pg_proc p
+                       join pg_namespace n on n.oid = p.pronamespace,
+                     lateral aclexplode(p.proacl) a
+                       join pg_roles r on r.oid = a.grantee
+                      where n.nspname = 'public' and p.proname = 'f146_canaria'
+                        and r.rolname = 'anon' and a.privilege_type = 'EXECUTE'),
+    'F-146: una funcion nueva de public sigue naciendo ejecutable por anon -- la default privilege de 0022 no esta puesta';
+  raise notice 'OK · F-146: una funcion nueva de public no nace ejecutable por anon';
+end
+$$;
+
+drop function public.f146_canaria();
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

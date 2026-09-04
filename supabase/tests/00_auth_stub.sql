@@ -24,6 +24,29 @@ $$;
 
 grant anon, authenticated, service_role to postgres;
 
+-- -----------------------------------------------------------------------------
+-- ⚠ F-146 · el stub tiene que copiar tambien lo que la plataforma REGALA
+-- -----------------------------------------------------------------------------
+-- Hasta el 4-sep-2026 este fichero solo creaba los tres roles, y con eso el
+-- Postgres de pruebas se parecia a Supabase en lo que a Supabase le falta y no
+-- en lo que a Supabase le sobra. Supabase deja puestas unas DEFAULT PRIVILEGES
+-- en el esquema `public` que conceden EXECUTE a `anon`, `authenticated` y
+-- `service_role` sobre CADA funcion nueva, en el momento de crearla. Un
+-- `revoke execute ... from public` -el patron de todas las migraciones desde
+-- 0001- quita el pseudo-rol PUBLIC y NO quita esa concesion propia de `anon`.
+--
+-- Resultado: en el proyecto real cinco de las siete funciones de `public` eran
+-- ejecutables por `anon` mientras sus comentarios decian lo contrario, y **aqui
+-- no habia forma de verlo**: sin la default privilege, ninguna funcion local
+-- nacia con el permiso, asi que cualquier aserto sobre esto habria pasado en
+-- vacio. Un banco de pruebas mas permisivo que produccion falla en el sentido
+-- seguro; uno mas ESTRICTO -como era este- esconde agujeros reales.
+--
+-- Desde aqui, el local nace igual de abierto que el remoto y el aserto del
+-- final de 01_schema_smoke.sql mide algo de verdad.
+alter default privileges in schema public
+  grant execute on functions to anon, authenticated, service_role;
+
 create schema if not exists auth;
 
 create table if not exists auth.users (

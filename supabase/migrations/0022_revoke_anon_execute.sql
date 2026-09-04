@@ -1,0 +1,97 @@
+-- =============================================================================
+-- 0022 · `revoke ... from public` no quita a `anon`: hay que decirlo por su
+--        nombre (F-146)
+-- =============================================================================
+-- Hallado el 4-sep-2026 comprobando contra el proyecto real (`pg_proc.proacl`)
+-- que 0021 habia dejado UNA sola firma de `counter_offer`. La comprobacion
+-- devolvio, de paso, la lista de quien puede ejecutarla: `postgres, anon,
+-- authenticated, service_role`.
+--
+-- -----------------------------------------------------------------------------
+-- EL MECANISMO, Y POR QUE TODAS LAS MIGRACIONES ANTERIORES SE LO CREYERON
+-- -----------------------------------------------------------------------------
+-- Desde 0001 el patron ha sido siempre el mismo, con su comentario al lado
+-- (0012:116): *"`security definer` sin `revoke` es una funcion que puede llamar
+-- cualquiera, incluido `anon`"*, seguido de:
+--
+--     revoke execute on function ... from public;
+--     grant  execute on function ... to authenticated, service_role;
+--
+-- **`public` ahi es el pseudo-rol PUBLIC, no el esquema, y `anon` no recibe su
+-- permiso por PUBLIC.** Supabase deja puestas unas DEFAULT PRIVILEGES en el
+-- esquema `public` que conceden EXECUTE a `anon`, `authenticated` y
+-- `service_role` sobre **cada funcion nueva**, en el momento de crearla:
+--
+--     pg_default_acl → nspname=public, defaclobjtype=f,
+--       "postgres=X/postgres | anon=X/postgres | authenticated=X/postgres |
+--        service_role=X/postgres"   (y otra igual concedida por supabase_admin)
+--
+-- O sea que `anon` llega con concesion PROPIA y explicita. Quitar PUBLIC no le
+-- quita nada. El `revoke` hacia lo que decia -- y no lo que su comentario creia.
+--
+-- **Comprobado, no razonado** (4-sep-2026, proyecto `troxminloxkjwihwfevs`):
+--
+--     begin; set local role anon;
+--     select count(*) from public.org_public_keys('b2000000-…-0002');
+--     → 1 fila, con `public_key` incluida
+--
+-- `org_public_keys` es `security definer`, asi que corre por encima de RLS: un
+-- llamador anonimo -- la clave `anon` viaja en el bundle del navegador, no es un
+-- secreto -- que conozca el UUID de una organizacion APPROVED obtiene los
+-- `member_id` y las claves publicas X25519 de sus miembros.
+--
+-- -----------------------------------------------------------------------------
+-- QUE SE FILTRA DE VERDAD, DICHO SIN INFLARLO NI DESINFLARLO
+-- -----------------------------------------------------------------------------
+--  · **Se filtra**: cuantos miembros tiene una organizacion aprobada, sus
+--    `member_id` (que son los `auth.uid()` que usan las politicas) y sus claves
+--    publicas. La superficie de tres columnas de 0012 §1 aguanto: NO salen
+--    `email`, ni `full_name`, ni ninguno de los cuatro campos del respaldo de
+--    clave (ADR-001 §8). El primer invariante de ADR-001 sigue en pie.
+--  · **Hace falta el UUID de la organizacion**, y `anon` no puede listarlas:
+--    `organizations_select_approved` es politica sobre la tabla y a `anon` no le
+--    devuelve filas (comprobado el mismo dia: la misma llamada con el UUID
+--    sacado por subconsulta devolvio 0 filas, y con el literal delante devolvio
+--    1). O sea que no es enumerable a ciegas.
+--  · **`thread_public_keys` no filtra nada hoy**: su puerta es
+--    `app.can_access_thread(t_id)`, que para `anon` no es cierta nunca. Se
+--    revoca igual -- que hoy no filtre por una segunda cerradura no arregla que
+--    la primera estuviera abierta.
+--  · Las tres `security invoker` (`create_inquiry`, `counter_offer`,
+--    `create_thread_item`) pasan por RLS como `anon` y no escriben nada. Se
+--    revocan tambien: una funcion cuyo comentario dice "solo authenticated"
+--    tiene que ser verdad, o el proximo que lea el comentario construira encima.
+--
+-- Las dos unicas funciones de `public` que ya estaban bien son las de 0015
+-- (`demo_state`, `demo_reanchor_freshness`), y estan bien por el unico motivo
+-- que funciona: **nombran a `anon` en su `revoke`**.
+--
+-- -----------------------------------------------------------------------------
+-- LO QUE ESTA MIGRACION HACE, Y LO QUE NO
+-- -----------------------------------------------------------------------------
+-- 1. Revoca `execute` a `anon` en las cinco funciones de `public` que lo tenian.
+-- 2. Cambia las DEFAULT PRIVILEGES **para el rol que aplica las migraciones**
+--    (`postgres`, comprobado con `select current_user` por el MCP) de modo que
+--    una funcion NUEVA en `public` ya no nazca ejecutable por `anon`. Sin esto,
+--    la proxima migracion reintroduce el agujero sin que nadie lo note -- que es
+--    literalmente lo que hizo `0021` unas horas antes de escribirse esto.
+--
+--    No se toca la default privilege de `supabase_admin`: es de la plataforma,
+--    no nuestra, y las funciones que crea ese rol tampoco son nuestras.
+--
+-- 3. **NO revoca a `authenticated`**: ese es el permiso que la aplicacion usa.
+-- 4. **NO toca el esquema `app`**: PostgREST no lo expone y `anon` ni siquiera
+--    tiene `usage` sobre el (comprobado: `permission denied for schema app`).
+-- =============================================================================
+
+revoke execute on function public.org_public_keys(uuid) from anon;
+revoke execute on function public.thread_public_keys(uuid) from anon;
+revoke execute on function public.create_thread_item(uuid, text, text, text, jsonb) from anon;
+revoke execute on function public.create_inquiry(uuid, text, text, jsonb, integer) from anon;
+revoke execute on function public.counter_offer(uuid, text, text, jsonb, integer) from anon;
+
+-- Y que la proxima no nazca abierta. `for role postgres` porque es el rol con
+-- el que se aplican las migraciones: una DEFAULT PRIVILEGE solo alcanza a los
+-- objetos que crea el rol al que pertenece.
+alter default privileges for role postgres in schema public
+  revoke execute on functions from anon;

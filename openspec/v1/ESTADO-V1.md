@@ -148,6 +148,24 @@ primer intento: 3 de 3, la primera serie limpia del proyecto**, y la primera des
 que **no encuentra ningún hueco nuevo**. `15a` además corrió en frío (3,53% de caché), así
 que el resultado no se lo debe a un prompt ya calentado. $0,1865 las tres.
 
+**Y el PO pidió la serie 16 para ver si se sostenía. No se sostiene, y esa es la lección
+cara del día.** La 16 es una **réplica exacta**: mismo corpus —`harness/tasks/MSG-01.json`
+sin tocar desde `71b803b`, comprobado antes de lanzar—, mismo modelo, otras tres tiradas.
+Marcador: **1 de 3**. `16a` y `16c` fallaron el intento 1 y `16b` pasó 4/4. **Sobre el mismo
+corpus, dos series consecutivas dan 3 de 3 y 1 de 3** — o sea que con `n=3` el marcador mide
+tanto el corpus como la suerte, y el «3 de 3» de la 15 era lo segundo tanto como lo primero.
+Sumadas, las seis corridas del mismo corpus dan **4 de 6**.
+
+**Y la réplica pagó su coste, porque encontró `F-147`.** Las dos corridas que fallaron lo
+hicieron por lo MISMO: `ThreadList.test.tsx` exige la frase del estado vacío entera en **un
+solo nodo** (`getByText` con cadena compara el texto de un elemento, no el de un contenedor
+con hijos), y las dos la partieron en título y cuerpo. `component_api` declaraba desde
+`F-128` el botón y el motivo `fuera del MVP` verbatim, y de la frase que los precede no
+decía nada. **Es la segunda vez en el mismo día que el hueco lo abre una decisión de
+maquetación legítima** —`F-145` fue un `aria-label` que mejora la accesibilidad, este es un
+título separado de su cuerpo—: el Coder no se salta el contrato, elige entre dos formas que
+el contrato no distingue. Declarado con la serie ya cerrada, no a mitad.
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -177,6 +195,11 @@ que el resultado no se lo debe a un prompt ya calentado. $0,1865 las tres.
 | `MSG-01`, serie `15a`/`15b`/`15c` (corpus con `F-145`) | Los tres `attempt_1.json` y las tres filas de `harness-metrics.csv` | **3 de 3 a 4/4 al primer intento.** Ninguna repitió el `aria-label` de `14a` ni ningún síntoma ya cerrado. $0,1865 |
 | El marcador por series, contado y no recordado | `harness-metrics.csv`, contando **filas por corrida** (una fila = un intento) | Corridas que pasan 4/4 en el intento 1: **09 = 0/3 · 10 = 0/3 · 11 = 2/3 · 12 = 0/2** (`12c` no se lanzó) **· 13 = 1/3 · 14 = 2/3 · 15 = 3/3** |
 | Que el 3 de 3 no se lo debe al caché | `cache_hit_pct` de las tres filas | `15a` corrió con **3,53%** —en frío— y salió igual de limpia que `15b` y `15c`, las dos al 99,88% |
+| Que la serie 16 es una RÉPLICA y no otra medida | `git log -1 -- harness/tasks/MSG-01.json` **antes** de lanzar `16a` | Último cambio del corpus: `71b803b` (el de `F-145`), el mismo que midió la serie 15. Ni un byte entre las dos series |
+| `MSG-01`, serie `16a`/`16b`/`16c` | Los cinco `attempt_N.json` y las cinco filas del CSV | **1 de 3 al primer intento** (`16b`). `16a` y `16c`, dos intentos. $0,2113 |
+| Que el fallo de `16a` y `16c` es el MISMO y no dos casualidades | Los `attempt_1.json` de las dos, campo `checks` | Las dos fallan el mismo test —`ThreadList` · estado vacío— y por la misma causa: la frase partida en dos `<p>`. `16b` la escribió entera |
+| Que el `TS6133` de `16a` NO se repite | Los `attempt_1.json` de `16b` y `16c` | Solo aparece en `16a`. Es variación ordinaria (`noUnusedLocals` está en `app/tsconfig.json:11` y los `constraints` de la tarea no lo mencionan), y por eso **no** se declara |
+| `F-147` corregido, sin reintroducir el mecanismo de `F-140` | `python -m harness.tests.test_checks`, corrido ANTES de commitear | «Todas en verde». Texto al FINAL del `component_api` de `ThreadList.tsx`, sin tocar `" EL ESTADO VACIO"` ni `" LA FILA CONSERVA"` |
 
 ---
 
@@ -189,8 +212,9 @@ que el resultado no se lo debe a un prompt ya calentado. $0,1865 las tres.
 | `F-114`, `F-131`–`F-144` | ✅ ver cierres anteriores en `git show 7abbc33` |
 | **`F-145` los botones de página se buscan por su número y un `aria-label` lo sustituye** | ✅ **4-sep · `71b803b`** |
 | **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
-| `MSG-01` a 4/4 sin reintentos | ✅ **3 de 3 · serie 15** (`a2a691c`) — la primera limpia del proyecto |
-| Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · serie 15**, hecha el mismo día tras el cierre. Sin huecos nuevos |
+| `MSG-01` a 4/4 sin reintentos | 🟡 **4 de 6 sobre el mismo corpus** — serie 15: 3 de 3; serie 16 (réplica exacta): **1 de 3**. Con `n=3` el marcador mide también la suerte |
+| Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · series 15 y 16**, seis corridas. La 15 no encontró nada; **la 16 encontró `F-147`** |
+| **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — sin remedir: la serie 17 sería la primera que lo mide |
 
 ### Fundación V1
 
@@ -228,10 +252,13 @@ Sin cambios.
 4. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
    (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
    seis tareas: si canta en todas, se desactiva solo, que es `F-003`.
-5. **Y la pregunta que abre el 3 de 3: ¿se sigue remidiendo `MSG-01`?** Ocho series y quince
-   huecos después, la 15 es la primera que sale limpia entera. Una serie 16 diría si se
-   sostiene o fueron tres tiradas afortunadas; darlo por bueno libera ~$0,19 y un rato de
-   cada sesión para la Fundación. **Es decisión del PO, no del arnés.**
+5. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
+   no distingue el corpus de la suerte (3 de 3 y 1 de 3 sobre lo mismo). O se mide con más
+   tiradas por serie, o se acepta que el marcador es ruidoso y se usa solo para **encontrar
+   huecos**, que es para lo que sí ha servido siete veces seguidas. **Decisión del PO.**
+6. **Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.** El
+   `TS6133` de `16a` costó un reintento y no se repitió, así que no se declaró — pero el
+   flag lleva en `app/tsconfig.json:11` desde el día 2 y la tarea no lo menciona.
 
 ---
 
@@ -284,13 +311,15 @@ Sin cambios.
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Si el 3 de 3 de la serie 15 se sostiene.** Con `n=3` no se distingue «el corpus ya está
-  completo» de «tres tiradas afortunadas»: la 11 dio 2 de 3 y la 12 volvió a 0 de 2 en cuanto
-  cambió el corpus. Una serie 16 lo diría; hasta entonces es un dato, no una tendencia.
-- **Cuántos huecos de la familia `F-116`–`F-145` quedan.** Quince en ocho días, y **la serie
-  15 es la primera desde `F-137` que no encuentra ninguno** — lo que no dice que no queden:
-  dice que estas tres tiradas no los tocaron. `F-145` fue además de una clase que no se había
-  visto, el Coder **aplicó** una convención en vez de saltársela.
+- ~~Si el 3 de 3 de la serie 15 se sostiene.~~ **Contestado el mismo día: no.** La réplica
+  exacta dio 1 de 3. Lo que queda abierto es lo de detrás: **cuántas tiradas hacen falta para
+  que este marcador signifique algo**. Seis sobre el mismo corpus dan 4 de 6, y las series de
+  tres han oscilado entre 0 y 3 sin que el corpus cambiara.
+- **Cuántos huecos de la familia `F-116`–`F-147` quedan.** Dieciséis en ocho días. La serie
+  15 fue la primera desde `F-137` que no encontró ninguno **y la 16, sobre el corpus idéntico,
+  encontró uno** — así que «una serie limpia» no significa «corpus completo», significa «esas
+  tres tiradas no lo tocaron». `F-145` y `F-147` son además de una clase nueva: el Coder no se
+  salta el contrato, **elige entre dos formas que el contrato no distingue**.
 - **Desde cuándo `anon` podía ejecutar esas cinco funciones, y si alguien lo hizo.** El
   agujero existía desde `0012` (12-ago). **No se han mirado los logs de PostgREST** para ver
   si hubo llamadas anónimas a `org_public_keys` — se puede, y no se ha hecho hoy.
@@ -353,9 +382,9 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 7 de V1 · 4-sep-2026 (cerrado a las 09:08 UTC, reabierto y actualizado a las 09:41 con la serie 15) · fecha leída de la máquina (`date -u`) · estado
+*Día 7 de V1 · 4-sep-2026 (cerrado a las 09:08 UTC y reabierto dos veces: 09:41 con la serie 15, 10:19 con la serie 16 y `F-147`) · fecha leída de la máquina (`date -u`) · estado
 verificado contra el código de `mvp/bootstrap`, contra `pg_proc`/`pg_default_acl`/
 `list_migrations` del proyecto `troxminloxkjwihwfevs`, contra una llamada real como `anon`,
-contra la CI job a job de `71b803b` y contra la salida de **seis** corridas pagadas — no
+contra la CI job a job de `71b803b` y contra la salida de **nueve** corridas pagadas — no
 contra otro documento · **dos paradas a tiempo: Q-1 antes de escribir SQL, y `F-146` antes de dar
 `0021` por terminada** · Dirección Técnica, Nortex Systems*

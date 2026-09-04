@@ -23,23 +23,18 @@ absolutos.**
 > no dice nada. Haría falta `git worktree remove`, y uno de los tres es la sesión desde la
 > que se escribe esto. La primera mitad de la receta era falsa; la segunda sigue sin probar.
 >
-> **1-sep, comprobado otra vez, mismo resultado:** siguen siendo los mismos cuatro
-> worktrees prunables de siempre (`bearing-io-mvp-estado-f2911a`, `bearing-mvp-bootstrap-
-> 3bc0fc`, `dia-14-correcciones-mvp-8160b9`, `dia-4-f131-pending-003608`), todos anclados a
-> `43bb222` -anterior a todo el trabajo de V1-, más la raíz al día. Ninguno nuevo, ninguno
-> menos. Sigue sin probarse la hipótesis de lanzar desde la raíz.
+> **1-sep, 3-sep y 4-sep, comprobado tres veces más, mismo resultado:** los mismos cuatro
+> prunables de siempre (`bearing-io-mvp-estado-f2911a`, `bearing-mvp-bootstrap-3bc0fc`,
+> `dia-14-correcciones-mvp-8160b9`, `dia-4-f131-pending-003608`), todos anclados a `43bb222`
+> —anterior a todo el trabajo de V1—, más la raíz al día (hoy en `71b803b`). Cuatro jornadas
+> seguidas sin que cambie ni uno. **La hipótesis de lanzar desde la raíz sigue sin probarse.**
 >
-> **3-sep, comprobado una tercera vez, mismo resultado:** `git worktree list` da los mismos
-> cuatro prunables de siempre más la raíz, ahora en `185e0ce`. Tres jornadas seguidas sin que
-> cambie ni un worktree, ninguno nuevo. La hipótesis sigue exactamente donde estaba.
->
-> **Y un descubrimiento nuevo el 3-sep, de la misma familia que esta caja:** existe una
-> SEGUNDA copia de este fichero en la raíz del repo (`ESTADO-V1.md`, sin `openspec/v1/`
-> delante), **sin trackear por git**, casi idéntica a la tracked hasta hoy — alguna sesión
-> anterior escribió en las dos sin que nadie lo dejara escrito. La de verdad es esta
-> (`openspec/v1/ESTADO-V1.md`, la que aparece en `git log`); la de la raíz no se ha borrado
-> por si alguna herramienta la espera ahí, pero **no es fuente de nada** y queda pendiente
-> decidir si se elimina o se ignora en `.gitignore`.
+> **Y la SEGUNDA copia de este fichero en la raíz del repo, hallada el 3-sep: resuelta el
+> 4-sep-2026.** Se comparó con la trackeada antes de tocarla: era la versión de ayer **menos**
+> los párrafos que hablaban de sí misma, o sea que no tenía ni una línea propia. **Borrada**,
+> con copia de seguridad fuera del repo. **Y NO se ha metido en `.gitignore`, a propósito:**
+> ignorarla la haría invisible en `git status`, y fue justamente aparecer como `??` lo que
+> hizo que alguien la descubriera. Si alguna herramienta la recrea, se quiere ver.
 
 > 🔑 **¿Vas a tocar Supabase? Lee `CLAUDE.md` §10 ANTES de la primera consulta.**
 
@@ -69,6 +64,12 @@ empezada» **comprobándolo contra un `ls`**, cuando uno de sus seis entregables
 desde la primera migración (`F-132`). **Comprobar el continente no es comprobar el
 contenido. Ningún documento es fuente de verdad sobre el código. Este tampoco.**
 
+> **Y el 4-sep la regla se ganó una hermana, `F-146`:** comprobar el CÓDIGO tampoco basta
+> cuando la plataforma añade cosas por su cuenta. Las migraciones decían `revoke execute …
+> from public` desde `0001` y lo que la base tenía puesto era otra cosa. **Lo que se afirme
+> sobre privilegios, RLS o permisos se comprueba contra `pg_proc` / `pg_policies` / `pg_
+> default_acl`, no contra el `.sql` que se escribió.**
+
 **3 · La fecha se lee de la máquina, nunca de memoria.** El día 14 del MVP se fechó a sí
 mismo un día por delante y esa hora de diferencia es exactamente lo que ocultó `F-109`
 durante dos jornadas. El 25-ago volvió a pasar por el otro lado: tres documentos se
@@ -90,58 +91,55 @@ distrae.**
 
 ---
 
-**Día 6 de V1 · 3-sep-2026 · Estado: VERDE**
+**Día 7 de V1 · 4-sep-2026 · Estado: VERDE**
 
-Este fichero se abrió hoy leyendo el segundo cierre del día 5 (`40067f7`, 1-sep), con
-`F-141` y `F-142` cerrados y tres tareas para esta sesión: reescribir "Lista de hilos"
-(la pieza que activa `visibility_scope`), otra remedición de `MSG-01` con `F-141` ya
-puesto, y `D-3` (columna `quantity`). **Las tres se hicieron, y por el camino salieron dos
-hallazgos nuevos (`F-143`, `F-144`), los dos cerrados el mismo día en que se midieron.**
+Este fichero se abrió hoy leyendo el cierre del día 6 (`7abbc33`), con seis tareas en su
+§3. **Dos se hicieron enteras, una la paró el PO a propósito, una era suya y sigue suya, y
+por el camino salieron dos hallazgos nuevos —uno de ellos de seguridad— que no estaban en
+ninguna lista.**
 
-**Antes de tocar SQL, un hueco real se paró a media frase.** `ADR-002` D-7 exige que el
-ámbito por usuario sea opcional y apagado por defecto; nada en el esquema lo permitía —
-`visibility_scope` (`0018`, 1-sep) quedó soldado al rol **sin condición, para el 100% de
-las organizaciones**. Escribir `threads_select_participant` tal como D-1/D-8 lo piden
-habría encendido el ámbito para todo el mundo, justo lo que D-7 prohíbe. Se paró la sesión,
-se preguntó al PO, y la respuesta —añadir el interruptor ahora, ADR completo— es
-`0019_threads_visibility_scope_toggle.sql`: `organizations.visibility_scope_enabled`
-(octavo objeto de esquema que `ADR-002` §5 no tenía el 25-ago), más `threads_select_
-participant` y `thread_items_select_participant` reescritas para considerarlo — las dos,
-porque escribir solo la primera habría dejado un hueco real: con el ámbito encendido, un
-`OWN` seguiría pudiendo leer los elementos de un compañero consultando `thread_items`
-directamente en cuanto el hilo (compartido entre conversaciones independientes, `ADR-002`
-§6) apareciera en su lista por tener un elemento propio — el invariante `V-6` roto por la
-mitad que no se tocó. Probado local con dos organizaciones —una que enciende el ámbito,
-otra que nunca lo toca— antes de aplicar al proyecto real.
+**El punto 1 se hizo y por fin midió lo que decía medir.** Serie `14a`/`14b`/`14c`, la
+primera con `F-143` **y** `F-144` en el corpus desde el principio: **2 de 3 a 4/4 al primer
+intento** (`14b` y `14c`), contra 1 de 3 en la serie 13. `14a` necesitó un segundo intento
+por un hueco nuevo (`F-145`). $0,2221 las cuatro filas de CSV.
 
-**`D-3` fue el más barato, y no se quedó a medias.** `0020_thread_items_quantity.sql` añade
-`quantity` a `thread_items` y la usa en `create_inquiry` (quinto parámetro, con default
-para no romper al llamador de siempre) — y como dejar el quinto parámetro sin que nadie lo
-mande habría sido la misma clase de "columna que nadie lee" que `visibility_scope` fue
-durante dos días, `app/src/lib/thread-detail.ts` se actualizó en la misma sesión para
-mandar la cantidad real. **Deliberadamente NO toca `OFERTA`:** `create_thread_item` y
-`counter_offer` no conocen la columna todavía, y exigírsela hoy les habría roto el INSERT.
+**Los puntos 2 y 3 se pararon antes de escribir una línea de SQL, y esa es la noticia del
+día.** `thread_public_keys(t_id)` tenía que «devolver el conjunto que fija D-1», y al ir a
+escribirlo apareció que **`ADR-002` no dice a quién se envuelve la CEK de un elemento que
+ENTRA en una organización con el ámbito encendido**: en el primer contacto no participa
+nadie allí todavía. Envolver para todos deja a cada EDITOR del distribuidor leyendo toda
+consulta entrante y obliga a precisar `V-1`; no envolver para nadie deja la consulta
+ilegible e incontestable, irreparable; que el emisor elija destinatario expone la plantilla
+de la contraparte y es interfaz nueva. **Y una salida intermedia que parecía obvia está
+cerrada por el esquema:** un `MENSAJE` no puede llevar `responds_to_item_id`
+(`thread_items_shape_chk`, `0003:148`), así que **no hay ancla de conversación** dentro de
+un hilo compartido (`ADR-002` §6). Se preguntó al PO y decidió **parar y decidirlo con el
+ADR delante**. Queda escrito como **Q-1** en `ADR-002` §10 —que hasta hoy decía
+«Ninguna»— con las cuatro salidas, lo que cada una cuesta y la señal que apunta a la
+primera (§5 no lista `org_public_keys` como objeto a cambiar, y es la función del primer
+contacto).
 
-**La remedición de `MSG-01` repitió, otra vez, el patrón de "medir descubre lo que la
-lectura no ve" — pero esta vez cada hallazgo se cazó y se cerró en la misma tanda que lo
-produjo, sin que ninguno tocara la CI.** Primera serie (`12a`/`12b`, corpus con `F-141` ya
-puesto): las dos fallan el intento 1 con el **mismo** `TS2322` — `TONE_CLASS: Record<
-StateTone, string>` sin el `| undefined` que `noUncheckedIndexedAccess` exige para
-cualquier clase de un módulo CSS. La corrida `12c` **no se lanzó**: el mismo síntoma dos
-veces seguidas ya decía que el corpus estaba roto, y gastar un tercer intento no habría
-medido nada nuevo. Declarado como `F-143`, corregido en `component_api`,
-`python -m harness.tests.test_checks` en verde local antes de commitear. Segunda serie
-(`13a`/`13b`/`13c`, con `F-143` ya puesto): **cero recurrencias del `TS2322`** en las tres —
-`13b` pasa 4/4 al primer intento; `13a` necesita un segundo intento por un `import` por
-defecto contra uno nombrado (variación ordinaria, autocorregida); `13c` necesita un segundo
-intento por un hallazgo nuevo, `F-144`: el motivo de "Nuevo contacto" (`data-testid=
-"directorio-scope"`, declarado desde `F-139`) nunca decía qué TEXTO tiene que llevar — el
-literal `fuera del MVP` solo estaba declarado para el estado vacío de `ThreadList.tsx`
-(`F-128`), un nodo distinto. **Y corregirlo chocó una segunda vez con la lección de
-`F-140`:** el test que reconstruye "la tarea antes de `F-128`" truncaba solo
-`ThreadList.tsx`, y la mención nueva en `Messages.tsx` sobrevivía intacta a esa
-reconstrucción — `FALLAN 1` en local antes de tocar nada remoto, arreglado extendiendo el
-truncado a un segundo marcador, sin relajar el aserto.
+**El punto 4 se hizo entero, y «las dos vías de OFERTA» eran una.** `0021_counter_offer_
+quantity.sql` le da `p_quantity` a `counter_offer`. `create_thread_item` no lo lleva y no
+le falta: **rechaza `OFERTA`** (`0012:185`, MSG-03 fuera del MVP) y solo crea `MENSAJE`,
+que tiene `quantity is null` obligatorio. Y la cantidad **no se hereda** de la oferta
+anterior, a diferencia de `part_number` y `brand`: una contraoferta puede cambiarla, y
+copiar la vieja escribiría **en claro** una cifra que el ciphertext desmiente — un ADMIN
+leyendo D-2 vería 500 donde la oferta dice 300. `NULL` dice «no se sabe»; 500 dice una
+mentira comprobable.
+
+**Y el hallazgo que nadie buscaba, `F-146`.** Verificando —por rutina— que `0021` había
+dejado **una sola** firma de `counter_offer`, la consulta a `pg_proc.proacl` devolvió de
+paso quién puede ejecutarla: `postgres, anon, authenticated, service_role`. **El
+`revoke execute … from public` que todas las migraciones llevan desde `0001` revoca el
+pseudo-rol PUBLIC, y `anon` no recibe su permiso por ahí:** Supabase tiene *default
+privileges* en el esquema `public` que le dan `EXECUTE` sobre cada función nueva al
+crearla. **Cinco de las siete funciones de `public` estaban abiertas a `anon`**, y se
+comprobó ejecutándolo, no razonándolo: `set local role anon` + `org_public_keys(<org>)`
+devolvió una fila con su clave pública. Arreglado el mismo día (`0022`), con la mitad que
+más duele arreglada también: **el banco de pruebas local era más ESTRICTO que producción**
+—no copiaba esas *default privileges*— así que cualquier aserto sobre esto habría pasado
+**en vacío**.
 
 ---
 
@@ -149,20 +147,26 @@ truncado a un segundo marcador, sin relajar el aserto.
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-03`, 17:56 UTC al escribir esto |
-| El hueco de D-7 (ámbito opcional, apagado por defecto) no tenía objeto de esquema | `grep` de `visibility_scope_enabled`/`scope_enabled` contra `supabase/migrations/*.sql` y contra `docs/ADR-002*.md` §5, antes de escribir una línea de SQL | Cero resultados: ni el esquema ni la tabla de impacto de `ADR-002` §5 tenían el interruptor |
-| `0019_threads_visibility_scope_toggle.sql` (interruptor + dos políticas reescritas) | Local: `supabase/tests/run.sh` (fase 1), con asertos nuevos de D-1/D-2/D-7/D-8 usando dos organizaciones. Remoto: `information_schema.columns`, `pg_policies.qual` y los datos reales del proyecto (`troxminloxkjwihwfevs`), por el MCP | Columna `boolean not null default false`; las 6 organizaciones sembradas, las 6 en `false`. `pg_policies.qual` de las dos políticas coincide literal con la migración, no con lo que la migración dice que hace |
-| `0020_thread_items_quantity.sql` (`quantity` + `create_inquiry` con 5º parámetro) | Local: `supabase/tests/run.sh` (fase 1, con el guardia de `MENSAJE` sin `quantity` y el de cantidad negativa) y `npm test`/`npm run typecheck` en `app/`. Remoto: `information_schema.columns`, `pg_constraint`, `pg_proc` (una sola firma de `create_inquiry`, la de 5 parámetros — comprobado que el `drop function` no dejó las dos a la vez) | Todo verde. `app/src/lib/thread-detail.ts` manda `p_quantity` desde hoy; **no desplegado a Vercel** (§5) |
-| `MSG-01`, serie `12a`/`12b` (corpus con `F-141`, antes de `F-143`) | `attempt_1.json` de las dos, campo `sources` | Las dos fallan `C1` con el mismo `TS2322` ×5 en `TONE_CLASS`. `12c` no se lanzó |
-| `F-143` corregido, no reintroduce el mecanismo de `F-140` | `python -m harness.tests.test_checks`, corrido ANTES de commitear | Verde a la primera — el texto se añadió al final de `component_api` de `ThreadList.tsx`, sin tocar los anclajes de truncado |
-| `MSG-01`, serie `13a`/`13b`/`13c` (corpus con `F-143`) | Los seis `attempt_N.json`, `harness-metrics.csv` | **Cero recurrencias del `TS2322` de `F-143`.** `13b`: 4/4 al primer intento. `13a`: 2 intentos, `import` por defecto vs nombrado (variación ordinaria). `13c`: 2 intentos, hallazgo nuevo (`F-144`) |
-| `F-144` corregido, no reintroduce el mecanismo de `F-140` | `python -m harness.tests.test_checks`, corrido ANTES de commitear | Falló la primera vez (`FALLAN 1`): la mención nueva en `Messages.tsx` sobrevivía a la reconstrucción "antes de `F-128`". Corregido extendiendo el truncado a un segundo marcador; verde después |
-| La CI de los cuatro pushes de hoy, job a job | `gh run view --json jobs` sobre `804dfe9`, `ce78a72`, `d3eb430` y `185e0ce` | Las **cuatro** piezas en verde en los cuatro pushes: Esquema, App, Arnés, Playwright |
-| La suite del producto | `npm test` (tras `0020`, antes de los cambios de `harness/`, que no tocan `app/`) | **642 pasan, 23 saltadas** — mismo total que el 1-sep; el nuevo aserto de `p_quantity` vive DENTRO de un test ya existente, no suma uno |
-| Los worktrees | `git worktree list` | Los mismos cuatro prunables de siempre + la raíz, en `185e0ce`. Ninguno nuevo hoy, tercera comprobación seguida con el mismo resultado |
+| Fecha de máquina | `date -u` | `2026-09-04`, 09:08 UTC al escribir esto |
+| `MSG-01`, serie `14a`/`14b`/`14c` (corpus con `F-143` y `F-144` desde el principio) | Los cuatro `attempt_N.json` y las cuatro filas de `harness-metrics.csv` | **2 de 3 a 4/4 al primer intento.** `14b` y `14c` limpias; `14a` verde en 2 intentos. Cero recurrencias de `F-143` y `F-144` en las tres. $0,2221 en total |
+| `F-145` es hueco NUEVO y no una recurrencia | Los `attempt_1.json` de `09c`, `10a`, `10b`, `12b` y `13a` — las corridas anteriores donde esos dos tests de paginación salen en rojo | Ninguna tiene `aria-label` sobre los botones de página; `12b` y `13a` ni llegaban a los tests (fallaban en `typecheck`) |
+| `F-145` corregido, y sin reintroducir el mecanismo de `F-140` | `python -m harness.tests.test_checks`, corrido ANTES de commitear | «Todas en verde» a la primera. El texto se añadió al FINAL del `component_api` de `Messages.tsx`, sin tocar los dos anclajes de truncado |
+| Que el guardia de `cruzar_con_el_contrato` NO habría cazado `F-145` | Corrido sobre `MSG-01` el mismo día | 0 errores, 16 avisos, **ninguno** sobre `name: '2'`. No lo ve, y enseñárselo es pieza aparte (`F-003`: un guardia que grita en falso se desactiva) |
+| El hueco de Q-1: `ADR-002` no dice quién recibe la CEK en el lado que ENTRA | Lectura completa de `ADR-002` (D-1, D-2, D-7, D-8, V-1, V-2, §5, §6) **antes** de escribir SQL | Ni una línea sobre el receptor sin participantes. Y §5 **no** lista `org_public_keys`, que es la función del primer contacto |
+| Que no hay ancla de conversación para un `MENSAJE` | `thread_items_shape_chk` en `0003:148` y su reedición en `0020:44` | `MENSAJE` exige `responds_to_item_id is null`. Confirmado: cualquier respuesta a Q-1 que necesite saber a qué conversación pertenece un mensaje exige antes cambiar el esquema |
+| `0021_counter_offer_quantity.sql` | Local: `supabase/tests/run.sh` (fase 1) con cuatro asertos nuevos —cantidad en claro, NO herencia de la anterior, negativa bloqueada, una sola firma— y `npm test`/`npm run typecheck`. Remoto: `pg_proc` por el MCP | Todo verde. `npm test`: **642 pasan, 23 saltadas** (mismo total: el aserto nuevo vive dentro de un test que ya existía). Remoto: **una sola firma** de `counter_offer`, la de cinco parámetros |
+| `F-146`: `anon` podía ejecutar cinco funciones de `public` | `pg_proc.proacl` del proyecto real, y **la llamada de verdad**: `begin; set local role anon; select … from public.org_public_keys('b2000000-…-0002')` | **1 fila, con `public_key`.** Las dos funciones a salvo eran las de `0015`, que nombran a `anon` en su `revoke` |
+| Que lo que se filtraba NO incluía datos personales ni respaldo de clave | Las tres columnas que devuelve `org_public_keys` (`0014` §1) y la definición de `members` (`0001:73-81`) | `member_id`, `org_id`, `public_key`. Ni `email`, ni `full_name`, ni los cuatro campos del respaldo. El primer invariante de ADR-001 sigue en pie |
+| Que `anon` no puede enumerar organizaciones para conseguir el UUID | La misma llamada sacando el UUID por subconsulta, como `anon` | 0 filas — la política de `organizations` no le devuelve nada. Hace falta conocer el UUID por otra vía |
+| `0022_revoke_anon_execute.sql`, **con ancla negativa** | Sacando `0022` de la carpeta y corriendo la suite entera | **Falla con `EXIT=3`** nombrando exactamente las cinco: `counter_offer, create_inquiry, create_thread_item, org_public_keys, thread_public_keys`. Con `0022` puesta, verde |
+| `0022` aplicada de verdad | `pg_proc.proacl` y `pg_default_acl` del proyecto real, tras aplicar | Las cinco sin `anon`; `authenticated` intacto en las cinco; la *default privilege* de `postgres` ya sin `anon` (la de `supabase_admin` no se toca: es de la plataforma) |
+| Que revocar a `anon` no rompe la aplicación | `grep` de `.rpc(` en `app/src`, `app/e2e`, `app/scripts` y `supabase/functions` | Las cinco llamadas viven en `keys.ts` y `thread-detail.ts`, todas tras iniciar sesión. Los scripts de demo van con `service_role` |
+| Las dos migraciones están en el proyecto real | `list_migrations` por el MCP | `20260904075151 · 0021_counter_offer_quantity` y `20260904085916 · 0022_revoke_anon_execute` |
+| La CI del push de hoy, job a job | `gh run view 33856519511 --json jobs` sobre `71b803b` (que lleva los seis commits) | Las **cuatro** en verde: Esquema, App, Arnés, Playwright |
+| La copia sin trackear de este fichero en la raíz | `diff` contra `git show HEAD:openspec/v1/ESTADO-V1.md` antes de borrarla | Era la de ayer **menos** los párrafos sobre sí misma: ni una línea propia. Borrada, con respaldo fuera del repo. Ver la caja de arriba |
+| Los worktrees | `git worktree list` | Los mismos cuatro prunables + la raíz, hoy en `71b803b`. Cuarta comprobación seguida sin un cambio |
 | Estado del árbol al cerrar | `git status` | Limpio salvo `openspec/design-gui/Ingles/`, sin tocar hoy y ajeno a esta sesión |
-| Artefactos crudos del Coder (`app/src/screens/messages/*`) | `git status` tras cada corrida | Descartados con `git checkout --` antes de cada commit, cinco veces (`12a`, `12b`, `13a`, `13b`, `13c`) — ninguno se commiteó sobre la pantalla revisada |
-| La copia sin trackear de este fichero en la raíz del repo | `git ls-files \| grep ESTADO-V1` y `git status --short ESTADO-V1.md` | Confirmado: `openspec/v1/ESTADO-V1.md` es la única trackeada; la de la raíz es `??` y casi idéntica hasta hoy — ver caja de arriba |
+| Artefactos crudos del Coder (`app/src/screens/messages/*`) | `git status` tras cada corrida | Descartados con `git checkout --` antes de cada commit, tres veces (`14a`, `14b`, `14c`) |
 
 ---
 
@@ -172,22 +176,22 @@ truncado a un segundo marcador, sin relajar el aserto.
 
 | Pieza | Estado |
 |---|---|
-| `F-114`, `F-131`–`F-142` | ✅ ver cierres anteriores en `git show 40067f7` |
-| **`F-143` `TONE_CLASS` de `ThreadList.tsx` sin `\| undefined` (`noUncheckedIndexedAccess`)** | ✅ **3-sep · `d3eb430`** |
-| **`F-144` el motivo de "Nuevo contacto" sin el literal `fuera del MVP` declarado** | ✅ **3-sep · `185e0ce`** |
-| Medición del corpus de `MSG-01`, con `F-143`/`F-144` ya puestos | 🟡 Sin remedir todavía — la serie `13a`/`13b`/`13c` es la que ENCONTRÓ `F-144`, no la que mide el corpus ya con los dos arreglos dentro |
-| `MSG-01` a 4/4 sin reintentos | 🟡 1 de 3 (`13b`) al primer intento en la última serie; `13a` y `13c` necesitaron uno, por motivos ya cerrados y sin relación entre sí |
+| `F-114`, `F-131`–`F-144` | ✅ ver cierres anteriores en `git show 7abbc33` |
+| **`F-145` los botones de página se buscan por su número y un `aria-label` lo sustituye** | ✅ **4-sep · `71b803b`** |
+| **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
+| `MSG-01` a 4/4 sin reintentos | 🟡 **2 de 3** en la serie 14 (`14b`, `14c`), contra 1 de 3 en la 13 |
+| Medición del corpus de `MSG-01` con `F-145` ya puesto | 🔴 Sin medir — la serie 14 es la que ENCONTRÓ `F-145`; la 15 sería la primera que lo mide |
 
 ### Fundación V1
 
 | Pieza | Estado |
 |---|---|
 | Índice de la derivación de la lista (entregable 5 + `ADR-002` §5) | ✅ **1-sep · `087962b`** |
-| `visibility_scope` (D-4, `ADR-002` §5) | ✅ **1-sep · `f5ea8fc`** |
-| **`organizations.visibility_scope_enabled` (D-7, octavo objeto — no estaba en `ADR-002` §5 del 25-ago)** | ✅ **3-sep · `804dfe9`**, `0019_threads_visibility_scope_toggle.sql` |
-| **Lista de hilos (`threads_select_participant`) y `thread_items_select_participant`** | ✅ **3-sep · `804dfe9`** — las dos, por el invariante `V-6` (ver arriba) |
-| **`D-3` (`thread_items.quantity`)** | ✅ **3-sep · `ce78a72`**, solo `CONSULTA` vía `create_inquiry` — `OFERTA` sigue sin ella, a propósito |
-| Resto de la Fundación (entregables 1-3, 6; `thread_public_keys(t_id)`; `create_inquiry` con el reparto de destinatarios de D-1; `quantity` en `OFERTA`) | 🔴 Sin cambios |
+| `visibility_scope` (D-4) · `organizations.visibility_scope_enabled` (D-7) · Lista de hilos · `thread_items_select_participant` | ✅ **1-sep y 3-sep · `f5ea8fc`, `804dfe9`** |
+| `D-3` (`thread_items.quantity`) | ✅ **COMPLETO** — `CONSULTA` el 3-sep (`0020`), **`OFERTA` el 4-sep (`0021`, `ce78a72`→`098ba19`)** |
+| **`thread_public_keys(t_id)`** (reparto de destinatarios) | ⛔ **BLOQUEADA por Q-1** (`ADR-002` §10), decisión del PO del 4-sep |
+| **`create_inquiry`** (reparto de destinatarios de la CEK) | ⛔ **BLOQUEADA por Q-1**, y depende de la de arriba |
+| Resto de la Fundación (entregables 1-3, 6) | 🔴 Sin cambios |
 
 ### Corriente B · Fábrica — NO ABIERTA
 
@@ -201,26 +205,22 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **Remedir `MSG-01` una tercera vez (n=3), con `F-143` Y `F-144` ya en el corpus desde el
-   principio.** La serie `13a`/`13b`/`13c` midió el corpus mientras `F-144` todavía estaba
-   sin descubrir — es evidencia del hallazgo, no la medida de un corpus ya completo. Es la
-   primera vez que se puede preguntar de verdad si el marcador sube a 3/3 en 4/4.
-   ~$0,10 por tirada, tres tiradas.
-2. **`thread_public_keys(t_id)` (`ADR-002` §5): deja de devolver todos los miembros de las
-   dos organizaciones, pasa a devolver el conjunto que fija D-1.** Es la pieza que falta
-   para que `create_inquiry` pueda cambiar el reparto de destinatarios de la CEK sin
-   romper el envoltorio de claves del primer contacto (`0014` §1).
-3. **`create_inquiry`: el reparto de destinatarios de la CEK deja de ser «todos los
-   miembros».** Depende de (2). Es la última fila roja de `ADR-002` §5 que no es
-   `OFERTA`/`quantity`.
-4. **`quantity` en `OFERTA`** (`create_thread_item`, `counter_offer`): mismo patrón que
-   `D-3` para `CONSULTA`, pendiente desde hoy a propósito.
-5. **Vercel no se ha redesplegado.** `create_inquiry` ya acepta `p_quantity` y `app/src/
-   lib/thread-detail.ts` ya lo manda, pero lo que corre en producción sigue siendo el
-   código de antes — ninguna consulta nueva escribirá `quantity` en claro hasta que alguien
-   redespliegue (`CLAUDE.md` §10.2).
-6. **Decidir qué hacer con la copia sin trackear de este fichero en la raíz** — borrarla o
-   meterla en `.gitignore` con una nota, para que no vuelva a escribirse sin querer.
+1. **Q-1 de `ADR-002` §10, con el ADR delante.** Es lo que el PO dejó parado hoy y lo que
+   desbloquea las dos últimas filas rojas de §5. Las cuatro salidas están escritas con lo
+   que cuesta cada una; no hace falta reconstruir el análisis, solo decidir. **Media hora
+   de lectura vale más que media pieza escrita.**
+2. **`thread_public_keys(t_id)` y `create_inquiry`**, en cuanto Q-1 esté cerrada. El lado
+   del emisor no depende de la respuesta y está claro desde hoy: con el ámbito encendido,
+   la CEK deja de envolverse para los compañeros de quien escribe.
+3. **Remedir `MSG-01` (serie 15, `n=3`) con `F-145` ya en el corpus.** La 14 es la que lo
+   encontró, así que el 2 de 3 de hoy **no** es la medida del corpus completo. ~$0,07 por
+   tirada, tres tiradas.
+4. **Vercel sigue sin redesplegar, y ahora arrastra DOS cambios de cliente**, no uno:
+   `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (hoy). La base acepta las dos y
+   producción no manda ninguna (`CLAUDE.md` §10.2).
+5. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
+   (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
+   seis tareas: si canta en todas, se desactiva solo, que es `F-003`.
 
 ---
 
@@ -228,23 +228,26 @@ Sin cambios.
 
 | # | Decisión | Dónde |
 |---|---|---|
-| **ADR-002** | Ámbito de visibilidad por usuario. **Diez decisiones, seis invariantes, y un octavo objeto de esquema que el 25-ago no tenía (D-7).** Cuatro de siete objetos originales hechos, más el octavo | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
-| **D-7 se implementa con interruptor ahora, no se difiere** | 3-sep-2026, PO. `organizations.visibility_scope_enabled`, apagado por defecto, lo activa el ADMIN de la propia organización por la misma vía que `inventory_visibility_mode` (INV-07) | `0019_threads_visibility_scope_toggle.sql`, adenda en `ADR-002` D-7 |
-| **`D-3` se limita a `CONSULTA` en esta pieza** | 3-sep-2026. `OFERTA` tiene su propio campo `quantity` en `OfferContent` (cliente) sin conexión con la columna todavía; conectarla es la siguiente pieza, no esta — exigirla hoy rompía `create_thread_item`/`counter_offer` | `0020_thread_items_quantity.sql` |
-| **El hilo no es concepto visible** | El usuario ve «mi conversación con tal empresa». MSG-01 y MSG-02 no se titulan por hilo | ADR-002 §6 |
-| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. Sigue sin desplegarse — entregable 6 de la Fundación, sin fecha | Plan §4.2, `FUNDACION-V1.md` §1 |
+| **ADR-002** | Ámbito de visibilidad por usuario. Diez decisiones, seis invariantes, ocho objetos de esquema — **seis hechos, dos bloqueados por Q-1** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
+| **Q-1 se decide con el ADR delante, no sobre la marcha** | 4-sep-2026, PO. El reparto de la CEK en el lado que RECIBE no lo dice el ADR, y las salidas posibles cambian el producto, no solo el SQL | `ADR-002` §10 |
+| **`quantity` NO se hereda de la oferta anterior** | 4-sep-2026. Copiar la cantidad vieja escribiría en claro una cifra que el ciphertext puede desmentir. `NULL` dice «no se sabe» | `0021` §2 |
+| **D-7 se implementa con interruptor, no se difiere** | 3-sep-2026, PO. `organizations.visibility_scope_enabled`, apagado por defecto | `0019`, adenda en `ADR-002` D-7 |
+| **Lo que se afirme sobre privilegios se comprueba contra el catálogo, no contra el `.sql`** | 4-sep-2026, `F-146`. La plataforma añade concesiones que ninguna migración escribió | `0022`, regla 2 de este fichero |
+| **El banco de pruebas tiene que ser tan permisivo como producción, no más estricto** | 4-sep-2026, `F-146`. Un local más estricto esconde agujeros reales en vez de cazarlos | `00_auth_stub.sql` |
+| **El hilo no es concepto visible** | El usuario ve «mi conversación con tal empresa» | ADR-002 §6 |
+| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. Sigue sin desplegarse — entregable 6, sin fecha | Plan §4.2, `FUNDACION-V1.md` §1 |
 | **Generador de código** | DeepSeek V4 Flash **vía Microsoft Foundry, zona UE**. Nunca toca criptografía, reglas de acceso, claves ni datos de cliente | Plan §4.3 |
 | **Revisión multiagente** | Sobre esquema, criptografía y capa de datos. **Nunca sobre cada pantalla** | Plan §5.4 |
-| **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código | Plan, Anexo B |
-| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió. Las filas inválidas se marcan, no se borran | 25-ago · `F-129` |
-| **El guardia AVISA, no bloquea** | Vale para los roles (`F-127`), lo buscado por regex (`F-130`) y los roles estructurales (`F-131`). Es una **medida**, no una preferencia | `F-127`, `F-130`, `F-131` |
-| **`C2` corre SIEMPRE la suite e2e ENTERA** | `D-09-03 (a)`, 12-ago. Su motivo (`F-070`) sigue en pie | `test_runner.py` |
-| **Un verde con excusas se MARCA en el CSV** | 30-ago. Un verde con asterisco agregado como verde limpio es `F-129` otra vez | `F-134` |
+| **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código. **Hoy se usó dos veces** (Q-1 y `F-146`) | Plan, Anexo B |
+| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió | 25-ago · `F-129` |
+| **El guardia AVISA, no bloquea** | Vale para roles, literales y roles estructurales. Es una **medida**, no una preferencia | `F-127`, `F-130`, `F-131` |
+| **`C2` corre SIEMPRE la suite e2e ENTERA** | `D-09-03 (a)`, 12-ago | `test_runner.py` |
+| **Un verde con excusas se MARCA en el CSV** | 30-ago | `F-134` |
 | **Los logs de corrida se versionan, y los escribe la corrida** | 30-ago | `F-115`, `F-136` |
+| **El corpus NO se toca a mitad de serie** | 4-sep-2026. `F-145` se declaró después de `14c`: cambiarlo antes habría hecho que las tres corridas midieran corpus distintos | serie 14 |
+| **Un artefacto crudo del Coder no se commitea sobre una pantalla ya revisada** | Aplicado tres veces más hoy | `CLAUDE.md` §1.6 |
+| **Lo que el contrato exige, la tarea lo dice** | **Quince veces en ocho días.** La vía ha sido siempre la misma: declararlo en `component_api`, sin tocar ni un aserto | `F-116`…`F-145` |
 | **El 57 a 1 se acepta, sin acción** | 1-sep-2026, PO | `F-113` |
-| **Un artefacto crudo del Coder no se commitea sobre una pantalla ya revisada** | Aplicado cinco veces más hoy (`12a`, `12b`, `13a`, `13b`, `13c`) sin necesidad de pedirlo | `CLAUDE.md` §1.6 |
-| **Lo que el contrato exige, la tarea lo dice** | **Diecisiete veces en siete días.** La vía elegida ha sido siempre la misma: declararlo en `component_api`, sin tocar ni un aserto | `F-116`, `F-118`, `F-123`, `F-125`–`F-128`, `F-131`, `F-134`, `F-137`–`F-144` |
-| **Reunión con el socio del 20-ago** | 3-sep-2026, PO: fue bien, se continúa con el plan. Asunto cerrado — no vuelve a §5 ni §6 | — |
 
 ---
 
@@ -252,17 +255,17 @@ Sin cambios.
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **La Fundación V1 tiene un entregable con reloj: la residencia.** Sin cambios hoy — sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
+| ⛔ | **Q-1 de `ADR-002` §10 bloquea las dos últimas filas rojas de §5.** No es deuda: es una decisión pendiente, tomada a propósito | Álvaro (PO), con el ADR delante |
+| 🟠 | **La residencia sigue siendo el entregable con reloj.** Sin cambios hoy: `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
+| 🟡 | **Vercel no redesplegó, y ahora son DOS cambios de cliente sin desplegar** (`quantity` de `CONSULTA` y de `OFERTA`) | Redesplegar `app/` (manual, `CLAUDE.md` §10.2) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
-| 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial. Sin cambios | Álvaro: 20 $/mes |
-| 🟡 | **Vercel no redesplegó hoy.** `create_inquiry` acepta `p_quantity` desde `ce78a72` y el cliente ya lo manda, pero producción sigue en el código de antes: ninguna consulta nueva escribe `quantity` en claro hasta el próximo despliegue | Redesplegar `app/` (manual, `CLAUDE.md` §10.2) |
-| 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro) — tercera comprobación seguida con el mismo resultado, hoy contra `185e0ce` | Fuera de sesión, desde la raíz |
-| 🟡 | **Copia sin trackear de este fichero en la raíz del repo** (`ESTADO-V1.md`, hallada hoy) — no es fuente de nada, pero puede confundir a la próxima sesión si alguien lee de ahí | Borrarla o documentarla en `.gitignore` |
+| 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
+| 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro), cuarta comprobación seguida | Fuera de sesión, desde la raíz |
+| 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero | §3.5 |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
-| ⚪ | ~~`visibility_scope` existe pero nada la lee todavía~~ | **Resuelto 3-sep-2026: `0019` la conecta, con el interruptor de D-7 delante** |
-| ⚪ | ~~`Lista de hilos` y `thread_items_select_participant` sin reescribir~~ | **Resuelto 3-sep-2026: `0019`** |
-| ⚪ | ~~`D-3`: columna `quantity` en `thread_items`~~ | **Resuelto 3-sep-2026: `0020`, solo `CONSULTA`** |
-| ⚪ | ~~`MSG-01` sin remedir con `F-141` ya puesto~~ | **Resuelto 1-sep-2026: 3 de 3 en verde** |
+| ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
+| ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |
+| ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
 
 ---
 
@@ -270,27 +273,25 @@ Sin cambios.
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Si el marcador de `MSG-01` sube de verdad a 3/3 en 4/4 con `F-143` Y `F-144` ya puestos
-  desde el principio.** La serie `13a`/`13b`/`13c` midió mientras `F-144` seguía sin
-  descubrir; hasta la próxima serie, es una expectativa, no un dato.
-- **Cuántos huecos de la familia `F-116`–`F-144` quedan por descubrir en `MSG-01`.**
-  Diecisiete instancias en siete días y cada serie de tres corridas ha encontrado al menos
-  una nueva desde `F-137`. No hay forma de saber si la próxima serie sale limpia o
-  encuentra la dieciocho sin medir.
-- **Si `visibility_scope_enabled` y la derivación de la lista aguantan bajo carga.** Hito 6.
-  Con el interruptor, las dos políticas y el índice de `0017` ya puestos, es lo primero que
-  se puede medir en cuanto haya tráfico real que medir.
-- **Si `quantity` en `OFERTA` va a tropezar con el mismo tipo de hueco que `CONSULTA`** —un
-  `component_api` que no declare bien el tipo o la forma— cuando se conecte. No se ha
-  mirado todavía.
-- **Cuánto de la varianza entre corridas es el modelo y cuánto el prompt.** `13a` necesitó
-  un segundo intento por una variación ordinaria (import por defecto/nombrado) que ningún
-  `F-` explica — sigue siendo la misma pregunta abierta desde `F-137`.
+- **Si el marcador de `MSG-01` sube con `F-145` puesto.** El 2 de 3 de hoy se midió sobre
+  el corpus que todavía no lo tenía. Hasta la serie 15, es una expectativa.
+- **Cuántos huecos de la familia `F-116`–`F-145` quedan.** Quince en ocho días, y cada
+  serie desde `F-137` ha encontrado al menos uno nuevo. `F-145` además es de una clase que
+  no se había visto: el Coder **aplicó** una convención (accesibilidad) en vez de saltársela.
+  No hay forma de saber si la 15 sale limpia sin medir.
+- **Desde cuándo `anon` podía ejecutar esas cinco funciones, y si alguien lo hizo.** El
+  agujero existía desde `0012` (12-ago). **No se han mirado los logs de PostgREST** para ver
+  si hubo llamadas anónimas a `org_public_keys` — se puede, y no se ha hecho hoy.
+- **Cuántas funciones de `public` van a nacer fuera de nuestras migraciones.** `0022` cierra
+  la *default privilege* del rol `postgres`; la de `supabase_admin` sigue abierta y es de la
+  plataforma. Si algún día la plataforma crea una función en `public`, nacerá con `anon`.
+- **Si `quantity` en `OFERTA` se pinta en alguna pantalla.** La columna existe y la escribe
+  `counter_offer`, pero **nadie la lee todavía** — ni MSG-02, ni el plano de metadatos de
+  D-2, ni VERA. Es exactamente el estado en el que estuvo `visibility_scope` dos días.
+- **Cuánto de la varianza entre corridas es el modelo y cuánto el prompt.** Sin datos nuevos
+  hoy: las tres corridas de la serie 14 no tuvieron ninguna variación ordinaria que explicar.
 - **Por qué la API se cuelga en la segunda tarea de una tanda y nunca en la primera.**
   Sin datos nuevos hoy.
-- **Desde cuándo existe la copia sin trackear de este fichero en la raíz**, y si alguna
-  sesión anterior la usó como si fuera la de verdad. No se ha investigado el historial de
-  ninguna herramienta que pudiera haberla creado.
 
 ---
 
@@ -301,21 +302,23 @@ Cinco pasos. Se ejecutan **todos** o el relevo no vale.
 1. **`date -u`.** La cabecera lleva la fecha de la máquina, nunca la recordada.
 2. **Rellenar §1 comprobando, no recordando.** Cada fila necesita su columna «verificado
    contra». Si no puedes escribir contra qué lo comprobaste, no lo escribas. **Y comprueba
-   el contenido, no el continente** (`F-132`).
-3. **Revisar §2 contra el código**, no contra el §2 de ayer. Toda pieza marcada como
-   pendiente se comprueba en el fichero real ese mismo día.
+   el contenido, no el continente** (`F-132`). **Si la afirmación es sobre permisos o
+   privilegios, la fuente es el catálogo de la base, no el `.sql`** (`F-146`).
+3. **Revisar §2 contra el código**, no contra el §2 de ayer.
 4. **Rellenar §6.** Si está vacía, no se ha pensado lo suficiente.
 5. **Hallazgos a `findings-register.md`, métricas a `harness-metrics.csv`, commit y push.**
    Si se tocó código, desplegar **y comprobarlo en su URL**.
 
 ⚠ **Y el paso cero, que es la regla 4: no cierres hasta que se acabe.** El día 3 se cerró a
 las 12:33 y siguió hasta las 13:45. El día 4 se cerró a las 11:22 y siguió hasta las 12:31.
-El día 5 lo cumplió dos veces corriendo `test_checks.py` antes de commitear en vez de al
-cerrar. **El día 6 lo repitió dos veces más, con dos hallazgos distintos (`F-143`,
-`F-144`) y ninguno tocó la CI.**
+El día 6 lo cumplió dos veces corriendo `test_checks.py` antes de commitear. **El día 7 lo
+cumplió tres veces: `test_checks` antes de commitear `F-145`, el ancla negativa de `0022`
+antes de darlo por bueno, y la CI job a job antes de escribir esto.**
 
-⚠ **Y este fichero se escribe en `openspec/v1/ESTADO-V1.md`, no en la raíz del repo** — ver
-la caja del principio. Comprobar `git status --short` después de escribir, no solo antes.
+⚠ **Y este fichero se escribe en `openspec/v1/ESTADO-V1.md`, no en la raíz del repo.** La
+copia de la raíz se borró el 4-sep y **no** está en `.gitignore`: si reaparece, saldrá como
+`??` en `git status`, que es como se descubrió. Comprobar `git status --short` después de
+escribir, no solo antes.
 
 ---
 
@@ -324,22 +327,21 @@ la caja del principio. Comprobar `git status --short` después de escribir, no s
 Orden de lectura, y el orden importa:
 
 1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
-2. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado hoy: `visibility_
-   scope_enabled` (D-7), Lista de hilos, `thread_items_select_participant` y `D-3`.
-3. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
-4. **`docs/ADR-001` y `docs/ADR-002`** si vas a tocar criptografía, roles o mensajería.
-   `ADR-002` tiene adenda de hoy en D-7 y §5 (octavo objeto). Quedan rojas: `thread_public_
-   keys(t_id)`, `create_inquiry` (reparto de destinatarios) y `quantity` en `OFERTA`.
-5. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
-6. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
-7. **`findings-register.md`** nunca de corrido: por identificador, cuando algo te mande a
-   uno. Hoy: `F-143` y `F-144`.
+2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Es
+   lo primero de §3 y sin esa decisión no se escribe SQL de esas dos filas.
+3. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado hoy: `quantity`
+   completa y las dos filas bloqueadas.
+4. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
+5. **`docs/ADR-001`** si vas a tocar criptografía.
+6. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
+7. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
+8. **`findings-register.md`** nunca de corrido: por identificador. Hoy: `F-145` y `F-146`.
 
 ---
 
-*Día 6 de V1 · 3-sep-2026 (17:56 UTC) · fecha leída de la máquina (`date -u`) · estado
-verificado contra el código de `mvp/bootstrap`, contra `information_schema`/`pg_policies`/
-los datos reales del proyecto `troxminloxkjwihwfevs`, contra la CI job a job de los cuatro
-pushes de la sesión y contra la salida de cinco corridas pagadas más — no contra otro
-documento · **los dos hallazgos del día se cazaron en local antes de commitear, no al
-cerrar** · Dirección Técnica, Nortex Systems*
+*Día 7 de V1 · 4-sep-2026 (09:08 UTC) · fecha leída de la máquina (`date -u`) · estado
+verificado contra el código de `mvp/bootstrap`, contra `pg_proc`/`pg_default_acl`/
+`list_migrations` del proyecto `troxminloxkjwihwfevs`, contra una llamada real como `anon`,
+contra la CI job a job de `71b803b` y contra la salida de tres corridas pagadas — no contra
+otro documento · **dos paradas a tiempo: Q-1 antes de escribir SQL, y `F-146` antes de dar
+`0021` por terminada** · Dirección Técnica, Nortex Systems*

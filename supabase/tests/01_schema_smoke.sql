@@ -1350,29 +1350,47 @@ insert into public.threads (id, org_low_id, org_high_id, created_by_org_id)
 values ('11110000-0000-0000-0000-000000000002',
         least(:orgA::uuid, :orgC::uuid), greatest(:orgA::uuid, :orgC::uuid), :orgC);
 
-begin;
-  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
-  set local role authenticated;
-  do $$
-  declare
-    creado uuid;
-  begin
-    creado := public.create_thread_item(
-      '11110000-0000-0000-0000-000000000002', 'MENSAJE',
-      repeat('12', 32), repeat('16', 12),
-      jsonb_build_array(
-        jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
-          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('16',12),
-          'ephemeral_pubkey', repeat('22',32)),
-        jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
-          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('16',12),
-          'ephemeral_pubkey', repeat('44',32))
-      ));
-    assert creado is not null, 'a2 abre el hilo Alpha-Gamma con su primer mensaje';
-    raise notice 'OK · a2 abre Alpha-Gamma; a1 no participa en ningun elemento de este hilo';
-  end
-  $$;
-commit;
+-- ⚠ ESTE ELEMENTO SE INSERTA A PELO, Y ANTES NO. Lo escribia `create_thread_
+-- item` desde la sesion de a2, y desde `0023` esa via **ya no puede producir
+-- este dato**: el guardia de Q-1 exige que el ADMIN de las dos organizaciones
+-- (aqui a1) reciba copia de todo, y este bloque necesita justo lo contrario --
+-- un hilo donde a1 NO tenga ninguna clave envuelta- para poder distinguir a
+-- continuacion si a1 lo ve por ser ORG_METADATA (D-2) o por tener clave.
+--
+-- No se relaja el guardia ni se cambia lo que el bloque comprueba: se cambia
+-- COMO se siembra. Y el dato sigue siendo realista, que es lo que decide que
+-- esto valga: quedan tres formas de que un ADMIN no tenga clave de un elemento
+-- de su organizacion -- los elementos anteriores al 4-sep-2026, los de un ADMIN
+-- que todavia no ha publicado su `public_key` (el guardia lo exceptua a
+-- proposito, ver `0023` §4), y los anteriores a que a esa persona la
+-- ascendieran a ADMIN. La politica que se prueba aqui abajo es la que los
+-- cubre, y por eso sigue haciendo falta.
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   content_ciphertext, content_iv)
+values
+  ('12000000-0000-0000-0000-00000000000a', '11110000-0000-0000-0000-000000000002',
+   :orgA, '0a000002-0000-0000-0000-000000000002', 'MENSAJE',
+   decode(repeat('12', 32), 'hex'), decode(repeat('16', 12), 'hex'));
+
+insert into public.thread_item_keys
+  (item_id, recipient_member_id, wrapped_cek, wrap_iv, ephemeral_pubkey)
+values
+  ('12000000-0000-0000-0000-00000000000a', '0a000002-0000-0000-0000-000000000002',
+   decode(repeat('11',48),'hex'), decode(repeat('16',12),'hex'), decode(repeat('22',32),'hex')),
+  ('12000000-0000-0000-0000-00000000000a', '0c000001-0000-0000-0000-000000000001',
+   decode(repeat('33',48),'hex'), decode(repeat('16',12),'hex'), decode(repeat('44',32),'hex'));
+
+do $$
+begin
+  assert not exists (
+    select 1 from public.thread_item_keys
+     where item_id = '12000000-0000-0000-0000-00000000000a'
+       and recipient_member_id = '0a000001-0000-0000-0000-000000000001'),
+    'la siembra de este hilo tiene que dejar a a1 SIN clave: es lo que distingue D-2 de tener copia';
+  raise notice 'OK · a2 abre Alpha-Gamma; a1 no participa en ningun elemento de este hilo';
+end
+$$;
 
 -- Ancla PRE-interruptor: con el ambito todavia apagado, a2 sigue viendo TODO
 -- lo de Alpha -- comportamiento actual, tal como exige D-7 por defecto. Se
@@ -1557,10 +1575,15 @@ begin;
     nueva := public.counter_offer(
       '12000000-0000-0000-0000-000000000008',
       repeat('cc', 96), repeat('28', 12),
+      -- a1 va aqui desde `0023`: es el ADMIN de Alpha y Q-1 le da copia de todo,
+      -- asi que el guardia rechaza el reparto si falta. Antes bastaba con b1.
       jsonb_build_array(
         jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
           'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('28',12),
-          'ephemeral_pubkey', repeat('66',32))
+          'ephemeral_pubkey', repeat('66',32)),
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('99',48), 'wrap_iv', repeat('28',12),
+          'ephemeral_pubkey', repeat('aa',32))
       ));
 
     assert (select quantity from public.thread_items where id = nueva) is null,
@@ -1599,6 +1622,232 @@ begin
   raise notice 'OK · 0021: una sola firma de counter_offer';
 end
 $$;
+
+-- -----------------------------------------------------------------------------
+-- Q-1 (0023, ADR-002 §10) · el reparto de la CEK
+-- -----------------------------------------------------------------------------
+-- Hace falta mas plantilla que la de arriba: para distinguir "todos" de "yo y
+-- mis ADMIN" hace falta un tercer miembro en Alpha, y para distinguir "quien ha
+-- escrito" de "todos los de la contraparte" hacen falta tres en Gamma.
+insert into auth.users (id, email) values
+  ('0a000003-0000-0000-0000-000000000003', 'a3@alpha.test'),
+  ('0c000002-0000-0000-0000-000000000002', 'c2@gamma.test'),
+  ('0c000003-0000-0000-0000-000000000003', 'c3@gamma.test');
+
+insert into public.members (id, org_id, email, role, state) values
+  ('0a000003-0000-0000-0000-000000000003', :orgA, 'a3@alpha.test', 'EDITOR', 'PENDING_REVIEW'),
+  ('0c000002-0000-0000-0000-000000000002', :orgC, 'c2@gamma.test', 'EDITOR', 'PENDING_REVIEW'),
+  ('0c000003-0000-0000-0000-000000000003', :orgC, 'c3@gamma.test', 'EDITOR', 'PENDING_REVIEW');
+
+update public.members set state = 'ACTIVE'
+ where id in ('0a000003-0000-0000-0000-000000000003',
+              '0c000002-0000-0000-0000-000000000002',
+              '0c000003-0000-0000-0000-000000000003');
+
+-- Claves publicadas para los seis: el guardia solo exige al ADMIN que TIENE
+-- `public_key` (0023 §4), asi que sin esto la mitad de los asertos de abajo
+-- pasarian por el camino de la excepcion en vez de por el que se quiere probar.
+update public.members set public_key = decode(repeat('a1', 32), 'hex') where id = :a1;
+update public.members set public_key = decode(repeat('a2', 32), 'hex') where id = :a2;
+update public.members set public_key = decode(repeat('a3', 32), 'hex') where id = '0a000003-0000-0000-0000-000000000003';
+update public.members set public_key = decode(repeat('c1', 32), 'hex') where id = :c1;
+update public.members set public_key = decode(repeat('c2', 32), 'hex') where id = '0c000002-0000-0000-0000-000000000002';
+update public.members set public_key = decode(repeat('c3', 32), 'hex') where id = '0c000003-0000-0000-0000-000000000003';
+
+-- Estado de partida, dicho aqui y no heredado de bloques anteriores (regla 2
+-- del relevo: se comprueba, no se recuerda).
+update public.organizations set visibility_scope_enabled = true  where id = :orgA;
+update public.organizations set visibility_scope_enabled = false where id = :orgC;
+
+-- 1 · Con el ambito de Gamma APAGADO, la contraparte entera sigue entrando --
+-- comportamiento de 0012, que es lo que D-7 promete a quien no toca nada.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    quienes uuid[];
+  begin
+    select array_agg(member_id order by member_id) into quienes
+      from public.thread_public_keys('11110000-0000-0000-0000-000000000002');
+
+    assert quienes @> array['0c000001-0000-0000-0000-000000000001'::uuid,
+                           '0c000002-0000-0000-0000-000000000002'::uuid,
+                           '0c000003-0000-0000-0000-000000000003'::uuid],
+      'Q-1: con el ambito de la contraparte apagado, entran TODOS sus miembros';
+    assert quienes @> array['0a000001-0000-0000-0000-000000000001'::uuid],
+      'Q-1/D-2: el ADMIN de la propia organizacion entra siempre';
+    assert not (quienes @> array['0a000003-0000-0000-0000-000000000003'::uuid]),
+      'Q-1/V-1: con MI ambito encendido, un companero EDITOR que no participa NO entra';
+    raise notice 'OK · Q-1: mi lado acotado (yo + ADMIN), contraparte con ambito apagado entera';
+  end
+  $$;
+commit;
+
+-- 2 · Y si apago el mio, vuelve a ser exactamente lo de 0012: todos con todos.
+update public.organizations set visibility_scope_enabled = false where id = :orgA;
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    quienes uuid[];
+  begin
+    select array_agg(member_id order by member_id) into quienes
+      from public.thread_public_keys('11110000-0000-0000-0000-000000000002');
+    assert quienes @> array['0a000003-0000-0000-0000-000000000003'::uuid],
+      'D-7: con el ambito apagado no cambia NADA -- el companero que no participa vuelve a entrar';
+    raise notice 'OK · D-7: con el interruptor apagado, 0023 se comporta como 0012';
+  end
+  $$;
+commit;
+update public.organizations set visibility_scope_enabled = true where id = :orgA;
+
+-- 3 · Los DOS ambitos encendidos y nadie de Gamma ha escrito todavia en esta
+-- conversacion: entran todos los de Gamma. Es la regla 3 de Q-1, el buzon
+-- abierto -- si no, el elemento entrante no lo podria leer nadie alli.
+update public.organizations set visibility_scope_enabled = true where id = :orgC;
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    quienes uuid[];
+  begin
+    select array_agg(member_id order by member_id) into quienes
+      from public.thread_public_keys('11110000-0000-0000-0000-000000000002');
+    assert quienes @> array['0c000002-0000-0000-0000-000000000002'::uuid,
+                           '0c000003-0000-0000-0000-000000000003'::uuid],
+      'Q-1 regla 3: si nadie de la contraparte ha escrito, el elemento es ENTRANTE para ellos y entran todos';
+    raise notice 'OK · Q-1: buzon abierto mientras nadie ha asumido la conversacion';
+  end
+  $$;
+commit;
+
+-- 4 · c2 asume: responde. A partir de aqui, c3 deja de entrar -- y c1 sigue,
+-- por ADMIN. Es "asumir es responder", sin accion de reparto.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    creado uuid;
+  begin
+    -- ⚠ ANCLA DE F-148, y se queda puesta. Estas tres son las condiciones de
+    -- `thread_items_insert_own` (0003:333), y las tres se cumplian cuando la
+    -- escritura fallaba con "new row violates row-level security policy". Sin
+    -- ellas, el diagnostico habria empezado por acusar a la sesion o al rol --
+    -- que era lo mas probable a ojo- en vez de al `RETURNING` y a la politica
+    -- de LECTURA derivada de 0019, que era la causa. **Este bloque entero es la
+    -- prueba de que se puede escribir con el ambito encendido**: antes de 0023
+    -- no se podia, ni un mensaje.
+    assert app.is_active_member(), 'F-148: c2 tiene que estar ACTIVE para poder escribir';
+    assert app.current_org_id() = '33333333-3333-3333-3333-333333333333',
+      'F-148: c2 tiene que resolver a Gamma';
+    assert app.can_access_thread('11110000-0000-0000-0000-000000000002'),
+      'F-148: Gamma participa en el hilo Alpha-Gamma';
+
+    creado := public.create_thread_item(
+      '11110000-0000-0000-0000-000000000002', 'MENSAJE',
+      repeat('31', 32), repeat('32', 12),
+      jsonb_build_array(
+        -- c2 (quien escribe) + c1 (ADMIN de Gamma) + a1 (ADMIN de Alpha) +
+        -- a2 (el participante de la otra organizacion). c3 NO: seria V-1.
+        jsonb_build_object('member_id','0c000002-0000-0000-0000-000000000002',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('32',12), 'ephemeral_pubkey', repeat('22',32)),
+        jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('32',12), 'ephemeral_pubkey', repeat('44',32)),
+        jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+          'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('32',12), 'ephemeral_pubkey', repeat('66',32)),
+        jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
+          'wrapped_cek', repeat('77',48), 'wrap_iv', repeat('32',12), 'ephemeral_pubkey', repeat('88',32))
+      ));
+    assert creado is not null, 'c2 responde y con eso asume la conversacion';
+    raise notice 'OK · Q-1: asumir no es una accion, es responder';
+  end
+  $$;
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    quienes uuid[];
+  begin
+    select array_agg(member_id order by member_id) into quienes
+      from public.thread_public_keys('11110000-0000-0000-0000-000000000002');
+    assert quienes @> array['0c000002-0000-0000-0000-000000000002'::uuid],
+      'Q-1: quien respondio sigue entrando -- ha escrito en esta conversacion';
+    assert quienes @> array['0c000001-0000-0000-0000-000000000001'::uuid],
+      'Q-1/D-2: el ADMIN de la contraparte entra aunque no haya escrito';
+    assert not (quienes @> array['0c000003-0000-0000-0000-000000000003'::uuid]),
+      'Q-1: una vez asumida la conversacion, el companero que no escribio DEJA de recibir copia';
+    raise notice 'OK · Q-1: asumida la conversacion, el reparto se cierra sobre quien habla';
+  end
+  $$;
+commit;
+
+-- 5 · V-2 INVERTIDO (ADR-002 §4, 4-sep-2026): sin el ADMIN, no se escribe.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_thread_item(
+        '11110000-0000-0000-0000-000000000002', 'MENSAJE',
+        repeat('41',32), repeat('42',12),
+        jsonb_build_array(jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('42',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'V-2 invertido: un reparto que deja fuera al ADMIN de la organizacion');
+commit;
+
+-- 6 · V-1 precisado: con el ambito encendido, no se envuelve para un companero
+-- que no participa -- ni aunque quien escribe quiera.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_thread_item(
+        '11110000-0000-0000-0000-000000000002', 'MENSAJE',
+        repeat('43',32), repeat('44',12),
+        jsonb_build_array(
+          jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
+            'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('44',12), 'ephemeral_pubkey', repeat('22',32)),
+          jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+            'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('44',12), 'ephemeral_pubkey', repeat('44',32)),
+          jsonb_build_object('member_id','0a000003-0000-0000-0000-000000000003',
+            'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('44',12), 'ephemeral_pubkey', repeat('66',32))))$$,
+    'V-1: envolver para un companero EDITOR que no participa, con el ambito encendido');
+commit;
+
+-- 7 · org_public_keys, el primer contacto: de la propia organizacion solo yo y
+-- mis ADMIN; de la otra, todos (buzon abierto).
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  declare
+    mios  uuid[];
+    otros uuid[];
+  begin
+    select array_agg(member_id order by member_id) into mios
+      from public.org_public_keys('11111111-1111-1111-1111-111111111111');
+    select array_agg(member_id order by member_id) into otros
+      from public.org_public_keys('33333333-3333-3333-3333-333333333333');
+
+    assert mios @> array['0a000002-0000-0000-0000-000000000002'::uuid,
+                         '0a000001-0000-0000-0000-000000000001'::uuid]
+       and not (mios @> array['0a000003-0000-0000-0000-000000000003'::uuid]),
+      'Q-1: de la propia organizacion, con el ambito encendido, solo quien escribe y sus ADMIN';
+    assert otros @> array['0c000001-0000-0000-0000-000000000001'::uuid,
+                          '0c000002-0000-0000-0000-000000000002'::uuid,
+                          '0c000003-0000-0000-0000-000000000003'::uuid],
+      'Q-1 regla 3: de la contraparte, TODOS -- aunque tenga el ambito encendido';
+    raise notice 'OK · Q-1: org_public_keys acota mi lado y deja entero el de enfrente';
+  end
+  $$;
+commit;
 
 -- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`

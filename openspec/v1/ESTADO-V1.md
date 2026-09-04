@@ -195,6 +195,10 @@ el contrato no distingue. Declarado con la serie ya cerrada, no a mitad.
 | `MSG-01`, serie `15a`/`15b`/`15c` (corpus con `F-145`) | Los tres `attempt_1.json` y las tres filas de `harness-metrics.csv` | **3 de 3 a 4/4 al primer intento.** Ninguna repitió el `aria-label` de `14a` ni ningún síntoma ya cerrado. $0,1865 |
 | El marcador por series, contado y no recordado | `harness-metrics.csv`, contando **filas por corrida** (una fila = un intento) | Corridas que pasan 4/4 en el intento 1: **09 = 0/3 · 10 = 0/3 · 11 = 2/3 · 12 = 0/2** (`12c` no se lanzó) **· 13 = 1/3 · 14 = 2/3 · 15 = 3/3** |
 | Que el 3 de 3 no se lo debe al caché | `cache_hit_pct` de las tres filas | `15a` corrió con **3,53%** —en frío— y salió igual de limpia que `15b` y `15c`, las dos al 99,88% |
+| Q-1 cerrada, y escrita entera antes de tocar SQL | `ADR-002` §10, D-2 (adenda), §4 (V-1, V-2, V-6), §7.1 y §1, releídos tras editar | La decisión del PO —buzón abierto + el ADMIN recibe copia de todo— **invierte V-2**, precisa V-1 y V-6, revoca la segunda mitad de D-2 y resuelve la consecuencia 7.1 concentrando su riesgo |
+| `0023_q1_reparto_de_la_cek.sql` (las dos últimas filas de `ADR-002` §5) | Local: `supabase/tests/run.sh` con **ocho asertos nuevos**, incluidos los dos guardias disparando. Remoto: `pg_proc` (diez funciones, firmas y `security definer`), `pg_policy` (el `with check` nuevo) y una llamada real como miembro de verdad | Todo verde. Ninguna de las diez es ejecutable por `anon` — la *default privilege* de `0022` aguantó para funciones creadas después |
+| **`F-148`: con el ámbito encendido NO SE PODÍA ESCRIBIR NADA desde `0019`** | El fallo, provocado a propósito con el interruptor encendido en las dos organizaciones; y las cuatro condiciones de `thread_items_insert_own` comprobadas una a una con asertos antes de acusar a nadie | `new row violates row-level security policy` con las cuatro condiciones **cumplidas**. Causa: el `RETURNING` exige la política de SELECT, que desde `0019` pide una clave que aún no existe. Y al quitarlo, la misma trampa en `item_keys_insert_sender` y en la búsqueda del hilo |
+| Que `0023` no cambia nada con el ámbito apagado | Llamada real contra el proyecto, como un miembro de verdad, sobre un hilo de verdad | Mismo resultado que antes de la migración. Las seis organizaciones siguen con el interruptor a `false`, así que en producción esto no se nota — que es justamente por lo que `F-148` vivió un día entero |
 | Que la serie 16 es una RÉPLICA y no otra medida | `git log -1 -- harness/tasks/MSG-01.json` **antes** de lanzar `16a` | Último cambio del corpus: `71b803b` (el de `F-145`), el mismo que midió la serie 15. Ni un byte entre las dos series |
 | `MSG-01`, serie `16a`/`16b`/`16c` | Los cinco `attempt_N.json` y las cinco filas del CSV | **1 de 3 al primer intento** (`16b`). `16a` y `16c`, dos intentos. $0,2113 |
 | Que el fallo de `16a` y `16c` es el MISMO y no dos casualidades | Los `attempt_1.json` de las dos, campo `checks` | Las dos fallan el mismo test —`ThreadList` · estado vacío— y por la misma causa: la frase partida en dos `<p>`. `16b` la escribió entera |
@@ -212,6 +216,8 @@ el contrato no distingue. Declarado con la serie ya cerrada, no a mitad.
 | `F-114`, `F-131`–`F-144` | ✅ ver cierres anteriores en `git show 7abbc33` |
 | **`F-145` los botones de página se buscan por su número y un `aria-label` lo sustituye** | ✅ **4-sep · `71b803b`** |
 | **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
+| **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** |
+| **`F-148` con el ámbito encendido no se podía escribir nada** | ✅ **4-sep · `0023`**, aplicada y verificada |
 | `MSG-01` a 4/4 sin reintentos | 🟡 **4 de 6 sobre el mismo corpus** — serie 15: 3 de 3; serie 16 (réplica exacta): **1 de 3**. Con `n=3` el marcador mide también la suerte |
 | Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · series 15 y 16**, seis corridas. La 15 no encontró nada; **la 16 encontró `F-147`** |
 | **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — sin remedir: la serie 17 sería la primera que lo mide |
@@ -223,8 +229,9 @@ el contrato no distingue. Declarado con la serie ya cerrada, no a mitad.
 | Índice de la derivación de la lista (entregable 5 + `ADR-002` §5) | ✅ **1-sep · `087962b`** |
 | `visibility_scope` (D-4) · `organizations.visibility_scope_enabled` (D-7) · Lista de hilos · `thread_items_select_participant` | ✅ **1-sep y 3-sep · `f5ea8fc`, `804dfe9`** |
 | `D-3` (`thread_items.quantity`) | ✅ **COMPLETO** — `CONSULTA` el 3-sep (`0020`), **`OFERTA` el 4-sep (`0021`, `ce78a72`→`098ba19`)** |
-| **`thread_public_keys(t_id)`** (reparto de destinatarios) | 🟡 **DESBLOQUEADA 4-sep** — Q-1 cerrada. Sin escribir todavía |
-| **`create_inquiry`** (reparto de destinatarios de la CEK) | 🟡 **DESBLOQUEADA 4-sep** — Q-1 cerrada. Sin escribir todavía |
+| **`thread_public_keys(t_id)`** (reparto de destinatarios) | ✅ **4-sep · `0023`**, aplicada y verificada |
+| **`create_inquiry`** (reparto de destinatarios de la CEK) | ✅ **4-sep · `0023`**, con guardia en la base (`app.guard_cek_recipients`) |
+| **`F-148` · escribir con el ámbito encendido era imposible desde `0019`** | ✅ **4-sep · `0023`** — tres piezas, sin relajar ninguna política de lectura |
 | Resto de la Fundación (entregables 1-3, 6) | 🔴 Sin cambios |
 
 ### Corriente B · Fábrica — NO ABIERTA
@@ -239,26 +246,25 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. **`thread_public_keys(t_id)` y `create_inquiry`, con la regla de Q-1 ya escrita.** Para
-   cada elemento, la CEK se envuelve para: participantes de la conversación **+ el ADMIN de
-   las dos organizaciones, siempre + (solo en el elemento entrante) todos los miembros de la
-   organización que recibe**. Son las dos últimas filas de `ADR-002` §5 que no están hechas.
-2. **Y con ellas, los asertos que la decisión obliga a cambiar en `supabase/tests/`:** `V-2`
-   se INVIRTIÓ —el ADMIN ahora sí recibe copia de todo— así que su prueba pasa a afirmar lo
-   contrario de lo que afirmaba, y `V-1` y `V-6` necesitan la excepción del elemento
-   entrante. **Cambiar el aserto sin cambiar la prueba sería dejar el invariante sin
-   guardia.**
-3. **Vercel sigue sin redesplegar, y ahora arrastra DOS cambios de cliente**, no uno:
+1. **Encender el interruptor de D-7 en una organización de prueba y usar la aplicación de
+   verdad.** `0023` está probado contra el esquema, no contra el producto: el cliente pide
+   los destinatarios y envuelve, y esa ida y vuelta **no la ha hecho nadie todavía con el
+   ámbito encendido**. `F-148` existió un día entero porque nadie encendió el interruptor —
+   repetir el patrón sería no haber aprendido nada.
+2. **Lo que `F-148` deja abierto y no se ha mirado:** si queda algún OTRO camino de
+   escritura que dependa de una política de lectura. Se revisaron los tres de mensajería;
+   `inventory_lines`, `favorite_distributors` y las funciones de demo **no**.
+5. **Vercel sigue sin redesplegar, y arrastra DOS cambios de cliente**, no uno:
    `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (hoy). La base acepta las dos y
    producción no manda ninguna (`CLAUDE.md` §10.2).
-4. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
+6. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
    (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
    seis tareas: si canta en todas, se desactiva solo, que es `F-003`.
-5. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
+3. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
    no distingue el corpus de la suerte (3 de 3 y 1 de 3 sobre lo mismo). O se mide con más
    tiradas por serie, o se acepta que el marcador es ruidoso y se usa solo para **encontrar
    huecos**, que es para lo que sí ha servido siete veces seguidas. **Decisión del PO.**
-6. **Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.** El
+4. **Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.** El
    `TS6133` de `16a` costó un reintento y no se repitió, así que no se declaró — pero el
    flag lleva en `app/tsconfig.json:11` desde el día 2 y la tarea no lo menciona.
 
@@ -302,6 +308,8 @@ Sin cambios.
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
 | 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro), cuarta comprobación seguida | Fuera de sesión, desde la raíz |
+| 🟠 | **`0023` no lo ha probado ningún cliente.** El esquema está verificado; la ida y vuelta real —el navegador pide destinatarios, envuelve, escribe— nunca ha corrido con el ámbito encendido | §3.1 |
+| 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
 | 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero | §3.5 |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
 | ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
@@ -326,6 +334,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Desde cuándo `anon` podía ejecutar esas cinco funciones, y si alguien lo hizo.** El
   agujero existía desde `0012` (12-ago). **No se han mirado los logs de PostgREST** para ver
   si hubo llamadas anónimas a `org_public_keys` — se puede, y no se ha hecho hoy.
+- **Si queda algún otro camino de escritura colgando de una política de lectura.** `F-148`
+  eran tres en mensajería y se arreglaron los tres; `inventory_lines`, `favorite_distributors`
+  y las funciones de demostración no se han mirado con esa lupa.
+- **Si el reparto de `0023` sobrevive al cliente real.** Está probado contra el esquema con
+  ocho asertos, y contra el navegador **cero veces**.
 - **Cuántos ADMIN va a tener de verdad una organización.** Q-1 hace del ADMIN el único
   depositario de todo lo que sus editores dejen de tener, y hoy las dos organizaciones con
   miembros tienen **exactamente uno** (comprobado el 4-sep contra `members`). Con un solo
@@ -389,7 +402,7 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 7 de V1 · 4-sep-2026 (cerrado a las 09:08 UTC y reabierto dos veces: 09:41 con la serie 15, 10:19 con la serie 16 y `F-147`) · fecha leída de la máquina (`date -u`) · estado
+*Día 7 de V1 · 4-sep-2026 (cerrado a las 09:08 UTC y reabierto tres veces: 09:41 con la serie 15, 10:19 con la serie 16 y `F-147`, y 15:16 con Q-1 cerrada, `0023` y `F-148`) · fecha leída de la máquina (`date -u`) · estado
 verificado contra el código de `mvp/bootstrap`, contra `pg_proc`/`pg_default_acl`/
 `list_migrations` del proyecto `troxminloxkjwihwfevs`, contra una llamada real como `anon`,
 contra la CI job a job de `71b803b` y contra la salida de **nueve** corridas pagadas — no

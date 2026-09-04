@@ -643,6 +643,16 @@ export async function counterOffer(oldItemId: string, threadId: string, content:
     p_ciphertext: toHex(ciphertext),
     p_iv: toHex(iv),
     p_keys: claves,
+    // ADR-002 D-3 (`0021`): la cantidad viaja **además** en claro, no en vez de.
+    // Sigue cifrada dentro de `content` como el resto de las cifras; esta copia
+    // es la que leen el ADMIN (D-2) y VERA (D-6) sin descifrar nada.
+    //
+    // Se manda SIEMPRE, y por eso `counter_offer` no la hereda de la oferta
+    // anterior: una contraoferta puede cambiar la cantidad, y dejar que la base
+    // copiase la vieja escribiría en claro una cifra que este `content` puede
+    // desmentir. Si esta línea desaparece, la columna se queda a NULL — que es
+    // "no se sabe", no una cantidad equivocada.
+    p_quantity: content.quantity,
   });
   if (error) throw error;
 }

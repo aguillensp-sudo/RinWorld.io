@@ -279,12 +279,12 @@ falla si se rompe.** Rozar uno es VIOLA automático, no RIESGO.
 
 | Objeto | Cambio | Estado |
 |---|---|---|
-| `thread_items` | **+ columna `quantity`** (D-3) | ✅ `0020`, 3-sep-2026 — solo `create_inquiry` (CONSULTA); `OFERTA` queda para cuando `create_thread_item`/`counter_offer` la conozcan |
+| `thread_items` | **+ columna `quantity`** (D-3) | ✅ **Completo.** `0020`, 3-sep-2026 (`CONSULTA`, vía `create_inquiry`) y `0021`, 4-sep-2026 (`OFERTA`, vía `counter_offer`). `create_thread_item` no la lleva y no le falta: rechaza `OFERTA` por diseño (`0012:185`) y solo crea `MENSAJE`, que tiene `quantity is null` obligatorio. La cantidad **no se hereda** de la oferta anterior — ver el §2 de `0021` |
 | `members` | **+ columna `visibility_scope`** con check y trigger (D-4) | ✅ `0018`, 1-sep-2026 |
-| `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 | 🔴 |
+| `thread_public_keys(t_id)` | Deja de devolver todos los miembros (`0012:97`); devuelve el conjunto de destinatarios que fija D-1 | 🔴 **BLOQUEADA por Q-1 (§10)** — el lado del emisor está claro, el del receptor no lo decide este documento |
 | `thread_items_select_participant` | Hoy `app.can_access_thread(thread_id)` (`0003:329`). Pasa a considerar el ámbito | ✅ `0019`, 3-sep-2026 |
 | Lista de hilos (`threads_select_participant`) | Deja de ser consulta directa a `threads` (`0003:312`); se deriva de `thread_item_keys` | ✅ `0019`, 3-sep-2026 |
-| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 |
+| `create_inquiry` | El conjunto de destinatarios de la CEK deja de ser «todos los miembros» | 🔴 **BLOQUEADA por Q-1 (§10)**, y depende de la fila de arriba |
 | Índices | Nuevo índice para la derivación de la lista de hilos, en la dirección que filtra primero | ✅ `0017`, 1-sep-2026 |
 | **`organizations.visibility_scope_enabled`** (D-7, octavo objeto — no estaba en la lista original del 25-ago; ver adenda del 3-sep-2026 en D-7) | Interruptor por organización, apagado por defecto. Sin él, `visibility_scope` (D-4) se aplicaría al 100% de las organizaciones sin que D-7 lo permitiera | ✅ `0019`, 3-sep-2026 |
 
@@ -368,7 +368,7 @@ nombre:
 
 ## 10 · Preguntas abiertas
 
-**Ninguna.** Las tres que quedaban al redactar el borrador se cerraron el mismo día:
+Las tres del borrador se cerraron el mismo día que se escribió:
 
 | Era | Cerrada como |
 |---|---|
@@ -378,5 +378,58 @@ nombre:
 
 Y de cerrarlas salió §6, que no estaba en el borrador.
 
+---
 
-*ADR-002 · v1.3, 3-sep-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día que se escribió (25-ago) · adenda del 3-sep-2026 en D-7 y §5: octavo objeto de esquema (`organizations.visibility_scope_enabled`) que la lista original no tenía; D-3 (`thread_items.quantity`) cerrado el mismo día, solo para `CONSULTA` · estado del esquema verificado contra las migraciones `0001`, `0003`, `0012`, `0014` el 25-ago, y contra `0017`, `0018`, `0019`, `0020` y `information_schema`/`pg_policies` del proyecto real el 1-sep y el 3-sep · Dirección Técnica, Nortex Systems*
+### ⚠ Q-1 · ¿A quién se envuelve la CEK de un elemento que ENTRA en una organización con el ámbito encendido? — ABIERTA desde el 4-sep-2026
+
+**Detectada antes de escribir SQL, no después**, al empezar la fila
+`thread_public_keys(t_id)` de §5. El PO decidió el mismo día **parar y decidirlo
+con este documento delante**: las dos filas rojas de §5 quedan bloqueadas hasta
+entonces, y no se escribe media pieza mientras tanto.
+
+**El lado del emisor no tiene ambigüedad:** con el ámbito encendido, la CEK deja
+de envolverse para sus compañeros. Eso es D-8 y V-1 aplicados literalmente, y es
+implementable hoy.
+
+**El lado del receptor no tiene respuesta en este documento.** En el primer
+contacto —una CONSULTA que llega de otra organización— **todavía no participa
+nadie** en la que recibe:
+
+- Si se envuelve **para todos sus miembros**, la consulta llega y se puede
+  contestar, pero cada uno de sus EDITOR podrá descifrar toda consulta entrante
+  aunque la lleve un compañero. V-1 dice, literalmente, que un `OWN` *nunca*
+  recibe copia envuelta de un elemento en el que no participa: esta salida
+  obliga a precisar V-1 para el elemento de entrada, por escrito.
+- Si **no se envuelve para nadie**, no la puede leer ni contestar nadie. El
+  elemento queda ilegible para siempre y es irreparable (mismo caso que
+  `create_thread_item`, `0012` §5).
+- Si **el emisor elige destinatario**, se cumple V-1 al pie de la letra, pero
+  expone la plantilla de la contraparte a quien consulta y es interfaz nueva en
+  SRCH-01 — sale de la fundación y entra en la corriente B.
+- **Darlo al ADMIN como buzón está descartado por este mismo documento:** V-2
+  prohíbe que el ADMIN reciba copia envuelta por serlo, y D-2 existe justamente
+  para darle supervisión *sin* ser destinatario criptográfico. Elegir esa vía
+  obliga a reabrir V-2.
+
+**Dato de esquema que cierra las salidas intermedias, comprobado el 4-sep-2026
+contra `0003:148` (`thread_items_shape_chk`):** un `MENSAJE` **no puede** llevar
+`responds_to_item_id`. O sea que hoy **no existe ancla de conversación** para los
+mensajes dentro de un hilo compartido entre conversaciones independientes (§6):
+«los que ya tienen clave en este hilo» mezcla conversaciones distintas, y «solo
+el emisor» deja el mensaje sin llegar a la contraparte. Cualquier respuesta que
+dependa de saber *a qué conversación pertenece un mensaje* exige antes un cambio
+de esquema.
+
+**Señal a favor de la primera salida, y es lectura, no decisión:** §5 lista los
+objetos que cambian y **no incluye `org_public_keys`** (`0014` §1), que es
+precisamente la función del primer contacto y la que hoy devuelve todos los
+miembros de la organización consultada.
+
+**Qué bloquea:** las dos filas rojas de §5 — `thread_public_keys(t_id)` y el
+reparto de destinatarios de `create_inquiry`. Nada más: `quantity` en `OFERTA`
+(`0021`) es independiente y se hizo el 4-sep-2026.
+
+
+*ADR-002 · v1.4, 4-sep-2026 · **§10 deja de estar vacía: Q-1, el reparto de la CEK en el lado que RECIBE, abierta y bloqueando las dos últimas filas rojas de §5 por decisión del PO** · `quantity` cerrada del todo el 4-sep (`0021`, `OFERTA`) ·*
+
+*v1.3, 3-sep-2026 · las tres preguntas abiertas del borrador, cerradas el mismo día que se escribió (25-ago) · adenda del 3-sep-2026 en D-7 y §5: octavo objeto de esquema (`organizations.visibility_scope_enabled`) que la lista original no tenía; D-3 (`thread_items.quantity`) cerrado el mismo día, solo para `CONSULTA` · estado del esquema verificado contra las migraciones `0001`, `0003`, `0012`, `0014` el 25-ago, y contra `0017`, `0018`, `0019`, `0020` y `information_schema`/`pg_policies` del proyecto real el 1-sep y el 3-sep · Dirección Técnica, Nortex Systems*

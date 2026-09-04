@@ -408,8 +408,13 @@ describe('counterOffer · la fila del día 10 del Plan §3', () => {
       p_ciphertext: string;
       p_iv: string;
       p_keys: { member_id: string; wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[];
+      p_quantity: number;
     };
     expect(args.p_old_item_id).toBe(OLD_ITEM);
+    // ADR-002 D-3 (`0021`): la cantidad de la contraoferta viaja también en
+    // claro. La base NO la hereda de la oferta anterior a propósito, así que
+    // si esto dejara de mandarse la columna quedaría a NULL.
+    expect(args.p_quantity).toBe(500);
     // Hex pelado, sin el prefijo `\x` — es el contrato de 0012/0013.
     expect(args.p_ciphertext).not.toMatch(/^\\x/);
     expect(args.p_iv).not.toMatch(/^\\x/);

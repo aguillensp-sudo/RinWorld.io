@@ -87,6 +87,7 @@
     "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
     "No tocar el shell (app/src/shell/**) ni App.tsx: tienen contrato y tests propios desde el dia 2 (F-025).",
     "Los numeros y fechas se formatean con toLocaleString/Intl en 'es-ES', nunca a mano. El mock escribe '1.247' donde el espanol correcto es '1247' (F-024).",
-    "La vista previa del ultimo elemento son METADATOS, nunca contenido descifrado (spec §3)."
+    "La vista previa del ultimo elemento son METADATOS, nunca contenido descifrado (spec §3).",
+    "Ninguna variable, import o parametro sin usar (`noUnusedLocals` y `noUnusedParameters` en app/tsconfig.json:11-12): `tsc --noEmit` falla con `TS6133` si se declara algo que despues no se lee. Aparecio en la corrida `16a` (4-sep-2026) y costo un reintento; no se declaro entonces por ser variacion ordinaria -esta linea es la serie 17 midiendo si con el flag ya en la tarea deja de aparecer."
   ]
 }

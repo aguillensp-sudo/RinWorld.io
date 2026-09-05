@@ -237,11 +237,11 @@ Sin cambios.
 > 5-sep-2026.** `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` en
 > `HTTP 200`, bundle servido confirmado con `p_quantity` dentro (§1).
 
-1. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
-   no distingue el corpus de la suerte (3 de 3 y 1 de 3 sobre lo mismo). O se mide con más
-   tiradas por serie, o se acepta que el marcador es ruidoso y se usa solo para **encontrar
-   huecos**, que es para lo que sí ha servido siete veces seguidas. **Decisión del PO,
-   pendiente — implica gasto real y no se lanza sin ella.**
+1. ~~Serie 17, con `F-147` puesto, y la pregunta de `n=3`.~~ **Decidido 5-sep-2026, PO:
+   subir las tiradas por serie.** A partir de la 17, una serie mide con **`n=5`**, no
+   `n=3` — ver la fila nueva de §4. **Lanzada en segundo plano** (`17a`-`17e`,
+   `remedicion-17{a..e}-msg-n5`) tras confirmar el árbol de `app/src/screens/messages/`
+   limpio antes de empezar; resultado y coste real se añaden a §1 cuando termine.
 2. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
    (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
    seis tareas: si canta en todas, se desactiva solo, que es `F-003`. **Este sigue detrás a
@@ -258,6 +258,7 @@ Sin cambios.
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **Las series de medición pasan de `n=3` a `n=5`** | 5-sep-2026, PO. La serie 16 (réplica exacta de la 15) dio 1 de 3 donde la 15 dio 3 de 3 sobre el MISMO corpus: con tres tiradas el marcador mide tanto el corpus como la suerte. A partir de la serie 17, cinco tiradas por serie | Esta fila. Aplica desde `remedicion-17a-msg-n5` |
 | **ADR-002** | Ámbito de visibilidad por usuario. Diez decisiones, seis invariantes, ocho objetos de esquema — **seis hechos, dos bloqueados por Q-1** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
 | **Q-1 · CERRADA: buzón abierto + el ADMIN recibe copia de todo** | 4-sep-2026, PO. El elemento entrante llega a **todos** los miembros de la receptora; asume quien responde, sin acción de reparto; y el ADMIN de las dos organizaciones es destinatario criptográfico permanente | `ADR-002` §10 Q-1, D-2 (adenda) |
 | **V-2 queda INVERTIDO y V-1/V-6 precisados** | 4-sep-2026, consecuencia directa de Q-1. El ADMIN pasa de «nunca recibe copia por ser ADMIN» a «recibe copia de todo». La promesa interna deja de ser «el compañero no puede verlo» y pasa a «solo tu ADMIN puede» | `ADR-002` §4, §1 (matiz) |

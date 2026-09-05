@@ -1,0 +1,23 @@
+
+==============================================================================
+· corrida arrancada 2026-09-05 18:25:13 · harness/tasks/MSG-01.json --corrida remedicion-17e-msg-n5
+==============================================================================
+Log de esta corrida: harness\metrics\MSG-01\remedicion-17e-msg-n5\MSG-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/Messages.module.css', 'app/src/screens/messages/Messages.tsx', 'app/src/screens/messages/ThreadList.module.css', 'app/src/screens/messages/ThreadList.tsx']
+  tokens in/out: 22155/52819   cache: 99.95% hit
+  coste real: $0.070036   en frio: $0.079469
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\MSG-01\remedicion-17e-msg-n5\attempt_1.json (F-122)
+  CSV: 2026-09-05,MSG-01,MSG-01,deepseek-v4-flash,22155,52819,0.070036,1,6.4,app/src/screens/messages/Messages.module.css;app/src/screens/messages/Messages.tsx;app/src/screens/messages/ThreadList.module.css;app/src/screens/messages/ThreadList.tsx,99.95,no,-,remedicion-17e-msg-n5,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: - / e2e con 8 excusado(s) por la tarea (F-134): verde a efectos del Coder; la suite NO estaba limpia). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\MSG-01\remedicion-17e-msg-n5\attempt_1.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: VERDE en 1 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

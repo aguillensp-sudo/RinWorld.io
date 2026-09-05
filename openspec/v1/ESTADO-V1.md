@@ -91,14 +91,15 @@ distrae.**
 
 ---
 
-**Día 8 de V1 · 5-sep-2026 · Estado: EN CURSO (4 de 6 puntos del Día 7 hechos; este
-fichero se reabrirá al cerrar los que quedan, no es el cierre del día)**
+**Día 8 de V1 · 5-sep-2026 · Estado: VERDE — los seis puntos del Día 7 hechos. Sigue sin
+ser el cierre formal (§7 no se ha corrido entero); a la espera de que el PO lo diga**
 
 Este fichero se abrió hoy leyendo el cierre del día 7 (`9fe4eac`), con cinco tareas en su
-§3 (más una sexta, deliberadamente detrás porque no bloquea nada). **Los puntos 1
-(D-7 con el cliente real), 2 (otros caminos de escritura), 3 (`noUnusedLocals`) y 4
-(Vercel) están hechos.** Quedan la serie 17 (necesita decisión del PO) y el guardia. Y de
-probar D-7 salió una precisión importante que abre un punto nuevo — ver abajo y §6.
+§3 (más una sexta, deliberadamente detrás porque no bloquea nada). **Los seis están
+hechos:** D-7 con el cliente real (1), otros caminos de escritura (2), `noUnusedLocals`
+(3), Vercel (4), la serie 17 a `n=5` (5) y la decisión del guardia (6). De probar D-7
+salió un punto nuevo que no estaba en la lista de nadie —un EDITOR real— y ese también
+se cerró hoy.
 
 **D-7 se encendió en `Nordwälz Lager` (BETA) y las tres vías de escritura de `0023`
 pasaron por el cliente real, no por `supabase/tests`.** Con la app corriendo local
@@ -171,8 +172,9 @@ compartida mientras la prueba manual seguía en curso contra el mismo proyecto. 
 sin ningún `git push` de por medio, salió limpio a la primera. No es un bug: es una
 regla de proceso que faltaba, y ya está en `findings-register.md`.
 
-Quedan la serie 17 (corriendo, resultado a falta de que termine). El detalle del Día 7
-(series 14-16, Q-1, `F-145`-
+**Y la serie 17 terminó: `17a`-`17e`, CINCO de CINCO en verde al primer intento** —la
+primera serie 5/5 del proyecto, $0,336154, sin ningún hueco nuevo (§1). Con eso, los seis
+puntos que dejó el Día 7 están hechos. El detalle del Día 7 (series 14-16, Q-1, `F-145`-
 `F-148`, `0022`/`0023`) vive en `git show 9fe4eac:openspec/v1/ESTADO-V1.md`, no se repite
 aquí.
 
@@ -207,6 +209,8 @@ aquí.
 | `create_inquiry` con el cliente real, ESCRITO POR un EDITOR (no ADMIN), D-7 encendido en su propia organización | Sesión como `editor@bearingworld.test`, `SRCH-01` → consultar una línea de Rodamientos | Escribió sin error. En la base: **3 claves** — el propio EDITOR, el ADMIN de Nordwälz y el de Rodamientos — exactamente el conjunto que exige Q-1 para un no-ADMIN con el ámbito propio encendido |
 | `F-149`: el dato de la fila de arriba pareció desaparecer solo, dos veces confirmado en cero | SQL privilegiado y PostgREST con el JWT real del EDITOR, minutos después de la escritura | **Cero filas donde antes había una.** Causa, `gh run list`: el push de `cdfb9f0` (commit anterior de esta sesión) disparó CI → Playwright, que resetea los `HILO_IDS` de la siembra (`CLAUDE.md` §10.4) **mientras la prueba manual seguía en curso contra el mismo proyecto**. No es RLS ni el cliente |
 | Que `F-149` es de proceso y no del producto | Repetido el mismo paso (consultar la misma línea) sin ningún `git push` de por medio | Limpio a la primera: `thread_items` con las 3 claves esperadas, y el EDITOR vio **«1 hilo»** de inmediato en la pantalla real, sin recargar dos veces ni esperar |
+| **`MSG-01`, serie `17a`-`17e` (corpus con `F-147` y la declaración de `noUnusedLocals` ya puestas, `n=5` por decisión del PO)** | Los cinco `attempt_1.json` y las cinco filas de `harness-metrics.csv` | **5 de 5 a 4/4 al primer intento — la primera serie 5/5 del proyecto.** `17a` corrió en frío (6,93% de caché); `17b`-`17e` sobre el prompt ya calentado (99,95%). Ningún hueco nuevo. $0,071836 + $0,043487 + $0,065866 + $0,084929 + $0,070036 = **$0,336154** en total |
+| Que las cinco corridas de la 17 no dejaron artefactos crudos en el árbol | `git status --short app/src/screens/messages/` tras la serie completa | Limpio — `git checkout --` después de cada corrida, cinco veces |
 
 **Lo de arriba prueba que encender el interruptor no rompe la escritura, para un ADMIN
 y para un EDITOR real — y que D-8 se cumple con el cliente real.** El
@@ -226,9 +230,9 @@ detalle del Día 7 completo (series de medida, Q-1, `F-145`-`F-148`) queda en
 | **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
 | **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** |
 | **`F-148` con el ámbito encendido no se podía escribir nada** | ✅ **4-sep · `0023`**, aplicada y verificada contra el esquema; **5-sep, verificada contra el CLIENTE REAL** (D-7 en `Nordwälz Lager`, las tres vías de escritura) |
-| `MSG-01` a 4/4 sin reintentos | 🟡 **4 de 6 sobre el mismo corpus** — serie 15: 3 de 3; serie 16 (réplica exacta): **1 de 3**. Con `n=3` el marcador mide también la suerte |
+| `MSG-01` a 4/4 sin reintentos | 🟢 **9 de 11 sobre el mismo corpus, con `n=5` la 17 salió 5/5** — serie 15 (n=3): 3/3; serie 16, réplica (n=3): 1/3; serie 17 (n=5, con `F-147` y `noUnusedLocals` puestos): **5/5**. Con más tiradas el marcador deja de oscilar tanto — un solo dato de `n=5`, no una prueba |
 | Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · series 15 y 16**, seis corridas. La 15 no encontró nada; **la 16 encontró `F-147`** |
-| **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — sin remedir: la serie 17 sería la primera que lo mide |
+| **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — **remedido 5-sep, serie 17 (n=5): sin recurrencia en las cinco** |
 
 ### Fundación V1
 
@@ -278,9 +282,10 @@ Sin cambios.
 
 1. ~~Serie 17, con `F-147` puesto, y la pregunta de `n=3`.~~ **Decidido 5-sep-2026, PO:
    subir las tiradas por serie.** A partir de la 17, una serie mide con **`n=5`**, no
-   `n=3` — ver la fila nueva de §4. **Lanzada en segundo plano** (`17a`-`17e`,
-   `remedicion-17{a..e}-msg-n5`) tras confirmar el árbol de `app/src/screens/messages/`
-   limpio antes de empezar; resultado y coste real se añaden a §1 cuando termine.
+   `n=3` — ver la fila de §4. **Corrida y terminada: `17a`-`17e`, las CINCO en VERDE al
+   primer intento** — la primera serie 5/5 del proyecto (la 15 fue 3/3 y no sobrevivió a
+   la réplica, serie 16: 1/3). $0,336154 en total, sin ningún hueco nuevo. Ver §1 para el
+   detalle fila a fila.
 2. ~~Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres
    accesibles (`F-145`).~~ **Decidido 5-sep-2026: NO, y no por ruido — por algo peor: la
    corrección obvia no funciona.** Medido antes de escribir nada (§1): el `name: '2'` que
@@ -310,13 +315,18 @@ Sin cambios.
    sigue haciendo `git push` dispara CI → Playwright, que resetea la siembra debajo de
    la prueba en curso — no un bug, una regla de proceso nueva.
 
+**Los tres puntos que quedaban están hechos. Los seis del Día 7, completos.** Esto NO
+es el cierre del día por decisión propia — el ritual de §7 no se ha corrido entero y
+cerrar es del PO, no de quien escribe. Si no aparece nada nuevo, la próxima sesión
+puede empezar el ritual de cierre desde aquí.
+
 ---
 
 ## 4 · Decisiones vivas
 
 | # | Decisión | Dónde |
 |---|---|---|
-| **Las series de medición pasan de `n=3` a `n=5`** | 5-sep-2026, PO. La serie 16 (réplica exacta de la 15) dio 1 de 3 donde la 15 dio 3 de 3 sobre el MISMO corpus: con tres tiradas el marcador mide tanto el corpus como la suerte. A partir de la serie 17, cinco tiradas por serie | Esta fila. Aplica desde `remedicion-17a-msg-n5` |
+| **Las series de medición pasan de `n=3` a `n=5`** | 5-sep-2026, PO. La serie 16 (réplica exacta de la 15) dio 1 de 3 donde la 15 dio 3 de 3 sobre el MISMO corpus: con tres tiradas el marcador mide tanto el corpus como la suerte. A partir de la serie 17, cinco tiradas por serie. **Primer resultado: la 17 dio 5/5** — ni prueba ni refuta la apuesta por sí solo, pero es el mejor marcador visto hasta hoy | `remedicion-17{a..e}-msg-n5`, $0,336154 |
 | **ADR-002** | Ámbito de visibilidad por usuario. Diez decisiones, seis invariantes, ocho objetos de esquema — **seis hechos, dos bloqueados por Q-1** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
 | **Q-1 · CERRADA: buzón abierto + el ADMIN recibe copia de todo** | 4-sep-2026, PO. El elemento entrante llega a **todos** los miembros de la receptora; asume quien responde, sin acción de reparto; y el ADMIN de las dos organizaciones es destinatario criptográfico permanente | `ADR-002` §10 Q-1, D-2 (adenda) |
 | **V-2 queda INVERTIDO y V-1/V-6 precisados** | 4-sep-2026, consecuencia directa de Q-1. El ADMIN pasa de «nunca recibe copia por ser ADMIN» a «recibe copia de todo». La promesa interna deja de ser «el compañero no puede verlo» y pasa a «solo tu ADMIN puede» | `ADR-002` §4, §1 (matiz) |
@@ -369,8 +379,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
 - ~~Si el 3 de 3 de la serie 15 se sostiene.~~ **Contestado el mismo día: no.** La réplica
   exacta dio 1 de 3. Lo que queda abierto es lo de detrás: **cuántas tiradas hacen falta para
-  que este marcador signifique algo**. Seis sobre el mismo corpus dan 4 de 6, y las series de
-  tres han oscilado entre 0 y 3 sin que el corpus cambiara.
+  que este marcador signifique algo**. Con `n=3`, seis corridas dieron 4 de 6, oscilando
+  entre 0 y 3 sin que el corpus cambiara. **La serie 17, primera con `n=5`, dio 5 de 5** —
+  un único dato no decide si `n=5` basta, pero es la serie más limpia del proyecto hasta
+  hoy. Haría falta una réplica de la 17 (misma `n=5`, mismo corpus) para saber si esta vez
+  sí se sostiene, igual que se hizo con la 15 y la 16.
 - **Cuántos huecos de la familia `F-116`–`F-147` quedan.** Dieciséis en ocho días. La serie
   15 fue la primera desde `F-137` que no encontró ninguno **y la 16, sobre el corpus idéntico,
   encontró uno** — así que «una serie limpia» no significa «corpus completo», significa «esas
@@ -454,17 +467,18 @@ Orden de lectura, y el orden importa:
 5. **`docs/ADR-001`** si vas a tocar criptografía.
 6. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
 7. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
-8. **`findings-register.md`** nunca de corrido: por identificador. Hoy: `F-145` y `F-146`.
+8. **`findings-register.md`** nunca de corrido: por identificador. Del Día 8: `F-149`.
 
 ---
 
-*Día 8 de V1 · 5-sep-2026, 17:51 UTC — EN CURSO, no cerrado: quedan tres puntos de §3
-(serie 17 con decisión del PO pendiente, la del guardia, y el EDITOR de prueba nuevo de
-hoy) y el ritual de §7 no se ha corrido. De los cinco puntos que dejó el Día 7, cuatro
-están hechos hoy · fecha leída de la máquina (`date -u`) · estado verificado contra el
-proyecto real `troxminloxkjwihwfevs` (`update organizations`, `thread_items`/
-`thread_item_keys` tras cada escritura, `pg_proc`/`0019` para `caller_bypasses_
-visibility_scope`), contra sesiones de navegador reales como `alpha@bearingworld.test` y
-`beta@bearingworld.test`, contra `python -m harness.tests.test_checks`, y contra el bundle
-servido en `https://bearingworld.vercel.app` tras `vercel --prod` — no contra otro
-documento · Dirección Técnica, Nortex Systems*
+*Día 8 de V1 · 5-sep-2026, 16:34 UTC — los seis puntos del Día 7 hechos; NO cerrado
+por decisión propia, el ritual de §7 no se ha corrido entero y cerrar es del PO · fecha
+leída de la máquina (`date -u`) · estado verificado contra el proyecto real
+`troxminloxkjwihwfevs` (`update organizations`, `thread_items`/`thread_item_keys` tras
+cada escritura, `pg_proc`/`0019` para `caller_bypasses_visibility_scope`, un EDITOR real
+creado por el Admin API de Supabase), contra sesiones de navegador reales como
+`alpha@`, `beta@` y `editor@bearingworld.test`, contra `gh run list` para diagnosticar
+`F-149`, contra `python -m harness.tests.test_checks`, contra el bundle servido en
+`https://bearingworld.vercel.app` tras `vercel --prod`, y contra la salida real de
+**cinco** corridas pagadas de hoy (serie 17, `17a`-`17e`) — no contra otro documento ·
+Dirección Técnica, Nortex Systems*

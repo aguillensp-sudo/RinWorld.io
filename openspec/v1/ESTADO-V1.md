@@ -91,13 +91,14 @@ distrae.**
 
 ---
 
-**Día 8 de V1 · 5-sep-2026 · Estado: EN CURSO (1 de 5 puntos de §3 hecho; este fichero se
-reabrirá al cerrar los otros cuatro, no es el cierre del día)**
+**Día 8 de V1 · 5-sep-2026 · Estado: EN CURSO (4 de 6 puntos del Día 7 hechos; este
+fichero se reabrirá al cerrar los que quedan, no es el cierre del día)**
 
 Este fichero se abrió hoy leyendo el cierre del día 7 (`9fe4eac`), con cinco tareas en su
-§3 (más una sexta, deliberadamente detrás porque no bloquea nada). **El punto 1 —el más
-urgente de los cinco, porque era el único bloqueo real que quedaba sobre `0023`— está
-hecho: se ha probado con el cliente de verdad, no contra el esquema.**
+§3 (más una sexta, deliberadamente detrás porque no bloquea nada). **Los puntos 1
+(D-7 con el cliente real), 2 (otros caminos de escritura), 3 (`noUnusedLocals`) y 4
+(Vercel) están hechos.** Quedan la serie 17 (necesita decisión del PO) y el guardia. Y de
+probar D-7 salió una precisión importante que abre un punto nuevo — ver abajo y §6.
 
 **D-7 se encendió en `Nordwälz Lager` (BETA) y las tres vías de escritura de `0023`
 pasaron por el cliente real, no por `supabase/tests`.** Con la app corriendo local
@@ -121,9 +122,28 @@ de destinatarios con el ámbito encendido y apagado da lo mismo por construcció
 esta prueba certifica que **encender el interruptor no rompe la escritura**, no que el
 recorte de visibilidad a un EDITOR real funcione. Queda en §6.
 
-**Los puntos 2 a 5, y el sexto detrás, siguen en §3.** El detalle del Día 7 (series
-14-16, Q-1, `F-145`-`F-148`, `0022`/`0023`) vive en `git show 9fe4eac:openspec/v1/
-ESTADO-V1.md`, no se repite aquí.
+**Y ese matiz se hizo más preciso al mirarlo con calma.** `app.caller_bypasses_visibility_
+scope()` (`0019`) es `true` si quien llama es ADMIN, sin condición extra — y las dos
+organizaciones de prueba solo tienen un miembro, que es ADMIN. Así que ni la prueba de
+hoy ni la que encontró `F-148` el 4-sep pasaron nunca por la rama que exige una clave ya
+envuelta, que es la rama que de verdad puede romperse. «Probado contra el cliente real»
+seguía queriendo decir «probado para un ADMIN» — declarado, no descubierto por sorpresa
+en producción. Nuevo punto de §3: falta un EDITOR de verdad.
+
+**El punto 2 se hizo, revisando los tres pendientes y encontrando un cuarto que no
+estaba en la lista.** `inventory_lines`, `favorite_distributors` y las dos funciones de
+demo no tienen el hueco de `F-148` — políticas autocontenidas o `security definer`/
+`service_role` que saltan RLS entera. Y apareció `acceptOffer`/`rejectOffer`
+(`offers.ts`), con la misma forma (`update().select()`) que rompía `F-148`, pero sin el
+mismo riesgo: actúa sobre una fila YA visible antes del clic, no crea una fila y su
+clave en la misma operación. Razonado y comprobado con el cliente real, rechazando de
+verdad una oferta de Nordwälz.
+
+**Los puntos 3 (`noUnusedLocals` en los `constraints`, `a385eba`) y 4 (Vercel
+redesplegado, `p_quantity` confirmado en el bundle de producción) se hicieron enteros.**
+Quedan la serie 17 —con una pregunta para el PO delante, no se lanza sin ella— y el
+guardia. El detalle del Día 7 (series 14-16, Q-1, `F-145`-`F-148`, `0022`/`0023`) vive en
+`git show 9fe4eac:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
 ---
 
@@ -140,10 +160,19 @@ ESTADO-V1.md`, no se repite aquí.
 | `counter_offer` con el cliente real | Sesión como `alpha`, «Contra-ofertar» sobre la oferta pendiente de Nordwälz | Nueva `OFERTA` (`4,60 €/ud`, `1100 ud`, `3 días`), la vieja pasa a `Superada por contraoferta` con `superseded_by_item_id` apuntando a la nueva. **2 claves** |
 | Que los destinatarios de las tres escrituras son EXACTAMENTE los que exige Q-1 | `thread_item_keys` de cada elemento nuevo, cruzado con `members.visibility_scope` | Las tres: los dos únicos miembros, ambos `ORG_METADATA` — ni de más ni de menos |
 | Consola del navegador en las tres escrituras | `read_console_messages` (`onlyErrors`) tras cada una | Sin logs — ni un error |
+| Que la suite e2e (CI) no rompe con D-7 encendido en `Nordwälz Lager` | El push del commit anterior (`8dc5adc`) disparó CI completo con el interruptor ya puesto; `gh run list` sobre `mvp/bootstrap` | `conclusion: success`. El fixture de Playwright reseteó los `thread_items` del hilo de prueba (efímero, `CLAUDE.md` §10.4) pero **no tocó** `organizations.visibility_scope_enabled` — comprobado después, seguía en `true` |
+| `inventory_lines`: ¿algún INSERT/UPDATE depende de una política de SELECT que aún no se cumple? | `0002_inventory.sql`: `inventory_write_own` (using/with check) y `inventory_select_own` | Ninguna referencia a filas creadas después. `inventory_select_own` solo pide `org_id = current_org_id()`, cierto desde el primer instante. `archiveLine`/`deleteLine` ni siquiera encadenan `.select()` |
+| `favorite_distributors`: ídem, y el trigger que toca `organizations.favorite_count` de OTRA organización | `0005_lead_time_and_favorites.sql`: políticas + `app.sync_favorite_count()` | Políticas por `member_id = auth.uid()`, sin dependencia circular. El trigger que escribe en la fila de la CONTRAPARTE es `security definer` a propósito — bypasa RLS, comentario explícito en la migración |
+| Las dos funciones de demo (`demo_reanchor_freshness`, `demo_state`) | `0015_demo_reset_helpers.sql` | Las dos `security invoker` (el defecto) y **solo concedidas a `service_role`**, que salta RLS entera — no hay política de lectura de la que puedan colgar |
+| **Cuarto camino de escritura encontrado, no estaba en la lista: `acceptOffer`/`rejectOffer`** (`app/src/lib/offers.ts:251`) | Lectura de `setOfferState`: `update(thread_items).select(COLUMNS)` — misma forma que rompía `F-148` | Es un `UPDATE`+lectura sobre una fila YA EXISTENTE y ya visible antes del clic (si no lo fuera, el botón no se habría podido pulsar); no crea una fila ni una clave nueva en la misma operación, así que no hay el hueco huevo-y-gallina de `F-148`. Razonado Y probado: `alpha` rechazó una oferta de `Nordwälz` (D-7 encendido) sin error, `estado_oferta` pasó a `Rechazada` en la base |
+| **D-7 y el "bypass" del ADMIN, matiz que cambia lo que las pruebas de arriba certifican** | `app.caller_bypasses_visibility_scope()` (`0019:83-96`) | Es `true` si la organización de quien llama tiene el ámbito APAGADO **o si quien llama es ADMIN**. Las dos organizaciones de prueba solo tienen un miembro y es ADMIN — así que TODAS las pruebas de hoy y de ayer (`F-148` incluido) pasaron por la rama del *bypass*, nunca por la rama que exige una clave ya envuelta. La única forma de ejercitar esa rama de verdad es un EDITOR real, que no existe en ninguna de las dos organizaciones |
+| `noUnusedLocals`/`noUnusedParameters` en los `constraints` de `MSG-01` | `harness/tasks/MSG-01.json`, `python -m harness.tests.test_checks` | Añadido (`a385eba`). Todas en verde |
+| Vercel redesplegado | `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` | `HTTP 200`. El bundle servido contiene `p_quantity` — los dos cambios de cliente pendientes (`CONSULTA` 3-sep, `OFERTA` 4-sep) ya están en producción |
 
-**Lo de arriba prueba que encender el interruptor no rompe la escritura. No prueba D-8**
-(recorte de visibilidad a un EDITOR), porque ninguna de las dos organizaciones tiene uno
-— ver §6. El detalle del Día 7 completo (series de medida, Q-1, `F-145`-`F-148`) queda en
+**Lo de arriba prueba que encender el interruptor no rompe la escritura PARA UN ADMIN.**
+No prueba D-8 ni la rama "clave ya envuelta" de `F-148` para un EDITOR real, porque
+ninguna de las dos organizaciones tiene uno — ver §6, que se ha precisado con esto. El
+detalle del Día 7 completo (series de medida, Q-1, `F-145`-`F-148`) queda en
 `git show 9fe4eac:openspec/v1/ESTADO-V1.md`.
 
 ---
@@ -189,25 +218,39 @@ Sin cambios.
 
 > ~~1. Encender el interruptor de D-7 en una organización de prueba y usar la aplicación de
 > verdad.~~ **Hecho 5-sep-2026.** D-7 encendido en `Nordwälz Lager`, las tres vías de
-> escritura de `0023` probadas con el cliente real (§1). Ver §6: lo que esto NO cubre es D-8.
+> escritura de `0023` probadas con el cliente real (§1). **Con un matiz que resultó
+> importante: las pruebas solo ejercitan la rama del ADMIN** (`caller_bypasses_
+> visibility_scope`), porque ninguna de las dos organizaciones tiene un EDITOR — ver §6.
+>
+> ~~2. Lo que `F-148` deja abierto: si queda algún OTRO camino de escritura que dependa de
+> una política de lectura.~~ **Hecho 5-sep-2026.** `inventory_lines`, `favorite_distributors`
+> y las dos funciones de demo revisadas — ninguna tiene el hueco de `F-148`. Y salió un
+> CUARTO camino que no estaba en la lista original: `acceptOffer`/`rejectOffer` en
+> `offers.ts`, con la misma forma (`update().select()`) pero sin el mismo riesgo, porque
+> actúa sobre una fila YA visible, no una recién creada. Razonado y probado con el cliente
+> real (§1).
+>
+> ~~3. Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.~~
+> **Hecho 5-sep-2026**, `a385eba`. `test_checks` en verde.
+>
+> ~~4. Vercel sigue sin redesplegar, con DOS cambios de cliente pendientes.~~ **Hecho
+> 5-sep-2026.** `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` en
+> `HTTP 200`, bundle servido confirmado con `p_quantity` dentro (§1).
 
-1. **Lo que `F-148` deja abierto y no se ha mirado:** si queda algún OTRO camino de
-   escritura que dependa de una política de lectura. Se revisaron los tres de mensajería;
-   `inventory_lines`, `favorite_distributors` y las funciones de demo **no**.
-2. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
+1. **Serie 17, con `F-147` puesto** — y con una pregunta encima: la 16 demostró que `n=3`
    no distingue el corpus de la suerte (3 de 3 y 1 de 3 sobre lo mismo). O se mide con más
    tiradas por serie, o se acepta que el marcador es ruidoso y se usa solo para **encontrar
-   huecos**, que es para lo que sí ha servido siete veces seguidas. **Decisión del PO.**
-3. **Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.** El
-   `TS6133` de `16a` costó un reintento y no se repitió, así que no se declaró — pero el
-   flag lleva en `app/tsconfig.json:11` desde el día 2 y la tarea no lo menciona.
-4. **Vercel sigue sin redesplegar, y arrastra DOS cambios de cliente**, no uno:
-   `p_quantity` de `CONSULTA` (3-sep) y el de `OFERTA` (4-sep). La base acepta las dos y
-   producción no manda ninguna (`CLAUDE.md` §10.2).
-5. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
+   huecos**, que es para lo que sí ha servido siete veces seguidas. **Decisión del PO,
+   pendiente — implica gasto real y no se lanza sin ella.**
+2. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
    (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
    seis tareas: si canta en todas, se desactiva solo, que es `F-003`. **Este sigue detrás a
    propósito: es el único que no bloquea nada.**
+3. **Nuevo, de hoy: añadir un miembro EDITOR real a una organización de prueba** (con su
+   `public_key`) para poder probar la rama de `caller_bypasses_visibility_scope()` que
+   NINGUNA prueba de hoy tocó — la que exige que la clave ya esté envuelta, que es
+   exactamente la que rompía `F-148`. Sin esto, "probado contra el cliente real" sigue
+   queriendo decir "probado para un ADMIN".
 
 ---
 
@@ -245,7 +288,6 @@ Sin cambios.
 |---|---|---|
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj.** Sin cambios hoy: `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
-| 🟡 | **Vercel no redesplegó, y ahora son DOS cambios de cliente sin desplegar** (`quantity` de `CONSULTA` y de `OFERTA`) | Redesplegar `app/` (manual, `CLAUDE.md` §10.2) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
 | 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro), cuarta comprobación seguida | Fuera de sesión, desde la raíz |
@@ -255,7 +297,8 @@ Sin cambios.
 | ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
 | ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |
 | ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
-| ⚪ | ~~`0023` no lo ha probado ningún cliente~~ | **Resuelto 5-sep-2026: probado con el cliente real, D-7 encendido en `Nordwälz Lager`, las tres vías de escritura** |
+| ⚪ | ~~`0023` no lo ha probado ningún cliente~~ | **Resuelto 5-sep-2026: probado con el cliente real, D-7 encendido en `Nordwälz Lager`, las tres vías de escritura** (matiz: solo la rama del ADMIN, ver §6) |
+| ⚪ | ~~Vercel no redesplegó, DOS cambios de cliente pendientes~~ | **Resuelto 5-sep-2026: `vercel --prod`, bundle en producción confirmado con `p_quantity`** |
 
 ---
 
@@ -275,17 +318,23 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Desde cuándo `anon` podía ejecutar esas cinco funciones, y si alguien lo hizo.** El
   agujero existía desde `0012` (12-ago). **No se han mirado los logs de PostgREST** para ver
   si hubo llamadas anónimas a `org_public_keys` — se puede, y no se ha hecho hoy.
-- **Si queda algún otro camino de escritura colgando de una política de lectura.** `F-148`
-  eran tres en mensajería y se arreglaron los tres; `inventory_lines`, `favorite_distributors`
-  y las funciones de demostración no se han mirado con esa lupa.
+- ~~Si queda algún otro camino de escritura colgando de una política de lectura.~~
+  **Contestado el 5-sep: no en `inventory_lines`, `favorite_distributors` ni en las dos
+  funciones de demo — pero sí apareció un cuarto camino no listado, `acceptOffer`/
+  `rejectOffer`, con la misma forma que `F-148` y sin el mismo riesgo (§1: actúa sobre una
+  fila ya visible, no una recién creada).**
 - ~~Si el reparto de `0023` sobrevive al cliente real.~~ **Contestado el 5-sep: sí, las
-  tres vías de escritura, con D-7 encendido en `Nordwälz Lager`.** Lo que sigue sin
-  probarse es **D-8**: las dos organizaciones de e2e tienen un único miembro y ese miembro
-  es ADMIN, así que la prueba no pudo ejercitar «un EDITOR no ve nada de sus compañeros» —
-  con cero EDITOR en la mesa, el conjunto de destinatarios da lo mismo con el ámbito
-  encendido o apagado. Haría falta un segundo miembro EDITOR en una de las dos para
-  probarlo de verdad, y decidir si eso se hace sobre las organizaciones de e2e (con el
-  riesgo de que un test asuma hoy «un solo miembro») o sobre una tercera, desechable.
+  tres vías de escritura, con D-7 encendido en `Nordwälz Lager` — pero con un matiz que
+  vacía buena parte de la respuesta.** `app.caller_bypasses_visibility_scope()` (`0019`)
+  es `true` si quien llama es ADMIN, sin mirar nada más; las dos organizaciones de prueba
+  solo tienen un miembro y es ADMIN. **Así que TODO lo probado hoy — y también `F-148`
+  cuando se encontró el 4-sep — pasó por la rama del *bypass*, nunca por la rama que
+  exige una clave ya envuelta**, que es la que de verdad puede reventar. Sigue sin
+  probarse con el cliente real, y ahora se sabe con precisión qué falta: un EDITOR
+  auténtico (con su `public_key`) en una de las dos organizaciones, o en una tercera
+  desechable. Nuevo punto 3 de §3.
+- **D-8 («un EDITOR no ve nada de sus compañeros») sigue sin probarse**, por el mismo
+  motivo de arriba: sin un EDITOR real no hay a quién negarle la vista.
 - **Cuántos ADMIN va a tener de verdad una organización.** Q-1 hace del ADMIN el único
   depositario de todo lo que sus editores dejen de tener, y hoy las dos organizaciones con
   miembros tienen **exactamente uno** (comprobado el 4-sep y otra vez el 5-sep contra
@@ -338,8 +387,8 @@ escribir, no solo antes.
 Orden de lectura, y el orden importa:
 
 1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
-2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Es
-   lo primero de §3 y sin esa decisión no se escribe SQL de esas dos filas.
+2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Sin
+   esa decisión no se escribe SQL de reparto de CEK.
 3. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado hoy: `quantity`
    completa y las dos filas bloqueadas.
 4. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
@@ -350,9 +399,13 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 8 de V1 · 5-sep-2026, 15:27 UTC — EN CURSO, no cerrado: quedan cuatro puntos de §3 y
-el ritual de §7 no se ha corrido. Este pie describe únicamente el punto 1, ya hecho ·
-fecha leída de la máquina (`date -u`) · estado verificado contra el proyecto real
-`troxminloxkjwihwfevs` (`update organizations`, `thread_items`/`thread_item_keys` tras
-cada escritura) y contra una sesión de navegador real como `alpha@bearingworld.test` y
-`beta@bearingworld.test` — no contra otro documento · Dirección Técnica, Nortex Systems*
+*Día 8 de V1 · 5-sep-2026, 17:51 UTC — EN CURSO, no cerrado: quedan tres puntos de §3
+(serie 17 con decisión del PO pendiente, la del guardia, y el EDITOR de prueba nuevo de
+hoy) y el ritual de §7 no se ha corrido. De los cinco puntos que dejó el Día 7, cuatro
+están hechos hoy · fecha leída de la máquina (`date -u`) · estado verificado contra el
+proyecto real `troxminloxkjwihwfevs` (`update organizations`, `thread_items`/
+`thread_item_keys` tras cada escritura, `pg_proc`/`0019` para `caller_bypasses_
+visibility_scope`), contra sesiones de navegador reales como `alpha@bearingworld.test` y
+`beta@bearingworld.test`, contra `python -m harness.tests.test_checks`, y contra el bundle
+servido en `https://bearingworld.vercel.app` tras `vercel --prod` — no contra otro
+documento · Dirección Técnica, Nortex Systems*

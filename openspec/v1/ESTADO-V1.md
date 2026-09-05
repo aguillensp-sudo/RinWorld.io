@@ -155,8 +155,24 @@ ese `>2<` respeta el borde igual de bien que un `2` real. El guardia no necesita
 aprender a mirar nombres: necesitaría distinguir una declaración de un ejemplo dentro de
 la misma prosa, y eso es un problema distinto y más caro. No se escribe.
 
-Quedan la serie 17 (corriendo, resultado a falta de que termine) y el EDITOR de prueba
-para cerrar de verdad el punto 1. El detalle del Día 7 (series 14-16, Q-1, `F-145`-
+**Y el punto 1 quedó cerrado del todo, con permiso explícito del PO para crear una
+cuenta nueva.** Un EDITOR real en `Nordwälz Lager` —cuenta por el Admin API de Supabase,
+nunca por SQL directo en `auth.users` (la lección de `F-013`)—, con `role`/
+`visibility_scope` asignados solos por el trigger de `0001`/`0018` y su llavero
+publicado solo al iniciar sesión. **D-8, con el cliente real por primera vez:** el
+EDITOR vio «0 hilos» con la organización ya en conversación activa — el suelo del
+EDITOR, cumplido. Escribió una `CONSULTA` de verdad, no-ADMIN, D-7 encendido: la rama
+de `caller_bypasses_visibility_scope()` que ni la prueba de ayer ni el hallazgo
+original de `F-148` habían tocado nunca, verde con el cliente real. Y por el camino
+salió `F-149`: la primera vez pareció que el dato escrito desaparecía solo —confirmado
+y vuelto a comprobar minutos después, cero filas—, y la causa fue que el push del
+commit anterior de esta misma sesión disparó CI → Playwright, que resetea la siembra
+compartida mientras la prueba manual seguía en curso contra el mismo proyecto. Repetido
+sin ningún `git push` de por medio, salió limpio a la primera. No es un bug: es una
+regla de proceso que faltaba, y ya está en `findings-register.md`.
+
+Quedan la serie 17 (corriendo, resultado a falta de que termine). El detalle del Día 7
+(series 14-16, Q-1, `F-145`-
 `F-148`, `0022`/`0023`) vive en `git show 9fe4eac:openspec/v1/ESTADO-V1.md`, no se repite
 aquí.
 
@@ -185,10 +201,15 @@ aquí.
 | Vercel redesplegado | `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` | `HTTP 200`. El bundle servido contiene `p_quantity` — los dos cambios de cliente pendientes (`CONSULTA` 3-sep, `OFERTA` 4-sep) ya están en producción |
 | Por qué el guardia no vio `name: '2'` de `F-145` | `python -c` contra `harness.tests.dry_run`: `_pide_el_contrato` y `_declarado` con el blob real de `MSG-01.json` + spec + HTML aprobado (73 456 caracteres) | `'2' in nombres_u` → `True` (SÍ lo parsea). `_declarado('2', …)` → `True` porque `'2' in tarea` — la subcadena aparece **468 veces** por azar (fechas, `F-125`, `0012:185`…). El fallo es del filtro de "ya declarado", no de la detección |
 | Si un arreglo obvio (borde de palabra para nombres cortos/numéricos) serviría | Monkeypatch de `_declarado` con `re.search(r'(?<!\w)2(?!\w)', …)`, `cruzar_con_el_contrato` corrido contra las SEIS tareas reales, antes/después comparado | **Cero avisos nuevos en las seis.** En `MSG-01` el propio `component_api`, citando el HTML de `F-145` como ejemplo (`<button aria-label="Pagina 2">2</button>`), contiene un `>2<` que respeta el borde de palabra igual que un `2` real — el arreglo obvio no distingue una declaración de un ejemplo |
+| Cuenta EDITOR nueva creada de verdad, no adivinada | `POST /auth/v1/admin/users` (Admin API, clave de servicio leída de variable de entorno, nunca impresa ni pasada por CLI) + `insert into members` por el MCP | `id=cc14899b-…`, `role` y `visibility_scope` los puso SOLO el trigger de `0001`/`0018` (`EDITOR`/`OWN`, segundo miembro de `Nordwälz Lager`) — no se pasaron a mano |
+| Llavero del EDITOR publicado sin tocar nada | Login real como `editor@bearingworld.test` en la app, `select public_key from members` después | `public_key` pasó de `NULL` a una clave real **solo con iniciar sesión** — `ensureKeyring()` hizo lo suyo, igual que en producción |
+| **D-8 con el cliente real, primera vez**: ¿el EDITOR ve los hilos de su organización antes de participar? | Pantalla «Hilos» como `editor@bearingworld.test`, con `Nordwälz Lager` ya en conversación activa con Rodamientos | **«0 hilos».** El suelo del EDITOR (D-8) se cumple con el cliente real, no solo sobre el papel |
+| `create_inquiry` con el cliente real, ESCRITO POR un EDITOR (no ADMIN), D-7 encendido en su propia organización | Sesión como `editor@bearingworld.test`, `SRCH-01` → consultar una línea de Rodamientos | Escribió sin error. En la base: **3 claves** — el propio EDITOR, el ADMIN de Nordwälz y el de Rodamientos — exactamente el conjunto que exige Q-1 para un no-ADMIN con el ámbito propio encendido |
+| `F-149`: el dato de la fila de arriba pareció desaparecer solo, dos veces confirmado en cero | SQL privilegiado y PostgREST con el JWT real del EDITOR, minutos después de la escritura | **Cero filas donde antes había una.** Causa, `gh run list`: el push de `cdfb9f0` (commit anterior de esta sesión) disparó CI → Playwright, que resetea los `HILO_IDS` de la siembra (`CLAUDE.md` §10.4) **mientras la prueba manual seguía en curso contra el mismo proyecto**. No es RLS ni el cliente |
+| Que `F-149` es de proceso y no del producto | Repetido el mismo paso (consultar la misma línea) sin ningún `git push` de por medio | Limpio a la primera: `thread_items` con las 3 claves esperadas, y el EDITOR vio **«1 hilo»** de inmediato en la pantalla real, sin recargar dos veces ni esperar |
 
-**Lo de arriba prueba que encender el interruptor no rompe la escritura PARA UN ADMIN.**
-No prueba D-8 ni la rama "clave ya envuelta" de `F-148` para un EDITOR real, porque
-ninguna de las dos organizaciones tiene uno — ver §6, que se ha precisado con esto. El
+**Lo de arriba prueba que encender el interruptor no rompe la escritura, para un ADMIN
+y para un EDITOR real — y que D-8 se cumple con el cliente real.** El
 detalle del Día 7 completo (series de medida, Q-1, `F-145`-`F-148`) queda en
 `git show 9fe4eac:openspec/v1/ESTADO-V1.md`.
 
@@ -234,10 +255,11 @@ Sin cambios.
 ## 3 · Qué queda, en este orden
 
 > ~~1. Encender el interruptor de D-7 en una organización de prueba y usar la aplicación de
-> verdad.~~ **Hecho 5-sep-2026.** D-7 encendido en `Nordwälz Lager`, las tres vías de
-> escritura de `0023` probadas con el cliente real (§1). **Con un matiz que resultó
-> importante: las pruebas solo ejercitan la rama del ADMIN** (`caller_bypasses_
-> visibility_scope`), porque ninguna de las dos organizaciones tiene un EDITOR — ver §6.
+> verdad.~~ **Hecho 5-sep-2026, y cerrado del todo.** D-7 encendido en `Nordwälz Lager`,
+> las tres vías de escritura de `0023` probadas con el cliente real como ADMIN (§1) **y
+> luego como EDITOR de verdad** (punto 3 de esta lista, ya hecho también) — la rama de
+> `caller_bypasses_visibility_scope()` que ninguna prueba anterior tocó, incluido el
+> hallazgo original de `F-148`, queda ejercitada y en verde.
 >
 > ~~2. Lo que `F-148` deja abierto: si queda algún OTRO camino de escritura que dependa de
 > una política de lectura.~~ **Hecho 5-sep-2026.** `inventory_lines`, `favorite_distributors`
@@ -274,11 +296,19 @@ Sin cambios.
    necesita aprender a mirar nombres accesibles: necesitaría aprender a distinguir una
    declaración de un ejemplo ilustrativo dentro de la misma prosa**, que es un problema
    mucho más caro y con su propio riesgo de huecos nuevos. No se escribe.
-3. **Añadir un miembro EDITOR real a una organización de prueba** (con su `public_key`)
-   para poder probar la rama de `caller_bypasses_visibility_scope()` que NINGUNA prueba
-   de hoy tocó — la que exige que la clave ya esté envuelta, que es exactamente la que
-   rompía `F-148`. Sin esto, "probado contra el cliente real" sigue queriendo decir
-   "probado para un ADMIN".
+3. ~~Añadir un miembro EDITOR real a una organización de prueba, para probar la rama de
+   `caller_bypasses_visibility_scope()` que ningún ADMIN ejercita.~~ **Hecho 5-sep-2026**,
+   con permiso explícito del PO. Cuenta creada por el Admin API de Supabase (no por SQL
+   directo sobre `auth.users` — la lección de `F-013`), `members` la asignó sola a
+   `role='EDITOR'`/`visibility_scope='OWN'` (segundo miembro de la organización, trigger
+   de `0001`/`0018`), y el llavero se publicó solo al iniciar sesión, sin tocar nada a
+   mano (§1). **D-8 confirmado con el cliente real por primera vez:** el EDITOR vio
+   «0 hilos» con la organización ya teniendo una conversación activa. Escribió una
+   `CONSULTA` de verdad (`create_inquiry`, no-ADMIN, D-7 encendido) y a partir de ahí vio
+   «1 hilo» — la rama que exige clave ya envuelta, verde con el cliente real. Por el
+   camino salió `F-149` (§1): probar a mano contra el proyecto compartido mientras se
+   sigue haciendo `git push` dispara CI → Playwright, que resetea la siembra debajo de
+   la prueba en curso — no un bug, una regla de proceso nueva.
 
 ---
 
@@ -327,8 +357,9 @@ Sin cambios.
 | ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
 | ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |
 | ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
-| ⚪ | ~~`0023` no lo ha probado ningún cliente~~ | **Resuelto 5-sep-2026: probado con el cliente real, D-7 encendido en `Nordwälz Lager`, las tres vías de escritura** (matiz: solo la rama del ADMIN, ver §6) |
+| ⚪ | ~~`0023` no lo ha probado ningún cliente~~ | **Resuelto 5-sep-2026: probado con el cliente real, D-7 encendido en `Nordwälz Lager`, las tres vías de escritura — como ADMIN y como EDITOR real** |
 | ⚪ | ~~Vercel no redesplegó, DOS cambios de cliente pendientes~~ | **Resuelto 5-sep-2026: `vercel --prod`, bundle en producción confirmado con `p_quantity`** |
+| ⚪ | ~~D-8 (un EDITOR no ve nada de sus compañeros) sin probar con el cliente real~~ | **Resuelto 5-sep-2026: EDITOR real, «0 hilos» con la organización ya en conversación activa** |
 
 ---
 
@@ -353,23 +384,21 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   funciones de demo — pero sí apareció un cuarto camino no listado, `acceptOffer`/
   `rejectOffer`, con la misma forma que `F-148` y sin el mismo riesgo (§1: actúa sobre una
   fila ya visible, no una recién creada).**
-- ~~Si el reparto de `0023` sobrevive al cliente real.~~ **Contestado el 5-sep: sí, las
-  tres vías de escritura, con D-7 encendido en `Nordwälz Lager` — pero con un matiz que
-  vacía buena parte de la respuesta.** `app.caller_bypasses_visibility_scope()` (`0019`)
-  es `true` si quien llama es ADMIN, sin mirar nada más; las dos organizaciones de prueba
-  solo tienen un miembro y es ADMIN. **Así que TODO lo probado hoy — y también `F-148`
-  cuando se encontró el 4-sep — pasó por la rama del *bypass*, nunca por la rama que
-  exige una clave ya envuelta**, que es la que de verdad puede reventar. Sigue sin
-  probarse con el cliente real, y ahora se sabe con precisión qué falta: un EDITOR
-  auténtico (con su `public_key`) en una de las dos organizaciones, o en una tercera
-  desechable. Nuevo punto 3 de §3.
-- **D-8 («un EDITOR no ve nada de sus compañeros») sigue sin probarse**, por el mismo
-  motivo de arriba: sin un EDITOR real no hay a quién negarle la vista.
+- ~~Si el reparto de `0023` sobrevive al cliente real, en la rama que exige una clave ya
+  envuelta (no la del *bypass* de ADMIN).~~ **Contestado el 5-sep, con un EDITOR real
+  creado para la ocasión (permiso del PO):** sí. `create_inquiry` desde `editor@
+  bearingworld.test` (Nordwälz, D-7 encendido, `role='EDITOR'`) escribió con exactamente
+  3 claves — el propio EDITOR y los dos ADMIN, ni uno más — y **D-8 se cumplió con el
+  cliente real por primera vez**: «0 hilos» antes de participar. La única sorpresa fue de
+  proceso, no de producto: `F-149`, probar en vivo contra el proyecto compartido mientras
+  se sigue haciendo `git push` (que dispara CI → Playwright, y esa suite resetea la
+  siembra) deja el terreno moviéndose. Repetido sin push de por medio, limpio a la
+  primera.
 - **Cuántos ADMIN va a tener de verdad una organización.** Q-1 hace del ADMIN el único
-  depositario de todo lo que sus editores dejen de tener, y hoy las dos organizaciones con
-  miembros tienen **exactamente uno** (comprobado el 4-sep y otra vez el 5-sep contra
-  `members`). Con un solo ADMIN, la consecuencia 7.1 no se ha resuelto: se ha mudado de
-  sitio.
+  depositario de todo lo que sus editores dejen de tener, y las dos organizaciones de e2e
+  siguen teniendo **exactamente uno** cada una — `Nordwälz Lager` tiene ahora también un
+  EDITOR (de prueba, 5-sep), pero eso no cambia la cuenta de ADMIN. Con un solo ADMIN, la
+  consecuencia 7.1 no se ha resuelto: se ha mudado de sitio.
 - **Cuántas funciones de `public` van a nacer fuera de nuestras migraciones.** `0022` cierra
   la *default privilege* del rol `postgres`; la de `supabase_admin` sigue abierta y es de la
   plataforma. Si algún día la plataforma crea una función en `public`, nacerá con `anon`.

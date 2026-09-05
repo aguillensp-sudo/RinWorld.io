@@ -191,6 +191,7 @@ dice "no tengo ese dato" en cuanto sale de ahí.
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Clave publicable del cliente. **46 caracteres exactos** (F-050: un `;` de más costó dos días) |
 | `E2E_ALPHA_EMAIL` / `_PASSWORD` / `_ORG` | Cuenta de pruebas compradora |
 | `E2E_BETA_EMAIL` / `_PASSWORD` / `_ORG` | Cuenta de pruebas vendedora |
+| `E2E_EDITOR_EMAIL` / `_PASSWORD` / `_ORG` | Añadida 5-sep-2026. EDITOR (no ADMIN) en `Nordwälz Lager`, para probar D-7/D-8 y la rama de `caller_bypasses_visibility_scope()` que ningún ADMIN ejercita (`F-149`) |
 | `VITE_DEMO_KEY_SEED` | Deriva las claves E2EE de demo (D-08-01, F-067) |
 | `ANTHROPIC_API_KEY` | Solo local; en producción vive en el entorno de la Edge Function |
 

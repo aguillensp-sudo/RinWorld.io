@@ -91,8 +91,7 @@ distrae.**
 
 ---
 
-**Día 8 de V1 · 5-sep-2026 · Estado: VERDE — los seis puntos del Día 7 hechos. Sigue sin
-ser el cierre formal (§7 no se ha corrido entero); a la espera de que el PO lo diga**
+**Día 8 de V1 · 5-sep-2026 · Estado: VERDE — CERRADO a las 17:00 UTC, a petición del PO**
 
 Este fichero se abrió hoy leyendo el cierre del día 7 (`9fe4eac`), con cinco tareas en su
 §3 (más una sexta, deliberadamente detrás porque no bloquea nada). **Los seis están
@@ -217,6 +216,17 @@ y para un EDITOR real — y que D-8 se cumple con el cliente real.** El
 detalle del Día 7 completo (series de medida, Q-1, `F-145`-`F-148`) queda en
 `git show 9fe4eac:openspec/v1/ESTADO-V1.md`.
 
+**Ritual de cierre, comprobado de nuevo al final y no dado por hecho porque ya se
+comprobó antes:**
+
+| Afirmación | Verificado contra | Resultado |
+|---|---|---|
+| Fecha de máquina, al cerrar | `date -u` | `2026-09-05`, 17:00 UTC |
+| Estado del árbol al cerrar | `git status --short` | Limpio salvo `openspec/design-gui/Ingles/`, sin tocar hoy y ajeno a esta sesión (mismo aviso que el 4-sep) |
+| La CI del push final, job a job | `gh run view 33978342316 --json jobs` sobre `480f64b` | Las **cuatro** en verde: App (typecheck/Vitest/build), Esquema, Arnés, Playwright |
+| Que nada se movió entre la última prueba y el cierre | `Nordwälz Lager`/`Rodamientos Ibéricos` y el EDITOR releídos por SQL | `visibility_scope_enabled`: `true`/`false` sin cambios. El EDITOR sigue `ACTIVE`, `role='EDITOR'`, con clave publicada |
+| Los worktrees | `git worktree list` | **Cambiaron de composición, no de cuenta real:** desapareció `bearing-io-mvp-estado-f2911a`; aparecieron dos nuevos, `seccion-3-relevo-8cef0a` (esta sesión) y `sweet-mayer-f17466` (otra sesión, ajena). Siguen siendo cinco no-raíz + la raíz, sexta comprobación seguida sin que la hipótesis de la raíz se pruebe |
+
 ---
 
 ## 2 · Dónde estamos, por corriente
@@ -256,7 +266,27 @@ Sin cambios.
 
 ---
 
-## 3 · Qué queda, en este orden
+## 3 · Qué toca mañana, en este orden
+
+Los seis puntos que dejó el Día 7 se cerraron hoy — el detalle completo, abajo,
+plegado. Lo que queda abierto para el Día 9:
+
+1. **Decisión del PO: ¿réplica de la serie 17?** Mismo `n=5`, mismo corpus de `MSG-01`
+   (sin tocar desde hoy). La 15 dio 3/3 y no sobrevivió a su réplica (la 16, 1/3); un
+   solo 5/5 no dice si `n=5` es de verdad mejor marcador o si hoy tocó tener suerte.
+   Implica gasto real (~$0,34) — no se lanza sin que lo digas, mismo patrón que hoy.
+2. **El resto de la Fundación V1 (entregables 1-3, 6) sigue sin empezar.** Núcleo
+   (Corriente A) ya tiene D-7/D-8/Q-1/F-148 probados con el cliente real; es lo próximo
+   una vez que se decida el punto 1.
+3. **Del backlog de `§5`, sin decidir:** si el guardia de `0023` aprende a recalcular el
+   reparto ENTERO de claves en cada escritura (hoy cubre V-1 del emisor y V-2 en las dos
+   organizaciones, no el conjunto completo — un cliente manipulado podría envolver de
+   más hacia la contraparte). Ninguna prisa: está declarado, no tapado.
+
+Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase), Vercel en
+plan gratuito, y los worktrees (§5) — ninguno bloquea trabajo de ingeniería.
+
+### Lo que se cerró hoy (Día 8) — resumen; el detalle vive en el `git log` de hoy
 
 > ~~1. Encender el interruptor de D-7 en una organización de prueba y usar la aplicación de
 > verdad.~~ **Hecho 5-sep-2026, y cerrado del todo.** D-7 encendido en `Nordwälz Lager`,
@@ -315,10 +345,10 @@ Sin cambios.
    sigue haciendo `git push` dispara CI → Playwright, que resetea la siembra debajo de
    la prueba en curso — no un bug, una regla de proceso nueva.
 
-**Los tres puntos que quedaban están hechos. Los seis del Día 7, completos.** Esto NO
-es el cierre del día por decisión propia — el ritual de §7 no se ha corrido entero y
-cerrar es del PO, no de quien escribe. Si no aparece nada nuevo, la próxima sesión
-puede empezar el ritual de cierre desde aquí.
+**Los seis puntos del Día 7 quedaron completos, y el PO pidió el ritual de cierre
+entero** — corrido de verdad, no dado por hecho: §1 con las comprobaciones de cierre,
+§2 revisado, §6 con lo que sigue sin saberse, hallazgos y métricas volcados, commit y
+push. El Día 9 empieza en el punto 1 de arriba.
 
 ---
 
@@ -360,7 +390,7 @@ puede empezar el ritual de cierre desde aquí.
 | 🟠 | **La residencia sigue siendo el entregable con reloj.** Sin cambios hoy: `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
-| 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro), cuarta comprobación seguida | Fuera de sesión, desde la raíz |
+| 🟡 | **Los worktrees: seis** (raíz + cinco), **la composición cambió por primera vez** — desapareció uno, aparecieron dos de sesiones nuevas. Quinta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
 | 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
 | 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero. **Decidido 5-sep-2026: se queda así** — el arreglo obvio no funciona (§1, §4) | Aceptado, no se escribe |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
@@ -447,6 +477,15 @@ antes de darlo por bueno, y la CI job a job antes de escribir esto. Y luego el d
 igualmente: la serie 15 entera se corrió DESPUÉS de este cierre y este fichero se reescribió
 para meterla. Cerrar no es terminar.**
 
+**El día 8 lo cumplió por el otro lado: no cerró nada hasta que de verdad se acabó.**
+Este fichero se marcó explícitamente «EN CURSO, no es el cierre del día» durante horas
+mientras quedaban puntos abiertos —la serie 17 corriendo en segundo plano, el EDITOR de
+prueba pendiente de permiso—, y solo se corrió el ritual de cierre cuando el PO lo pidió
+y no quedaba nada suelto. Comprobado antes de escribir el pie: `git status --short`
+limpio, CI job a job en verde sobre el commit final, y el estado de la base
+(`visibility_scope_enabled`, el EDITOR y su clave) releído por si algo se había movido
+entre medias — no se había movido nada.
+
 ⚠ **Y este fichero se escribe en `openspec/v1/ESTADO-V1.md`, no en la raíz del repo.** La
 copia de la raíz se borró el 4-sep y **no** está en `.gitignore`: si reaparece, saldrá como
 `??` en `git status`, que es como se descubrió. Comprobar `git status --short` después de
@@ -471,14 +510,15 @@ Orden de lectura, y el orden importa:
 
 ---
 
-*Día 8 de V1 · 5-sep-2026, 16:34 UTC — los seis puntos del Día 7 hechos; NO cerrado
-por decisión propia, el ritual de §7 no se ha corrido entero y cerrar es del PO · fecha
-leída de la máquina (`date -u`) · estado verificado contra el proyecto real
+*Día 8 de V1 · 5-sep-2026, cerrado a las 17:00 UTC a petición del PO, con los seis
+puntos del Día 7 hechos y sin nada suelto detrás · fecha leída de la máquina (`date -u`)
+dos veces, al abrir y al cerrar · estado verificado contra el proyecto real
 `troxminloxkjwihwfevs` (`update organizations`, `thread_items`/`thread_item_keys` tras
 cada escritura, `pg_proc`/`0019` para `caller_bypasses_visibility_scope`, un EDITOR real
-creado por el Admin API de Supabase), contra sesiones de navegador reales como
-`alpha@`, `beta@` y `editor@bearingworld.test`, contra `gh run list` para diagnosticar
-`F-149`, contra `python -m harness.tests.test_checks`, contra el bundle servido en
+creado por el Admin API de Supabase y releído al cerrar sin cambios), contra sesiones de
+navegador reales como `alpha@`, `beta@` y `editor@bearingworld.test`, contra `gh run
+list` para diagnosticar `F-149` y de nuevo job a job sobre el commit final, contra
+`python -m harness.tests.test_checks`, contra el bundle servido en
 `https://bearingworld.vercel.app` tras `vercel --prod`, y contra la salida real de
 **cinco** corridas pagadas de hoy (serie 17, `17a`-`17e`) — no contra otro documento ·
 Dirección Técnica, Nortex Systems*

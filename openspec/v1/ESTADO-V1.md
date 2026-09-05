@@ -141,9 +141,24 @@ verdad una oferta de Nordwälz.
 
 **Los puntos 3 (`noUnusedLocals` en los `constraints`, `a385eba`) y 4 (Vercel
 redesplegado, `p_quantity` confirmado en el bundle de producción) se hicieron enteros.**
-Quedan la serie 17 —con una pregunta para el PO delante, no se lanza sin ella— y el
-guardia. El detalle del Día 7 (series 14-16, Q-1, `F-145`-`F-148`, `0022`/`0023`) vive en
-`git show 9fe4eac:openspec/v1/ESTADO-V1.md`, no se repite aquí.
+
+**Y el guardia se decidió que NO, con la medida hecha antes de escribir nada — pero no
+por ruido, que era la razón que se esperaba.** El PO decidió subir las series a `n=5`
+(la 16 demostró que `n=3` mide tanto el corpus como la suerte) y la serie 17 quedó
+lanzada en segundo plano. Mientras corría, medí el guardia: el `name: '2'` de `F-145` **sí
+lo ve** — `'2' in nombres_u` es cierto —, lo que falla es `_declarado()`, cuyo último
+recurso es una subcadena sin borde de palabra sobre un blob de 73 KB donde `'2'` aparece
+468 veces por azar. Probé el arreglo obvio —exigir borde de palabra para nombres cortos—
+contra las seis tareas reales: **cero avisos nuevos, ni en `MSG-01`**, porque el propio
+`component_api`, al explicar `F-145`, cita `<button aria-label="Pagina 2">2</button>` —y
+ese `>2<` respeta el borde igual de bien que un `2` real. El guardia no necesitaría
+aprender a mirar nombres: necesitaría distinguir una declaración de un ejemplo dentro de
+la misma prosa, y eso es un problema distinto y más caro. No se escribe.
+
+Quedan la serie 17 (corriendo, resultado a falta de que termine) y el EDITOR de prueba
+para cerrar de verdad el punto 1. El detalle del Día 7 (series 14-16, Q-1, `F-145`-
+`F-148`, `0022`/`0023`) vive en `git show 9fe4eac:openspec/v1/ESTADO-V1.md`, no se repite
+aquí.
 
 ---
 
@@ -168,6 +183,8 @@ guardia. El detalle del Día 7 (series 14-16, Q-1, `F-145`-`F-148`, `0022`/`0023
 | **D-7 y el "bypass" del ADMIN, matiz que cambia lo que las pruebas de arriba certifican** | `app.caller_bypasses_visibility_scope()` (`0019:83-96`) | Es `true` si la organización de quien llama tiene el ámbito APAGADO **o si quien llama es ADMIN**. Las dos organizaciones de prueba solo tienen un miembro y es ADMIN — así que TODAS las pruebas de hoy y de ayer (`F-148` incluido) pasaron por la rama del *bypass*, nunca por la rama que exige una clave ya envuelta. La única forma de ejercitar esa rama de verdad es un EDITOR real, que no existe en ninguna de las dos organizaciones |
 | `noUnusedLocals`/`noUnusedParameters` en los `constraints` de `MSG-01` | `harness/tasks/MSG-01.json`, `python -m harness.tests.test_checks` | Añadido (`a385eba`). Todas en verde |
 | Vercel redesplegado | `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` | `HTTP 200`. El bundle servido contiene `p_quantity` — los dos cambios de cliente pendientes (`CONSULTA` 3-sep, `OFERTA` 4-sep) ya están en producción |
+| Por qué el guardia no vio `name: '2'` de `F-145` | `python -c` contra `harness.tests.dry_run`: `_pide_el_contrato` y `_declarado` con el blob real de `MSG-01.json` + spec + HTML aprobado (73 456 caracteres) | `'2' in nombres_u` → `True` (SÍ lo parsea). `_declarado('2', …)` → `True` porque `'2' in tarea` — la subcadena aparece **468 veces** por azar (fechas, `F-125`, `0012:185`…). El fallo es del filtro de "ya declarado", no de la detección |
+| Si un arreglo obvio (borde de palabra para nombres cortos/numéricos) serviría | Monkeypatch de `_declarado` con `re.search(r'(?<!\w)2(?!\w)', …)`, `cruzar_con_el_contrato` corrido contra las SEIS tareas reales, antes/después comparado | **Cero avisos nuevos en las seis.** En `MSG-01` el propio `component_api`, citando el HTML de `F-145` como ejemplo (`<button aria-label="Pagina 2">2</button>`), contiene un `>2<` que respeta el borde de palabra igual que un `2` real — el arreglo obvio no distingue una declaración de un ejemplo |
 
 **Lo de arriba prueba que encender el interruptor no rompe la escritura PARA UN ADMIN.**
 No prueba D-8 ni la rama "clave ya envuelta" de `F-148` para un EDITOR real, porque
@@ -242,15 +259,26 @@ Sin cambios.
    `n=3` — ver la fila nueva de §4. **Lanzada en segundo plano** (`17a`-`17e`,
    `remedicion-17{a..e}-msg-n5`) tras confirmar el árbol de `app/src/screens/messages/`
    limpio antes de empezar; resultado y coste real se añaden a §1 cuando termine.
-2. **Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres accesibles**
-   (`F-145`). Antes de escribirlo hay que medir cuántos avisos en falso daría sobre las
-   seis tareas: si canta en todas, se desactiva solo, que es `F-003`. **Este sigue detrás a
-   propósito: es el único que no bloquea nada.**
-3. **Nuevo, de hoy: añadir un miembro EDITOR real a una organización de prueba** (con su
-   `public_key`) para poder probar la rama de `caller_bypasses_visibility_scope()` que
-   NINGUNA prueba de hoy tocó — la que exige que la clave ya esté envuelta, que es
-   exactamente la que rompía `F-148`. Sin esto, "probado contra el cliente real" sigue
-   queriendo decir "probado para un ADMIN".
+2. ~~Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres
+   accesibles (`F-145`).~~ **Decidido 5-sep-2026: NO, y no por ruido — por algo peor: la
+   corrección obvia no funciona.** Medido antes de escribir nada (§1): el `name: '2'` que
+   se le escapó a `F-145` SÍ lo parsea el guardia (`'2' in nombres_u` es `True`) — lo que
+   falla es `_declarado()`, cuyo último recurso es `nombre in tarea`, una subcadena SIN
+   borde de palabra sobre un blob de 73 KB donde el carácter `'2'` aparece **468 veces**
+   por casualidad (fechas, `F-125`, `0012:185`...). Probé el arreglo obvio —exigir borde
+   de palabra para nombres de 1-2 caracteres o puramente numéricos— contra las seis
+   tareas: **cero avisos nuevos en las seis**, incluida `MSG-01`. No porque el arreglo no
+   sirva en general, sino porque el propio `component_api` de `MSG-01`, AL EXPLICAR
+   `F-145`, cita el HTML de ejemplo `<button aria-label="Pagina 2">2</button>` — y ese
+   `>2<` respeta el borde de palabra igual de bien que un `2` de verdad. **El guardia no
+   necesita aprender a mirar nombres accesibles: necesitaría aprender a distinguir una
+   declaración de un ejemplo ilustrativo dentro de la misma prosa**, que es un problema
+   mucho más caro y con su propio riesgo de huecos nuevos. No se escribe.
+3. **Añadir un miembro EDITOR real a una organización de prueba** (con su `public_key`)
+   para poder probar la rama de `caller_bypasses_visibility_scope()` que NINGUNA prueba
+   de hoy tocó — la que exige que la clave ya esté envuelta, que es exactamente la que
+   rompía `F-148`. Sin esto, "probado contra el cliente real" sigue queriendo decir
+   "probado para un ADMIN".
 
 ---
 
@@ -280,6 +308,7 @@ Sin cambios.
 | **Un artefacto crudo del Coder no se commitea sobre una pantalla ya revisada** | Aplicado tres veces más hoy | `CLAUDE.md` §1.6 |
 | **Lo que el contrato exige, la tarea lo dice** | **Quince veces en ocho días.** La vía ha sido siempre la misma: declararlo en `component_api`, sin tocar ni un aserto | `F-116`…`F-145` |
 | **El 57 a 1 se acepta, sin acción** | 1-sep-2026, PO | `F-113` |
+| **El guardia NO aprende a mirar nombres accesibles (`F-145`)** | 5-sep-2026. Medido antes de escribir: el arreglo obvio (borde de palabra para nombres cortos) da CERO avisos nuevos en las seis tareas, porque el propio `component_api` de `MSG-01` cita HTML de ejemplo que reintroduce el mismo falso negativo. El problema no es el guardia, es distinguir una declaración de un ejemplo en la misma prosa | §1, §3 |
 
 ---
 
@@ -293,7 +322,7 @@ Sin cambios.
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
 | 🟡 | **Los worktrees: siguen siendo cinco** (raíz + cuatro), cuarta comprobación seguida | Fuera de sesión, desde la raíz |
 | 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
-| 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero | §3.5 |
+| 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero. **Decidido 5-sep-2026: se queda así** — el arreglo obvio no funciona (§1, §4) | Aceptado, no se escribe |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
 | ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
 | ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |

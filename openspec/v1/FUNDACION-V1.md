@@ -27,6 +27,18 @@ del repo en `mvp/bootstrap` **y la base de datos de verdad** (`information_schem
 > organización sin el cual `visibility_scope` se habría aplicado al 100% de las
 > organizaciones sin que nadie lo pidiera. Ver la adenda del 3-sep-2026 en el
 > propio ADR-002, D-7 y §5.
+>
+> ⚠ **Corregido el 6-sep-2026 (Día 9 de V1):** el PO pidió seguir con el resto de
+> Fundación V1 —entregables 1, 2, 3 y 6— dejando el 5 (pregunta de alcance sin
+> contestar) tal cual. **El 2 queda hecho** (despliegue continuo, `ci.yml`, ver
+> §1 fila 2). **El 1 queda a medias** (`entornos.md` nuevo, producción real,
+> ensayo pendiente). **El 6 queda con runbook listo, sin aplicar al código real**
+> (`vera-vertex-eu-migracion.md`) porque el proyecto GCP no existe todavía. **El
+> 3 queda bloqueado**, y por un motivo que no estaba previsto: la cuenta de
+> Supabase ya tiene el cupo de proyectos Free agotado con un proyecto AJENO a
+> este repo (`motioniq-rag`), y el MCP no tiene herramienta para borrarlo — ver
+> §1 fila 3. Ninguno de los cuatro se declara "hecho" sin haberlo visto correr
+> o sin poder aplicarlo todavía; es la misma regla que evitó `F-132`.
 
 > **Por qué existe este fichero.** `ESTADO-V1.md` §2 lleva cuatro días diciendo
 > *«Fundación V1 (entornos, ADR-002, índice, residencia) — ⚪ No empezada»*, y hoy dice
@@ -61,12 +73,12 @@ la fábrica».
 
 | # | Entregable | Estado | Verificado contra |
 |---|---|---|---|
-| **1** | **Tres entornos como código** | 🔴 **No empezado** | No hay `terraform/`, `infra/` ni `pulumi/` en el árbol. `.github/workflows/ci.yml` tiene cuatro *jobs* y **ni un `environment:`**: no hay separación declarada entre desarrollo, ensayo y producción |
-| **2** | **Despliegue sin interrupción** | 🔴 **No empezado** | No hay nada de despliegue en `ci.yml`. Y es peor que «falta»: `CLAUDE.md` §10.2 deja escrito que **las Edge Functions no se despliegan con el push a git y la app tampoco llega sola a Vercel** (`F-091`, `F-072`). Hoy el despliegue es manual, así que no hay una interrupción que quitar: hay un paso humano que automatizar primero |
-| **3** | **Aislamiento de la base de demostración** | 🟡 **A medias, y la mitad que hay es la de reponer** | `supabase/migrations/0015_demo_reset_helpers.sql` existe desde el día 13 del MVP y hace el **reseteo** —dos funciones que re-anclan la frescura de la siembra—. Lo que NO hay es el **aislamiento**: la demo vive en el mismo proyecto `troxminloxkjwihwfevs` que todo lo demás. Resetear no es aislar |
+| **1** | **Tres entornos como código** | 🟡 **A medias — 6-sep-2026** | `openspec/v1/entornos.md` (nuevo) documenta el mapa de los tres entornos y por qué "como código" no significa Terraform/Pulumi en este *stack*. `producción` ya es real: el *job* `deploy` de `ci.yml` lleva `environment: production`. `ensayo/staging` queda 🔴 sin proyecto Supabase propio — depende del entregable 3, bloqueado hoy por un límite de cuenta ajeno a este repo. `desarrollo` sigue siendo solo `app/.env.example`, sin cambios |
+| **2** | **Despliegue sin interrupción** | ✅ **Automatizado — 6-sep-2026** | Nuevo *job* `deploy` en `.github/workflows/ci.yml` (`needs: [schema, app, e2e, arnes]`, solo en push a `mvp/bootstrap`): despliega la app a Vercel y la función `vera` a Supabase automáticamente. Cierra la causa raíz de `F-091`/`F-072` (ver `findings-register.md` F-150) — las migraciones siguen a mano por el MCP, a propósito. **Pendiente:** el PO tiene que añadir dos secretos nuevos de GitHub (`VERCEL_TOKEN`, `SUPABASE_ACCESS_TOKEN`) antes de la primera corrida real — el YAML es válido pero no se ha visto correr todavía |
+| **3** | **Aislamiento de la base de demostración** | 🟡 **A medias — bloqueado el 6-sep al intentar el proyecto separado** | `supabase/migrations/0015_demo_reset_helpers.sql` existe desde el día 13 del MVP y hace el **reseteo**. El PO decidió ir por proyecto Supabase separado (6-sep), pero `create_project` falló: la cuenta ya tiene 2 proyectos Free activos en la org (`troxminloxkjwihwfevs` + `motioniq-rag`, ajeno a este repo) y Supabase bloquea un tercero sin pausar/borrar uno o pasar a plan de pago. El MCP no tiene herramienta de borrado de proyectos (solo `pause_project`/`create_project`/`restore_project`), y `pause_project` sobre `motioniq-rag` falló porque ya está hibernando ("contact support"). **Queda en manos del PO:** borrarlo él mismo desde el dashboard, o cambiar a la otra opción de `F-098` (hilos propios de e2e, sin proyecto nuevo) |
 | **4** | **Los cuatro campos del respaldo de clave en la primera migración** | ✅ **HECHO, y desde el día 1** | `0001_organizations_and_members.sql:78-81`: `encrypted_key_blob`, `key_iv`, `argon2_salt`, `kdf_params`. **Y con más de lo que el hito pedía:** `members_key_iv_len_chk` (IV de 12 bytes), `members_salt_len_chk` (salt de 32) y `members_backup_all_or_none_chk`, que impone que estén **los cuatro o ninguno**. El comentario del fichero lo llama `schema-desde-dia-uno · server-blind-storage` |
 | **5** | **Índice de búsqueda** | 🟡 **A medias, y la mitad de ADR-002 ya está hecha** | Hay dos índices trigrama GIN, con `pg_trgm` habilitado en `0001:23`: `organizations_name_trgm` (`0001:50`) e `inventory_lines` sobre `part_number` (`0002:123`). **El índice que ADR-002 §5 pide para derivar la lista de hilos ya existe** (`0017_thread_derivation_index.sql`, 1-sep-2026 — ver §2). ⚠ **Lo que sigue sin resolver es de alcance, no de código:** el plan dice «índice de búsqueda» en singular y no dice si se refiere a este o a los dos trigrama de arriba. La contesta el PO |
-| **6** | **Residencia europea del agente** | 🔴 **No empezado, y hoy va en la dirección contraria** | `supabase/functions/vera/index.ts:1` importa `npm:@anthropic-ai/sdk` y la línea 184 construye el cliente **sin `baseURL`**: sale contra `api.anthropic.com`. Cero apariciones de `vertex`, `europe`, `eu-west` o `region` en toda la carpeta de funciones. Y `index.ts:28` fija `MODELO = 'claude-sonnet-4-6'` |
+| **6** | **Residencia europea del agente** | 🔴 **No empezado del lado del código; runbook listo desde el 6-sep** | `supabase/functions/vera/index.ts:1` importa `npm:@anthropic-ai/sdk` y la línea 184 construye el cliente **sin `baseURL`**: sale contra `api.anthropic.com`. Cero apariciones de `vertex`, `europe`, `eu-west` o `region` en toda la carpeta de funciones. Y `index.ts:28` fija `MODELO = 'claude-sonnet-4-6'`. **6-sep-2026:** confirmado por búsqueda web que Vertex AI SÍ ofrece hoy un *endpoint multi-región UE* para Claude (GA mayo-2026) con Sonnet 5 disponible — viable, no bloqueado por el proveedor. Bloqueado por infraestructura propia: **el proyecto GCP no existe todavía** (confirmado por el PO). Runbook completo, con el diff de código sin aplicar, en `vera-vertex-eu-migracion.md` — no se toca el `index.ts` real sin poder probarlo contra credenciales reales |
 
 > ⚠ **El punto 6, dicho con precisión, porque es fácil pasarse de frenada.** `ESTADO-V1.md`
 > §4 tiene como decisión viva *«VERA en producción: **Sonnet 5** vía Vertex AI europeo»*.

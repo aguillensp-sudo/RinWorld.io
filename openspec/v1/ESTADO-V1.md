@@ -91,91 +91,59 @@ distrae.**
 
 ---
 
-**Día 8 de V1 · 5-sep-2026 · Estado: VERDE — CERRADO a las 17:00 UTC, a petición del PO**
+**Día 9 de V1 · 6-sep-2026 · Estado: EN CURSO**
 
-Este fichero se abrió hoy leyendo el cierre del día 7 (`9fe4eac`), con cinco tareas en su
-§3 (más una sexta, deliberadamente detrás porque no bloquea nada). **Los seis están
-hechos:** D-7 con el cliente real (1), otros caminos de escritura (2), `noUnusedLocals`
-(3), Vercel (4), la serie 17 a `n=5` (5) y la decisión del guardia (6). De probar D-7
-salió un punto nuevo que no estaba en la lista de nadie —un EDITOR real— y ese también
-se cerró hoy.
+Este fichero se abrió hoy leyendo el cierre del Día 8 (`591ea20`), con tres puntos en su
+§3 — todos decisión del PO, no trabajo empezado. El PO decidió **no** replicar la serie
+17 y seguir con **el resto de Fundación V1: entregables 1, 2, 3 y 6**, dejando el 5
+(pregunta de alcance sin contestar) tal cual.
 
-**D-7 se encendió en `Nordwälz Lager` (BETA) y las tres vías de escritura de `0023`
-pasaron por el cliente real, no por `supabase/tests`.** Con la app corriendo local
-(`npm run dev`, sin tocar código), sesión real como `alpha@bearingworld.test`: `SRCH-01`
-→ «Consultar seleccionados» sobre una línea de Nordwälz → `create_inquiry` escribió la
-`CONSULTA` sin error. Sesión real como `beta@bearingworld.test` (la organización con el
-ámbito encendido): abrió el hilo, leyó la `CONSULTA` recién llegada —descifrada, no
-«contenido cifrado»— y respondió con un `MENSAJE` → `create_thread_item` escribió sin el
-`new row violates row-level security policy` que definía `F-148`. Vuelta a `alpha`:
-«Contra-ofertar» sobre la oferta pendiente → `counter_offer` escribió la nueva oferta y
-marcó la vieja `Superada por contraoferta`. **Las tres, con el interruptor encendido de
-verdad en una de las dos organizaciones, cero errores de consola, verificado después
-contra `thread_items`/`thread_item_keys` del proyecto real:** cada elemento nuevo con
-exactamente 2 claves, las de los dos únicos miembros —ambos `ORG_METADATA`—, ninguna de
-más ni de menos.
+**El entregable 2 (despliegue continuo) quedó hecho entero.** Tres agentes de
+exploración en paralelo confirmaron que `ci.yml` era CI pura —cuatro *jobs*, cero
+despliegue— y que el despliegue real eran dos sistemas manuales, exactamente la causa
+que `F-091`/`F-072` documentaron en su día con un parche de proceso, no de raíz. Nuevo
+*job* `deploy`, disparado solo en push a `mvp/bootstrap` tras el verde de los otros
+cuatro: despliega la app a Vercel y la función `vera` a Supabase, con dos secretos de
+GitHub nuevos y separados del login roto de `F-073`. Las migraciones siguen a mano por
+el MCP, a propósito — automatizarlas no es lo que ninguno de los dos hallazgos pedía.
+**Verificación honesta:** el YAML es válido, pero no puede probarse de extremo a extremo
+hasta que el PO añada `VERCEL_TOKEN` y `SUPABASE_ACCESS_TOKEN` como secretos del
+repositorio — no se declara "verificado en producción" sin haberlo visto correr.
+Documentado en `findings-register.md` (`F-150`) y `CLAUDE.md` §10.2.
 
-**Y lo que esto NO prueba, para no repetir el error de `F-132`:** las dos organizaciones
-de e2e tienen **un solo miembro cada una, y ese miembro es el ADMIN**. D-8 («un EDITOR no
-ve nada de sus compañeros») no se ha ejercitado —con cero EDITOR en la mesa, el conjunto
-de destinatarios con el ámbito encendido y apagado da lo mismo por construcción, así que
-esta prueba certifica que **encender el interruptor no rompe la escritura**, no que el
-recorte de visibilidad a un EDITOR real funcione. Queda en §6.
+**El entregable 1 (tres entornos como código) quedó a medias, con el reparto que
+tenía sentido dado lo que pasó con el 3 (ver abajo).** `entornos.md` (nuevo) documenta
+por qué "como código" en este *stack* (Vercel+Supabase, ninguno nativo de IaC) se
+concreta en `environment:` de GitHub más este documento como fuente de verdad — no un
+módulo de Terraform, decisión de alcance explícita como la del entregable 5.
+`producción` ya es real (`environment: production` en el *job* `deploy`); `ensayo` queda
+🔴 porque depende del entregable 3, y `desarrollo` sigue siendo lo de siempre.
 
-**Y ese matiz se hizo más preciso al mirarlo con calma.** `app.caller_bypasses_visibility_
-scope()` (`0019`) es `true` si quien llama es ADMIN, sin condición extra — y las dos
-organizaciones de prueba solo tienen un miembro, que es ADMIN. Así que ni la prueba de
-hoy ni la que encontró `F-148` el 4-sep pasaron nunca por la rama que exige una clave ya
-envuelta, que es la rama que de verdad puede romperse. «Probado contra el cliente real»
-seguía queriendo decir «probado para un ADMIN» — declarado, no descubierto por sorpresa
-en producción. Nuevo punto de §3: falta un EDITOR de verdad.
+**El entregable 3 (aislamiento de demo/e2e) se intentó y se topó con un muro real, no
+previsto en el plan de la mañana.** El PO decidió ir por proyecto Supabase separado, con
+coste confirmado en $0/mes (`get_cost`) antes de crear nada. `create_project` falló: la
+cuenta ya tiene **2 proyectos Free activos** en la misma org —`troxminloxkjwihwfevs`
+(este) y **`motioniq-rag`, un proyecto ajeno a este repo**— y Supabase bloquea un
+tercero. Intenté la vía reversible primero: `pause_project` sobre `motioniq-rag` falló
+("ya está hibernando, contacta con soporte"). El PO autorizó explícitamente borrarlo,
+pero **el MCP de Supabase no tiene ninguna herramienta de borrado de proyectos** —solo
+`pause_project`/`restore_project`/`create_project`—, así que ni con permiso puedo
+ejecutarlo desde aquí. Queda en manos del PO: borrarlo él mismo desde el dashboard
+cuando tenga acceso, o cambiar a la otra opción que ya estaba sobre la mesa desde
+`F-098` (hilos propios para el e2e, sin proyecto nuevo). **Ningún dato ni fichero se
+tocó** — la única acción real fue la creación fallida (sin efecto) y el intento de
+pausa fallido (sin efecto).
 
-**El punto 2 se hizo, revisando los tres pendientes y encontrando un cuarto que no
-estaba en la lista.** `inventory_lines`, `favorite_distributors` y las dos funciones de
-demo no tienen el hueco de `F-148` — políticas autocontenidas o `security definer`/
-`service_role` que saltan RLS entera. Y apareció `acceptOffer`/`rejectOffer`
-(`offers.ts`), con la misma forma (`update().select()`) que rompía `F-148`, pero sin el
-mismo riesgo: actúa sobre una fila YA visible antes del clic, no crea una fila y su
-clave en la misma operación. Razonado y comprobado con el cliente real, rechazando de
-verdad una oferta de Nordwälz.
+**El entregable 6 (residencia europea) quedó con el código preparado pero SIN aplicar
+al fichero real.** Búsqueda web confirmó que Vertex AI ofrece hoy un *endpoint
+multi-región UE* para Claude (GA mayo-2026) con Sonnet 5 disponible — la decisión de §4
+es viable. El PO confirmó que el proyecto GCP no existe todavía, así que `vera/index.ts`
+—que hoy funciona— no se toca sin poder probarlo contra credenciales reales: el
+runbook completo, con el diff de código listo para aplicar, vive en
+`vera-vertex-eu-migracion.md`.
 
-**Los puntos 3 (`noUnusedLocals` en los `constraints`, `a385eba`) y 4 (Vercel
-redesplegado, `p_quantity` confirmado en el bundle de producción) se hicieron enteros.**
-
-**Y el guardia se decidió que NO, con la medida hecha antes de escribir nada — pero no
-por ruido, que era la razón que se esperaba.** El PO decidió subir las series a `n=5`
-(la 16 demostró que `n=3` mide tanto el corpus como la suerte) y la serie 17 quedó
-lanzada en segundo plano. Mientras corría, medí el guardia: el `name: '2'` de `F-145` **sí
-lo ve** — `'2' in nombres_u` es cierto —, lo que falla es `_declarado()`, cuyo último
-recurso es una subcadena sin borde de palabra sobre un blob de 73 KB donde `'2'` aparece
-468 veces por azar. Probé el arreglo obvio —exigir borde de palabra para nombres cortos—
-contra las seis tareas reales: **cero avisos nuevos, ni en `MSG-01`**, porque el propio
-`component_api`, al explicar `F-145`, cita `<button aria-label="Pagina 2">2</button>` —y
-ese `>2<` respeta el borde igual de bien que un `2` real. El guardia no necesitaría
-aprender a mirar nombres: necesitaría distinguir una declaración de un ejemplo dentro de
-la misma prosa, y eso es un problema distinto y más caro. No se escribe.
-
-**Y el punto 1 quedó cerrado del todo, con permiso explícito del PO para crear una
-cuenta nueva.** Un EDITOR real en `Nordwälz Lager` —cuenta por el Admin API de Supabase,
-nunca por SQL directo en `auth.users` (la lección de `F-013`)—, con `role`/
-`visibility_scope` asignados solos por el trigger de `0001`/`0018` y su llavero
-publicado solo al iniciar sesión. **D-8, con el cliente real por primera vez:** el
-EDITOR vio «0 hilos» con la organización ya en conversación activa — el suelo del
-EDITOR, cumplido. Escribió una `CONSULTA` de verdad, no-ADMIN, D-7 encendido: la rama
-de `caller_bypasses_visibility_scope()` que ni la prueba de ayer ni el hallazgo
-original de `F-148` habían tocado nunca, verde con el cliente real. Y por el camino
-salió `F-149`: la primera vez pareció que el dato escrito desaparecía solo —confirmado
-y vuelto a comprobar minutos después, cero filas—, y la causa fue que el push del
-commit anterior de esta misma sesión disparó CI → Playwright, que resetea la siembra
-compartida mientras la prueba manual seguía en curso contra el mismo proyecto. Repetido
-sin ningún `git push` de por medio, salió limpio a la primera. No es un bug: es una
-regla de proceso que faltaba, y ya está en `findings-register.md`.
-
-**Y la serie 17 terminó: `17a`-`17e`, CINCO de CINCO en verde al primer intento** —la
-primera serie 5/5 del proyecto, $0,336154, sin ningún hueco nuevo (§1). Con eso, los seis
-puntos que dejó el Día 7 están hechos. El detalle del Día 7 (series 14-16, Q-1, `F-145`-
-`F-148`, `0022`/`0023`) vive en `git show 9fe4eac:openspec/v1/ESTADO-V1.md`, no se repite
-aquí.
+El detalle del Día 8 completo (D-7/D-8 con el cliente real, serie 17, el guardia
+decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
 ---
 
@@ -183,49 +151,20 @@ aquí.
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-05`, 15:27 UTC al escribir esto |
-| Estado de partida de las dos organizaciones de e2e | `select … from organizations o left join members m` sobre `Rodamientos Ibéricos` y `Nordwälz Lager`, proyecto real | Las dos `APPROVED`, `visibility_scope_enabled = false`, **un solo miembro cada una y ese miembro es ADMIN** (`visibility_scope = 'ORG_METADATA'`), con `public_key` publicada |
-| **D-7 encendido en `Nordwälz Lager`** | `update organizations set visibility_scope_enabled = true … returning …` | `visibility_scope_enabled = true` confirmado en la fila devuelta |
-| La app real arranca sin tocar código | `npm run dev` (vía `.claude/launch.json`, nuevo hoy) + `preview_logs` | Sin errores en el servidor |
-| `create_inquiry` con el cliente real, receptor con D-7 encendido | Sesión de navegador como `alpha@bearingworld.test`, `SRCH-01` → «Consultar seleccionados» sobre `6205-2RS · NSK` de Nordwälz | Mensaje de éxito en la UI, cero errores de consola. En la base: `CONSULTA` nueva, thread `11111111…001`, **2 claves** |
-| `create_thread_item` con el cliente real, ESCRITO DESDE la organización con D-7 encendido | Sesión como `beta@bearingworld.test` (Nordwälz), abrir el hilo, leer la `CONSULTA` (descifrada, no «contenido cifrado»), responder con `MENSAJE` | Escribió sin el `new row violates row-level security policy` de `F-148`. En la base: `MENSAJE` de Nordwälz, **2 claves** |
-| `counter_offer` con el cliente real | Sesión como `alpha`, «Contra-ofertar» sobre la oferta pendiente de Nordwälz | Nueva `OFERTA` (`4,60 €/ud`, `1100 ud`, `3 días`), la vieja pasa a `Superada por contraoferta` con `superseded_by_item_id` apuntando a la nueva. **2 claves** |
-| Que los destinatarios de las tres escrituras son EXACTAMENTE los que exige Q-1 | `thread_item_keys` de cada elemento nuevo, cruzado con `members.visibility_scope` | Las tres: los dos únicos miembros, ambos `ORG_METADATA` — ni de más ni de menos |
-| Consola del navegador en las tres escrituras | `read_console_messages` (`onlyErrors`) tras cada una | Sin logs — ni un error |
-| Que la suite e2e (CI) no rompe con D-7 encendido en `Nordwälz Lager` | El push del commit anterior (`8dc5adc`) disparó CI completo con el interruptor ya puesto; `gh run list` sobre `mvp/bootstrap` | `conclusion: success`. El fixture de Playwright reseteó los `thread_items` del hilo de prueba (efímero, `CLAUDE.md` §10.4) pero **no tocó** `organizations.visibility_scope_enabled` — comprobado después, seguía en `true` |
-| `inventory_lines`: ¿algún INSERT/UPDATE depende de una política de SELECT que aún no se cumple? | `0002_inventory.sql`: `inventory_write_own` (using/with check) y `inventory_select_own` | Ninguna referencia a filas creadas después. `inventory_select_own` solo pide `org_id = current_org_id()`, cierto desde el primer instante. `archiveLine`/`deleteLine` ni siquiera encadenan `.select()` |
-| `favorite_distributors`: ídem, y el trigger que toca `organizations.favorite_count` de OTRA organización | `0005_lead_time_and_favorites.sql`: políticas + `app.sync_favorite_count()` | Políticas por `member_id = auth.uid()`, sin dependencia circular. El trigger que escribe en la fila de la CONTRAPARTE es `security definer` a propósito — bypasa RLS, comentario explícito en la migración |
-| Las dos funciones de demo (`demo_reanchor_freshness`, `demo_state`) | `0015_demo_reset_helpers.sql` | Las dos `security invoker` (el defecto) y **solo concedidas a `service_role`**, que salta RLS entera — no hay política de lectura de la que puedan colgar |
-| **Cuarto camino de escritura encontrado, no estaba en la lista: `acceptOffer`/`rejectOffer`** (`app/src/lib/offers.ts:251`) | Lectura de `setOfferState`: `update(thread_items).select(COLUMNS)` — misma forma que rompía `F-148` | Es un `UPDATE`+lectura sobre una fila YA EXISTENTE y ya visible antes del clic (si no lo fuera, el botón no se habría podido pulsar); no crea una fila ni una clave nueva en la misma operación, así que no hay el hueco huevo-y-gallina de `F-148`. Razonado Y probado: `alpha` rechazó una oferta de `Nordwälz` (D-7 encendido) sin error, `estado_oferta` pasó a `Rechazada` en la base |
-| **D-7 y el "bypass" del ADMIN, matiz que cambia lo que las pruebas de arriba certifican** | `app.caller_bypasses_visibility_scope()` (`0019:83-96`) | Es `true` si la organización de quien llama tiene el ámbito APAGADO **o si quien llama es ADMIN**. Las dos organizaciones de prueba solo tienen un miembro y es ADMIN — así que TODAS las pruebas de hoy y de ayer (`F-148` incluido) pasaron por la rama del *bypass*, nunca por la rama que exige una clave ya envuelta. La única forma de ejercitar esa rama de verdad es un EDITOR real, que no existe en ninguna de las dos organizaciones |
-| `noUnusedLocals`/`noUnusedParameters` en los `constraints` de `MSG-01` | `harness/tasks/MSG-01.json`, `python -m harness.tests.test_checks` | Añadido (`a385eba`). Todas en verde |
-| Vercel redesplegado | `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` | `HTTP 200`. El bundle servido contiene `p_quantity` — los dos cambios de cliente pendientes (`CONSULTA` 3-sep, `OFERTA` 4-sep) ya están en producción |
-| Por qué el guardia no vio `name: '2'` de `F-145` | `python -c` contra `harness.tests.dry_run`: `_pide_el_contrato` y `_declarado` con el blob real de `MSG-01.json` + spec + HTML aprobado (73 456 caracteres) | `'2' in nombres_u` → `True` (SÍ lo parsea). `_declarado('2', …)` → `True` porque `'2' in tarea` — la subcadena aparece **468 veces** por azar (fechas, `F-125`, `0012:185`…). El fallo es del filtro de "ya declarado", no de la detección |
-| Si un arreglo obvio (borde de palabra para nombres cortos/numéricos) serviría | Monkeypatch de `_declarado` con `re.search(r'(?<!\w)2(?!\w)', …)`, `cruzar_con_el_contrato` corrido contra las SEIS tareas reales, antes/después comparado | **Cero avisos nuevos en las seis.** En `MSG-01` el propio `component_api`, citando el HTML de `F-145` como ejemplo (`<button aria-label="Pagina 2">2</button>`), contiene un `>2<` que respeta el borde de palabra igual que un `2` real — el arreglo obvio no distingue una declaración de un ejemplo |
-| Cuenta EDITOR nueva creada de verdad, no adivinada | `POST /auth/v1/admin/users` (Admin API, clave de servicio leída de variable de entorno, nunca impresa ni pasada por CLI) + `insert into members` por el MCP | `id=cc14899b-…`, `role` y `visibility_scope` los puso SOLO el trigger de `0001`/`0018` (`EDITOR`/`OWN`, segundo miembro de `Nordwälz Lager`) — no se pasaron a mano |
-| Llavero del EDITOR publicado sin tocar nada | Login real como `editor@bearingworld.test` en la app, `select public_key from members` después | `public_key` pasó de `NULL` a una clave real **solo con iniciar sesión** — `ensureKeyring()` hizo lo suyo, igual que en producción |
-| **D-8 con el cliente real, primera vez**: ¿el EDITOR ve los hilos de su organización antes de participar? | Pantalla «Hilos» como `editor@bearingworld.test`, con `Nordwälz Lager` ya en conversación activa con Rodamientos | **«0 hilos».** El suelo del EDITOR (D-8) se cumple con el cliente real, no solo sobre el papel |
-| `create_inquiry` con el cliente real, ESCRITO POR un EDITOR (no ADMIN), D-7 encendido en su propia organización | Sesión como `editor@bearingworld.test`, `SRCH-01` → consultar una línea de Rodamientos | Escribió sin error. En la base: **3 claves** — el propio EDITOR, el ADMIN de Nordwälz y el de Rodamientos — exactamente el conjunto que exige Q-1 para un no-ADMIN con el ámbito propio encendido |
-| `F-149`: el dato de la fila de arriba pareció desaparecer solo, dos veces confirmado en cero | SQL privilegiado y PostgREST con el JWT real del EDITOR, minutos después de la escritura | **Cero filas donde antes había una.** Causa, `gh run list`: el push de `cdfb9f0` (commit anterior de esta sesión) disparó CI → Playwright, que resetea los `HILO_IDS` de la siembra (`CLAUDE.md` §10.4) **mientras la prueba manual seguía en curso contra el mismo proyecto**. No es RLS ni el cliente |
-| Que `F-149` es de proceso y no del producto | Repetido el mismo paso (consultar la misma línea) sin ningún `git push` de por medio | Limpio a la primera: `thread_items` con las 3 claves esperadas, y el EDITOR vio **«1 hilo»** de inmediato en la pantalla real, sin recargar dos veces ni esperar |
-| **`MSG-01`, serie `17a`-`17e` (corpus con `F-147` y la declaración de `noUnusedLocals` ya puestas, `n=5` por decisión del PO)** | Los cinco `attempt_1.json` y las cinco filas de `harness-metrics.csv` | **5 de 5 a 4/4 al primer intento — la primera serie 5/5 del proyecto.** `17a` corrió en frío (6,93% de caché); `17b`-`17e` sobre el prompt ya calentado (99,95%). Ningún hueco nuevo. $0,071836 + $0,043487 + $0,065866 + $0,084929 + $0,070036 = **$0,336154** en total |
-| Que las cinco corridas de la 17 no dejaron artefactos crudos en el árbol | `git status --short app/src/screens/messages/` tras la serie completa | Limpio — `git checkout --` después de cada corrida, cinco veces |
-
-**Lo de arriba prueba que encender el interruptor no rompe la escritura, para un ADMIN
-y para un EDITOR real — y que D-8 se cumple con el cliente real.** El
-detalle del Día 7 completo (series de medida, Q-1, `F-145`-`F-148`) queda en
-`git show 9fe4eac:openspec/v1/ESTADO-V1.md`.
-
-**Ritual de cierre, comprobado de nuevo al final y no dado por hecho porque ya se
-comprobó antes:**
-
-| Afirmación | Verificado contra | Resultado |
-|---|---|---|
-| Fecha de máquina, al cerrar | `date -u` | `2026-09-05`, 17:00 UTC |
-| Estado del árbol al cerrar | `git status --short` | Limpio salvo `openspec/design-gui/Ingles/`, sin tocar hoy y ajeno a esta sesión (mismo aviso que el 4-sep) |
-| La CI del push final, job a job | `gh run view 33978342316 --json jobs` sobre `480f64b` | Las **cuatro** en verde: App (typecheck/Vitest/build), Esquema, Arnés, Playwright |
-| Que nada se movió entre la última prueba y el cierre | `Nordwälz Lager`/`Rodamientos Ibéricos` y el EDITOR releídos por SQL | `visibility_scope_enabled`: `true`/`false` sin cambios. El EDITOR sigue `ACTIVE`, `role='EDITOR'`, con clave publicada |
-| Los worktrees | `git worktree list` | **Cambiaron de composición, no de cuenta real:** desapareció `bearing-io-mvp-estado-f2911a`; aparecieron dos nuevos, `seccion-3-relevo-8cef0a` (esta sesión) y `sweet-mayer-f17466` (otra sesión, ajena). Siguen siendo cinco no-raíz + la raíz, sexta comprobación seguida sin que la hipótesis de la raíz se pruebe |
+| Fecha de máquina | `date -u` | `2026-09-06` |
+| Rama real de trabajo vs. `main` | `git branch -a -vv`, `git log --oneline` de las dos | `main` congelada en `43bb222` (4-ago); todo el trabajo de V1 vive en `mvp/bootstrap` (`591ea20`, hoy). Decide la rama de disparo de la CD |
+| `ci.yml` antes de tocarlo: ¿algún paso de despliegue? | Lectura completa + agente de exploración | Cuatro *jobs*, cero `deploy`, cero `environment:`. Confirmado también por `grep` sin resultados |
+| Causa exacta de `F-091`/`F-072` | `CLAUDE.md` §10.2, `despliegue.md`, `findings-register.md` | Despliegue manual en dos sistemas (Vercel CLI, Supabase por MCP/CLI), ninguno disparado por push |
+| `ci.yml` tras añadir el *job* `deploy` | `python -c "import yaml; yaml.safe_load(...)"` dos veces (antes y después de `environment: production`) | YAML válido las dos veces, cinco *jobs* (`schema`, `app`, `e2e`, `arnes`, `deploy`), `needs`/`if`/`environment` con los valores esperados |
+| Si `vercel`/`supabase` CLI son dependencias declaradas | `app/package.json` | Ninguna de las dos — igual que el resto del proyecto, se invocan con `npx`, sin pin de versión nuevo que el proyecto no tuviera ya |
+| Org de Supabase para el proyecto nuevo | `list_organizations` (MCP) | Una sola: `ujatcozvbspkycepemfq`, la misma del proyecto principal |
+| Coste de un proyecto Supabase nuevo en esa org | `get_cost` (MCP) | `$0/mes` — mostrado al PO antes de pedir confirmación, no asumido |
+| Creación real del proyecto `bearingworld-e2e` | `confirm_cost` + `create_project` (MCP), con el visto bueno explícito del PO sobre el número real | **Falló**: `BadRequestException`, límite de 2 proyectos Free activos ya alcanzado |
+| Qué proyectos existen de verdad en la org | `list_projects` (MCP) | Tres: `autonomos-ia-mvp` (`INACTIVE`), `troxminloxkjwihwfevs`/`MVP_RinWorld.io` (`ACTIVE_HEALTHY`, este repo), `motioniq-rag` (`ACTIVE_HEALTHY`, **ajeno a este repo**) |
+| Si se puede pausar `motioniq-rag` para liberar el cupo (vía reversible, intentada antes que borrar) | `pause_project` (MCP) | Falló: `"Cannot pause project while it is currently hibernating. Please reach out to support."` |
+| Si se puede borrar `motioniq-rag` con el permiso explícito del PO | Búsqueda del MCP de Supabase por una herramienta de borrado | **No existe ninguna** — el servidor MCP solo expone `pause_project`/`restore_project`/`create_project` para el ciclo de vida de un proyecto. Ninguna acción posible desde aquí, con o sin permiso |
+| Disponibilidad real de Claude en Vertex AI, región UE (para el entregable 6) | Búsqueda web, no memoria | Confirmado: *multi-region endpoint* UE para Claude en Vertex AI, GA mayo-2026, retención cero de datos; Sonnet 5 disponible ahí. Fuente primaria a re-confirmar en el momento de ejecutar la migración: `platform.claude.com/docs/en/build-with-claude/claude-on-vertex-ai` |
+| `vera/index.ts` real, línea a línea, antes de escribir el runbook | Lectura completa del fichero | Confirma `MODELO = 'claude-sonnet-4-6'` (línea 28), cliente Anthropic sin `baseURL` (línea 184), única env var `ANTHROPIC_API_KEY` (línea 166) |
 
 ---
 
@@ -254,7 +193,10 @@ comprobó antes:**
 | **`thread_public_keys(t_id)`** (reparto de destinatarios) | ✅ **4-sep · `0023`**, aplicada y verificada |
 | **`create_inquiry`** (reparto de destinatarios de la CEK) | ✅ **4-sep · `0023`**, con guardia en la base (`app.guard_cek_recipients`) |
 | **`F-148` · escribir con el ámbito encendido era imposible desde `0019`** | ✅ **4-sep · `0023`** — tres piezas, sin relajar ninguna política de lectura |
-| Resto de la Fundación (entregables 1-3, 6) | 🔴 Sin cambios |
+| Entregable 2 · despliegue continuo | ✅ **6-sep** — *job* `deploy` en `ci.yml`, pendiente de que el PO añada dos secretos para la primera corrida real (`F-150`) |
+| Entregable 1 · tres entornos como código | 🟡 **6-sep, a medias** — `entornos.md`, producción real, ensayo pendiente del entregable 3 |
+| Entregable 3 · aislamiento de demo/e2e | 🔴 **Bloqueado 6-sep** — cupo de proyectos Free agotado por un proyecto ajeno (`motioniq-rag`), sin herramienta de borrado en el MCP. Decisión del PO pendiente |
+| Entregable 6 · residencia europea (VERA) | 🟡 **6-sep, runbook listo** — `vera-vertex-eu-migracion.md`, sin aplicar al código real; falta el proyecto GCP |
 
 ### Corriente B · Fábrica — NO ABIERTA
 
@@ -268,25 +210,44 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-Los seis puntos que dejó el Día 7 se cerraron hoy — el detalle completo, abajo,
-plegado. Lo que queda abierto para el Día 9:
+El PO pidió explícitamente **no** replicar la serie 17 hoy y seguir con el resto de
+Fundación V1. Lo que queda abierto para el Día 10:
 
-1. **Decisión del PO: ¿réplica de la serie 17?** Mismo `n=5`, mismo corpus de `MSG-01`
-   (sin tocar desde hoy). La 15 dio 3/3 y no sobrevivió a su réplica (la 16, 1/3); un
-   solo 5/5 no dice si `n=5` es de verdad mejor marcador o si hoy tocó tener suerte.
-   Implica gasto real (~$0,34) — no se lanza sin que lo digas, mismo patrón que hoy.
-2. **El resto de la Fundación V1 (entregables 1-3, 6) sigue sin empezar.** Núcleo
-   (Corriente A) ya tiene D-7/D-8/Q-1/F-148 probados con el cliente real; es lo próximo
-   una vez que se decida el punto 1.
-3. **Del backlog de `§5`, sin decidir:** si el guardia de `0023` aprende a recalcular el
-   reparto ENTERO de claves en cada escritura (hoy cubre V-1 del emisor y V-2 en las dos
-   organizaciones, no el conjunto completo — un cliente manipulado podría envolver de
-   más hacia la contraparte). Ninguna prisa: está declarado, no tapado.
+1. **Decisión del PO sobre el entregable 3 (aislamiento de demo/e2e), bloqueado hoy.**
+   Tres caminos reales, ninguno ejecutable desde aquí sin que el PO elija: (a) borrar
+   `motioniq-rag` él mismo desde el dashboard de Supabase y avisar para reintentar
+   `create_project`; (b) pasar la org a plan de pago (Pro, ~$25/mes — hay que confirmar
+   el número real con `get_cost` antes de aplicarlo); (c) cambiar de estrategia a "hilos
+   propios para el e2e" (la otra opción de `F-098`, sin proyecto nuevo, toca ~52 tests).
+   Sin esto, el entregable 1 tampoco puede cerrar su fila de "ensayo/staging".
+2. **Entregable 2, pendiente de dos secretos del PO para su primera corrida real:**
+   `VERCEL_TOKEN` (vercel.com/account/tokens) y `SUPABASE_ACCESS_TOKEN`
+   (supabase.com/dashboard/account/tokens, org `ujatcozvbspkycepemfq`) como secretos de
+   GitHub — el PO los añade él mismo, nunca pegados en el chat.
+3. **Entregable 6, con el proyecto GCP todavía por crear.** El runbook
+   (`vera-vertex-eu-migracion.md`) está listo; en cuanto exista el proyecto GCP, aplicar
+   el diff de código ahí descrito, siguiendo el orden de corte de su §4.
+4. **Decisión del PO: ¿réplica de la serie 17?** Sigue sin decidirse, solo aplazada hoy.
+   Mismo `n=5`, mismo corpus de `MSG-01` (sin tocar desde el 5-sep). Implica gasto real
+   (~$0,34) — no se lanza sin que lo digas.
+5. **Del backlog de `§5`, sin decidir:** si el guardia de `0023` aprende a recalcular el
+   reparto ENTERO de claves en cada escritura. Ninguna prisa: está declarado, no tapado.
 
-Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase), Vercel en
-plan gratuito, y los worktrees (§5) — ninguno bloquea trabajo de ingeniería.
+Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase), la
+pregunta de alcance del entregable 5 (`FUNDACION-V1.md`), y los worktrees (§5) —
+ninguno bloquea trabajo de ingeniería.
 
-### Lo que se cerró hoy (Día 8) — resumen; el detalle vive en el `git log` de hoy
+### Lo que se cerró hoy (Día 9) — resumen; el detalle vive en el `git log` de hoy
+
+- **Entregable 2 (despliegue continuo): hecho.** *Job* `deploy` en `ci.yml`, cierra la
+  causa raíz de `F-091`/`F-072` (`F-150`).
+- **Entregable 1 (tres entornos): a medias.** `entornos.md`, producción real, ensayo
+  pendiente del punto 1 de arriba.
+- **Entregable 3 (aislamiento demo/e2e): bloqueado, no hecho.** Ver punto 1 de arriba.
+- **Entregable 6 (residencia UE): runbook listo, código sin aplicar.**
+  `vera-vertex-eu-migracion.md`.
+
+### Lo que se cerró el Día 8 — el detalle vive en `git show 591ea20`
 
 > ~~1. Encender el interruptor de D-7 en una organización de prueba y usar la aplicación de
 > verdad.~~ **Hecho 5-sep-2026, y cerrado del todo.** D-7 encendido en `Nordwälz Lager`,
@@ -348,7 +309,8 @@ plan gratuito, y los worktrees (§5) — ninguno bloquea trabajo de ingeniería.
 **Los seis puntos del Día 7 quedaron completos, y el PO pidió el ritual de cierre
 entero** — corrido de verdad, no dado por hecho: §1 con las comprobaciones de cierre,
 §2 revisado, §6 con lo que sigue sin saberse, hallazgos y métricas volcados, commit y
-push. El Día 9 empieza en el punto 1 de arriba.
+push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el entregable 3
+— ver §3 de arriba para el punto exacto donde retoma el Día 10.
 
 ---
 
@@ -365,7 +327,7 @@ push. El Día 9 empieza en el punto 1 de arriba.
 | **Lo que se afirme sobre privilegios se comprueba contra el catálogo, no contra el `.sql`** | 4-sep-2026, `F-146`. La plataforma añade concesiones que ninguna migración escribió | `0022`, regla 2 de este fichero |
 | **El banco de pruebas tiene que ser tan permisivo como producción, no más estricto** | 4-sep-2026, `F-146`. Un local más estricto esconde agujeros reales en vez de cazarlos | `00_auth_stub.sql` |
 | **El hilo no es concepto visible** | El usuario ve «mi conversación con tal empresa» | ADR-002 §6 |
-| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. Sigue sin desplegarse — entregable 6, sin fecha | Plan §4.2, `FUNDACION-V1.md` §1 |
+| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. Confirmado viable el 6-sep (Vertex ofrece *endpoint* multi-región UE para Claude, GA mayo-2026). Runbook listo (`vera-vertex-eu-migracion.md`), código sin aplicar — falta el proyecto GCP, sin fecha | Plan §4.2, `FUNDACION-V1.md` §1 |
 | **Generador de código** | DeepSeek V4 Flash **vía Microsoft Foundry, zona UE**. Nunca toca criptografía, reglas de acceso, claves ni datos de cliente | Plan §4.3 |
 | **Revisión multiagente** | Sobre esquema, criptografía y capa de datos. **Nunca sobre cada pantalla** | Plan §5.4 |
 | **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código. **Hoy se usó dos veces** (Q-1 y `F-146`) | Plan, Anexo B |
@@ -379,6 +341,9 @@ push. El Día 9 empieza en el punto 1 de arriba.
 | **Lo que el contrato exige, la tarea lo dice** | **Quince veces en ocho días.** La vía ha sido siempre la misma: declararlo en `component_api`, sin tocar ni un aserto | `F-116`…`F-145` |
 | **El 57 a 1 se acepta, sin acción** | 1-sep-2026, PO | `F-113` |
 | **El guardia NO aprende a mirar nombres accesibles (`F-145`)** | 5-sep-2026. Medido antes de escribir: el arreglo obvio (borde de palabra para nombres cortos) da CERO avisos nuevos en las seis tareas, porque el propio `component_api` de `MSG-01` cita HTML de ejemplo que reintroduce el mismo falso negativo. El problema no es el guardia, es distinguir una declaración de un ejemplo en la misma prosa | §1, §3 |
+| **La CD dispara sobre `mvp/bootstrap`, no `main`** | 6-sep-2026, PO. `main` lleva desde el 4-ago sin moverse; fusionarla es un cambio de flujo aparte, no de CI | `ci.yml`, `entornos.md` |
+| **El aislamiento de demo/e2e va por proyecto Supabase separado** | 6-sep-2026, PO — dirección confirmada dos veces (antes y después de ver el coste real, $0/mes). Bloqueado en la ejecución por un límite de cuenta ajeno al repo, no por la decisión en sí | `FUNDACION-V1.md` entregable 3 |
+| **Ante una acción irreversible, se prueba primero la reversible** | 6-sep-2026, aplicado sin que hiciera falta pedirlo: se intentó `pause_project` sobre `motioniq-rag` antes de considerar borrarlo, aunque el PO ya había autorizado el borrado directo | Esta sesión |
 
 ---
 
@@ -387,8 +352,9 @@ push. El Día 9 empieza en el punto 1 de arriba.
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
-| 🟠 | **La residencia sigue siendo el entregable con reloj.** Sin cambios hoy: `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`, sin fecha puesta | Álvaro |
-| 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando | Álvaro: re-loguear y `link` |
+| 🟠 | **La residencia sigue siendo el entregable con reloj, pero ya con runbook.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com` — el diff de código y los pasos de GCP están en `vera-vertex-eu-migracion.md`, sin fecha puesta porque falta el proyecto GCP | Álvaro: crear el proyecto GCP |
+| 🟠 | **Entregable 3 bloqueado: cupo de proyectos Free de Supabase agotado por `motioniq-rag`, ajeno a este repo.** `pause_project` falló (ya hibernando); el MCP no tiene herramienta de borrado. Tres salidas en §3 — ninguna ejecutable sin el PO | Álvaro: borrar/pausar `motioniq-rag` desde el dashboard, pagar el plan Pro, o elegir "hilos propios de e2e" |
+| 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
 | 🟡 | **Los worktrees: seis** (raíz + cinco), **la composición cambió por primera vez** — desapareció uno, aparecieron dos de sesiones nuevas. Quinta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
 | 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
@@ -452,6 +418,18 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   hoy: las tres corridas de la serie 14 no tuvieron ninguna variación ordinaria que explicar.
 - **Por qué la API se cuelga en la segunda tarea de una tanda y nunca en la primera.**
   Sin datos nuevos hoy.
+- **Qué hay dentro de `motioniq-rag`.** Nunca se miró — ni antes de intentar pausarlo ni
+  antes de que el PO autorizara borrarlo. No se ha ejecutado ninguna acción sobre él
+  (las dos que se intentaron fallaron sin efecto), pero si en algún momento SÍ se borra,
+  conviene mirar primero qué se pierde, aunque el PO ya lo haya autorizado a ciegas.
+- **Si "hilos propios de e2e" sale más barato que pagar Supabase Pro para el entregable
+  3.** No medido hoy — ni el coste de tocar ~52 tests e2e existentes, ni cuánto durarían
+  $25/mes siendo la solución. Es la comparación que le falta a la decisión del PO en §3.
+- **Si el id de modelo y la región multi-UE de Vertex AI que cita
+  `vera-vertex-eu-migracion.md` (de una búsqueda web del 6-sep) siguen vigentes el día
+  que se ejecute la migración.** El propio documento dice que hay que reconfirmarlos
+  contra la doc oficial en ese momento — aquí queda constancia de que hoy NO se
+  confirmaron contra la consola de GCP, solo contra resultados de búsqueda.
 
 ---
 
@@ -500,13 +478,17 @@ Orden de lectura, y el orden importa:
 1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
 2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Sin
    esa decisión no se escribe SQL de reparto de CEK.
-3. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado hoy: `quantity`
-   completa y las dos filas bloqueadas.
-4. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
-5. **`docs/ADR-001`** si vas a tocar criptografía.
-6. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
-7. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
-8. **`findings-register.md`** nunca de corrido: por identificador. Del Día 8: `F-149`.
+3. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado el 6-sep: entregables
+   1, 2 y 6 con movimiento; el 3 bloqueado — lee su adenda del 6-sep antes de reintentar
+   `create_project`.
+4. **`openspec/v1/entornos.md`** (nuevo, 6-sep) si vas a tocar CI/CD o el mapa de entornos.
+5. **`openspec/v1/vera-vertex-eu-migracion.md`** (nuevo, 6-sep) antes de tocar `vera/index.ts`
+   por el entregable 6 — no reinventar el runbook.
+6. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
+7. **`docs/ADR-001`** si vas a tocar criptografía.
+8. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
+9. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
+10. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
 
 ---
 

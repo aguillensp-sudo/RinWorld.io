@@ -221,9 +221,16 @@ dice "no tengo ese dato" en cuanto sale de ahí.
   > `ujatcozvbspkycepemfq`— y contra `VITE_SUPABASE_URL` de `app/.env`. Un ref de
   > organización usado como ref de proyecto en la sección que se lee **antes de la primera
   > consulta** es exactamente el error que esta §10 existe para evitar.
-- **Las Edge Functions no se despliegan con el push a git** y la app tampoco llega sola a
-  Vercel (**F-091**, **F-072**). Cerrar un bloque que alguien va a probar en la URL
-  desplegada incluye redesplegarlo o decir explícitamente que falta.
+- **Corregido el 6-sep-2026 (entregable 2 de Fundación V1):** el *job* `deploy` de
+  `.github/workflows/ci.yml` despliega la app a Vercel y la función `vera` a Supabase
+  automáticamente tras el verde de `schema`+`app`+`e2e`+`arnes`, en cada push a
+  `mvp/bootstrap` — **F-091 y F-072 quedan cerrados de raíz**, ya no de proceso: un
+  "cerrado" en el relevo ahora sí implica que llegó a la URL real, sin que nadie tenga
+  que acordarse de correr `vercel --prod` a mano. Usa dos secretos de GitHub nuevos,
+  `VERCEL_TOKEN` y `SUPABASE_ACCESS_TOKEN` (scopeado a la org `ujatcozvbspkycepemfq`,
+  **no** el login de la CLI de F-073 — es un token aparte, solo para CI). **Las
+  migraciones siguen sin tocarse aquí, a propósito:** este *job* no corre `supabase db
+  push`; el esquema sigue yendo por el MCP, revisado migración a migración.
 
 ### 10.3 El esquema — para no adivinar nombres de columna
 

@@ -184,12 +184,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [schema, app, e2e, arnes]
     if: github.event_name == 'push' && github.ref == 'refs/heads/mvp/bootstrap'
-    # Entregable 1 de Fundación V1 (entornos como código): este es el único de los
-    # tres entornos que hoy tiene infraestructura real y separada -- ver
-    # openspec/v1/entornos.md. `staging` no se declara aquí todavía: el job `e2e`
-    # sigue apuntando al mismo proyecto que producción hasta que se resuelva el
-    # entregable 3 (aislamiento de demo/e2e), y declarar un entorno que no existe
-    # de verdad sería el mismo error que F-132 en otra ropa.
+    # Entregable 1 de Fundación V1 (entornos como código) -- ver
+    # openspec/v1/entornos.md. `staging` (el job `e2e`) tiene su propio proyecto
+    # Supabase aislado desde el entregable 3 (F-149); este job es `production`.
     environment: production
     defaults:
       run:
@@ -206,9 +203,11 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       - name: VERA a Supabase (Edge Function)
-        # SUPABASE_ACCESS_TOKEN es un token nuevo, scopeado para CI -- no pasa
+        # `SUPABASE_ACCESS_TOKEN` (env var, nombre que exige la CLI) sale del
+        # secreto `SUPABASE_TOKEN` -- así se llamó al crearlo (7-sep), GitHub
+        # no deja renombrar secretos. Token nuevo, scopeado para CI -- no pasa
         # por el login local de la CLI, que sigue en la cuenta equivocada
         # (F-073). Por eso este paso no hereda ese bloqueo.
         run: npx supabase functions deploy vera --project-ref troxminloxkjwihwfevs
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}

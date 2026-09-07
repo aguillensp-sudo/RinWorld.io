@@ -174,6 +174,8 @@ decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repi
 | `app/.env`: variable `SUPABASE_E2E_SERVICE_KEY` duplicada (un bloque con el valor real, otro documental con el mismo nombre en blanco) | El subagente lo detectó al cargarla con `dotenv` normal — se queda con la ÚLTIMA aparición, la vacía | Corregido: bloque duplicado borrado, un único bloque `SUPABASE_E2E_*` en `app/.env`. Los dos scripts nuevos igualmente parsean "última NO vacía", por si vuelve a pasar |
 | *Rama del PO*: los tres secretos de GitHub para el *job* `e2e` | `SUPABASE_E2E_URL`/`SUPABASE_E2E_PUBLISHABLE_KEY` puestos por Claude (`gh secret set`, valores públicos); `SUPABASE_E2E_SERVICE_KEY` puesto por el PO desde el dashboard, tras instrucciones paso a paso | `gh secret list` confirma los tres presentes |
 | `ci.yml`, *job* `e2e` tras apuntarlo al proyecto aislado | `python -c "import yaml; ..."` sobre el fichero final | YAML válido, `environment: staging`, las tres variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_KEY`) leyendo de `secrets.SUPABASE_E2E_*` |
+| **El *job* `e2e` contra `bearingworld-e2e`, en CI real (no local)** | `gh run view 34094524208 --json jobs`, push de `8618b81` | ✅ **verde** — `schema`, `app`, `arnes` y `e2e` (Playwright) los cuatro en éxito. Confirma que el proyecto aislado funciona desde GitHub Actions, no solo desde la corrida local del subagente |
+| El *job* `deploy` nuevo, primera corrida real | Mismo run | 🔴 **Falla, y por lo ya anotado en §5**: `VERCEL_TOKEN` llega vacío (`"You defined --token, but it's missing a value"`) — el secreto todavía no existe. Ningún otro fallo detrás; en cuanto el PO ponga los dos secretos, se reintenta con un push |
 
 ---
 

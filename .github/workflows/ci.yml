@@ -199,9 +199,13 @@ jobs:
       - name: App a Vercel (producción)
         # app/.vercel/project.json ya fija orgId/projectId: no hace falta
         # `vercel link`. Mismo comando que despliegue.md documenta a mano.
+        # `NEW_VERCEL_TOKEN`, no `VERCEL_TOKEN`: el primer token (7-sep) dio
+        # "Error: User not found" en Vercel -- token inválido o de la cuenta
+        # equivocada. El PO creó uno nuevo con este otro nombre en vez de
+        # sobrescribir el secreto viejo; el viejo se queda sin usar en el repo.
         run: npx vercel --prod --token="$VERCEL_TOKEN" --yes
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.NEW_VERCEL_TOKEN }}
       - name: VERA a Supabase (Edge Function)
         # `SUPABASE_ACCESS_TOKEN` (env var, nombre que exige la CLI) sale del
         # secreto `SUPABASE_TOKEN` -- así se llamó al crearlo (7-sep), GitHub

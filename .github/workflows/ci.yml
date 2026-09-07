@@ -200,10 +200,15 @@ jobs:
         # app/.vercel/project.json ya fija orgId/projectId: no hace falta
         # `vercel link`. Mismo comando que despliegue.md documenta a mano.
         # `NEW_VERCEL_TOKEN`, no `VERCEL_TOKEN`: el primer token (7-sep) dio
-        # "Error: User not found" en Vercel -- token inválido o de la cuenta
-        # equivocada. El PO creó uno nuevo con este otro nombre en vez de
-        # sobrescribir el secreto viejo; el viejo se queda sin usar en el repo.
-        run: npx vercel --prod --token="$VERCEL_TOKEN" --yes
+        # "Error: User not found" en Vercel. El segundo token (otro secreto
+        # nuevo) dio EL MISMO error -- no era un despiste al copiar. El
+        # proyecto pertenece a un EQUIPO (`orgId` en project.json empieza por
+        # `team_`), y un token de Vercel se genera con un scope concreto: si
+        # se creó con scope "My Account" en vez del equipo, la CLI encuentra
+        # al usuario pero no al equipo, y lo reporta como "User not found" en
+        # vez de "Team not found". `--scope` fuerza el equipo explícitamente
+        # en vez de depender de que el token ya traiga el scope correcto.
+        run: npx vercel --prod --scope team_DxbnTcPjK55GRxmJiMm4YUsp --token="$VERCEL_TOKEN" --yes
         env:
           VERCEL_TOKEN: ${{ secrets.NEW_VERCEL_TOKEN }}
       - name: VERA a Supabase (Edge Function)

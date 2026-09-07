@@ -196,22 +196,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: App a Vercel (producción)
-        # app/.vercel/project.json ya fija orgId/projectId: no hace falta
-        # `vercel link`. Mismo comando que despliegue.md documenta a mano.
-        # `NEW_VERCEL_TOKEN`, no `VERCEL_TOKEN`: el primer token (7-sep) dio
-        # "Error: User not found" en Vercel. El segundo token (otro secreto
-        # nuevo) dio EL MISMO error -- no era un despiste al copiar. El
-        # proyecto pertenece a un EQUIPO (`orgId` en project.json empieza por
-        # `team_`), y un token de Vercel se genera con un scope concreto: si
-        # se creó con scope "My Account" en vez del equipo, la CLI encuentra
-        # al usuario pero no al equipo, y lo reporta como "User not found" en
-        # vez de "Team not found". `--scope` fuerza el equipo explícitamente
-        # en vez de depender de que el token ya traiga el scope correcto.
-        run: npx vercel --prod --scope team_DxbnTcPjK55GRxmJiMm4YUsp --token="$VERCEL_TOKEN" --yes
-        env:
-          VERCEL_TOKEN: ${{ secrets.NEW_VERCEL_TOKEN }}
       - name: VERA a Supabase (Edge Function)
+        # Va PRIMERO a propósito (7-sep): el paso de Vercel está bloqueado por
+        # F-151 (acceso de cuenta, no de configuración -- ver el hallazgo) y
+        # un paso que falla para el job entero por defecto. Con este orden,
+        # el despliegue de VERA se puede verificar de forma independiente
+        # mientras F-151 sigue abierto, en vez de quedar sin probar nunca.
+        #
         # `SUPABASE_ACCESS_TOKEN` (env var, nombre que exige la CLI) sale del
         # secreto `SUPABASE_TOKEN` -- así se llamó al crearlo (7-sep), GitHub
         # no deja renombrar secretos. Token nuevo, scopeado para CI -- no pasa
@@ -220,3 +211,17 @@ jobs:
         run: npx supabase functions deploy vera --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+      - name: App a Vercel (producción)
+        # app/.vercel/project.json ya fija orgId/projectId: no hace falta
+        # `vercel link`. Mismo comando que despliegue.md documenta a mano.
+        #
+        # ⚠ BLOQUEADO POR F-151, no por esta configuración. Tres tokens
+        # distintos (dos nombres de secreto, con y sin --scope explícito)
+        # fallaron igual: la cuenta de Vercel del PO no administra el equipo
+        # dueño de este proyecto (`team_DxbnTcPjK55GRxmJiMm4YUsp`) -- lo
+        # confirmó el propio PO, ese equipo ni le aparece en el selector.
+        # `--scope` se deja puesto porque no estorba y documenta la intención,
+        # pero no arregla un problema de acceso de cuenta.
+        run: npx vercel --prod --scope team_DxbnTcPjK55GRxmJiMm4YUsp --token="$VERCEL_TOKEN" --yes
+        env:
+          VERCEL_TOKEN: ${{ secrets.NEW_VERCEL_TOKEN }}

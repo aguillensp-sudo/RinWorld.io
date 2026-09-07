@@ -165,6 +165,15 @@ decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repi
 | Si se puede borrar `motioniq-rag` con el permiso explícito del PO | Búsqueda del MCP de Supabase por una herramienta de borrado | **No existe ninguna** — el servidor MCP solo expone `pause_project`/`restore_project`/`create_project` para el ciclo de vida de un proyecto. Ninguna acción posible desde aquí, con o sin permiso |
 | Disponibilidad real de Claude en Vertex AI, región UE (para el entregable 6) | Búsqueda web, no memoria | Confirmado: *multi-region endpoint* UE para Claude en Vertex AI, GA mayo-2026, retención cero de datos; Sonnet 5 disponible ahí. Fuente primaria a re-confirmar en el momento de ejecutar la migración: `platform.claude.com/docs/en/build-with-claude/claude-on-vertex-ai` |
 | `vera/index.ts` real, línea a línea, antes de escribir el runbook | Lectura completa del fichero | Confirma `MODELO = 'claude-sonnet-4-6'` (línea 28), cliente Anthropic sin `baseURL` (línea 184), única env var `ANTHROPIC_API_KEY` (línea 166) |
+| **7-sep, tras borrar el PO `motioniq-rag`:** ¿queda sitio de verdad? | `list_projects` (MCP), de nuevo | Solo dos: `autonomos-ia-mvp` (`INACTIVE`) y `troxminloxkjwihwfevs` (`ACTIVE_HEALTHY`, este repo). `motioniq-rag` ya no aparece |
+| Creación real del proyecto `bearingworld-e2e`, segundo intento | `get_cost` (`$0/mes`, mostrado de nuevo) → `confirm_cost` → `create_project` (MCP) | **Esta vez sí**: `ogdhyzgjjbbikjbkhxmu`, `bearingworld-e2e`, eu-west-1, `ACTIVE_HEALTHY` |
+| Las 23 migraciones (`0001`-`0023`) aplicadas al proyecto nuevo, en orden | Subagente dedicado: `apply_migration` una a una, luego `list_migrations` + `information_schema` + recuento de filas | Las 23 registradas, ninguna falló. Tablas núcleo presentes con RLS activo. `members.visibility_scope`, `organizations.visibility_scope_enabled` (`boolean default false`), `thread_items.quantity` — las tres columnas confirmadas. Cero filas de datos, como se esperaba de un proyecto recién creado |
+| Cuentas ALPHA/BETA/EDITOR en el proyecto nuevo | Admin API de Supabase (nunca SQL directo — `F-013`), verificado con **login real** contra `/auth/v1/token`, no solo con la fila existiendo | Los tres, `HTTP 200` con token de acceso |
+| Organizaciones, miembros, catálogo (221 líneas) y los cinco hilos congelados | `execute_sql` (MCP) para orgs/miembros/catálogo, script de reseteo para los hilos (con el mismo `VITE_DEMO_KEY_SEED` — mismos UUID de miembro, mismo cifrado pre-derivado) | Seis organizaciones, ALPHA/BETA `ADMIN`, EDITOR `EDITOR`/`OWN` como segundo miembro de Nordwälz. `visibility_scope_enabled` dejado en `false` en las dos, a propósito — la suite existente nunca se probó con D-7 encendido. Los cinco estados presentes |
+| Que el proyecto nuevo sirve de verdad, no solo que las filas existen | **Suite Playwright real** (`npx playwright test`) corrida contra `bearingworld-e2e`, antes de tocar `ci.yml` | **53 de 53 en verde**, sin huecos que rellenar más allá del catálogo (ya incluido arriba) |
+| `app/.env`: variable `SUPABASE_E2E_SERVICE_KEY` duplicada (un bloque con el valor real, otro documental con el mismo nombre en blanco) | El subagente lo detectó al cargarla con `dotenv` normal — se queda con la ÚLTIMA aparición, la vacía | Corregido: bloque duplicado borrado, un único bloque `SUPABASE_E2E_*` en `app/.env`. Los dos scripts nuevos igualmente parsean "última NO vacía", por si vuelve a pasar |
+| *Rama del PO*: los tres secretos de GitHub para el *job* `e2e` | `SUPABASE_E2E_URL`/`SUPABASE_E2E_PUBLISHABLE_KEY` puestos por Claude (`gh secret set`, valores públicos); `SUPABASE_E2E_SERVICE_KEY` puesto por el PO desde el dashboard, tras instrucciones paso a paso | `gh secret list` confirma los tres presentes |
+| `ci.yml`, *job* `e2e` tras apuntarlo al proyecto aislado | `python -c "import yaml; ..."` sobre el fichero final | YAML válido, `environment: staging`, las tres variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_KEY`) leyendo de `secrets.SUPABASE_E2E_*` |
 
 ---
 
@@ -194,8 +203,8 @@ decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repi
 | **`create_inquiry`** (reparto de destinatarios de la CEK) | ✅ **4-sep · `0023`**, con guardia en la base (`app.guard_cek_recipients`) |
 | **`F-148` · escribir con el ámbito encendido era imposible desde `0019`** | ✅ **4-sep · `0023`** — tres piezas, sin relajar ninguna política de lectura |
 | Entregable 2 · despliegue continuo | ✅ **6-sep** — *job* `deploy` en `ci.yml`, pendiente de que el PO añada dos secretos para la primera corrida real (`F-150`) |
-| Entregable 1 · tres entornos como código | 🟡 **6-sep, a medias** — `entornos.md`, producción real, ensayo pendiente del entregable 3 |
-| Entregable 3 · aislamiento de demo/e2e | 🔴 **Bloqueado 6-sep** — cupo de proyectos Free agotado por un proyecto ajeno (`motioniq-rag`), sin herramienta de borrado en el MCP. Decisión del PO pendiente |
+| Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep** — `entornos.md`, producción y ensayo/staging reales, los dos con `environment:` de GitHub |
+| Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
 | Entregable 6 · residencia europea (VERA) | 🟡 **6-sep, runbook listo** — `vera-vertex-eu-migracion.md`, sin aplicar al código real; falta el proyecto GCP |
 
 ### Corriente B · Fábrica — NO ABIERTA
@@ -211,39 +220,39 @@ Sin cambios.
 ## 3 · Qué toca mañana, en este orden
 
 El PO pidió explícitamente **no** replicar la serie 17 hoy y seguir con el resto de
-Fundación V1. Lo que queda abierto para el Día 10:
+Fundación V1. Con 1, 2 y 3 ya hechos (7-sep), lo que queda abierto para el Día 10:
 
-1. **Decisión del PO sobre el entregable 3 (aislamiento de demo/e2e), bloqueado hoy.**
-   Tres caminos reales, ninguno ejecutable desde aquí sin que el PO elija: (a) borrar
-   `motioniq-rag` él mismo desde el dashboard de Supabase y avisar para reintentar
-   `create_project`; (b) pasar la org a plan de pago (Pro, ~$25/mes — hay que confirmar
-   el número real con `get_cost` antes de aplicarlo); (c) cambiar de estrategia a "hilos
-   propios para el e2e" (la otra opción de `F-098`, sin proyecto nuevo, toca ~52 tests).
-   Sin esto, el entregable 1 tampoco puede cerrar su fila de "ensayo/staging".
-2. **Entregable 2, pendiente de dos secretos del PO para su primera corrida real:**
+1. **Entregable 2, pendiente de dos secretos del PO para su primera corrida real:**
    `VERCEL_TOKEN` (vercel.com/account/tokens) y `SUPABASE_ACCESS_TOKEN`
    (supabase.com/dashboard/account/tokens, org `ujatcozvbspkycepemfq`) como secretos de
-   GitHub — el PO los añade él mismo, nunca pegados en el chat.
-3. **Entregable 6, con el proyecto GCP todavía por crear.** El runbook
+   GitHub — el PO los añade él mismo, nunca pegados en el chat. El *job* `deploy` está
+   escrito y validado (YAML), pero nunca ha corrido de verdad.
+2. **Entregable 6, con el proyecto GCP todavía por crear.** El runbook
    (`vera-vertex-eu-migracion.md`) está listo; en cuanto exista el proyecto GCP, aplicar
    el diff de código ahí descrito, siguiendo el orden de corte de su §4.
-4. **Decisión del PO: ¿réplica de la serie 17?** Sigue sin decidirse, solo aplazada hoy.
+3. **Decisión del PO: ¿réplica de la serie 17?** Sigue sin decidirse, solo aplazada.
    Mismo `n=5`, mismo corpus de `MSG-01` (sin tocar desde el 5-sep). Implica gasto real
    (~$0,34) — no se lanza sin que lo digas.
-5. **Del backlog de `§5`, sin decidir:** si el guardia de `0023` aprende a recalcular el
+4. **Del backlog de `§5`, sin decidir:** si el guardia de `0023` aprende a recalcular el
    reparto ENTERO de claves en cada escritura. Ninguna prisa: está declarado, no tapado.
+5. **Nuevo, del 7-sep:** el proyecto aislado (`bearingworld-e2e`) hoy solo tiene la
+   siembra base. Falta decidir si el catálogo completo de 200+ líneas del proyecto
+   principal (el que ve un socio real en la demo de venta) también se replica aquí, o si
+   los 221 renglones que ya trajo el entregable 3 (mismos que `SRCH-01`/`INV-01`
+   necesitan para pasar) bastan para lo que este proyecto tiene que hacer.
 
 Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase), la
 pregunta de alcance del entregable 5 (`FUNDACION-V1.md`), y los worktrees (§5) —
 ninguno bloquea trabajo de ingeniería.
 
-### Lo que se cerró hoy (Día 9) — resumen; el detalle vive en el `git log` de hoy
+### Lo que se cerró hoy (Día 9, 6/7-sep) — resumen; el detalle vive en el `git log` de hoy
 
 - **Entregable 2 (despliegue continuo): hecho.** *Job* `deploy` en `ci.yml`, cierra la
-  causa raíz de `F-091`/`F-072` (`F-150`).
-- **Entregable 1 (tres entornos): a medias.** `entornos.md`, producción real, ensayo
-  pendiente del punto 1 de arriba.
-- **Entregable 3 (aislamiento demo/e2e): bloqueado, no hecho.** Ver punto 1 de arriba.
+  causa raíz de `F-091`/`F-072` (`F-150`). Sin probar de extremo a extremo (punto 1).
+- **Entregable 1 (tres entornos): hecho.** `entornos.md`, producción y staging reales.
+- **Entregable 3 (aislamiento demo/e2e): hecho, con prueba real.** `motioniq-rag`
+  borrado por el PO, `bearingworld-e2e` creado, sembrado, probado con Playwright
+  (53/53) ANTES de conectar CI, y CI ya apuntando ahí. `F-149` cerrado de raíz.
 - **Entregable 6 (residencia UE): runbook listo, código sin aplicar.**
   `vera-vertex-eu-migracion.md`.
 
@@ -353,8 +362,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 |---|---|---|
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj, pero ya con runbook.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com` — el diff de código y los pasos de GCP están en `vera-vertex-eu-migracion.md`, sin fecha puesta porque falta el proyecto GCP | Álvaro: crear el proyecto GCP |
-| 🟠 | **Entregable 3 bloqueado: cupo de proyectos Free de Supabase agotado por `motioniq-rag`, ajeno a este repo.** `pause_project` falló (ya hibernando); el MCP no tiene herramienta de borrado. Tres salidas en §3 — ninguna ejecutable sin el PO | Álvaro: borrar/pausar `motioniq-rag` desde el dashboard, pagar el plan Pro, o elegir "hilos propios de e2e" |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
+| 🟡 | **El *job* `deploy` (entregable 2) nunca ha corrido de verdad.** El YAML es válido pero le faltan dos secretos de GitHub, `VERCEL_TOKEN` y `SUPABASE_ACCESS_TOKEN` | Álvaro: añadirlos como secretos del repositorio |
 | 🟡 | **Vercel sigue en plan gratuito**, que prohíbe uso comercial | Álvaro: 20 $/mes |
 | 🟡 | **Los worktrees: seis** (raíz + cinco), **la composición cambió por primera vez** — desapareció uno, aparecieron dos de sesiones nuevas. Quinta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
 | 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
@@ -365,6 +374,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
 | ⚪ | ~~`0023` no lo ha probado ningún cliente~~ | **Resuelto 5-sep-2026: probado con el cliente real, D-7 encendido en `Nordwälz Lager`, las tres vías de escritura — como ADMIN y como EDITOR real** |
 | ⚪ | ~~Vercel no redesplegó, DOS cambios de cliente pendientes~~ | **Resuelto 5-sep-2026: `vercel --prod`, bundle en producción confirmado con `p_quantity`** |
+| ⚪ | ~~Entregable 3 bloqueado: cupo de proyectos Free de Supabase agotado por `motioniq-rag`, ajeno a este repo~~ | **Resuelto 7-sep-2026: el PO lo borró desde el dashboard** (`pause_project` había fallado antes, ya hibernando). `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) — ver §1, §2 |
 | ⚪ | ~~D-8 (un EDITOR no ve nada de sus compañeros) sin probar con el cliente real~~ | **Resuelto 5-sep-2026: EDITOR real, «0 hilos» con la organización ya en conversación activa** |
 
 ---

@@ -15,7 +15,9 @@
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
     "demo:reset": "node scripts/demo-reset.mjs",
-    "demo:verdad": "node scripts/verdad-demo.mjs"
+    "demo:verdad": "node scripts/verdad-demo.mjs",
+    "demo:reset:e2e-project": "node scripts/demo-reset-e2e-project.mjs",
+    "e2e:e2e-project": "node scripts/run-e2e-against-e2e-project.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

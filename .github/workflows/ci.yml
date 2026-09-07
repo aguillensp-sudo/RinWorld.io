@@ -60,6 +60,10 @@ jobs:
     name: Playwright · puerta de las dos cuentas
     runs-on: ubuntu-latest
     needs: app
+    # Entregable 1 de Fundación V1 (entornos como código): este job corre
+    # contra el proyecto Supabase aislado (`bearingworld-e2e`), no contra
+    # producción -- ver openspec/v1/entornos.md.
+    environment: staging
     defaults:
       run:
         working-directory: app
@@ -76,11 +80,19 @@ jobs:
         run: npx playwright test
         env:
           CI: 'true'
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          # Entregable 3 de Fundación V1 (F-149): proyecto AISLADO de
+          # producción/demo, no `secrets.SUPABASE_URL`. Cierra la causa raíz
+          # de F-149 -- esta suite ya no puede resetear datos compartidos
+          # mientras una prueba manual sigue en curso contra el otro proyecto,
+          # porque ya no toca ese proyecto en absoluto.
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_E2E_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_E2E_PUBLISHABLE_KEY }}
           # Sin estas, e2e/session.spec.ts lanza un error en CI en vez de
           # saltarse la puerta: un skip silencioso reportaría verde sin haber
-          # probado lo único que el día 2 tenía que demostrar.
+          # probado lo único que el día 2 tenía que demostrar. Mismas cuentas
+          # por email/password que el proyecto principal -- Supabase Auth es
+          # por proyecto, sin colisión -- así que estos tres secretos NO
+          # cambian con el aislamiento.
           E2E_ALPHA_EMAIL: ${{ secrets.E2E_ALPHA_EMAIL }}
           E2E_ALPHA_PASSWORD: ${{ secrets.E2E_ALPHA_PASSWORD }}
           E2E_ALPHA_ORG: ${{ secrets.E2E_ALPHA_ORG }}
@@ -102,7 +114,7 @@ jobs:
           # y no puede descifrar lo sembrado, aunque el fixture sí corriera.
           #
           # Nombres de secret sin el prefijo `VITE_`, como SUPABASE_URL.
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_E2E_SERVICE_KEY }}
           VITE_DEMO_KEY_SEED: ${{ secrets.DEMO_KEY_SEED }}
       # DECISIÓN DEL PO, 12-ago: se queda como está — opción (a) de las tres que
       # había sobre la mesa. Yo recomendaba la (b), subirlo solo al fallar; el PO

@@ -17,29 +17,28 @@ distinta, no un error de este documento.
 
 | Entorno | Vercel | Supabase | Rama | Estado |
 |---|---|---|---|---|
-| Producción | Production (`bearingworld.vercel.app`) | `troxminloxkjwihwfevs` (`MVP_RinWorld.io`, eu-west-1) | `mvp/bootstrap` | ✅ Real, y desde el 6-sep con `environment: production` declarado en el *job* `deploy` de `ci.yml` |
-| Ensayo/staging | Preview deployments (automático por rama/PR, sin código nuevo) | **Pendiente** — depende del entregable 3 | PRs contra `mvp/bootstrap` | 🔴 Sin backend propio todavía. Hoy el *job* `e2e` sigue apuntando a `troxminloxkjwihwfevs`, el mismo proyecto que producción |
-| Desarrollo | Local (`vite dev`, `.env`) | Compartiría el proyecto de staging una vez exista | Cualquiera, sin CI | 🟡 Existe de facto (todo el mundo desarrolla así hoy); "como código" es solo `app/.env.example` |
+| Producción | Production (`bearingworld.vercel.app`) | `troxminloxkjwihwfevs` (`MVP_RinWorld.io`, eu-west-1) | `mvp/bootstrap` | ✅ Real, `environment: production` en el *job* `deploy` de `ci.yml` |
+| Ensayo/staging | Preview deployments (automático por rama/PR, sin código nuevo) | `bearingworld-e2e` (`ogdhyzgjjbbikjbkhxmu`, eu-west-1) | PRs contra `mvp/bootstrap` | ✅ **Real desde el 7-sep-2026** — `environment: staging` en el *job* `e2e`, secretos `SUPABASE_E2E_*`. Probado con la suite Playwright completa antes de conectarlo a CI: 53/53 |
+| Desarrollo | Local (`vite dev`, `.env`) | Comparte el proyecto de staging (`bearingworld-e2e`) vía `demo:reset:e2e-project`/`e2e:e2e-project` | Cualquiera, sin CI | 🟡 Existe de facto; "como código" es solo `app/.env.example` |
 
-**Por qué "ensayo" no tiene proyecto propio todavía, dicho sin maquillar:** el entregable
-3 (aislamiento de demo/e2e) se decidió por proyecto Supabase separado el mismo 6-sep,
-pero `create_project` chocó con un límite real de cuenta (2 proyectos Free activos ya
-existentes en la org, uno de ellos ajeno a este repo) que no se puede resolver desde
-aquí — ver `FUNDACION-V1.md` entregable 3 y `findings-register.md`. **El diseño de este
-documento asume que, cuando se resuelva, ese MISMO proyecto nuevo sirve de staging** — no
-se crea un tercer proyecto Supabase solo para "ensayo": la infraestructura se solapa con
-el diseño, que es justo el criterio que el propio Plan V1 pide para este hito.
+**Cómo se resolvió "ensayo":** el entregable 3 (aislamiento de demo/e2e) se decidió por
+proyecto Supabase separado el 6-sep; `create_project` chocó primero con un límite real de
+cuenta (2 proyectos Free activos, uno ajeno a este repo), resuelto por el PO borrando el
+ajeno. Con el cupo libre, `bearingworld-e2e` se creó, se le aplicaron las 23 migraciones,
+se sembraron cuentas+hilos, y se probó con la suite Playwright real (53/53) ANTES de
+conectar CI — no se declaró "listo" con solo las filas insertadas. **No se creó un tercer
+proyecto Supabase**: el mismo proyecto del entregable 3 sirve de staging, tal como este
+documento proponía — la infraestructura se solapa con el diseño, el criterio que el
+propio Plan V1 pide para este hito.
 
-## Qué queda por hacer cuando el entregable 3 se resuelva
+## Scripts nuevos (7-sep-2026)
 
-1. Declarar `environment: staging` en el *job* `e2e` de `ci.yml`, apuntando sus secretos
-   (`SUPABASE_URL`, `E2E_ALPHA_*`, etc.) al proyecto nuevo.
-2. Actualizar la fila de "ensayo/staging" de este documento de 🔴 a ✅, con la fecha y el
-   `project_id` real — no antes, para no repetir el error de `F-132` (declarar hecho lo
-   que no se ha comprobado).
-3. Decidir si el entorno `production` de GitHub lleva revisores obligatorios antes de que
-   el *job* `deploy` corra — es un cambio de configuración del repositorio compartido,
-   así que se pide confirmación explícita en el momento, aparte de la de este documento.
+- `app/scripts/demo-reset-e2e-project.mjs` — resiembra los cinco hilos congelados del
+  proyecto aislado (equivalente a `npm run demo:reset`, pero apuntado a
+  `SUPABASE_E2E_*` en vez de a las variables de producción).
+- `app/scripts/run-e2e-against-e2e-project.mjs` — corre `npm run e2e` con el entorno
+  sobreescrito para apuntar al proyecto aislado, sin tocar `app/.env` ni el proyecto
+  compartido. Accesibles como `npm run demo:reset:e2e-project` / `npm run e2e:e2e-project`.
 
 ## Lo que este documento NO decide
 

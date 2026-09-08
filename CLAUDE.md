@@ -226,11 +226,15 @@ dice "no tengo ese dato" en cuanto sale de ahí.
   automáticamente tras el verde de `schema`+`app`+`e2e`+`arnes`, en cada push a
   `mvp/bootstrap` — **F-091 y F-072 quedan cerrados de raíz**, ya no de proceso: un
   "cerrado" en el relevo ahora sí implica que llegó a la URL real, sin que nadie tenga
-  que acordarse de correr `vercel --prod` a mano. Usa dos secretos de GitHub nuevos,
-  `VERCEL_TOKEN` y `SUPABASE_ACCESS_TOKEN` (scopeado a la org `ujatcozvbspkycepemfq`,
-  **no** el login de la CLI de F-073 — es un token aparte, solo para CI). **Las
-  migraciones siguen sin tocarse aquí, a propósito:** este *job* no corre `supabase db
-  push`; el esquema sigue yendo por el MCP, revisado migración a migración.
+  que acordarse de correr `vercel --prod` a mano. Usa dos secretos de GitHub, con los
+  nombres reales con los que se crearon (GitHub no deja renombrar): `SUPABASE_TOKEN`
+  (scopeado a la org `ujatcozvbspkycepemfq`, **no** el login de la CLI de F-073 — es un
+  token aparte, solo para CI) y, **desde el 8-sep-2026 (F-151), `VERCEL_NEWACCOUNT_TOKEN`**
+  — cuenta y proyecto nuevos (`alvaro-7494` / `rin-world-io`), el `orgId`/`projectId`
+  van literales como `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` en el propio `ci.yml`, no por
+  `.vercel/project.json` (no se comitea). **Las migraciones siguen sin tocarse aquí, a
+  propósito:** este *job* no corre `supabase db push`; el esquema sigue yendo por el
+  MCP, revisado migración a migración.
 
 ### 10.3 El esquema — para no adivinar nombres de columna
 

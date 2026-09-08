@@ -17,7 +17,7 @@ distinta, no un error de este documento.
 
 | Entorno | Vercel | Supabase | Rama | Estado |
 |---|---|---|---|---|
-| Producción | Production (`rin-world-io.vercel.app`, proyecto `prj_ybo4kVtQJcL0ZbhrI3qhzIVe5GUP`, cuenta personal `alvaro-7494`) | `troxminloxkjwihwfevs` (`MVP_RinWorld.io`, eu-west-1) | `mvp/bootstrap` | 🟡 **8-sep-2026, cuenta y proyecto nuevos por `F-151`** (ver `ESTADO-V1.md` §5) — `bearingworld.vercel.app` y su cuenta quedan inaccesibles, sustituidos. Job `deploy` de `ci.yml` apuntado a `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` nuevos; sin confirmar todavía en una corrida real (regla 2) |
+| Producción | Production (`rin-world-io.vercel.app`, proyecto `prj_ybo4kVtQJcL0ZbhrI3qhzIVe5GUP`, cuenta personal `alvaro-7494`) | `troxminloxkjwihwfevs` (`MVP_RinWorld.io`, eu-west-1) | `mvp/bootstrap` | ✅ **8-sep-2026, `F-151` cerrado** — cuenta y proyecto nuevos (`bearingworld.vercel.app` y su cuenta quedan inaccesibles, sustituidos). Confirmado en CI real: `gh run` `34219861643`, *job* `deploy` verde, alias `https://rin-world-io.vercel.app` en `HTTP 200` |
 | Ensayo/staging | Preview deployments (automático por rama/PR, sin código nuevo) | `bearingworld-e2e` (`ogdhyzgjjbbikjbkhxmu`, eu-west-1) | PRs contra `mvp/bootstrap` | ✅ **Real desde el 7-sep-2026** — `environment: staging` en el *job* `e2e`, secretos `SUPABASE_E2E_*`. Probado con la suite Playwright completa antes de conectarlo a CI: 53/53 |
 | Desarrollo | Local (`vite dev`, `.env`) | Comparte el proyecto de staging (`bearingworld-e2e`) vía `demo:reset:e2e-project`/`e2e:e2e-project` | Cualquiera, sin CI | 🟡 Existe de facto; "como código" es solo `app/.env.example` |
 

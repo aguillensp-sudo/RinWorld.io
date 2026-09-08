@@ -124,12 +124,46 @@ dashboard.
 
 ## 5 · Lo que este documento NO decide
 
-- El id exacto del modelo Sonnet 5 en Vertex Model Garden.
-- El identificador de región multi-UE exacto a pasar al SDK.
 - Si Workload Identity Federation es viable desde Deno Deploy (Edge Functions de
   Supabase) o si la clave de servicio JSON como secreto es la vía definitiva, no solo la
   de arranque.
 
-Los tres se confirman contra la documentación oficial y la consola de GCP en el momento
-de ejecutar esto — fijarlos hoy de memoria sería exactamente el error que este proyecto
-lleva evitando desde `F-108`/`F-129`/`F-132`: declarar un estado sin haberlo comprobado.
+**8-sep-2026: los otros dos se confirmaron contra `platform.claude.com/docs/en/build-with-claude/claude-on-vertex-ai` real, no de memoria** — id de modelo `claude-sonnet-5` (sin sufijo `@fecha`, es el actual GA) y región multi-UE `region: "eu"` (endpoint `aiplatform.eu.rep.googleapis.com`, distinto del regional `europe-west*`).
+
+## 6 · Infraestructura GCP creada hoy (8-sep-2026), y dónde quedó cada paso del §1
+
+| Paso del §1 | Estado | Detalle |
+|---|---|---|
+| 1. Proyecto GCP con facturación | ✅ | `bearingworld-vera-eu` (número `828676704243`), cuenta `a.guillen.sp@gmail.com`. Facturación `014A85-69538E-B501FA` vinculada, `billingEnabled: true` |
+| 2. API de Vertex AI habilitada | ✅ | `aiplatform.googleapis.com`, confirmado con `gcloud services list --enabled` |
+| 3. Modelo Sonnet 5 de Anthropic en Model Garden | 🟡 **distinto de lo previsto** — ver §7 | No hizo falta ningún clic de habilitación: una llamada real a `rawPredict` llegó hasta la comprobación de cupo sin que Vertex se quejara de acceso al modelo. El bloqueo real es de cupo, no de Model Garden |
+| 4. Cuenta de servicio, rol mínimo | ✅ | `vera-vertex@bearingworld-vera-eu.iam.gserviceaccount.com`, `roles/aiplatform.user` únicamente — confirmado con `gcloud projects add-iam-policy-binding`, sin `Editor`/`Owner` |
+| 5. Clave JSON de la cuenta de servicio | ⬜ **sin generar, a propósito** | Mismo criterio que los tokens de Vercel/Supabase (`ESTADO-V1.md` §4, 8-sep): la genera y la sube a los secretos de Supabase el PO desde su terminal, no queda nunca en el chat |
+
+## 7 · Bloqueo nuevo, no previsto en el §1 original: cupo en cero
+
+Probado con una llamada real (`rawPredict`, `region=eu`, modelo `claude-sonnet-5`) usando el
+token de la propia cuenta del PO — no asumido, ejecutado:
+
+```
+429 RESOURCE_EXHAUSTED
+Quota exceeded for aiplatform.googleapis.com/eu_multi_region_online_prediction_requests_per_base_model
+with base model: anthropic-claude-sonnet
+```
+
+Repetido tras un par de minutos (por si era propagación de la facturación recién vinculada):
+mismo error exacto, palabra por palabra. **No es el "algunos modelos piden solicitud de
+acceso aparte" que preveía el §1 punto 3** — la llamada pasó la comprobación de acceso al
+modelo sin queja; lo que está en cero es el cupo de peticiones para `anthropic-claude-sonnet`
+en el endpoint multi-región `eu`, que en un proyecto recién creado empieza así por defecto.
+
+**Pendiente del PO, no automatizable desde aquí:** pedir el aumento de cupo en
+`https://console.cloud.google.com/iam-admin/quotas?project=bearingworld-vera-eu`, filtrando
+por `anthropic-claude-sonnet` o por el nombre del métrico de arriba. Es un formulario con
+justificación de negocio que revisa Google — no hay equivalente por `gcloud` para este tipo
+de cupo de modelo de terceros, y el tiempo de aprobación no está confirmado en la
+documentación pública consultada hoy.
+
+**No se toca `vera/index.ts` todavía**, ni con este bloqueo resuelto: el §4 (orden de corte)
+exige probar el diff contra una llamada real que SÍ responda antes de tocar producción, y
+hoy esa llamada sigue en `429`.

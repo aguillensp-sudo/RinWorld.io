@@ -212,16 +212,28 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
       - name: App a Vercel (producción)
-        # app/.vercel/project.json ya fija orgId/projectId: no hace falta
-        # `vercel link`. Mismo comando que despliegue.md documenta a mano.
+        # F-151 (8-sep): la cuenta de Vercel vieja no administraba el equipo
+        # dueño del proyecto -- cuatro tokens distintos fallaron con "User
+        # not found" antes de llegar siquiera a mirar el proyecto. Cuenta
+        # nueva (personal, `alvaro-7494`), proyecto nuevo creado por
+        # `vercel link` (no por "Import Git Repository": esa vía conecta un
+        # disparador propio de Vercel por push que habría duplicado este
+        # mismo despliegue y saltado la puerta de tests de este job).
         #
-        # ⚠ BLOQUEADO POR F-151, no por esta configuración. Tres tokens
-        # distintos (dos nombres de secreto, con y sin --scope explícito)
-        # fallaron igual: la cuenta de Vercel del PO no administra el equipo
-        # dueño de este proyecto (`team_DxbnTcPjK55GRxmJiMm4YUsp`) -- lo
-        # confirmó el propio PO, ese equipo ni le aparece en el selector.
-        # `--scope` se deja puesto porque no estorba y documenta la intención,
-        # pero no arregla un problema de acceso de cuenta.
-        run: npx vercel --prod --scope team_DxbnTcPjK55GRxmJiMm4YUsp --token="$VERCEL_TOKEN" --yes
+        # `app/.vercel/project.json` no se comitea (está en `.gitignore`,
+        # es estado local de quien enlaza) y este runner parte de un
+        # checkout limpio, así que el enlace va por las env vars que la
+        # propia CLI de Vercel documenta como alternativa a `vercel link`:
+        # VERCEL_ORG_ID y VERCEL_PROJECT_ID. Sin `--scope`: con esas dos
+        # puestas la CLI no lo necesita. Los dos IDs no son secretos --son
+        # identificadores, no credenciales-- así que van literales, igual
+        # que antes iba `team_...` literal en `--scope`.
+        #
+        # ⚠ Sin confirmar en una corrida real todavía (regla 2 de
+        # ESTADO-V1.md): esto quita la causa que F-151 documentó, pero no se
+        # declara resuelto hasta verlo verde en `gh run view`.
+        run: npx vercel --prod --token="$VERCEL_TOKEN" --yes
         env:
-          VERCEL_TOKEN: ${{ secrets.NEW_VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_NEWACCOUNT_TOKEN }}
+          VERCEL_ORG_ID: team_R5unqkZcbV5BDvmyQsS9t64x
+          VERCEL_PROJECT_ID: prj_ybo4kVtQJcL0ZbhrI3qhzIVe5GUP

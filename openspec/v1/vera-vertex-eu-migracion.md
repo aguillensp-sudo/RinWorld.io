@@ -157,13 +157,30 @@ acceso aparte" que preveía el §1 punto 3** — la llamada pasó la comprobaci�
 modelo sin queja; lo que está en cero es el cupo de peticiones para `anthropic-claude-sonnet`
 en el endpoint multi-región `eu`, que en un proyecto recién creado empieza así por defecto.
 
-**Pendiente del PO, no automatizable desde aquí:** pedir el aumento de cupo en
-`https://console.cloud.google.com/iam-admin/quotas?project=bearingworld-vera-eu`, filtrando
-por `anthropic-claude-sonnet` o por el nombre del métrico de arriba. Es un formulario con
-justificación de negocio que revisa Google — no hay equivalente por `gcloud` para este tipo
-de cupo de modelo de terceros, y el tiempo de aprobación no está confirmado en la
-documentación pública consultada hoy.
+**8-sep-2026, comprobado en la propia consola de Quotas: las tres filas del métrico de arriba
+dicen `Ajustable: No`.** El formulario genérico de "Edit Quotas" no sirve para este cupo — es
+el patrón de modelo de terceros, se desbloquea por otra vía. La vía real es la ficha del
+modelo en Model Garden
+(`console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-sonnet-5`), que
+resultó ser un **formulario de solicitud de acceso revisado por Anthropic** (no autoservicio):
+nombre/web/sede de la empresa, usuarios y casos de uso previstos, y una declaración sobre la
+Acceptable Use Policy (asesoría legal/médica/financiera o chatbot cara al consumidor — el PO
+respondió que no, VERA es B2B interno). Región elegida: `EU`, coherente con el entregable.
 
-**No se toca `vera/index.ts` todavía**, ni con este bloqueo resuelto: el §4 (orden de corte)
-exige probar el diff contra una llamada real que SÍ responda antes de tocar producción, y
-hoy esa llamada sigue en `429`.
+**El primer envío se cortó a mitad, por un bloqueo distinto y previo:** la cuenta de
+facturación `014A85-69538E-B501FA` seguía en **prueba gratuita**, y Google no deja comprar
+productos de terceros (como los modelos de Anthropic) contra crédito de prueba — "Elige una
+cuenta de facturación diferente o actualiza a una cuenta pagada". El PO actualizó la cuenta a
+pagada (confirmado con `gcloud billing accounts describe`, `open: true`) y volvió a enviar el
+formulario — la consola confirmó "Se compró Claude Sonnet 5".
+
+**10-sep-2026, comprobado con una llamada real tras la compra confirmada:** mismo `429`,
+mismo mensaje, palabra por palabra. La compra/solicitud queda enviada de verdad esta vez, pero
+**eso no es lo mismo que aprobada** — Anthropic revisa la solicitud antes de provisionar el
+cupo, y no hay dato fiable de cuánto tarda esa revisión en la documentación pública consultada.
+
+**No se toca `vera/index.ts` todavía**, ni con la facturación y la solicitud ya resueltas por
+el PO: el §4 (orden de corte) exige probar el diff contra una llamada real que SÍ responda
+antes de tocar producción, y a fecha 10-sep esa llamada sigue en `429`. Próximo paso: repetir
+la llamada de prueba cuando llegue confirmación de Anthropic, o periódicamente si no llega
+ninguna.

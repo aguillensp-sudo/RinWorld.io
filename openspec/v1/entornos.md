@@ -81,9 +81,19 @@ pasa de `ignoreCommand` a:
 ```
 
 Cualquier otra rama (PRs incluidas) sigue con el valor por defecto (`true`), así que sí
-generará su preview. Pendiente de confirmar en el dashboard: (1) que el próximo push a
-`mvp/bootstrap` no genera ninguna fila de *Source* = GitHub, y (2) que una rama/PR distinta sí
-la genera.
+generará su preview.
+
+**Confirmado en vivo (10-sep-2026), las dos direcciones:**
+1. El push del propio fix a `mvp/bootstrap` (`3ca7348`) no generó ninguna fila de *Source* =
+   GitHub en Deployments -- el `deploy` job de CI (`gh run` `34462864195`) siguió verde y
+   `rin-world-io.vercel.app` en `HTTP 200`, sin ningún build fantasma de por medio.
+2. PR de prueba (#1, `test/vercel-preview-check`) contra `mvp/bootstrap`: sí generó una
+   Preview deployment real (`rin-world-9ojsucf75-ring-world.vercel.app`, `HTTP 302` a
+   `vercel.com/sso-api` -- la protección SSO por defecto de Vercel en previews, no un error).
+   PR cerrada y rama borrada tras confirmar.
+
+Con esto, `F-151`/entregable 1 quedan completos: producción por CI, preview por Git
+integration, sin duplicar el despliegue de producción.
 
 ## Scripts nuevos (7-sep-2026)
 

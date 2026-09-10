@@ -40,12 +40,22 @@ from . import pricing
 #
 # Las 85 filas historicas llevan `-`. No se reconstruyen: «el CSV historico no se
 # recalcula» (25-ago), y `-` dice lo unico cierto, que es que no se sabe.
+#
+# ⚠ `primer_intento_limpio`, la cuarta en entrar por la misma puerta (F-152,
+# 10-sep, Dia 12). La serie 18 del harness fue la primera vez que la diferencia
+# importo para leer un resultado: `18b`-`18e` verdes al primer intento, `18a`
+# verde recien en el intento 3 tras repetir el mismo error de sintaxis dos veces
+# -- y el veredicto final («PASA») cuenta las dos corridas igual. El dato crudo
+# ya estaba (`intentos` en la fila que pasa), pero repartido en varias filas por
+# corrida, no resumido en una columna a nivel de fila. Las 143 filas historicas
+# llevan `-`, mismo criterio que `corrida`: no se recalculan aunque el dato de
+# `intentos` ya estuviera.
 COLUMNS = [
     "fecha", "tarea", "pantalla", "modelo",
     "tokens_in", "tokens_out", "coste_usd",
     "intentos", "minutos", "ficheros",
     "cache_hit_pct", "escalado_a_humano", "checks_inejecutables",
-    "corrida", "resultado",
+    "corrida", "primer_intento_limpio", "resultado",
 ]
 
 # F-033 · los tres estados de un check. `rojo` e `inejecutable` se registraban
@@ -143,8 +153,19 @@ def csv_row(rec: dict, resultado: str, fecha: str = None) -> list:
         # teclear, y una columna que llegara por otra via seria la unica que
         # podria divergir del artefacto que la corrida dejo en disco.
         rec.get("corrida") or "-",
+        _primer_intento_limpio(rec, resultado),
         resultado,
     ]
+
+
+def _primer_intento_limpio(rec: dict, resultado: str) -> str:
+    """F-152 · '-' si esta fila no es un veredicto verde (FALLA intermedio,
+    ESCALADO): "limpio o rescatado" no aplica a una corrida que no llego a
+    PASA. Si es PASA, 'si' cuando llego en el primer intento y 'no' cuando
+    hizo falta reintentar -- la distincion que la serie 18 dejo abierta."""
+    if not resultado.startswith("PASA"):
+        return "-"
+    return "si" if rec["attempt"] == 1 else "no"
 
 
 def _assert_no_commas(row: list) -> None:

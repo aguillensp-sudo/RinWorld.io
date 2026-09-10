@@ -18,7 +18,7 @@ distinta, no un error de este documento.
 | Entorno | Vercel | Supabase | Rama | Estado |
 |---|---|---|---|---|
 | Producción | Production (`rin-world-io.vercel.app`, proyecto `prj_ybo4kVtQJcL0ZbhrI3qhzIVe5GUP`, cuenta personal `alvaro-7494`) | `troxminloxkjwihwfevs` (`MVP_RinWorld.io`, eu-west-1) | `mvp/bootstrap` | ✅ **8-sep-2026, `F-151` cerrado** — cuenta y proyecto nuevos (`bearingworld.vercel.app` y su cuenta quedan inaccesibles, sustituidos). Confirmado en CI real: `gh run` `34219861643`, *job* `deploy` verde, alias `https://rin-world-io.vercel.app` en `HTTP 200` |
-| Ensayo/staging | Preview deployments (automático por rama/PR, sin código nuevo) | `bearingworld-e2e` (`ogdhyzgjjbbikjbkhxmu`, eu-west-1) | PRs contra `mvp/bootstrap` | ✅ **Real desde el 7-sep-2026** — `environment: staging` en el *job* `e2e`, secretos `SUPABASE_E2E_*`. Probado con la suite Playwright completa antes de conectarlo a CI: 53/53 |
+| Ensayo/staging | Preview deployments — 🟡 **10-sep-2026, preparado, sin activar** (ver abajo) | `bearingworld-e2e` (`ogdhyzgjjbbikjbkhxmu`, eu-west-1) | PRs contra `mvp/bootstrap` | ✅ **Supabase real desde el 7-sep-2026** — `environment: staging` en el *job* `e2e`, secretos `SUPABASE_E2E_*`. Probado con la suite Playwright completa antes de conectarlo a CI: 53/53. **Vercel: las preview URLs dejaron de existir el 8-sep** al crear el proyecto nuevo sin Git conectado (evitar duplicar el *job* `deploy`, `F-151`) |
 | Desarrollo | Local (`vite dev`, `.env`) | Comparte el proyecto de staging (`bearingworld-e2e`) vía `demo:reset:e2e-project`/`e2e:e2e-project` | Cualquiera, sin CI | 🟡 Existe de facto; "como código" es solo `app/.env.example` |
 
 **Cómo se resolvió "ensayo":** el entregable 3 (aislamiento de demo/e2e) se decidió por
@@ -30,6 +30,22 @@ conectar CI — no se declaró "listo" con solo las filas insertadas. **No se cr
 proyecto Supabase**: el mismo proyecto del entregable 3 sirve de staging, tal como este
 documento proponía — la infraestructura se solapa con el diseño, el criterio que el
 propio Plan V1 pide para este hito.
+
+## Vercel Preview deployments (10-sep-2026, preparado)
+
+Al crear el proyecto Vercel nuevo el 8-sep sin Git conectado (`F-151`) se perdió el efecto
+colateral de que cada PR generaba una URL de vista previa clicable — distinto del *job*
+`e2e`, que prueba funcionalidad contra `bearingworld-e2e` pero no deja mirar la pantalla.
+
+**Preparado, sin activar:** `app/vercel.json` lleva ahora `ignoreCommand`, que le dice a
+Vercel que se salte el *build* en `mvp/bootstrap` (nuestro *job* `deploy` de CI sigue siendo
+el único que toca producción, gateado por los tests) y que SÍ construya para cualquier otra
+rama — o sea, preview automática en PRs sin duplicar el despliegue de producción, el problema
+que causó desconectar el Git integration la primera vez.
+
+**Pendiente del PO:** reconectar el repo en Project Settings → Git del proyecto
+`rin-world-io`. Sin eso, `ignoreCommand` no tiene efecto — Vercel solo lo evalúa si hay un
+disparador de Git de por medio.
 
 ## Scripts nuevos (7-sep-2026)
 

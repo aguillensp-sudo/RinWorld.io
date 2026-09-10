@@ -103,52 +103,86 @@ runbook listo, código sin aplicar; el 2 (despliegue continuo) quedó a medias �
 
 ---
 
-**Día 10 de V1 · 8-sep-2026 · Estado: CERRADO**
+**Día 10 de V1 · 8-sep-2026 · Estado: CERRADO.** Sesión de un solo punto: `F-151`
+cerrado con cuenta y proyecto de Vercel nuevos (`alvaro-7494` / `rin-world-io`),
+verificados en CI real (`gh run` `34219861643`, los cinco *jobs* en verde incluido
+`deploy`) y con `curl` (`HTTP 200`). Entregable 2 de Fundación V1 (despliegue continuo)
+quedó cerrado del todo. El detalle completo vive en
+`git show 522b94a:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
-Sesión de un solo punto: cerrar `F-151`, el único bloqueo que dejó abierto el Día 9. El
-PO tomó la tercera vía que el propio hallazgo dejaba escrita —ni recuperar la cuenta
-original ni pedir invitación a quien administra el equipo viejo, sino cuenta y proyecto
-de Vercel nuevos— asumiendo lo que eso pierde: el dominio `bearingworld.vercel.app` y
-las variables de entorno del proyecto viejo, ninguno de los dos ya accesible para
-confirmarlo.
+---
 
-**El primer intento fue por el camino equivocado, y se detectó antes de dejarlo correr
-en serio.** El proyecto nuevo se creó con "Import Git Repository" desde el dashboard de
-Vercel, no con `vercel link`: esa vía conecta el disparador propio de Vercel por push,
-redundante con el *job* `deploy` de la CI y sin su puerta de tests. Y desplegó `main`
-(congelada en `43bb222` desde el 4-ago), no `mvp/bootstrap`, donde vive todo el trabajo
-de V1 — lo que llegó a verse en el dashboard no era el producto, era una foto de hace
-más de un mes. Detectado por la propia evidencia que el PO pegó (pantalla del
-deployment, rama `main`, commit `43bb222`), antes de tocar nada de CI. Git integration
-desconectado antes de seguir.
+**Día 11 de V1 · 8/10-sep-2026 · Estado: CERRADO**
 
-**Segundo hueco, no del PO sino de esta sesión: un token solo no iba a bastar.**
-`app/.vercel/project.json` fija `orgId`/`projectId` de un proyecto, pero ese fichero
-está en `.gitignore` desde que existe —es estado local de quien enlaza— y el *job*
-`deploy` corre sobre un checkout limpio que nunca lo tuvo. Nunca se notó porque los
-cuatro intentos de `F-151` fallaban antes, en el login. Con la cuenta nueva hacía falta
-además el `orgId`/`projectId` reales: resuelto con `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID`
-como env vars del *step* —alternativa que la propia CLI de Vercel documenta a
-`vercel link`—, sin `--scope` (ya no hace falta con las dos puestas).
+Cuatro puntos: uno bloqueado en una revisión externa y tres cerrados del todo. El
+proyecto GCP del entregable 6 se creó el mismo 8-sep, después de cerrar el Día 10
+(`eac532e`, 18:42 — el ritual no impidió seguir trabajando, regla 4); el resto —la
+solicitud de Model Garden, la serie 18, el catálogo y las Preview deployments de
+Vercel— es de hoy, 10-sep, tras un hueco de dos días sin sesión.
 
-**Cambios:** `ci.yml` quita `--scope team_DxbnTcPjK55GRxmJiMm4YUsp` (equipo muerto),
-añade `VERCEL_ORG_ID: team_R5unqkZcbV5BDvmyQsS9t64x` y
-`VERCEL_PROJECT_ID: prj_ybo4kVtQJcL0ZbhrI3qhzIVe5GUP` literales —no son secretos, son
-identificadores, igual que antes iba `team_...` literal en `--scope`— y apunta
-`VERCEL_TOKEN` al secreto `VERCEL_NEWACCOUNT_TOKEN`, creado por el PO desde su propia
-terminal y nunca pegado en el chat, la misma regla que ya regía para `SUPABASE_TOKEN`.
-Secreto muerto `NEW_VERCEL_TOKEN` (cuenta vieja) borrado. `entornos.md`, `CLAUDE.md`
-§10.2 y `findings-register.md` (`F-150`, `F-151`) actualizados para que ninguno de los
-tres siga citando la cuenta o los nombres de secreto viejos.
+**Entregable 6 (residencia UE de VERA): infraestructura GCP creada y verificada,
+bloqueada en la aprobación de Anthropic, sin fecha.** Proyecto `bearingworld-vera-eu`
+creado, facturación enlazada (primero en prueba gratuita — Google no deja comprar
+productos de terceros contra ese crédito, el PO actualizó a cuenta pagada), API
+`aiplatform.googleapis.com` habilitada, cuenta de servicio
+`vera-vertex@bearingworld-vera-eu.iam.gserviceaccount.com` con el rol mínimo
+`roles/aiplatform.user` — las cuatro piezas confirmadas hoy contra `gcloud`, no contra
+lo que se recordaba haber hecho (§1). El modelo (`claude-sonnet-5`) y la región
+multi-UE (`eu`) se confirmaron el 8-sep contra documentación viva, cerrando dos de los
+tres huecos que dejaba el runbook. **El tercer hueco resultó ser el bloqueo real:** el
+cupo de Vertex AI para modelos de terceros de Anthropic no es autoservicio —hace falta
+un formulario de Model Garden que revisa Anthropic, no Google—, y tras enviarlo (con la
+facturación ya en cuenta pagada) la llamada de prueba contra
+`aiplatform.eu.rep.googleapis.com` sigue devolviendo el mismo `429 RESOURCE_EXHAUSTED`
+en cada comprobación de hoy, la última de ellas al cierre de esta sesión. **No se toca
+`vera/index.ts`** —orden de corte del propio runbook— hasta que una llamada real
+responda. Detalle completo en `vera-vertex-eu-migracion.md`.
 
-**Verificado en CI real, no solo desplegado (regla 2):** push a `mvp/bootstrap`
-(`5532789`), `gh run` `34219861643` — los cinco *jobs* en verde, incluido `deploy`.
-Alias `https://rin-world-io.vercel.app` confirmado con `curl`, `HTTP 200`. Entregable 2
-de Fundación V1 (despliegue continuo) queda **cerrado del todo**: VERA y Vercel, los dos
-verdes en CI real, ninguno de los dos a medias.
+**Réplica de la serie 17 (harness, `MSG-01`, n=5): 5/5 en veredicto, pero no tan limpia
+como la 17 — nuevo hallazgo `F-152`.** Mismo corpus que la 17 (sin tocar desde el
+5-sep), mismo `n=5`. `18b`-`18e` salieron verdes al primer intento, igual que las cinco
+de la 17. **`18a` no:** el intento 1 rompió `C1` (typecheck, 454 errores, sintaxis
+inválida arrancando en `ThreadList.tsx:105`) y `C2`; el intento 2, con 71% de *cache
+hit* y tocando SOLO ese fichero, produjo el mismo error literal en la misma línea — el
+modelo no se autocorrigió con su propio error delante, lo repitió. Solo en el intento
+3, regenerando los CUATRO ficheros en vez de uno, salió verde. El veredicto del arnés
+(«verde en N intentos») cuenta esto como 5/5, y a ese nivel la 17 SÍ replica — pero
+«5/5» ya no significa lo mismo en las dos series: la 17 fue cinco aciertos al primer
+intento, la 18 fue cuatro aciertos al primer intento y uno rescatado por el mecanismo
+de reintento. Ver `F-152` y §6.
 
-El detalle del Día 8 completo (D-7/D-8 con el cliente real, serie 17, el guardia
-decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repite aquí.
+**Catálogo de `bearingworld-e2e` vs. producción: sin *gap*, comprobado hoy contra las
+dos bases, no contra lo que decía el entregable 3.** `select count(*), count(distinct
+org_id) from inventory_lines` da **221 filas / 6 organizaciones** en
+`troxminloxkjwihwfevs` (producción) y exactamente lo mismo en `ogdhyzgjjbbikjbkhxmu`
+(`bearingworld-e2e`) — el punto 4 de §3 del Día 10 queda cerrado sin acción: no hace
+falta replicar ningún catálogo adicional, el entregable 3 ya trajo el mismo que ve un
+socio real.
+
+**Vercel Preview deployments: reconectadas, con tres capas de fallo por debajo que no
+se veían desde el dashboard — nuevo hallazgo `F-153`, cerrado.** El PO reconectó el
+repo en Project Settings → Git, como quedó pendiente el 8-sep. (1) `Root Directory` del
+proyecto estaba en `./`, no en `app`: el Git integration nunca llegaba a leer
+`app/vercel.json` ni su `ignoreCommand`, así que cada push a `mvp/bootstrap` generaba
+un *deployment* "Ready" completo por esa vía —exactamente el despliegue duplicado que
+se había evitado desconectando Git la primera vez—, sin que producción llegara a
+romperse (`HTTP 200` verificado en cada paso). El PO corrigió `Root Directory` a `app`.
+(2) Eso rompió el propio *job* `deploy` de CI: arranca ya en `app/` por su
+`working-directory`, así que con `Root Directory=app` la CLI sumaba las dos rutas y
+buscaba `app/app` (`gh run` `34459783951`, error real). Corregido forzando ese paso a
+la raíz del repo (`d932dcb`). (3) Con las dos cosas corregidas, `ignoreCommand` SEGUÍA
+sin generar ni "Ready" ni "Ignored"/"Canceled" para `mvp/bootstrap` — ninguna fila de
+*Source*=GitHub en absoluto, solo las del *job* de CI. Contrastado contra la
+documentación oficial de Vercel (`/docs/project-configuration/git-configuration`): la
+propiedad pensada para esto es `git.deploymentEnabled`, no `ignoreCommand` (que solo
+cancela un *build* ya en marcha, y sigue gastando cupo). `app/vercel.json` pasa a
+`{"git": {"deploymentEnabled": {"mvp/bootstrap": false}}}` (`3ca7348`). **Confirmado en
+las dos direcciones, no solo desplegado:** el push del propio fix a `mvp/bootstrap` no
+generó ninguna fila de GitHub (CI verde, `gh run` `34462864195`, producción `HTTP
+200`); una PR de prueba real (#1, `test/vercel-preview-check`) SÍ generó una *Preview
+deployment* real (`rin-world-9ojsucf75-ring-world.vercel.app`, `HTTP 302` a la
+protección SSO de Vercel en *previews* — comportamiento normal, no error). PR cerrada y
+rama borrada tras confirmar. Detalle completo en `entornos.md`.
 
 ---
 
@@ -156,16 +190,18 @@ decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repi
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-08` |
-| Causa exacta de `F-151`, releída antes de tocar nada | `app/.vercel/project.json` (`orgId` con forma `team_...`) + el propio hallazgo | Confirma que el bloqueo era de acceso de cuenta, no de ningún token — coincide con lo ya escrito el 7-sep |
-| Si `app/.vercel/project.json` llega al runner de CI | `git ls-files app/.vercel/`, `.gitignore` | Vacío — no se comitea, es estado local de quien enlaza. El *job* `deploy` nunca tuvo forma de resolver el proyecto sin `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID`; hueco no visto antes porque los cuatro intentos previos de `F-151` fallaban en el login, antes de llegar aquí |
-| El primer deployment del proyecto nuevo (pantalla que pegó el PO) | Lectura directa de la pantalla: dominio, rama, commit | `main` @ `43bb222` — la rama congelada desde el 4-ago, no `mvp/bootstrap`. Viene de "Import Git Repository", que conecta el disparador propio de Vercel por push |
-| Si ese disparador seguía activo tras pedir desconectarlo | Confirmación directa del PO | Desconectado, Project Settings → Git |
-| `ci.yml` tras el cambio (sin `--scope`, con `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` literales, secreto renombrado) | `python -c "import yaml; yaml.safe_load(...)"` | YAML válido |
-| Secretos de GitHub tras el cambio | `gh secret list` antes y después de `gh secret delete NEW_VERCEL_TOKEN` | Antes: `NEW_VERCEL_TOKEN` (muerto, cuenta vieja) y `VERCEL_NEWACCOUNT_TOKEN` (nuevo, puesto por el PO desde su terminal) los dos presentes. Después: solo `VERCEL_NEWACCOUNT_TOKEN` |
-| El *job* `deploy`, primera corrida real contra la cuenta nueva | `gh run watch 34219861643` + `gh run view --json jobs` | Los cinco *jobs* en verde: `schema`, `app`, `e2e`, `arnes`, `deploy` |
-| El paso "App a Vercel (producción)" en concreto, no solo el *job* entero | `gh run view --log` sobre ese *step* | `Production https://rin-world-rejdpdrak-ring-world.vercel.app`, `▲ Aliased https://rin-world-io.vercel.app` — sin error, primera vez que este paso termina sin `"User not found"` |
-| Si la URL de producción sirve de verdad, no solo que Vercel dice que desplegó | `curl -s -o /dev/null -w "%{http_code}"` contra `https://rin-world-io.vercel.app` | `HTTP 200` |
+| Fecha de máquina | `date -u` | `2026-09-10` |
+| Proyecto GCP, facturación, API y cuenta de servicio del entregable 6 | `gcloud projects describe`, `gcloud billing projects describe`, `gcloud services list --filter=aiplatform`, `gcloud iam service-accounts list` + `get-iam-policy` — los cuatro, hoy, no recordados | Proyecto `bearingworld-vera-eu` `ACTIVE`; facturación `True` sobre `014A85-69538E-B501FA`; `aiplatform.googleapis.com` habilitada; `vera-vertex@bearingworld-vera-eu.iam.gserviceaccount.com` con `roles/aiplatform.user` |
+| Si la aprobación de Anthropic (Model Garden) ha llegado | Llamada real a `aiplatform.eu.rep.googleapis.com/.../claude-sonnet-5:rawPredict`, repetida varias veces hoy, la última al cierre | `429 RESOURCE_EXHAUSTED`, idéntico en todos los intentos — sigue bloqueado |
+| Serie 18 (réplica n=5 de la 17), corrida a corrida | `harness/metrics/MSG-01/remedicion-18{a..e}-msg-n5/*.json` + `.log`, no el resumen dado de palabra | `18b`-`18e`: verde, intento 1. `18a`: verde en intento 3, tras dos intentos con `C1`/`C2` rojo por el mismo error de sintaxis en `ThreadList.tsx:105` |
+| Catálogo de `bearingworld-e2e` vs. producción | `select count(*), count(distinct org_id) from inventory_lines` contra `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`, hoy, las dos bases | 221 filas / 6 organizaciones en las dos — sin *gap* |
+| `Root Directory` del proyecto Vercel, según lo reportó el PO desde el dashboard | Captura directa de Settings → General → Root Directory | `./` — causa confirmada de que `ignoreCommand` no se aplicaba |
+| El *job* `deploy` tras fijar `Root Directory=app` | `gh run view 34459783951 --log-failed` | Falla: `The provided path ".../app/app" does not exist` |
+| El *job* `deploy` tras forzar `working-directory` a la raíz en ese paso | `gh run view 34460245089` | Los cinco *jobs* en verde, incluido `deploy` |
+| Si `ignoreCommand` generaba alguna fila (Ready/Ignored/Canceled) para `mvp/bootstrap` tras los dos fixes anteriores | Lectura directa del dashboard de Vercel, pedida dos veces distintas | Ninguna fila de *Source*=GitHub — solo las del *job* de CI |
+| `git.deploymentEnabled` tras el cambio de mecanismo, dirección "no construir" | Push real a `mvp/bootstrap` (`3ca7348`) + `gh run` `34462864195` + `curl` a producción | CI verde, `HTTP 200`, sin *build* fantasma |
+| `git.deploymentEnabled`, dirección "sí construir" | PR de prueba real #1 (`test/vercel-preview-check`) + `curl` a la URL de preview | Preview generada, `HTTP 302` a `vercel.com/sso-api` (protección SSO por defecto, no error) |
+| Estado final del repo | `git status --short`, `git log --oneline -8` | Limpio (solo un directorio ajeno sin trackear, `openspec/design-gui/Ingles/`, de otra sesión); último commit `ee255d6`, CI verde (`gh run` `34463362519`), producción `HTTP 200` |
 
 ---
 
@@ -180,7 +216,7 @@ decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repi
 | **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
 | **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** |
 | **`F-148` con el ámbito encendido no se podía escribir nada** | ✅ **4-sep · `0023`**, aplicada y verificada contra el esquema; **5-sep, verificada contra el CLIENTE REAL** (D-7 en `Nordwälz Lager`, las tres vías de escritura) |
-| `MSG-01` a 4/4 sin reintentos | 🟢 **9 de 11 sobre el mismo corpus, con `n=5` la 17 salió 5/5** — serie 15 (n=3): 3/3; serie 16, réplica (n=3): 1/3; serie 17 (n=5, con `F-147` y `noUnusedLocals` puestos): **5/5**. Con más tiradas el marcador deja de oscilar tanto — un solo dato de `n=5`, no una prueba |
+| `MSG-01` a 4/4 sin reintentos | 🟢 **13 de 16 sobre el mismo corpus, contando solo el primer intento (así mide esta fila)** — serie 15 (n=3): 3/3; serie 16, réplica (n=3): 1/3; serie 17 (n=5): 5/5, las cinco al primer intento; serie 18, réplica de la 17 (n=5): **4 de 5 limpias al primer intento** — `18a` roja en `C1`/`C2` en los intentos 1 y 2, verde recién en el 3 (`F-152`); no cuenta como limpia para esta fila aunque el veredicto final de la corrida sea verde |
 | Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · series 15 y 16**, seis corridas. La 15 no encontró nada; **la 16 encontró `F-147`** |
 | **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — **remedido 5-sep, serie 17 (n=5): sin recurrencia en las cinco** |
 
@@ -195,9 +231,9 @@ decidido que no) vive en `git show 591ea20:openspec/v1/ESTADO-V1.md`, no se repi
 | **`create_inquiry`** (reparto de destinatarios de la CEK) | ✅ **4-sep · `0023`**, con guardia en la base (`app.guard_cek_recipients`) |
 | **`F-148` · escribir con el ámbito encendido era imposible desde `0019`** | ✅ **4-sep · `0023`** — tres piezas, sin relajar ninguna política de lectura |
 | Entregable 2 · despliegue continuo | ✅ **HECHO — 8-sep** — VERA y Vercel, los dos verdes en CI real (`gh run` `34219861643`). `F-151` cerrado: cuenta y proyecto de Vercel nuevos, ver §4/§5 |
-| Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep** — `entornos.md`, producción y ensayo/staging reales, los dos con `environment:` de GitHub |
+| Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep, Preview deployments recuperadas el 10-sep sin duplicar producción** (`F-153`) — `entornos.md`, los tres entornos con `environment:` de GitHub donde aplica |
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
-| Entregable 6 · residencia europea (VERA) | 🟡 **6-sep, runbook listo** — `vera-vertex-eu-migracion.md`, sin aplicar al código real; falta el proyecto GCP |
+| Entregable 6 · residencia europea (VERA) | 🟠 **10-sep, infraestructura GCP creada y verificada** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
 ### Corriente B · Fábrica — NO ABIERTA
 
@@ -211,41 +247,51 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-Con el entregable 2 cerrado hoy, lo que queda abierto de Fundación V1 para el Día 11 es
-exactamente lo que ya estaba pendiente el 7-sep — la sesión de hoy fue de un solo punto
-y no tocó nada de esto:
+Con el entregable 6 bloqueado en una revisión externa y el resto de los puntos
+abiertos del Día 10 cerrados hoy (§1), lo único que queda con movimiento propio es:
 
-1. **Entregable 6, con el proyecto GCP todavía por crear.** El runbook
-   (`vera-vertex-eu-migracion.md`) está listo; en cuanto exista el proyecto GCP, aplicar
-   el diff de código ahí descrito, siguiendo el orden de corte de su §4.
-2. **Decisión del PO: ¿réplica de la serie 17?** Sigue sin decidirse, solo aplazada.
-   Mismo `n=5`, mismo corpus de `MSG-01` (sin tocar desde el 5-sep). Implica gasto real
-   (~$0,34) — no se lanza sin que lo digas.
-3. **Del backlog de `§5`, sin decidir:** si el guardia de `0023` aprende a recalcular el
-   reparto ENTERO de claves en cada escritura. Ninguna prisa: está declarado, no tapado.
-4. **Del 7-sep, sin decidir:** el proyecto aislado (`bearingworld-e2e`) hoy solo tiene la
-   siembra base. Falta decidir si el catálogo completo de 200+ líneas del proyecto
-   principal (el que ve un socio real en la demo de venta) también se replica aquí, o si
-   los 221 renglones que ya trajo el entregable 3 (mismos que `SRCH-01`/`INV-01`
-   necesitan para pasar) bastan para lo que este proyecto tiene que hacer.
-5. **Nuevo, del 8-sep:** `entornos.md` describía el entorno de ensayo/staging de Vercel
-   como "Preview deployments (automático por rama/PR)" — con el proyecto nuevo SIN Git
-   conectado (a propósito, para no duplicar el *job* `deploy`, ver más abajo), eso ya no
-   ocurre. Nadie parece haber usado esas *preview URLs* de Vercel hasta donde consta en
-   este fichero, así que no bloquea nada hoy, pero **queda sin decidir** si hace falta
-   recuperarlas (Vercel permite Git conectado solo para Preview, sin tocar Production) o
-   si el *job* `e2e` contra `bearingworld-e2e` ya cubre lo que un preview daría.
+1. **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA
+   conocido.** No hay más margen técnico desde este lado — la infraestructura GCP está
+   lista y verificada (§1), el bloqueo es una revisión humana ajena al repo. Reintentar
+   la llamada de prueba cuando llegue alguna confirmación por email, o periódicamente si
+   no llega ninguna. **No tocar `vera/index.ts` hasta que responda** (orden de corte del
+   runbook).
+2. **Del backlog de `§5`, sin decidir, sin prisa:** si el guardia de `0023` aprende a
+   recalcular el reparto ENTERO de claves en cada escritura. Sigue declarado, no tapado.
+3. **`F-152`, abierto como observación, no como acción:** si el CSV/reporting debería
+   distinguir «verde al primer intento» de «verde tras reintentos» — hoy los dos cuentan
+   igual en el veredicto de la corrida, y la serie 18 es la primera vez que la diferencia
+   importa para leer un resultado.
 
-Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase), la
-pregunta de alcance del entregable 5 (`FUNDACION-V1.md`), y los worktrees (§5) —
-ninguno bloquea trabajo de ingeniería.
+Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase) y la
+pregunta de alcance del entregable 5 (`FUNDACION-V1.md`) — ninguno bloquea trabajo de
+ingeniería.
 
-### Lo que se cerró hoy (Día 10, 8-sep)
+### Lo que se cerró hoy (Día 11, 10-sep)
+
+- **Infraestructura GCP del entregable 6, creada y verificada.** Proyecto, facturación
+  (cuenta pagada), API `aiplatform.googleapis.com` y cuenta de servicio con el rol
+  mínimo — las cuatro piezas confirmadas hoy contra `gcloud`. Modelo y región multi-UE
+  confirmados contra documentación viva el 8-sep. **Bloqueado en la aprobación de
+  Anthropic (Model Garden)**, sin fecha — no es un bloqueo de este repo.
+- **Serie 18 (réplica n=5 de la 17): 5/5 en veredicto, con un matiz nuevo — `F-152`.**
+  `18b`-`18e` limpias al primer intento; `18a` verde recién al intento 3, tras repetir
+  el mismo error de sintaxis en los intentos 1 y 2.
+- **Catálogo de `bearingworld-e2e`: sin *gap* con producción, confirmado hoy contra las
+  dos bases** (221 filas / 6 organizaciones en las dos). El punto 4 del Día 10 queda
+  cerrado sin acción.
+- **Vercel Preview deployments: recuperadas, con tres causas encadenadas resueltas —
+  `F-153`.** `Root Directory` corregido a `app`; el *job* `deploy` de CI arreglado tras
+  romperse por ese mismo cambio; `ignoreCommand` reemplazado por `git.deploymentEnabled`
+  (la propiedad correcta según la documentación oficial de Vercel). Confirmado en las
+  dos direcciones con un push real y una PR de prueba real, cerrada tras confirmar.
+
+### Lo que se cerró el Día 10 (8-sep) — resumen; el detalle vive en `git show 522b94a`
 
 - **`F-151` cerrado.** Cuenta y proyecto de Vercel nuevos (`alvaro-7494` / `rin-world-io`),
   `ci.yml` apuntado con `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` literales en vez de
   `--scope`, verificado en CI real (`gh run` `34219861643`) y con `curl` (`HTTP 200`).
-- **Entregable 2 (despliegue continuo) queda cerrado del todo.** VERA y Vercel, los dos
+- **Entregable 2 (despliegue continuo) quedó cerrado del todo.** VERA y Vercel, los dos
   verdes en CI real — nada a medias, a diferencia del cierre del 7-sep.
 - **Cuenta vieja de Vercel, dada por perdida sin intentar recuperarla.** El PO tomó
   directamente la tercera vía que el propio `F-151` dejaba escrita — `bearingworld.vercel.app`
@@ -361,6 +407,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | **Ante una acción irreversible, se prueba primero la reversible** | 6-sep-2026, aplicado sin que hiciera falta pedirlo: se intentó `pause_project` sobre `motioniq-rag` antes de considerar borrarlo, aunque el PO ya había autorizado el borrado directo | Esta sesión |
 | **`F-151` se cierra con cuenta y proyecto de Vercel nuevos, no recuperando el acceso viejo** | 8-sep-2026, PO — la tercera vía que el propio hallazgo dejaba escrita, sin intentar antes las otras dos (re-login con `aguillensp-sudo`, o invitación de quien administra el equipo viejo). Coste asumido: se pierden `bearingworld.vercel.app` y las variables de entorno del proyecto viejo | `F-151`, `entornos.md` |
 | **Los tokens no se pegan en el chat, el PO los pone él mismo por su terminal** | Ya regía para `SUPABASE_TOKEN` (7-sep); aplicado también hoy a `VERCEL_NEWACCOUNT_TOKEN`. Los IDs de proyecto/organización (`orgId`, `projectId`) NO son secretos y sí se pasan en claro — son identificadores, no credenciales | Esta sesión, `ci.yml` |
+| **La cuenta de facturación de GCP pasa de prueba gratuita a pagada** | 10-sep-2026, PO. Necesario para poder solicitar acceso a modelos de terceros (Claude Sonnet 5) en Model Garden — Google no deja comprar esos productos contra crédito de prueba | `vera-vertex-eu-migracion.md` |
+| **`git.deploymentEnabled` sustituye a `ignoreCommand` para excluir `mvp/bootstrap` del disparador de Git de Vercel** | 10-sep-2026. `ignoreCommand` no generaba ni "Ready" ni "Ignored" para esa rama tras corregir `Root Directory`; la documentación oficial de Vercel señala `git.deploymentEnabled` como la propiedad pensada para esto, sin gastar cupo de *build* | `F-153`, `entornos.md`, `app/vercel.json` |
 
 ---
 
@@ -369,11 +417,10 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
-| 🟠 | **La residencia sigue siendo el entregable con reloj, pero ya con runbook.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com` — el diff de código y los pasos de GCP están en `vera-vertex-eu-migracion.md`, sin fecha puesta porque falta el proyecto GCP | Álvaro: crear el proyecto GCP |
+| 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
 | 🟡 | **Vercel sigue en plan gratuito** (ahora en la cuenta nueva, `alvaro-7494`), que prohíbe uso comercial | Álvaro: 20 $/mes |
-| 🟡 | **Nuevo, 8-sep:** con el proyecto Vercel nuevo sin Git conectado (a propósito, ver `F-151`), `entornos.md` ya no describe bien el entorno de ensayo — decía "Preview deployments automático por rama/PR" para Vercel y eso dejó de pasar. Sin decidir si hace falta recuperarlo o si `bearingworld-e2e` (staging de Supabase) ya cubre la necesidad | Sin decidir, ver §3 |
-| 🟡 | **Los worktrees: seis** (raíz + cinco), **la composición cambió por primera vez** — desapareció uno, aparecieron dos de sesiones nuevas. Quinta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
+| 🟡 | **Los worktrees: cinco** (raíz + cuatro) — bajó de seis, la composición volvió a cambiar. Sexta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
 | 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
 | 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero. **Decidido 5-sep-2026: se queda así** — el arreglo obvio no funciona (§1, §4) | Aceptado, no se escribe |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
@@ -385,6 +432,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~Entregable 3 bloqueado: cupo de proyectos Free de Supabase agotado por `motioniq-rag`, ajeno a este repo~~ | **Resuelto 7-sep-2026: el PO lo borró desde el dashboard** (`pause_project` había fallado antes, ya hibernando). `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) — ver §1, §2 |
 | ⚪ | ~~D-8 (un EDITOR no ve nada de sus compañeros) sin probar con el cliente real~~ | **Resuelto 5-sep-2026: EDITOR real, «0 hilos» con la organización ya en conversación activa** |
 | ⚪ | ~~`F-151`: el paso de Vercel del *job* `deploy` bloqueado por acceso de cuenta~~ | **Resuelto 8-sep-2026: cuenta y proyecto de Vercel nuevos, verificados en CI real (`34219861643`) y con `curl` (`HTTP 200`)** — ver §1, §2, §4 |
+| ⚪ | ~~Preview deployments de Vercel no ocurrían, proyecto nuevo sin Git conectado~~ | **Resuelto 10-sep-2026: `git.deploymentEnabled` en `app/vercel.json`, confirmado con push real y PR de prueba — `F-153`** |
 
 ---
 
@@ -398,7 +446,12 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   entre 0 y 3 sin que el corpus cambiara. **La serie 17, primera con `n=5`, dio 5 de 5** —
   un único dato no decide si `n=5` basta, pero es la serie más limpia del proyecto hasta
   hoy. Haría falta una réplica de la 17 (misma `n=5`, mismo corpus) para saber si esta vez
-  sí se sostiene, igual que se hizo con la 15 y la 16.
+  sí se sostiene, igual que se hizo con la 15 y la 16. **Réplica hecha, 10-sep (serie 18):
+  el marcador final SÍ se sostiene (5/5), pero no tan limpio como la 17** — `18a` solo
+  llegó verde en el intento 3 (`F-152`), las otras cuatro limpias al primer intento como
+  toda la 17. Si esto cuenta como «se sostiene» o como la primera señal de que `n=5`
+  necesita mirar también la tasa de reintentos, no solo el veredicto final, queda sin
+  decidir.
 - **Cuántos huecos de la familia `F-116`–`F-147` quedan.** Dieciséis en ocho días. La serie
   15 fue la primera desde `F-137` que no encontró ninguno **y la 16, sobre el corpus idéntico,
   encontró uno** — así que «una serie limpia» no significa «corpus completo», significa «esas
@@ -451,17 +504,27 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   *job* `deploy` volverá a fallar en algún push futuro sin que nadie lo note hasta que
   ocurra — el mismo patrón de fallo silencioso que ya costó semanas con la cuenta vieja
   (`F-151`), esta vez evitable si alguien lo comprueba antes de que pase.
-- **Si hace falta recuperar los *Preview deployments* de Vercel para el entorno de
-  ensayo.** Ver §3 punto 5 y §5 — no se ha decidido ni medido si `bearingworld-e2e`
-  (staging de Supabase, sin Vercel de por medio) ya cubre lo que un preview daría.
+- ~~Si hace falta recuperar los *Preview deployments* de Vercel para el entorno de
+  ensayo.~~ **Contestado el 10-sep: se recuperaron** (`git.deploymentEnabled`, `F-153`)
+  — no hizo falta decidir entre las dos opciones, se consiguieron las dos cosas:
+  `bearingworld-e2e` sigue cubriendo el *job* `e2e`, y ahora también hay preview visual
+  por PR.
 - **Si "hilos propios de e2e" sale más barato que pagar Supabase Pro para el entregable
   3.** No medido hoy — ni el coste de tocar ~52 tests e2e existentes, ni cuánto durarían
   $25/mes siendo la solución. Es la comparación que le falta a la decisión del PO en §3.
-- **Si el id de modelo y la región multi-UE de Vertex AI que cita
+- ~~Si el id de modelo y la región multi-UE de Vertex AI que cita
   `vera-vertex-eu-migracion.md` (de una búsqueda web del 6-sep) siguen vigentes el día
-  que se ejecute la migración.** El propio documento dice que hay que reconfirmarlos
-  contra la doc oficial en ese momento — aquí queda constancia de que hoy NO se
-  confirmaron contra la consola de GCP, solo contra resultados de búsqueda.
+  que se ejecute la migración.~~ **Contestado el 8-sep: sí, confirmados contra
+  `platform.claude.com/docs/en/build-with-claude/claude-on-vertex-ai` real** —
+  `claude-sonnet-5` (GA, sin sufijo de fecha) y región multi-UE `eu`
+  (`aiplatform.eu.rep.googleapis.com`). Lo que sigue sin dato es otra cosa: **cuánto va
+  a tardar Anthropic en aprobar la solicitud de Model Garden** — ninguna comprobación
+  de hoy lo acorta, ni siquiera a un rango.
+- **Si el marcador verde/rojo de una corrida del harness debería distinguir «primer
+  intento» de «verde tras reintentos».** La serie 18 es la primera vez que esta
+  distinción cambia la lectura de un resultado (`F-152`) — hoy los dos cuentan igual
+  para el veredicto final de la corrida, y no se ha decidido si el CSV/reporting
+  debería separarlos.
 
 ---
 
@@ -521,17 +584,25 @@ Orden de lectura, y el orden importa:
 8. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
 9. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
 10. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
-    Del Día 10: `F-151` (cerrado).
+    Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (observación, sin acción),
+    `F-153` (cerrado).
 
 ---
 
-*Día 10 de V1 · 8-sep-2026, cerrado a petición del PO tras dejar `F-151` resuelto y
-verificado, sin nada suelto detrás · fecha leída de la máquina (`date -u`) dos veces, al
-abrir y al cerrar · estado verificado contra `gh run` `34219861643` job a job (los cinco
-en verde, incluido `deploy`), contra el log real del paso "App a Vercel (producción)"
-(`▲ Aliased https://rin-world-io.vercel.app`, sin `"User not found"` por primera vez),
-contra `curl` a esa URL (`HTTP 200`), contra `gh secret list` antes y después de borrar
-`NEW_VERCEL_TOKEN`, y contra `python -c "import yaml; yaml.safe_load(...)"` sobre
-`ci.yml` — no contra otro documento · `git status --short` releído antes de escribir
-este pie: solo los ficheros que esta sesión tocó (`ci.yml`, `entornos.md`, `CLAUDE.md`,
-`findings-register.md`, este fichero) · Dirección Técnica, Nortex Systems*
+*Día 11 de V1 · 8/10-sep-2026, cerrado a petición del PO tras dejar el entregable 6
+bloqueado únicamente en una revisión externa de Anthropic y los otros tres puntos
+(serie 18, catálogo, Vercel Preview) cerrados del todo · fecha leída de la máquina
+(`date -u`) al cerrar: `2026-09-10` · infraestructura GCP verificada hoy contra `gcloud`
+(`projects describe`, `billing projects describe`, `services list`, `iam
+service-accounts list`/`get-iam-policy`), no contra lo recordado · bloqueo de Anthropic
+verificado con una llamada real a `aiplatform.eu.rep.googleapis.com` (`429
+RESOURCE_EXHAUSTED`, idéntico en todos los intentos de hoy) · serie 18 verificada
+fichero a fichero (`harness/metrics/MSG-01/remedicion-18{a..e}-msg-n5/*.json` y `.log`),
+no de memoria · catálogo verificado con `select count(*), count(distinct org_id) from
+inventory_lines` contra `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`, hoy · Vercel
+verificado con `gh run view` sobre `34459783951` (fallo), `34460245089` y `34462864195`
+(verdes), `curl` a producción (`HTTP 200`) y a la preview de la PR de prueba #1 (`HTTP
+302` a `vercel.com/sso-api`, protección SSO normal) — no contra otro documento ·
+`git status --short` releído antes de escribir este pie: limpio salvo
+`openspec/design-gui/Ingles/`, sin trackear y ajeno a esta sesión · Dirección Técnica,
+Nortex Systems*

@@ -1909,6 +1909,40 @@ begin;
 commit;
 
 -- -----------------------------------------------------------------------------
+-- 0026 · F-156 · "ya has consultado" no se salta para un EDITOR sin clave
+-- -----------------------------------------------------------------------------
+-- a3 es EDITOR de Alpha (ambito ya encendido desde la linea ~1433), no ha
+-- escrito nada y no tiene ninguna clave envuelta en la CONSULTA que a1 le
+-- mando a Beta sobre la linea e1000000-...-003 (bloque "create_inquiry
+-- (0014)", mas arriba). Antes de 0026, el EXISTS de create_inquiry caia bajo
+-- thread_items_select_participant (0019) y a3 no veia esa fila -- el
+-- guardia se saltaba en silencio y la consulta duplicada se habria creado.
+-- Confirmado contra un Postgres desechable antes de escribir 0026, no
+-- razonado.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_inquiry('e1000000-0000-0000-0000-000000000003',
+        repeat('cc',48), repeat('16',12),
+        jsonb_build_array(jsonb_build_object('member_id','0a000003-0000-0000-0000-000000000003',
+          'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('16',12),
+          'ephemeral_pubkey', repeat('22',32))))$$,
+    'F-156 (0026): a3 (EDITOR sin clave en la consulta previa) no puede duplicar la consulta que a1 ya mando a Beta');
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.thread_items
+          where item_type = 'CONSULTA'
+            and inventory_line_id = 'e1000000-0000-0000-0000-000000000003'
+            and sender_org_id = '11111111-1111-1111-1111-111111111111') = 1,
+    'F-156: sigue habiendo UNA sola CONSULTA de Alpha a Beta sobre esta linea -- ninguna duplicada se creo';
+  raise notice 'OK · F-156: app.org_already_inquired ve la consulta previa aunque el llamador no tenga clave en ella';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

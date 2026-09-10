@@ -124,63 +124,69 @@ completo vive en `git show c395432:openspec/v1/ESTADO-V1.md`, no se repite aquí
 
 ---
 
-**Día 12 de V1 · 10-sep-2026 · Estado: CERRADO**
+**Día 12 de V1 · 10-sep-2026 · Estado: CERRADO.** Dos puntos del backlog de `0023` §4 cerrados a petición del PO — `0024` (`F-154`, reparto exacto hacia la CONTRAPARTE) y `0025` (`F-155`, `app.thread_counterpart` `security definer`) — más `F-152` (columna `primer_intento_limpio` en el CSV del arnés). El entregable 6 se recomprobó y sigue bloqueado en Anthropic Model Garden (`429 RESOURCE_EXHAUSTED`), sin movimiento posible desde el repo. El detalle completo vive en `git show 29520f3:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
-Dos puntos del backlog que el Día 11 dejó "sin decidir, sin prisa" (§3), decididos y
-ejecutados los dos hoy a petición del PO; el entregable 6 sigue exactamente donde lo
-dejó el Día 11 — se recomprobó, no se dio por hecho.
+---
 
-**Entregable 6: recomprobado, sigue bloqueado, sin movimiento posible desde aquí.**
-Llamada real repetida contra `aiplatform.eu.rep.googleapis.com/.../claude-sonnet-5:rawPredict`
-en `bearingworld-vera-eu`: mismo `429 RESOURCE_EXHAUSTED`, mensaje idéntico letra por
-letra al del cierre del Día 11. Aparte, se confirmó que la CI del commit de cierre del
-Día 11 (`c395432`) terminó en verde (`gh run` `34464957453`, 4m12s) — quedaba pendiente
-de confirmar anoche.
+**Día 13 de V1 · 10-sep-2026 · Estado: CERRADO**
 
-**Backlog de `0023` §4 (reparto exacto de la CEK hacia la CONTRAPARTE): cerrado en
-`0024`, y con un segundo hallazgo encadenado (`F-155`) que `0024` obligó a destapar.**
-El guardia (`app.guard_cek_recipients`) solo comprobaba que no faltara nadie (V-2) y que
-no sobrara nadie DENTRO de mi propia organización (V-1) — nunca que no sobrara nadie
-hacia la CONTRAPARTE, que es justo lo que `0023` §4 dejaba escrito como hueco declarado.
-`0024` añade dos comprobaciones aditivas, sin tocar V-1/V-2 ni una línea: **`F-154`**
-(nuevo, no estaba declarado en ningún sitio) — ningún destinatario puede ser de una
-TERCERA organización ajena al intercambio, algo que ni V-1 ni V-2 miraban nunca; y el
-cierre del propio backlog — con hilo ya existente, el reparto tiene que ser subconjunto
-EXACTO de lo que `thread_public_keys(thread_id)` devuelve ahora mismo, reutilizando esa
-función como fuente de verdad en vez de reimplementar la lógica de destinatarios una
-segunda vez. Corriendo `supabase/tests/run.sh` (Docker, Postgres desechable) DESPUÉS de
-escribir `0024`, un bloque de prueba ya existente y sin tocar (`01_schema_smoke.sql`,
-"c2 asume: responde") empezó a fallar — **no por un bug de `0024`, sino porque `0024` fue
-la primera pieza en depender de que `otra` (la organización de enfrente) estuviera bien
-calculada.** `create_thread_item`/`counter_offer` la calculaban con un `SELECT` normal
-sobre `threads`, sujeto a la política de RLS que desde `0019` exige tener YA una clave
-envuelta en el hilo — y quien escribe su primer elemento en un hilo con el ámbito
-encendido no la tiene todavía, así que el `SELECT` devolvía cero filas y `otra` quedaba
-en `NULL` sin ningún error. Nunca se notó porque ni V-1 ni V-2 (0023) dependían de que
-`otra` fuera correcto con la fuerza suficiente para romper un aserto. Es la misma familia
-que `F-148`. Cerrado en `0025` con `app.thread_counterpart()`, `security definer`, mismo
-patrón que `app.resolve_thread`/`app.can_access_thread`. Detalle en `F-154`/`F-155`
-(`findings-register.md`).
+Sesión de un solo punto, respondiendo la pregunta que `F-155` dejó abierta en el
+§3/§6 del cierre del Día 12: *"¿hay OTROS `SELECT` bajo RLS con el mismo patrón
+en el resto de `app/src/lib/`, además de los dos que `0025` corrigió?"* —
+auditado, y sí: un tercero, encontrado y cerrado hoy (`F-156`). El entregable 6
+no se recomprobó — no hay ninguna señal de que el bloqueo de Anthropic haya
+cambiado desde ayer, y el foco de la sesión era otro.
 
-**`F-152` (distinguir "verde al primer intento" de "verde tras reintentos" en el CSV del
-arnés): cerrado.** Columna nueva `primer_intento_limpio` en `harness-metrics.csv`
-(`harness/core/metrics.py`) — `si`/`no` en la fila que llega a `PASA` según si `attempt`
-fue 1 o hizo falta reintentar, `-` en cualquier fila que no sea un veredicto verde (mismo
-patrón que `corrida`, F-129). Las 143 filas históricas llevan `-`: no se recalculan
-aunque el dato de `intentos` ya estuviera, por la misma regla que impidió recalcular el
-histórico al añadir `corrida`.
+**`F-156`, respondiendo la pregunta abierta de `F-155`: cerrado en `0026`.**
+Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos
+(`thread_public_keys`, `org_public_keys`, `create_thread_item`, `counter_offer`,
+`create_inquiry`) contra el criterio exacto de `F-155`: un `SELECT`/`EXISTS`
+dentro de una función `security invoker` que dependa de tener ya una clave
+envuelta. Las dos primeras ya eran `security definer` con `app.can_access_thread`
+como puerta — inmunes. `create_thread_item` y `counter_offer` quedaron limpias
+tras `0025`. `create_inquiry` no: su guardia contra duplicados —*"Ya has
+consultado esta referencia con este distribuidor"*— hace
+`exists(select 1 from thread_items where item_type='CONSULTA' and
+inventory_line_id=… and sender_org_id=app.current_org_id())`, un `SELECT`
+normal bajo `thread_items_select_participant` (`0019`). Esa política exige
+clave envuelta EN ESE ELEMENTO CONCRETO y mira al MIEMBRO que llama, no a su
+organización — y con el ámbito encendido, `org_public_keys` (`0023` §3)
+envuelve el lado propio SOLO para quien escribe y sus ADMIN. Cualquier otro
+EDITOR de la organización nunca tiene clave en ese ítem, así que el `EXISTS`
+le devuelve CERO FILAS sin error: el guardia se salta en silencio y deja pasar
+una consulta duplicada a la misma línea y al mismo distribuidor — exactamente
+lo que su propio mensaje de error dice que impide. Misma familia que
+`F-148`/`F-155`, con una vuelta de tuerca: no bloquea a un escritor legítimo,
+deja pasar una escritura que debería rechazarse.
 
-**Verificación de cierre, las dos piezas:** `supabase/tests/run.sh` completo
-(`ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`, con dos asertos nuevos para
-`F-154` y el backlog de `0023` §4, más el bloque preexistente de Q-1 que `0025` volvió a
-dejar en verde) contra un Postgres desechable, no contra producción — `0024` y `0025`
-aplicadas después por el MCP a `troxminloxkjwihwfevs` y a `bearingworld-e2e`, con
-`pg_proc` releído en producción para confirmar la firma nueva de `guard_cek_recipients`
-(4 parámetros, la de 3 ya no existe) y que `app.thread_counterpart` quedó `security
-definer`. `python -m harness.tests.test_checks` (exactamente el comando del *job* `arnes`
-de CI): 22 en verde. `get_advisors` (seguridad) en `troxminloxkjwihwfevs`: los tres avisos
-existentes, ninguno nuevo de `guard_cek_recipients` ni `thread_counterpart` — los dos
-viven en `app`, no expuestos por REST.
+**Verificado contra un Postgres desechable ANTES de escribir la migración, no
+razonado.** Con el ámbito de Alpha ya encendido (fixture existente de
+`01_schema_smoke.sql`), a1 (ADMIN) consulta una línea de Beta; desde la sesión
+de a3 (EDITOR de Alpha, no ha escrito nada, sin clave envuelta en ese ítem),
+el `EXISTS` que usa `create_inquiry` da `false`, mientras que sin RLS (como
+`postgres`) la fila existe de verdad (`true`). No se veía antes porque el
+único test de este guardia repite el MISMO miembro en las dos consultas y
+corre ANTES de que el ámbito de Alpha se encienda más adelante en el fichero
+(línea ~1433) — las dos condiciones que hacen falta para que el hueco se
+manifieste nunca coincidieron en ningún aserto.
+
+**Arreglo, mismo patrón que `app.thread_counterpart`/`app.resolve_thread`/
+`app.is_item_sender`.** Nuevo helper `app.org_already_inquired(p_line, p_org)`,
+`security definer`, misma consulta sin pasar por RLS — devuelve un booleano,
+nunca una fila de `thread_items`, así que no abre lectura, cierra el hueco.
+`create_inquiry` lo usa en vez del `EXISTS` directo; ni el mensaje de error ni
+el resto de la lógica cambian una línea.
+
+**Verificación de cierre:** `supabase/tests/run.sh` completo (`ESQUEMA VERDE` +
+`CATALOGO VERDE` + `FRESCURA VERDE`), con un test de regresión nuevo en
+`01_schema_smoke.sql` (a3 intenta duplicar la consulta de a1 a Beta, bloqueado
+con el literal exacto; se confirma que sigue habiendo UNA sola fila de
+`CONSULTA`) — `0026` aplicada después por el MCP a `troxminloxkjwihwfevs` y a
+`bearingworld-e2e`, con `pg_proc`/`pg_get_function_identity_arguments`
+releído para confirmar `app.org_already_inquired` (`prosecdef=true`) y que
+`create_inquiry` sigue `security invoker`. `get_advisors` (seguridad) en las
+dos bases: los tres avisos ya existentes desde el Día 12, ninguno nuevo —
+`org_already_inquired` vive en `app`, no expuesta por REST.
 
 ---
 
@@ -189,16 +195,13 @@ viven en `app`, no expuestos por REST.
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
 | Fecha de máquina | `date -u` | `2026-09-10` |
-| CI del cierre del Día 11 (`c395432`) | `gh run list --commit c395432` | `success`, `34464957453`, 4m12s |
-| Si la aprobación de Anthropic (Model Garden) ha llegado, recomprobado hoy | Llamada real a `aiplatform.eu.rep.googleapis.com/.../claude-sonnet-5:rawPredict` contra `bearingworld-vera-eu`, no el resultado de anoche | `429 RESOURCE_EXHAUSTED`, mismo mensaje letra por letra — sigue bloqueado |
-| El hueco declarado en `0023` §4 ("un cliente manipulado puede envolver de más hacia la CONTRAPARTE") | Lectura línea a línea de `app.guard_cek_recipients` antes de escribir SQL nuevo, no de memoria | Confirmado: V-1 solo mira intrusos en mi propia organización, V-2 solo mira que no falte un ADMIN — ninguna de las dos mira exceso hacia la contraparte, ni pertenencia a las dos organizaciones del intercambio (`F-154`, no estaba ni declarado) |
-| `0024` (el guardia recalcula el conjunto exacto) contra el esquema real | `supabase/tests/run.sh` (Docker, Postgres desechable) tras escribir la migración, no asumido en verde | Un bloque preexistente y sin tocar ("c2 asume: responde") pasó a fallar — `F-155`, ver más abajo |
-| La causa de `F-155` (`otra` en `NULL`) | `raise notice` de depuración contra un Postgres desechable en el punto exacto del fallo: `org_low_id`, `org_high_id`, `current_org_id()`, `otra`, uno a uno | `otra` = `NULL`: el `SELECT` de `create_thread_item`/`counter_offer` cae bajo `threads_select_participant` (0019), que exige ya tener una clave envuelta — y quien escribe su primer elemento no la tiene |
-| `0025` (helper `security definer`) contra el esquema real | `supabase/tests/run.sh` completo, de nuevo, con los dos test nuevos de `F-154`/backlog de `0023` §4 añadidos a `01_schema_smoke.sql` | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`; los dos test nuevos disparan señalando exactamente al miembro esperado (`b1` en el de tercera organización, `c3` en el de exceso hacia la contraparte) |
-| `0024`/`0025` aplicadas a producción y a `bearingworld-e2e` | `pg_proc`/`pg_get_function_identity_arguments` releído después por el MCP, no asumido por el `{"success":true}` de `apply_migration` | `guard_cek_recipients` con 4 parámetros (la firma de 3 ya no existe); `thread_counterpart` presente, `prosecdef=true` — en las dos bases |
-| Avisos de seguridad nuevos tras `0024`/`0025` | `get_advisors(type=security)` en `troxminloxkjwihwfevs` | Los tres avisos ya existentes (search_path de dos funciones de demo, `org_public_keys`/`thread_public_keys` ejecutables por `authenticated`, password protection); ninguno nuevo — `guard_cek_recipients`/`thread_counterpart` viven en `app`, no expuestos por REST |
-| El *job* `arnes` de CI (`F-152`) | `python -m harness.tests.test_checks`, el comando exacto del *job* | 22 en verde |
-| Las 143 filas históricas de `harness-metrics.csv` tras insertar la columna nueva | Script que cuenta comas por fila antes de tocar nada — el contrato exige cero comas por campo | 143 de 143 con el recuento esperado; columna `primer_intento_limpio` insertada con `-` en las 143, sin recalcular ninguna |
+| La pregunta abierta de `F-155`: ¿hay otros `SELECT`/`EXISTS` bajo RLS con el mismo patrón en `app/src/lib/`? | Lectura completa de `keys.ts` y `thread-detail.ts`, más `grep` de `.rpc(` y `.from('threads'\|'thread_items'\|'thread_item_keys')` en todo `app/src` | Cinco llamadas RPC relevantes (`thread_public_keys`, `org_public_keys`, `create_thread_item`, `counter_offer`, `create_inquiry`); las dos primeras ya `security definer` con `can_access_thread` como puerta — inmunes; las otras tres revisadas línea a línea contra las migraciones vigentes tras `0025` |
+| Sospecha sobre el guardia "ya has consultado" de `create_inquiry` | Lectura de `0019` (política) + `0023` §3 (`org_public_keys` con el ámbito encendido solo envuelve a quien escribe + ADMIN) | Hipótesis formada antes de tocar código: el mismo patrón de `F-148`/`F-155` debería aplicar |
+| La hipótesis, contra un Postgres desechable (bloque de depuración temporal en `01_schema_smoke.sql`, borrado después de confirmar) | `supabase/tests/run.sh`, sesión de a3 (EDITOR de Alpha, sin clave en el ítem de la consulta previa de a1) | `EXISTS` de `create_inquiry` devuelve `false`; sin RLS (como `postgres`) la fila existe de verdad (`true`) — confirmado `F-156` |
+| `0026` (helper `security definer` + `create_inquiry` actualizado) contra el esquema real | `supabase/tests/run.sh` completo, con el test de regresión nuevo (a3 intenta duplicar) | `ESQUEMA VERDE`; bloqueado con el literal exacto (`Ya has consultado esta referencia con este distribuidor.`), una sola fila de `CONSULTA` tras el intento |
+| `0026` aplicada a producción y a `bearingworld-e2e` | `pg_proc`/`pg_get_function_identity_arguments` releído después por el MCP, no asumido por el `{"success":true}` de `apply_migration` | `app.org_already_inquired` presente, `prosecdef=true`; `create_inquiry` sigue `security invoker` — en las dos bases |
+| Avisos de seguridad nuevos tras `0026` | `get_advisors(type=security)` en `troxminloxkjwihwfevs` y `bearingworld-e2e` | Los tres avisos ya existentes desde el Día 12 (search_path de dos funciones de demo, `org_public_keys`/`thread_public_keys` ejecutables por `authenticated`, password protection); ninguno nuevo — `org_already_inquired` vive en `app`, no expuesta por REST |
+| Entregable 6 (residencia UE, bloqueo de Anthropic) | NO recomprobado hoy — el foco de la sesión fue la auditoría de `F-155`, sin ninguna señal de que el bloqueo haya cambiado desde ayer | Sigue como lo dejó el Día 12 (`429 RESOURCE_EXHAUSTED`), sin verificar hoy |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -245,25 +248,36 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-Con el entregable 6 bloqueado en una revisión externa y las dos piezas del backlog del
-Día 11 cerradas hoy (§1), lo único que queda con movimiento propio es:
+Con la pregunta que dejó abierta `F-155` contestada hoy (`F-156`, cerrado) y el
+entregable 6 sin ningún movimiento posible desde este lado, no queda ningún punto con
+acción propia pendiente en el repo:
 
 1. **Entregable 6: seguir esperando la aprobación de Anthropic (Model Garden), sin ETA
-   conocido.** No hay más margen técnico desde este lado — recomprobado hoy, mismo `429`
-   letra por letra. Reintentar la llamada de prueba cuando llegue alguna confirmación por
-   email, o periódicamente si no llega ninguna. **No tocar `vera/index.ts` hasta que
-   responda** (orden de corte del runbook).
-2. **`F-155`, el hallazgo que salió al cerrar el backlog de hoy, deja una pregunta
-   abierta:** ¿hay OTROS `SELECT` bajo RLS de `threads`/`thread_items` en el código que
-   asuman en silencio que quien llama ya tiene una clave envuelta, además de los dos que
-   `0025` corrigió? No se ha auditado el resto de `keys.ts`/`thread-detail.ts` con esa
-   pregunta concreta — ver §6.
+   conocido.** No recomprobado hoy — el foco de la sesión era la auditoría de `F-155`, y
+   no hay ninguna señal de que el bloqueo haya cambiado desde el `429` del Día 12.
+   Reintentar la llamada de prueba cuando llegue alguna confirmación por email, o
+   periódicamente si no llega ninguna. **No tocar `vera/index.ts` hasta que responda**
+   (orden de corte del runbook).
 
 Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase) y la
 pregunta de alcance del entregable 5 (`FUNDACION-V1.md`) — ninguno bloquea trabajo de
 ingeniería.
 
-### Lo que se cerró hoy (Día 12, 10-sep)
+### Lo que se cerró hoy (Día 13, 10-sep)
+
+- **`F-156` (nuevo, respondiendo la pregunta abierta de `F-155`): cerrado en `0026`.**
+  El guardia "ya has consultado esta referencia con este distribuidor" de
+  `create_inquiry` se saltaba en silencio para cualquier EDITOR de la organización que
+  no fuera quien escribió la consulta original ni un ADMIN — permitiendo duplicar una
+  consulta a la misma línea y al mismo distribuidor. Nuevo helper
+  `app.org_already_inquired`, `security definer`, mismo patrón que
+  `app.thread_counterpart`/`app.resolve_thread`/`app.is_item_sender`.
+- **Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos contra
+  el criterio de `F-155`.** Solo `create_inquiry` tenía el hueco; las otras cuatro ya
+  estaban limpias (dos `security definer` desde `0012`/`0023`, dos arregladas en
+  `0025`).
+
+### Lo que se cerró el Día 12 (10-sep)
 
 - **Entregable 6: recomprobado, sigue bloqueado.** Mismo `429 RESOURCE_EXHAUSTED`, sin
   movimiento posible desde este repo. CI del cierre del Día 11 confirmada en verde.
@@ -417,6 +431,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | **El guardia de la CEK recalcula el conjunto exacto en vez de solo comprobar "no falta nadie"** | 10-sep-2026, PO — decisión ejecutada el mismo día que se tomó (Día 12). Reutiliza `thread_public_keys` como fuente de verdad en vez de reimplementar la lógica de destinatarios una segunda vez; con hilo existente, `p_keys` tiene que ser subconjunto exacto de lo que esa función devuelve | `0024`, `F-154`, `findings-register.md` |
 | **Un `SELECT` bajo RLS que depende de `thread_item_keys` no sirve dentro de una función `security invoker` que un participante SIN clave todavía tiene que poder llamar** | 10-sep-2026, `F-155`. Mismo principio que `F-148` (0023 §4bis): la lectura derivada de si ya tienes clave no puede ser condición para la escritura que te la daría. La solución es siempre un helper `security definer` (`can_access_thread`, `resolve_thread`, y ahora `thread_counterpart`), nunca relajar la política de lectura | `0025`, `F-155` |
 | **El CSV histórico del arnés no se recalcula, ni cuando el dato ya estaba** (repetido) | 10-sep-2026, aplicado a `primer_intento_limpio` (F-152) igual que a `corrida` (F-129) — aunque `intentos` ya bastaba para derivarlo en las 143 filas viejas, se escribe `-` y no se reconstruye | `harness/core/metrics.py`, F-129, F-152 |
+| **Un guardia que decide con un `SELECT`/`EXISTS` bajo RLS puede saltarse en silencio, no solo bloquear a quien escribe** | 10-sep-2026 (Día 13), `F-156`. Misma causa que `F-148`/`F-155` (política de SELECT derivada de `thread_item_keys` dentro de una función `security invoker`), pero con un efecto nuevo: en vez de romper la escritura de quien llama, deja pasar algo que el guardia debía impedir. Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos contra este criterio; ninguna otra tenía el hueco | `0026`, `F-156`, `findings-register.md` |
 
 ---
 
@@ -431,7 +446,6 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | 🟡 | **Los worktrees: cinco** (raíz + cuatro) — bajó de seis, la composición volvió a cambiar. Sexta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
 | 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero. **Decidido 5-sep-2026: se queda así** — el arreglo obvio no funciona (§1, §4) | Aceptado, no se escribe |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
-| 🟡 | **`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?** `0025` corrigió los dos que se encontraron (`otra` en `create_thread_item`/`counter_offer`), pero no se ha auditado el resto de `keys.ts`/`thread-detail.ts` con esa pregunta concreta como criterio | Sin decidir — ver §3 |
 | ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
 | ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |
 | ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
@@ -443,6 +457,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~Preview deployments de Vercel no ocurrían, proyecto nuevo sin Git conectado~~ | **Resuelto 10-sep-2026: `git.deploymentEnabled` en `app/vercel.json`, confirmado con push real y PR de prueba — `F-153`** |
 | ⚪ | ~~Un cliente manipulado puede envolver de más hacia la CONTRAPARTE (backlog de `0023` §4)~~ | **Resuelto 10-sep-2026: `0024`, el guardia recalcula el conjunto exacto vía `thread_public_keys`. De paso salió `F-154` (tercera organización) y `F-155` (helper `security definer` para `otra`, en `0025`)** |
 | ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
+| ⚪ | ~~`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?~~ | **Resuelto 10-sep-2026 (Día 13): sí, un tercero — el guardia "ya has consultado" de `create_inquiry`, cerrado en `0026` (`F-156`). Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos; ninguna otra tenía el hueco** |
 
 ---
 
@@ -534,12 +549,23 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   intento» de «verde tras reintentos».~~ **Contestado el 10-sep-2026 (Día 12): sí** —
   columna `primer_intento_limpio` en `harness-metrics.csv`, `si`/`no` en la fila que
   llega a `PASA`, `-` en cualquier otra. Las 143 filas históricas no se recalculan.
-- **Si quedan otros `SELECT` bajo RLS, en funciones `security invoker`, que asuman en
-  silencio que quien llama ya tiene una clave envuelta en el hilo.** `F-155` (10-sep)
-  encontró dos —`otra` en `create_thread_item` y en `counter_offer`— corregidos en
-  `0025` con `app.thread_counterpart()`. No se ha revisado el resto de `app/src/lib/`
-  con esa pregunta concreta como criterio; puede haber más, o puede que estos dos
-  fueran los únicos que dependían de `otra` con la fuerza suficiente para romper algo.
+- ~~Si quedan otros `SELECT` bajo RLS, en funciones `security invoker`, que asuman en
+  silencio que quien llama ya tiene una clave envuelta en el hilo.~~ **Contestado el
+  10-sep-2026 (Día 13): sí, un tercero.** Auditadas las cinco llamadas RPC de
+  `app/src/lib/` que tocan claves o hilos (`thread_public_keys`, `org_public_keys`,
+  `create_thread_item`, `counter_offer`, `create_inquiry`) contra el criterio exacto:
+  las dos primeras ya eran `security definer` con `can_access_thread` como puerta —
+  inmunes; `create_thread_item`/`counter_offer` ya limpias tras `0025`; `create_inquiry`
+  tenía el hueco en su guardia "ya has consultado" — cerrado en `0026` (`F-156`),
+  verificado contra un Postgres desechable ANTES de escribir la migración. **Lo que
+  esto NO cubre:** no se ha revisado ningún trigger ni función `app.*` que ningún RPC
+  de `app/src/lib/` invoque directamente hoy (`app.validate_thread_item`, `app.check_
+  thread_rate_limit`, `app.guard_thread_state`…), ni la función Edge `vera/index.ts` —
+  fuera de alcance de la pregunta original de `F-155`, que hablaba de `app/src/lib/`.
+- **Si el mismo patrón vive en algún trigger o función `app.*` interna que corre en
+  cada escritura sin que ningún RPC del cliente lo invoque por su cuenta.** No auditado
+  hoy con este criterio concreto — la sesión se acotó a lo que llama `app/src/lib/`,
+  que es lo que pedía la pregunta original de `F-155`.
 
 ---
 
@@ -600,24 +626,31 @@ Orden de lectura, y el orden importa:
 9. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
 10. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
     Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
-    (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`).
+    (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
+    Día 13: `F-156` (cerrado, `0026`).
 
 ---
 
-*Día 12 de V1 · 10-sep-2026, cerrado a petición del PO tras cerrar las dos piezas del
-backlog que el Día 11 dejó abiertas y recomprobar que el entregable 6 sigue bloqueado ·
-fecha leída de la máquina (`date -u`) al cerrar: `2026-09-10` · bloqueo de Anthropic
-recomprobado con una llamada real a `aiplatform.eu.rep.googleapis.com` (`429
-RESOURCE_EXHAUSTED`, idéntico letra por letra al del cierre del Día 11) · CI del cierre
-del Día 11 confirmada en verde (`gh run` `34464957453`) · `0024` y `0025` verificadas
-contra un Postgres desechable (`supabase/tests/run.sh`, Docker) antes de tocar
-producción, con dos asertos nuevos que disparan señalando exactamente al miembro
-esperado — no solo "sigue en verde" — y aplicadas después a `troxminloxkjwihwfevs` y
-`bearingworld-e2e` por el MCP, con `pg_proc` releído para confirmar las firmas nuevas ·
-`get_advisors` (seguridad) sin avisos nuevos · `python -m harness.tests.test_checks`
-(el comando exacto del *job* `arnes`): 22 en verde · columna `primer_intento_limpio` de
-`harness-metrics.csv` verificada fila a fila contra el recuento de comas antes de
-escribir, no asumida — 143 de 143 · `git status --short` releído antes de escribir este
-pie: cinco ficheros modificados y dos migraciones nuevas, listos para commitear, más
-`openspec/design-gui/Ingles/`, sin trackear y ajeno a esta sesión (sin cambios desde el
-Día 11) · Dirección Técnica, Nortex Systems*
+*Día 13 de V1 · 10-sep-2026, cerrado tras responder la pregunta que `F-155` dejó
+abierta el Día 12 y cerrar el hallazgo que salió de auditarla · fecha leída de la
+máquina (`date -u`) al cerrar: `2026-09-10` · auditadas las cinco llamadas RPC de
+`app/src/lib/` que tocan claves o hilos (`thread_public_keys`, `org_public_keys`,
+`create_thread_item`, `counter_offer`, `create_inquiry`) contra el criterio exacto de
+`F-155` — un `SELECT`/`EXISTS` bajo RLS derivado de `thread_item_keys` dentro de una
+función `security invoker` · `F-156` encontrado en el guardia "ya has consultado" de
+`create_inquiry`, confirmado contra un Postgres desechable ANTES de escribir la
+migración (el `EXISTS` da `false` desde la sesión de un EDITOR sin clave en el ítem,
+`true` sin RLS) · `0026` verificada con `supabase/tests/run.sh` completo (`ESQUEMA
+VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`), con un test de regresión nuevo que
+bloquea con el literal exacto y confirma que sigue habiendo una sola fila — y aplicada
+después a `troxminloxkjwihwfevs` y `bearingworld-e2e` por el MCP, con `pg_proc`/
+`pg_get_function_identity_arguments` releído para confirmar `app.org_already_inquired`
+(`security definer`) y que `create_inquiry` sigue `security invoker` · `get_advisors`
+(seguridad), en las dos bases: los tres avisos ya existentes desde el Día 12, ninguno
+nuevo · entregable 6 NO recomprobado hoy, a propósito — sigue como lo dejó el Día 12,
+sin ninguna señal de que el bloqueo de Anthropic haya cambiado · `git status --short`
+releído antes de escribir este pie: tres ficheros modificados
+(`findings-register.md`, `ESTADO-V1.md`, `01_schema_smoke.sql`) y una migración nueva
+sin trackear (`0026`), listos para commitear, más `openspec/design-gui/Ingles/`, sin
+trackear y ajena a esta sesión (sin cambios desde el Día 11) · Dirección Técnica,
+Nortex Systems*

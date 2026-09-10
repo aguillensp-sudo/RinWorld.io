@@ -112,77 +112,75 @@ quedó cerrado del todo. El detalle completo vive en
 
 ---
 
-**Día 11 de V1 · 8/10-sep-2026 · Estado: CERRADO**
+**Día 11 de V1 · 8/10-sep-2026 · Estado: CERRADO.** Cuatro puntos: uno bloqueado en una
+revisión externa (entregable 6, GCP listo, Anthropic/Model Garden sin aprobar, `429
+RESOURCE_EXHAUSTED`) y tres cerrados del todo — serie 18 de `MSG-01` (5/5 en veredicto,
+pero `18a` solo verde al intento 3 tras repetir el mismo error de sintaxis dos veces,
+`F-152`, cerrado el Día 12), catálogo de `bearingworld-e2e` sin *gap* con producción
+(221 filas / 6 organizaciones en las dos bases), y Vercel Preview deployments
+recuperadas con tres causas encadenadas resueltas (`Root Directory`, el *job* `deploy`
+de CI, y `git.deploymentEnabled` en vez de `ignoreCommand`, `F-153`). El detalle
+completo vive en `git show c395432:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
-Cuatro puntos: uno bloqueado en una revisión externa y tres cerrados del todo. El
-proyecto GCP del entregable 6 se creó el mismo 8-sep, después de cerrar el Día 10
-(`eac532e`, 18:42 — el ritual no impidió seguir trabajando, regla 4); el resto —la
-solicitud de Model Garden, la serie 18, el catálogo y las Preview deployments de
-Vercel— es de hoy, 10-sep, tras un hueco de dos días sin sesión.
+---
 
-**Entregable 6 (residencia UE de VERA): infraestructura GCP creada y verificada,
-bloqueada en la aprobación de Anthropic, sin fecha.** Proyecto `bearingworld-vera-eu`
-creado, facturación enlazada (primero en prueba gratuita — Google no deja comprar
-productos de terceros contra ese crédito, el PO actualizó a cuenta pagada), API
-`aiplatform.googleapis.com` habilitada, cuenta de servicio
-`vera-vertex@bearingworld-vera-eu.iam.gserviceaccount.com` con el rol mínimo
-`roles/aiplatform.user` — las cuatro piezas confirmadas hoy contra `gcloud`, no contra
-lo que se recordaba haber hecho (§1). El modelo (`claude-sonnet-5`) y la región
-multi-UE (`eu`) se confirmaron el 8-sep contra documentación viva, cerrando dos de los
-tres huecos que dejaba el runbook. **El tercer hueco resultó ser el bloqueo real:** el
-cupo de Vertex AI para modelos de terceros de Anthropic no es autoservicio —hace falta
-un formulario de Model Garden que revisa Anthropic, no Google—, y tras enviarlo (con la
-facturación ya en cuenta pagada) la llamada de prueba contra
-`aiplatform.eu.rep.googleapis.com` sigue devolviendo el mismo `429 RESOURCE_EXHAUSTED`
-en cada comprobación de hoy, la última de ellas al cierre de esta sesión. **No se toca
-`vera/index.ts`** —orden de corte del propio runbook— hasta que una llamada real
-responda. Detalle completo en `vera-vertex-eu-migracion.md`.
+**Día 12 de V1 · 10-sep-2026 · Estado: CERRADO**
 
-**Réplica de la serie 17 (harness, `MSG-01`, n=5): 5/5 en veredicto, pero no tan limpia
-como la 17 — nuevo hallazgo `F-152`.** Mismo corpus que la 17 (sin tocar desde el
-5-sep), mismo `n=5`. `18b`-`18e` salieron verdes al primer intento, igual que las cinco
-de la 17. **`18a` no:** el intento 1 rompió `C1` (typecheck, 454 errores, sintaxis
-inválida arrancando en `ThreadList.tsx:105`) y `C2`; el intento 2, con 71% de *cache
-hit* y tocando SOLO ese fichero, produjo el mismo error literal en la misma línea — el
-modelo no se autocorrigió con su propio error delante, lo repitió. Solo en el intento
-3, regenerando los CUATRO ficheros en vez de uno, salió verde. El veredicto del arnés
-(«verde en N intentos») cuenta esto como 5/5, y a ese nivel la 17 SÍ replica — pero
-«5/5» ya no significa lo mismo en las dos series: la 17 fue cinco aciertos al primer
-intento, la 18 fue cuatro aciertos al primer intento y uno rescatado por el mecanismo
-de reintento. Ver `F-152` y §6.
+Dos puntos del backlog que el Día 11 dejó "sin decidir, sin prisa" (§3), decididos y
+ejecutados los dos hoy a petición del PO; el entregable 6 sigue exactamente donde lo
+dejó el Día 11 — se recomprobó, no se dio por hecho.
 
-**Catálogo de `bearingworld-e2e` vs. producción: sin *gap*, comprobado hoy contra las
-dos bases, no contra lo que decía el entregable 3.** `select count(*), count(distinct
-org_id) from inventory_lines` da **221 filas / 6 organizaciones** en
-`troxminloxkjwihwfevs` (producción) y exactamente lo mismo en `ogdhyzgjjbbikjbkhxmu`
-(`bearingworld-e2e`) — el punto 4 de §3 del Día 10 queda cerrado sin acción: no hace
-falta replicar ningún catálogo adicional, el entregable 3 ya trajo el mismo que ve un
-socio real.
+**Entregable 6: recomprobado, sigue bloqueado, sin movimiento posible desde aquí.**
+Llamada real repetida contra `aiplatform.eu.rep.googleapis.com/.../claude-sonnet-5:rawPredict`
+en `bearingworld-vera-eu`: mismo `429 RESOURCE_EXHAUSTED`, mensaje idéntico letra por
+letra al del cierre del Día 11. Aparte, se confirmó que la CI del commit de cierre del
+Día 11 (`c395432`) terminó en verde (`gh run` `34464957453`, 4m12s) — quedaba pendiente
+de confirmar anoche.
 
-**Vercel Preview deployments: reconectadas, con tres capas de fallo por debajo que no
-se veían desde el dashboard — nuevo hallazgo `F-153`, cerrado.** El PO reconectó el
-repo en Project Settings → Git, como quedó pendiente el 8-sep. (1) `Root Directory` del
-proyecto estaba en `./`, no en `app`: el Git integration nunca llegaba a leer
-`app/vercel.json` ni su `ignoreCommand`, así que cada push a `mvp/bootstrap` generaba
-un *deployment* "Ready" completo por esa vía —exactamente el despliegue duplicado que
-se había evitado desconectando Git la primera vez—, sin que producción llegara a
-romperse (`HTTP 200` verificado en cada paso). El PO corrigió `Root Directory` a `app`.
-(2) Eso rompió el propio *job* `deploy` de CI: arranca ya en `app/` por su
-`working-directory`, así que con `Root Directory=app` la CLI sumaba las dos rutas y
-buscaba `app/app` (`gh run` `34459783951`, error real). Corregido forzando ese paso a
-la raíz del repo (`d932dcb`). (3) Con las dos cosas corregidas, `ignoreCommand` SEGUÍA
-sin generar ni "Ready" ni "Ignored"/"Canceled" para `mvp/bootstrap` — ninguna fila de
-*Source*=GitHub en absoluto, solo las del *job* de CI. Contrastado contra la
-documentación oficial de Vercel (`/docs/project-configuration/git-configuration`): la
-propiedad pensada para esto es `git.deploymentEnabled`, no `ignoreCommand` (que solo
-cancela un *build* ya en marcha, y sigue gastando cupo). `app/vercel.json` pasa a
-`{"git": {"deploymentEnabled": {"mvp/bootstrap": false}}}` (`3ca7348`). **Confirmado en
-las dos direcciones, no solo desplegado:** el push del propio fix a `mvp/bootstrap` no
-generó ninguna fila de GitHub (CI verde, `gh run` `34462864195`, producción `HTTP
-200`); una PR de prueba real (#1, `test/vercel-preview-check`) SÍ generó una *Preview
-deployment* real (`rin-world-9ojsucf75-ring-world.vercel.app`, `HTTP 302` a la
-protección SSO de Vercel en *previews* — comportamiento normal, no error). PR cerrada y
-rama borrada tras confirmar. Detalle completo en `entornos.md`.
+**Backlog de `0023` §4 (reparto exacto de la CEK hacia la CONTRAPARTE): cerrado en
+`0024`, y con un segundo hallazgo encadenado (`F-155`) que `0024` obligó a destapar.**
+El guardia (`app.guard_cek_recipients`) solo comprobaba que no faltara nadie (V-2) y que
+no sobrara nadie DENTRO de mi propia organización (V-1) — nunca que no sobrara nadie
+hacia la CONTRAPARTE, que es justo lo que `0023` §4 dejaba escrito como hueco declarado.
+`0024` añade dos comprobaciones aditivas, sin tocar V-1/V-2 ni una línea: **`F-154`**
+(nuevo, no estaba declarado en ningún sitio) — ningún destinatario puede ser de una
+TERCERA organización ajena al intercambio, algo que ni V-1 ni V-2 miraban nunca; y el
+cierre del propio backlog — con hilo ya existente, el reparto tiene que ser subconjunto
+EXACTO de lo que `thread_public_keys(thread_id)` devuelve ahora mismo, reutilizando esa
+función como fuente de verdad en vez de reimplementar la lógica de destinatarios una
+segunda vez. Corriendo `supabase/tests/run.sh` (Docker, Postgres desechable) DESPUÉS de
+escribir `0024`, un bloque de prueba ya existente y sin tocar (`01_schema_smoke.sql`,
+"c2 asume: responde") empezó a fallar — **no por un bug de `0024`, sino porque `0024` fue
+la primera pieza en depender de que `otra` (la organización de enfrente) estuviera bien
+calculada.** `create_thread_item`/`counter_offer` la calculaban con un `SELECT` normal
+sobre `threads`, sujeto a la política de RLS que desde `0019` exige tener YA una clave
+envuelta en el hilo — y quien escribe su primer elemento en un hilo con el ámbito
+encendido no la tiene todavía, así que el `SELECT` devolvía cero filas y `otra` quedaba
+en `NULL` sin ningún error. Nunca se notó porque ni V-1 ni V-2 (0023) dependían de que
+`otra` fuera correcto con la fuerza suficiente para romper un aserto. Es la misma familia
+que `F-148`. Cerrado en `0025` con `app.thread_counterpart()`, `security definer`, mismo
+patrón que `app.resolve_thread`/`app.can_access_thread`. Detalle en `F-154`/`F-155`
+(`findings-register.md`).
+
+**`F-152` (distinguir "verde al primer intento" de "verde tras reintentos" en el CSV del
+arnés): cerrado.** Columna nueva `primer_intento_limpio` en `harness-metrics.csv`
+(`harness/core/metrics.py`) — `si`/`no` en la fila que llega a `PASA` según si `attempt`
+fue 1 o hizo falta reintentar, `-` en cualquier fila que no sea un veredicto verde (mismo
+patrón que `corrida`, F-129). Las 143 filas históricas llevan `-`: no se recalculan
+aunque el dato de `intentos` ya estuviera, por la misma regla que impidió recalcular el
+histórico al añadir `corrida`.
+
+**Verificación de cierre, las dos piezas:** `supabase/tests/run.sh` completo
+(`ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`, con dos asertos nuevos para
+`F-154` y el backlog de `0023` §4, más el bloque preexistente de Q-1 que `0025` volvió a
+dejar en verde) contra un Postgres desechable, no contra producción — `0024` y `0025`
+aplicadas después por el MCP a `troxminloxkjwihwfevs` y a `bearingworld-e2e`, con
+`pg_proc` releído en producción para confirmar la firma nueva de `guard_cek_recipients`
+(4 parámetros, la de 3 ya no existe) y que `app.thread_counterpart` quedó `security
+definer`. `python -m harness.tests.test_checks` (exactamente el comando del *job* `arnes`
+de CI): 22 en verde. `get_advisors` (seguridad) en `troxminloxkjwihwfevs`: los tres avisos
+existentes, ninguno nuevo de `guard_cek_recipients` ni `thread_counterpart` — los dos
+viven en `app`, no expuestos por REST.
 
 ---
 
@@ -191,17 +189,17 @@ rama borrada tras confirmar. Detalle completo en `entornos.md`.
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
 | Fecha de máquina | `date -u` | `2026-09-10` |
-| Proyecto GCP, facturación, API y cuenta de servicio del entregable 6 | `gcloud projects describe`, `gcloud billing projects describe`, `gcloud services list --filter=aiplatform`, `gcloud iam service-accounts list` + `get-iam-policy` — los cuatro, hoy, no recordados | Proyecto `bearingworld-vera-eu` `ACTIVE`; facturación `True` sobre `014A85-69538E-B501FA`; `aiplatform.googleapis.com` habilitada; `vera-vertex@bearingworld-vera-eu.iam.gserviceaccount.com` con `roles/aiplatform.user` |
-| Si la aprobación de Anthropic (Model Garden) ha llegado | Llamada real a `aiplatform.eu.rep.googleapis.com/.../claude-sonnet-5:rawPredict`, repetida varias veces hoy, la última al cierre | `429 RESOURCE_EXHAUSTED`, idéntico en todos los intentos — sigue bloqueado |
-| Serie 18 (réplica n=5 de la 17), corrida a corrida | `harness/metrics/MSG-01/remedicion-18{a..e}-msg-n5/*.json` + `.log`, no el resumen dado de palabra | `18b`-`18e`: verde, intento 1. `18a`: verde en intento 3, tras dos intentos con `C1`/`C2` rojo por el mismo error de sintaxis en `ThreadList.tsx:105` |
-| Catálogo de `bearingworld-e2e` vs. producción | `select count(*), count(distinct org_id) from inventory_lines` contra `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`, hoy, las dos bases | 221 filas / 6 organizaciones en las dos — sin *gap* |
-| `Root Directory` del proyecto Vercel, según lo reportó el PO desde el dashboard | Captura directa de Settings → General → Root Directory | `./` — causa confirmada de que `ignoreCommand` no se aplicaba |
-| El *job* `deploy` tras fijar `Root Directory=app` | `gh run view 34459783951 --log-failed` | Falla: `The provided path ".../app/app" does not exist` |
-| El *job* `deploy` tras forzar `working-directory` a la raíz en ese paso | `gh run view 34460245089` | Los cinco *jobs* en verde, incluido `deploy` |
-| Si `ignoreCommand` generaba alguna fila (Ready/Ignored/Canceled) para `mvp/bootstrap` tras los dos fixes anteriores | Lectura directa del dashboard de Vercel, pedida dos veces distintas | Ninguna fila de *Source*=GitHub — solo las del *job* de CI |
-| `git.deploymentEnabled` tras el cambio de mecanismo, dirección "no construir" | Push real a `mvp/bootstrap` (`3ca7348`) + `gh run` `34462864195` + `curl` a producción | CI verde, `HTTP 200`, sin *build* fantasma |
-| `git.deploymentEnabled`, dirección "sí construir" | PR de prueba real #1 (`test/vercel-preview-check`) + `curl` a la URL de preview | Preview generada, `HTTP 302` a `vercel.com/sso-api` (protección SSO por defecto, no error) |
-| Estado final del repo | `git status --short`, `git log --oneline -8` | Limpio (solo un directorio ajeno sin trackear, `openspec/design-gui/Ingles/`, de otra sesión); último commit `ee255d6`, CI verde (`gh run` `34463362519`), producción `HTTP 200` |
+| CI del cierre del Día 11 (`c395432`) | `gh run list --commit c395432` | `success`, `34464957453`, 4m12s |
+| Si la aprobación de Anthropic (Model Garden) ha llegado, recomprobado hoy | Llamada real a `aiplatform.eu.rep.googleapis.com/.../claude-sonnet-5:rawPredict` contra `bearingworld-vera-eu`, no el resultado de anoche | `429 RESOURCE_EXHAUSTED`, mismo mensaje letra por letra — sigue bloqueado |
+| El hueco declarado en `0023` §4 ("un cliente manipulado puede envolver de más hacia la CONTRAPARTE") | Lectura línea a línea de `app.guard_cek_recipients` antes de escribir SQL nuevo, no de memoria | Confirmado: V-1 solo mira intrusos en mi propia organización, V-2 solo mira que no falte un ADMIN — ninguna de las dos mira exceso hacia la contraparte, ni pertenencia a las dos organizaciones del intercambio (`F-154`, no estaba ni declarado) |
+| `0024` (el guardia recalcula el conjunto exacto) contra el esquema real | `supabase/tests/run.sh` (Docker, Postgres desechable) tras escribir la migración, no asumido en verde | Un bloque preexistente y sin tocar ("c2 asume: responde") pasó a fallar — `F-155`, ver más abajo |
+| La causa de `F-155` (`otra` en `NULL`) | `raise notice` de depuración contra un Postgres desechable en el punto exacto del fallo: `org_low_id`, `org_high_id`, `current_org_id()`, `otra`, uno a uno | `otra` = `NULL`: el `SELECT` de `create_thread_item`/`counter_offer` cae bajo `threads_select_participant` (0019), que exige ya tener una clave envuelta — y quien escribe su primer elemento no la tiene |
+| `0025` (helper `security definer`) contra el esquema real | `supabase/tests/run.sh` completo, de nuevo, con los dos test nuevos de `F-154`/backlog de `0023` §4 añadidos a `01_schema_smoke.sql` | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`; los dos test nuevos disparan señalando exactamente al miembro esperado (`b1` en el de tercera organización, `c3` en el de exceso hacia la contraparte) |
+| `0024`/`0025` aplicadas a producción y a `bearingworld-e2e` | `pg_proc`/`pg_get_function_identity_arguments` releído después por el MCP, no asumido por el `{"success":true}` de `apply_migration` | `guard_cek_recipients` con 4 parámetros (la firma de 3 ya no existe); `thread_counterpart` presente, `prosecdef=true` — en las dos bases |
+| Avisos de seguridad nuevos tras `0024`/`0025` | `get_advisors(type=security)` en `troxminloxkjwihwfevs` | Los tres avisos ya existentes (search_path de dos funciones de demo, `org_public_keys`/`thread_public_keys` ejecutables por `authenticated`, password protection); ninguno nuevo — `guard_cek_recipients`/`thread_counterpart` viven en `app`, no expuestos por REST |
+| El *job* `arnes` de CI (`F-152`) | `python -m harness.tests.test_checks`, el comando exacto del *job* | 22 en verde |
+| Las 143 filas históricas de `harness-metrics.csv` tras insertar la columna nueva | Script que cuenta comas por fila antes de tocar nada — el contrato exige cero comas por campo | 143 de 143 con el recuento esperado; columna `primer_intento_limpio` insertada con `-` en las 143, sin recalcular ninguna |
+| Estado final del repo | `git status --short` | (ver pie) |
 
 ---
 
@@ -247,44 +245,51 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-Con el entregable 6 bloqueado en una revisión externa y el resto de los puntos
-abiertos del Día 10 cerrados hoy (§1), lo único que queda con movimiento propio es:
+Con el entregable 6 bloqueado en una revisión externa y las dos piezas del backlog del
+Día 11 cerradas hoy (§1), lo único que queda con movimiento propio es:
 
-1. **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA
-   conocido.** No hay más margen técnico desde este lado — la infraestructura GCP está
-   lista y verificada (§1), el bloqueo es una revisión humana ajena al repo. Reintentar
-   la llamada de prueba cuando llegue alguna confirmación por email, o periódicamente si
-   no llega ninguna. **No tocar `vera/index.ts` hasta que responda** (orden de corte del
-   runbook).
-2. **Del backlog de `§5`, sin decidir, sin prisa:** si el guardia de `0023` aprende a
-   recalcular el reparto ENTERO de claves en cada escritura. Sigue declarado, no tapado.
-3. **`F-152`, abierto como observación, no como acción:** si el CSV/reporting debería
-   distinguir «verde al primer intento» de «verde tras reintentos» — hoy los dos cuentan
-   igual en el veredicto de la corrida, y la serie 18 es la primera vez que la diferencia
-   importa para leer un resultado.
+1. **Entregable 6: seguir esperando la aprobación de Anthropic (Model Garden), sin ETA
+   conocido.** No hay más margen técnico desde este lado — recomprobado hoy, mismo `429`
+   letra por letra. Reintentar la llamada de prueba cuando llegue alguna confirmación por
+   email, o periódicamente si no llega ninguna. **No tocar `vera/index.ts` hasta que
+   responda** (orden de corte del runbook).
+2. **`F-155`, el hallazgo que salió al cerrar el backlog de hoy, deja una pregunta
+   abierta:** ¿hay OTROS `SELECT` bajo RLS de `threads`/`thread_items` en el código que
+   asuman en silencio que quien llama ya tiene una clave envuelta, además de los dos que
+   `0025` corrigió? No se ha auditado el resto de `keys.ts`/`thread-detail.ts` con esa
+   pregunta concreta — ver §6.
 
 Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase) y la
 pregunta de alcance del entregable 5 (`FUNDACION-V1.md`) — ninguno bloquea trabajo de
 ingeniería.
 
-### Lo que se cerró hoy (Día 11, 10-sep)
+### Lo que se cerró hoy (Día 12, 10-sep)
 
-- **Infraestructura GCP del entregable 6, creada y verificada.** Proyecto, facturación
-  (cuenta pagada), API `aiplatform.googleapis.com` y cuenta de servicio con el rol
-  mínimo — las cuatro piezas confirmadas hoy contra `gcloud`. Modelo y región multi-UE
-  confirmados contra documentación viva el 8-sep. **Bloqueado en la aprobación de
-  Anthropic (Model Garden)**, sin fecha — no es un bloqueo de este repo.
-- **Serie 18 (réplica n=5 de la 17): 5/5 en veredicto, con un matiz nuevo — `F-152`.**
-  `18b`-`18e` limpias al primer intento; `18a` verde recién al intento 3, tras repetir
-  el mismo error de sintaxis en los intentos 1 y 2.
-- **Catálogo de `bearingworld-e2e`: sin *gap* con producción, confirmado hoy contra las
-  dos bases** (221 filas / 6 organizaciones en las dos). El punto 4 del Día 10 queda
-  cerrado sin acción.
-- **Vercel Preview deployments: recuperadas, con tres causas encadenadas resueltas —
-  `F-153`.** `Root Directory` corregido a `app`; el *job* `deploy` de CI arreglado tras
-  romperse por ese mismo cambio; `ignoreCommand` reemplazado por `git.deploymentEnabled`
-  (la propiedad correcta según la documentación oficial de Vercel). Confirmado en las
-  dos direcciones con un push real y una PR de prueba real, cerrada tras confirmar.
+- **Entregable 6: recomprobado, sigue bloqueado.** Mismo `429 RESOURCE_EXHAUSTED`, sin
+  movimiento posible desde este repo. CI del cierre del Día 11 confirmada en verde.
+- **Backlog de `0023` §4 (reparto exacto hacia la CONTRAPARTE): cerrado en `0024`.**
+  Nueva comprobación aditiva en `app.guard_cek_recipients`: con hilo existente, el
+  reparto tiene que ser subconjunto exacto de `thread_public_keys(thread_id)`.
+- **`F-154` (nuevo, no declarado antes): cerrado en `0024`.** Ningún destinatario de la
+  CEK puede pertenecer a una tercera organización ajena al intercambio — ni V-1 ni V-2
+  de `0023` lo comprobaban nunca.
+- **`F-155` (nuevo, descubierto verificando `0024`): cerrado en `0025`.** `otra` (la
+  organización de enfrente) se calculaba con un `SELECT` bajo RLS que devolvía `NULL`
+  para quien escribe su primer elemento en un hilo con el ámbito encendido — mismo
+  patrón que `F-148`. Nuevo helper `app.thread_counterpart()`, `security definer`.
+- **`F-152`: cerrado.** Columna `primer_intento_limpio` en `harness-metrics.csv` —
+  distingue un veredicto verde limpio de uno rescatado por reintentos, sin recalcular
+  las 143 filas históricas.
+
+### Lo que se cerró el Día 11 (10-sep) — resumen; el detalle vive en `git show c395432`
+
+- **Infraestructura GCP del entregable 6, creada y verificada.** Bloqueada en la
+  aprobación de Anthropic (Model Garden), sin fecha.
+- **Serie 18 (réplica n=5 de la 17): 5/5 en veredicto, con un matiz nuevo — `F-152`**
+  (cerrado el Día 12, ver arriba).
+- **Catálogo de `bearingworld-e2e`: sin *gap* con producción**, 221 filas / 6
+  organizaciones en las dos bases.
+- **Vercel Preview deployments: recuperadas, tres causas encadenadas resueltas — `F-153`.**
 
 ### Lo que se cerró el Día 10 (8-sep) — resumen; el detalle vive en `git show 522b94a`
 
@@ -409,6 +414,9 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | **Los tokens no se pegan en el chat, el PO los pone él mismo por su terminal** | Ya regía para `SUPABASE_TOKEN` (7-sep); aplicado también hoy a `VERCEL_NEWACCOUNT_TOKEN`. Los IDs de proyecto/organización (`orgId`, `projectId`) NO son secretos y sí se pasan en claro — son identificadores, no credenciales | Esta sesión, `ci.yml` |
 | **La cuenta de facturación de GCP pasa de prueba gratuita a pagada** | 10-sep-2026, PO. Necesario para poder solicitar acceso a modelos de terceros (Claude Sonnet 5) en Model Garden — Google no deja comprar esos productos contra crédito de prueba | `vera-vertex-eu-migracion.md` |
 | **`git.deploymentEnabled` sustituye a `ignoreCommand` para excluir `mvp/bootstrap` del disparador de Git de Vercel** | 10-sep-2026. `ignoreCommand` no generaba ni "Ready" ni "Ignored" para esa rama tras corregir `Root Directory`; la documentación oficial de Vercel señala `git.deploymentEnabled` como la propiedad pensada para esto, sin gastar cupo de *build* | `F-153`, `entornos.md`, `app/vercel.json` |
+| **El guardia de la CEK recalcula el conjunto exacto en vez de solo comprobar "no falta nadie"** | 10-sep-2026, PO — decisión ejecutada el mismo día que se tomó (Día 12). Reutiliza `thread_public_keys` como fuente de verdad en vez de reimplementar la lógica de destinatarios una segunda vez; con hilo existente, `p_keys` tiene que ser subconjunto exacto de lo que esa función devuelve | `0024`, `F-154`, `findings-register.md` |
+| **Un `SELECT` bajo RLS que depende de `thread_item_keys` no sirve dentro de una función `security invoker` que un participante SIN clave todavía tiene que poder llamar** | 10-sep-2026, `F-155`. Mismo principio que `F-148` (0023 §4bis): la lectura derivada de si ya tienes clave no puede ser condición para la escritura que te la daría. La solución es siempre un helper `security definer` (`can_access_thread`, `resolve_thread`, y ahora `thread_counterpart`), nunca relajar la política de lectura | `0025`, `F-155` |
+| **El CSV histórico del arnés no se recalcula, ni cuando el dato ya estaba** (repetido) | 10-sep-2026, aplicado a `primer_intento_limpio` (F-152) igual que a `corrida` (F-129) — aunque `intentos` ya bastaba para derivarlo en las 143 filas viejas, se escribe `-` y no se reconstruye | `harness/core/metrics.py`, F-129, F-152 |
 
 ---
 
@@ -421,9 +429,9 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
 | 🟡 | **Vercel sigue en plan gratuito** (ahora en la cuenta nueva, `alvaro-7494`), que prohíbe uso comercial | Álvaro: 20 $/mes |
 | 🟡 | **Los worktrees: cinco** (raíz + cuatro) — bajó de seis, la composición volvió a cambiar. Sexta comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe | Fuera de sesión, desde la raíz |
-| 🟡 | **Un cliente manipulado puede envolver de más hacia la CONTRAPARTE.** El guardia cubre V-1 en el lado del emisor y V-2 en las dos organizaciones, no el conjunto entero: comprobarlo exigiría recalcular el reparto en cada escritura. Declarado en `0023`, no tapado | Sin decidir |
 | 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero. **Decidido 5-sep-2026: se queda así** — el arreglo obvio no funciona (§1, §4) | Aceptado, no se escribe |
 | 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
+| 🟡 | **`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?** `0025` corrigió los dos que se encontraron (`otra` en `create_thread_item`/`counter_offer`), pero no se ha auditado el resto de `keys.ts`/`thread-detail.ts` con esa pregunta concreta como criterio | Sin decidir — ver §3 |
 | ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
 | ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |
 | ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
@@ -433,6 +441,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~D-8 (un EDITOR no ve nada de sus compañeros) sin probar con el cliente real~~ | **Resuelto 5-sep-2026: EDITOR real, «0 hilos» con la organización ya en conversación activa** |
 | ⚪ | ~~`F-151`: el paso de Vercel del *job* `deploy` bloqueado por acceso de cuenta~~ | **Resuelto 8-sep-2026: cuenta y proyecto de Vercel nuevos, verificados en CI real (`34219861643`) y con `curl` (`HTTP 200`)** — ver §1, §2, §4 |
 | ⚪ | ~~Preview deployments de Vercel no ocurrían, proyecto nuevo sin Git conectado~~ | **Resuelto 10-sep-2026: `git.deploymentEnabled` en `app/vercel.json`, confirmado con push real y PR de prueba — `F-153`** |
+| ⚪ | ~~Un cliente manipulado puede envolver de más hacia la CONTRAPARTE (backlog de `0023` §4)~~ | **Resuelto 10-sep-2026: `0024`, el guardia recalcula el conjunto exacto vía `thread_public_keys`. De paso salió `F-154` (tercera organización) y `F-155` (helper `security definer` para `otra`, en `0025`)** |
+| ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
 
 ---
 
@@ -520,11 +530,16 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   (`aiplatform.eu.rep.googleapis.com`). Lo que sigue sin dato es otra cosa: **cuánto va
   a tardar Anthropic en aprobar la solicitud de Model Garden** — ninguna comprobación
   de hoy lo acorta, ni siquiera a un rango.
-- **Si el marcador verde/rojo de una corrida del harness debería distinguir «primer
-  intento» de «verde tras reintentos».** La serie 18 es la primera vez que esta
-  distinción cambia la lectura de un resultado (`F-152`) — hoy los dos cuentan igual
-  para el veredicto final de la corrida, y no se ha decidido si el CSV/reporting
-  debería separarlos.
+- ~~Si el marcador verde/rojo de una corrida del harness debería distinguir «primer
+  intento» de «verde tras reintentos».~~ **Contestado el 10-sep-2026 (Día 12): sí** —
+  columna `primer_intento_limpio` en `harness-metrics.csv`, `si`/`no` en la fila que
+  llega a `PASA`, `-` en cualquier otra. Las 143 filas históricas no se recalculan.
+- **Si quedan otros `SELECT` bajo RLS, en funciones `security invoker`, que asuman en
+  silencio que quien llama ya tiene una clave envuelta en el hilo.** `F-155` (10-sep)
+  encontró dos —`otra` en `create_thread_item` y en `counter_offer`— corregidos en
+  `0025` con `app.thread_counterpart()`. No se ha revisado el resto de `app/src/lib/`
+  con esa pregunta concreta como criterio; puede haber más, o puede que estos dos
+  fueran los únicos que dependían de `otra` con la fuerza suficiente para romper algo.
 
 ---
 
@@ -584,25 +599,25 @@ Orden de lectura, y el orden importa:
 8. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
 9. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
 10. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
-    Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (observación, sin acción),
-    `F-153` (cerrado).
+    Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
+    (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`).
 
 ---
 
-*Día 11 de V1 · 8/10-sep-2026, cerrado a petición del PO tras dejar el entregable 6
-bloqueado únicamente en una revisión externa de Anthropic y los otros tres puntos
-(serie 18, catálogo, Vercel Preview) cerrados del todo · fecha leída de la máquina
-(`date -u`) al cerrar: `2026-09-10` · infraestructura GCP verificada hoy contra `gcloud`
-(`projects describe`, `billing projects describe`, `services list`, `iam
-service-accounts list`/`get-iam-policy`), no contra lo recordado · bloqueo de Anthropic
-verificado con una llamada real a `aiplatform.eu.rep.googleapis.com` (`429
-RESOURCE_EXHAUSTED`, idéntico en todos los intentos de hoy) · serie 18 verificada
-fichero a fichero (`harness/metrics/MSG-01/remedicion-18{a..e}-msg-n5/*.json` y `.log`),
-no de memoria · catálogo verificado con `select count(*), count(distinct org_id) from
-inventory_lines` contra `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`, hoy · Vercel
-verificado con `gh run view` sobre `34459783951` (fallo), `34460245089` y `34462864195`
-(verdes), `curl` a producción (`HTTP 200`) y a la preview de la PR de prueba #1 (`HTTP
-302` a `vercel.com/sso-api`, protección SSO normal) — no contra otro documento ·
-`git status --short` releído antes de escribir este pie: limpio salvo
-`openspec/design-gui/Ingles/`, sin trackear y ajeno a esta sesión · Dirección Técnica,
-Nortex Systems*
+*Día 12 de V1 · 10-sep-2026, cerrado a petición del PO tras cerrar las dos piezas del
+backlog que el Día 11 dejó abiertas y recomprobar que el entregable 6 sigue bloqueado ·
+fecha leída de la máquina (`date -u`) al cerrar: `2026-09-10` · bloqueo de Anthropic
+recomprobado con una llamada real a `aiplatform.eu.rep.googleapis.com` (`429
+RESOURCE_EXHAUSTED`, idéntico letra por letra al del cierre del Día 11) · CI del cierre
+del Día 11 confirmada en verde (`gh run` `34464957453`) · `0024` y `0025` verificadas
+contra un Postgres desechable (`supabase/tests/run.sh`, Docker) antes de tocar
+producción, con dos asertos nuevos que disparan señalando exactamente al miembro
+esperado — no solo "sigue en verde" — y aplicadas después a `troxminloxkjwihwfevs` y
+`bearingworld-e2e` por el MCP, con `pg_proc` releído para confirmar las firmas nuevas ·
+`get_advisors` (seguridad) sin avisos nuevos · `python -m harness.tests.test_checks`
+(el comando exacto del *job* `arnes`): 22 en verde · columna `primer_intento_limpio` de
+`harness-metrics.csv` verificada fila a fila contra el recuento de comas antes de
+escribir, no asumida — 143 de 143 · `git status --short` releído antes de escribir este
+pie: cinco ficheros modificados y dos migraciones nuevas, listos para commitear, más
+`openspec/design-gui/Ingles/`, sin trackear y ajeno a esta sesión (sin cambios desde el
+Día 11) · Dirección Técnica, Nortex Systems*

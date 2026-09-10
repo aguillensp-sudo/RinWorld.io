@@ -31,21 +31,34 @@ proyecto Supabase**: el mismo proyecto del entregable 3 sirve de staging, tal co
 documento proponía — la infraestructura se solapa con el diseño, el criterio que el
 propio Plan V1 pide para este hito.
 
-## Vercel Preview deployments (10-sep-2026, preparado)
+## Vercel Preview deployments (10-sep-2026, activado)
 
 Al crear el proyecto Vercel nuevo el 8-sep sin Git conectado (`F-151`) se perdió el efecto
 colateral de que cada PR generaba una URL de vista previa clicable — distinto del *job*
 `e2e`, que prueba funcionalidad contra `bearingworld-e2e` pero no deja mirar la pantalla.
 
-**Preparado, sin activar:** `app/vercel.json` lleva ahora `ignoreCommand`, que le dice a
-Vercel que se salte el *build* en `mvp/bootstrap` (nuestro *job* `deploy` de CI sigue siendo
-el único que toca producción, gateado por los tests) y que SÍ construya para cualquier otra
-rama — o sea, preview automática en PRs sin duplicar el despliegue de producción, el problema
-que causó desconectar el Git integration la primera vez.
+`app/vercel.json` lleva `ignoreCommand`, que le dice a Vercel que se salte el *build* en
+`mvp/bootstrap` (nuestro *job* `deploy` de CI sigue siendo el único que toca producción,
+gateado por los tests) y que SÍ construya para cualquier otra rama — preview automática en
+PRs sin duplicar el despliegue de producción, el problema que causó desconectar el Git
+integration la primera vez.
 
-**Pendiente del PO:** reconectar el repo en Project Settings → Git del proyecto
-`rin-world-io`. Sin eso, `ignoreCommand` no tiene efecto — Vercel solo lo evalúa si hay un
-disparador de Git de por medio.
+**10-sep-2026: el PO reconectó el repo** en Project Settings → Git del proyecto
+`rin-world-io`. Primera comprobación en el dashboard: **todos** los pushes a `mvp/bootstrap`
+desde la reconexión salían como *deployment* completo "Ready" (10-15s de build), no como
+"Ignored" — el `ignoreCommand` no se estaba aplicando. Producción seguía sirviendo bien
+(`HTTP 200` verificado), pero el riesgo de que uno de esos *builds* fantasma pisara el
+*deploy* bueno era real y creciente con cada push.
+
+**Causa:** `Root Directory` del proyecto estaba en `./` (raíz del repo), no en `app`. El
+proyecto se creó con `vercel link` ejecutado dentro de `app/` (ver comentario en `ci.yml`),
+lo que nunca fija ese ajuste — solo importa cuando el disparador es Git, no cuando despliega
+la CLI. Con `Root Directory` en la raíz, el Git integration nunca llegaba a leer
+`app/vercel.json` ni, por tanto, su `ignoreCommand`.
+
+**Corregido por el PO:** `Root Directory` cambiado de `./` a `app` en Settings → General.
+Pendiente de confirmar en el próximo push a `mvp/bootstrap` que ahora sí aparece
+"Ignored"/"Skipped" en vez de "Ready".
 
 ## Scripts nuevos (7-sep-2026)
 

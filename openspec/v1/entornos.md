@@ -57,8 +57,33 @@ la CLI. Con `Root Directory` en la raíz, el Git integration nunca llegaba a lee
 `app/vercel.json` ni, por tanto, su `ignoreCommand`.
 
 **Corregido por el PO:** `Root Directory` cambiado de `./` a `app` en Settings → General.
-Pendiente de confirmar en el próximo push a `mvp/bootstrap` que ahora sí aparece
-"Ignored"/"Skipped" en vez de "Ready".
+Efecto colateral: rompió el propio `deploy` job de CI (la CLI, que ya arranca en `app/` por
+el `working-directory` del job, sumaba las dos rutas y buscaba `app/app` -- `gh run`
+`34459783951`). Corregido forzando ese paso a la raíz del repo (`d932dcb`).
+
+**Comprobado en el dashboard tras el fix de Root Directory:** los pushes a `mvp/bootstrap`
+seguían sin generar ninguna fila nueva de origen GitHub en Deployments -- ni "Ready" ni
+"Ignored"/"Canceled", solo las filas de siempre con *Source* = CLI (el `deploy` job de CI,
+autor `alvaro-7494`, que no pasa por `ignoreCommand` porque no es un despliegue disparado por
+Git). La única fila de *Source* = GitHub visible es una de `main` de cuando se reconectó el
+repo -- nada de `mvp/bootstrap` llegó a intentar un build ni cancelarlo.
+
+**Cambio de enfoque:** `ignoreCommand` solo cancela un build ya en marcha (sigue contando
+para el cupo de *builds*) y, según la documentación oficial de Vercel, no hay garantía de que
+se lea correctamente en todas las combinaciones de `Root Directory`. La propiedad pensada
+exactamente para esto es `git.deploymentEnabled` (`vercel.json`, ver
+`/docs/project-configuration/git-configuration`): un mapa rama→booleano que impide que el
+push dispare *ningún* deployment en absoluto para esa rama, sin gastar cupo. `app/vercel.json`
+pasa de `ignoreCommand` a:
+
+```json
+"git": { "deploymentEnabled": { "mvp/bootstrap": false } }
+```
+
+Cualquier otra rama (PRs incluidas) sigue con el valor por defecto (`true`), así que sí
+generará su preview. Pendiente de confirmar en el dashboard: (1) que el próximo push a
+`mvp/bootstrap` no genera ninguna fila de *Source* = GitHub, y (2) que una rama/PR distinta sí
+la genera.
 
 ## Scripts nuevos (7-sep-2026)
 

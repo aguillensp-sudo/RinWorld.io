@@ -85,6 +85,11 @@ generará su preview. Pendiente de confirmar en el dashboard: (1) que el próxim
 `mvp/bootstrap` no genera ninguna fila de *Source* = GitHub, y (2) que una rama/PR distinta sí
 la genera.
 
+**Prueba en vivo (10-sep-2026):** esta misma línea se comitea en una rama de prueba
+(`test/vercel-preview-check`) con PR abierta contra `mvp/bootstrap`, precisamente para
+comprobar (2) -- que Vercel genera una Preview deployment real para esa rama. PR y rama se
+cierran/borran en cuanto quede confirmado.
+
 ## Scripts nuevos (7-sep-2026)
 
 - `app/scripts/demo-reset-e2e-project.mjs` — resiembra los cinco hilos congelados del

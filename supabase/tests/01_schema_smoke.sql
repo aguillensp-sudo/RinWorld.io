@@ -1850,6 +1850,65 @@ begin;
 commit;
 
 -- -----------------------------------------------------------------------------
+-- 0024 · el guardia recalcula el conjunto EXACTO (backlog de 0023 §4, F-154)
+-- -----------------------------------------------------------------------------
+-- Reutiliza el hilo y el estado de arriba: c2 ya asumio la conversacion (paso
+-- 4), asi que el conjunto correcto de Gamma esta cerrado a {c1 (ADMIN), c2
+-- (escribio)} -- c3 quedo fuera. Es justo el estado donde el hueco de 0023
+-- §4 era real: nada impedia antes pedir de mas hacia la contraparte.
+
+-- 8 · F-154 · ningun destinatario puede ser de una TERCERA organizacion,
+-- ajena por completo a este hilo -- aqui, b1 de Beta Rodamientos.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_thread_item(
+        '11110000-0000-0000-0000-000000000002', 'MENSAJE',
+        repeat('51',32), repeat('52',12),
+        jsonb_build_array(
+          jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
+            'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('52',12), 'ephemeral_pubkey', repeat('22',32)),
+          jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+            'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('52',12), 'ephemeral_pubkey', repeat('44',32)),
+          jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+            'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('52',12), 'ephemeral_pubkey', repeat('66',32)),
+          jsonb_build_object('member_id','0c000002-0000-0000-0000-000000000002',
+            'wrapped_cek', repeat('77',48), 'wrap_iv', repeat('52',12), 'ephemeral_pubkey', repeat('88',32)),
+          jsonb_build_object('member_id','0b000001-0000-0000-0000-000000000001',
+            'wrapped_cek', repeat('99',48), 'wrap_iv', repeat('52',12), 'ephemeral_pubkey', repeat('aa',32))))$$,
+    'F-154 (0024): envolver para un miembro de una TERCERA organizacion, ajena al hilo');
+commit;
+
+-- 9 · 0024, backlog de 0023 §4 · con hilo ya asumido, el reparto no puede
+-- incluir a mas gente de la CONTRAPARTE de la que thread_public_keys
+-- devuelve ahora mismo -- aqui, c3, que tiene clave publicada y pertenece a
+-- la organizacion correcta, pero dejo de entrar en el paso 4 de arriba
+-- porque no participo. Esto es exactamente lo que 0023 §4 dejaba declarado
+-- y sin cerrar: "un cliente manipulado podria envolver de mas hacia la
+-- CONTRAPARTE".
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_thread_item(
+        '11110000-0000-0000-0000-000000000002', 'MENSAJE',
+        repeat('53',32), repeat('54',12),
+        jsonb_build_array(
+          jsonb_build_object('member_id','0a000002-0000-0000-0000-000000000002',
+            'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('54',12), 'ephemeral_pubkey', repeat('22',32)),
+          jsonb_build_object('member_id','0a000001-0000-0000-0000-000000000001',
+            'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('54',12), 'ephemeral_pubkey', repeat('44',32)),
+          jsonb_build_object('member_id','0c000001-0000-0000-0000-000000000001',
+            'wrapped_cek', repeat('55',48), 'wrap_iv', repeat('54',12), 'ephemeral_pubkey', repeat('66',32)),
+          jsonb_build_object('member_id','0c000002-0000-0000-0000-000000000002',
+            'wrapped_cek', repeat('77',48), 'wrap_iv', repeat('54',12), 'ephemeral_pubkey', repeat('88',32)),
+          jsonb_build_object('member_id','0c000003-0000-0000-0000-000000000003',
+            'wrapped_cek', repeat('bb',48), 'wrap_iv', repeat('54',12), 'ephemeral_pubkey', repeat('cc',32))))$$,
+    '0024 (backlog 0023 §4): envolver de mas hacia la CONTRAPARTE -- c3 ya no entra tras asumirse la conversacion');
+commit;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

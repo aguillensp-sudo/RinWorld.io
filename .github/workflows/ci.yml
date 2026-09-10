@@ -229,9 +229,19 @@ jobs:
         # identificadores, no credenciales-- así que van literales, igual
         # que antes iba `team_...` literal en `--scope`.
         #
-        # ⚠ Sin confirmar en una corrida real todavía (regla 2 de
-        # ESTADO-V1.md): esto quita la causa que F-151 documentó, pero no se
-        # declara resuelto hasta verlo verde en `gh run view`.
+        # Confirmado verde en corrida real (`gh run` `34219861643`), F-151
+        # cerrado -- ver openspec/mvp/findings-register.md.
+        #
+        # 10-sep-2026: al reconectar el Git integration para las Preview
+        # deployments (`openspec/v1/entornos.md`), hubo que fijar el
+        # `Root Directory` del proyecto en Vercel a `app` -- si no, el
+        # integration nunca ve `app/vercel.json` ni su `ignoreCommand`. Pero
+        # este paso ya arranca en `app/` por el `working-directory` del job:
+        # con Root Directory=app, la CLI sumaba las dos rutas y buscaba
+        # `app/app` (error real: "The provided path .../app/app does not
+        # exist", `gh run` `34459783951`). Se fuerza aquí la raíz del repo
+        # para que la CLI combine bien con el ajuste del proyecto.
+        working-directory: ${{ github.workspace }}
         run: npx vercel --prod --token="$VERCEL_TOKEN" --yes
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_NEWACCOUNT_TOKEN }}

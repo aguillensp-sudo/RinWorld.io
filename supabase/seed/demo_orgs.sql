@@ -67,8 +67,25 @@ insert into public.organizations (id, name, legal_name, country, continent, stat
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------------------------
--- 3 · Comprobación
+-- 3 · El contacto público (0027, para DIR-01)
 -- -----------------------------------------------------------------------------
-select id, name, country, continent, status
+-- `contact_phone` y `contact_email` son dos de las cinco columnas de la tabla de
+-- DIR-01, y sin ellas el directorio se demuestra con dos huecos por fila. Van
+-- aquí y no en la migración porque son datos de DEMO, no esquema: la migración
+-- crea las columnas, la siembra las rellena.
+--
+-- UPDATE y no INSERT a propósito: las seis filas ya existen a estas alturas del
+-- fichero, y así esto es idempotente sin ningún `on conflict`.
+update public.organizations set contact_phone = '+34 954 123 456',   contact_email = 'info@rodamientosibericos.es'   where id = 'a1000000-0000-4000-8000-000000000001';
+update public.organizations set contact_phone = '+49 7161 44 22 10', contact_email = 'kontakt@nordwaelz.de'          where id = 'b2000000-0000-4000-8000-000000000002';
+update public.organizations set contact_phone = '+39 02 4567 8900',  contact_email = 'info@cuscinettipadana.it'      where id = 'c3000000-0000-4000-8000-000000000003';
+update public.organizations set contact_phone = '+48 22 123 45 67',  contact_email = 'biuro@lozyskawschod.pl'        where id = 'd4000000-0000-4000-8000-000000000004';
+update public.organizations set contact_phone = '+33 4 72 34 56 78', contact_email = 'contact@roulementsrhone.fr'    where id = 'e5000000-0000-4000-8000-000000000005';
+update public.organizations set contact_phone = '+90 212 345 67 89', contact_email = 'iletisim@anadolurulman.com.tr' where id = 'f6000000-0000-4000-8000-000000000006';
+
+-- -----------------------------------------------------------------------------
+-- 4 · Comprobación
+-- -----------------------------------------------------------------------------
+select id, name, country, continent, status, contact_phone, contact_email
   from public.organizations
  order by continent, country;

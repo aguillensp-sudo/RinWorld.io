@@ -47,7 +47,7 @@ no se cambian a partir de aquí:
 
 | Pantalla | Módulo | Spec | Qué le hace falta a su capa de datos |
 |---|---|---|---|
-| **`DIR-01`** · Directorio de Organizaciones | 04 · Mensajería/Directorio | 167 líneas | La más barata de las tres: `organizations` ya tiene las diez columnas que la tabla pinta, filtra y ordena. Y su forma —tabla con filtros, orden por cabecera y paginación— es la de `SRCH-01` e `INV-01`: **es la única comparable con algo ya medido** |
+| **`DIR-01`** · Directorio de Organizaciones | 04 · Mensajería/Directorio | 167 líneas | ⚠ **Corregido el 11-sep, al escribir su capa de datos: NO corría sobre `organizations` tal como estaba.** Dos de las cinco columnas de su tabla —Teléfono y Email— no existían en el esquema. Las añade `0027`, con sus dos `CHECK` y metidas en `app.guard_organization_columns`, porque una columna nueva no entra sola en ese guardia y nacía editable por cualquier ADMIN. Sigue siendo la más barata de las tres —dos columnas frente a un módulo de foro sin una sola tabla— pero **no era gratis, y la frase anterior se escribió mirando las columnas de la tabla sin cruzarlas con las que la spec pinta**. Su forma —tabla con filtros, orden por cabecera y paginación— sí es la de `SRCH-01` e `INV-01`: **es la única comparable con algo ya medido** |
 | **`ADMIN-01`** · Panel de Aprobación del Operador | 01 · Alta de empresas | 187 líneas | Campos nuevos. La tabla de solicitudes pide más de lo que `organizations` guarda hoy: `status` existe, el resto de la solicitud no |
 | **`FORO-01`** · Lista de Categorías del Foro | 08 · Foro | 154 líneas | Tablas nuevas enteras: el foro **no tiene ni una** en las 26 migraciones. Es además la única parte no cifrada del producto, así que no arrastra ninguna decisión de criptografía |
 
@@ -180,7 +180,9 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
    `ADMIN-01` y `FORO-01`.**
 2. **Sus tres capas de datos, escritas a mano y entregadas.** Es la condición que la
    corriente B ya tenía escrita: se abre cuando la corriente A publica el contrato de datos
-   de cada módulo.
+   de cada módulo. **`DIR-01`: hecha el 11-sep** — `0027` (las dos columnas que faltaban),
+   `app/src/lib/directory.ts` y su prueba, con el esquema verificado en las dos bases y los
+   asertos del guardia nuevos en `01_schema_smoke.sql`. Quedan `ADMIN-01` y `FORO-01`.
 3. **Sus tres tareas en formato fijo**, validadas con `--seco`. Con ellas el corpus pasa de
    seis a nueve, camino de las diez a quince que el plan declaró objetivo no alcanzado del
    MVP y asignó a este mismo hito.

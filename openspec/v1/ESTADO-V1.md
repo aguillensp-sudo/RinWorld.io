@@ -245,6 +245,39 @@ era **fundir por clave**. Cerrado el mismo día con `fusionar()`, historia resta
 el commit anterior y siete comprobaciones nuevas en `test_checks.py`. **Línea base del H1:
 21 filas, 887,77 $ acumulados, de los cuales 550,25 $ son de V1.**
 
+**Tercera adenda: arranca `DIR-01`, y la capa de datos descubre que la pantalla no era
+gratis.** El PO pidió empezar por el directorio. Al cruzar su spec con el esquema —no al
+leer una de las dos— aparecieron **tres desajustes**, y los tres habrían salido como
+defectos del Coder si nadie los mira antes:
+
+1. **Dos de las cinco columnas de la tabla no existen.** Teléfono y Email de contacto no
+   están en `organizations`. **Esto corrige lo que se le dijo al PO al proponer la
+   pantalla** —que corría sobre la tabla *"tal como está"*—, y la corrección está escrita
+   en el umbral y en la cabecera de la migración, no solo aquí.
+2. **La spec dice `ACTIVE` y ese estado no existe.** El `CHECK` admite `PENDING_REVIEW`,
+   `APPROVED`, `REJECTED` y `SUSPENDED`. Lo que la spec llama *"organizaciones activas"* es
+   `APPROVED`.
+3. **La política de lectura deja ver la organización propia en cualquier estado**, así que
+   sin un `.eq('status','APPROVED')` explícito una organización propia en revisión se vería
+   a sí misma en el directorio público. Misma forma que el `.neq` de `SRCH-01`: no falla
+   nada, sale una fila que no debería estar.
+
+**`0027`** añade las dos columnas con sus dos `CHECK` y —esto es lo que no es obvio— las
+mete en `app.guard_organization_columns`: **una columna nueva no entra sola en ese
+guardia**, y nacía editable por cualquier ADMIN vía una política que filtra por
+organización y no por columna. Cinco asertos nuevos en `01_schema_smoke.sql` lo fijan, con
+ancla positiva incluida para que el bloque no mida que el ADMIN no puede tocar nada.
+Verificada contra un Postgres desechable ANTES de aplicarla, y aplicada después a las dos
+bases con el catálogo releído (columnas, `CHECK` y cuerpo del guardia) en vez de creerle al
+`{"success":true}`. `get_advisors` sin avisos nuevos.
+
+**`app/src/lib/directory.ts`** y su prueba quedan escritos a mano, que es lo que exige el
+umbral: la capa de datos es precondición de la pantalla, no producto de la fábrica. 15
+pruebas en verde y typecheck limpio. **Lo que NO se hace en esta sesión, a propósito: la
+tarea, los tests de aceptación y la corrida.** Esa es la unidad que mide el H1 y debe
+correr en una sesión limpia, o la cifra 7 le imputaría a `DIR-01` el coste de la auditoría
+de `F-155`, del plan y del umbral. Esta sesión ya lleva 35,42 $.
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -267,6 +300,12 @@ el commit anterior y siete comprobaciones nuevas en `test_checks.py`. **Línea b
 | Que el medidor de orquestación borra historia al usarlo (`F-157`) | `git diff` del CSV inmediatamente después de una pasada normal, no el resumen que imprime el propio módulo | **Once filas de agosto borradas, 387 $ de coste ya medido.** De 13 filas y 591,54 $ a 11 y 386,14 $. Arreglado el mismo día y la historia restaurada: 21 filas, 887,77 $ |
 | Que el arreglo de `F-157` funciona y no duplica | `python -m harness.tests.test_checks` entero (23 pruebas) con el caso nuevo, y una pasada real del medidor sobre el CSV restaurado | Todas en verde. La pasada real conserva las diez filas cuyas transcripciones ya no existen y lo dice por pantalla |
 | Línea base de la cifra 7 del umbral | El CSV fundido, separando por fecha | 887,77 $ acumulados; **550,25 $ desde el 27-ago, que es V1** |
+| Que `DIR-01` necesitaba esquema nuevo, al contrario de lo que se le dijo al PO | Las cinco columnas que la spec pinta, cruzadas una a una con `information_schema.columns` de `organizations` | **Faltaban dos: Teléfono y Email.** Añadidas en `0027`, con sus `CHECK` y dentro del guardia de columnas |
+| Que el estado `ACTIVE` de la spec no existe en la base | `pg_get_constraintdef` de la restricción de `organizations.status` | Admite `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `SUSPENDED`. El directorio filtra por `APPROVED`, documentado en la cabecera de `directory.ts` |
+| `0027` contra un Postgres desechable, ANTES de aplicarla | `supabase/tests/run.sh` completo, con cinco asertos nuevos (ancla positiva + las dos columnas bloqueadas al ADMIN + el operador sí + el `CHECK` del email) | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE` |
+| `0027` aplicada a las dos bases | Catálogo releído por el MCP —columnas, `CHECK` y cuerpo del guardia—, no el `{"success":true}` | Las dos columnas, las dos restricciones y el guardia actualizado en `troxminloxkjwihwfevs` y `bearingworld-e2e`; seis organizaciones con contacto en cada una |
+| Avisos de seguridad tras `0027` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo |
+| La capa de datos de `DIR-01` | `npx tsc --noEmit` y `npx vitest run src/lib/directory.test.ts` | Typecheck limpio, 15 pruebas en verde |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -324,12 +363,17 @@ cinco depende de nadie de fuera:
    `DIR-01`, `ADMIN-01` y `FORO-01`** — directorio, alta de empresas y foro. `REG-07` se
    cayó de la propuesta al leer su spec (es generación de claves: criptografía, y el Plan
    §4.3 dice que el generador no la toca) e `INV-02` por medir el techo y no la media.
-2. **Las tres capas de datos, escritas a mano y entregadas.** Es la condición que abre la
-   corriente B, y la práctica que ya siguen las seis tareas del corpus. **Con estas tres no
-   es gratis, y se eligieron así a propósito:** `DIR-01` corre sobre `organizations` tal
-   como está, `ADMIN-01` necesita campos nuevos para la solicitud, y `FORO-01` **tablas
-   nuevas enteras** — el foro no tiene ni una en las 26 migraciones. Tres pantallas sobre
-   esquema existente habrían medido la fábrica en su caso más cómodo.
+2. **Las tres capas de datos, escritas a mano y entregadas.** `DIR-01`: **HECHA el
+   11-sep** (`0027` con las dos columnas que faltaban, `app/src/lib/directory.ts` y su
+   prueba, verificado en las dos bases). Quedan `ADMIN-01` —campos nuevos para la
+   solicitud— y `FORO-01` —**tablas nuevas enteras**, el foro no tiene ni una en las 27
+   migraciones—. Con estas tres la capa de datos no es gratis y se eligieron así a
+   propósito: tres pantallas sobre esquema existente habrían medido la fábrica en su caso
+   más cómodo.
+   ⚠ **Y la corrida de cada pantalla va en SESIÓN LIMPIA**, con el medidor de orquestación
+   corrido antes y después. Si la tarea, los tests y la corrida comparten sesión con otro
+   trabajo, la cifra 7 le imputa a la pantalla un coste que no es suyo y el veredicto sale
+   falso por arriba.
 3. **Las tres tareas en formato fijo, validadas con `--seco`.** El corpus pasa de **6 a 9**,
    camino de las **10–15** que el plan declaró objetivo no alcanzado del MVP y asignó
    explícitamente a este hito.

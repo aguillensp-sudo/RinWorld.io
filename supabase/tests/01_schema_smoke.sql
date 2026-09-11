@@ -1943,6 +1943,80 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0027 · el contacto publico lo escribe el operador, no el cliente
+-- -----------------------------------------------------------------------------
+-- `contact_phone` y `contact_email` son datos publicos --los pinta DIR-01 para
+-- cualquier miembro-- pero publicos de LEER no es lo mismo que editables. La
+-- politica `organizations_update_visibility_admin` filtra por ORGANIZACION, no
+-- por columna: un ADMIN puede escribir en su propia fila, y lo unico que acota
+-- QUE columna es el disparador `app.guard_organization_columns`.
+--
+-- Asi que una columna nueva NO entra sola en ese guardia: nace editable por
+-- cualquier ADMIN. `0027` las mete a las dos, y este bloque lo fija. Sin el, la
+-- proxima columna que alguien anada a `organizations` volvera a nacer abierta y
+-- no se vera hasta que un cliente manipulado cambie el telefono publico de su
+-- organizacion por otro.
+
+-- Se guarda el valor de antes para devolverlo al final: este bloque escribe de
+-- verdad, y dejar el terreno movido es como se cuelan los fallos entre pruebas.
+select inventory_visibility_mode as modo_a_antes
+  from public.organizations where id = :orgA \gset
+
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+
+  -- 1 · ANCLA POSITIVA. Lo que el guardia SI deja pasar sigue pasando, o este
+  -- bloque estaria midiendo que el ADMIN no puede tocar nada de nada.
+  update public.organizations
+     set inventory_visibility_mode = 'RESTRINGIDA'
+   where id = :orgA;
+
+  do $$
+  begin
+    assert (select inventory_visibility_mode from public.organizations
+             where id = '11111111-1111-1111-1111-111111111111') = 'RESTRINGIDA',
+      '0027: un ADMIN sigue pudiendo cambiar inventory_visibility_mode -- si esto falla, el guardia bloquea de mas';
+    raise notice 'OK · 0027: el ADMIN sigue pudiendo cambiar lo que siempre pudo';
+  end
+  $$;
+
+  -- 2 · Y las dos columnas nuevas, no.
+  select public.expect_fail(
+    'update public.organizations set contact_email = ''otro@ejemplo.com'' where id = ''11111111-1111-1111-1111-111111111111''',
+    '0027: un ADMIN no puede cambiar el email de contacto de su propia organizacion');
+
+  select public.expect_fail(
+    'update public.organizations set contact_phone = ''+34 000 000 000'' where id = ''11111111-1111-1111-1111-111111111111''',
+    '0027: ni el telefono');
+commit;
+
+-- 3 · Y el operador si, que es quien los rellena en la siembra.
+update public.organizations
+   set contact_phone = '+34 954 123 456', contact_email = 'info@alpha.test'
+ where id = :orgA;
+
+do $$
+begin
+  assert (select contact_email from public.organizations
+           where id = '11111111-1111-1111-1111-111111111111') = 'info@alpha.test',
+    '0027: el operador (postgres/service_role) si escribe el contacto publico';
+
+  -- 4 · Y el CHECK del email no deja pasar cualquier cosa.
+  raise notice 'OK · 0027: el contacto publico lo escribe el operador';
+end
+$$;
+
+select public.expect_fail(
+  'update public.organizations set contact_email = ''esto no es un email'' where id = ''11111111-1111-1111-1111-111111111111''',
+  '0027: organizations_contact_email_chk rechaza un email sin arroba');
+
+-- Terreno devuelto a como estaba.
+update public.organizations
+   set inventory_visibility_mode = :'modo_a_antes'
+ where id = :orgA;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

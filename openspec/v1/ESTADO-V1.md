@@ -360,8 +360,17 @@ significa "no es Operador" — el mismo fallo que esto viene a arreglar.
 en `platform_operators`. Hecha por el MCP y **comprobada desde la sesión del propio
 operador**, no solo mirando que la fila exista: `app.is_platform_operator()` le devuelve
 cierto y la RLS le enseña las tres solicitudes, sus tres filas de historial y un operador.
-**Sigue faltando la cuenta equivalente en `bearingworld-e2e`**, que es la que permitiría a
-la tarea de ADMIN-01 declarar un test de extremo a extremo.
+**La cuenta equivalente en `bearingworld-e2e` también quedó creada y dada de alta el mismo
+día.** De esto solo queda lo que es credenciales y es del PO: `E2E_OPERATOR_EMAIL` y
+`E2E_OPERATOR_PASSWORD` en `app/.env` y en los secretos de GitHub.
+
+**Y de paso salió la mitad que nadie había comprobado de un actor privilegiado: qué NO ve.**
+Con la cuenta ya creada, desde la sesión del propio Operador, en las dos bases: **0 líneas
+de inventario, 0 hilos cifrados, 0 elementos de hilo, 0 categorías de foro y 3 solicitudes.**
+Es lo correcto —no pertenece a ninguna organización y todo lo comercial cuelga de
+pertenecer a una— y ahora está anclado en `01_schema_smoke.sql` con su ancla positiva al
+lado, porque el día que alguien escriba `authenticated` donde iba `app.is_active_member()`,
+el Operador empezaría a ver inventario ajeno sin que nada fallara.
 
 **`F-159`: la CI se puso roja en un test que no tocaba nada de lo que se cambió.** El job de
 Playwright falló en INV-01 con `Expected Set {"Published"}, Received Set {}`. Confirmado **no

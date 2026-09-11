@@ -192,9 +192,10 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
    **(a) ~~Una cuenta de Operador de Plataforma.~~ HECHA el 11-sep en producción**
    (`operador@bearingworld.test`, creada por el PO y dada de alta en
    `platform_operators`; comprobado desde su propia sesión que la RLS le reconoce y le
-   enseña las tres solicitudes). **Falta la del proyecto de e2e**, que es otra cuenta con
-   sus credenciales en `app/.env` y en los secretos de GitHub, y sin ella la tarea de
-   ADMIN-01 sigue sin poder declarar un test de extremo a extremo.** `0028` no crea ninguna a propósito —una cuenta es
+   enseña las tres solicitudes). **Y la del proyecto de e2e, también creada el 11-sep**
+   y dada de alta. Lo único que queda de esto es de credenciales y es del PO: poner
+   `E2E_OPERATOR_EMAIL`/`_PASSWORD` en `app/.env` y en los secretos de GitHub. Con eso, la
+   tarea de ADMIN-01 ya puede declarar un test de extremo a extremo.** `0028` no crea ninguna a propósito —una cuenta es
    credenciales, y eso lo decide el PO, como con `E2E_EDITOR_*` el 5-sep—. Sin ella la
    pantalla no se puede ver ni probar de extremo a extremo, y su tarea del paso 3 no puede
    declarar ningún test e2e que la ejercite.

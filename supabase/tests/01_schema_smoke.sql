@@ -2220,6 +2220,39 @@ begin
 end
 $$;
 
+-- 7 · El Operador ve la cola y NADA MAS.
+--
+-- Es la mitad que nadie comprueba de un actor privilegiado. El Operador entra
+-- con credenciales propias y decide sobre organizaciones, asi que la pregunta
+-- interesante no es que puede ver -- eso ya se ha probado arriba -- sino que NO
+-- puede: no pertenece a ninguna organizacion, y todo lo comercial de este
+-- producto cuelga de pertenecer a una. El dia que alguien escriba una politica
+-- con `authenticated` a secas donde iba `app.is_active_member()`, el Operador
+-- empezaria a ver inventario ajeno y hilos cifrados sin que nada fallara.
+--
+-- Comprobado ademas contra las dos bases reales el 11-sep-2026, con la cuenta de
+-- Operador ya creada: 0 lineas de inventario, 0 hilos, 0 elementos, 0 categorias
+-- de foro y 3 solicitudes.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines) = 0,
+      '0028: el Operador no ve inventario de nadie -- no pertenece a ninguna organizacion';
+    assert (select count(*) from public.threads) = 0,
+      '0028: ni un solo hilo cifrado';
+    assert (select count(*) from public.thread_items) = 0,
+      '0028: ni un solo elemento de hilo';
+    assert (select count(*) from public.forum_categories) = 0,
+      '0028: ni el foro, que exige ser miembro activo aunque sea publico';
+    assert (select count(*) from public.registration_requests) > 0,
+      '0028: ANCLA POSITIVA -- pero la cola SI la ve, o esto estaria midiendo que no ve nada de nada';
+    raise notice 'OK · 0028: el Operador ve la cola y nada mas';
+  end
+  $$;
+commit;
+
 -- 7 · Y `anon` no tiene ni un privilegio sobre las tres tablas nuevas.
 do $$
 declare

@@ -1,10 +1,11 @@
 # Umbral de la fábrica — el criterio de cierre del H1
 
-> **Escrito ANTES de medir nada.** 11-sep-2026, con el corpus en seis tareas y sin que
-> ninguna de las tres pantallas de la prueba esté elegida todavía en código. El commit que
-> introduce este fichero es anterior a la primera corrida de las tres, y esa precedencia es
-> comprobable con `git log`. **Un umbral escrito después de ver el resultado no es un
-> umbral: es una justificación.**
+> **Escrito ANTES de medir nada.** 11-sep-2026, con el corpus en seis tareas, sin una sola
+> línea escrita de las tres pantallas de la prueba y sin sus tareas. Las tres se confirmaron
+> ese mismo día, también antes de correr nada (§1). Los dos commits —el del umbral y el de
+> la confirmación— son anteriores a la primera corrida, y esa precedencia es comprobable con
+> `git log`. **Un umbral escrito después de ver el resultado no es un umbral: es una
+> justificación.**
 
 > **Por qué existe este fichero.** El plan V1 v2.3 pone el H1 en la semana 3 con este
 > criterio: *«Tres pantallas construidas y aceptadas, con su coste y su tiempo por pantalla
@@ -41,11 +42,28 @@ corrida, y cumplen las tres condiciones siguientes:
 - Tienen **diseño aprobado y spec escrita** en `openspec/design-gui/specs y html
   aprobados/`.
 
-**Propuesta, pendiente de que el PO la confirme antes de la primera corrida:** `REG-07`
-(121 líneas de spec), `FORO-01` (154) e `INV-02` (181). Tres módulos distintos, tres
-tamaños de spec distintos, y el foro es además la única parte no cifrada del producto, así
-que entra sin depender de ninguna decisión de criptografía. Si el PO prefiere otras tres,
-se sustituyen **aquí y antes de correr**, no después.
+**CONFIRMADAS POR EL PO EL 11-SEP-2026, antes de la primera corrida.** Son estas tres, y
+no se cambian a partir de aquí:
+
+| Pantalla | Módulo | Spec | Qué le hace falta a su capa de datos |
+|---|---|---|---|
+| **`DIR-01`** · Directorio de Organizaciones | 04 · Mensajería/Directorio | 167 líneas | La más barata de las tres: `organizations` ya tiene las diez columnas que la tabla pinta, filtra y ordena. Y su forma —tabla con filtros, orden por cabecera y paginación— es la de `SRCH-01` e `INV-01`: **es la única comparable con algo ya medido** |
+| **`ADMIN-01`** · Panel de Aprobación del Operador | 01 · Alta de empresas | 187 líneas | Campos nuevos. La tabla de solicitudes pide más de lo que `organizations` guarda hoy: `status` existe, el resto de la solicitud no |
+| **`FORO-01`** · Lista de Categorías del Foro | 08 · Foro | 154 líneas | Tablas nuevas enteras: el foro **no tiene ni una** en las 26 migraciones. Es además la única parte no cifrada del producto, así que no arrastra ninguna decisión de criptografía |
+
+**La mezcla es deliberada, y el PO la eligió sabiendo lo que cuesta.** Una pantalla sobre
+esquema existente, una con campos nuevos y una con tablas nuevas. Si las tres corrieran
+sobre lo que ya existe, la fábrica se mediría en su caso más cómodo y el número no se
+parecería al trabajo real de las 24 pantallas que quedan. Eso alarga el paso 2 de §7, y ese
+alargamiento **es el precio de que la cifra sirva para extrapolar**, que es lo único que el
+H1 existe para conseguir.
+
+**Y por qué NO están las tres que se propusieron primero, que es parte del registro.**
+`REG-07` se cayó al leer su spec: es *Generación de Claves y Almacenamiento de Backup*, o
+sea criptografía, y el Plan §4.3 tiene decidido que el generador no la toca — medir la
+fábrica con ella habría medido otra cosa, y se propuso sin haber leído la spec. `INV-02`
+(procesamiento y mapeo de columnas con confirmación humana) se cayó por el motivo
+contrario: es de las pantallas más complejas del producto y mediría el techo, no la media.
 
 ---
 
@@ -146,7 +164,8 @@ Sección obligatoria, misma regla que `ESTADO-V1.md` §6.
 
 Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
 
-1. **El PO confirma las tres pantallas** de §1 (o las cambia, aquí y antes de correr).
+1. ~~El PO confirma las tres pantallas de §1.~~ **Hecho el 11-sep-2026: `DIR-01`,
+   `ADMIN-01` y `FORO-01`.**
 2. **Sus tres capas de datos, escritas a mano y entregadas.** Es la condición que la
    corriente B ya tenía escrita: se abre cuando la corriente A publica el contrato de datos
    de cada módulo.

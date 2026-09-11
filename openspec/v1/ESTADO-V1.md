@@ -246,6 +246,7 @@ estado antes de que alguien la cazara.**
 | Dónde estamos respecto al plan V1 v2.3 (adenda, a petición del PO) | El `.docx` del plan leído entero contra el repo: `harness/tasks/` (6 tareas), `harness/requirements.txt`, `harness/core/pricing.py` y `orchestration_pricing.py`, `harness-metrics.csv` (143 filas, 7 pantallas), `harness-review.csv` y `orchestration-metrics.csv` | Semana 3, la del H1. Banda de semanas 1–3: cuatro de cinco piezas hechas. Banda de semanas 3–5 (Fundación): 5 de 6 entregables, el sexto bloqueado fuera del repo. **El H1 sigue abierto** |
 | Que el umbral del H1 no existía en ninguna parte | `grep -rl "umbral" openspec/ --include=*.md` antes de escribir nada | Cero resultados relativos a la fábrica. La tabla de riesgos del plan lo exige «escrito de antemano» — escrito hoy, `UMBRAL-FABRICA-V1.md`, y su commit es anterior a cualquier corrida de las tres pantallas |
 | Si la tarea de `SRCH-01` seguía sin actualizar tras `F-118` | `git log -- harness/tasks/SRCH-01.json`, el cuerpo de `1183a38`, el propio JSON, y las fechas de las filas `SRCH-01` de `harness-metrics.csv` | **No: actualizada el 29-ago y medida 14 veces ese mismo día.** Lo desfasado era la casilla de estado de `F-118` en el registro, cerrada hoy con esa evidencia |
+| Las tres pantallas del H1, elegidas y confirmadas por el PO | Specs leídas una a una en `openspec/design-gui/specs y html aprobados/specs/`, y las columnas reales de `organizations` consultadas por el MCP antes de afirmar qué capa de datos hace falta | `DIR-01`, `ADMIN-01`, `FORO-01`. **`REG-07` descartada por criptografía** (Plan §4.3), leyendo la spec que no se había leído al proponerla. Escritas en `UMBRAL-FABRICA-V1.md` §1 antes de cualquier corrida |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -299,12 +300,16 @@ pieza que le faltaba para ser una medición en vez de una impresión: el umbral,
 antes de medir. El orden de abajo es el de `UMBRAL-FABRICA-V1.md` §7, y ninguno de los
 cinco depende de nadie de fuera:
 
-1. **El PO confirma las tres pantallas.** Propuesta escrita: `REG-07`, `FORO-01`, `INV-02`
-   — tres módulos distintos, tres tamaños de spec distintos, y el foro no depende de
-   ninguna decisión de criptografía. Cuesta un minuto y bloquea todo lo demás. **Si se
-   cambian, se cambian en el umbral y ANTES de correr.**
+1. ~~El PO confirma las tres pantallas.~~ **HECHO el 11-sep, antes de correr nada:
+   `DIR-01`, `ADMIN-01` y `FORO-01`** — directorio, alta de empresas y foro. `REG-07` se
+   cayó de la propuesta al leer su spec (es generación de claves: criptografía, y el Plan
+   §4.3 dice que el generador no la toca) e `INV-02` por medir el techo y no la media.
 2. **Las tres capas de datos, escritas a mano y entregadas.** Es la condición que abre la
-   corriente B, y la práctica que ya siguen las seis tareas del corpus.
+   corriente B, y la práctica que ya siguen las seis tareas del corpus. **Con estas tres no
+   es gratis, y se eligieron así a propósito:** `DIR-01` corre sobre `organizations` tal
+   como está, `ADMIN-01` necesita campos nuevos para la solicitud, y `FORO-01` **tablas
+   nuevas enteras** — el foro no tiene ni una en las 26 migraciones. Tres pantallas sobre
+   esquema existente habrían medido la fábrica en su caso más cómodo.
 3. **Las tres tareas en formato fijo, validadas con `--seco`.** El corpus pasa de **6 a 9**,
    camino de las **10–15** que el plan declaró objetivo no alcanzado del MVP y asignó
    explícitamente a este hito.

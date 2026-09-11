@@ -44,6 +44,9 @@ test.describe('INV-01 · inventario real', () => {
     // consulta encuentra un array vacío y falla por carrera, no por defecto.
     await expect(page.getByRole('table')).toBeVisible();
     await expect(page.getByTestId('pag-info')).toBeVisible();
+    // Y a la primera FILA, no solo al contenedor: la tabla se pinta antes de que
+    // llegue la consulta, y ese hueco es el de F-159.
+    await expect(page.locator('tbody tr').first()).toBeVisible();
   });
 
   test('pinta líneas de la base, no datos de ejemplo del HTML aprobado', async ({ page }) => {
@@ -120,6 +123,15 @@ test.describe('INV-01 · inventario real', () => {
     expect(publicados).toBeGreaterThan(0);
     expect(publicados).toBeLessThanOrEqual(todos);
     // Y todos los badges visibles dicen Published.
+    //
+    // ⚠ F-159 · `allTextContents()` NO auto-espera --lo dice el `beforeEach` de
+    // este mismo fichero y lo repite la busqueda doce lineas mas abajo-- y entre
+    // el clic en el filtro y la llegada de la consulta la tabla se queda SIN
+    // filas. Leer ahi devuelve `[]`, el conjunto sale vacio y el test falla por
+    // carrera, no por defecto: es lo que tumbo la CI el 11-sep sobre un commit
+    // que no tocaba INV-01. Se espera a la primera celda de estado, que es
+    // justo el dato que este test mira.
+    await expect(page.locator('tbody tr td:nth-child(5)').first()).toHaveText('Published');
     const badges = await page.locator('tbody tr td:nth-child(5)').allTextContents();
     expect(new Set(badges)).toEqual(new Set(['Published']));
   });
@@ -223,6 +235,10 @@ test.describe('catálogo del día 3 · las dos organizaciones tienen stock', () 
       await topNav(page).getByRole('button', { name: 'Inventario' }).click();
       await expect(page.getByRole('heading', { level: 1, name: 'Mi inventario' })).toBeVisible();
       await expect(page.getByRole('table')).toBeVisible();
+      // La tabla puede estar visible con el cuerpo todavia vacio ("Cargando
+      // inventario..."), asi que se espera a la primera FILA y no al
+      // contenedor: misma carrera que F-159.
+      await expect(page.locator('tbody tr').first()).toBeVisible();
       return page.locator('tbody tr td:nth-child(1)').allTextContents();
     }
 

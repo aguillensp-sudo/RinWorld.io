@@ -310,6 +310,37 @@ no crea ninguna a propósito. Sin ella la pantalla no se ve, no se prueba de ext
 extremo, y su tarea no puede declarar un test e2e que la ejercite. **Es lo único de las tres
 pantallas que depende del PO.**
 
+**Quinta adenda: `FORO-01`, y con ella el paso 2 del hito queda cerrado.** Tercera y última
+capa de datos. El foro es **la única parte no cifrada del producto**, así que aquí no hay
+CEK ni reparto de claves: hay texto plano y un aviso permanente en pantalla que lo dice.
+`0029` estrena tres tablas —categorías, hilos y publicaciones—, una vista para los
+contadores de la tarjeta y dos disparadores.
+
+**Tres decisiones que la migración toma y deja escritas:**
+
+- **Las cuatro categorías van en la migración, no en la siembra.** La spec las llama *"las
+  cuatro categorías de lanzamiento"* y las nombra una a una con su descripción: son
+  producto, no datos de demo, y cambiarlas debe costar una migración.
+- **Los contadores se calculan, no se guardan.** Se podrían mantener desnormalizados con
+  disparadores —es lo que hace `organizations.favorite_count`— y se ha decidido que no: son
+  cuatro filas, un contador guardado puede derivar y un `count(*)` no. La vista lleva
+  `security_invoker = true`, sin lo cual habría devuelto los recuentos del foro entero a
+  quien no puede ver ni un hilo; hay un aserto que lo comprueba con un usuario sin
+  organización.
+- **No hay moderación: ni una política de `UPDATE` ni de `DELETE` para nadie.** El *control
+  de abuso* del Plan §3.1 es de FORO-02/03 y es una decisión de producto sin tomar. Es más
+  fácil añadir esas políticas el día que se decida que retirar las que se hubieran puesto
+  de más.
+
+**Y lo que más importa en el único sitio sin cifrar: la firma la pone la base.** Un
+disparador sobrescribe autor y organización con `auth.uid()` y `app.current_org_id()`, y el
+aserto lo comprueba publicando a nombre de otro a propósito. Publicar suplantando a otra
+organización donde el contenido se lee en claro es el peor fallo posible de este módulo.
+
+**Estado del paso 2 del H1: cerrado.** Las tres capas de datos hechas, verificadas y
+sembradas en las dos bases. Lo siguiente son las tres tareas en formato fijo, y esas van en
+sesión limpia.
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -343,6 +374,10 @@ pantallas que depende del PO.**
 | La siembra de demo de `ADMIN-01` | Ella misma: exige una solicitud de cada color y falla si no | 3 solicitudes, 1 roja / 1 naranja / 1 normal, 3 filas de historial y **0 operadores** en las dos bases |
 | Avisos de seguridad tras `0028` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo. `app.is_platform_operator` no sale porque vive en `app`, no expuesta por REST |
 | La capa de datos de `ADMIN-01` | `npx tsc --noEmit` y `npx vitest run src/lib/admin-requests.test.ts` | Typecheck limpio, 18 pruebas en verde |
+| `0029` contra un Postgres desechable, ANTES de aplicarla | `supabase/tests/run.sh` completo con siete asertos nuevos: las cuatro categorías y su orden, el reloj del hilo, los contadores calculados, el foro visible para todo miembro activo, la vista respetando la RLS de quien consulta, la firma que pone la base y los privilegios que no existen | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`, en verde a la primera |
+| `0029` aplicada y sembrada en las dos bases | El resultado releído: contadores por categoría y ninguna categoría vacía | Cuatro categorías con dos hilos cada una, entre 3 y 7 publicaciones, y última actividad de hace 2 h, 5 h, 5 días y 11 días — los cuatro valores distintos, que es lo que la tarjeta tiene que poder distinguir |
+| Avisos de seguridad tras `0029` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo. **La vista no dispara el aviso de vista `security definer`**, que es la confirmación de que `security_invoker` está puesto |
+| La capa de datos de `FORO-01` | `npx tsc --noEmit` y `npx vitest run src/lib/forum.test.ts` | Typecheck limpio, 15 pruebas en verde |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -400,10 +435,9 @@ cinco depende de nadie de fuera:
    `DIR-01`, `ADMIN-01` y `FORO-01`** — directorio, alta de empresas y foro. `REG-07` se
    cayó de la propuesta al leer su spec (es generación de claves: criptografía, y el Plan
    §4.3 dice que el generador no la toca) e `INV-02` por medir el techo y no la media.
-2. **Las tres capas de datos, escritas a mano y entregadas.** `DIR-01` y `ADMIN-01`:
-   **HECHAS el 11-sep** (`0027` y `0028`, sus dos capas en `app/src/lib/` con sus pruebas,
-   verificadas en las dos bases). **Queda `FORO-01`** —tablas nuevas enteras, el foro no
-   tiene ni una en las 28 migraciones—. Con estas tres la capa de datos no es gratis y se eligieron así a
+2. ~~Las tres capas de datos, escritas a mano y entregadas.~~ **HECHO el 11-sep, las
+   tres:** `0027`/`directory.ts`, `0028`/`admin-requests.ts` y `0029`/`forum.ts`, cada una
+   con sus pruebas, sus asertos de esquema y su siembra, verificadas en las dos bases. Con estas tres la capa de datos no es gratis y se eligieron así a
    propósito: tres pantallas sobre esquema existente habrían medido la fábrica en su caso
    más cómodo.
    ⚠ **Y la corrida de cada pantalla va en SESIÓN LIMPIA**, con el medidor de orquestación

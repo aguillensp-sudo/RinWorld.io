@@ -2238,6 +2238,154 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0029 · el foro: publico para la comunidad, firmado por la base
+-- -----------------------------------------------------------------------------
+-- El foro es la unica parte NO cifrada del producto, asi que lo que aqui se
+-- comprueba no es que nadie lea: es que lea **todo miembro activo** y que nadie
+-- pueda publicar a nombre de otro. Lo segundo importa mas justamente porque el
+-- contenido se lee en claro.
+
+do $$
+begin
+  assert (select count(*) from public.forum_categories) = 4,
+    '0029: las cuatro categorias de lanzamiento vienen en la migracion, no en la siembra';
+  assert (select string_agg(slug, ',' order by position) from public.forum_categories)
+         = 'general,referencias-tecnicas,logistica-y-aduanas,plataforma-y-soporte',
+    '0029: y en el orden que fija el producto, no el alfabetico';
+  raise notice 'OK · 0029: las cuatro categorias, en su orden';
+end
+$$;
+
+-- Dos hilos y tres publicaciones, sembrados como postgres (el disparador de
+-- firma se aparta para el operador, como en toda la siembra).
+insert into public.forum_threads (id, category_id, title, author_member_id, author_org_id, created_at, last_post_at)
+select '22220000-0000-4000-8000-00000000bbb1',
+       (select id from public.forum_categories where slug = 'general'),
+       'Bienvenidos al foro', :a1, :orgA, now() - interval '3 days', now() - interval '3 days';
+
+insert into public.forum_threads (id, category_id, title, author_member_id, author_org_id, created_at, last_post_at)
+select '22220000-0000-4000-8000-00000000bbb2',
+       (select id from public.forum_categories where slug = 'logistica-y-aduanas'),
+       'Aranceles a Marruecos', :b1, :orgB, now() - interval '2 hours', now() - interval '2 hours';
+
+insert into public.forum_posts (thread_id, author_member_id, author_org_id, body, created_at) values
+  ('22220000-0000-4000-8000-00000000bbb1', :a1, :orgA, 'Primer mensaje.',  now() - interval '3 days'),
+  ('22220000-0000-4000-8000-00000000bbb1', :b1, :orgB, 'Segundo mensaje.', now() - interval '1 day'),
+  ('22220000-0000-4000-8000-00000000bbb2', :b1, :orgB, 'Tercer mensaje.',  now() - interval '2 hours');
+
+do $$
+begin
+  assert (select last_post_at from public.forum_threads
+           where id = '22220000-0000-4000-8000-00000000bbb1') > now() - interval '2 days',
+    '0029: publicar mueve el reloj del hilo -- lo que ordena la lista de recientes';
+  raise notice 'OK · 0029: el reloj del hilo lo mueve la publicacion, no el cliente';
+end
+$$;
+
+-- 1 · Los contadores de la tarjeta, que es lo que la pantalla pinta.
+do $$
+declare
+  hilos_general int;
+  pubs_general  int;
+begin
+  select thread_count, post_count into hilos_general, pubs_general
+    from public.forum_category_stats where slug = 'general';
+
+  assert hilos_general = 1, '0029: la categoria General cuenta su hilo';
+  assert pubs_general = 2,  '0029: y sus dos publicaciones';
+  assert (select thread_count from public.forum_category_stats where slug = 'plataforma-y-soporte') = 0,
+    '0029: una categoria vacia cuenta cero, no desaparece de la rejilla';
+  assert (select last_activity_at from public.forum_category_stats where slug = 'logistica-y-aduanas')
+         > (select last_activity_at from public.forum_category_stats where slug = 'general'),
+    '0029: la ultima actividad distingue una categoria de otra';
+  raise notice 'OK · 0029: los contadores de la tarjeta salen calculados y una categoria vacia sigue estando';
+end
+$$;
+
+-- 2 · Un miembro activo lo ve todo; quien no es miembro, nada.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.forum_categories) = 4,
+      '0029: ANCLA POSITIVA -- un miembro activo ve las cuatro categorias';
+    assert (select count(*) from public.forum_posts) = 3,
+      '0029: y las publicaciones de todas las organizaciones, que para eso es publico';
+    assert (select count(*) from public.forum_category_stats) = 4,
+      '0029: y la vista de contadores';
+    raise notice 'OK · 0029: el foro es publico para cualquier miembro activo';
+  end
+  $$;
+commit;
+
+-- Un usuario autenticado SIN fila en `members` no es miembro de nada.
+insert into auth.users (id, email) values
+  ('0f000001-0000-0000-0000-000000000001', 'sinorg@nadie.test');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0f000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.forum_categories) = 0,
+      '0029: quien no es miembro no ve el foro';
+    assert (select count(*) from public.forum_category_stats) = 0,
+      '0029: y la vista NO se salta la RLS de sus tablas -- es el security_invoker';
+    raise notice 'OK · 0029: la vista de contadores respeta la RLS de quien consulta';
+  end
+  $$;
+commit;
+
+-- 3 · La firma la pone la base: se publica a nombre propio aunque se mande otro.
+begin;
+  select set_config('request.jwt.claim.sub', :b1, true);
+  set local role authenticated;
+
+  insert into public.forum_posts (thread_id, author_member_id, author_org_id, body)
+  values ('22220000-0000-4000-8000-00000000bbb1',
+          '0a000001-0000-0000-0000-000000000001',   -- a1: NO es quien llama
+          '11111111-1111-1111-1111-111111111111',   -- orgA: tampoco es su organizacion
+          'Publicado con la firma de otro, a ver.');
+commit;
+
+do $$
+declare
+  quien uuid;
+  org   uuid;
+begin
+  select author_member_id, author_org_id into quien, org
+    from public.forum_posts
+   where body = 'Publicado con la firma de otro, a ver.';
+
+  assert quien = '0b000001-0000-0000-0000-000000000001',
+    '0029: el autor es quien llama, no el que venia en el INSERT';
+  assert org = '22222222-2222-2222-2222-222222222222',
+    '0029: y la organizacion, la suya -- publicar a nombre de otra es lo peor que puede pasar en el unico sitio sin cifrar';
+  raise notice 'OK · 0029: la firma de una publicacion la pone la base';
+end
+$$;
+
+-- 4 · No hay moderacion todavia, y eso se nota en los privilegios.
+do $$
+declare
+  sobran text;
+begin
+  select string_agg(privilege_type || ' en ' || table_name, ', ' order by table_name || privilege_type)
+    into sobran
+    from information_schema.role_table_grants
+   where grantee in ('authenticated','anon')
+     and table_schema = 'public'
+     and table_name in ('forum_categories','forum_threads','forum_posts','forum_category_stats')
+     and (grantee = 'anon' or privilege_type in ('UPDATE','DELETE','TRUNCATE'));
+
+  assert sobran is null,
+    '0029: privilegios que no deberia haber en el foro: ' || coalesce(sobran, '');
+  raise notice 'OK · 0029: nadie edita ni borra en el foro, y anon no tiene nada';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

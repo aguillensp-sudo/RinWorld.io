@@ -180,12 +180,13 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
    `ADMIN-01` y `FORO-01`.**
 2. **Sus tres capas de datos, escritas a mano y entregadas.** Es la condición que la
    corriente B ya tenía escrita: se abre cuando la corriente A publica el contrato de datos
-   de cada módulo. **`DIR-01` y `ADMIN-01`: hechas el 11-sep.** `DIR-01` con `0027` (las dos
-   columnas que faltaban), `app/src/lib/directory.ts` y su prueba. `ADMIN-01` con `0028`
-   —tres tablas, un actor nuevo y dos disparadores—, `app/src/lib/admin-requests.ts` y su
-   prueba, más trece asertos y su siembra de demo. Las dos verificadas contra un Postgres
-   desechable antes de aplicarse y releídas del catálogo después, en las dos bases. **Queda
-   `FORO-01`.**
+   de cada módulo. ~~`DIR-01`, `ADMIN-01` y `FORO-01`.~~ **LAS TRES HECHAS el 11-sep**, cada
+   una con su migración, su capa de datos a mano, su prueba de unidad, sus asertos de
+   esquema y su siembra de demo: `0027` para `DIR-01` (dos columnas), `0028` para
+   `ADMIN-01` (tres tablas, un actor nuevo y dos disparadores) y `0029` para `FORO-01`
+   (tres tablas, una vista con `security_invoker`, dos disparadores y las cuatro categorías
+   de lanzamiento como producto). Las tres verificadas contra un Postgres desechable ANTES
+   de aplicarse y releídas del catálogo después, en las dos bases.
    ⚠ **Y `ADMIN-01` tiene una dependencia que no depende de esta sesión: hace falta una
    cuenta de Operador de Plataforma.** `0028` no crea ninguna a propósito —una cuenta es
    credenciales, y eso lo decide el PO, como con `E2E_EDITOR_*` el 5-sep—. Sin ella la

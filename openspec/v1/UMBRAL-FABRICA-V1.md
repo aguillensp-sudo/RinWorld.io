@@ -180,9 +180,17 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
    `ADMIN-01` y `FORO-01`.**
 2. **Sus tres capas de datos, escritas a mano y entregadas.** Es la condición que la
    corriente B ya tenía escrita: se abre cuando la corriente A publica el contrato de datos
-   de cada módulo. **`DIR-01`: hecha el 11-sep** — `0027` (las dos columnas que faltaban),
-   `app/src/lib/directory.ts` y su prueba, con el esquema verificado en las dos bases y los
-   asertos del guardia nuevos en `01_schema_smoke.sql`. Quedan `ADMIN-01` y `FORO-01`.
+   de cada módulo. **`DIR-01` y `ADMIN-01`: hechas el 11-sep.** `DIR-01` con `0027` (las dos
+   columnas que faltaban), `app/src/lib/directory.ts` y su prueba. `ADMIN-01` con `0028`
+   —tres tablas, un actor nuevo y dos disparadores—, `app/src/lib/admin-requests.ts` y su
+   prueba, más trece asertos y su siembra de demo. Las dos verificadas contra un Postgres
+   desechable antes de aplicarse y releídas del catálogo después, en las dos bases. **Queda
+   `FORO-01`.**
+   ⚠ **Y `ADMIN-01` tiene una dependencia que no depende de esta sesión: hace falta una
+   cuenta de Operador de Plataforma.** `0028` no crea ninguna a propósito —una cuenta es
+   credenciales, y eso lo decide el PO, como con `E2E_EDITOR_*` el 5-sep—. Sin ella la
+   pantalla no se puede ver ni probar de extremo a extremo, y su tarea del paso 3 no puede
+   declarar ningún test e2e que la ejercite.
 3. **Sus tres tareas en formato fijo**, validadas con `--seco`. Con ellas el corpus pasa de
    seis a nueve, camino de las diez a quince que el plan declaró objetivo no alcanzado del
    MVP y asignó a este mismo hito.

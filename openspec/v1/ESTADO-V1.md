@@ -278,6 +278,38 @@ tarea, los tests de aceptación y la corrida.** Esa es la unidad que mide el H1 
 correr en una sesión limpia, o la cifra 7 le imputaría a `DIR-01` el coste de la auditoría
 de `F-155`, del plan y del umbral. Esta sesión ya lleva 35,42 $.
 
+**Cuarta adenda: `ADMIN-01`, y dos cosas que no se sabían al elegirla.** Segunda capa de
+datos de las tres. Al contrario que `DIR-01`, esta pantalla **no tenía ni una fila de
+esquema debajo**: `0028` estrena tres tablas —la cola del FSR, su historial y los
+operadores— dos disparadores y un actor que el proyecto no tenía, el **Operador de
+Plataforma**, que no pertenece a ninguna organización.
+
+**La decisión que la migración toma y el PO puede revocar barato:** el operador se resuelve
+con una tabla y un ayudante `security definer`, igual que `app.is_org_admin()`, en vez de
+con un *claim* en el JWT o con una función de borde. Las tres opciones están escritas en la
+cabecera de `0028` con su porqué; si el PO prefiere otra, lo que cambia es
+`app.is_platform_operator()` y las cuatro políticas que la invocan.
+
+**Y dos hallazgos, los dos cazados por asertos escritos ANTES de aplicar nada:**
+
+- **Un `CHECK` que dejaba pasar justo lo que prohibía.** Estaba escrito como
+  `(state = 'REJECTED' and char_length(...) between 10 and 500) or (state <> 'REJECTED' and
+  ... is null)`, y con el motivo a `NULL` la primera rama vale `NULL`, la segunda `FALSE`, y
+  **`NULL or FALSE` es `NULL` — y un `CHECK` que da `NULL` PASA**. Un rechazo sin motivo
+  entraba sin una queja. Reescrito con `case`, que nunca devuelve `NULL`. No llegó a la base
+  real: lo paró el banco de pruebas contra el Postgres desechable.
+- **`F-158`: la spec aprobada de `ADMIN-01` se contradice a sí misma.** Su tabla de columnas
+  dice *"en naranja si > 24h, en rojo si > 48h"* y catorce líneas más abajo su bloque de
+  datos de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Las dos no pueden
+  ser ciertas, y cada una lleva a una pantalla distinta. **Manda la regla**, y queda escrito
+  en los tres sitios donde alguien podría arreglarlo al revés. Lo cazó la siembra de demo,
+  que se verifica a sí misma exigiendo una fila de cada color y salió con dos.
+
+**Lo que `ADMIN-01` necesita y esta sesión no puede dar: una cuenta de Operador.** `0028`
+no crea ninguna a propósito. Sin ella la pantalla no se ve, no se prueba de extremo a
+extremo, y su tarea no puede declarar un test e2e que la ejercite. **Es lo único de las tres
+pantallas que depende del PO.**
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -306,6 +338,11 @@ de `F-155`, del plan y del umbral. Esta sesión ya lleva 35,42 $.
 | `0027` aplicada a las dos bases | Catálogo releído por el MCP —columnas, `CHECK` y cuerpo del guardia—, no el `{"success":true}` | Las dos columnas, las dos restricciones y el guardia actualizado en `troxminloxkjwihwfevs` y `bearingworld-e2e`; seis organizaciones con contacto en cada una |
 | Avisos de seguridad tras `0027` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo |
 | La capa de datos de `DIR-01` | `npx tsc --noEmit` y `npx vitest run src/lib/directory.test.ts` | Typecheck limpio, 15 pruebas en verde |
+| `0028` contra un Postgres desechable, ANTES de aplicarla | `supabase/tests/run.sh` completo con trece asertos nuevos: la cola invisible para quien no es Operador, el `UPDATE` que no da error y no cambia nada, la firma que pone la base, la máquina de estados, el motivo obligatorio, `Volver a revisión` y los privilegios de `anon` y `authenticated` | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`. **Dos asertos fallaron antes de pasar**, y los dos eran defectos reales: el `CHECK` que daba `NULL` y un aserto mío que medía el error equivocado |
+| `0028` aplicada a las dos bases | Catálogo releído por el MCP: RLS en las tres tablas, 4 políticas, 2 disparadores, 5 `CHECK`, el ayudante `security definer`, el guardia `invoker` y cero privilegios de `anon` | Todo presente en `troxminloxkjwihwfevs` y `bearingworld-e2e` |
+| La siembra de demo de `ADMIN-01` | Ella misma: exige una solicitud de cada color y falla si no | 3 solicitudes, 1 roja / 1 naranja / 1 normal, 3 filas de historial y **0 operadores** en las dos bases |
+| Avisos de seguridad tras `0028` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo. `app.is_platform_operator` no sale porque vive en `app`, no expuesta por REST |
+| La capa de datos de `ADMIN-01` | `npx tsc --noEmit` y `npx vitest run src/lib/admin-requests.test.ts` | Typecheck limpio, 18 pruebas en verde |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -363,11 +400,10 @@ cinco depende de nadie de fuera:
    `DIR-01`, `ADMIN-01` y `FORO-01`** — directorio, alta de empresas y foro. `REG-07` se
    cayó de la propuesta al leer su spec (es generación de claves: criptografía, y el Plan
    §4.3 dice que el generador no la toca) e `INV-02` por medir el techo y no la media.
-2. **Las tres capas de datos, escritas a mano y entregadas.** `DIR-01`: **HECHA el
-   11-sep** (`0027` con las dos columnas que faltaban, `app/src/lib/directory.ts` y su
-   prueba, verificado en las dos bases). Quedan `ADMIN-01` —campos nuevos para la
-   solicitud— y `FORO-01` —**tablas nuevas enteras**, el foro no tiene ni una en las 27
-   migraciones—. Con estas tres la capa de datos no es gratis y se eligieron así a
+2. **Las tres capas de datos, escritas a mano y entregadas.** `DIR-01` y `ADMIN-01`:
+   **HECHAS el 11-sep** (`0027` y `0028`, sus dos capas en `app/src/lib/` con sus pruebas,
+   verificadas en las dos bases). **Queda `FORO-01`** —tablas nuevas enteras, el foro no
+   tiene ni una en las 28 migraciones—. Con estas tres la capa de datos no es gratis y se eligieron así a
    propósito: tres pantallas sobre esquema existente habrían medido la fábrica en su caso
    más cómodo.
    ⚠ **Y la corrida de cada pantalla va en SESIÓN LIMPIA**, con el medidor de orquestación
@@ -829,7 +865,9 @@ Orden de lectura, y el orden importa:
 11. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
     Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
     (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
-    Día 13: `F-156` (cerrado, `0026`). Del Día 14: `F-157` (cerrado el mismo día) — el medidor del
+    Día 13: `F-156` (cerrado, `0026`). Del Día 14: `F-157` (cerrado el mismo día) y `F-158`
+    (**abierto, es del PO**: la spec de `ADMIN-01` se contradice a sí misma en el umbral
+    de color de la antigüedad en cola) — el medidor del
     coste de orquestación borraba su propia historia al usarlo. La auditoría de la
     mañana no encontró hallazgo y dejó un ancla en `01_schema_smoke.sql`; el hallazgo
     salió por la tarde, arrancando el H1.

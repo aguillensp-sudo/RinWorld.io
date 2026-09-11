@@ -75,6 +75,7 @@ contra la API real.
 | `migrations/0006_favorite_count_without_view.sql` | Bloquea la escritura de `favorite_count` desde el cliente y hace el backfill. **Su nombre engaña:** la vista agregada que iba a sustituir no llegó a git, y el contador ya está en 0005 — ver F-021 |
 | `seed/dev_accounts.sql` | Las dos organizaciones y las dos cuentas. Idempotente. Las contraseñas entran por variable, nunca en el fichero |
 | `seed/demo_orgs.sql` | Las **seis** organizaciones de la demo (decisión del PO, 7-ago) y la corrección de los diacríticos de las dos primeras. Ver F-019 |
+| `seed/demo_registration_requests.sql` | Las **tres** solicitudes de registro de ADMIN-01 (`0028`), con las antiguedades del bloque de ejemplo de su spec: 52 h, 18 h y 3 h. **Re-ancla el reloj cada vez que se corre** y devuelve las tres a `PENDING_REVIEW`; se verifica a si mismo. No crea ninguna cuenta de Operador, asi que la pantalla sigue sin poder verse hasta que el PO de una de alta |
 | `seed/catalog_demo.sql` | Catálogo de demo: **215 líneas** generadas por el Coder el 7-ago y aplicadas sin corregir. Diseñado hacia atrás desde `openspec/mvp/guion-demo-y-siembra.md`. Ver F-022 |
 | `seed/demo_threads.sql` | **Cinco hilos** de Rodamientos Ibéricos, uno por cada estado de `thread-lifecycle`, con su último elemento. Existe para que `app/e2e/messages.spec.ts` pueda correr contra datos reales: un test de aceptación declarado que no se puede ejecutar cuenta como rojo (F-015). El `content_ciphertext` es relleno a propósito — MSG-01 nunca descifra |
 

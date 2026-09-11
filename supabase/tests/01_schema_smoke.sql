@@ -2017,6 +2017,227 @@ update public.organizations
  where id = :orgA;
 
 -- -----------------------------------------------------------------------------
+-- 0028 · la cola de solicitudes solo la ve y la decide el Operador
+-- -----------------------------------------------------------------------------
+-- ADMIN-01 estrena un actor que el esquema no tenia: alguien sin organizacion
+-- que decide sobre organizaciones que todavia no existen. Todo lo que sigue
+-- comprueba las dos mitades de eso -- que el Operador puede, y que un miembro
+-- normal no -- mas la maquina de estados y la firma de la decision.
+--
+-- ⚠ Y una de las comprobaciones es de las que no fallan solas: un UPDATE que la
+-- RLS no deja pasar NO da error, afecta a cero filas. Por eso el aserto lee la
+-- fila DESPUES en vez de esperar una excepcion: es la forma de F-148, y aqui se
+-- mide a proposito.
+
+-- Un operador (como postgres: el operador lo da de alta la plataforma) y una
+-- solicitud en cola. La solicitud entra por `service_role`/postgres porque
+-- ninguna politica de INSERT existe para nadie mas -- el FSR es de REG-00.
+insert into auth.users (id, email) values
+  ('0e000001-0000-0000-0000-000000000001', 'operador@plataforma.test');
+insert into public.platform_operators (id, full_name) values
+  ('0e000001-0000-0000-0000-000000000001', 'Operadora de Plataforma');
+
+insert into public.registration_requests
+  (id, org_name, country, applicant_full_name, applicant_email, applicant_phone, website, submitted_at)
+values
+  ('11110000-0000-4000-8000-000000000001', 'Distribuciones Alvarez SL', 'ES',
+   'Juan Alvarez Garcia', 'jalvarez@distribalvarez.test', '+34 91 234 56 78', null,
+   now() - interval '52 hours');
+
+do $$
+begin
+  assert (select count(*) from public.registration_request_events
+           where request_id = '11110000-0000-4000-8000-000000000001') = 1,
+    '0028: el disparador escribe la fila de historial del envio del FSR';
+  assert (select state from public.registration_request_events
+           where request_id = '11110000-0000-4000-8000-000000000001') = 'PENDING_REVIEW',
+    '0028: y nace en PENDING_REVIEW';
+  raise notice 'OK · 0028: el historial lo escribe la base desde el primer momento';
+end
+$$;
+
+-- 1 · Un miembro normal de una organizacion no ve NADA de la cola.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.registration_requests) = 0,
+      '0028: un ADMIN de organizacion no ve la cola de solicitudes';
+    assert (select count(*) from public.registration_request_events) = 0,
+      '0028: ni el historial';
+    assert (select count(*) from public.platform_operators) = 0,
+      '0028: ni quienes son los operadores';
+    raise notice 'OK · 0028: la cola es invisible para quien no es Operador';
+  end
+  $$;
+
+  -- Y tampoco la puede decidir. ⚠ Esto NO lanza excepcion: la politica de
+  -- UPDATE simplemente no le aplica y el UPDATE afecta a cero filas.
+  update public.registration_requests set state = 'INVITED_APPROVED'
+   where id = '11110000-0000-4000-8000-000000000001';
+commit;
+
+do $$
+begin
+  assert (select state from public.registration_requests
+           where id = '11110000-0000-4000-8000-000000000001') = 'PENDING_REVIEW',
+    '0028: el UPDATE de un no-Operador no cambio nada -- y no dio error, que es lo que hay que medir';
+  raise notice 'OK · 0028: un no-Operador no decide, y su intento pasa en silencio (por eso se lee la fila)';
+end
+$$;
+
+-- 2 · El Operador si la ve, y la aprueba.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  do $$
+  begin
+    assert (select count(*) from public.registration_requests) = 1,
+      '0028: ANCLA POSITIVA -- el Operador si ve la cola';
+    raise notice 'OK · 0028: el Operador ve la cola';
+  end
+  $$;
+
+  -- Intenta ademas firmar la decision a nombre de otro y con otra fecha: la base
+  -- lo tiene que pisar con quien llama y cuando.
+  update public.registration_requests
+     set state = 'INVITED_APPROVED',
+         decided_by = null,
+         decided_at = '2020-01-01T00:00:00Z'
+   where id = '11110000-0000-4000-8000-000000000001';
+commit;
+
+do $$
+begin
+  assert (select state from public.registration_requests
+           where id = '11110000-0000-4000-8000-000000000001') = 'INVITED_APPROVED',
+    '0028: el Operador aprueba';
+  assert (select decided_by from public.registration_requests
+           where id = '11110000-0000-4000-8000-000000000001')
+         = '0e000001-0000-0000-0000-000000000001',
+    '0028: la firma la pone la base con quien llama, no el cliente';
+  assert (select decided_at from public.registration_requests
+           where id = '11110000-0000-4000-8000-000000000001') > now() - interval '1 minute',
+    '0028: y la fecha es la de ahora, no la que mando el cliente';
+  assert (select count(*) from public.registration_request_events
+           where request_id = '11110000-0000-4000-8000-000000000001') = 2,
+    '0028: el historial gana su segunda fila';
+  raise notice 'OK · 0028: aprobar firma con quien llama y deja rastro';
+end
+$$;
+
+-- 3 · Una transicion que la maquina de estados no permite.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    'update public.registration_requests set state = ''REJECTED'', rejection_reason = ''se rechaza tarde'' where id = ''11110000-0000-4000-8000-000000000001''',
+    '0028: una solicitud ya aprobada no se puede rechazar despues');
+commit;
+
+-- 4 · Rechazo: sin motivo no, con motivo si, y el historial lo guarda.
+insert into public.registration_requests
+  (id, org_name, country, applicant_full_name, applicant_email, submitted_at)
+values
+  ('11110000-0000-4000-8000-000000000002', 'Nordic Bearings AB', 'SE',
+   'Sven Nordic', 'info@nordicbearings.test', now() - interval '18 hours');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  select public.expect_fail(
+    'update public.registration_requests set state = ''REJECTED'' where id = ''11110000-0000-4000-8000-000000000002''',
+    '0028: rechazar sin motivo no se puede');
+
+  select public.expect_fail(
+    'update public.registration_requests set state = ''REJECTED'', rejection_reason = ''corto'' where id = ''11110000-0000-4000-8000-000000000002''',
+    '0028: ni con un motivo de menos de diez caracteres');
+
+  update public.registration_requests
+     set state = 'REJECTED', rejection_reason = 'Sin actividad comprobable en el sector.'
+   where id = '11110000-0000-4000-8000-000000000002';
+commit;
+
+do $$
+begin
+  assert (select note from public.registration_request_events
+           where request_id = '11110000-0000-4000-8000-000000000002'
+             and state = 'REJECTED') = 'Sin actividad comprobable en el sector.',
+    '0028: el motivo del rechazo queda en el historial, que es lo que el panel lateral enseña';
+  raise notice 'OK · 0028: el rechazo exige motivo y el motivo se guarda';
+end
+$$;
+
+-- 5 · `Volver a revision` limpia el motivo y la firma.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  update public.registration_requests set state = 'PENDING_REVIEW'
+   where id = '11110000-0000-4000-8000-000000000002';
+commit;
+
+do $$
+begin
+  assert (select rejection_reason from public.registration_requests
+           where id = '11110000-0000-4000-8000-000000000002') is null,
+    '0028: al volver a revision el motivo NO se queda pegado';
+  assert (select decided_by from public.registration_requests
+           where id = '11110000-0000-4000-8000-000000000002') is null,
+    '0028: ni la firma de la decision que ya no existe';
+  raise notice 'OK · 0028: volver a revision devuelve la solicitud limpia a la cola';
+end
+$$;
+
+-- 6 · El historial no se escribe a mano, ni siquiera siendo Operador.
+--
+-- Se comprueba con el catalogo de privilegios y no intentando el INSERT, y es a
+-- proposito: el intento falla con `42501 permission denied`, que es un fallo de
+-- GRANT y no de politica, y `expect_fail` lo clasifica -- con razon -- como test
+-- roto. La invariante que importa no es "que error sale": es que NADIE
+-- autenticado tiene con que escribir esta tabla ni con que insertar en la cola.
+-- Lo escribe el disparador `security definer`, y punto.
+do $$
+declare
+  sobran text;
+begin
+  select string_agg(privilege_type || ' en ' || table_name, ', ' order by table_name || privilege_type)
+    into sobran
+    from information_schema.role_table_grants
+   where grantee = 'authenticated'
+     and table_schema = 'public'
+     and (
+       (table_name = 'registration_request_events' and privilege_type in ('INSERT','UPDATE','DELETE'))
+       or (table_name = 'registration_requests' and privilege_type in ('INSERT','DELETE'))
+       or (table_name = 'platform_operators' and privilege_type in ('INSERT','UPDATE','DELETE'))
+     );
+
+  assert sobran is null,
+    '0028: authenticated tiene privilegios de escritura que no deberia: ' || coalesce(sobran, '');
+  raise notice 'OK · 0028: nadie autenticado puede escribir el historial ni insertar en la cola';
+end
+$$;
+
+-- 7 · Y `anon` no tiene ni un privilegio sobre las tres tablas nuevas.
+do $$
+declare
+  abiertas text;
+begin
+  select string_agg(distinct table_name, ', ' order by table_name) into abiertas
+    from information_schema.role_table_grants
+   where grantee = 'anon'
+     and table_schema = 'public'
+     and table_name in ('platform_operators','registration_requests','registration_request_events');
+
+  assert abiertas is null,
+    '0028: anon tiene privilegios sobre la cola de solicitudes: ' || coalesce(abiertas, '');
+  raise notice 'OK · 0028: anon no tiene ni un privilegio sobre las tres tablas nuevas';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

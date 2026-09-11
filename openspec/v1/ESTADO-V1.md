@@ -200,6 +200,34 @@ recomprobado hoy con una llamada real** `rawPredict` (región `eu`, `claude-sonn
 proyecto `bearingworld-vera-eu`): `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por
 palabra que el 8 y el 10-sep. Sin movimiento.
 
+**Adenda del mismo día, a petición del PO: dónde estamos respecto al plan V1 v2.3, y qué
+falta para el H1.** Cerrar no es terminar, y el día siguió. Se leyó el plan y se contrastó
+contra el repo, pieza a pieza. **Estamos en la semana 3, que es exactamente la del H1**
+(«la fábrica está medida»), con la banda de semanas 3–5 —la Fundación— casi entera hecha y
+la de semanas 1–3 con cuatro de sus cinco piezas cerradas: tabla de precios con fecha de
+vigencia, manifiesto de dependencias con LangGraph fijado en su versión exacta, coste de
+orquestación instrumentado, y el arreglo del bucle convertido en medición. **La quinta,
+diseñar y medir la fábrica, es la que cierra el hito y es la que faltaba.**
+
+De esa quinta se cerró hoy la primera mitad: **`UMBRAL-FABRICA-V1.md`, el umbral escrito
+ANTES de medir** — la condición literal que la tabla de riesgos del plan le pone al H1 y
+que no existía en ningún sitio. Ocho cifras con su umbral y el origen de cada una, tres
+veredictos atados a los tres escenarios de calendario del propio plan (18, 21 o 30
+semanas), cuatro reglas anti-trampa y una §6 de lo que el umbral NO mide. **La más honesta
+de esas advertencias: la corrección humana tiene una muestra de dos** —solo VND-01 y
+LOGIN-01 se revisaron con el bucle ya arreglado—, que es justamente la razón de ser del
+hito.
+
+**Y una corrección de estado, que es la mitad incómoda de la adenda.** El informe al PO
+dijo que la tarea de `SRCH-01` seguía sin actualizar desde la decisión de `F-118`. **Es
+falso, y la fuente del error fue leer el registro de hallazgos en vez del repo:** la tarea
+se actualizó el 29-ago en `1183a38` —declara `veraCriteria` con la instrucción de
+ignorarla, y el test de VERA salió a `*.fuera-de-contrato.test.tsx`— y `SRCH-01` se midió
+**14 veces** ese mismo día. Lo que estaba desfasado era la casilla de estado de `F-118`,
+trece días diciendo «Abierto» con el arreglo hecho, comitteado y medido. Corregida hoy
+contra `git log` y contra el CSV. **Es `F-012` otra vez, y esta vez llegó a un informe de
+estado antes de que alguien la cazara.**
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -215,6 +243,9 @@ palabra que el 8 y el 10-sep. Sin movimiento.
 | Que el ancla estructural nueva mida de verdad y no en vacío (la lección de `F-146`) | `supabase/tests/run.sh` completo, con canaria: se crea una función `invoker` que lee `thread_items`, se exige que el detector la nombre, y se borra | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`. Los tres asertos nuevos en verde **y la canaria detectada por su nombre** |
 | `vera/index.ts`, la mitad que el Día 13 dejó explícitamente fuera de alcance | Lectura del fichero entero (236 líneas) y `grep` de `createClient`/`.from(`/`.rpc(`/`SERVICE_ROLE` sobre `supabase/functions/` | **No toca Postgres en ningún punto.** Importa el SDK de Anthropic y `tools.json`, y de la petición solo mira que traiga cabecera `Authorization`. Queda fuera de la familia por construcción, no por auditoría. Es además la única función Edge del repo |
 | Entregable 6 (residencia UE, bloqueo de Anthropic) | Llamada real `rawPredict` contra `aiplatform.eu.rep.googleapis.com`, `claude-sonnet-5`, proyecto `bearingworld-vera-eu`, con token de la cuenta del PO — ejecutada hoy, no recordada | `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por palabra que el 8 y el 10-sep. Sin ningún movimiento |
+| Dónde estamos respecto al plan V1 v2.3 (adenda, a petición del PO) | El `.docx` del plan leído entero contra el repo: `harness/tasks/` (6 tareas), `harness/requirements.txt`, `harness/core/pricing.py` y `orchestration_pricing.py`, `harness-metrics.csv` (143 filas, 7 pantallas), `harness-review.csv` y `orchestration-metrics.csv` | Semana 3, la del H1. Banda de semanas 1–3: cuatro de cinco piezas hechas. Banda de semanas 3–5 (Fundación): 5 de 6 entregables, el sexto bloqueado fuera del repo. **El H1 sigue abierto** |
+| Que el umbral del H1 no existía en ninguna parte | `grep -rl "umbral" openspec/ --include=*.md` antes de escribir nada | Cero resultados relativos a la fábrica. La tabla de riesgos del plan lo exige «escrito de antemano» — escrito hoy, `UMBRAL-FABRICA-V1.md`, y su commit es anterior a cualquier corrida de las tres pantallas |
+| Si la tarea de `SRCH-01` seguía sin actualizar tras `F-118` | `git log -- harness/tasks/SRCH-01.json`, el cuerpo de `1183a38`, el propio JSON, y las fechas de las filas `SRCH-01` de `harness-metrics.csv` | **No: actualizada el 29-ago y medida 14 veces ese mismo día.** Lo desfasado era la casilla de estado de `F-118` en el registro, cerrada hoy con esa evidencia |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -251,7 +282,9 @@ palabra que el 8 y el 10-sep. Sin movimiento.
 
 ### Corriente B · Fábrica — NO ABIERTA
 
-Sin cambios. Se abre cuando la corriente A publique los contratos de datos.
+Se abre cuando la corriente A publique los contratos de datos, y esa sigue siendo la
+condición. **Novedad del 11-sep: ya tiene su vara de medir** — `UMBRAL-FABRICA-V1.md`, el
+umbral del H1, escrito antes de medir. Lo que falta para abrirla está en §3, en orden.
 
 ### Corriente C · Verificación — NO ABIERTA
 
@@ -261,25 +294,34 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-La familia `F-148`/`F-155`/`F-156` queda cerrada por los dos lados: lo que llama el
-cliente se auditó el Día 13, y lo que corre por debajo sin que nadie lo invoque
-—disparadores, funciones internas de `app`, expresiones de política y la función Edge—
-se auditó hoy, sin encontrar ninguno más. **No queda ningún punto con acción propia
-pendiente en el repo:**
+**El H1 del plan es lo único con acción propia que queda en el repo**, y desde hoy tiene la
+pieza que le faltaba para ser una medición en vez de una impresión: el umbral, escrito
+antes de medir. El orden de abajo es el de `UMBRAL-FABRICA-V1.md` §7, y ninguno de los
+cinco depende de nadie de fuera:
 
-1. **Entregable 6: seguir esperando la aprobación de Anthropic (Model Garden), sin ETA
-   conocido.** Recomprobado hoy con una llamada real: mismo `429 RESOURCE_EXHAUSTED`,
-   palabra por palabra. **No tocar `vera/index.ts` hasta que responda** (orden de corte
-   del runbook). Reintentar cuando llegue confirmación por email, o periódicamente si no
-   llega ninguna.
+1. **El PO confirma las tres pantallas.** Propuesta escrita: `REG-07`, `FORO-01`, `INV-02`
+   — tres módulos distintos, tres tamaños de spec distintos, y el foro no depende de
+   ninguna decisión de criptografía. Cuesta un minuto y bloquea todo lo demás. **Si se
+   cambian, se cambian en el umbral y ANTES de correr.**
+2. **Las tres capas de datos, escritas a mano y entregadas.** Es la condición que abre la
+   corriente B, y la práctica que ya siguen las seis tareas del corpus.
+3. **Las tres tareas en formato fijo, validadas con `--seco`.** El corpus pasa de **6 a 9**,
+   camino de las **10–15** que el plan declaró objetivo no alcanzado del MVP y asignó
+   explícitamente a este hito.
+4. **Correr `python -m harness.core.orchestration_metrics`.** Su última fila es del 31-ago:
+   once días de sesiones sin medir, y son las caras. Sin línea base, la cifra 7 del umbral
+   —la que decide si la partida de modelos del plan se sostiene— no se puede evaluar.
+5. **Las tres corridas, su revisión y el C5 del PO.** El veredicto va a §1 con las ocho
+   cifras al lado, y arrastra el escenario de calendario: 18, 21 o 30 semanas.
 
-Si el PO prefiere abrir trabajo nuevo en vez de esperar, los dos candidatos ya escritos
-siguen ahí y ninguno depende del entregable 6: **otra serie `n=5` sobre el corpus de
-`MSG-01`** (§6 dice qué decidiría) y **la pregunta de alcance del entregable 5**
-(`FUNDACION-V1.md`).
+En paralelo, sin acción propia desde este lado:
 
-Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago
-de Vercel — ninguno bloquea trabajo de ingeniería.
+- **Entregable 6: seguir esperando la aprobación de Anthropic (Model Garden), sin ETA.**
+  Recomprobado el 11-sep con llamada real: mismo `429 RESOURCE_EXHAUSTED`. **No tocar
+  `vera/index.ts` hasta que responda** (orden de corte del runbook).
+
+Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
+Vercel — ninguno bloquea trabajo de ingeniería.
 
 ### Lo que se cerró hoy (Día 14, 11-sep)
 
@@ -629,6 +671,19 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   Lo que no se sabe es si el mensaje de error basta para que una sesión que no conoce
   la historia de `F-148`/`F-155`/`F-156` haga la auditoría en vez de añadir el nombre a
   la lista y seguir.
+- **Si los umbrales del H1 están puestos donde deben.** Los de la corrección humana
+  (cifras 4 y 5 de `UMBRAL-FABRICA-V1.md`) se apoyan en **dos** puntos de medida, los
+  únicos dos revisados con el bucle ya arreglado, y el resto es juicio declarado como tal.
+  Un umbral que nadie puede fallar no mide, y uno imposible tampoco: cuál de las dos cosas
+  es este solo se sabrá al correr las tres pantallas. Lo que sí está cerrado es que **no se
+  toca después de ver el resultado**.
+- **Cuánto de las 21 pantallas restantes dice una muestra de tres.** Tres de módulos
+  distintos es mejor muestra que tres del mismo, pero siguen siendo tres de veinticuatro.
+  Por eso el escenario base del umbral obliga a remedir al llegar a seis.
+- **Cuántas casillas más del registro de hallazgos dicen «Abierto» con el trabajo hecho.**
+  Hoy apareció una (`F-118`, trece días) y no se buscó ninguna otra: el registro tiene
+  dieciocho filas en algún estado abierto y **ninguna se ha contrastado contra el repo con
+  este criterio**. Es barato y no se ha hecho.
 - **Si `app.guard_offer_decider` se está apoyando sin saberlo en una política de otra
   tabla.** Compara `quien = old.sender_org_id` y, si `app.current_org_id()` devolviera
   `NULL`, la comparación no sería cierta y el guardia dejaría pasar el cambio de estado
@@ -687,17 +742,20 @@ Orden de lectura, y el orden importa:
 1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
 2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Sin
    esa decisión no se escribe SQL de reparto de CEK.
-3. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado el 6-sep: entregables
+3. **`openspec/v1/UMBRAL-FABRICA-V1.md`** ANTES de tocar nada de la fábrica de pantallas o
+   del H1. Es el umbral escrito antes de medir, y **no se reescribe después de ver un
+   resultado**: si hay que cambiar las tres pantallas, se cambian ahí y antes de correr.
+4. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado el 6-sep: entregables
    1, 2 y 6 con movimiento; el 3 bloqueado — lee su adenda del 6-sep antes de reintentar
    `create_project`.
-4. **`openspec/v1/entornos.md`** (nuevo, 6-sep) si vas a tocar CI/CD o el mapa de entornos.
-5. **`openspec/v1/vera-vertex-eu-migracion.md`** (nuevo, 6-sep) antes de tocar `vera/index.ts`
+5. **`openspec/v1/entornos.md`** (nuevo, 6-sep) si vas a tocar CI/CD o el mapa de entornos.
+6. **`openspec/v1/vera-vertex-eu-migracion.md`** (nuevo, 6-sep) antes de tocar `vera/index.ts`
    por el entregable 6 — no reinventar el runbook.
-6. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
-7. **`docs/ADR-001`** si vas a tocar criptografía.
-8. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
-9. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
-10. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
+7. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
+8. **`docs/ADR-001`** si vas a tocar criptografía.
+9. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
+10. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
+11. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
     Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
     (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
     Día 13: `F-156` (cerrado, `0026`). Del Día 14: **ninguno** — la
@@ -724,5 +782,10 @@ de `security definer` (`FORCE RLS` y dueño)—, todos con los nombres de tabla 
 VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`) con la canaria detectada por su nombre ·
 entregable 6 recomprobado hoy con una llamada real a `rawPredict` (región `eu`,
 `claude-sonnet-5`): `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por palabra que
-el 8 y el 10-sep · `git status --short` releído antes de escribir este pie · Dirección
-Técnica, Nortex Systems*
+el 8 y el 10-sep · **adenda del mismo día, a petición del PO:** leído el plan
+V1 v2.3 contra el repo pieza a pieza — estamos en la semana 3, la del H1, con la Fundación
+casi entera hecha y el hito abierto — y escrito `UMBRAL-FABRICA-V1.md`, el umbral que la
+tabla de riesgos del plan exige «de antemano» y que no existía; corregida además la casilla
+de `F-118`, trece días en «Abierto» con el arreglo hecho y medido desde el 29-ago
+(`1183a38`, 14 corridas de `SRCH-01` ese mismo día) · `git status --short` releído antes de
+escribir este pie · Dirección Técnica, Nortex Systems*

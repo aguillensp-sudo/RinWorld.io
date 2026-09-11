@@ -128,65 +128,77 @@ completo vive en `git show c395432:openspec/v1/ESTADO-V1.md`, no se repite aquí
 
 ---
 
-**Día 13 de V1 · 10-sep-2026 · Estado: CERRADO**
+**Día 13 de V1 · 10-sep-2026 · Estado: CERRADO.** Sesión de un solo punto: la pregunta
+que `F-155` dejó abierta el Día 12 —*"¿hay OTROS `SELECT` bajo RLS con el mismo patrón en
+el resto de `app/src/lib/`?"*— auditada contra las cinco llamadas RPC que tocan claves o
+hilos. Sí había un tercero: el guardia *"ya has consultado"* de `create_inquiry`, que se
+saltaba en silencio para cualquier EDITOR sin clave en el ítem de la consulta previa —
+cerrado en `0026` (`F-156`), verificado contra un Postgres desechable ANTES de escribir la
+migración y aplicado a las dos bases. El entregable 6 no se recomprobó ese día, a
+propósito. El detalle completo vive en `git show 1c4e1ac:openspec/v1/ESTADO-V1.md`, no se
+repite aquí.
 
-Sesión de un solo punto, respondiendo la pregunta que `F-155` dejó abierta en el
-§3/§6 del cierre del Día 12: *"¿hay OTROS `SELECT` bajo RLS con el mismo patrón
-en el resto de `app/src/lib/`, además de los dos que `0025` corrigió?"* —
-auditado, y sí: un tercero, encontrado y cerrado hoy (`F-156`). El entregable 6
-no se recomprobó — no hay ninguna señal de que el bloqueo de Anthropic haya
-cambiado desde ayer, y el foco de la sesión era otro.
+---
 
-**`F-156`, respondiendo la pregunta abierta de `F-155`: cerrado en `0026`.**
-Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos
-(`thread_public_keys`, `org_public_keys`, `create_thread_item`, `counter_offer`,
-`create_inquiry`) contra el criterio exacto de `F-155`: un `SELECT`/`EXISTS`
-dentro de una función `security invoker` que dependa de tener ya una clave
-envuelta. Las dos primeras ya eran `security definer` con `app.can_access_thread`
-como puerta — inmunes. `create_thread_item` y `counter_offer` quedaron limpias
-tras `0025`. `create_inquiry` no: su guardia contra duplicados —*"Ya has
-consultado esta referencia con este distribuidor"*— hace
-`exists(select 1 from thread_items where item_type='CONSULTA' and
-inventory_line_id=… and sender_org_id=app.current_org_id())`, un `SELECT`
-normal bajo `thread_items_select_participant` (`0019`). Esa política exige
-clave envuelta EN ESE ELEMENTO CONCRETO y mira al MIEMBRO que llama, no a su
-organización — y con el ámbito encendido, `org_public_keys` (`0023` §3)
-envuelve el lado propio SOLO para quien escribe y sus ADMIN. Cualquier otro
-EDITOR de la organización nunca tiene clave en ese ítem, así que el `EXISTS`
-le devuelve CERO FILAS sin error: el guardia se salta en silencio y deja pasar
-una consulta duplicada a la misma línea y al mismo distribuidor — exactamente
-lo que su propio mensaje de error dice que impide. Misma familia que
-`F-148`/`F-155`, con una vuelta de tuerca: no bloquea a un escritor legítimo,
-deja pasar una escritura que debería rechazarse.
+**Día 14 de V1 · 11-sep-2026 · Estado: CERRADO**
 
-**Verificado contra un Postgres desechable ANTES de escribir la migración, no
-razonado.** Con el ámbito de Alpha ya encendido (fixture existente de
-`01_schema_smoke.sql`), a1 (ADMIN) consulta una línea de Beta; desde la sesión
-de a3 (EDITOR de Alpha, no ha escrito nada, sin clave envuelta en ese ítem),
-el `EXISTS` que usa `create_inquiry` da `false`, mientras que sin RLS (como
-`postgres`) la fila existe de verdad (`true`). No se veía antes porque el
-único test de este guardia repite el MISMO miembro en las dos consultas y
-corre ANTES de que el ámbito de Alpha se encienda más adelante en el fichero
-(línea ~1433) — las dos condiciones que hacen falta para que el hueco se
-manifieste nunca coincidieron en ningún aserto.
+La otra mitad de la misma pregunta, la que el Día 13 dejó fuera de alcance a propósito
+porque `F-155` hablaba de `app/src/lib/`: **¿y todo lo que corre por debajo sin que ningún
+RPC del cliente lo invoque?** Disparadores, funciones internas de `app`, las expresiones
+de las propias políticas de RLS, y la función Edge. Auditado hoy contra el criterio exacto
+de la familia —un `SELECT`/`EXISTS` bajo RLS dentro de código `security invoker` cuyo
+resultado vacío **decide** en vez de fallar—. **La respuesta es que no hay ninguno más, y
+por una razón más fuerte que la esperada.**
 
-**Arreglo, mismo patrón que `app.thread_counterpart`/`app.resolve_thread`/
-`app.is_item_sender`.** Nuevo helper `app.org_already_inquired(p_line, p_org)`,
-`security definer`, misma consulta sin pasar por RLS — devuelve un booleano,
-nunca una fila de `thread_items`, así que no abre lectura, cierra el hueco.
-`create_inquiry` lo usa en vez del `EXISTS` directo; ni el mensaje de error ni
-el resto de la lógica cambian una línea.
+**Los siete disparadores `security invoker` de `app` no leen NINGUNA tabla.** No es que su
+lectura esté bien resuelta: es que no hay lectura. `guard_member_privileges`,
+`guard_offer_decider`, `guard_offer_terminal_state`, `guard_organization_columns`,
+`guard_thread_state`, `touch_item_estado` y `touch_updated_at` deciden con `OLD`/`NEW`,
+`current_user`, `auth.uid()` y ayudantes `security definer`. Todo lo que en `app` sí lee
+tablas —las otras 21 funciones— es `security definer`, y las 23 `definer` de `app`/`public`
+son de `postgres`, el dueño de las tablas: RLS no les aplica. La fuente fue el catálogo de
+la base (`pg_proc`, `pg_trigger`, `pg_policies`, `pg_class`), no los `.sql`, y el barrido
+se repitió en `troxminloxkjwihwfevs` y en `bearingworld-e2e` con el mismo resultado.
 
-**Verificación de cierre:** `supabase/tests/run.sh` completo (`ESQUEMA VERDE` +
-`CATALOGO VERDE` + `FRESCURA VERDE`), con un test de regresión nuevo en
-`01_schema_smoke.sql` (a3 intenta duplicar la consulta de a1 a Beta, bloqueado
-con el literal exacto; se confirma que sigue habiendo UNA sola fila de
-`CONSULTA`) — `0026` aplicada después por el MCP a `troxminloxkjwihwfevs` y a
-`bearingworld-e2e`, con `pg_proc`/`pg_get_function_identity_arguments`
-releído para confirmar `app.org_already_inquired` (`prosecdef=true`) y que
-`create_inquiry` sigue `security invoker`. `get_advisors` (seguridad) en las
-dos bases: los tres avisos ya existentes desde el Día 12, ninguno nuevo —
-`org_already_inquired` vive en `app`, no expuesta por REST.
+**Las 20 políticas de RLS de `public`, leídas una a una.** Dos leen otra tabla con RLS
+dentro de su propia expresión, que es la forma exacta de `F-148`:
+`thread_items_select_participant` y `threads_select_participant`, las dos con un `EXISTS`
+sobre `thread_item_keys`. No es un hueco: la RLS anidada de esa tabla filtra por
+`recipient_member_id = auth.uid()`, **la misma condición que el `EXISTS` ya impone**, así
+que no puede esconder ninguna fila que el `EXISTS` fuera a contar.
+
+**`vera/index.ts` queda fuera de la familia por construcción, no por auditoría.** Leído
+entero: no toca Postgres en ningún punto —importa el SDK de Anthropic y `tools.json`, y de
+la petición solo mira que traiga cabecera `Authorization`—. Es además la única función
+Edge del repo.
+
+**Sin migración nueva, a propósito: no había nada que corregir.** `0026` sigue siendo la
+última y el contador de hallazgos sigue en `F-156`. Pero **un resultado negativo no se
+guarda en un documento, se ancla** — caduca con la próxima migración, y este es el tipo de
+invariante que nadie vuelve a comprobar a mano. Cuatro asertos nuevos en
+`01_schema_smoke.sql`, ninguno con nombres de tabla escritos a mano (salen de `pg_class`,
+así que una tabla con RLS nueva queda cubierta sin tocar el fichero):
+
+1. **La superficie permitida.** Ninguna función `security invoker` de `app`/`public` fuera
+   de las seis auditadas —las tres RPC del Día 13, las dos de demo y el falso positivo de
+   `guard_member_privileges`, cada una con su porqué escrito al lado— puede nombrar una
+   tabla con RLS.
+2. **Una canaria que demuestra que el detector detecta.** Se crea una función `invoker` que
+   lee `thread_items` y se exige que el detector la nombre. Sin esto, el aserto 1 pasaría
+   en vacío el día que el barrido dejara de medir — que es exactamente como `F-146`
+   sobrevivió desde `0012`.
+3. **Nada de SQL dinámico en código `invoker`.** El detector lee el CUERPO de la función:
+   una tabla nombrada dentro de un `execute` compuesto en tiempo de ejecución no aparece
+   ahí. Hoy no hay ni una sola función así, comprobado contra el catálogo.
+4. **La premisa de la inmunidad de `security definer`**, que no es un axioma: ninguna tabla
+   con `FORCE ROW LEVEL SECURITY` y ninguna función `definer` de otro dueño. Si cualquiera
+   de las dos cae, `F-148` renace entero, en silencio y en todas partes a la vez.
+
+**Verificación de cierre:** `supabase/tests/run.sh` completo (`ESQUEMA VERDE` + `CATALOGO
+VERDE` + `FRESCURA VERDE`), con la canaria detectada por su nombre. **Entregable 6
+recomprobado hoy con una llamada real** `rawPredict` (región `eu`, `claude-sonnet-5`,
+proyecto `bearingworld-vera-eu`): `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por
+palabra que el 8 y el 10-sep. Sin movimiento.
 
 ---
 
@@ -194,14 +206,15 @@ dos bases: los tres avisos ya existentes desde el Día 12, ninguno nuevo —
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-10` |
-| La pregunta abierta de `F-155`: ¿hay otros `SELECT`/`EXISTS` bajo RLS con el mismo patrón en `app/src/lib/`? | Lectura completa de `keys.ts` y `thread-detail.ts`, más `grep` de `.rpc(` y `.from('threads'\|'thread_items'\|'thread_item_keys')` en todo `app/src` | Cinco llamadas RPC relevantes (`thread_public_keys`, `org_public_keys`, `create_thread_item`, `counter_offer`, `create_inquiry`); las dos primeras ya `security definer` con `can_access_thread` como puerta — inmunes; las otras tres revisadas línea a línea contra las migraciones vigentes tras `0025` |
-| Sospecha sobre el guardia "ya has consultado" de `create_inquiry` | Lectura de `0019` (política) + `0023` §3 (`org_public_keys` con el ámbito encendido solo envuelve a quien escribe + ADMIN) | Hipótesis formada antes de tocar código: el mismo patrón de `F-148`/`F-155` debería aplicar |
-| La hipótesis, contra un Postgres desechable (bloque de depuración temporal en `01_schema_smoke.sql`, borrado después de confirmar) | `supabase/tests/run.sh`, sesión de a3 (EDITOR de Alpha, sin clave en el ítem de la consulta previa de a1) | `EXISTS` de `create_inquiry` devuelve `false`; sin RLS (como `postgres`) la fila existe de verdad (`true`) — confirmado `F-156` |
-| `0026` (helper `security definer` + `create_inquiry` actualizado) contra el esquema real | `supabase/tests/run.sh` completo, con el test de regresión nuevo (a3 intenta duplicar) | `ESQUEMA VERDE`; bloqueado con el literal exacto (`Ya has consultado esta referencia con este distribuidor.`), una sola fila de `CONSULTA` tras el intento |
-| `0026` aplicada a producción y a `bearingworld-e2e` | `pg_proc`/`pg_get_function_identity_arguments` releído después por el MCP, no asumido por el `{"success":true}` de `apply_migration` | `app.org_already_inquired` presente, `prosecdef=true`; `create_inquiry` sigue `security invoker` — en las dos bases |
-| Avisos de seguridad nuevos tras `0026` | `get_advisors(type=security)` en `troxminloxkjwihwfevs` y `bearingworld-e2e` | Los tres avisos ya existentes desde el Día 12 (search_path de dos funciones de demo, `org_public_keys`/`thread_public_keys` ejecutables por `authenticated`, password protection); ninguno nuevo — `org_already_inquired` vive en `app`, no expuesta por REST |
-| Entregable 6 (residencia UE, bloqueo de Anthropic) | NO recomprobado hoy — el foco de la sesión fue la auditoría de `F-155`, sin ninguna señal de que el bloqueo haya cambiado desde ayer | Sigue como lo dejó el Día 12 (`429 RESOURCE_EXHAUSTED`), sin verificar hoy |
+| Fecha de máquina | `date -u` | `2026-09-11` |
+| El cierre del Día 13 llegó a `origin` y su CI acabó en verde | `git status -sb` y `gh run list` | Sin desfase con `origin/mvp/bootstrap` (`1c4e1ac`); corrida `34497839743`, `success` |
+| La pregunta que el Día 13 dejó abierta: ¿vive el patrón de `F-155` en algún disparador o función interna de `app` que ningún RPC del cliente invoque? | El catálogo de la base, no los `.sql`: `pg_proc` (28 funciones en `app`, 7 en `public`), `pg_trigger` (19 disparadores, 14 colgando de funciones de `app`) y el cuerpo (`prosrc`) de las 12 `security invoker` | **No.** Las siete `invoker` de `app` son exactamente las siete de disparador, y **ninguna lee ninguna tabla**: deciden con `OLD`/`NEW`, `current_user`, `auth.uid()` y ayudantes `security definer`. Todo lo que en `app` lee tablas es `security definer` |
+| La premisa de la que depende esa inmunidad — que a `security definer` no le aplique RLS | `pg_class.relforcerowsecurity` y `pg_proc.proowner` contra `pg_class.relowner`, en las dos bases | Ninguna de las 8 tablas con RLS de `public` fuerza RLS sobre su dueño, y las 23 funciones `security definer` de `app`/`public` son de `postgres`, dueño de las tablas. Se sostiene hoy — y por eso se ancla, no se supone |
+| Las políticas que leen OTRA tabla con RLS dentro de su propia expresión (la forma exacta de `F-148`) | `pg_policies`, las 20 políticas de `public` leídas una a una | Dos: `thread_items_select_participant` y `threads_select_participant`, las dos con un `EXISTS` sobre `thread_item_keys`. La RLS anidada de esa tabla filtra por `recipient_member_id = auth.uid()`, **la misma condición que el `EXISTS` ya impone** — no puede esconder ninguna fila que el `EXISTS` fuera a contar. No es un hueco |
+| Qué funciones `security invoker` nombran una tabla con RLS | Barrido del cuerpo contra los nombres de las tablas con RLS **derivados de `pg_class`**, no escritos a mano — en `troxminloxkjwihwfevs` y en `bearingworld-e2e` | Seis, todas conocidas: las tres RPC auditadas el Día 13 (`create_inquiry`, `create_thread_item`, `counter_offer`), las dos de demo, y `app.guard_member_privileges` — falso positivo: lo único que nombra es `members.role` dentro del texto de una excepción |
+| Que el ancla estructural nueva mida de verdad y no en vacío (la lección de `F-146`) | `supabase/tests/run.sh` completo, con canaria: se crea una función `invoker` que lee `thread_items`, se exige que el detector la nombre, y se borra | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`. Los tres asertos nuevos en verde **y la canaria detectada por su nombre** |
+| `vera/index.ts`, la mitad que el Día 13 dejó explícitamente fuera de alcance | Lectura del fichero entero (236 líneas) y `grep` de `createClient`/`.from(`/`.rpc(`/`SERVICE_ROLE` sobre `supabase/functions/` | **No toca Postgres en ningún punto.** Importa el SDK de Anthropic y `tools.json`, y de la petición solo mira que traiga cabecera `Authorization`. Queda fuera de la familia por construcción, no por auditoría. Es además la única función Edge del repo |
+| Entregable 6 (residencia UE, bloqueo de Anthropic) | Llamada real `rawPredict` contra `aiplatform.eu.rep.googleapis.com`, `claude-sonnet-5`, proyecto `bearingworld-vera-eu`, con token de la cuenta del PO — ejecutada hoy, no recordada | `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por palabra que el 8 y el 10-sep. Sin ningún movimiento |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -234,7 +247,7 @@ dos bases: los tres avisos ya existentes desde el Día 12, ninguno nuevo —
 | Entregable 2 · despliegue continuo | ✅ **HECHO — 8-sep** — VERA y Vercel, los dos verdes en CI real (`gh run` `34219861643`). `F-151` cerrado: cuenta y proyecto de Vercel nuevos, ver §4/§5 |
 | Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep, Preview deployments recuperadas el 10-sep sin duplicar producción** (`F-153`) — `entornos.md`, los tres entornos con `environment:` de GitHub donde aplica |
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
-| Entregable 6 · residencia europea (VERA) | 🟠 **10-sep, infraestructura GCP creada y verificada** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
+| Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
 ### Corriente B · Fábrica — NO ABIERTA
 
@@ -248,22 +261,53 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-Con la pregunta que dejó abierta `F-155` contestada hoy (`F-156`, cerrado) y el
-entregable 6 sin ningún movimiento posible desde este lado, no queda ningún punto con
-acción propia pendiente en el repo:
+La familia `F-148`/`F-155`/`F-156` queda cerrada por los dos lados: lo que llama el
+cliente se auditó el Día 13, y lo que corre por debajo sin que nadie lo invoque
+—disparadores, funciones internas de `app`, expresiones de política y la función Edge—
+se auditó hoy, sin encontrar ninguno más. **No queda ningún punto con acción propia
+pendiente en el repo:**
 
 1. **Entregable 6: seguir esperando la aprobación de Anthropic (Model Garden), sin ETA
-   conocido.** No recomprobado hoy — el foco de la sesión era la auditoría de `F-155`, y
-   no hay ninguna señal de que el bloqueo haya cambiado desde el `429` del Día 12.
-   Reintentar la llamada de prueba cuando llegue alguna confirmación por email, o
-   periódicamente si no llega ninguna. **No tocar `vera/index.ts` hasta que responda**
-   (orden de corte del runbook).
+   conocido.** Recomprobado hoy con una llamada real: mismo `429 RESOURCE_EXHAUSTED`,
+   palabra por palabra. **No tocar `vera/index.ts` hasta que responda** (orden de corte
+   del runbook). Reintentar cuando llegue confirmación por email, o periódicamente si no
+   llega ninguna.
 
-Fuera de sesión, siguen sin moverse: `F-073` (re-loguear la CLI de Supabase) y la
-pregunta de alcance del entregable 5 (`FUNDACION-V1.md`) — ninguno bloquea trabajo de
-ingeniería.
+Si el PO prefiere abrir trabajo nuevo en vez de esperar, los dos candidatos ya escritos
+siguen ahí y ninguno depende del entregable 6: **otra serie `n=5` sobre el corpus de
+`MSG-01`** (§6 dice qué decidiría) y **la pregunta de alcance del entregable 5**
+(`FUNDACION-V1.md`).
 
-### Lo que se cerró hoy (Día 13, 10-sep)
+Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago
+de Vercel — ninguno bloquea trabajo de ingeniería.
+
+### Lo que se cerró hoy (Día 14, 11-sep)
+
+- **Contestada la última pregunta abierta de la familia `F-155`, y la respuesta es que no
+  hay nada que arreglar.** Auditados contra el criterio exacto —un `SELECT`/`EXISTS` bajo
+  RLS dentro de código `security invoker` cuyo resultado vacío decide en vez de fallar—
+  los siete disparadores de `app`, las 20 políticas de RLS de `public` y la función Edge
+  `vera/index.ts`. Ninguno tiene la forma: **los disparadores no leen tablas**, las dos
+  políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada
+  aplicaría, y `vera` no toca Postgres.
+- **Un resultado negativo no se guarda en un documento: se ancla.** Tres asertos nuevos
+  en `01_schema_smoke.sql`, ninguno con nombres de tabla escritos a mano —salen de
+  `pg_class`, así que una tabla con RLS nueva queda cubierta sin tocar el fichero:
+  1. ninguna función `security invoker` de `app`/`public` fuera de la superficie auditada
+     (seis, listadas con su porqué) puede nombrar una tabla con RLS;
+  2. **una canaria que demuestra que el detector detecta** — se crea una función `invoker`
+     que lee `thread_items` y se exige que el detector la nombre. Sin esto, el aserto de
+     arriba pasaría en vacío el día que el barrido dejara de medir, que es exactamente
+     como `F-146` sobrevivió desde `0012`;
+  3. la premisa de la inmunidad de `security definer`: ninguna tabla con `FORCE ROW LEVEL
+     SECURITY` y ninguna función `definer` de otro dueño. Si alguna de las dos cae,
+     `F-148` renace entero, en silencio y en todas partes a la vez.
+- **Sin migración nueva, a propósito.** No hay nada que corregir en la base: lo de hoy es
+  una auditoría y su ancla. `0026` sigue siendo la última migración, y el número de
+  hallazgos sigue en `F-156`.
+- **Entregable 6: recomprobado con llamada real, sigue bloqueado.** Mismo `429`.
+
+### Lo que se cerró el Día 13 (10-sep)
 
 - **`F-156` (nuevo, respondiendo la pregunta abierta de `F-155`): cerrado en `0026`.**
   El guardia "ya has consultado esta referencia con este distribuidor" de
@@ -458,6 +502,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~Un cliente manipulado puede envolver de más hacia la CONTRAPARTE (backlog de `0023` §4)~~ | **Resuelto 10-sep-2026: `0024`, el guardia recalcula el conjunto exacto vía `thread_public_keys`. De paso salió `F-154` (tercera organización) y `F-155` (helper `security definer` para `otra`, en `0025`)** |
 | ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
 | ⚪ | ~~`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?~~ | **Resuelto 10-sep-2026 (Día 13): sí, un tercero — el guardia "ya has consultado" de `create_inquiry`, cerrado en `0026` (`F-156`). Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos; ninguna otra tenía el hueco** |
+| ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
 
 ---
 
@@ -562,10 +607,38 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   de `app/src/lib/` invoque directamente hoy (`app.validate_thread_item`, `app.check_
   thread_rate_limit`, `app.guard_thread_state`…), ni la función Edge `vera/index.ts` —
   fuera de alcance de la pregunta original de `F-155`, que hablaba de `app/src/lib/`.
-- **Si el mismo patrón vive en algún trigger o función `app.*` interna que corre en
-  cada escritura sin que ningún RPC del cliente lo invoque por su cuenta.** No auditado
-  hoy con este criterio concreto — la sesión se acotó a lo que llama `app/src/lib/`,
-  que es lo que pedía la pregunta original de `F-155`.
+- ~~Si el mismo patrón vive en algún trigger o función `app.*` interna que corre en
+  cada escritura sin que ningún RPC del cliente lo invoque por su cuenta.~~
+  **Contestado el 11-sep-2026 (Día 14): no, y por una razón más fuerte que «no se
+  encontró ninguno» — los siete disparadores no leen NINGUNA tabla.** No es que su
+  lectura esté bien resuelta: es que no hay lectura. Todo lo que en `app` lee tablas es
+  `security definer` y de `postgres`, el dueño, así que RLS no le aplica. **Lo que esto
+  NO cubre, y conviene decirlo:** la auditoría mira una sola dirección —código `invoker`
+  que lee de menos sin enterarse—. La contraria, si cada ayudante `security definer`
+  está tan acotado como debería estar ahora que son 23 y ven la base entera, **no la ha
+  mirado nadie con ese criterio**.
+- **Si el barrido que ancla ese resultado sigue midiendo toda la superficie el día que
+  el esquema crezca.** El detector lee el CUERPO de cada función `invoker` y busca
+  nombres de tablas con RLS. Dos cosas lo pueden dejar ciego, y hoy ninguna ocurre
+  —comprobado contra el catálogo, no supuesto—: SQL dinámico (`execute`), que ahora
+  tiene su propio aserto, y una vista o una función intermedia que tape la tabla. Lo
+  segundo no está cubierto por nada.
+- **Si el aserto le va a servir de algo a quien lo rompa.** Cuando nazca una función
+  `invoker` legítima que lea una tabla con RLS —que nacerá—, el ancla se pone roja y
+  alguien tendrá que auditarla y meterla en la lista. Eso es el diseño, no un fallo.
+  Lo que no se sabe es si el mensaje de error basta para que una sesión que no conoce
+  la historia de `F-148`/`F-155`/`F-156` haga la auditoría en vez de añadir el nombre a
+  la lista y seguir.
+- **Si `app.guard_offer_decider` se está apoyando sin saberlo en una política de otra
+  tabla.** Compara `quien = old.sender_org_id` y, si `app.current_org_id()` devolviera
+  `NULL`, la comparación no sería cierta y el guardia dejaría pasar el cambio de estado
+  **sin decir nada** — la forma de la familia, con el ayudante `definer` en medio en vez
+  de un `SELECT` crudo. Hoy es inalcanzable: `current_org_id()` solo da `NULL` si no hay
+  fila en `members` para `auth.uid()`, y entonces `app.is_active_member()` es falso y la
+  política `thread_items_update_participant` corta el `UPDATE` antes. **Comprobado
+  leyendo los tres cuerpos y la política en el catálogo, NO contra una sesión viva.**
+  Que un guardia dependa de una política de otro fichero para no fallar en silencio es
+  exactamente lo que costó `F-148`.
 
 ---
 
@@ -627,30 +700,29 @@ Orden de lectura, y el orden importa:
 10. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
     Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
     (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
-    Día 13: `F-156` (cerrado, `0026`).
+    Día 13: `F-156` (cerrado, `0026`). Del Día 14: **ninguno** — la
+    jornada auditó y no encontró hallazgo, así que el contador sigue en `F-156`; lo que
+    dejó es un ancla en `01_schema_smoke.sql`, no una fila en el registro.
 
 ---
 
-*Día 13 de V1 · 10-sep-2026, cerrado tras responder la pregunta que `F-155` dejó
-abierta el Día 12 y cerrar el hallazgo que salió de auditarla · fecha leída de la
-máquina (`date -u`) al cerrar: `2026-09-10` · auditadas las cinco llamadas RPC de
-`app/src/lib/` que tocan claves o hilos (`thread_public_keys`, `org_public_keys`,
-`create_thread_item`, `counter_offer`, `create_inquiry`) contra el criterio exacto de
-`F-155` — un `SELECT`/`EXISTS` bajo RLS derivado de `thread_item_keys` dentro de una
-función `security invoker` · `F-156` encontrado en el guardia "ya has consultado" de
-`create_inquiry`, confirmado contra un Postgres desechable ANTES de escribir la
-migración (el `EXISTS` da `false` desde la sesión de un EDITOR sin clave en el ítem,
-`true` sin RLS) · `0026` verificada con `supabase/tests/run.sh` completo (`ESQUEMA
-VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`), con un test de regresión nuevo que
-bloquea con el literal exacto y confirma que sigue habiendo una sola fila — y aplicada
-después a `troxminloxkjwihwfevs` y `bearingworld-e2e` por el MCP, con `pg_proc`/
-`pg_get_function_identity_arguments` releído para confirmar `app.org_already_inquired`
-(`security definer`) y que `create_inquiry` sigue `security invoker` · `get_advisors`
-(seguridad), en las dos bases: los tres avisos ya existentes desde el Día 12, ninguno
-nuevo · entregable 6 NO recomprobado hoy, a propósito — sigue como lo dejó el Día 12,
-sin ninguna señal de que el bloqueo de Anthropic haya cambiado · `git status --short`
-releído antes de escribir este pie: tres ficheros modificados
-(`findings-register.md`, `ESTADO-V1.md`, `01_schema_smoke.sql`) y una migración nueva
-sin trackear (`0026`), listos para commitear, más `openspec/design-gui/Ingles/`, sin
-trackear y ajena a esta sesión (sin cambios desde el Día 11) · Dirección Técnica,
-Nortex Systems*
+*Día 14 de V1 · 11-sep-2026, cerrado tras contestar la última pregunta abierta de la
+familia `F-155` — la mitad que el Día 13 dejó fuera de alcance a propósito: lo que corre
+por debajo sin que ningún RPC del cliente lo invoque · fecha leída de la máquina
+(`date -u`) al cerrar: `2026-09-11` · auditados contra el criterio exacto los siete
+disparadores `security invoker` de `app`, las 20 políticas de RLS de `public` y la
+función Edge `vera/index.ts`; ninguno tiene la forma, y los disparadores por una razón
+más fuerte que la esperada: **no leen ninguna tabla** · la fuente fue el catálogo de la
+base (`pg_proc`, `pg_trigger`, `pg_policies`, `pg_class`), no los `.sql`, y el barrido se
+repitió en `troxminloxkjwihwfevs` y en `bearingworld-e2e` con el mismo resultado ·
+**sin migración nueva: no había nada que corregir**, `0026` sigue siendo la última y el
+contador de hallazgos sigue en `F-156` · el resultado negativo queda anclado con cuatro
+asertos nuevos en `01_schema_smoke.sql` —superficie `invoker` permitida, canaria que
+demuestra que el detector detecta, ausencia de SQL dinámico, y la premisa de la inmunidad
+de `security definer` (`FORCE RLS` y dueño)—, todos con los nombres de tabla derivados de
+`pg_class` y no escritos a mano · `supabase/tests/run.sh` completo en verde (`ESQUEMA
+VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`) con la canaria detectada por su nombre ·
+entregable 6 recomprobado hoy con una llamada real a `rawPredict` (región `eu`,
+`claude-sonnet-5`): `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por palabra que
+el 8 y el 10-sep · `git status --short` releído antes de escribir este pie · Dirección
+Técnica, Nortex Systems*

@@ -355,6 +355,14 @@ es el interior del `return`. Seis pruebas nuevas con mock de red, que miran **la
 no solo el resultado**: una tabla mal escrita devolvería cero filas, y cero filas aquí
 significa "no es Operador" — el mismo fallo que esto viene a arreglar.
 
+**La cuenta de Operador, por fin, en producción.** El PO creó la cuenta en Auth
+(`operador@bearingworld.test`, confirmada) pero no pudo completar el segundo paso, el alta
+en `platform_operators`. Hecha por el MCP y **comprobada desde la sesión del propio
+operador**, no solo mirando que la fila exista: `app.is_platform_operator()` le devuelve
+cierto y la RLS le enseña las tres solicitudes, sus tres filas de historial y un operador.
+**Sigue faltando la cuenta equivalente en `bearingworld-e2e`**, que es la que permitiría a
+la tarea de ADMIN-01 declarar un test de extremo a extremo.
+
 **`F-159`: la CI se puso roja en un test que no tocaba nada de lo que se cambió.** El job de
 Playwright falló en INV-01 con `Expected Set {"Published"}, Received Set {}`. Confirmado **no
 reproducible antes de tocar nada** (relanzado el mismo job sobre el mismo commit: verde

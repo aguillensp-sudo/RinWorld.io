@@ -111,9 +111,54 @@ export function App() {
     return <Login onSubmit={signIn} error={error} />;
   }
 
-  // Autenticado en Auth pero sin fila en `members`. Pasa si alguien crea el
-  // usuario sin provisionar el miembro; se dice en claro en vez de mostrar un
-  // shell vacío con "—" por todas partes.
+  // Operador de Plataforma: entra, pero su pantalla todavía no existe.
+  //
+  // ⚠ **ESTE BLOQUE ES UN HUECO CON NOMBRE, NO UNA PANTALLA.** ADMIN-01 --la
+  // cola de solicitudes-- es una de las tres pantallas con las que se mide el
+  // H1, y la construye el generador, no esta mano. Lo que hace falta antes de
+  // esa corrida es que el Operador PUEDA ENTRAR: sin esta rama, su sesión es
+  // válida, su fila en `platform_operators` existe, y aun así el shell le manda
+  // al login diciéndole que hable con el operador.
+  //
+  // Cuando ADMIN-01 esté construida, lo que se sustituye es el interior de este
+  // `return`, no la condición. El `data-testid` se queda: es el ancla por la que
+  // el e2e comprueba que el Operador pasó del login.
+  if (state.status === 'operator') {
+    return (
+      <div
+        data-testid="operator-home"
+        style={{
+          minHeight: '100%',
+          background: 'var(--color-cold-white, #F1F3F6)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          padding: '32px',
+          textAlign: 'center',
+        }}
+      >
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-steel-mist, #6B7280)' }}>
+          Operador de Plataforma
+        </p>
+        <h1 style={{ margin: 0, fontSize: '20px' }}>
+          {state.profile.fullName ?? state.profile.email}
+        </h1>
+        <p style={{ margin: 0, maxWidth: '46ch', fontSize: '13px' }}>
+          El panel de aprobación todavía no está construido. La cuenta funciona y las
+          solicitudes están en la base: lo que falta es la pantalla.
+        </p>
+        <button type="button" onClick={() => void signOut()}>
+          Cerrar sesión
+        </button>
+      </div>
+    );
+  }
+
+  // Autenticado en Auth pero sin fila en `members` NI en `platform_operators`.
+  // Pasa si alguien crea el usuario sin provisionar el miembro; se dice en claro
+  // en vez de mostrar un shell vacío con "—" por todas partes.
   if (state.status === 'orphan') {
     return (
       <Login

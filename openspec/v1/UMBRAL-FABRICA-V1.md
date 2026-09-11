@@ -193,14 +193,18 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
    credenciales, y eso lo decide el PO, como con `E2E_EDITOR_*` el 5-sep—. Sin ella la
    pantalla no se puede ver ni probar de extremo a extremo, y su tarea del paso 3 no puede
    declarar ningún test e2e que la ejercite.
-   **(b) Una rama de sesión para quien no tiene organización.** Descubierto el 11-sep
+   **(b) ~~Una rama de sesión para quien no tiene organización.~~ HECHA el 11-sep.** Descubierto el 11-sep
    leyendo `App.tsx:117`: hoy, cualquier usuario autenticado sin fila en `members` acaba en
    la pantalla de login con el mensaje *"La cuenta existe pero no está asignada a ninguna
    organización. Habla con el operador."* — que es exactamente lo que le diría **al
    operador**. `session.ts` ya distingue ese caso (`status: 'orphan'`), así que el arreglo
    es corto: consultar `platform_operators` cuando no hay miembro y devolver un estado
    propio. **Es trabajo de corriente A, escrito a mano, no del generador**, y toca el shell,
-   así que se hace a propósito y no de paso.
+   así que se hizo a propósito y no de paso. `session.ts` tiene ya `status: 'operator'` y
+   `App.tsx` su rama, con un `data-testid="operator-home"` que es el ancla por la que el
+   e2e comprobará que el Operador pasa del login. **Lo que hay detrás de esa rama es un
+   hueco con nombre, no una pantalla:** ADMIN-01 la construye el generador, y lo que se
+   sustituirá es el interior del `return`, no la condición.
 3. **Sus tres tareas en formato fijo**, validadas con `--seco`. Con ellas el corpus pasa de
    seis a nueve, camino de las diez a quince que el plan declaró objetivo no alcanzado del
    MVP y asignó a este mismo hito.

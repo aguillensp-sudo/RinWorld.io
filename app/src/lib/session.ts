@@ -15,6 +15,21 @@ export interface MemberProfile {
 }
 
 /**
+ * Lo que la sesión necesita saber del Operador de Plataforma (`0028`).
+ *
+ * ⚠ **No tiene organización, y ese es justo el punto.** El Operador decide sobre
+ * organizaciones que todavía no existen, así que no puede pertenecer a ninguna:
+ * no hay `orgId`, ni `role`, ni `state`, porque nada de eso significa nada aquí.
+ * Un `MemberProfile` con los campos a `null` habría sido más cómodo y habría
+ * obligado a cada pantalla a acordarse de comprobarlos.
+ */
+export interface OperatorProfile {
+  id: string;
+  email: string;
+  fullName: string | null;
+}
+
+/**
  * Iniciales para el avatar del sidebar. Función pura y exportada porque es lo
  * único del perfil con lógica propia, y se prueba en session.test.ts.
  */
@@ -58,8 +73,43 @@ type State =
   | { status: 'loading' }
   | { status: 'anonymous' }
   | { status: 'authenticated'; profile: MemberProfile }
+  /** Operador de Plataforma: sin organización a propósito. Ver `OperatorProfile`. */
+  | { status: 'operator'; profile: OperatorProfile }
   /** Autenticado en Auth pero sin fila en `members`: cuenta a medio provisionar. */
   | { status: 'orphan'; email: string };
+
+/**
+ * ¿El que entra es Operador de Plataforma?
+ *
+ * Se pregunta **solo cuando no hay fila en `members`**, que es la única
+ * situación en la que la respuesta puede ser que sí: un Operador no pertenece a
+ * ninguna organización. Así el camino normal —el de los miembros, que son
+ * todos menos un puñado— no paga una consulta de más en cada arranque de sesión.
+ *
+ * ⚠ **Cero filas aquí NO es un error, y por eso se usa `maybeSingle()`.** La
+ * política de `platform_operators` (`0028`) es `app.is_platform_operator()`, así
+ * que a quien no es Operador la tabla le devuelve vacío sin quejarse. Lo que sí
+ * sería un error es un fallo de red o de permisos, y ese se propaga.
+ */
+async function loadOperator(userId: string, email: string): Promise<State | null> {
+  const { data, error } = await supabase
+    .from('platform_operators')
+    .select('id, full_name')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    status: 'operator',
+    profile: {
+      id: data.id as string,
+      email,
+      fullName: (data.full_name as string | null) ?? null,
+    },
+  };
+}
 
 /**
  * La consulta va sin filtro de organización a propósito: RLS ya limita `members`
@@ -76,7 +126,7 @@ type State =
  * al login. Nombrar la FK hace que la consulta no dependa de cuántas tablas nuevas
  * apunten a `organizations` — y van a apuntar más. Ver F-020.
  */
-async function loadProfile(userId: string, email: string): Promise<State> {
+export async function loadProfile(userId: string, email: string): Promise<State> {
   const { data, error } = await supabase
     .from('members')
     .select(
@@ -86,7 +136,13 @@ async function loadProfile(userId: string, email: string): Promise<State> {
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) return { status: 'orphan', email };
+
+  // Sin fila en `members` quedan dos posibilidades, y hasta el 11-sep-2026 el
+  // código solo contemplaba la mala: o es un Operador de Plataforma --que no
+  // pertenece a ninguna organización por diseño-- o es una cuenta a medio
+  // provisionar. Antes de esto, el Operador acababa en la pantalla de login con
+  // el mensaje *"habla con el operador"*. Dicho al operador.
+  if (!data) return (await loadOperator(userId, email)) ?? { status: 'orphan', email };
 
   const org = data.organizations as unknown as { name: string; country: string } | null;
   return {

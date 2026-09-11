@@ -341,6 +341,30 @@ organización donde el contenido se lee en claro es el peor fallo posible de est
 sembradas en las dos bases. Lo siguiente son las tres tareas en formato fijo, y esas van en
 sesión limpia.
 
+**Sexta adenda: la rama de sesión del Operador, y `F-159`.** Dos cosas después de cerrar el
+paso 2.
+
+**La rama de sesión (a petición del PO).** Hasta hoy, un Operador de Plataforma con su
+cuenta creada y su fila en `platform_operators` entraba y acababa en la pantalla de login
+con el mensaje *"la cuenta existe pero no está asignada a ninguna organización, habla con el
+operador"*. Dicho al operador. `session.ts` gana `status: 'operator'` —se pregunta por
+`platform_operators` **solo cuando no hay fila en `members`**, para que el camino de los
+miembros no pague una consulta de más en cada arranque— y `App.tsx` su rama. Detrás hay un
+hueco con nombre, no una pantalla: ADMIN-01 la construye el generador y lo que se sustituirá
+es el interior del `return`. Seis pruebas nuevas con mock de red, que miran **la consulta y
+no solo el resultado**: una tabla mal escrita devolvería cero filas, y cero filas aquí
+significa "no es Operador" — el mismo fallo que esto viene a arreglar.
+
+**`F-159`: la CI se puso roja en un test que no tocaba nada de lo que se cambió.** El job de
+Playwright falló en INV-01 con `Expected Set {"Published"}, Received Set {}`. Confirmado **no
+reproducible antes de tocar nada** (relanzado el mismo job sobre el mismo commit: verde
+entero). La causa es una carrera que el propio fichero documenta dos veces y en ese test no
+protegía: `allTextContents()` no auto-espera, y entre el clic en el filtro y la llegada de
+la consulta la tabla se queda sin filas. Arreglado en los tres sitios, incluida la raíz (el
+`beforeEach`). **Se arregla hoy y no cuando toque porque las tres pantallas del H1 se van a
+medir con esta suite: un rojo de carrera se cobraría como un rojo del Coder, que es `F-033`,
+`F-112` y `F-114` otra vez.**
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -378,6 +402,9 @@ sesión limpia.
 | `0029` aplicada y sembrada en las dos bases | El resultado releído: contadores por categoría y ninguna categoría vacía | Cuatro categorías con dos hilos cada una, entre 3 y 7 publicaciones, y última actividad de hace 2 h, 5 h, 5 días y 11 días — los cuatro valores distintos, que es lo que la tarjeta tiene que poder distinguir |
 | Avisos de seguridad tras `0029` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo. **La vista no dispara el aviso de vista `security definer`**, que es la confirmación de que `security_invoker` está puesto |
 | La capa de datos de `FORO-01` | `npx tsc --noEmit` y `npx vitest run src/lib/forum.test.ts` | Typecheck limpio, 15 pruebas en verde |
+| Que el rojo de la CI no lo causaba el commit | `gh run rerun --failed` sobre el MISMO commit, antes de tocar una línea | Verde entero, despliegue incluido. El fallo era una carrera, y el arreglo se escribió después de saberlo, no para que pasara |
+| La rama de sesión del Operador | `npx tsc --noEmit` y la suite entera de vitest | Typecheck limpio, **696 pruebas en verde**, 6 de ellas nuevas sobre la bifurcación (miembro / Operador / cuenta a medio provisionar) |
+| Lo que esa rama NO verifica todavía | — | **No se ha ejecutado con una cuenta real**, porque no existe ninguna: el alta de un Operador es credenciales y la da el PO. Hasta entonces, la rama está probada con mock y con el esquema, no contra la API |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---

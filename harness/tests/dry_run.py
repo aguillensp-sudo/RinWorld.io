@@ -28,6 +28,7 @@ cubre cada `.tsx` de `outputs`.
 
 Uso:  python -m harness.tests.dry_run
 """
+import csv
 import json
 import pathlib
 import re
@@ -142,6 +143,26 @@ def test_runner_seco(state):
     return test_runner_node(state, runner=runner_falso)
 
 
+def _columna(fila: str, nombre: str) -> str:
+    """Lee UNA columna de una fila ya escrita de `harness-metrics.csv`, por
+    NOMBRE contra `metrics.COLUMNS` y no por una posicion contada a mano ni por
+    un substring de la linea entera.
+
+    F-160 (11-sep-2026, Dia 14 de V1): `escenario()` llevaba desde el dia 4
+    comprobando el escalado con `",si," in fila` -un substring de la linea
+    entera-, y eso dejo de significar lo que decia el dia que `primer_intento_
+    limpio` (F-152, 10-sep) se sumo a `metrics.COLUMNS` DETRAS de `corrida` y
+    DELANTE de `resultado`. Una corrida verde al primer intento escribe
+    `escalado_a_humano=no` pero TAMBIEN `primer_intento_limpio=si`, y esa `si`
+    de la columna nueva cae justo antes de `resultado` -`...,no,-,-,si,PASA...`-,
+    asi que la busqueda de `,si,` la encontraba iguel y `--seco` escalaba en
+    FALSO sobre las seis tareas del corpus, DIR-01 incluida, sin que ninguna
+    tuviera nada que ver con el escalado. Un cambio en un fichero compartido
+    -el contrato de columnas de `metrics.py`- rompio una comprobacion en otro
+    fichero que nadie reconecto: la misma familia que `F-033`/`F-129`."""
+    return next(csv.reader([fila]))[metrics.COLUMNS.index(nombre)]
+
+
 def escenario(nombre, guion, esperado_verdicto, esperado_intentos, csv_tmp):
     print(f"\n=== {nombre} ===")
     app = build_graph(coder=coder_falso(guion), test_runner=test_runner_seco)
@@ -158,7 +179,7 @@ def escenario(nombre, guion, esperado_verdicto, esperado_intentos, csv_tmp):
     assert len(filas) == esperado_intentos, \
         f"{len(filas)} filas de CSV, esperaba una por intento ({esperado_intentos})"
 
-    escalados = [f for f in filas if ",si," in f]
+    escalados = [f for f in filas if _columna(f, "escalado_a_humano") == "si"]
     if esperado_verdicto == "escalado":
         assert len(escalados) == 1, "el escalado se marca en una fila y solo una"
     else:

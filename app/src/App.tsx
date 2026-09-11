@@ -8,6 +8,7 @@ import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, navIndexOf } from './shell/AppShell';
 import { Login } from './screens/Login';
 import { Panel } from './screens/panel/Panel';
+import { Directory } from './screens/directory/Directory';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
@@ -41,6 +42,8 @@ const SEARCH_NAV = navIndexOf('Comprando');
  *  coinciden — es INV-01/INV-02 quien discrepa, ver el comentario de arriba. */
 const SELLING_NAV = navIndexOf('Vendiendo');
 const HOME_NAV = navIndexOf('Panel');
+/** DIR-01 §2: "Ítem activo en nav: **Empresas**". Spec y HTML aprobado coinciden. */
+const EMPRESAS_NAV = navIndexOf('Empresas');
 
 /**
  * De índice de nav al nombre de pantalla que entiende VERA (F-090).
@@ -75,6 +78,9 @@ const MESSAGES_VERA_SUBTITLE = 'Agente de mensajería';
  *  pantalla no tenga nada que ver con SRCH-01. Está comprobado en la spec, no
  *  supuesto: no es un copiar y pegar de aquí. */
 const SEARCH_VERA_SUBTITLE = 'Agente de búsqueda';
+
+/** DIR-01 §5: "**Subtítulo del panel:** `Agente del directorio`". */
+const DIRECTORY_VERA_SUBTITLE = 'Agente del directorio';
 
 export function App() {
   const { state, error, signIn, signOut } = useSession();
@@ -172,6 +178,7 @@ export function App() {
   const onMessages = nav === MESSAGES_NAV;
   const onSearch = nav === SEARCH_NAV;
   const onSelling = nav === SELLING_NAV;
+  const onEmpresas = nav === EMPRESAS_NAV;
 
   /* PANEL-01 §5 dice `Agente de busqueda` para el Panel, igual que SRCH-01 y
    * VND-01. Comprobado en la spec, no supuesto. */
@@ -179,7 +186,9 @@ export function App() {
     ? INVENTORY_VERA_SUBTITLE
     : onMessages
       ? MESSAGES_VERA_SUBTITLE
-      : SEARCH_VERA_SUBTITLE;
+      : onEmpresas
+        ? DIRECTORY_VERA_SUBTITLE
+        : SEARCH_VERA_SUBTITLE;
 
   /*
    * El agente se construye aquí, después de saber que hay perfil, y no en un
@@ -298,6 +307,13 @@ export function App() {
         />
       ) : onInventory ? (
         <Inventory profile={state.profile} />
+      ) : onEmpresas ? (
+        /*
+         * DIR-01. Sin `now`: ninguna de sus cinco columnas es relativa al reloj
+         * (Nombre, País, Teléfono, Email, Favoritos) — al contrario que
+         * INV-01/SRCH-01/MSG-01, aquí no hay nada que envejezca en pantalla.
+         */
+        <Directory profile={state.profile} />
       ) : (
         /*
          * PANEL-01, el punto de entrada tras el login. Sustituye al andamiaje

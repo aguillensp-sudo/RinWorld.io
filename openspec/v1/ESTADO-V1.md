@@ -228,6 +228,23 @@ trece días diciendo «Abierto» con el arreglo hecho, comitteado y medido. Corr
 contra `git log` y contra el CSV. **Es `F-012` otra vez, y esta vez llegó a un informe de
 estado antes de que alguien la cazara.**
 
+**Segunda adenda: el PO confirma las tres pantallas del H1, y arrancando por `DIR-01`
+aparece `F-157`.** Confirmadas `DIR-01`, `ADMIN-01` y `FORO-01` —directorio, alta de
+empresas y foro—, escritas en el umbral antes de que exista una sola línea de ninguna de
+las tres. `REG-07`, que iba en la propuesta inicial, se cayó al leer su spec: es generación
+de claves, o sea criptografía, y el Plan §4.3 dice que el generador no la toca. **Se
+propuso sin haberla leído, y eso queda escrito en el umbral, no solo aquí.**
+
+Y al correr el paso 4 de `UMBRAL-FABRICA-V1.md` §7 —el medidor del coste de orquestación,
+para dar línea base a la cifra 7— salió **`F-157`: el medidor borraba su propia historia
+cada vez que se usaba.** Una ejecución normal se llevó por delante once filas de agosto,
+387 $ de coste ya medido. La causa estaba escrita en su propio docstring, con la premisa
+correcta y la conclusión equivocada: *«cada pasada relee todas las transcripciones vivas,
+así que añadir duplicaría cada sesión»* — cierto, pero lo que hacía falta no era añadir,
+era **fundir por clave**. Cerrado el mismo día con `fusionar()`, historia restaurada desde
+el commit anterior y siete comprobaciones nuevas en `test_checks.py`. **Línea base del H1:
+21 filas, 887,77 $ acumulados, de los cuales 550,25 $ son de V1.**
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -247,6 +264,9 @@ estado antes de que alguien la cazara.**
 | Que el umbral del H1 no existía en ninguna parte | `grep -rl "umbral" openspec/ --include=*.md` antes de escribir nada | Cero resultados relativos a la fábrica. La tabla de riesgos del plan lo exige «escrito de antemano» — escrito hoy, `UMBRAL-FABRICA-V1.md`, y su commit es anterior a cualquier corrida de las tres pantallas |
 | Si la tarea de `SRCH-01` seguía sin actualizar tras `F-118` | `git log -- harness/tasks/SRCH-01.json`, el cuerpo de `1183a38`, el propio JSON, y las fechas de las filas `SRCH-01` de `harness-metrics.csv` | **No: actualizada el 29-ago y medida 14 veces ese mismo día.** Lo desfasado era la casilla de estado de `F-118` en el registro, cerrada hoy con esa evidencia |
 | Las tres pantallas del H1, elegidas y confirmadas por el PO | Specs leídas una a una en `openspec/design-gui/specs y html aprobados/specs/`, y las columnas reales de `organizations` consultadas por el MCP antes de afirmar qué capa de datos hace falta | `DIR-01`, `ADMIN-01`, `FORO-01`. **`REG-07` descartada por criptografía** (Plan §4.3), leyendo la spec que no se había leído al proponerla. Escritas en `UMBRAL-FABRICA-V1.md` §1 antes de cualquier corrida |
+| Que el medidor de orquestación borra historia al usarlo (`F-157`) | `git diff` del CSV inmediatamente después de una pasada normal, no el resumen que imprime el propio módulo | **Once filas de agosto borradas, 387 $ de coste ya medido.** De 13 filas y 591,54 $ a 11 y 386,14 $. Arreglado el mismo día y la historia restaurada: 21 filas, 887,77 $ |
+| Que el arreglo de `F-157` funciona y no duplica | `python -m harness.tests.test_checks` entero (23 pruebas) con el caso nuevo, y una pasada real del medidor sobre el CSV restaurado | Todas en verde. La pasada real conserva las diez filas cuyas transcripciones ya no existen y lo dice por pantalla |
+| Línea base de la cifra 7 del umbral | El CSV fundido, separando por fecha | 887,77 $ acumulados; **550,25 $ desde el 27-ago, que es V1** |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -313,9 +333,11 @@ cinco depende de nadie de fuera:
 3. **Las tres tareas en formato fijo, validadas con `--seco`.** El corpus pasa de **6 a 9**,
    camino de las **10–15** que el plan declaró objetivo no alcanzado del MVP y asignó
    explícitamente a este hito.
-4. **Correr `python -m harness.core.orchestration_metrics`.** Su última fila es del 31-ago:
-   once días de sesiones sin medir, y son las caras. Sin línea base, la cifra 7 del umbral
-   —la que decide si la partida de modelos del plan se sostiene— no se puede evaluar.
+4. ~~Correr `python -m harness.core.orchestration_metrics`.~~ **HECHO el 11-sep, y de ahí
+   salió `F-157`** (el medidor borraba su propia historia; arreglado y fijado con prueba).
+   Línea base: 887,77 $ acumulados, 550,25 $ de ellos en V1. ⚠ **A partir de ahora se corre
+   ANTES y DESPUÉS de cada pantalla**, no al final de las tres: una transcripción podada es
+   una medida que ya no existe.
 5. **Las tres corridas, su revisión y el C5 del PO.** El veredicto va a §1 con las ocho
    cifras al lado, y arrastra el escenario de calendario: 18, 21 o 30 semanas.
 
@@ -763,9 +785,10 @@ Orden de lectura, y el orden importa:
 11. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
     Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
     (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
-    Día 13: `F-156` (cerrado, `0026`). Del Día 14: **ninguno** — la
-    jornada auditó y no encontró hallazgo, así que el contador sigue en `F-156`; lo que
-    dejó es un ancla en `01_schema_smoke.sql`, no una fila en el registro.
+    Día 13: `F-156` (cerrado, `0026`). Del Día 14: `F-157` (cerrado el mismo día) — el medidor del
+    coste de orquestación borraba su propia historia al usarlo. La auditoría de la
+    mañana no encontró hallazgo y dejó un ancla en `01_schema_smoke.sql`; el hallazgo
+    salió por la tarde, arrancando el H1.
 
 ---
 

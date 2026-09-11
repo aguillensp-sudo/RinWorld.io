@@ -145,11 +145,49 @@ def scan(repo_path: pathlib.Path) -> list:
     return sorted(filas, key=lambda r: (r["fecha"], r["sesion"], r["modelo"]))
 
 
+def fusionar(nuevas: list, csv_path: pathlib.Path):
+    """Funde lo recien medido con lo que el CSV ya sabia, por (sesion, modelo).
+
+    ⚠ F-157, y costo 387 $ de historia en una sola pasada. `scan()` solo ve las
+    transcripciones que siguen EN DISCO, y Claude Code las poda: el 11-sep-2026
+    una ejecucion normal de este modulo borro ONCE filas de agosto --el coste de
+    orquestacion entero de la primera mitad del proyecto-- porque sus ficheros ya
+    no existian. Salieron de git, pero el CSV es la serie, no el respaldo.
+
+    Reescribir el fichero entero es correcto para las sesiones que se acaban de
+    medir --su fila se recalcula-- y destructivo para las demas. Asi que se
+    conserva lo que el fichero ya tenia y solo se pisa la fila de una sesion que
+    se ha vuelto a medir. El duplicado que temia el docstring de abajo no puede
+    ocurrir: la clave es (sesion, modelo), y `sesion` es el UUID de la
+    transcripcion, globalmente unico.
+
+    Devuelve (filas ordenadas, cuantas se conservaron sin poder remedirlas).
+    """
+    previas = {}
+    if csv_path.exists():
+        with csv_path.open(encoding="utf-8", newline="") as fh:
+            for r in csv.DictReader(fh):
+                if all(c in r and r[c] != "" for c in COLUMNS):
+                    previas[(r["sesion"], r["modelo"])] = {c: r[c] for c in COLUMNS}
+
+    frescas = {(r["sesion"], r["modelo"]): {c: str(r[c]) for c in COLUMNS}
+               for r in nuevas}
+    conservadas = sum(1 for k in previas if k not in frescas)
+    previas.update(frescas)
+
+    filas = sorted(previas.values(),
+                   key=lambda r: (r["fecha"], r["sesion"], r["modelo"]))
+    return filas, conservadas
+
+
 def write_csv(rows: list, csv_path: pathlib.Path) -> None:
-    """Reescribe el fichero entero cada vez, a diferencia de `metrics.append_csv`.
-    No hay un `--seco` que corra dos veces la misma corrida: cada ejecucion relee
-    TODAS las transcripciones vivas, asi que anadir en vez de reescribir
-    duplicaria cada sesion en cada pasada."""
+    """Escribe el fichero entero a partir de las filas YA FUNDIDAS (`fusionar`).
+
+    Antes reescribia directamente lo escaneado, y el razonamiento escrito aqui
+    --"cada ejecucion relee todas las transcripciones vivas, asi que anadir
+    duplicaria cada sesion"-- era correcto en su premisa y falso en su
+    conclusion: lo que hacia falta no era anadir, era FUNDIR por clave. Ver
+    `fusionar` y F-157."""
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
         w = csv.writer(fh, lineterminator="\n")
@@ -180,18 +218,22 @@ def main(argv=None) -> int:
         capture_output=True, text=True, check=True,
     ).stdout.strip())
 
-    rows = scan(repo_path)
     out_path = pathlib.Path(args.out)
     if not out_path.is_absolute():
         out_path = toplevel / out_path
+
+    rows, conservadas = fusionar(scan(repo_path), out_path)
     write_csv(rows, out_path)
 
     sesiones = {r["sesion"] for r in rows}
-    total = sum(r["coste_usd_sombra"] for r in rows)
+    total = sum(float(r["coste_usd_sombra"]) for r in rows)
     por_dia = defaultdict(float)
     for r in rows:
-        por_dia[r["fecha"]] += r["coste_usd_sombra"]
+        por_dia[r["fecha"]] += float(r["coste_usd_sombra"])
 
+    if conservadas:
+        print(f"{conservadas} filas conservadas del CSV: sus transcripciones ya "
+              f"no estan en disco y no se pueden remedir (F-157)")
     print(f"{len(rows)} filas ({len(sesiones)} sesiones, "
           f"{len(transcript_dirs(repo_path))} worktrees con transcripciones) -> {out_path}")
     print(f"Coste-sombra total (tarifa API, NO lo que se paga bajo suscripcion): "

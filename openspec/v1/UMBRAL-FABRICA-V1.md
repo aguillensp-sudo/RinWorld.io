@@ -154,6 +154,18 @@ Sección obligatoria, misma regla que `ESTADO-V1.md` §6.
 - **La cifra 7 no es dinero que se pague.** Es coste-sombra a tarifa publicada, calculado
   sobre las transcripciones. Sirve para extrapolar y para comparar sesiones entre sí, no
   para conciliar una factura.
+- **Y su instrumento acaba de demostrar que es frágil.** `F-157`: hasta hoy, cada pasada
+  del medidor borraba las sesiones cuya transcripción ya no estaba en disco. Está
+  arreglado y fijado con una prueba, pero **lo que ya se podó antes de medirse no vuelve**.
+  Si una de las tres pantallas se construye en una sesión que nadie mide a tiempo, su cifra
+  7 no existe y no se puede reconstruir.
+- **Si el ritmo de gasto de orquestación de estas tres semanas se parece al de las 21.**
+  Los 550 $ de V1 en 16 días de calendario dan unos 34 $/día; a ese ritmo, las 21 semanas
+  del plan salen por encima de los 4.500 € que el plan pone como techo de TODA la
+  orquestación. **No es una predicción:** estas primeras semanas han sido de auditoría y de
+  documento, donde el modelo caro hace casi todo, y la fase de fábrica mueve trabajo al
+  generador barato. Justamente por eso importa medir las tres pantallas: son las primeras
+  sesiones con la forma que tendrán las 24.
 - **No dice nada sobre las 21 pantallas restantes.** Tres pantallas de tres módulos son
   mejor muestra que tres del mismo, pero siguen siendo tres de veinticuatro. La regla de
   decisión del escenario base incluye una remedición a las seis por este motivo.
@@ -172,9 +184,15 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
 3. **Sus tres tareas en formato fijo**, validadas con `--seco`. Con ellas el corpus pasa de
    seis a nueve, camino de las diez a quince que el plan declaró objetivo no alcanzado del
    MVP y asignó a este mismo hito.
-4. **`python -m harness.core.orchestration_metrics` corrido**, para que la cifra 7 tenga
-   línea base. Su última fila es del 31-ago: once días de sesiones sin medir, y son las
-   sesiones más caras del proyecto.
+4. ~~`python -m harness.core.orchestration_metrics` corrido, para que la cifra 7 tenga
+   línea base.~~ **Hecho el 11-sep-2026, y de paso salió `F-157`:** el medidor borraba su
+   propia historia en cada pasada —once filas de agosto, 387 $ ya medidos, desaparecidas en
+   una ejecución normal— porque reescribía el fichero entero con lo que quedaba en disco.
+   Arreglado el mismo día (funde por sesión en vez de reescribir) y la historia restaurada.
+   **Línea base: 21 filas, 887,77 $ de coste-sombra acumulado, de los cuales 550,25 $ son
+   de V1** (desde el 27-ago). ⚠ **Y una consecuencia para esta medición: el medidor se
+   corre ANTES y DESPUÉS de cada una de las tres pantallas**, no al final de las tres. Una
+   transcripción podada es una medida que ya no existe.
 
 ---
 

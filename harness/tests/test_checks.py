@@ -22,7 +22,7 @@ import tempfile
 import time
 import urllib.error
 
-from ..core import llm, metrics, parse, pricing
+from ..core import llm, metrics, orchestration_metrics, parse, pricing
 from ..graph.checks import check_idiomatic, check_palette, read_tokens
 from ..graph.nodes.coder import build_messages, build_system
 from ..graph.nodes.test_runner import (
@@ -1281,6 +1281,67 @@ def test_la_corrida_escribe_su_propio_log():
           roto is None, repr(roto))
 
 
+def test_el_csv_de_orquestacion_no_pierde_historia():
+    """F-157 · una pasada normal del medidor borraba la historia que ya no esta en disco.
+
+    `scan()` solo ve las transcripciones que siguen EN DISCO, y Claude Code las
+    poda. `write_csv` reescribia el fichero entero con lo escaneado, asi que el
+    11-sep-2026 una ejecucion normal se llevo por delante ONCE filas de agosto:
+    387 $ de coste de orquestacion ya medido, el de la primera mitad del
+    proyecto. Salieron de git, pero el CSV ES la serie -- y la serie es la cifra
+    7 del umbral del H1, la que decide si la partida de modelos del plan se
+    sostiene. Un instrumento que borra sus propias medidas al usarlo no mide.
+
+    El razonamiento del docstring viejo era correcto en su premisa y falso en su
+    conclusion: si, cada pasada relee todas las transcripciones vivas y anadir
+    duplicaria; lo que hacia falta no era anadir, era FUNDIR por (sesion, modelo).
+    Esta prueba fija las tres cosas: se conserva lo que ya no se puede remedir, se
+    pisa lo que si, y dos pasadas seguidas no duplican nada."""
+    print("\nF-157 · el CSV de orquestacion no pierde historia")
+
+    def fila(sesion, coste, fecha="2026-08-13", modelo="claude-opus-5"):
+        return {"fecha": fecha, "sesion": sesion, "worktree": "/tmp/wt",
+                "modelo": modelo, "tokens_in": 10, "tokens_out": 20,
+                "cache_write_5m": 0, "cache_write_1h": 0, "cache_read": 0,
+                "coste_usd_sombra": coste, "turnos": 3,
+                "price_table_date": "2026-08-28"}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        csv_path = pathlib.Path(tmp) / "orquestacion.csv"
+
+        # Lo que el fichero ya sabia: dos sesiones de agosto.
+        orchestration_metrics.write_csv(
+            [fila("sesion-vieja", 22.99), fila("sesion-viva", 50.0)], csv_path)
+
+        # Una pasada que solo ve UNA de las dos, con otro coste, y una nueva.
+        escaneadas = [fila("sesion-viva", 55.5), fila("sesion-nueva", 1.25,
+                                                      fecha="2026-09-11")]
+        filas, conservadas = orchestration_metrics.fusionar(escaneadas, csv_path)
+        por_sesion = {f["sesion"]: f for f in filas}
+
+        check("la sesion que ya no esta en disco sobrevive a la pasada",
+              "sesion-vieja" in por_sesion,
+              f"sesiones tras fundir: {sorted(por_sesion)}")
+        check("y con su coste intacto",
+              por_sesion.get("sesion-vieja", {}).get("coste_usd_sombra") == "22.99",
+              str(por_sesion.get("sesion-vieja")))
+        check("conservadas cuenta exactamente esa", conservadas == 1,
+              f"conservadas={conservadas}")
+        check("la sesion remedida se pisa con el valor nuevo",
+              por_sesion.get("sesion-viva", {}).get("coste_usd_sombra") == "55.5",
+              str(por_sesion.get("sesion-viva")))
+        check("y la sesion nueva entra", "sesion-nueva" in por_sesion,
+              f"sesiones tras fundir: {sorted(por_sesion)}")
+        check("tres filas, ni una mas", len(filas) == 3, f"filas={len(filas)}")
+
+        # Y el miedo que justificaba reescribir: dos pasadas no duplican.
+        orchestration_metrics.write_csv(filas, csv_path)
+        otra, _ = orchestration_metrics.fusionar(escaneadas, csv_path)
+        check("dos pasadas seguidas no duplican ninguna sesion",
+              len(otra) == 3 and len({f["sesion"] for f in otra}) == 3,
+              f"filas={len(otra)}")
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -1319,6 +1380,7 @@ def main() -> int:
     test_el_guardia_cruza_tarea_y_contrato()
     test_c2_reparte_las_culpas_del_e2e()
     test_la_corrida_escribe_su_propio_log()
+    test_el_csv_de_orquestacion_no_pierde_historia()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

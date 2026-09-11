@@ -10,8 +10,10 @@ import {
   REASON_MAX,
   REASON_MIN,
   REQUEST_STATES,
+  requestDateLabel,
   toRequestEvent,
   toRequestRow,
+  websiteHref,
   type RequestRowRaw,
 } from './admin-requests';
 
@@ -168,5 +170,26 @@ describe('el historial', () => {
     });
     expect(evento.operatorId).toBe('0e000001-0000-0000-0000-000000000001');
     expect(evento.note).toBe('Sin actividad comprobable en el sector.');
+  });
+});
+
+describe('requestDateLabel', () => {
+  it('formatea fecha y hora como las otras pantallas formatean la fecha, con la hora sumada', () => {
+    expect(requestDateLabel('2026-06-28T08:14:00Z')).toBe('28 jun 2026 · 08:14');
+  });
+
+  it('una fecha ilegible se devuelve tal cual, sin inventar un guion', () => {
+    expect(requestDateLabel('no soy una fecha')).toBe('no soy una fecha');
+  });
+});
+
+describe('websiteHref', () => {
+  it('antepone https:// a un dominio sin esquema, para que no sea una URL relativa', () => {
+    expect(websiteHref('nordicbearings.se')).toBe('https://nordicbearings.se');
+  });
+
+  it('no toca una URL que ya trae esquema, http o https', () => {
+    expect(websiteHref('https://roulementsfrance.fr')).toBe('https://roulementsfrance.fr');
+    expect(websiteHref('http://roulementsfrance.fr')).toBe('http://roulementsfrance.fr');
   });
 });

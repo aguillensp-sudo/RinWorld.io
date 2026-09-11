@@ -92,6 +92,42 @@ export function queueAgeLabel(iso: string, now: Date = new Date()): string {
 }
 
 // -----------------------------------------------------------------------------
+// La fecha de solicitud, columna 6 · "DD Mmm YYYY · HH:MM" (spec §3)
+// -----------------------------------------------------------------------------
+
+/**
+ * *"28 Jun 2026 · 08:14"* en el bloque de ejemplo de la spec. Va aquí y no en
+ * el componente por la regla de la casa (F-024/F-059): las fechas se formatean
+ * en la capa de datos, nunca a mano.
+ *
+ * ⚠ **El mes sale en minúscula y sin punto** (`28 jun 2026`), no como el
+ * literal del mock. Es el mismo `Intl.DateTimeFormat('es-ES', {day, month:
+ * 'short', year})` que ya usan `sentAtLabel` (`sent-offers.ts`) y `dateLabel`
+ * (`panel.ts`) para el mismo formato "DD Mmm YYYY" -- comprobado con
+ * `dateLabel('...') === '11 ago 2026'` en `panel.test.ts`, no adivinado -- así
+ * que esta función no inventa un tercer formato, reusa el que ya hay y le suma
+ * la hora que ADMIN-01 pide y las otras dos pantallas no.
+ *
+ * Sin fecha válida se devuelve el propio `iso` tal cual, igual que
+ * `sentAtLabel`: un `—` inventado taparía el dato malo en vez de mostrarlo.
+ */
+export function requestDateLabel(iso: string, locale = 'es-ES'): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const fecha = new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(t);
+  const hora = new Intl.DateTimeFormat(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(t);
+  return `${fecha} · ${hora}`;
+}
+
+// -----------------------------------------------------------------------------
 // El motivo del rechazo
 // -----------------------------------------------------------------------------
 
@@ -146,6 +182,18 @@ export interface RequestRow {
   rejectionReason: string;
   decidedBy: string | null;
   decidedAt: string | null;
+}
+
+/**
+ * Columna 5, "Sitio web": `row.website` puede venir sin esquema -- el FSR lo
+ * pide como texto libre, no como `<input type="url">"` (Módulo 01 v1.5), así
+ * que `nordicbearings.se` es una entrada tan válida como
+ * `https://nordicbearings.se`. Un `<a href="nordicbearings.se">` sin esquema
+ * es una URL RELATIVA a la propia pantalla, no un enlace externo: se antepone
+ * `https://` solo cuando hace falta, nunca se duplica.
+ */
+export function websiteHref(website: string): string {
+  return /^https?:\/\//i.test(website) ? website : `https://${website}`;
 }
 
 export function toRequestRow(raw: RequestRowRaw): RequestRow {

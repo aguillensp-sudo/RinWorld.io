@@ -21,6 +21,23 @@ export const BETA = {
 export const haveCreds = !!(ALPHA.email && ALPHA.password && BETA.email && BETA.password);
 
 /**
+ * El Operador de Plataforma (`0028`, 11-sep-2026): sin `org`, a propósito -- no
+ * pertenece a ninguna organización, y `CLAUDE.md` §10.1 dice que su email NO es
+ * secreto (va literal en `ci.yml`, solo la password es secreto de CI).
+ *
+ * Sin `storageState` propio: el único que tiene uno pre-generado es `ALPHA`
+ * (`auth.setup.ts`), y `playwright.config.ts` lo aplica por defecto al proyecto
+ * `chromium` entero. Un test de ADMIN-01 hace su propio `signIn(page, OPERATOR)`
+ * en vez de sumar un segundo proyecto de setup para una sola pantalla.
+ */
+export const OPERATOR = {
+  email: process.env.E2E_OPERATOR_EMAIL ?? 'operador@bearingworld.test',
+  password: process.env.E2E_OPERATOR_PASSWORD ?? '',
+};
+
+export const haveOperatorCreds = !!(OPERATOR.email && OPERATOR.password);
+
+/**
  * Lo que `fixture.setup.ts` necesita para reponer la siembra de demo antes de la
  * suite.
  *

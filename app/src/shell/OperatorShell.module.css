@@ -1,0 +1,31 @@
+/* =============================================================================
+   OperatorShell · las DOS reglas que de verdad difieren del shell de miembro
+   (`AppShell.module.css`), que este fichero importa y reutiliza para todo lo
+   demás: brand bar, nav, sidebar overlay, `bwcnt` — layout ya fijado por el
+   sistema base, sin ni una línea que reescribir.
+   ========================================================================== */
+
+.actBrass {
+  color: white;
+  border-bottom-color: var(--bw-brass);
+}
+
+.actBrassSb {
+  color: white;
+  border-left-color: var(--bw-brass);
+  background: var(--bw-nav-active-fill);
+}
+
+/* "Operador", spec ADMIN-01 §2: actor distinto al de un miembro distribuidor,
+   y el HTML aprobado lo marca con esta píldora junto al nombre. */
+.opBadge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bw-brass);
+  border: 1px solid var(--bw-brass-border);
+  background: var(--bw-tag-bg);
+  border-radius: 3px;
+  padding: 2px 7px;
+}

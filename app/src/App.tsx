@@ -6,8 +6,10 @@ import type { Screen } from './lib/vera-tools';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, navIndexOf } from './shell/AppShell';
+import { OperatorShell, operatorNavIndexOf } from './shell/OperatorShell';
 import { Login } from './screens/Login';
 import { Panel } from './screens/panel/Panel';
+import { AdminRequests } from './screens/admin/AdminRequests';
 import { Directory } from './screens/directory/Directory';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
@@ -82,6 +84,9 @@ const SEARCH_VERA_SUBTITLE = 'Agente de búsqueda';
 /** DIR-01 §5: "**Subtítulo del panel:** `Agente del directorio`". */
 const DIRECTORY_VERA_SUBTITLE = 'Agente del directorio';
 
+/** ADMIN-01 §5: "**Subtítulo del panel:** `Asistente del operador`". */
+const ADMIN_VERA_SUBTITLE = 'Asistente del operador';
+
 export function App() {
   const { state, error, signIn, signOut } = useSession();
   const [nav, setNav] = useState(HOME_NAV);
@@ -104,6 +109,15 @@ export function App() {
    */
   const [veraCriteria, setVeraCriteria] = useState<SearchCriteria | null>(null);
 
+  /**
+   * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
+   * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
+   * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
+   * `orphan` vienen DESPUÉS: las reglas de los hooks no dejan declararlo abajo
+   * solo para la rama que lo usa.
+   */
+  const [operatorNav, setOperatorNav] = useState(() => operatorNavIndexOf('Solicitudes'));
+
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
@@ -117,48 +131,29 @@ export function App() {
     return <Login onSubmit={signIn} error={error} />;
   }
 
-  // Operador de Plataforma: entra, pero su pantalla todavía no existe.
+  // Operador de Plataforma: entra, y desde hoy con SU PROPIO shell.
   //
-  // ⚠ **ESTE BLOQUE ES UN HUECO CON NOMBRE, NO UNA PANTALLA.** ADMIN-01 --la
-  // cola de solicitudes-- es una de las tres pantallas con las que se mide el
-  // H1, y la construye el generador, no esta mano. Lo que hace falta antes de
-  // esa corrida es que el Operador PUEDA ENTRAR: sin esta rama, su sesión es
-  // válida, su fila en `platform_operators` existe, y aun así el shell le manda
-  // al login diciéndole que hable con el operador.
-  //
-  // Cuando ADMIN-01 esté construida, lo que se sustituye es el interior de este
-  // `return`, no la condición. El `data-testid` se queda: es el ancla por la que
-  // el e2e comprueba que el Operador pasó del login.
+  // ⚠ ADMIN-01 --la cola de solicitudes-- es una de las tres pantallas del H1,
+  // y la construye el generador, no esta mano; lo de aqui es solo el wiring
+  // (mismo criterio que 'Empresas'/`Directory` para DIR-01). `OperatorShell`
+  // es NUEVO (no una edicion de `AppShell`, que sigue intacto): un
+  // `OperatorProfile` no tiene organizacion ni encaja en el shell de un
+  // miembro, y ADMIN-01 §2 pide su propia navegacion de cinco items y acento
+  // brass, no los ocho items azules del shell estandar. `AdminRequests` es el
+  // hueco con nombre -- lo que se sustituye es ESE fichero entero cuando corra
+  // la tarea, no esta rama ni `OperatorShell`. El `data-testid="operator-home"`
+  // vive ahora en `OperatorShell`, no aqui: sigue siendo el ancla del e2e.
   if (state.status === 'operator') {
     return (
-      <div
-        data-testid="operator-home"
-        style={{
-          minHeight: '100%',
-          background: 'var(--color-cold-white, #F1F3F6)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          padding: '32px',
-          textAlign: 'center',
-        }}
+      <OperatorShell
+        operator={state.profile}
+        onSignOut={signOut}
+        activeNav={operatorNav}
+        onNavigate={setOperatorNav}
+        veraSubtitle={ADMIN_VERA_SUBTITLE}
       >
-        <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-steel-mist, #6B7280)' }}>
-          Operador de Plataforma
-        </p>
-        <h1 style={{ margin: 0, fontSize: '20px' }}>
-          {state.profile.fullName ?? state.profile.email}
-        </h1>
-        <p style={{ margin: 0, maxWidth: '46ch', fontSize: '13px' }}>
-          El panel de aprobación todavía no está construido. La cuenta funciona y las
-          solicitudes están en la base: lo que falta es la pantalla.
-        </p>
-        <button type="button" onClick={() => void signOut()}>
-          Cerrar sesión
-        </button>
-      </div>
+        <AdminRequests operator={state.profile} />
+      </OperatorShell>
     );
   }
 

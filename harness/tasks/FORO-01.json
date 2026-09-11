@@ -1,0 +1,61 @@
+{
+  "task_id": "FORO-01",
+  "screen": "FORO-01",
+  "goal": "Panel de contenido de FORO-01 (Foro de la Comunidad): aviso de confidencialidad permanente, seccion opcional de actividad reciente, y rejilla de cuatro tarjetas de categoria con sus contadores. El shell es el estandar de un miembro (AppShell) y ya esta wireado ('Foros'); no se toca. Tercera y ultima de las tres pantallas del H1 (UMBRAL-FABRICA-V1.md) -- con ella el paso 3 de su §7 queda completo.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §1: la capa de datos (`forum.ts`) es precondicion de la pantalla, ya escrita y entregada por Claude Code -no la construye esta tarea-. Sesion limpia, mismo criterio que DIR-01/ADMIN-01.",
+  "_nota_wiring": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea (mismo patron que 'Empresas' para DIR-01): 'Foros' ya esta wireado en `App.tsx` a un `Forum` de marcador (`data-testid=\"foro01-placeholder\"`). Los `outputs` de esta tarea sustituyen ese fichero entero.",
+  "_nota_un_solo_fichero": "A diferencia de DIR-01 y ADMIN-01, esta tarea NO se reparte en pantalla+tabla: FORO-01 es una rejilla de solo lectura sin filtros, orden ni acciones, la misma forma que PANEL-01 (`harness/tasks/PANEL-01.json`, tambien dos `outputs`). Partirla en mas ficheros aqui seria inventar una frontera que la pantalla no pide.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_FORO-01.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/FORO-01 · FORO v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/panel/Panel.tsx",
+    "_nota_style_reference": "PANEL-01 ya resolvio la misma forma -una rejilla de tarjetas de solo lectura en un unico fichero, con estados de carga/error/vacio- y con el mismo `now?` inyectable para el tiempo relativo. Mirala antes de inventar nada de la estructura.",
+    "data_layer": "app/src/lib/forum.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `fetchCategories`, `fetchRecentThreads`, `RECENT_LIMIT`, `relativeShort`, `relativeLong`, `threadCountLabel`, `postCountLabel`, `toCategory`, `toRecentThread` y los tipos `Category`/`RecentThread` estan escritos y probados. Ni una sola de esas reglas se reimplementa: en particular, NO se reimplementa el tiempo relativo -hay DOS formatos a proposito, `relativeShort` ('hace 2h') para la lista de recientes y `relativeLong` ('hace 2 horas'/'Última actividad hace 2 días') para la tarjeta, y no son intercambiables- ni el singular de los contadores (`threadCountLabel`/`postCountLabel`)."
+  },
+  "outputs": [
+    "app/src/screens/forum/Forum.tsx",
+    "app/src/screens/forum/Forum.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos.",
+    "_nota_accesibilidad": "Las tarjetas de categoria y los items de actividad reciente son `<button type=\"button\" disabled>` -no un `<div onClick>`-, con `title` explicando por que estan apagados (ver mas abajo). Un `<div>` clicable sin rol de boton no es accesible por teclado ni anunciado como accionable.",
+    "app/src/screens/forum/Forum.tsx": "export function Forum({ profile, now }: { profile: MemberProfile; now?: Date }). Importa `type MemberProfile` de '../../lib/session'. ES LA PANTALLA, sin division en sub-componentes (ver `_nota_un_solo_fichero`): posee el estado -categorias, hilos recientes, carga y error- y en un unico efecto al montar llama en paralelo (`Promise.all`) a `fetchCategories()` y `fetchRecentThreads()` de '../../lib/forum'. `now` es inyectable para que los tests no dependan del reloj -por defecto `new Date()`, mismo patron que INV-01/SRCH-01/PANEL-01-. ESTRUCTURA, DE ARRIBA A ABAJO: (1) eyebrow, texto VERBATIM 'Módulo 08 · Foro de la Comunidad', sin rol de encabezado; (2) el titulo en un `<h1>` de verdad, texto VERBATIM 'Foro de la Comunidad' -el `page-title` del mock es un `<div>`, pero aqui manda el contrato de la app, igual que en DIR-01/ADMIN-01/SRCH-01-; (3) el subtitulo, texto VERBATIM 'Un espacio de discusión pública entre miembros. El contenido del foro no está cifrado — es visible para toda la comunidad.'; (4) el AVISO DE CONFIDENCIALIDAD (spec §7: 'permanente y obligatorio... no es opcional ni ocultable'): SIEMPRE visible, sin boton para cerrarlo, con el parrafo VERBATIM 'El contenido publicado en el Foro es texto plano, visible para todos los miembros de Bearingworld.io. Nada de lo escrito aquí tiene ninguna garantía de confidencialidad. Para conversaciones privadas, usa la mensajería cifrada.' donde la frase 'Nada de lo escrito aquí tiene ninguna garantía de confidencialidad.' va DENTRO DE UN `<strong>` -asi la marca el HTML aprobado, y es la frase que mas importa que un lector rapido no se salte-; (5) mientras `loading`, la zona de contenido pinta 'Cargando foro…' -con `…` unicode, un solo caracter- con `aria-busy=\"true\"` EN VEZ DE lo que sigue; si `fetchCategories`/`fetchRecentThreads` rechazan, un `<div role=\"alert\">` con `errorMessage(e)` -importado de '../../lib/session', igual que en INV-01/DIR-01- EN VEZ DE lo que sigue; en cualquier otro caso, los dos bloques (6) y (7); (6) SECCION 'Actividad reciente' (spec §3, cabecera con ese texto VERBATIM): SOLO SE PINTA -cabecera incluida- cuando `fetchRecentThreads()` devuelve una o mas filas; con cero filas la seccion ENTERA desaparece (spec §3: 'se oculta si no hay actividad reciente'; spec §6 lo repite para el foro recien lanzado). Cuando se pinta, un item por hilo, EN EL ORDEN QUE LLEGA -ya viene ordenado por `fetchRecentThreads`, esto no reordena-, cada uno un `<button type=\"button\" disabled title=\"FORO-02 (la lista de hilos) llega en una próxima versión.\">` que contiene los CUATRO datos de la spec §3: `thread.title`, `thread.categoryName` (badge), `thread.authorOrgName`, y `relativeShort(thread.lastPostAt, now)`; (7) SECCION 'Categorías' (cabecera VERBATIM 'Categorías'): SIEMPRE se pinta, las CUATRO tarjetas de `fetchCategories()` EN EL ORDEN QUE LLEGA -ya viene por `position`, esto no reordena ni filtra: una categoria con cero hilos sigue saliendo (`_nota_data_layer` de `forum.ts`), asi que NO HACE FALTA UN ESTADO VACIO SEPARADO para 'foro recien lanzado' -sale solo de pintar contadores a cero, ver `out_of_scope`-. Cada tarjeta es un `<button type=\"button\" disabled title=\"FORO-02 (la lista de hilos) llega en una próxima versión.\">` -MISMO title que los items de actividad reciente: las dos apuntan al mismo FORO-02 que no existe- que contiene: `category.name`, `category.description`, DOS elementos de contador -uno con `threadCountLabel(category.threadCount)`, otro con `postCountLabel(category.postCount)`, SEPARADOS -no concatenados con `·` en un solo texto, asi los pinta el HTML aprobado, dos `.cat-stat` distintos- y, SOLO SI `category.lastActivityAt` no es `null`, una linea `` `Última actividad ${relativeLong(category.lastActivityAt, now)}` ``. Con `lastActivityAt` a `null` esa linea NO SE PINTA -ni un guion, ni una fecha inventada: la spec no da un literal para 'sin actividad todavia' y no se inventa uno-."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/forum/Forum.test.tsx"
+    ],
+    "e2e": [
+      "app/e2e/forum.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e va contra el Supabase real -con la siembra de `demo_forum.sql`, ocho hilos reales repartidos en las cuatro categorias- porque los tests de unidad mockean la capa de datos y no pueden cazar que las categorias vengan de `forum_category_stats` y no de una lista de cuatro nombres escrita a mano (spec §7)."
+  },
+  "out_of_scope": [
+    "FORO-02, la lista de hilos de una categoria (spec §3: 'Al hacer clic en una tarjeta -> redirige a FORO-02'). No existe todavia ni tiene tarea propia. Las tarjetas y los items de actividad reciente se pintan apagados con su motivo, ver `component_api`.",
+    "El wiring de 'Foros' en App.tsx y el subtitulo de VERA 'Agente del foro' (spec §5): ya hecho a mano por Claude Code como precondicion (ver `_nota_wiring`), igual que en DIR-01/ADMIN-01.",
+    "El cableado VERA<->foro de la spec §5 (VERA contando 'hilos propios con respuestas nuevas'). Es conversacion de demostracion del documento de diseno, no una herramienta conectada -mismo criterio que el resto de pantallas-.",
+    "Un estado vacio especial para 'foro recien lanzado' (spec §6). No hace falta: con cero hilos, `fetchCategories()` sigue devolviendo las cuatro filas con sus contadores a cero (`_nota_data_layer`) y `fetchRecentThreads()` devuelve una lista vacia que ya oculta la seccion -es la MISMA logica de (6) y (7), no una rama nueva-.",
+    "Publicar, responder o cualquier escritura en el foro. FORO-01 es 'una pantalla de solo lectura y navegación' (spec §4). Escribir es de FORO-02/03.",
+    "Redirigir a una organizacion SUSPENDED o a un usuario sin sesion (spec §6, RNG-FORO-01/02): son reglas de acceso que resuelve el shell/la sesion antes de montar cualquier pantalla, no algo que FORO-01 compruebe por su cuenta."
+  ],
+  "constraints": [
+    "Ni un color literal: todo `var(--bw-...)`. El bloque de confidencialidad usa `--bw-brass`/`--bw-tag-bg`, el resto los tokens neutros ya usados en DIR-01/ADMIN-01/SRCH-01.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`.",
+    "No tocar `app/src/shell/**` ni `App.tsx`: tienen contrato y tests propios, y el wiring de esta pantalla ya esta hecho -ver `_nota_wiring`-.",
+    "No reimplementar nada de `app/src/lib/forum.ts`. Ni los dos formatos de tiempo relativo (`relativeShort`/`relativeLong`, no son intercambiables), ni el singular de los contadores (`threadCountLabel`/`postCountLabel`), ni el mapeo de una fila cruda (`toCategory`/`toRecentThread`). Estan escritos y probados.",
+    "El TITULO de la pantalla es 'Foro de la Comunidad' (spec §3), en un `<h1>` de verdad -el `page-title` del HTML aprobado es un `<div>`, pero aqui manda el contrato de la app-.",
+    "El aviso de confidencialidad no lleva boton de cerrar, `dismiss` ni estado propio: es permanente por contrato (spec §7).",
+    "Las cuatro tarjetas de categoria y los items de actividad reciente son controles APAGADOS (`disabled`) con `title`, nunca enlaces que naveguen a ningun sitio -FORO-02 no existe-."
+  ]
+}

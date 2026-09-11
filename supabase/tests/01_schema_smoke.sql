@@ -1992,4 +1992,160 @@ $$;
 
 drop function public.f146_canaria();
 
+-- -----------------------------------------------------------------------------
+-- F-155 / F-156 (Día 14) · ninguna función `security invoker` nueva puede leer
+-- una tabla con RLS
+-- -----------------------------------------------------------------------------
+-- El ancla estructural de la familia `F-148`/`F-155`/`F-156`. Los tres eran el
+-- mismo error: un `SELECT`/`EXISTS` contra una tabla con RLS, dentro de una
+-- función `security invoker`, cuyo resultado vacío no fallaba — decidía. La
+-- auditoría del Día 14 recorrió los siete disparadores y las funciones internas
+-- de `app` y no encontró ninguno más: **ningún disparador lee ninguna tabla**,
+-- y todo lo que sí lee es `security definer` y propiedad del dueño de las
+-- tablas, así que RLS no le aplica.
+--
+-- Ese resultado es de hoy y caduca con la próxima migración, así que se ancla:
+-- la lista de abajo es la superficie auditada entera, y cualquier función
+-- `invoker` que nazca nombrando una tabla con RLS la rompe. Las tablas NO van
+-- literales: salen de `pg_class`, para que una tabla con RLS nueva quede
+-- cubierta sin tocar este fichero.
+--
+-- Por qué cada una de las seis está permitida:
+--   · `create_inquiry`, `create_thread_item`, `counter_offer` — auditadas línea
+--     a línea el Día 13; sus lecturas sensibles ya van por ayudantes
+--     `security definer` (`app.thread_counterpart`, `app.org_already_inquired`,
+--     `app.resolve_thread`). Lo que les queda bajo RLS son escrituras, que
+--     fallan con error en vez de decidir en silencio.
+--   · `demo_state`, `demo_reanchor_freshness` — utilidades de demo, no guardias:
+--     no hay ninguna decisión colgando de que su lectura salga vacía.
+--   · `guard_member_privileges` — falso positivo del detector, y se deja dentro
+--     a propósito para que se vea: lo único que nombra es `members.role` DENTRO
+--     del texto de una excepción. No lee nada.
+create or replace function app.f155_detector() returns text
+  language sql security definer set search_path to 'pg_catalog','public' as $detector$
+  select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname)
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname in ('app','public')
+     and p.prokind = 'f'
+     and not p.prosecdef
+     and p.proname not in ('expect_fail','f146_canaria')
+     and n.nspname || '.' || p.proname not in (
+           'public.create_inquiry',
+           'public.create_thread_item',
+           'public.counter_offer',
+           'public.demo_state',
+           'public.demo_reanchor_freshness',
+           'app.guard_member_privileges')
+     and exists (
+           select 1
+             from pg_class c
+             join pg_namespace cn on cn.oid = c.relnamespace
+            where cn.nspname = 'public'
+              and c.relkind = 'r'
+              and c.relrowsecurity
+              and p.prosrc ~* ('\y' || c.relname || '\y'));
+$detector$;
+
+do $$
+declare
+  intrusas text;
+begin
+  intrusas := app.f155_detector();
+  assert intrusas is null,
+    'F-155: estas funciones security invoker nombran una tabla con RLS y no estan en la superficie auditada: '
+    || coalesce(intrusas, '') || ' -- si la lectura decide algo, es el agujero de F-148/F-155/F-156 otra vez';
+  raise notice 'OK · F-155: ninguna funcion invoker fuera de la superficie auditada nombra una tabla con RLS';
+end
+$$;
+
+-- Y que el detector detecte. Sin esta canaria el aserto de arriba pasaria en
+-- vacio el dia que alguien cambie `prosrc` por otra cosa -- la leccion de F-146.
+create or replace function app.f155_canaria() returns int
+  language plpgsql as $canaria$
+begin
+  return (select count(*)::int from thread_items);
+end;
+$canaria$;
+
+do $$
+begin
+  assert app.f155_detector() = 'app.f155_canaria',
+    'F-155: el detector no ve una funcion invoker que lee thread_items -- el ancla de arriba mide en vacio. Vio: '
+    || coalesce(app.f155_detector(), '(nada)');
+  raise notice 'OK · F-155: el detector si ve una funcion invoker nueva que lee una tabla con RLS';
+end
+$$;
+
+drop function app.f155_canaria();
+drop function app.f155_detector();
+
+-- Y que nadie construya el SQL a mano dentro de una funcion `invoker`. El
+-- detector de arriba lee el CUERPO de la funcion: una tabla nombrada dentro de
+-- un `execute` compuesto en tiempo de ejecucion no aparece en el cuerpo y el
+-- barrido no la ve. Hoy no hay ni una sola funcion asi en `app` ni en `public`
+-- —comprobado contra el catalogo, no supuesto—, y por eso el barrido literal
+-- basta. El dia que aparezca una, este aserto la pone delante de quien la
+-- escriba en vez de dejarla pasar callando.
+do $$
+declare
+  dinamicas text;
+begin
+  select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname)
+    into dinamicas
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname in ('app','public')
+     and p.prokind = 'f'
+     and not p.prosecdef
+     and p.proname not in ('expect_fail','f146_canaria')
+     and p.prosrc ~* '\yexecute\y';
+
+  assert dinamicas is null,
+    'F-155: estas funciones security invoker montan SQL dinamico, asi que el barrido de cuerpos no puede ver que tablas tocan: '
+    || coalesce(dinamicas, '') || ' -- auditalas a mano contra el criterio de F-155 antes de dejarlas pasar';
+  raise notice 'OK · F-155: ninguna funcion invoker monta SQL dinamico, asi que el barrido de cuerpos mide toda la superficie';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- F-155 · la premisa que hace inmune a `security definer`, comprobada
+-- -----------------------------------------------------------------------------
+-- Que un ayudante `security definer` no vea RLS no es un axioma: depende de dos
+-- cosas que hoy se cumplen y que una migración futura puede romper sin tocar
+-- ninguna función. Si alguna de las dos cae, `app.can_access_thread`,
+-- `app.thread_counterpart` y `app.org_already_inquired` vuelven a filtrar por
+-- RLS y F-148 renace entero, en silencio y en todas partes a la vez.
+do $$
+declare
+  forzadas text;
+  ajenas   text;
+  dueno    oid;
+begin
+  select string_agg(c.relname, ', ' order by c.relname) into forzadas
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relkind = 'r' and c.relforcerowsecurity;
+
+  assert forzadas is null,
+    'F-155: estas tablas tienen FORCE ROW LEVEL SECURITY, asi que RLS le aplica tambien a su dueno y los ayudantes security definer dejan de ser inmunes: '
+    || coalesce(forzadas, '');
+
+  select c.relowner into dueno
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relname = 'thread_items';
+
+  select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname) into ajenas
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname in ('app','public') and p.prosecdef and p.proowner <> dueno;
+
+  assert ajenas is null,
+    'F-155: estas funciones security definer no son del dueno de las tablas, asi que siguen sujetas a RLS: '
+    || coalesce(ajenas, '');
+
+  raise notice 'OK · F-155: ninguna tabla fuerza RLS sobre su dueno y todo security definer es del dueno de las tablas';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

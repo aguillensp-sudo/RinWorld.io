@@ -192,7 +192,7 @@ dice "no tengo ese dato" en cuanto sale de ahí.
 | `E2E_ALPHA_EMAIL` / `_PASSWORD` / `_ORG` | Cuenta de pruebas compradora |
 | `E2E_BETA_EMAIL` / `_PASSWORD` / `_ORG` | Cuenta de pruebas vendedora |
 | `E2E_EDITOR_EMAIL` / `_PASSWORD` / `_ORG` | Añadida 5-sep-2026. EDITOR (no ADMIN) en `Nordwälz Lager`, para probar D-7/D-8 y la rama de `caller_bypasses_visibility_scope()` que ningún ADMIN ejercita (`F-149`) |
-| `E2E_OPERATOR_EMAIL` / `_PASSWORD` | Añadida 11-sep-2026. **Operador de Plataforma** (`0028`): sin organización a propósito, por eso no hay `_ORG`. Es la cuenta con la que se puede probar ADMIN-01 de extremo a extremo. **La cuenta se crea en el panel, no por SQL** (`F-013`), y después hay que darla de alta en `platform_operators` |
+| `E2E_OPERATOR_EMAIL` / `_PASSWORD` | Añadida 11-sep-2026. **Operador de Plataforma** (`0028`): sin organización a propósito, por eso no hay `_ORG`. Es la cuenta con la que se puede probar ADMIN-01 de extremo a extremo. **La cuenta se crea en el panel, no por SQL** (`F-013`), y después hay que darla de alta en `platform_operators`. **En los secretos de GitHub va SOLO `E2E_OPERATOR_PASSWORD`** (puesto el 11-sep-2026): el correo no es un secreto, está en claro en `.env.example`, y cuando exista el e2e de ADMIN-01 irá literal en `ci.yml` — mismo criterio que `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID`, §10.2. Un secreto de más es un sitio de más donde puede faltar sin que nadie se entere (`F-071`) |
 | `VITE_DEMO_KEY_SEED` | Deriva las claves E2EE de demo (D-08-01, F-067) |
 | `ANTHROPIC_API_KEY` | Solo local; en producción vive en el entorno de la Edge Function |
 

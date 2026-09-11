@@ -11,6 +11,7 @@ import { Login } from './screens/Login';
 import { Panel } from './screens/panel/Panel';
 import { AdminRequests } from './screens/admin/AdminRequests';
 import { Directory } from './screens/directory/Directory';
+import { Forum } from './screens/forum/Forum';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
@@ -46,6 +47,8 @@ const SELLING_NAV = navIndexOf('Vendiendo');
 const HOME_NAV = navIndexOf('Panel');
 /** DIR-01 §2: "Ítem activo en nav: **Empresas**". Spec y HTML aprobado coinciden. */
 const EMPRESAS_NAV = navIndexOf('Empresas');
+/** FORO-01 §2: "Ítem activo en nav: **Foros**". Spec y HTML aprobado coinciden. */
+const FOROS_NAV = navIndexOf('Foros');
 
 /**
  * De índice de nav al nombre de pantalla que entiende VERA (F-090).
@@ -86,6 +89,9 @@ const DIRECTORY_VERA_SUBTITLE = 'Agente del directorio';
 
 /** ADMIN-01 §5: "**Subtítulo del panel:** `Asistente del operador`". */
 const ADMIN_VERA_SUBTITLE = 'Asistente del operador';
+
+/** FORO-01 §5: "**Subtítulo del panel:** `Agente del foro`". */
+const FORUM_VERA_SUBTITLE = 'Agente del foro';
 
 export function App() {
   const { state, error, signIn, signOut } = useSession();
@@ -174,6 +180,7 @@ export function App() {
   const onSearch = nav === SEARCH_NAV;
   const onSelling = nav === SELLING_NAV;
   const onEmpresas = nav === EMPRESAS_NAV;
+  const onForos = nav === FOROS_NAV;
 
   /* PANEL-01 §5 dice `Agente de busqueda` para el Panel, igual que SRCH-01 y
    * VND-01. Comprobado en la spec, no supuesto. */
@@ -183,7 +190,9 @@ export function App() {
       ? MESSAGES_VERA_SUBTITLE
       : onEmpresas
         ? DIRECTORY_VERA_SUBTITLE
-        : SEARCH_VERA_SUBTITLE;
+        : onForos
+          ? FORUM_VERA_SUBTITLE
+          : SEARCH_VERA_SUBTITLE;
 
   /*
    * El agente se construye aquí, después de saber que hay perfil, y no en un
@@ -309,6 +318,12 @@ export function App() {
          * INV-01/SRCH-01/MSG-01, aquí no hay nada que envejezca en pantalla.
          */
         <Directory profile={state.profile} />
+      ) : onForos ? (
+        /* FORO-01. `now` explícito y construido EN EL RENDER, mismo criterio
+         * que INV-01/SRCH-01/MSG-01: las tarjetas de categoría y la actividad
+         * reciente son tiempo relativo ("hace N horas"), y un `now` congelado
+         * al montar dejaría una sesión larga con esas cifras rancias. */
+        <Forum profile={state.profile} now={new Date()} />
       ) : (
         /*
          * PANEL-01, el punto de entrada tras el login. Sustituye al andamiaje

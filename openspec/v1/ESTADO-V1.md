@@ -142,6 +142,29 @@ repite aquí.
 
 **Día 14 de V1 · 11-sep-2026 · Estado: CERRADO**
 
+> **EL DÍA EN SIETE LÍNEAS.** Debajo hay seis adendas en orden cronológico, porque el día
+> empezó siendo una cosa y acabó siendo otra. Si solo vas a leer una cosa, que sea esto:
+>
+> 1. **Cerrada la familia `F-148`/`F-155`/`F-156` por el lado que faltaba** —disparadores,
+>    políticas y función Edge—, sin hallazgo y con el resultado anclado en cuatro asertos.
+> 2. **Leído el plan contra el repo a petición del PO:** estamos en la **semana 3**, la del
+>    **H1**, con la Fundación casi entera hecha y el hito abierto.
+> 3. **Escrito `UMBRAL-FABRICA-V1.md`**, el umbral que la tabla de riesgos del plan exige
+>    *"de antemano"* y que no existía. Ocho cifras, tres veredictos atados a los tres
+>    escenarios de calendario, y reglas anti-trampa.
+> 4. **El PO confirmó las tres pantallas** (`DIR-01`, `ADMIN-01`, `FORO-01`) **antes** de
+>    que existiera una sola línea de ninguna.
+> 5. **Las tres capas de datos, escritas a mano, verificadas y sembradas** (`0027`, `0028`,
+>    `0029`). El paso 2 del hito queda cerrado.
+> 6. **Tres hallazgos nuevos:** `F-157` (el medidor de coste borraba su propia historia),
+>    `F-158` (la spec de `ADMIN-01` se contradice a sí misma — **abierto, es del PO**) y
+>    `F-159` (un e2e que falla por carrera, justo antes de medir con él).
+> 7. **El Operador de Plataforma existe de verdad**: cuenta en las dos bases, alta, rama de
+>    sesión, alcance comprobado y contraseña en CI. **No queda nada del PO en esa pantalla.**
+>
+> **Lo que toca mañana está en §3, y es todo trabajo propio:** las tres tareas en formato
+> fijo y las tres corridas. Van en sesión limpia (§3, punto 5).
+
 La otra mitad de la misma pregunta, la que el Día 13 dejó fuera de alcance a propósito
 porque `F-155` hablaba de `app/src/lib/`: **¿y todo lo que corre por debajo sin que ningún
 RPC del cliente lo invoque?** Disparadores, funciones internas de `app`, las expresiones
@@ -422,6 +445,11 @@ medir con esta suite: un rojo de carrera se cobraría como un rojo del Coder, qu
 | Que el rojo de la CI no lo causaba el commit | `gh run rerun --failed` sobre el MISMO commit, antes de tocar una línea | Verde entero, despliegue incluido. El fallo era una carrera, y el arreglo se escribió después de saberlo, no para que pasara |
 | La rama de sesión del Operador | `npx tsc --noEmit` y la suite entera de vitest | Typecheck limpio, **696 pruebas en verde**, 6 de ellas nuevas sobre la bifurcación (miembro / Operador / cuenta a medio provisionar) |
 | Lo que esa rama NO verifica todavía | — | **No se ha ejecutado con una cuenta real**, porque no existe ninguna: el alta de un Operador es credenciales y la da el PO. Hasta entonces, la rama está probada con mock y con el esquema, no contra la API |
+| La cuenta de Operador, en las dos bases | `auth.users` cruzado con `platform_operators` por el MCP; el alta la hizo esta sesión, la cuenta la creó el PO en el panel | `operador@bearingworld.test` en `troxminloxkjwihwfevs` (15:00 UTC) y en `bearingworld-e2e` (15:16 UTC), las dos confirmadas y dadas de alta |
+| Que el Operador ve lo que debe **y nada más** | Consulta desde su propia sesión (`set_config` + `set local role authenticated`), en las dos bases | **3 solicitudes, 3 filas de historial, 1 operador — y 0 líneas de inventario, 0 hilos cifrados, 0 elementos y 0 categorías de foro.** Anclado después en `01_schema_smoke.sql` con su ancla positiva |
+| El secreto de CI del Operador | `gh secret list`, que enseña nombres y no valores | `E2E_OPERATOR_PASSWORD` presente (15:40 UTC). `E2E_OPERATOR_EMAIL` **no**, y se decide que no lo sea: un correo no es un secreto y un secreto de más es un sitio de más donde puede faltar (`F-071`) |
+| Coste de orquestación al cierre | `python -m harness.core.orchestration_metrics`, corrido otra vez al terminar | **997,77 $** acumulados, **660,24 $** de ellos en V1, y **148,75 $** de esta sesión. Las diez filas de agosto siguen ahí gracias al arreglo de `F-157` de por la mañana |
+| CI de cada commit del día | `gh run watch` job a job, ocho veces | Verde en todos salvo uno, `62102fd`, que dio `F-159` y quedó verde al relanzarlo y arreglado después |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -456,11 +484,15 @@ medir con esta suite: un rojo de carrera se cobraría como un rojo del Coder, qu
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — NO ABIERTA
+### Corriente B · Fábrica — NO ABIERTA, pero con todo lo suyo listo
 
 Se abre cuando la corriente A publique los contratos de datos, y esa sigue siendo la
-condición. **Novedad del 11-sep: ya tiene su vara de medir** — `UMBRAL-FABRICA-V1.md`, el
-umbral del H1, escrito antes de medir. Lo que falta para abrirla está en §3, en orden.
+condición. **El 11-sep se cumplió para las tres pantallas del H1:** `0027`/`directory.ts`,
+`0028`/`admin-requests.ts` y `0029`/`forum.ts`, verificadas y sembradas en las dos bases. Y
+tiene su vara de medir, `UMBRAL-FABRICA-V1.md`, escrita antes de medir.
+
+**Lo único que falta para abrirla son las tres tareas en formato fijo y las tres corridas**
+(§3). No queda ninguna dependencia de nadie de fuera.
 
 ### Corriente C · Verificación — NO ABIERTA
 
@@ -470,40 +502,37 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-**El H1 del plan es lo único con acción propia que queda en el repo**, y desde hoy tiene la
-pieza que le faltaba para ser una medición en vez de una impresión: el umbral, escrito
-antes de medir. El orden de abajo es el de `UMBRAL-FABRICA-V1.md` §7, y ninguno de los
-cinco depende de nadie de fuera:
+**El H1 sigue siendo lo único con acción propia en el repo, y ya no depende de nadie de
+fuera.** De los cinco pasos de `UMBRAL-FABRICA-V1.md` §7, tres están hechos:
 
-1. ~~El PO confirma las tres pantallas.~~ **HECHO el 11-sep, antes de correr nada:
-   `DIR-01`, `ADMIN-01` y `FORO-01`** — directorio, alta de empresas y foro. `REG-07` se
-   cayó de la propuesta al leer su spec (es generación de claves: criptografía, y el Plan
-   §4.3 dice que el generador no la toca) e `INV-02` por medir el techo y no la media.
-2. ~~Las tres capas de datos, escritas a mano y entregadas.~~ **HECHO el 11-sep, las
-   tres:** `0027`/`directory.ts`, `0028`/`admin-requests.ts` y `0029`/`forum.ts`, cada una
-   con sus pruebas, sus asertos de esquema y su siembra, verificadas en las dos bases. Con estas tres la capa de datos no es gratis y se eligieron así a
-   propósito: tres pantallas sobre esquema existente habrían medido la fábrica en su caso
-   más cómodo.
-   ⚠ **Y la corrida de cada pantalla va en SESIÓN LIMPIA**, con el medidor de orquestación
-   corrido antes y después. Si la tarea, los tests y la corrida comparten sesión con otro
-   trabajo, la cifra 7 le imputa a la pantalla un coste que no es suyo y el veredicto sale
-   falso por arriba.
-3. **Las tres tareas en formato fijo, validadas con `--seco`.** El corpus pasa de **6 a 9**,
-   camino de las **10–15** que el plan declaró objetivo no alcanzado del MVP y asignó
-   explícitamente a este hito.
-4. ~~Correr `python -m harness.core.orchestration_metrics`.~~ **HECHO el 11-sep, y de ahí
-   salió `F-157`** (el medidor borraba su propia historia; arreglado y fijado con prueba).
-   Línea base: 887,77 $ acumulados, 550,25 $ de ellos en V1. ⚠ **A partir de ahora se corre
-   ANTES y DESPUÉS de cada pantalla**, no al final de las tres: una transcripción podada es
-   una medida que ya no existe.
-5. **Las tres corridas, su revisión y el C5 del PO.** El veredicto va a §1 con las ocho
-   cifras al lado, y arrastra el escenario de calendario: 18, 21 o 30 semanas.
+| | Paso | Estado |
+|---|---|---|
+| 1 | El PO confirma las tres pantallas | ✅ **11-sep** · `DIR-01`, `ADMIN-01`, `FORO-01` |
+| 2 | Las tres capas de datos, a mano | ✅ **11-sep** · `0027`, `0028`, `0029` |
+| 3 | **Las tres tareas en formato fijo** | 🔴 **Es lo que toca** |
+| 4 | Línea base del coste de orquestación | ✅ **11-sep** · y de ahí salió `F-157` |
+| 5 | **Las tres corridas, su revisión y el C5** | 🔴 Después de la 3 |
+
+1. **Escribir la tarea de `DIR-01`**, sus tests de aceptación y correrla. Es la más barata
+   de las tres y la única comparable con algo ya medido: su forma —tabla con filtros, orden
+   por cabecera y paginación— es la de `SRCH-01` e `INV-01`. **Empezar por ella no es
+   comodidad: es tener un punto de referencia antes de las otras dos.**
+2. **Luego `ADMIN-01` y `FORO-01`**, cada una en su sesión.
+3. **El veredicto**, con las ocho cifras, en §1 y contra la regla de decisión del umbral §4.
+
+⚠ **CADA PANTALLA VA EN SESIÓN LIMPIA, y el medidor de orquestación se corre ANTES y
+DESPUÉS.** No es ceremonia: la cifra 7 del umbral —la que decide si la partida de modelos
+del plan se sostiene— se mide por sesión, así que una sesión compartida le imputa a la
+pantalla un coste que no es suyo. **Esta sesión, sin construir ninguna pantalla, costó
+148,75 $ de coste-sombra**; el umbral pone el techo de una pantalla en 50 de mediana.
 
 En paralelo, sin acción propia desde este lado:
 
-- **Entregable 6: seguir esperando la aprobación de Anthropic (Model Garden), sin ETA.**
-  Recomprobado el 11-sep con llamada real: mismo `429 RESOURCE_EXHAUSTED`. **No tocar
-  `vera/index.ts` hasta que responda** (orden de corte del runbook).
+- **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Recomprobado
+  el 11-sep con llamada real: mismo `429 RESOURCE_EXHAUSTED`. **No tocar `vera/index.ts`.**
+- **`F-158`, del PO:** la spec de `ADMIN-01` dice *"naranja si > 24h"* y pinta en naranja una
+  solicitud de 18 horas. El código sigue la regla y lo dice en voz alta, así que no bloquea
+  nada; corregir la spec es suyo.
 
 Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
 Vercel — ninguno bloquea trabajo de ingeniería.
@@ -729,6 +758,9 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~Un cliente manipulado puede envolver de más hacia la CONTRAPARTE (backlog de `0023` §4)~~ | **Resuelto 10-sep-2026: `0024`, el guardia recalcula el conjunto exacto vía `thread_public_keys`. De paso salió `F-154` (tercera organización) y `F-155` (helper `security definer` para `otra`, en `0025`)** |
 | ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
 | ⚪ | ~~`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?~~ | **Resuelto 10-sep-2026 (Día 13): sí, un tercero — el guardia "ya has consultado" de `create_inquiry`, cerrado en `0026` (`F-156`). Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos; ninguna otra tenía el hueco** |
+| 🟠 | **`F-158`, y es del PO: la spec aprobada de `ADMIN-01` se contradice a sí misma.** Su tabla de columnas dice *"en naranja si > 24h, en rojo si > 48h"* y su bloque de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Cada lectura lleva a una pantalla distinta. El código sigue la REGLA y lo deja escrito en los tres sitios donde alguien podría arreglarlo al revés, así que **no bloquea la construcción**; lo que no puede arreglar el código es el documento | Producto: corregir la spec |
+| 🟡 | **Nadie ha mirado si las otras 30 specs aprobadas tienen la misma clase de contradicción que `F-158`.** Salió por casualidad, porque la siembra de demo se verifica a sí misma y exigía una fila de cada color. Un barrido cuesta poco y no se ha hecho | Cualquier sesión, antes de que la fábrica construya sobre ellas |
+| ⚪ | ~~ADMIN-01 no se puede probar de extremo a extremo: no hay cuenta de Operador~~ | **Resuelto 11-sep-2026: cuenta creada por el PO en las dos bases, dada de alta por el MCP, alcance comprobado desde su propia sesión y `E2E_OPERATOR_PASSWORD` en los secretos de CI.** La rama de sesión del shell, que era la otra mitad y no se sabía, también |
 | ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
 
 ---
@@ -856,6 +888,18 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   Lo que no se sabe es si el mensaje de error basta para que una sesión que no conoce
   la historia de `F-148`/`F-155`/`F-156` haga la auditoría en vez de añadir el nombre a
   la lista y seguir.
+- **Si la rama de sesión del Operador funciona contra la API real.** Está probada con mock
+  de red (seis pruebas que miran la consulta, no solo el resultado) y el esquema está
+  probado desde la sesión del propio Operador, pero **nadie ha entrado con esa cuenta en la
+  aplicación**: hacerlo es teclear una contraseña y eso no lo hace esta sesión. Si al entrar
+  saliera la pantalla de login en vez del hueco con nombre, lo que falla es el puente entre
+  las dos mitades, no ninguna de las dos.
+- **Cuánto de los 148,75 $ de esta sesión es fábrica y cuánto es todo lo demás.** El dato
+  existe por sesión, no por tarea (`F-157` lo dejó escrito), así que una jornada que audita,
+  lee un plan, escribe un umbral y tres capas de datos produce **un solo número**. Para la
+  cifra 7 del umbral hace falta lo contrario: una sesión, una pantalla. De ahí la regla de
+  §3, y **no está probada todavía**: la primera sesión limpia dirá si una pantalla cabe en
+  los 50 $ o si el plan tiene un problema de coste que nadie ha visto.
 - **Si los umbrales del H1 están puestos donde deben.** Los de la corrección humana
   (cifras 4 y 5 de `UMBRAL-FABRICA-V1.md`) se apoyan en **dos** puntos de medida, los
   únicos dos revisados con el bucle ya arreglado, y el resto es juicio declarado como tal.
@@ -943,37 +987,37 @@ Orden de lectura, y el orden importa:
 11. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
     Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
     (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
-    Día 13: `F-156` (cerrado, `0026`). Del Día 14: `F-157` (cerrado el mismo día) y `F-158`
-    (**abierto, es del PO**: la spec de `ADMIN-01` se contradice a sí misma en el umbral
-    de color de la antigüedad en cola) — el medidor del
+    Día 13: `F-156` (cerrado, `0026`). Del Día 14, tres: `F-157` (cerrado — el medidor de
+    coste borraba su propia historia), `F-158` (**ABIERTO, es del PO** — la spec de
+    `ADMIN-01` se contradice a sí misma en el umbral de color de la antigüedad en cola) y
+    `F-159` (cerrado — un e2e que fallaba por carrera, arreglado justo antes de que la
+    fábrica empiece a medirse con esa suite) — el medidor del
     coste de orquestación borraba su propia historia al usarlo. La auditoría de la
     mañana no encontró hallazgo y dejó un ancla en `01_schema_smoke.sql`; el hallazgo
     salió por la tarde, arrancando el H1.
 
 ---
 
-*Día 14 de V1 · 11-sep-2026, cerrado tras contestar la última pregunta abierta de la
-familia `F-155` — la mitad que el Día 13 dejó fuera de alcance a propósito: lo que corre
-por debajo sin que ningún RPC del cliente lo invoque · fecha leída de la máquina
-(`date -u`) al cerrar: `2026-09-11` · auditados contra el criterio exacto los siete
-disparadores `security invoker` de `app`, las 20 políticas de RLS de `public` y la
-función Edge `vera/index.ts`; ninguno tiene la forma, y los disparadores por una razón
-más fuerte que la esperada: **no leen ninguna tabla** · la fuente fue el catálogo de la
-base (`pg_proc`, `pg_trigger`, `pg_policies`, `pg_class`), no los `.sql`, y el barrido se
-repitió en `troxminloxkjwihwfevs` y en `bearingworld-e2e` con el mismo resultado ·
-**sin migración nueva: no había nada que corregir**, `0026` sigue siendo la última y el
-contador de hallazgos sigue en `F-156` · el resultado negativo queda anclado con cuatro
-asertos nuevos en `01_schema_smoke.sql` —superficie `invoker` permitida, canaria que
-demuestra que el detector detecta, ausencia de SQL dinámico, y la premisa de la inmunidad
-de `security definer` (`FORCE RLS` y dueño)—, todos con los nombres de tabla derivados de
-`pg_class` y no escritos a mano · `supabase/tests/run.sh` completo en verde (`ESQUEMA
-VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`) con la canaria detectada por su nombre ·
-entregable 6 recomprobado hoy con una llamada real a `rawPredict` (región `eu`,
-`claude-sonnet-5`): `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por palabra que
-el 8 y el 10-sep · **adenda del mismo día, a petición del PO:** leído el plan
-V1 v2.3 contra el repo pieza a pieza — estamos en la semana 3, la del H1, con la Fundación
-casi entera hecha y el hito abierto — y escrito `UMBRAL-FABRICA-V1.md`, el umbral que la
-tabla de riesgos del plan exige «de antemano» y que no existía; corregida además la casilla
-de `F-118`, trece días en «Abierto» con el arreglo hecho y medido desde el 29-ago
-(`1183a38`, 14 corridas de `SRCH-01` ese mismo día) · `git status --short` releído antes de
-escribir este pie · Dirección Técnica, Nortex Systems*
+*Día 14 de V1 · 11-sep-2026 · fecha leída de la máquina (`date -u`) al cerrar:
+`2026-09-11`, 15:45 UTC · **el día empezó cerrando la familia `F-155` por el lado que
+faltaba y acabó con las tres capas de datos del H1 escritas** · auditados los siete
+disparadores de `app`, las 20 políticas de `public` y `vera/index.ts` sin encontrar ninguno
+más, y el resultado anclado con cuatro asertos y una canaria que demuestra que el detector
+detecta · leído el plan V1 v2.3 contra el repo a petición del PO: semana 3, la del H1 ·
+escrito `UMBRAL-FABRICA-V1.md` ANTES de medir, que es la condición que la tabla de riesgos
+del plan le pone al hito y que no existía · tres pantallas confirmadas por el PO antes de
+que existiera una línea de ninguna, y `REG-07` descartada al leer su spec (es criptografía,
+Plan §4.3) · `0027`, `0028` y `0029` escritas, probadas contra un Postgres desechable ANTES
+de aplicarse, aplicadas a `troxminloxkjwihwfevs` y `bearingworld-e2e` y releídas del
+catálogo — nunca del `{"success":true}` — con sus siembras verificándose a sí mismas ·
+`directory.ts`, `admin-requests.ts` y `forum.ts` a mano, con **54** pruebas de unidad nuevas, contadas corriéndolas ·
+**tres hallazgos:** `F-157` (el medidor de orquestación borraba 387 $ de historia al usarlo;
+cerrado y fijado), `F-158` (la spec de `ADMIN-01` se contradice a sí misma; **abierto, es
+del PO**) y `F-159` (un e2e que falla por carrera; confirmado NO reproducible antes de
+tocarlo, arreglado en los tres sitios) · el Operador de Plataforma existe: cuenta en las dos
+bases creada por el PO, alta por el MCP, rama de sesión en el shell, alcance comprobado
+desde su propia sesión (ve la cola y **nada** del mercado) y `E2E_OPERATOR_PASSWORD` en CI ·
+coste-sombra de orquestación al cierre: **997,77 $** acumulados, **660,24 $** en V1,
+**148,75 $** esta sesión · CI verde job a job en el commit final · `git status --short`
+releído antes de escribir este pie: limpio salvo `openspec/design-gui/Ingles/`, sin trackear
+y ajena a esta sesión desde el Día 11 · Dirección Técnica, Nortex Systems*

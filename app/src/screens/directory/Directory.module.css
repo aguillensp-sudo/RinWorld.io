@@ -1,0 +1,203 @@
+/* DIR-01 · Directorio de Organizaciones — panel de contenido.
+   Ningún color literal: todo sale del vocabulario de tokens del sistema
+   (openspec/architecture/design-system.md §1). El fondo Cold White del panel lo
+   pone el shell; aquí no se repite.
+   Nota de tokens: los botones de paginación usan `--bw-radius-hamburger` (4px),
+   el radio de control más cercano al 4px de la navegación numérica del mock. No
+   se inventa un token nuevo para 4px. */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+  margin: 0 0 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin: 0 0 18px;
+  max-width: 560px;
+}
+
+/* ── Barra de filtros ─────────────────────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  color: var(--bw-ink-steel);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.searchInput {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 280px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  color: var(--bw-input-text);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.select:focus,
+.searchInput:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.searchButton {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.searchButton:hover {
+  color: var(--bw-calibration-blue);
+  border-color: var(--bw-calibration-blue);
+}
+
+.clearButton {
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--bw-steel-mist);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.clearButton:hover {
+  color: var(--bw-error-text);
+}
+
+.searchButton:focus-visible,
+.clearButton:focus-visible,
+.pageButton:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
+}
+
+/* ── Zona de la tabla: carga y error ──────────────────────────────────────── */
+
+.loading {
+  padding: 32px 14px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  background: var(--bw-surface-mist);
+  color: var(--bw-steel-mist);
+  font-size: var(--bw-size-input);
+}
+
+.error {
+  padding: 14px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: 8px;
+  background: var(--bw-tint-danger);
+  color: var(--bw-error-text);
+  font-size: var(--bw-size-input);
+}
+
+/* ── Paginación ───────────────────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.pageInfo {
+  margin-right: 6px;
+  color: var(--bw-steel-mist);
+  font-size: var(--bw-size-label);
+}
+
+.pageButton {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius-hamburger);
+  background: var(--bw-surface-mist);
+  color: var(--bw-ink-steel);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.pageButton:hover:not(:disabled) {
+  border-color: var(--bw-brass);
+  color: var(--bw-brass);
+}
+
+.pageButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pageButtonActive,
+.pageButtonActive:hover:not(:disabled) {
+  background: var(--bw-deep-steel);
+  border-color: var(--bw-deep-steel);
+  color: var(--bw-cold-white);
+}

@@ -140,270 +140,151 @@ repite aquí.
 
 ---
 
-**Día 14 de V1 · 11-sep-2026 · Estado: CERRADO**
+**Día 14 de V1 · 11-sep-2026 · Estado: CERRADO.** Cerrada la familia `F-148`/`F-155`/`F-156`
+por el lado que faltaba —disparadores, políticas y función Edge—, sin hallazgo y anclada con
+cuatro asertos y una canaria. A petición del PO: plan releído contra el repo (semana 3, la
+del H1), escrito `UMBRAL-FABRICA-V1.md` —el umbral que la tabla de riesgos exige "de
+antemano" y no existía—, y confirmadas las tres pantallas del H1 (`DIR-01`, `ADMIN-01`,
+`FORO-01`) antes de que existiera una línea de código de ninguna. Las tres capas de datos
+escritas a mano, verificadas y sembradas (`0027`, `0028`, `0029`): paso 2 del hito cerrado.
+Tres hallazgos: `F-157` (el medidor de coste borraba su propia historia, cerrado), `F-158`
+(la spec de `ADMIN-01` se contradice a sí misma —**abierto, es del PO**) y `F-159` (un e2e
+que falla por carrera, cerrado). El Operador de Plataforma existe de verdad en las dos
+bases: cuenta, alta, rama de sesión, alcance comprobado desde su propia sesión. El detalle
+completo —las seis adendas del día— vive en `git show f5e1d7e:openspec/v1/ESTADO-V1.md`, no
+se repite aquí.
 
-> **EL DÍA EN SIETE LÍNEAS.** Debajo hay seis adendas en orden cronológico, porque el día
-> empezó siendo una cosa y acabó siendo otra. Si solo vas a leer una cosa, que sea esto:
+---
+
+**Día 15 de V1 · trabajo 11-sep-2026, cierre redactado 13-sep-2026 · Estado: CERRADO**
+
+> **EL DÍA EN OCHO LÍNEAS.**
 >
-> 1. **Cerrada la familia `F-148`/`F-155`/`F-156` por el lado que faltaba** —disparadores,
->    políticas y función Edge—, sin hallazgo y con el resultado anclado en cuatro asertos.
-> 2. **Leído el plan contra el repo a petición del PO:** estamos en la **semana 3**, la del
->    **H1**, con la Fundación casi entera hecha y el hito abierto.
-> 3. **Escrito `UMBRAL-FABRICA-V1.md`**, el umbral que la tabla de riesgos del plan exige
->    *"de antemano"* y que no existía. Ocho cifras, tres veredictos atados a los tres
->    escenarios de calendario, y reglas anti-trampa.
-> 4. **El PO confirmó las tres pantallas** (`DIR-01`, `ADMIN-01`, `FORO-01`) **antes** de
->    que existiera una sola línea de ninguna.
-> 5. **Las tres capas de datos, escritas a mano, verificadas y sembradas** (`0027`, `0028`,
->    `0029`). El paso 2 del hito queda cerrado.
-> 6. **Tres hallazgos nuevos:** `F-157` (el medidor de coste borraba su propia historia),
->    `F-158` (la spec de `ADMIN-01` se contradice a sí misma — **abierto, es del PO**) y
->    `F-159` (un e2e que falla por carrera, justo antes de medir con él).
-> 7. **El Operador de Plataforma existe de verdad**: cuenta en las dos bases, alta, rama de
->    sesión, alcance comprobado y contraseña en CI. **No queda nada del PO en esa pantalla.**
+> 1. **Sesión nueva, arrancando exactamente donde dejó el Día 14:** el paso 3 de
+>    `UMBRAL-FABRICA-V1.md` §7, las tres tareas en formato fijo.
+> 2. **`F-160`, cazado antes de gastar un token.** `--seco` escalaba en FALSO en las SEIS
+>    tareas del corpus —`DIR-01` incluida, y confirmado también contra `SRCH-01`, de hace
+>    semanas— desde que `F-152` sumó `primer_intento_limpio` al CSV sin que `dry_run.py` lo
+>    supiera. Cerrado el mismo día.
+> 3. **`DIR-01` escrita, con sus tests, `--seco` limpia.** Precondición descubierta y resuelta
+>    primero: "Empresas" no tenía ninguna ruta real en `App.tsx` a la que el e2e pudiera
+>    llegar.
+> 4. **`ADMIN-01`, y con ella un hallazgo de arquitectura, no solo de esquema.** El Operador
+>    no encaja en `AppShell` —nav de cinco ítems propios y acento brass (spec §2), un
+>    `OperatorProfile` sin organización—. Nuevo `OperatorShell.tsx`, sin tocar `AppShell.tsx`
+>    ni sus 147 líneas de tests.
+> 5. **Segundo hallazgo de `ADMIN-01`: el mock promete un email que nadie envía.** Aprobar y
+>    Rechazar no disparan ningún correo —no hay proveedor configurado en todo el proyecto—, y
+>    el texto de confirmación se corrigió para no afirmarlo (mismo principio que `F-100`).
+> 6. **`FORO-01` escrita**, la más simple de las tres —un solo fichero, misma forma que
+>    `PANEL-01`—. Con esto, el paso 3 del §7 queda completo: nueve tareas en el corpus, las
+>    tres del H1 listas para correr.
+> 7. **La corrida real sigue sin poder pasar en esta sesión.** `DEEPSEEK_API_KEY` vive en el
+>    entorno local del PO (`C:\Users\admin\...`), nunca en esta sesión remota —comprobado con
+>    `uname`/`mount` contra el propio contenedor, no supuesto ni discutido de oídas—. El paso
+>    5 del §7 (las tres corridas, C5 y el veredicto) queda para una sesión con esa clave a
+>    mano.
+> 8. **Este fichero se cierra dos días después de escribirse el trabajo**, por una
+>    interrupción de la conversación, no porque el día se alargara —regla 4 de este fichero,
+>    y va anotado porque es justo el tipo de desfase que la regla 3 pide no maquillar.
 >
-> **Lo que toca mañana está en §3, y es todo trabajo propio:** las tres tareas en formato
-> fijo y las tres corridas. Van en sesión limpia (§3, punto 5).
+> **Lo que toca a continuación no es trabajo de esta sesión:** las tres corridas, cada una en
+> el entorno local del PO y en su propia sesión limpia. Ver §3.
 
-La otra mitad de la misma pregunta, la que el Día 13 dejó fuera de alcance a propósito
-porque `F-155` hablaba de `app/src/lib/`: **¿y todo lo que corre por debajo sin que ningún
-RPC del cliente lo invoque?** Disparadores, funciones internas de `app`, las expresiones
-de las propias políticas de RLS, y la función Edge. Auditado hoy contra el criterio exacto
-de la familia —un `SELECT`/`EXISTS` bajo RLS dentro de código `security invoker` cuyo
-resultado vacío **decide** en vez de fallar—. **La respuesta es que no hay ninguno más, y
-por una razón más fuerte que la esperada.**
+**`F-160`, en detalle.** `harness/tests/dry_run.py` comprueba desde el día 4 que ninguna fila
+del CSV quede marcada como escalada con `[f for f in filas if ",si," in f]` —un substring de
+la LÍNEA ENTERA—. El 10-sep (`F-152`) `primer_intento_limpio` se sumó a `metrics.COLUMNS`
+justo detrás de `corrida` y delante de `resultado`, y una corrida limpia al primer intento
+escribe esa columna en `si` aunque `escalado_a_humano` sea `no`: la fila sale
+`...,no,-,-,si,PASA...` y el substring la encuentra igual. Reproducido primero contra
+`SRCH-01.json` para confirmar que no era nada de `DIR-01`: el propio arnés llevaba un mes
+roto en cuanto `metrics.COLUMNS` creció. Arreglado con `_columna()`, que lee el CSV con el
+módulo `csv` de la librería estándar y busca por NOMBRE, no por substring. Verificado con
+`python -m harness.tests.dry_run` (los tres escenarios A/B/C en verde) y con `--seco` sobre
+`DIR-01`/`ADMIN-01`/`FORO-01` y de nuevo sobre `SRCH-01`. Misma familia que `F-033`/`F-129`:
+un cambio en el contrato de columnas de un fichero compartido rompió una comprobación en
+otro que nadie reconectó.
 
-**Los siete disparadores `security invoker` de `app` no leen NINGUNA tabla.** No es que su
-lectura esté bien resuelta: es que no hay lectura. `guard_member_privileges`,
-`guard_offer_decider`, `guard_offer_terminal_state`, `guard_organization_columns`,
-`guard_thread_state`, `touch_item_estado` y `touch_updated_at` deciden con `OLD`/`NEW`,
-`current_user`, `auth.uid()` y ayudantes `security definer`. Todo lo que en `app` sí lee
-tablas —las otras 21 funciones— es `security definer`, y las 23 `definer` de `app`/`public`
-son de `postgres`, el dueño de las tablas: RLS no les aplica. La fuente fue el catálogo de
-la base (`pg_proc`, `pg_trigger`, `pg_policies`, `pg_class`), no los `.sql`, y el barrido
-se repitió en `troxminloxkjwihwfevs` y en `bearingworld-e2e` con el mismo resultado.
+**`DIR-01`, escrita cruzando la tarea con lo que el repo YA tenía, no solo con la spec.**
+`harness/tasks/DIR-01.json`: `style_reference` es `ResultsTable.tsx` —mismo patrón de
+cabecera ordenable con un `<button>` dentro del `<th>`—, `data_layer` es `directory.ts`
+—entregada el Día 14—, y `component_api` fija cada literal verbatim, con cuidado explícito de
+no confundir el `...` ASCII del placeholder del buscador con el `…` unicode de "Cargando
+directorio…". La precondición que hizo falta antes de poder escribir el e2e: `App.tsx` no
+tenía ninguna rama para "Empresas" —C2 corre SIEMPRE la suite de Playwright entera (D-09-03
+a), así que sin esto el e2e de hoy habría tumbado cualquier corrida futura de `ADMIN-01` o
+`FORO-01` por un fichero que no es el suyo—. Resuelto con un `Directory.tsx` de marcador
+(mismo patrón que la rama del Operador del Día 14). Validada `--seco`: cero problemas, cero
+avisos.
 
-**Las 20 políticas de RLS de `public`, leídas una a una.** Dos leen otra tabla con RLS
-dentro de su propia expresión, que es la forma exacta de `F-148`:
-`thread_items_select_participant` y `threads_select_participant`, las dos con un `EXISTS`
-sobre `thread_item_keys`. No es un hueco: la RLS anidada de esa tabla filtra por
-`recipient_member_id = auth.uid()`, **la misma condición que el `EXISTS` ya impone**, así
-que no puede esconder ninguna fila que el `EXISTS` fuera a contar.
+**`ADMIN-01`: el hallazgo de arquitectura, completo.** ADMIN-01 §2 dice que el Operador
+"tiene su propia vista de navegación", y el HTML aprobado lo confirma con cinco ítems propios
+(`Panel`/`Solicitudes`/`Organizaciones`/`Log de auditoría`/`Sistema`) y acento BRASS, no los
+ocho ítems azules del shell de un miembro. Y un `OperatorProfile` (`session.ts`) no tiene
+`orgName` ni `role`: `AppShell` está tipado a `MemberProfile` y los usa en tres sitios
+(nav-right, sidebar, avatar). Reusarlo habría significado tocar un componente compartido con
+su propia suite de pruebas por una pantalla que ni siquiera pertenece a una organización.
+`OperatorShell.tsx` es NUEVO —`AppShell.tsx` queda intacto, con sus tests intactos—: importa
+`AppShell.module.css` para todo lo que el sistema base ya fija igual entre las dos vistas
+(brand bar, nav, sidebar overlay, `bwcnt`) y suma un módulo propio de quince líneas solo para
+las dos reglas de acento que de verdad cambian, más la píldora "Operador" del mock. `VeraPanel`
+se reutiliza sin `agent` —el cableado VERA↔herramientas del Operador no existe todavía, y
+`VeraPanel` ya sabe decir que no está conectada cuando se monta así—. Doce pruebas nuevas en
+verde. `App.tsx`: el bloque `operator` deja de ser un `<div>` de marcador inline y pasa a
+`<OperatorShell><AdminRequests .../></OperatorShell>`; el `data-testid="operator-home"` —ancla
+del e2e desde el Día 14— se muda a `OperatorShell`.
 
-**`vera/index.ts` queda fuera de la familia por construcción, no por auditoría.** Leído
-entero: no toca Postgres en ningún punto —importa el SDK de Anthropic y `tools.json`, y de
-la petición solo mira que traiga cabecera `Authorization`—. Es además la única función
-Edge del repo.
+**Y el segundo hallazgo, sobre el propio contenido.** El HTML aprobado y la spec §3/§6 dicen
+que Aprobar/Rechazar "envían" los correos EML-07/EML-08, y el mock lo confirma en el panel
+tras aprobar: *"Aprobación registrada. Email EML-07 enviado al solicitante."* **Ningún envío
+de correo existe en el proyecto** —ni en `admin-requests.ts`, ni en ninguna Edge Function, ni
+ningún proveedor configurado en `CLAUDE.md`—. Pintar que se envió un email que nadie envía es
+la pantalla afirmando algo falso, la misma clase de riesgo que `CLAUDE.md` §7 describe para
+VERA. `harness/tasks/ADMIN-01.json` corrige los dos textos a "Aprobación registrada." y
+"Solicitud rechazada.", sin mencionar ningún email —mismo principio que `F-100` en `SRCH-01`,
+escrito antes de que exista una línea de código—.
 
-**Sin migración nueva, a propósito: no había nada que corregir.** `0026` sigue siendo la
-última y el contador de hallazgos sigue en `F-156`. Pero **un resultado negativo no se
-guarda en un documento, se ancla** — caduca con la próxima migración, y este es el tipo de
-invariante que nadie vuelve a comprobar a mano. Cuatro asertos nuevos en
-`01_schema_smoke.sql`, ninguno con nombres de tabla escritos a mano (salen de `pg_class`,
-así que una tabla con RLS nueva queda cubierta sin tocar el fichero):
+Dos ampliaciones a `admin-requests.ts` (ya entregada el Día 14, ahora con 22 pruebas en vez de
+18): `requestDateLabel` —"DD Mmm YYYY · HH:MM", reusando el mismo `Intl.DateTimeFormat` de
+`sentAtLabel`/`dateLabel`, no un tercer formato— y `websiteHref` —antepone `https://` a un
+dominio del FSR sin esquema, para que el enlace de la tabla sea externo y no relativo a la
+propia pantalla—. `harness/tasks/ADMIN-01.json` validada `--seco`: cero problemas, cero
+avisos. El e2e (`admin-requests.spec.ts`) es DE SOLO LECTURA a propósito: aprobar, rechazar o
+devolver a revisión de verdad dejaría `demo_registration_requests.sql` descuadrada, porque no
+hay ningún `teardown` que la reponga entre corridas de Playwright —al contrario que la
+siembra de mensajería—; el camino de escritura ya está cubierto con mocks en
+`AdminRequests.test.tsx`.
 
-1. **La superficie permitida.** Ninguna función `security invoker` de `app`/`public` fuera
-   de las seis auditadas —las tres RPC del Día 13, las dos de demo y el falso positivo de
-   `guard_member_privileges`, cada una con su porqué escrito al lado— puede nombrar una
-   tabla con RLS.
-2. **Una canaria que demuestra que el detector detecta.** Se crea una función `invoker` que
-   lee `thread_items` y se exige que el detector la nombre. Sin esto, el aserto 1 pasaría
-   en vacío el día que el barrido dejara de medir — que es exactamente como `F-146`
-   sobrevivió desde `0012`.
-3. **Nada de SQL dinámico en código `invoker`.** El detector lee el CUERPO de la función:
-   una tabla nombrada dentro de un `execute` compuesto en tiempo de ejecución no aparece
-   ahí. Hoy no hay ni una sola función así, comprobado contra el catálogo.
-4. **La premisa de la inmunidad de `security definer`**, que no es un axioma: ninguna tabla
-   con `FORCE ROW LEVEL SECURITY` y ninguna función `definer` de otro dueño. Si cualquiera
-   de las dos cae, `F-148` renace entero, en silencio y en todas partes a la vez.
+**`FORO-01`, la más simple de las tres.** Sin filtros, sin orden, sin acciones: un único
+fichero (`Forum.tsx` + su CSS Module), misma forma que `PANEL-01`. `component_api` fija el
+aviso de confidencialidad como PERMANENTE (spec §7, "no es opcional ni ocultable"), los dos
+formatos de tiempo relativo que `forum.ts` ya distingue (`relativeShort` para la lista de
+recientes, `relativeLong` para la tarjeta —no son intercambiables—), y que ninguna tarjeta
+necesita un estado vacío especial para "foro recién lanzado": con cero hilos,
+`fetchCategories()` sigue devolviendo las cuatro filas a cero —ya resuelto por la vista
+`forum_category_stats`—, así que inventar una rama nueva habría sido inventar un requisito
+que la capa de datos ya cubre. El e2e comprueba, contra la siembra real de `demo_forum.sql`,
+que el hilo más reciente de la actividad real NO lleva la organización autora que el HTML
+aprobado le atribuye —el mock dice "Rodamientos del Sur SL"; la siembra real es "Rodamientos
+Ibéricos"—. Validada `--seco`: cero problemas, cero avisos. Requirió su propia precondición
+de wiring ("Foros" → `Forum` de marcador), mismo patrón que `DIR-01`.
 
-**Verificación de cierre:** `supabase/tests/run.sh` completo (`ESQUEMA VERDE` + `CATALOGO
-VERDE` + `FRESCURA VERDE`), con la canaria detectada por su nombre. **Entregable 6
-recomprobado hoy con una llamada real** `rawPredict` (región `eu`, `claude-sonnet-5`,
-proyecto `bearingworld-vera-eu`): `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por
-palabra que el 8 y el 10-sep. Sin movimiento.
+**El límite del entorno, aclarado sin ambigüedad.** El PO dio por hecho que esta sesión veía
+`C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app\.env`, de donde sale
+`DEEPSEEK_API_KEY`. Comprobado contra la propia máquina —`uname -a` (Linux, contenedor
+`vm`), `mount` (raíz en `/dev/vda`, un disco propio; ningún volumen de red ni de Windows)—,
+no contra lo que "los agentes" hicieran en otras sesiones: esta corre en un contenedor remoto
+en la nube, clonado desde GitHub al arrancar, sin ningún canal hacia el portátil del PO. Las
+sesiones que sí ven esa ruta son Claude Code local, instalado y lanzado directamente en esa
+máquina Windows —es su propio disco, no un permiso—. Sin la clave aquí, el paso 5 del §7 no
+puede correr en esta sesión bajo ninguna circunstancia; lo que sí puede es lo que se hizo:
+escribir y validar en seco las tres tareas.
 
-**Adenda del mismo día, a petición del PO: dónde estamos respecto al plan V1 v2.3, y qué
-falta para el H1.** Cerrar no es terminar, y el día siguió. Se leyó el plan y se contrastó
-contra el repo, pieza a pieza. **Estamos en la semana 3, que es exactamente la del H1**
-(«la fábrica está medida»), con la banda de semanas 3–5 —la Fundación— casi entera hecha y
-la de semanas 1–3 con cuatro de sus cinco piezas cerradas: tabla de precios con fecha de
-vigencia, manifiesto de dependencias con LangGraph fijado en su versión exacta, coste de
-orquestación instrumentado, y el arreglo del bucle convertido en medición. **La quinta,
-diseñar y medir la fábrica, es la que cierra el hito y es la que faltaba.**
-
-De esa quinta se cerró hoy la primera mitad: **`UMBRAL-FABRICA-V1.md`, el umbral escrito
-ANTES de medir** — la condición literal que la tabla de riesgos del plan le pone al H1 y
-que no existía en ningún sitio. Ocho cifras con su umbral y el origen de cada una, tres
-veredictos atados a los tres escenarios de calendario del propio plan (18, 21 o 30
-semanas), cuatro reglas anti-trampa y una §6 de lo que el umbral NO mide. **La más honesta
-de esas advertencias: la corrección humana tiene una muestra de dos** —solo VND-01 y
-LOGIN-01 se revisaron con el bucle ya arreglado—, que es justamente la razón de ser del
-hito.
-
-**Y una corrección de estado, que es la mitad incómoda de la adenda.** El informe al PO
-dijo que la tarea de `SRCH-01` seguía sin actualizar desde la decisión de `F-118`. **Es
-falso, y la fuente del error fue leer el registro de hallazgos en vez del repo:** la tarea
-se actualizó el 29-ago en `1183a38` —declara `veraCriteria` con la instrucción de
-ignorarla, y el test de VERA salió a `*.fuera-de-contrato.test.tsx`— y `SRCH-01` se midió
-**14 veces** ese mismo día. Lo que estaba desfasado era la casilla de estado de `F-118`,
-trece días diciendo «Abierto» con el arreglo hecho, comitteado y medido. Corregida hoy
-contra `git log` y contra el CSV. **Es `F-012` otra vez, y esta vez llegó a un informe de
-estado antes de que alguien la cazara.**
-
-**Segunda adenda: el PO confirma las tres pantallas del H1, y arrancando por `DIR-01`
-aparece `F-157`.** Confirmadas `DIR-01`, `ADMIN-01` y `FORO-01` —directorio, alta de
-empresas y foro—, escritas en el umbral antes de que exista una sola línea de ninguna de
-las tres. `REG-07`, que iba en la propuesta inicial, se cayó al leer su spec: es generación
-de claves, o sea criptografía, y el Plan §4.3 dice que el generador no la toca. **Se
-propuso sin haberla leído, y eso queda escrito en el umbral, no solo aquí.**
-
-Y al correr el paso 4 de `UMBRAL-FABRICA-V1.md` §7 —el medidor del coste de orquestación,
-para dar línea base a la cifra 7— salió **`F-157`: el medidor borraba su propia historia
-cada vez que se usaba.** Una ejecución normal se llevó por delante once filas de agosto,
-387 $ de coste ya medido. La causa estaba escrita en su propio docstring, con la premisa
-correcta y la conclusión equivocada: *«cada pasada relee todas las transcripciones vivas,
-así que añadir duplicaría cada sesión»* — cierto, pero lo que hacía falta no era añadir,
-era **fundir por clave**. Cerrado el mismo día con `fusionar()`, historia restaurada desde
-el commit anterior y siete comprobaciones nuevas en `test_checks.py`. **Línea base del H1:
-21 filas, 887,77 $ acumulados, de los cuales 550,25 $ son de V1.**
-
-**Tercera adenda: arranca `DIR-01`, y la capa de datos descubre que la pantalla no era
-gratis.** El PO pidió empezar por el directorio. Al cruzar su spec con el esquema —no al
-leer una de las dos— aparecieron **tres desajustes**, y los tres habrían salido como
-defectos del Coder si nadie los mira antes:
-
-1. **Dos de las cinco columnas de la tabla no existen.** Teléfono y Email de contacto no
-   están en `organizations`. **Esto corrige lo que se le dijo al PO al proponer la
-   pantalla** —que corría sobre la tabla *"tal como está"*—, y la corrección está escrita
-   en el umbral y en la cabecera de la migración, no solo aquí.
-2. **La spec dice `ACTIVE` y ese estado no existe.** El `CHECK` admite `PENDING_REVIEW`,
-   `APPROVED`, `REJECTED` y `SUSPENDED`. Lo que la spec llama *"organizaciones activas"* es
-   `APPROVED`.
-3. **La política de lectura deja ver la organización propia en cualquier estado**, así que
-   sin un `.eq('status','APPROVED')` explícito una organización propia en revisión se vería
-   a sí misma en el directorio público. Misma forma que el `.neq` de `SRCH-01`: no falla
-   nada, sale una fila que no debería estar.
-
-**`0027`** añade las dos columnas con sus dos `CHECK` y —esto es lo que no es obvio— las
-mete en `app.guard_organization_columns`: **una columna nueva no entra sola en ese
-guardia**, y nacía editable por cualquier ADMIN vía una política que filtra por
-organización y no por columna. Cinco asertos nuevos en `01_schema_smoke.sql` lo fijan, con
-ancla positiva incluida para que el bloque no mida que el ADMIN no puede tocar nada.
-Verificada contra un Postgres desechable ANTES de aplicarla, y aplicada después a las dos
-bases con el catálogo releído (columnas, `CHECK` y cuerpo del guardia) en vez de creerle al
-`{"success":true}`. `get_advisors` sin avisos nuevos.
-
-**`app/src/lib/directory.ts`** y su prueba quedan escritos a mano, que es lo que exige el
-umbral: la capa de datos es precondición de la pantalla, no producto de la fábrica. 15
-pruebas en verde y typecheck limpio. **Lo que NO se hace en esta sesión, a propósito: la
-tarea, los tests de aceptación y la corrida.** Esa es la unidad que mide el H1 y debe
-correr en una sesión limpia, o la cifra 7 le imputaría a `DIR-01` el coste de la auditoría
-de `F-155`, del plan y del umbral. Esta sesión ya lleva 35,42 $.
-
-**Cuarta adenda: `ADMIN-01`, y dos cosas que no se sabían al elegirla.** Segunda capa de
-datos de las tres. Al contrario que `DIR-01`, esta pantalla **no tenía ni una fila de
-esquema debajo**: `0028` estrena tres tablas —la cola del FSR, su historial y los
-operadores— dos disparadores y un actor que el proyecto no tenía, el **Operador de
-Plataforma**, que no pertenece a ninguna organización.
-
-**La decisión que la migración toma y el PO puede revocar barato:** el operador se resuelve
-con una tabla y un ayudante `security definer`, igual que `app.is_org_admin()`, en vez de
-con un *claim* en el JWT o con una función de borde. Las tres opciones están escritas en la
-cabecera de `0028` con su porqué; si el PO prefiere otra, lo que cambia es
-`app.is_platform_operator()` y las cuatro políticas que la invocan.
-
-**Y dos hallazgos, los dos cazados por asertos escritos ANTES de aplicar nada:**
-
-- **Un `CHECK` que dejaba pasar justo lo que prohibía.** Estaba escrito como
-  `(state = 'REJECTED' and char_length(...) between 10 and 500) or (state <> 'REJECTED' and
-  ... is null)`, y con el motivo a `NULL` la primera rama vale `NULL`, la segunda `FALSE`, y
-  **`NULL or FALSE` es `NULL` — y un `CHECK` que da `NULL` PASA**. Un rechazo sin motivo
-  entraba sin una queja. Reescrito con `case`, que nunca devuelve `NULL`. No llegó a la base
-  real: lo paró el banco de pruebas contra el Postgres desechable.
-- **`F-158`: la spec aprobada de `ADMIN-01` se contradice a sí misma.** Su tabla de columnas
-  dice *"en naranja si > 24h, en rojo si > 48h"* y catorce líneas más abajo su bloque de
-  datos de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Las dos no pueden
-  ser ciertas, y cada una lleva a una pantalla distinta. **Manda la regla**, y queda escrito
-  en los tres sitios donde alguien podría arreglarlo al revés. Lo cazó la siembra de demo,
-  que se verifica a sí misma exigiendo una fila de cada color y salió con dos.
-
-**Lo que `ADMIN-01` necesita y esta sesión no puede dar: una cuenta de Operador.** `0028`
-no crea ninguna a propósito. Sin ella la pantalla no se ve, no se prueba de extremo a
-extremo, y su tarea no puede declarar un test e2e que la ejercite. **Es lo único de las tres
-pantallas que depende del PO.**
-
-**Quinta adenda: `FORO-01`, y con ella el paso 2 del hito queda cerrado.** Tercera y última
-capa de datos. El foro es **la única parte no cifrada del producto**, así que aquí no hay
-CEK ni reparto de claves: hay texto plano y un aviso permanente en pantalla que lo dice.
-`0029` estrena tres tablas —categorías, hilos y publicaciones—, una vista para los
-contadores de la tarjeta y dos disparadores.
-
-**Tres decisiones que la migración toma y deja escritas:**
-
-- **Las cuatro categorías van en la migración, no en la siembra.** La spec las llama *"las
-  cuatro categorías de lanzamiento"* y las nombra una a una con su descripción: son
-  producto, no datos de demo, y cambiarlas debe costar una migración.
-- **Los contadores se calculan, no se guardan.** Se podrían mantener desnormalizados con
-  disparadores —es lo que hace `organizations.favorite_count`— y se ha decidido que no: son
-  cuatro filas, un contador guardado puede derivar y un `count(*)` no. La vista lleva
-  `security_invoker = true`, sin lo cual habría devuelto los recuentos del foro entero a
-  quien no puede ver ni un hilo; hay un aserto que lo comprueba con un usuario sin
-  organización.
-- **No hay moderación: ni una política de `UPDATE` ni de `DELETE` para nadie.** El *control
-  de abuso* del Plan §3.1 es de FORO-02/03 y es una decisión de producto sin tomar. Es más
-  fácil añadir esas políticas el día que se decida que retirar las que se hubieran puesto
-  de más.
-
-**Y lo que más importa en el único sitio sin cifrar: la firma la pone la base.** Un
-disparador sobrescribe autor y organización con `auth.uid()` y `app.current_org_id()`, y el
-aserto lo comprueba publicando a nombre de otro a propósito. Publicar suplantando a otra
-organización donde el contenido se lee en claro es el peor fallo posible de este módulo.
-
-**Estado del paso 2 del H1: cerrado.** Las tres capas de datos hechas, verificadas y
-sembradas en las dos bases. Lo siguiente son las tres tareas en formato fijo, y esas van en
-sesión limpia.
-
-**Sexta adenda: la rama de sesión del Operador, y `F-159`.** Dos cosas después de cerrar el
-paso 2.
-
-**La rama de sesión (a petición del PO).** Hasta hoy, un Operador de Plataforma con su
-cuenta creada y su fila en `platform_operators` entraba y acababa en la pantalla de login
-con el mensaje *"la cuenta existe pero no está asignada a ninguna organización, habla con el
-operador"*. Dicho al operador. `session.ts` gana `status: 'operator'` —se pregunta por
-`platform_operators` **solo cuando no hay fila en `members`**, para que el camino de los
-miembros no pague una consulta de más en cada arranque— y `App.tsx` su rama. Detrás hay un
-hueco con nombre, no una pantalla: ADMIN-01 la construye el generador y lo que se sustituirá
-es el interior del `return`. Seis pruebas nuevas con mock de red, que miran **la consulta y
-no solo el resultado**: una tabla mal escrita devolvería cero filas, y cero filas aquí
-significa "no es Operador" — el mismo fallo que esto viene a arreglar.
-
-**La cuenta de Operador, por fin, en producción.** El PO creó la cuenta en Auth
-(`operador@bearingworld.test`, confirmada) pero no pudo completar el segundo paso, el alta
-en `platform_operators`. Hecha por el MCP y **comprobada desde la sesión del propio
-operador**, no solo mirando que la fila exista: `app.is_platform_operator()` le devuelve
-cierto y la RLS le enseña las tres solicitudes, sus tres filas de historial y un operador.
-**La cuenta equivalente en `bearingworld-e2e` también quedó creada y dada de alta el mismo
-día.** De esto solo queda lo que es credenciales y es del PO: `E2E_OPERATOR_EMAIL` y
-`E2E_OPERATOR_PASSWORD` en `app/.env` y en los secretos de GitHub.
-
-**Y de paso salió la mitad que nadie había comprobado de un actor privilegiado: qué NO ve.**
-Con la cuenta ya creada, desde la sesión del propio Operador, en las dos bases: **0 líneas
-de inventario, 0 hilos cifrados, 0 elementos de hilo, 0 categorías de foro y 3 solicitudes.**
-Es lo correcto —no pertenece a ninguna organización y todo lo comercial cuelga de
-pertenecer a una— y ahora está anclado en `01_schema_smoke.sql` con su ancla positiva al
-lado, porque el día que alguien escriba `authenticated` donde iba `app.is_active_member()`,
-el Operador empezaría a ver inventario ajeno sin que nada fallara.
-
-**`F-159`: la CI se puso roja en un test que no tocaba nada de lo que se cambió.** El job de
-Playwright falló en INV-01 con `Expected Set {"Published"}, Received Set {}`. Confirmado **no
-reproducible antes de tocar nada** (relanzado el mismo job sobre el mismo commit: verde
-entero). La causa es una carrera que el propio fichero documenta dos veces y en ese test no
-protegía: `allTextContents()` no auto-espera, y entre el clic en el filtro y la llegada de
-la consulta la tabla se queda sin filas. Arreglado en los tres sitios, incluida la raíz (el
-`beforeEach`). **Se arregla hoy y no cuando toque porque las tres pantallas del H1 se van a
-medir con esta suite: un rojo de carrera se cobraría como un rojo del Coder, que es `F-033`,
-`F-112` y `F-114` otra vez.**
+**Coste-sombra al cierre:** `python -m harness.core.orchestration_metrics` corrido dos veces
+—a mitad de sesión (tras `DIR-01`) y al cerrar—. Cierre: **1.055,62 $** acumulados; el
+11-sep entero (Día 14 + Día 15, misma fecha de calendario) pasa de 148,75 $ a **206,60 $**,
+así que esta sesión sola son **57,85 $** —sin ninguna corrida real, solo escribir y validar
+tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 
 ---
 
@@ -411,45 +292,26 @@ medir con esta suite: un rojo de carrera se cobraría como un rojo del Coder, qu
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-11` |
-| El cierre del Día 13 llegó a `origin` y su CI acabó en verde | `git status -sb` y `gh run list` | Sin desfase con `origin/mvp/bootstrap` (`1c4e1ac`); corrida `34497839743`, `success` |
-| La pregunta que el Día 13 dejó abierta: ¿vive el patrón de `F-155` en algún disparador o función interna de `app` que ningún RPC del cliente invoque? | El catálogo de la base, no los `.sql`: `pg_proc` (28 funciones en `app`, 7 en `public`), `pg_trigger` (19 disparadores, 14 colgando de funciones de `app`) y el cuerpo (`prosrc`) de las 12 `security invoker` | **No.** Las siete `invoker` de `app` son exactamente las siete de disparador, y **ninguna lee ninguna tabla**: deciden con `OLD`/`NEW`, `current_user`, `auth.uid()` y ayudantes `security definer`. Todo lo que en `app` lee tablas es `security definer` |
-| La premisa de la que depende esa inmunidad — que a `security definer` no le aplique RLS | `pg_class.relforcerowsecurity` y `pg_proc.proowner` contra `pg_class.relowner`, en las dos bases | Ninguna de las 8 tablas con RLS de `public` fuerza RLS sobre su dueño, y las 23 funciones `security definer` de `app`/`public` son de `postgres`, dueño de las tablas. Se sostiene hoy — y por eso se ancla, no se supone |
-| Las políticas que leen OTRA tabla con RLS dentro de su propia expresión (la forma exacta de `F-148`) | `pg_policies`, las 20 políticas de `public` leídas una a una | Dos: `thread_items_select_participant` y `threads_select_participant`, las dos con un `EXISTS` sobre `thread_item_keys`. La RLS anidada de esa tabla filtra por `recipient_member_id = auth.uid()`, **la misma condición que el `EXISTS` ya impone** — no puede esconder ninguna fila que el `EXISTS` fuera a contar. No es un hueco |
-| Qué funciones `security invoker` nombran una tabla con RLS | Barrido del cuerpo contra los nombres de las tablas con RLS **derivados de `pg_class`**, no escritos a mano — en `troxminloxkjwihwfevs` y en `bearingworld-e2e` | Seis, todas conocidas: las tres RPC auditadas el Día 13 (`create_inquiry`, `create_thread_item`, `counter_offer`), las dos de demo, y `app.guard_member_privileges` — falso positivo: lo único que nombra es `members.role` dentro del texto de una excepción |
-| Que el ancla estructural nueva mida de verdad y no en vacío (la lección de `F-146`) | `supabase/tests/run.sh` completo, con canaria: se crea una función `invoker` que lee `thread_items`, se exige que el detector la nombre, y se borra | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`. Los tres asertos nuevos en verde **y la canaria detectada por su nombre** |
-| `vera/index.ts`, la mitad que el Día 13 dejó explícitamente fuera de alcance | Lectura del fichero entero (236 líneas) y `grep` de `createClient`/`.from(`/`.rpc(`/`SERVICE_ROLE` sobre `supabase/functions/` | **No toca Postgres en ningún punto.** Importa el SDK de Anthropic y `tools.json`, y de la petición solo mira que traiga cabecera `Authorization`. Queda fuera de la familia por construcción, no por auditoría. Es además la única función Edge del repo |
-| Entregable 6 (residencia UE, bloqueo de Anthropic) | Llamada real `rawPredict` contra `aiplatform.eu.rep.googleapis.com`, `claude-sonnet-5`, proyecto `bearingworld-vera-eu`, con token de la cuenta del PO — ejecutada hoy, no recordada | `HTTP 429 RESOURCE_EXHAUSTED`, mismo mensaje palabra por palabra que el 8 y el 10-sep. Sin ningún movimiento |
-| Dónde estamos respecto al plan V1 v2.3 (adenda, a petición del PO) | El `.docx` del plan leído entero contra el repo: `harness/tasks/` (6 tareas), `harness/requirements.txt`, `harness/core/pricing.py` y `orchestration_pricing.py`, `harness-metrics.csv` (143 filas, 7 pantallas), `harness-review.csv` y `orchestration-metrics.csv` | Semana 3, la del H1. Banda de semanas 1–3: cuatro de cinco piezas hechas. Banda de semanas 3–5 (Fundación): 5 de 6 entregables, el sexto bloqueado fuera del repo. **El H1 sigue abierto** |
-| Que el umbral del H1 no existía en ninguna parte | `grep -rl "umbral" openspec/ --include=*.md` antes de escribir nada | Cero resultados relativos a la fábrica. La tabla de riesgos del plan lo exige «escrito de antemano» — escrito hoy, `UMBRAL-FABRICA-V1.md`, y su commit es anterior a cualquier corrida de las tres pantallas |
-| Si la tarea de `SRCH-01` seguía sin actualizar tras `F-118` | `git log -- harness/tasks/SRCH-01.json`, el cuerpo de `1183a38`, el propio JSON, y las fechas de las filas `SRCH-01` de `harness-metrics.csv` | **No: actualizada el 29-ago y medida 14 veces ese mismo día.** Lo desfasado era la casilla de estado de `F-118` en el registro, cerrada hoy con esa evidencia |
-| Las tres pantallas del H1, elegidas y confirmadas por el PO | Specs leídas una a una en `openspec/design-gui/specs y html aprobados/specs/`, y las columnas reales de `organizations` consultadas por el MCP antes de afirmar qué capa de datos hace falta | `DIR-01`, `ADMIN-01`, `FORO-01`. **`REG-07` descartada por criptografía** (Plan §4.3), leyendo la spec que no se había leído al proponerla. Escritas en `UMBRAL-FABRICA-V1.md` §1 antes de cualquier corrida |
-| Que el medidor de orquestación borra historia al usarlo (`F-157`) | `git diff` del CSV inmediatamente después de una pasada normal, no el resumen que imprime el propio módulo | **Once filas de agosto borradas, 387 $ de coste ya medido.** De 13 filas y 591,54 $ a 11 y 386,14 $. Arreglado el mismo día y la historia restaurada: 21 filas, 887,77 $ |
-| Que el arreglo de `F-157` funciona y no duplica | `python -m harness.tests.test_checks` entero (23 pruebas) con el caso nuevo, y una pasada real del medidor sobre el CSV restaurado | Todas en verde. La pasada real conserva las diez filas cuyas transcripciones ya no existen y lo dice por pantalla |
-| Línea base de la cifra 7 del umbral | El CSV fundido, separando por fecha | 887,77 $ acumulados; **550,25 $ desde el 27-ago, que es V1** |
-| Que `DIR-01` necesitaba esquema nuevo, al contrario de lo que se le dijo al PO | Las cinco columnas que la spec pinta, cruzadas una a una con `information_schema.columns` de `organizations` | **Faltaban dos: Teléfono y Email.** Añadidas en `0027`, con sus `CHECK` y dentro del guardia de columnas |
-| Que el estado `ACTIVE` de la spec no existe en la base | `pg_get_constraintdef` de la restricción de `organizations.status` | Admite `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `SUSPENDED`. El directorio filtra por `APPROVED`, documentado en la cabecera de `directory.ts` |
-| `0027` contra un Postgres desechable, ANTES de aplicarla | `supabase/tests/run.sh` completo, con cinco asertos nuevos (ancla positiva + las dos columnas bloqueadas al ADMIN + el operador sí + el `CHECK` del email) | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE` |
-| `0027` aplicada a las dos bases | Catálogo releído por el MCP —columnas, `CHECK` y cuerpo del guardia—, no el `{"success":true}` | Las dos columnas, las dos restricciones y el guardia actualizado en `troxminloxkjwihwfevs` y `bearingworld-e2e`; seis organizaciones con contacto en cada una |
-| Avisos de seguridad tras `0027` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo |
-| La capa de datos de `DIR-01` | `npx tsc --noEmit` y `npx vitest run src/lib/directory.test.ts` | Typecheck limpio, 15 pruebas en verde |
-| `0028` contra un Postgres desechable, ANTES de aplicarla | `supabase/tests/run.sh` completo con trece asertos nuevos: la cola invisible para quien no es Operador, el `UPDATE` que no da error y no cambia nada, la firma que pone la base, la máquina de estados, el motivo obligatorio, `Volver a revisión` y los privilegios de `anon` y `authenticated` | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`. **Dos asertos fallaron antes de pasar**, y los dos eran defectos reales: el `CHECK` que daba `NULL` y un aserto mío que medía el error equivocado |
-| `0028` aplicada a las dos bases | Catálogo releído por el MCP: RLS en las tres tablas, 4 políticas, 2 disparadores, 5 `CHECK`, el ayudante `security definer`, el guardia `invoker` y cero privilegios de `anon` | Todo presente en `troxminloxkjwihwfevs` y `bearingworld-e2e` |
-| La siembra de demo de `ADMIN-01` | Ella misma: exige una solicitud de cada color y falla si no | 3 solicitudes, 1 roja / 1 naranja / 1 normal, 3 filas de historial y **0 operadores** en las dos bases |
-| Avisos de seguridad tras `0028` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo. `app.is_platform_operator` no sale porque vive en `app`, no expuesta por REST |
-| La capa de datos de `ADMIN-01` | `npx tsc --noEmit` y `npx vitest run src/lib/admin-requests.test.ts` | Typecheck limpio, 18 pruebas en verde |
-| `0029` contra un Postgres desechable, ANTES de aplicarla | `supabase/tests/run.sh` completo con siete asertos nuevos: las cuatro categorías y su orden, el reloj del hilo, los contadores calculados, el foro visible para todo miembro activo, la vista respetando la RLS de quien consulta, la firma que pone la base y los privilegios que no existen | `ESQUEMA VERDE` + `CATALOGO VERDE` + `FRESCURA VERDE`, en verde a la primera |
-| `0029` aplicada y sembrada en las dos bases | El resultado releído: contadores por categoría y ninguna categoría vacía | Cuatro categorías con dos hilos cada una, entre 3 y 7 publicaciones, y última actividad de hace 2 h, 5 h, 5 días y 11 días — los cuatro valores distintos, que es lo que la tarjeta tiene que poder distinguir |
-| Avisos de seguridad tras `0029` | `get_advisors(type=security)` | Los tres de siempre; ninguno nuevo. **La vista no dispara el aviso de vista `security definer`**, que es la confirmación de que `security_invoker` está puesto |
-| La capa de datos de `FORO-01` | `npx tsc --noEmit` y `npx vitest run src/lib/forum.test.ts` | Typecheck limpio, 15 pruebas en verde |
-| Que el rojo de la CI no lo causaba el commit | `gh run rerun --failed` sobre el MISMO commit, antes de tocar una línea | Verde entero, despliegue incluido. El fallo era una carrera, y el arreglo se escribió después de saberlo, no para que pasara |
-| La rama de sesión del Operador | `npx tsc --noEmit` y la suite entera de vitest | Typecheck limpio, **696 pruebas en verde**, 6 de ellas nuevas sobre la bifurcación (miembro / Operador / cuenta a medio provisionar) |
-| Lo que esa rama NO verifica todavía | — | **No se ha ejecutado con una cuenta real**, porque no existe ninguna: el alta de un Operador es credenciales y la da el PO. Hasta entonces, la rama está probada con mock y con el esquema, no contra la API |
-| La cuenta de Operador, en las dos bases | `auth.users` cruzado con `platform_operators` por el MCP; el alta la hizo esta sesión, la cuenta la creó el PO en el panel | `operador@bearingworld.test` en `troxminloxkjwihwfevs` (15:00 UTC) y en `bearingworld-e2e` (15:16 UTC), las dos confirmadas y dadas de alta |
-| Que el Operador ve lo que debe **y nada más** | Consulta desde su propia sesión (`set_config` + `set local role authenticated`), en las dos bases | **3 solicitudes, 3 filas de historial, 1 operador — y 0 líneas de inventario, 0 hilos cifrados, 0 elementos y 0 categorías de foro.** Anclado después en `01_schema_smoke.sql` con su ancla positiva |
-| El secreto de CI del Operador | `gh secret list`, que enseña nombres y no valores | `E2E_OPERATOR_PASSWORD` presente (15:40 UTC). `E2E_OPERATOR_EMAIL` **no**, y se decide que no lo sea: un correo no es un secreto y un secreto de más es un sitio de más donde puede faltar (`F-071`) |
-| Coste de orquestación al cierre | `python -m harness.core.orchestration_metrics`, corrido otra vez al terminar | **997,77 $** acumulados, **660,24 $** de ellos en V1, y **148,75 $** de esta sesión. Las diez filas de agosto siguen ahí gracias al arreglo de `F-157` de por la mañana |
-| CI de cada commit del día | `gh run watch` job a job, ocho veces | Verde en todos salvo uno, `62102fd`, que dio `F-159` y quedó verde al relanzarlo y arreglado después |
+| Fecha de máquina | `date -u` | `2026-09-11` durante el trabajo (commits, 15:48–19:44 UTC); `2026-09-13` al redactar este cierre — la sesión de chat se interrumpió dos días, el trabajo no se alargó (ver Día 15, punto 8) |
+| El cierre del Día 14 llegó a `origin` y su CI acabó en verde | `mcp__github__actions_get`/`actions_list` sobre el run del push, no el mensaje del commit | Run `34618286746` sobre `f5e1d7e`: `success`, los CINCO jobs (arnés, app, esquema, Playwright, despliegue continuo app+VERA) |
+| Que la rama asignada a esta sesión (`claude/amazing-hawking-q7pm45`) tuviera el trabajo de V1 | `git log`, `git merge-base` contra `origin/main` y `origin/mvp/bootstrap` | **No.** Anclada a `43bb222`, el `main` de antes de todo V1 — exactamente el patrón `F-108` que este mismo fichero describe en su aviso de cabecera. Se cambió a trabajar sobre `mvp/bootstrap`, con permiso explícito del PO |
+| Que `--seco` escalaba en falso (nuevo, `F-160`) | `python -m harness.graph.run harness/tasks/DIR-01.json --seco`, y el mismo comando contra `SRCH-01.json` para descartar que fuera cosa de la tarea nueva | Las dos crasheaban con `AssertionError: no deberia haber ninguna fila marcada como escalada` — la causa vive en `dry_run.py`, no en ninguna tarea |
+| La causa exacta de `F-160` | Corrida manual del grafo con el CSV real, leyendo la fila byte a byte | `...,no,-,-,si,PASA...` — el `,si,` de `primer_intento_limpio` (columna añadida por `F-152` el 10-sep) cae justo donde el detector de escalado buscaba el suyo |
+| Que el arreglo de `F-160` funciona y no rompe nada más | `python -m harness.tests.dry_run` (los tres escenarios A/B/C) y `--seco` sobre `DIR-01`, `ADMIN-01`, `FORO-01` y de nuevo `SRCH-01` | Los cinco, verdes |
+| La tarea `DIR-01`, formato fijo | `--seco` | `[DIR-01] tarea valida: 8 inputs, 4 outputs, component_api cubre cada .tsx, ficheros de aceptacion en su sitio` — cero avisos |
+| La tarea `ADMIN-01`, formato fijo | `--seco` | `[ADMIN-01] tarea valida: 8 inputs, 6 outputs...` — cero avisos |
+| La tarea `FORO-01`, formato fijo | `--seco` | `[FORO-01] tarea valida: 8 inputs, 2 outputs...` — cero avisos |
+| Que ADMIN-01 encajara en `AppShell` tal cual | Spec `ADMIN-01` §2, el HTML aprobado (nav propio de cinco ítems, acento brass) y los tipos de `session.ts` (`OperatorProfile` sin `orgName`/`role`) contra las props de `AppShell.tsx` | **No.** `AppShell` está tipado a `MemberProfile` y usa `orgName` en tres sitios. Motivó `OperatorShell.tsx` nuevo |
+| Que `AppShell.tsx` y sus tests quedaran intactos tras crear `OperatorShell` | `git diff -- app/src/shell/AppShell.tsx app/src/shell/AppShell.module.css` | Vacío — cero líneas tocadas |
+| `OperatorShell.tsx` | `npx tsc --noEmit` y `npx vitest run src/shell/OperatorShell.test.tsx` | Typecheck limpio, 12 pruebas nuevas en verde |
+| Que algún envío de correo (EML-07/EML-08) exista en el proyecto | Lectura de `admin-requests.ts`, `supabase/functions/` entera y `CLAUDE.md` | Ninguno. Cero proveedores de correo configurados en ningún sitio del repo — el texto de confirmación de `ADMIN-01` se corrigió para no afirmarlo |
+| `admin-requests.ts` ampliada (`requestDateLabel`, `websiteHref`) | `npx vitest run src/lib/admin-requests.test.ts` | 22 pruebas en verde (18 + 4 nuevas) |
+| El wiring de "Empresas" y "Foros" en `App.tsx`, antes de escribir cualquier e2e | `npx tsc --noEmit` y `npx vitest run` sobre la suite entera, tras cada wiring | Typecheck limpio; suite existente sin ninguna regresión en los dos puntos |
+| El estado de la app tras las tres tareas nuevas | `npx tsc --noEmit` (repo entero) y `npx vitest run` (repo entero) | Typecheck: solo los tres `Cannot find module` esperados (`DirectoryTable`, `RequestsTable`, `RequestDetailPanel` — no los escribe esta sesión). Vitest: **712 pruebas en verde, 36 en rojo contra los marcadores de las tres pantallas (esperado), 23 saltadas** |
+| Que `DEEPSEEK_API_KEY` esté disponible en esta sesión (afirmado por el PO, `app/.env` local) | `uname -a`, `mount`, `ls /` sobre esta misma máquina | **No.** Contenedor Linux (`vm`), raíz en `/dev/vda` propio, sin ningún volumen de red ni de Windows. Sin canal hacia `C:\Users\admin\...` |
+| Coste de orquestación, antes y después de esta sesión | `python -m harness.core.orchestration_metrics`, corrido a mitad de sesión (tras `DIR-01`) y otra vez al cerrar | 997,77 $ → 1.018,06 $ → **1.055,62 $**. El 11-sep entero (Día 14 + Día 15) pasa de 148,75 $ a **206,60 $**: esta sesión sola, **57,85 $**, sin ninguna corrida real |
+| Divergencia con `origin/mvp/bootstrap` antes de escribir este cierre | `git fetch origin mvp/bootstrap` + `git status -sb` | Sin desfase — nadie más ha tocado la rama desde el último push de esta sesión |
+| CI de los commits de esta sesión | `mcp__github__actions_list` sobre `mvp/bootstrap` | El primer push (harness fix + tarea `DIR-01` + métricas) SÍ corrió: `failure` en `App · typecheck` — rojo esperado y por diseño, sin `[skip ci]` por un descuido (corregido en los push siguientes). Los cuatro commits de `OperatorShell`/`ADMIN-01`/`FORO-01` llevan `[skip ci]` en el commit de cabeza de cada push: **GitHub no llegó a arrancar ningún run** — verificado con `actions_list`, sigue siendo el run `34637176421` el más reciente. Lo verde de esos cuatro commits es SOLO la verificación local (typecheck + vitest de arriba), no CI |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -484,15 +346,20 @@ medir con esta suite: un rojo de carrera se cobraría como un rojo del Coder, qu
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — NO ABIERTA, pero con todo lo suyo listo
+### Corriente B · Fábrica — NO ABIERTA, con el paso 3 del §7 completo
 
-Se abre cuando la corriente A publique los contratos de datos, y esa sigue siendo la
-condición. **El 11-sep se cumplió para las tres pantallas del H1:** `0027`/`directory.ts`,
-`0028`/`admin-requests.ts` y `0029`/`forum.ts`, verificadas y sembradas en las dos bases. Y
-tiene su vara de medir, `UMBRAL-FABRICA-V1.md`, escrita antes de medir.
+Se abre cuando la corriente A publique los contratos de datos, y esa condición se cumplió el
+11-sep: `0027`/`directory.ts`, `0028`/`admin-requests.ts` y `0029`/`forum.ts`, verificadas y
+sembradas en las dos bases. Y tiene su vara de medir, `UMBRAL-FABRICA-V1.md`, escrita antes
+de medir.
 
-**Lo único que falta para abrirla son las tres tareas en formato fijo y las tres corridas**
-(§3). No queda ninguna dependencia de nadie de fuera.
+**El Día 15 completó el paso 3: las tres tareas en formato fijo** —`DIR-01`, `ADMIN-01`,
+`FORO-01`, las nueve del corpus— **, cada una validada con `--seco` (cero problemas, cero
+avisos).** Lo único que falta para abrir la corriente son las tres corridas (§3, paso 5), y
+**esta vez la dependencia no es de nadie externo al proyecto, sino de dónde vive
+`DEEPSEEK_API_KEY`:** en el entorno local del PO, no en una sesión remota (Día 15,
+comprobado con `uname`/`mount`, no supuesto). Las corridas no dependen de ninguna
+aprobación ni de ningún tercero — dependen de correrlas en la máquina que tiene la clave.
 
 ### Corriente C · Verificación — NO ABIERTA
 
@@ -502,29 +369,34 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-**El H1 sigue siendo lo único con acción propia en el repo, y ya no depende de nadie de
-fuera.** De los cinco pasos de `UMBRAL-FABRICA-V1.md` §7, tres están hechos:
+**El H1 sigue siendo lo único con acción propia en el repo. De los cinco pasos de
+`UMBRAL-FABRICA-V1.md` §7, cuatro están hechos y el quinto tiene una dependencia real, no de
+aprobación sino de máquina:**
 
 | | Paso | Estado |
 |---|---|---|
 | 1 | El PO confirma las tres pantallas | ✅ **11-sep** · `DIR-01`, `ADMIN-01`, `FORO-01` |
 | 2 | Las tres capas de datos, a mano | ✅ **11-sep** · `0027`, `0028`, `0029` |
-| 3 | **Las tres tareas en formato fijo** | 🔴 **Es lo que toca** |
+| 3 | Las tres tareas en formato fijo | ✅ **11-sep (Día 15)** · las nueve del corpus, `--seco` limpias |
 | 4 | Línea base del coste de orquestación | ✅ **11-sep** · y de ahí salió `F-157` |
-| 5 | **Las tres corridas, su revisión y el C5** | 🔴 Después de la 3 |
+| 5 | **Las tres corridas, su revisión y el C5** | 🔴 **Es lo único que queda** |
 
-1. **Escribir la tarea de `DIR-01`**, sus tests de aceptación y correrla. Es la más barata
-   de las tres y la única comparable con algo ya medido: su forma —tabla con filtros, orden
-   por cabecera y paginación— es la de `SRCH-01` e `INV-01`. **Empezar por ella no es
-   comodidad: es tener un punto de referencia antes de las otras dos.**
-2. **Luego `ADMIN-01` y `FORO-01`**, cada una en su sesión.
+1. **Correr las tres tareas** —`DIR-01`, `ADMIN-01`, `FORO-01`, en ese orden: `DIR-01` sigue
+   siendo la única comparable con algo ya medido (`SRCH-01`/`INV-01`)— **en el entorno LOCAL
+   del PO**, donde vive `DEEPSEEK_API_KEY`. Esta sesión remota no puede: comprobado con
+   `uname`/`mount` contra el propio contenedor, no supuesto (Día 15).
+2. **El C5 de cada una**, a mano, del PO.
 3. **El veredicto**, con las ocho cifras, en §1 y contra la regla de decisión del umbral §4.
 
-⚠ **CADA PANTALLA VA EN SESIÓN LIMPIA, y el medidor de orquestación se corre ANTES y
+⚠ **CADA CORRIDA VA EN SESIÓN LIMPIA, y el medidor de orquestación se corre ANTES y
 DESPUÉS.** No es ceremonia: la cifra 7 del umbral —la que decide si la partida de modelos
 del plan se sostiene— se mide por sesión, así que una sesión compartida le imputa a la
-pantalla un coste que no es suyo. **Esta sesión, sin construir ninguna pantalla, costó
-148,75 $ de coste-sombra**; el umbral pone el techo de una pantalla en 50 de mediana.
+pantalla un coste que no es suyo. **La sesión del Día 14, sin construir ninguna pantalla,
+costó 148,75 $; la del Día 15, escribiendo las tres tareas sin correr ninguna, 57,85 $**
+—ninguna de las dos es la cifra 7 de ninguna pantalla, y el umbral pone su techo en 50 de
+mediana. Si las tres corridas se escriben Y se corren en la MISMA sesión (lo que el propio
+§7 pide), la cifra 7 de cada una sale limpia; si se corren en una sesión que ya trae encima
+el coste de escribir la tarea, no.
 
 En paralelo, sin acción propia desde este lado:
 
@@ -537,7 +409,25 @@ En paralelo, sin acción propia desde este lado:
 Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
 Vercel — ninguno bloquea trabajo de ingeniería.
 
-### Lo que se cerró hoy (Día 14, 11-sep)
+### Lo que se cerró el Día 15 (trabajo 11-sep, redactado 13-sep)
+
+- **`F-160` cerrado.** `--seco` escalaba en falso en las seis tareas del corpus por una
+  columna del CSV (`primer_intento_limpio`, `F-152`) que `dry_run.py` no sabía leer.
+  Arreglado leyendo el CSV por nombre de columna, no por substring de la línea.
+- **Las tres tareas del paso 3 escritas, con sus tests de aceptación, y validadas `--seco`**:
+  `DIR-01`, `ADMIN-01`, `FORO-01`. Corpus de seis a nueve tareas.
+- **`OperatorShell.tsx` nuevo**, porque el Operador no encaja en `AppShell` (nav propio,
+  `OperatorProfile` sin organización). `AppShell.tsx` y sus tests, intactos.
+- **Hallazgo sobre `ADMIN-01`: ningún envío de correo existe en el proyecto.** El texto de
+  confirmación de Aprobar/Rechazar se corrigió para no afirmar un email que nadie manda.
+- **Aclarado sin ambigüedad: esta sesión remota no ve `C:\Users\admin\...`.** El PO dio por
+  hecho lo contrario; comprobado contra la propia máquina (`uname`, `mount`), no discutido
+  de oídas. Las tres corridas del paso 5 necesitan el entorno local.
+- **Siete commits en `mvp/bootstrap`**: el de la tarea `DIR-01` salió rojo por diseño SIN
+  `[skip ci]` —se me olvidó, primer descuido de la sesión—; corregido desde `ADMIN-01` en
+  adelante, con `[skip ci]` en los dos commits de tarea que quedaban. Ver §1.
+
+### Lo que se cerró el Día 14 (11-sep)
 
 - **Contestada la última pregunta abierta de la familia `F-155`, y la respuesta es que no
   hay nada que arreglar.** Auditados contra el criterio exacto —un `SELECT`/`EXISTS` bajo
@@ -732,6 +622,9 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | **Un `SELECT` bajo RLS que depende de `thread_item_keys` no sirve dentro de una función `security invoker` que un participante SIN clave todavía tiene que poder llamar** | 10-sep-2026, `F-155`. Mismo principio que `F-148` (0023 §4bis): la lectura derivada de si ya tienes clave no puede ser condición para la escritura que te la daría. La solución es siempre un helper `security definer` (`can_access_thread`, `resolve_thread`, y ahora `thread_counterpart`), nunca relajar la política de lectura | `0025`, `F-155` |
 | **El CSV histórico del arnés no se recalcula, ni cuando el dato ya estaba** (repetido) | 10-sep-2026, aplicado a `primer_intento_limpio` (F-152) igual que a `corrida` (F-129) — aunque `intentos` ya bastaba para derivarlo en las 143 filas viejas, se escribe `-` y no se reconstruye | `harness/core/metrics.py`, F-129, F-152 |
 | **Un guardia que decide con un `SELECT`/`EXISTS` bajo RLS puede saltarse en silencio, no solo bloquear a quien escribe** | 10-sep-2026 (Día 13), `F-156`. Misma causa que `F-148`/`F-155` (política de SELECT derivada de `thread_item_keys` dentro de una función `security invoker`), pero con un efecto nuevo: en vez de romper la escritura de quien llama, deja pasar algo que el guardia debía impedir. Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos contra este criterio; ninguna otra tenía el hueco | `0026`, `F-156`, `findings-register.md` |
+| **El Operador de Plataforma tiene su propio componente de shell, `OperatorShell.tsx`, no una rama dentro de `AppShell`** | 11-sep-2026 (Día 15). Nav de cinco ítems propios y acento brass (spec `ADMIN-01` §2) contra un `AppShell` tipado a `MemberProfile` que usa `orgName`/`role` en tres sitios — reusarlo habría tocado un componente compartido con 147 líneas de tests por una pantalla sin organización. Reutiliza `AppShell.module.css` para el layout común; `AppShell.tsx` queda intacto | `OperatorShell.tsx`, `App.tsx` |
+| **`ADMIN-01` no afirma que se envía ningún email** | 11-sep-2026 (Día 15). El HTML aprobado y la spec prometen EML-07/EML-08; ningún envío de correo existe en el proyecto. Los textos de confirmación se corrigen a "Aprobación registrada."/"Solicitud rechazada.", sin mencionar ningún email — mismo principio que `F-100` | `harness/tasks/ADMIN-01.json` |
+| **Un commit con el contrato de aceptación en rojo contra un marcador lleva `[skip ci]`, con el motivo en el cuerpo** | Ya estaba en `CLAUDE.md` §1; aplicado con un descuido el 11-sep (el commit de la tarea `DIR-01` salió sin él) y corregido desde `ADMIN-01` en adelante | `CLAUDE.md` §1, Día 15 |
 
 ---
 
@@ -762,6 +655,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | 🟡 | **Nadie ha mirado si las otras 30 specs aprobadas tienen la misma clase de contradicción que `F-158`.** Salió por casualidad, porque la siembra de demo se verifica a sí misma y exigía una fila de cada color. Un barrido cuesta poco y no se ha hecho | Cualquier sesión, antes de que la fábrica construya sobre ellas |
 | ⚪ | ~~ADMIN-01 no se puede probar de extremo a extremo: no hay cuenta de Operador~~ | **Resuelto 11-sep-2026: cuenta creada por el PO en las dos bases, dada de alta por el MCP, alcance comprobado desde su propia sesión y `E2E_OPERATOR_PASSWORD` en los secretos de CI.** La rama de sesión del shell, que era la otra mitad y no se sabía, también |
 | ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
+| ⚪ | ~~`F-160`: `--seco` escalaba en falso en las seis tareas del corpus~~ | **Resuelto 11-sep-2026 (Día 15): `_columna()` en `dry_run.py`, lee el CSV por nombre de columna, no por substring de la línea.** Verificado con `python -m harness.tests.dry_run` y `--seco` sobre las tres tareas nuevas y `SRCH-01` |
+| 🔴 | **Las tres corridas del paso 5 de `UMBRAL-FABRICA-V1.md` §7 no pueden correr en una sesión remota.** `DEEPSEEK_API_KEY` vive solo en el entorno local del PO (`app/.env` no la lleva; es variable de entorno de usuario, `CLAUDE.md` §1). Comprobado el 11-sep (Día 15) contra la propia máquina de esta sesión (`uname`, `mount`): contenedor Linux en la nube, sin ningún canal hacia `C:\Users\admin\...` | El PO, en su terminal local, con `git pull` de `mvp/bootstrap` |
 
 ---
 
@@ -769,6 +664,25 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
+- **Si las tres tareas del H1 pasan al primer intento, y con qué corrección humana.** Nada de
+  esto se sabrá hasta que corran de verdad. `DIR-01` es la más comparable con algo ya
+  medido; `ADMIN-01` es la más grande de las tres (panel lateral, formulario de rechazo,
+  máquina de tres botones según estado) y la que más riesgo de escalado tiene por tamaño de
+  contrato; `FORO-01` es la más simple y la que menos debería sorprender.
+- **Si la cifra 7 de las tres pantallas va a servir para algo, dado que se escribieron en una
+  sesión y (previsiblemente) se correrán en otra.** `UMBRAL-FABRICA-V1.md` §6 ya avisa de
+  esto: si escribir la tarea y correrla van en sesiones distintas, la cifra sale BAJA, no
+  falsa — pero baja para las tres a la vez, con el mismo sesgo, así que la comparación
+  ENTRE ellas debería seguir siendo válida aunque el número absoluto no sirva para el
+  umbral tal cual está redactado. No se ha decidido si el PO acepta esa lectura o prefiere
+  remedir escribiendo y corriendo junto.
+- **Si `F-158` es un caso aislado o el primero de varios.** Sigue sin barrerse si las otras
+  30 specs aprobadas tienen la misma clase de contradicción regla-contra-ejemplo (§5, fila
+  ya existente desde el Día 14).
+- **Si algún otro campo de `DEEPSEEK_API_KEY`/`DS_PRICE_*` falta en el entorno local del PO
+  cuando corra las tres tareas.** Esta sesión no lo puede comprobar: solo puede confirmar
+  que AQUÍ no está, no que allí sí lo esté completo — `harness/README.md` dice que el
+  arnés no arranca si `DS_PRICE_IN_HIT`/`DS_PRICE_IN_MISS`/`DS_PRICE_OUT` están a cero.
 - ~~Si el 3 de 3 de la serie 15 se sostiene.~~ **Contestado el mismo día: no.** La réplica
   exacta dio 1 de 3. Lo que queda abierto es lo de detrás: **cuántas tiradas hacen falta para
   que este marcador signifique algo**. Con `n=3`, seis corridas dieron 4 de 6, oscilando
@@ -991,33 +905,41 @@ Orden de lectura, y el orden importa:
     coste borraba su propia historia), `F-158` (**ABIERTO, es del PO** — la spec de
     `ADMIN-01` se contradice a sí misma en el umbral de color de la antigüedad en cola) y
     `F-159` (cerrado — un e2e que fallaba por carrera, arreglado justo antes de que la
-    fábrica empiece a medirse con esa suite) — el medidor del
-    coste de orquestación borraba su propia historia al usarlo. La auditoría de la
-    mañana no encontró hallazgo y dejó un ancla en `01_schema_smoke.sql`; el hallazgo
-    salió por la tarde, arrancando el H1.
+    fábrica empiece a medirse con esa suite). Del Día 15: `F-160` (cerrado — `--seco`
+    escalaba en falso por una columna del CSV que el detector no sabía leer). `F-158`
+    sigue siendo el único abierto del corpus, y sigue siendo del PO.
 
 ---
 
-*Día 14 de V1 · 11-sep-2026 · fecha leída de la máquina (`date -u`) al cerrar:
-`2026-09-11`, 15:45 UTC · **el día empezó cerrando la familia `F-155` por el lado que
-faltaba y acabó con las tres capas de datos del H1 escritas** · auditados los siete
-disparadores de `app`, las 20 políticas de `public` y `vera/index.ts` sin encontrar ninguno
-más, y el resultado anclado con cuatro asertos y una canaria que demuestra que el detector
-detecta · leído el plan V1 v2.3 contra el repo a petición del PO: semana 3, la del H1 ·
-escrito `UMBRAL-FABRICA-V1.md` ANTES de medir, que es la condición que la tabla de riesgos
-del plan le pone al hito y que no existía · tres pantallas confirmadas por el PO antes de
-que existiera una línea de ninguna, y `REG-07` descartada al leer su spec (es criptografía,
-Plan §4.3) · `0027`, `0028` y `0029` escritas, probadas contra un Postgres desechable ANTES
-de aplicarse, aplicadas a `troxminloxkjwihwfevs` y `bearingworld-e2e` y releídas del
-catálogo — nunca del `{"success":true}` — con sus siembras verificándose a sí mismas ·
-`directory.ts`, `admin-requests.ts` y `forum.ts` a mano, con **54** pruebas de unidad nuevas, contadas corriéndolas ·
-**tres hallazgos:** `F-157` (el medidor de orquestación borraba 387 $ de historia al usarlo;
-cerrado y fijado), `F-158` (la spec de `ADMIN-01` se contradice a sí misma; **abierto, es
-del PO**) y `F-159` (un e2e que falla por carrera; confirmado NO reproducible antes de
-tocarlo, arreglado en los tres sitios) · el Operador de Plataforma existe: cuenta en las dos
-bases creada por el PO, alta por el MCP, rama de sesión en el shell, alcance comprobado
-desde su propia sesión (ve la cola y **nada** del mercado) y `E2E_OPERATOR_PASSWORD` en CI ·
-coste-sombra de orquestación al cierre: **997,77 $** acumulados, **660,24 $** en V1,
-**148,75 $** esta sesión · CI verde job a job en el commit final · `git status --short`
-releído antes de escribir este pie: limpio salvo `openspec/design-gui/Ingles/`, sin trackear
-y ajena a esta sesión desde el Día 11 · Dirección Técnica, Nortex Systems*
+*Día 14 de V1 · 11-sep-2026 · el detalle completo de su cierre vive en
+`git show f5e1d7e:openspec/v1/ESTADO-V1.md` (no se repite en este pie: este es el cierre del
+Día 15, que empieza donde el 14 terminó).*
+
+*Día 15 de V1 · trabajo hecho el 11-sep-2026 (15:48–19:44 UTC, los siete commits) · fecha
+leída de la máquina (`date -u`) al escribir este cierre: `2026-09-13`, 07:38 UTC — **dos días
+después del trabajo, por una interrupción de la conversación, no porque el día se alargara
+(regla 4, y se dice en voz alta por la regla 3)** · empezó donde el Día 14 lo dejó: el paso 3
+de `UMBRAL-FABRICA-V1.md` §7 · `F-160` cazado y cerrado antes de gastar un token en ninguna
+tarea —`--seco` escalaba en falso en las seis del corpus por una columna del CSV
+(`primer_intento_limpio`, `F-152`) que el detector de escalado no sabía leer, reproducido
+también contra `SRCH-01` para confirmar que no era cosa de hoy— · **las tres tareas del H1
+escritas, con sus tests de aceptación, y validadas `--seco`: cero problemas, cero avisos en
+las tres** · `OperatorShell.tsx` nuevo, porque el Operador no encaja en `AppShell`
+(`AppShell.tsx` y sus 147 líneas de tests, intactos) · segundo hallazgo en `ADMIN-01`: ningún
+envío de correo existe en el proyecto, y el texto de confirmación se corrigió para no
+afirmarlo · `admin-requests.ts` ampliada a 22 pruebas (`requestDateLabel`, `websiteHref`) ·
+**el límite del entorno, aclarado sin ambigüedad y comprobado contra la propia máquina**
+(`uname`, `mount`): esta sesión es un contenedor remoto sin ningún canal hacia
+`C:\Users\admin\...`, así que el paso 5 del §7 —las tres corridas— no puede correr aquí bajo
+ninguna circunstancia · typecheck limpio y **712 pruebas existentes en verde** tras las tres
+tareas, con las 36 nuevas de `DIR-01`/`ADMIN-01`/`FORO-01` en rojo contra sus marcadores,
+como corresponde antes de que exista la pantalla de verdad · siete commits en
+`mvp/bootstrap`, con un `[skip ci]` olvidado en el primero (`DIR-01`) y corregido desde
+`ADMIN-01` en adelante — por eso el primer push sí corrió CI (rojo esperado, `App ·
+typecheck`) y los tres siguientes no corrieron ninguno, verificado con
+`mcp__github__actions_list` y no con el mensaje del commit · coste-sombra de orquestación al
+cierre: **1.055,62 $** acumulados; el 11-sep entero (Día 14 + Día 15) pasa de 148,75 $ a
+**206,60 $**, así que esta sesión sola son **57,85 $**, sin ninguna corrida real ·
+`F-158` sigue abierto, es del PO · `git status --short` releído antes de escribir este pie:
+limpio salvo los dos ficheros de este mismo cierre (`ESTADO-V1.md`,
+`orchestration-metrics.csv`) · Dirección Técnica, Nortex Systems*

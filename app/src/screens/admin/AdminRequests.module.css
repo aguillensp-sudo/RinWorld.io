@@ -1,0 +1,114 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+}
+
+.title {
+  margin: 0 0 3px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  max-width: 600px;
+  font-size: var(--bw-size-body);
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Chips de filtro por estado ─────────────────────────────────────────── */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 14px;
+  /* El token de superficie más claro del sistema: no hay un blanco puro
+     declarado y §6.1 prohíbe escribirlo a mano. */
+  background: var(--bw-warm-cream);
+  color: var(--bw-steel-mist);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.chip:hover {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-ink-steel);
+}
+
+.chip:focus-visible {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.chipActive,
+.chipActive:hover {
+  background: var(--bw-chip-active-bg);
+  border-color: var(--bw-chip-active-border);
+  color: var(--bw-primary-dark);
+  font-weight: 600;
+}
+
+/* ── Zona de la tabla ───────────────────────────────────────────────────── */
+
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.tableArea {
+  flex: 1;
+  min-width: 0;
+}
+
+.loading,
+.error {
+  padding: 32px 16px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  background: var(--bw-warm-cream);
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  text-align: center;
+}
+
+.error {
+  border-color: var(--bw-badge-danger-border);
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-error-text);
+  text-align: left;
+}

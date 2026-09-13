@@ -1,0 +1,157 @@
+
+==============================================================================
+· corrida arrancada 2026-09-13 12:18:23 · harness/tasks/ADMIN-01.json
+==============================================================================
+Log de esta corrida: harness\metrics\ADMIN-01\ADMIN-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/admin/AdminRequests.module.css', 'app/src/screens/admin/AdminRequests.tsx', 'app/src/screens/admin/RequestDetailPanel.module.css', 'app/src/screens/admin/RequestDetailPanel.tsx', 'app/src/screens/admin/RequestsTable.module.css', 'app/src/screens/admin/RequestsTable.tsx']
+  tokens in/out: 26507/37545   cache: 0.0% hit
+  coste real: $0.061222   en frio: $0.061222
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\ADMIN-01\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/admin/AdminRequests.module.css', 'app/src/screens/admin/AdminRequests.tsx', 'app/src/screens/admin/RequestDetailPanel.module.css', 'app/src/screens/admin/RequestDetailPanel.tsx', 'app/src/screens/admin/RequestsTable.module.css', 'app/src/screens/admin/RequestsTable.tsx']
+  tokens in/out: 37669/39989   cache: 69.66% hit
+  coste real: $0.058182   en frio: $0.069360
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\ADMIN-01\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  TRUNCADO (finish_reason=length). Reintento con max_tokens=131072 (F-005)
+  ficheros: ['app/src/screens/admin/AdminRequests.module.css', 'app/src/screens/admin/AdminRequests.tsx', 'app/src/screens/admin/RequestDetailPanel.module.css', 'app/src/screens/admin/RequestDetailPanel.tsx', 'app/src/screens/admin/RequestsTable.module.css', 'app/src/screens/admin/RequestsTable.tsx']
+  tokens in/out: 73686/104618   cache: 87.55% hit
+  coste real: $0.143035   en frio: $0.170518
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\ADMIN-01\attempt_3.json (F-122)
+  CSV: 2026-09-13,ADMIN-01,ADMIN-01,deepseek-v4-flash,26507,37545,0.061222,1,2.2,app/src/screens/admin/AdminRequests.module.css;app/src/screens/admin/AdminRequests.tsx;app/src/screens/admin/RequestDetailPanel.module.css;app/src/screens/admin/RequestDetailPanel.tsx;app/src/screens/admin/RequestsTable.module.css;app/src/screens/admin/RequestsTable.tsx,0.00,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-13,ADMIN-01,ADMIN-01,deepseek-v4-flash,37669,39989,0.058182,2,2.6,app/src/screens/admin/AdminRequests.module.css;app/src/screens/admin/AdminRequests.tsx;app/src/screens/admin/RequestDetailPanel.module.css;app/src/screens/admin/RequestDetailPanel.tsx;app/src/screens/admin/RequestsTable.module.css;app/src/screens/admin/RequestsTable.tsx,69.66,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-13,ADMIN-01,ADMIN-01,deepseek-v4-flash,73686,104618,0.143035,3,7.4,app/src/screens/admin/AdminRequests.module.css;app/src/screens/admin/AdminRequests.tsx;app/src/screens/admin/RequestDetailPanel.module.css;app/src/screens/admin/RequestDetailPanel.tsx;app/src/screens/admin/RequestsTable.module.css;app/src/screens/admin/RequestsTable.tsx,87.55,si,-,-,-,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\ADMIN-01\attempt_1.json
+  harness\metrics\ADMIN-01\attempt_2.json
+  harness\metrics\ADMIN-01\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run test:arnes (exit 1)
+15 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/lib/admin-requests.test.ts > requestDateLabel > formatea fecha y hora como las otras pantallas formatean la fecha, con la hora sumada
+  - src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > pinta los siete datos del FSR de la spec §3
+  - src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > el formulario de rechazo, abierto: el textarea es controlado y "Confirmar rechazo" nace deshabilitado
+  - src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > aprobado: el texto de confirmación sustituye a los botones, y no promete un correo que nadie manda
+  - src/screens/forum/Forum.test.tsx > Forum > pinta el eyebrow, el título y el subtítulo literales de la spec §3
+  - src/screens/forum/Forum.test.tsx > Forum > el aviso de confidencialidad es permanente y lleva su frase clave en negrita
+  - src/screens/forum/Forum.test.tsx > Forum > pinta las cuatro categorías con sus contadores y su última actividad
+  - src/screens/forum/Forum.test.tsx > Forum > el singular de los contadores usa el literal exacto de la capa de datos
+  - src/screens/forum/Forum.test.tsx > Forum > una categoría sin actividad nunca no pinta una fecha inventada
+  - src/screens/forum/Forum.test.tsx > Forum > las tarjetas de categoría están apagadas -FORO-02 no existe- y lo dicen
+  - src/screens/forum/Forum.test.tsx > Forum > con actividad reciente, pinta la sección con sus cuatro datos por hilo
+  - src/screens/forum/Forum.test.tsx > Forum > el hilo reciente también está apagado -FORO-02 no existe- y lo dice
+  - src/screens/forum/Forum.test.tsx > Forum > sin actividad reciente, la sección entera -con su cabecera- se oculta (spec §3)
+  - src/screens/forum/Forum.test.tsx > Forum > mientras carga, pinta el aviso de carga con `aria-busy`
+  - src/screens/forum/Forum.test.tsx > Forum > un fallo de red se pinta en `role="alert"`
+
+--- ultimas lineas de la salida ---
+  <div>
+    <div
+      data-testid="foro01-placeholder"
+      style="min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px; text-align: center;"
+    >
+      <p
+        style="margin: 0px; font-size: 13px;"
+      >
+        El Foro de la Comunidad todavía no está construido.
+      </p>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="foro01-placeholder"
+      style="min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px; text-align: center;"
+    >
+      <p
+        style="margin: 0px; font-size: 13px;"
+      >
+        El Foro de la Comunidad todavía no está construido.
+      </p>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/screens/forum/Forum.test.tsx:175:25
+    173|     fetchCategories.mockRejectedValue(new Error('la base no responde')…
+    174|     render(<Forum profile={profile} now={NOW} />);
+    175|     expect(await screen.findByRole('alert')).toHaveTextContent('la bas…
+       |                         ^
+    176|   });
+    177| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+3 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > pinta los siete datos del FSR de la spec §3
+  - src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > el formulario de rechazo, abierto: el textarea es controlado y "Confirmar rechazo" nace deshabilitado
+  - src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > aprobado: el texto de confirmación sustituye a los botones, y no promete un correo que nadie manda
+
+--- ultimas lineas de la salida ---
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </footer>
+    </aside>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/admin/RequestDetailPanel.test.tsx:120:19
+    118|     ).toHaveValue('');
+    119|     expect(screen.getByRole('button', { name: 'Confirmar rechazo' })).…
+    120|     expect(screen.getByRole('button', { name: 'Rechazar' })).not.toBeI…
+       |                   ^
+    121|   });
+    122|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/screens/admin/RequestDetailPanel.test.tsx > RequestDetailPanel > aprobado: el texto de confirmación sustituye a los botones, y no promete un correo que nadie manda
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <span
+  class="_fieldLabel_f89ce4"
+>
+  Email
+</span> instead
+ ❯ src/screens/admin/RequestDetailPanel.test.tsx:168:46
+    166|     render(<RequestDetailPanel {...base()} feedback="approved" />);
+    167|     expect(screen.getByText('Aprobación registrada.')).toBeInTheDocume…
+    168|     expect(screen.queryByText(/email/i)).not.toBeInTheDocument();
+       |                                              ^
+    169|     expect(screen.queryByRole('button', { name: 'Aprobar' })).not.toBe…
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯

@@ -1,0 +1,390 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 340px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Cabecera ───────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 16px;
+  background: var(--bw-surface-mist);
+  border-bottom: 1px solid var(--bw-divider-mist);
+}
+
+.eyebrow {
+  margin: 0 0 3px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-brand);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  color: var(--bw-brass);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-input);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--bw-deep-steel);
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -2px;
+  border: none;
+  border-radius: var(--bw-radius-hamburger);
+  background: none;
+  color: var(--bw-steel-mist);
+  font-family: inherit;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.close:hover {
+  background: var(--bw-hover-surface);
+  color: var(--bw-deep-steel);
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
+}
+
+/* ── Cuerpo: datos del FSR e historial ──────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.sectionLabel {
+  margin: 0 0 9px;
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.field {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.fieldLabel {
+  flex-shrink: 0;
+  min-width: 108px;
+  padding-top: 1px;
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+}
+
+.fieldValue {
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  word-break: break-all;
+}
+
+.valueMono {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+}
+
+.extLink {
+  color: var(--bw-calibration-blue);
+  text-decoration: none;
+}
+
+.extLink:hover {
+  text-decoration: underline;
+}
+
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--bw-divider-mist);
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+.historyDate {
+  padding-top: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-steel-mist);
+}
+
+.historyNote {
+  flex: 1;
+  min-width: 100%;
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+}
+
+.historyLoading {
+  margin: 0;
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Badge de estado, también en el historial ───────────────────────────── */
+
+.stateBadge {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-hint);
+}
+
+.pending {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning-dark);
+}
+
+.approved {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+.rejected {
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  color: var(--bw-error-text);
+}
+
+.cancelled {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border);
+  color: var(--bw-ink-steel-soft);
+}
+
+/* ── Pie: aviso, confirmaciones y acciones ──────────────────────────────── */
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 16px;
+  border-top: 1px solid var(--bw-divider-mist);
+}
+
+.alert {
+  padding: 8px 11px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-sensitive-bg);
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.feedbackApprove {
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--bw-badge-success-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-badge-success-bg);
+  font-size: var(--bw-size-label);
+  color: var(--bw-success-dark);
+}
+
+.feedbackReject {
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-sensitive-bg);
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.approve {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 36px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: var(--bw-signal-green);
+  color: var(--bw-warm-cream);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+
+.approve:not(:disabled):hover {
+  opacity: 0.87;
+}
+
+.reject {
+  flex: 1;
+  height: 36px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  background: none;
+  color: var(--bw-sensitive-text);
+  font-family: inherit;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.reject:not(:disabled):hover {
+  background: var(--bw-danger-hover-bg);
+}
+
+.return {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: none;
+  color: var(--bw-steel-mist);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.return:not(:disabled):hover {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-ink-steel);
+}
+
+.approve:disabled,
+.reject:disabled,
+.return:disabled,
+.confirm:disabled,
+.cancel:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Formulario de rechazo (spec §4) ────────────────────────────────────── */
+
+.rejectForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reason {
+  min-height: 80px;
+  padding: 8px 10px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-warm-cream);
+  color: var(--bw-deep-steel);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.reason:focus {
+  border-color: var(--bw-sensitive-text);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.reason::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confirm {
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: var(--bw-sensitive-text);
+  color: var(--bw-warm-cream);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+
+.confirm:not(:disabled):hover {
+  opacity: 0.87;
+}
+
+.cancel {
+  height: 34px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: none;
+  color: var(--bw-steel-mist);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.cancel:not(:disabled):hover {
+  color: var(--bw-deep-steel);
+}

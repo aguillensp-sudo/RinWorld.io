@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { RequestEvent, RequestRow } from '../../lib/admin-requests';
 
@@ -52,7 +52,9 @@ function base() {
 describe('RequestDetailPanel', () => {
   it('pinta los siete datos del FSR de la spec §3', () => {
     render(<RequestDetailPanel {...base()} />);
-    expect(screen.getByText('Distribuciones Álvarez SL')).toBeInTheDocument();
+    // F-162: el nombre pinta dos veces a propósito -titulo y campo del panel-,
+    // `getByText` exige un match unico y fallaba con "multiple elements".
+    expect(screen.getAllByText('Distribuciones Álvarez SL').length).toBeGreaterThan(0);
     expect(screen.getByText('España · ES')).toBeInTheDocument();
     expect(screen.getByText('Juan Álvarez García')).toBeInTheDocument();
     expect(screen.getByText('jalvarez@distribalvarez.com')).toBeInTheDocument();
@@ -117,7 +119,9 @@ describe('RequestDetailPanel', () => {
       screen.getByPlaceholderText('Explica el motivo del rechazo — se enviará al solicitante'),
     ).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Confirmar rechazo' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Rechazar' })).not.toBeInTheDocument();
+    // F-162: `getByRole` lanza si no encuentra el elemento, asi que la
+    // aserción de ausencia nunca llegaba a evaluarse. Es `queryByRole`.
+    expect(screen.queryByRole('button', { name: 'Rechazar' })).not.toBeInTheDocument();
   });
 
   it('escribir en el textarea llama a onRejectReasonChange, no gestiona su propio estado', async () => {
@@ -163,9 +167,15 @@ describe('RequestDetailPanel', () => {
   });
 
   it('aprobado: el texto de confirmación sustituye a los botones, y no promete un correo que nadie manda', () => {
-    render(<RequestDetailPanel {...base()} feedback="approved" />);
+    const { container } = render(<RequestDetailPanel {...base()} feedback="approved" />);
     expect(screen.getByText('Aprobación registrada.')).toBeInTheDocument();
-    expect(screen.queryByText(/email/i)).not.toBeInTheDocument();
+    // F-162: el panel de datos pinta el campo "Email" SIEMPRE (spec, no
+    // condicionado a `feedback`); el regex sobre todo el documento lo cazaba
+    // por error. Lo que había que comprobar es que el PIE -donde vive la
+    // confirmación- no promete ningún envío, no el documento entero.
+    const footer = container.querySelector('footer');
+    expect(footer).not.toBeNull();
+    expect(within(footer as HTMLElement).queryByText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Aprobar' })).not.toBeInTheDocument();
   });
 

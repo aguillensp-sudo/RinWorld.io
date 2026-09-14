@@ -1,45 +1,52 @@
-/* DIR-01 · Directorio de Organizaciones — panel de contenido.
-   Ningún color literal: todo sale del vocabulario de tokens del sistema
-   (openspec/architecture/design-system.md §1). El fondo Cold White del panel lo
-   pone el shell; aquí no se repite.
-   Nota de tokens: los botones de paginación usan `--bw-radius-hamburger` (4px),
-   el radio de control más cercano al 4px de la navegación numérica del mock. No
-   se inventa un token nuevo para 4px. */
+/* =============================================================================
+   DIR-01 · Directorio de Organizaciones — pantalla
+   =============================================================================
+   Solo tokens de `:root` (design-system.md §1): ningún hex, ningún rgb().
+   El fondo del panel de contenido lo pone el shell (`--bw-cold-white`), así que
+   aquí no se repite.
 
-.screen {
+   Nota de tokens: el mock usa `white` para la superficie de tarjeta, de campo y
+   de botón. No existe un token de blanco puro en §1; se usa `--bw-warm-cream`
+   (#FAF8F4), que es el más claro de la paleta y el más cercano al blanco del
+   mock sin inventar un valor nuevo.
+   ========================================================================== */
+
+.page {
   display: flex;
   flex-direction: column;
 }
 
+/* ── Cabecera de la pantalla ─────────────────────────────────────────────── */
+
 .eyebrow {
-  font-family: var(--bw-font-title);
-  font-size: var(--bw-size-eyebrow);
-  font-weight: 700;
-  letter-spacing: var(--bw-ls-eyebrow);
-  text-transform: uppercase;
-  color: var(--bw-steel-mist);
   margin: 0 0 4px;
+  font-family: var(--bw-font-title);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-steel-mist);
 }
 
 .title {
+  margin: 0 0 6px;
   font-family: var(--bw-font-title);
   font-size: var(--bw-size-title);
   font-weight: 700;
   letter-spacing: var(--bw-ls-title);
   color: var(--bw-deep-steel);
-  margin: 0 0 4px;
 }
 
 .subtitle {
+  margin: 0 0 18px;
+  max-width: 560px;
   font-family: var(--bw-font-body);
   font-size: 14px;
   line-height: 1.6;
   color: var(--bw-steel-mist);
-  margin: 0 0 18px;
-  max-width: 560px;
 }
 
-/* ── Barra de filtros ─────────────────────────────────────────────────────── */
+/* ── Barra de filtros ────────────────────────────────────────────────────── */
 
 .filterBar {
   display: flex;
@@ -53,28 +60,38 @@
   height: 36px;
   padding: 0 10px;
   border: 1px solid var(--bw-line-steel-strong);
-  border-radius: var(--bw-radius);
-  background: var(--bw-surface-mist);
-  color: var(--bw-ink-steel);
-  font-family: inherit;
+  border-radius: 5px;
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
   font-size: var(--bw-size-input);
+  color: var(--bw-ink-steel);
   cursor: pointer;
   transition: border-color 0.15s;
 }
 
-.searchInput {
-  flex: 1 1 200px;
-  min-width: 0;
-  max-width: 280px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: var(--bw-radius);
-  background: var(--bw-surface-mist);
-  color: var(--bw-input-text);
-  font-family: inherit;
-  font-size: var(--bw-size-input);
+.select:focus {
   outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  max-width: 280px;
+  min-width: 180px;
+}
+
+.searchInput {
+  width: 100%;
+  height: 36px;
+  padding: 0 36px 0 12px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
   transition: border-color 0.15s;
 }
 
@@ -82,107 +99,117 @@
   color: var(--bw-input-placeholder);
 }
 
-.select:focus,
 .searchInput:focus {
   outline: none;
   border-color: var(--bw-calibration-blue);
   box-shadow: var(--bw-focus-halo);
 }
 
+/* La lupa es un botón de verdad: la spec §3 pide que la búsqueda se dispare
+   «al pulsar Enter o icono lupa», y un icono que no es un control no existe
+   para el teclado. */
 .searchButton {
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--bw-line-steel-strong);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
   border-radius: var(--bw-radius);
-  background: var(--bw-surface-mist);
+  background: none;
   color: var(--bw-steel-mist);
   cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.12s;
 }
 
 .searchButton:hover {
   color: var(--bw-calibration-blue);
-  border-color: var(--bw-calibration-blue);
+}
+
+.searchButton:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
 }
 
 .clearButton {
   padding: 4px 8px;
   border: none;
   background: none;
-  color: var(--bw-steel-mist);
-  font-family: inherit;
-  font-size: var(--bw-size-label);
+  font-family: var(--bw-font-body);
+  font-size: 12px;
   font-weight: 500;
+  color: var(--bw-steel-mist);
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.12s;
 }
 
 .clearButton:hover {
-  color: var(--bw-error-text);
+  color: var(--bw-sensitive-text);
 }
 
-.searchButton:focus-visible,
-.clearButton:focus-visible,
-.pageButton:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-halo);
-}
-
-/* ── Zona de la tabla: carga y error ──────────────────────────────────────── */
+/* ── Zona de la tabla: carga y error ─────────────────────────────────────── */
 
 .loading {
-  padding: 32px 14px;
+  padding: 28px 14px;
   border: 1px solid var(--bw-line-steel);
   border-radius: 8px;
-  background: var(--bw-surface-mist);
-  color: var(--bw-steel-mist);
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
   font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  text-align: center;
 }
 
 .error {
-  padding: 14px;
+  padding: 16px;
   border: 1px solid var(--bw-badge-danger-border);
   border-radius: 8px;
   background: var(--bw-tint-danger);
-  color: var(--bw-error-text);
+  font-family: var(--bw-font-body);
   font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
 }
 
-/* ── Paginación ───────────────────────────────────────────────────────────── */
+/* ── Paginación ──────────────────────────────────────────────────────────── */
 
 .pagination {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   flex-wrap: wrap;
   margin-top: 14px;
 }
 
 .pageInfo {
   margin-right: 6px;
-  color: var(--bw-steel-mist);
+  font-family: var(--bw-font-body);
   font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
 }
 
 .pageButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 30px;
   height: 30px;
   padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: var(--bw-radius-hamburger);
-  background: var(--bw-surface-mist);
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
+  font-size: 12px;
   color: var(--bw-ink-steel);
-  font-family: inherit;
-  font-size: var(--bw-size-label);
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    color 0.12s;
 }
 
 .pageButton:hover:not(:disabled) {
@@ -195,9 +222,16 @@
   cursor: not-allowed;
 }
 
-.pageButtonActive,
-.pageButtonActive:hover:not(:disabled) {
+/* La página actual. El color no es la única señal: el botón lleva
+   `aria-current="page"`. */
+.currentPage {
   background: var(--bw-deep-steel);
   border-color: var(--bw-deep-steel);
-  color: var(--bw-cold-white);
+  color: var(--bw-warm-cream);
+  cursor: default;
+}
+
+.currentPage:hover {
+  border-color: var(--bw-deep-steel);
+  color: var(--bw-warm-cream);
 }

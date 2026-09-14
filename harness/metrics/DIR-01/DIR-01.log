@@ -61,3 +61,43 @@ src/screens/admin/RequestsTable.test.tsx(13,40): error TS2307: Cannot find modul
 ### C2 ROJO
 suite e2e COMPLETA (exit 1)
 Error: Process from config.webServer was not able to start. Exit code: 2
+
+==============================================================================
+· corrida arrancada 2026-09-14 10:42:03 · harness/tasks/DIR-01.json
+==============================================================================
+Log de esta corrida: harness\metrics\DIR-01\DIR-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/directory/Directory.module.css', 'app/src/screens/directory/Directory.tsx', 'app/src/screens/directory/DirectoryTable.module.css', 'app/src/screens/directory/DirectoryTable.tsx']
+  tokens in/out: 25464/23881   cache: 99.03% hit
+  coste real: $0.031985   en frio: $0.042727
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\DIR-01\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/directory/Directory.module.css', 'app/src/screens/directory/Directory.tsx', 'app/src/screens/directory/DirectoryTable.module.css', 'app/src/screens/directory/DirectoryTable.tsx']
+  tokens in/out: 33164/6816   cache: 76.42% hit
+  coste real: $0.012793   en frio: $0.023589
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\DIR-01\attempt_2.json (F-122)
+  CSV: 2026-09-14,DIR-01,DIR-01,deepseek-v4-flash,25464,23881,0.031985,1,1.5,app/src/screens/directory/Directory.module.css;app/src/screens/directory/Directory.tsx;app/src/screens/directory/DirectoryTable.module.css;app/src/screens/directory/DirectoryTable.tsx,99.03,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-14,DIR-01,DIR-01,deepseek-v4-flash,33164,6816,0.012793,2,0.3,app/src/screens/directory/Directory.module.css;app/src/screens/directory/Directory.tsx;app/src/screens/directory/DirectoryTable.module.css;app/src/screens/directory/DirectoryTable.tsx,76.42,no,-,-,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\DIR-01\attempt_1.json
+  harness\metrics\DIR-01\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  ⚠ Y estos son de una corrida ANTERIOR, no de esta:
+      harness\metrics\DIR-01\attempt_3.json
+      Quien los lea mañana los leera como si fueran de hoy.
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

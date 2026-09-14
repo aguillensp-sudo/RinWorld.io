@@ -24,7 +24,7 @@ pueda desviar de ella con el tiempo.
 import datetime
 import sys
 
-PRICE_TABLE_DATE = "2026-08-28"
+PRICE_TABLE_DATE = "2026-09-14"
 STALE_AFTER_DAYS = 90
 
 PRICES = {
@@ -35,6 +35,15 @@ PRICES = {
     "claude-sonnet-5": {
         "input": 2.0, "cache_write_5m": 2.50, "cache_write_1h": 4.0,
         "cache_read": 0.20, "output": 10.0,
+    },
+    # F-163: una sesion sin tarifa paro las dos corridas de F-161/F-162 al
+    # tropezar con este modelo. Una fila anterior, sin pedirla nadie, ya habia
+    # puesto $0.80/$1.0/$1.6/$0.08/$4.0 -que es la tarifa de Haiku 3.5,
+    # retirado, no la de Haiku 4.5- y se revirtio dos veces sin verificarla.
+    # Esta es la publicada hoy en la pagina de precios para Haiku 4.5.
+    "claude-haiku-4-5-20251001": {
+        "input": 1.0, "cache_write_5m": 1.25, "cache_write_1h": 2.0,
+        "cache_read": 0.10, "output": 5.0,
     },
     # Fast mode (investigacion): solo Opus 5 / Opus 4.8, mismo cache, input y
     # output a tarifa distinta. Se activa por sesion con `/fast`, asi que se

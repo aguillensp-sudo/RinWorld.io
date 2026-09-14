@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import {
   DEFAULT_SORT,
   EMPTY_FILTERS,
@@ -23,33 +23,22 @@ interface Props {
 /**
  * DIR-01 · Directorio de Organizaciones.
  *
- * La pantalla posee TODO el estado: los filtros aplicados (país + nombre), el
- * texto en curso del buscador —que es estado de interfaz y no un filtro hasta que
- * se confirma con Enter o con la lupa—, los países del desplegable, el orden, la
- * página y las últimas filas/total/páginas que devolvió el servidor.
+ * Es la PANTALLA: posee todo el estado y es el único sitio que llama a la red.
+ * `DirectoryTable` es presentacional y pinta lo que reciba.
  *
- * Tres cosas del contrato que conviene tener presentes al leer el cuerpo:
+ * El reparto de estado es el de INV-01 y SRCH-01, y por la misma razón:
  *
- * 1. **La búsqueda NO es reactiva.** Escribir en el campo no consulta nada (spec
- *    §3: «Búsqueda server-side al pulsar Enter o icono lupa»). El texto se copia
- *    al filtro `name` —recortado— en `runSearch`, y solo ahí. Ese filtro es
- *    aparte del `draft`: `Limpiar filtros` se decide sobre lo APLICADO, no sobre
- *    lo que haya sin confirmar en el campo.
- * 2. **Cambiar el país consulta de inmediato**, sin botón de por medio, y vuelve
- *    a la página 1. El filtro `country` no se toca al buscar por nombre, ni al
- *    revés: los dos controles son combinables (spec §3).
- * 3. **Ordenar y filtrar vuelven a la página 1.**
+ * - Los **filtros aplicados** (`filters`) son lo que se consulta de verdad.
+ * - El **texto en curso** (`draft`) es lo que se está escribiendo. Son dos
+ *   estados distintos porque la spec §3 pide «búsqueda server-side al pulsar
+ *   Enter o icono lupa»: teclear no consulta, confirmar sí. Si fueran el mismo
+ *   estado, cada pulsación sería una consulta, que es justo lo que la spec
+ *   evita.
+ * - El **orden**, la **página** y la **respuesta** son del servidor: aquí solo
+ *   se guardan los últimos valores que devolvió.
  */
 export function Directory({ profile }: Props) {
-  // El perfil llega por contrato de pantalla, pero DIR-01 no restringe nada por
-  // miembro: la spec §7 dice que los datos de contacto son públicos para todos
-  // los miembros, sin depender de la visibilidad de inventario de cada uno. No
-  // condiciona ninguna consulta ni ninguna celda, y por eso no se usa.
-  void profile;
-
-  /** Filtros APLICADOS. `Limpiar filtros` se decide sobre esto. */
   const [filters, setFilters] = useState<DirectoryFilters>(EMPTY_FILTERS);
-  /** Lo que hay escrito en el campo, todavía sin confirmar. */
   const [draft, setDraft] = useState('');
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [sort, setSort] = useState<DirectorySort>(DEFAULT_SORT);
@@ -61,13 +50,19 @@ export function Directory({ profile }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Los países que de verdad hay en el directorio, no la lista ISO completa ni
-   * agrupados por continente: eso era del mock. Ya vienen ordenados por la capa
-   * de datos y aquí no se reordenan.
-   *
-   * Si esto rechaza, el desplegable se queda solo con «Todos los países» y el
-   * resto de la pantalla sigue funcionando: este fallo NO se pinta en el
-   * `role="alert"`, que es exclusivamente para el fallo de `fetchOrganizations`.
+   * El miembro de sesión no decide ninguna de las cinco columnas de DIR-01:
+   * ninguna es relativa al reloj ni al propio miembro. El prop es el contrato
+   * de la pantalla (el shell lo inyecta), no un dato que se pinte aquí.
+   */
+  void profile;
+
+  /**
+   * Los países del desplegable salen de la base, no de una lista ISO fija:
+   * ofrecer doscientos cuarenta y nueve países que no devuelven ni una fila es
+   * un desplegable que solo sirve para perderse. Si la petición falla, el
+   * desplegable se queda con «Todos los países» y **el resto de la pantalla
+   * sigue funcionando**: este fallo no es el de la tabla y no se pinta en su
+   * `role="alert"`.
    */
   useEffect(() => {
     let cancelled = false;
@@ -86,9 +81,14 @@ export function Directory({ profile }: Props) {
   }, []);
 
   /**
-   * La consulta. Al empezar una carga nueva se descarta lo que había y se vuelve
-   * al mensaje de carga: nunca se pintan filas de una respuesta anterior mientras
-   * llega la siguiente.
+   * La consulta. Depende de los filtros aplicados, del orden y de la página:
+   * cualquier cambio en los tres vuelve a preguntar al servidor, que es lo que
+   * significa «paginación server-side».
+   *
+   * Al empezar una carga nueva se descarta la respuesta anterior (`setRows([])`)
+   * y se vuelve al mensaje de carga. Nunca se pintan filas de una consulta
+   * vieja mientras llega la siguiente: la tabla y el orden que muestra siempre
+   * corresponden a los filtros que tiene delante el usuario.
    */
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +96,7 @@ export function Directory({ profile }: Props) {
     setLoading(true);
     setError(null);
     setRows([]);
+    setTotal(0);
 
     fetchOrganizations({ filters, sort, page })
       .then((result) => {
@@ -103,12 +104,16 @@ export function Directory({ profile }: Props) {
         setRows(result.rows);
         setTotal(result.total);
         setPageCount(result.pageCount);
-        setLoading(false);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(errorMessage(err));
-        setLoading(false);
+        setRows([]);
+        setTotal(0);
+        setPageCount(1);
+        setError(errorMessage(err instanceof Error ? err : new Error(String(err))));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
 
     return () => {
@@ -116,49 +121,73 @@ export function Directory({ profile }: Props) {
     };
   }, [filters, sort, page]);
 
-  /** Enter en el campo y la lupa hacen EXACTAMENTE lo mismo. */
-  function runSearch() {
-    // Sin tocar `filters.country`: los dos controles se combinan.
-    setFilters((current) => ({ ...current, name: draft.trim() }));
-    setPage(1);
-  }
-
-  function handleCountryChange(code: string) {
-    setFilters((current) => ({ ...current, country: code }));
-    setPage(1);
-  }
-
-  function clearFilters() {
-    setFilters(EMPTY_FILTERS);
-    // El campo se vacía también EN PANTALLA, no solo el filtro aplicado.
-    setDraft('');
-    setPage(1);
-  }
-
-  function handleSort(field: DirectorySortField) {
-    // La dirección la decide `nextSort`, en la capa de datos: desde aquí nunca
-    // viaja una dirección. Ordenar vuelve a la página 1 — el orden nuevo reordena
-    // TODAS las filas, no solo las de la página en la que estaba el usuario.
-    setSort((current) => nextSort(current, field));
+  /**
+   * Cambiar el país consulta DE INMEDIATO —sin botón de por medio— y vuelve a
+   * la página 1: la página 3 de los resultados anteriores no significa nada
+   * para el filtro nuevo.
+   */
+  function handleCountryChange(event: ChangeEvent<HTMLSelectElement>) {
+    const country = event.target.value;
+    setFilters((prev) => ({ ...prev, country }));
     setPage(1);
   }
 
   /**
-   * DIR-02 (la ficha pública de la organización) no está construida todavía y no
-   * es una de las tres pantallas del H1: no hay destino al que navegar. El
-   * handler existe igualmente porque es el contrato de `DirectoryTable` —igual
-   * que `onConsult`/`onContact` en SRCH-01— y el día que exista DIR-02 solo
-   * cambia este cuerpo.
+   * La única vía por la que el texto en pantalla se convierte en filtro. La
+   * usan Enter y la lupa, y hacen exactamente lo mismo: copiar el texto
+   * recortado al filtro `name` **sin tocar** el país que hubiera puesto el
+   * desplegable, y volver a la página 1.
+   */
+  function runSearch() {
+    const name = draft.trim();
+    setFilters((prev) => ({ ...prev, name }));
+    setPage(1);
+  }
+
+  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      runSearch();
+    }
+  }
+
+  /**
+   * `Limpiar filtros` sobre los filtros APLICADOS, no sobre lo que haya sin
+   * confirmar en el campo: vacía el campo también en pantalla, devuelve los dos
+   * filtros a `EMPTY_FILTERS`, vuelve a la página 1 y consulta.
+   */
+  function handleClear() {
+    setFilters(EMPTY_FILTERS);
+    setDraft('');
+    setPage(1);
+  }
+
+  /**
+   * Pulsar una cabecera: la dirección la decide `nextSort`, no la tabla. La
+   * tabla manda el CAMPO, nunca la dirección.
+   *
+   * Y vuelve a la página 1, igual que un filtro: con el orden nuevo, la página
+   * 3 de la ordenación anterior no significa nada. El orden no toca los
+   * filtros; la página solo se reinicia.
+   */
+  function handleSort(field: DirectorySortField) {
+    setSort((prev) => nextSort(prev, field));
+    setPage(1);
+  }
+
+  /**
+   * El contrato del componente para cuando exista DIR-02. El nombre de la fila
+   * está apagado y este manejador no llega a dispararse nunca; se conserva
+   * igual que `Consultar`/`Contactar` en SRCH-01 (F-100).
    */
   function handleOpenOrganization(_id: string) {
-    // Sin destino todavía.
+    // DIR-02 no está construida todavía: no hay destino al que navegar.
   }
 
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
-  const countLabel = total === 1 ? `${total} organización` : `${total} organizaciones`;
 
   return (
-    <div className={styles.screen}>
+    <div className={styles.page}>
       <p className={styles.eyebrow}>Directorio de Organizaciones</p>
       <h1 className={styles.title}>Empresas</h1>
       <p className={styles.subtitle}>
@@ -166,15 +195,18 @@ export function Directory({ profile }: Props) {
         todos los miembros.
       </p>
 
-      {/* La barra de filtros sigue montada y utilizable mientras carga. */}
+      {/* La barra de filtros NO desaparece mientras carga: mismo criterio que
+          SRCH-01. Se puede seguir escribiendo y cambiando de país. */}
       <div className={styles.filterBar}>
         <select
           className={styles.select}
           aria-label="País"
           value={filters.country}
-          onChange={(event) => handleCountryChange(event.target.value)}
+          onChange={handleCountryChange}
         >
           <option value="">Todos los países</option>
+          {/* Ya vienen ordenados por nombre desde la capa de datos: aquí no se
+              reordena nada. Sin `<optgroup>` por continente: eso es del mock. */}
           {countries.map((country) => (
             <option key={country.code} value={country.code}>
               {country.label}
@@ -182,43 +214,39 @@ export function Directory({ profile }: Props) {
           ))}
         </select>
 
-        <input
-          className={styles.searchInput}
-          type="search"
-          aria-label="Buscar organización por nombre"
-          placeholder="Buscar organización..."
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') runSearch();
-          }}
-        />
-
-        <button
-          type="button"
-          className={styles.searchButton}
-          aria-label="Buscar organización"
-          onClick={runSearch}
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            focusable="false"
+        <div className={styles.searchWrap}>
+          <input
+            type="search"
+            className={styles.searchInput}
+            aria-label="Buscar organización por nombre"
+            placeholder="Buscar organización..."
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
+          />
+          <button
+            type="button"
+            className={styles.searchButton}
+            aria-label="Buscar organización"
+            onClick={runSearch}
           >
-            <circle cx="11" cy="11" r="7" />
-            <line x1="16.5" y1="16.5" x2="21" y2="21" />
-          </svg>
-        </button>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+              <line
+                x1="16.2"
+                y1="16.2"
+                x2="21"
+                y2="21"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
 
         {hasActiveFilters(filters) && (
-          <button type="button" className={styles.clearButton} onClick={clearFilters}>
+          <button type="button" className={styles.clearButton} onClick={handleClear}>
             Limpiar filtros
           </button>
         )}
@@ -241,30 +269,29 @@ export function Directory({ profile }: Props) {
             onOpenOrganization={handleOpenOrganization}
           />
 
+          {/* La tabla y la paginación van SIEMPRE juntas: el estado de cero
+              filas lo resuelve la tabla por dentro, no la pantalla. */}
           <nav className={styles.pagination} aria-label="Paginación del directorio">
             <span className={styles.pageInfo}>
-              {countLabel} · pág. {page}/{pageCount}
+              {`${total} ${total === 1 ? 'organización' : 'organizaciones'} · pág. ${page}/${pageCount}`}
             </span>
-
             <button
               type="button"
               className={styles.pageButton}
               aria-label="Página anterior"
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-              disabled={page === 1}
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
             >
               ‹
             </button>
-
-            {/* Una por página, de 1 a `pageCount`, sin ventana ni puntos
-                suspensivos: el tamaño de V1 no los necesita. */}
+            {/* Un botón por página, todas seguidas: con el tamaño de V1 no hace
+                falta la ventana con puntos suspensivos de INV-01, y añadirla
+                sería inventar un requisito que la spec no pide. */}
             {pages.map((n) => (
               <button
                 key={n}
                 type="button"
-                className={
-                  n === page ? `${styles.pageButton} ${styles.pageButtonActive}` : styles.pageButton
-                }
+                className={n === page ? `${styles.pageButton} ${styles.currentPage}` : styles.pageButton}
                 aria-label={`Página ${n}`}
                 aria-current={n === page ? 'page' : undefined}
                 onClick={() => setPage(n)}
@@ -272,13 +299,12 @@ export function Directory({ profile }: Props) {
                 {n}
               </button>
             ))}
-
             <button
               type="button"
               className={styles.pageButton}
               aria-label="Página siguiente"
-              onClick={() => setPage((current) => current + 1)}
               disabled={page >= pageCount}
+              onClick={() => setPage(page + 1)}
             >
               ›
             </button>

@@ -1,10 +1,19 @@
-/* Tabla del directorio (DIR-01). Ningún color literal: solo tokens del sistema. */
+/* =============================================================================
+   DIR-01 · Directorio de Organizaciones — tabla
+   =============================================================================
+   Solo tokens de `:root` (design-system.md §1): ningún hex, ningún rgb().
 
-.tableWrap {
+   Nota de tokens: no hay blanco puro en §1, así que la superficie de la tarjeta
+   y de la celda es `--bw-warm-cream` (#FAF8F4), el token más claro de la
+   paleta; la cabecera usa `--bw-surface-mist`, que es el rol que §1.4 le da
+   («th»).
+   ========================================================================== */
+
+.tableOuter {
   border: 1px solid var(--bw-line-steel);
   border-radius: 8px;
-  background: var(--bw-surface-mist);
-  overflow: hidden;
+  background: var(--bw-warm-cream);
+  overflow-x: auto;
 }
 
 .table {
@@ -16,55 +25,38 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--bw-line-steel);
   background: var(--bw-surface-mist);
-  color: var(--bw-steel-mist);
   font-family: var(--bw-font-title);
   font-size: var(--bw-size-hint);
   font-weight: 700;
-  letter-spacing: var(--bw-ls-label);
   text-transform: uppercase;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-steel-mist);
   text-align: left;
   white-space: nowrap;
   user-select: none;
-}
-
-.sortable {
-  cursor: pointer;
 }
 
 .sortButton {
   padding: 0;
   border: none;
   background: none;
-  color: inherit;
   font: inherit;
-  letter-spacing: inherit;
   text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   cursor: pointer;
+  transition: color 0.12s;
 }
 
 .sortButton:hover {
   color: var(--bw-ink-steel);
 }
 
-.sortButton:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-halo);
-}
-
-/* La flecha de dirección es decoración de CSS, no texto del botón: así el nombre
-   accesible de la cabecera ordenable sigue siendo exactamente «Nombre», «País» o
-   «Favoritos» y no «Nombre ↑». */
-.sortAsc,
-.sortDesc {
+/* La cabecera activa se distingue por color además del `aria-sort` del `<th>`,
+   que es la señal que anuncia el lector de pantalla. */
+.th[aria-sort='ascending'] .sortButton,
+.th[aria-sort='descending'] .sortButton {
   color: var(--bw-calibration-blue);
-}
-
-.sortAsc::after {
-  content: ' ↑';
-}
-
-.sortDesc::after {
-  content: ' ↓';
 }
 
 .row:hover .td {
@@ -74,9 +66,9 @@
 .td {
   padding: 11px 14px;
   border-bottom: 1px solid var(--bw-divider-mist);
-  color: var(--bw-ink-steel);
   font-family: var(--bw-font-body);
   font-size: var(--bw-size-input);
+  color: var(--bw-ink-steel);
   vertical-align: middle;
 }
 
@@ -84,57 +76,56 @@
   border-bottom: none;
 }
 
+.emptyCell {
+  padding: 28px 14px;
+  color: var(--bw-steel-mist);
+  text-align: center;
+}
+
+/* El nombre es un control apagado, no un enlace. Se queda azul y legible: un
+   botón deshabilitado que parece roto engaña más que uno que explica por qué
+   está apagado (el motivo va en el `title`). */
 .nameButton {
   padding: 0;
   border: none;
   background: none;
-  color: var(--bw-calibration-blue);
-  font-family: inherit;
+  font-family: var(--bw-font-body);
   font-size: var(--bw-size-input);
   font-weight: 500;
+  color: var(--bw-calibration-blue);
   text-align: left;
-  cursor: pointer;
+  cursor: default;
 }
 
-/* Apagado porque DIR-02 no existe todavía: el color se apaga con él, para no
-   prometer un enlace que no lleva a ninguna parte. */
 .nameButton:disabled {
-  color: var(--bw-steel-mist);
-  cursor: default;
+  opacity: 1;
+  color: var(--bw-calibration-blue);
 }
 
 .countryBadge {
   display: inline-block;
   padding: 2px 7px;
-  border: 1px solid var(--bw-badge-neutral-border-soft);
+  border: 1px solid var(--bw-line-steel);
   border-radius: 2px;
   background: var(--bw-cold-white);
-  color: var(--bw-steel-mist);
   font-family: var(--bw-font-mono);
-  font-size: var(--bw-size-hint);
+  font-size: 11px;
+  letter-spacing: var(--bw-ls-hint);
+  color: var(--bw-steel-mist);
   white-space: nowrap;
 }
 
 .contact {
+  font-size: 12px;
   color: var(--bw-steel-mist);
-  font-size: var(--bw-size-label);
   white-space: nowrap;
 }
 
-.favorite {
+.favorites {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--bw-brass);
-  font-size: var(--bw-size-label);
+  font-size: 12px;
   font-weight: 500;
-}
-
-.emptyCell {
-  padding: 28px 14px;
-  border-bottom: none;
-  color: var(--bw-steel-mist);
-  font-family: var(--bw-font-body);
-  font-size: var(--bw-size-input);
-  text-align: center;
+  color: var(--bw-brass);
 }

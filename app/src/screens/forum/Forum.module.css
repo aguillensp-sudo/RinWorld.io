@@ -1,0 +1,227 @@
+/* =============================================================================
+   FORO-01 · Lista de Categorías del Foro
+   =============================================================================
+   Ningún color literal: todo sale del vocabulario `var(--bw-*)`.
+
+   Dos decisiones que conviene dejar escritas:
+
+   · El HTML aprobado pinta las tarjetas y las filas de actividad sobre blanco
+     puro. No hay token de blanco en el sistema; el más cercano es
+     `--bw-surface-mist`, que es la superficie sutil de §1.4 sobre el Cold White
+     del panel.
+
+   · El HTML aprobado usa 13px para el aviso, las descripciones y los títulos de
+     los hilos. En el sistema ese escalón es `--bw-size-input` (13px): se usa el
+     token y no el literal, aunque su nombre venga de los campos de formulario.
+   ========================================================================== */
+
+.body {
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+  min-height: 100%;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+  margin-bottom: 3px;
+}
+
+.sub {
+  max-width: 600px;
+  font-size: var(--bw-size-body);
+  line-height: 1.6;
+  color: var(--bw-text-secondary);
+  margin-bottom: 16px;
+}
+
+/* ── Aviso de confidencialidad ───────────────────────────────────────────── */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: var(--bw-radius);
+}
+
+.noticeIcon {
+  font-size: 16px;
+  color: var(--bw-brass);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.noticeText {
+  flex: 1;
+  font-size: var(--bw-size-input);
+  line-height: 1.55;
+  color: var(--bw-text-secondary);
+}
+
+/* La frase que un lector rápido no se puede saltar: brass, en negrita. */
+.noticeText strong {
+  color: var(--bw-brass);
+}
+
+/* ── Carga y error ───────────────────────────────────────────────────────── */
+.loading {
+  font-size: var(--bw-size-body);
+  color: var(--bw-steel-mist);
+}
+
+.error {
+  font-size: var(--bw-size-body);
+  color: var(--bw-error-text);
+}
+
+/* ── Secciones ───────────────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 26px;
+}
+
+.sectionHead {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-divider);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+  margin-bottom: 10px;
+}
+
+/* ── Actividad reciente ──────────────────────────────────────────────────── */
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  text-align: left;
+  cursor: not-allowed;
+}
+
+.recentTitle {
+  flex: 1;
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+/* El badge también va en mayúsculas en el dato (ver el comentario de
+   `Forum.tsx`): `text-transform` no cambia el nombre accesible, así que el
+   dato llega ya en mayúsculas y esto solo lo garantiza. */
+.badgeCat {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+  background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  white-space: nowrap;
+}
+
+.recentOrg {
+  flex-shrink: 0;
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+}
+
+.recentTime {
+  flex-shrink: 0;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+}
+
+/* ── Rejilla de categorías ───────────────────────────────────────────────── */
+.catGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.catCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  text-align: left;
+  cursor: not-allowed;
+}
+
+.catName {
+  font-size: var(--bw-size-body);
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.catDesc {
+  flex: 1;
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-steel-mist);
+}
+
+.catStats {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.catStat {
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+.catLast {
+  margin-top: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+/* Los controles están apagados a propósito (FORO-02 no existe), pero su texto
+   sigue siendo el del diseño: nada de grises de navegador. */
+.recentItem:disabled,
+.catCard:disabled {
+  color: inherit;
+  opacity: 1;
+}

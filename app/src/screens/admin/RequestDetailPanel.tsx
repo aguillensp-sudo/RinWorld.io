@@ -27,44 +27,37 @@ interface Props {
 }
 
 /**
- * El color del badge de estado. `styles` es un índice de strings —una clase
- * puede faltar en una build sin CSS—, así que el valor admite `undefined` y
- * quien lo compone lo descarta.
+ * El valor es `string | undefined` a propósito: con `noUncheckedIndexedAccess`,
+ * la declaración de los CSS Modules del repo es una firma de índice y cada
+ * `styles.x` puede ser `undefined`. Se declara tal cual en vez de forzar un
+ * `as string`, que sería mentir sobre lo que el tipo dice de verdad.
  */
 const STATE_CLASS: Record<RequestState, string | undefined> = {
-  PENDING_REVIEW: styles.pending,
-  INVITED_APPROVED: styles.approved,
-  REJECTED: styles.rejected,
-  CANCELLED: styles.cancelled,
+  PENDING_REVIEW: styles.statePending,
+  INVITED_APPROVED: styles.stateApproved,
+  REJECTED: styles.stateRejected,
+  CANCELLED: styles.stateCancelled,
 };
-
-/**
- * El formato de fecha es SIEMPRE el de la capa de datos —aquí no se escribe
- * ninguna fecha a mano—, pero el instante se le pasa normalizado a su reloj UTC:
- * la cola del Operador se audita en UTC y así la misma solicitud no sale con una
- * hora distinta según la zona horaria de la máquina que la mira. En un entorno
- * en UTC el desplazamiento es cero.
- */
-function utcClock(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return iso;
-  return new Date(t + new Date(t).getTimezoneOffset() * 60_000).toISOString();
-}
 
 /**
  * Panel lateral de detalle de ADMIN-01.
  *
- * Totalmente controlado: no llama a ninguna función de red, no decide cuándo se
- * abre el formulario de rechazo —eso es de `AdminRequests`— y el textarea del
- * motivo no guarda su propio estado: su `value` es `rejectReason` y cada tecla
- * sale por `onRejectReasonChange`.
+ * Totalmente controlado: no llama a la red, no decide cuándo se abre el
+ * formulario de rechazo y **no guarda el texto del motivo** — su `value` es
+ * `rejectReason` y cada tecla sube por `onRejectReasonChange`. La validación del
+ * botón de confirmar sale de `isValidRejectionReason`, jamás de un `.length`
+ * escrito a mano.
+ *
+ * El pie (`<footer>`) es una sola rama de las cinco posibles, en el orden de la
+ * tarea: error → confirmación de aprobación → confirmación de rechazo →
+ * formulario → decisión según el estado de la fila.
  */
 export function RequestDetailPanel({
   row,
-  history = [],
-  historyLoading = false,
+  history,
+  historyLoading,
   rejecting,
-  rejectReason = '',
+  rejectReason,
   onRejectReasonChange,
   actionBusy,
   actionError,
@@ -76,84 +69,12 @@ export function RequestDetailPanel({
   onReturnToReview,
   onClose,
 }: Props) {
-  /**
-   * El pie: SOLO UNA de las ramas de decisión a la vez, en el orden de prioridad
-   * de la spec. El `actionError` va aparte, encima: avisa y NO oculta la rama
-   * que toque, para que el operador pueda reintentar sin perder los botones.
-   */
-  let decision: JSX.Element | null = null;
-
-  if (feedback === 'approved') {
-    // Texto literal de la tarea: NINGUNA mención a un email. El proveedor de
-    // correo de EML-07/EML-08 no existe en el proyecto y esta pantalla no puede
-    // afirmar un envío que no ocurre.
-    decision = <p className={styles.feedbackApprove}>Aprobación registrada.</p>;
-  } else if (feedback === 'rejected') {
-    decision = <p className={styles.feedbackReject}>Solicitud rechazada.</p>;
-  } else if (rejecting) {
-    decision = (
-      <div className={styles.rejectForm}>
-        <textarea
-          className={styles.reason}
-          placeholder="Explica el motivo del rechazo — se enviará al solicitante"
-          maxLength={500}
-          value={rejectReason}
-          onChange={(e) => onRejectReasonChange(e.target.value)}
-        />
-        <p className={styles.hint}>
-          Este texto se incluirá en el email de rechazo (EML-08) · Mín 10 / máx 500 caracteres
-        </p>
-        <div className={styles.formActions}>
-          <button
-            type="button"
-            className={styles.confirm}
-            // La validación sale de la capa de datos: el `CHECK` de la base y
-            // este botón no pueden discrepar (F-148).
-            disabled={actionBusy || !isValidRejectionReason(rejectReason)}
-            onClick={onConfirmReject}
-          >
-            Confirmar rechazo
-          </button>
-          <button
-            type="button"
-            className={styles.cancel}
-            disabled={actionBusy}
-            onClick={onCancelReject}
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    );
-  } else if (row.state === 'PENDING_REVIEW') {
-    decision = (
-      <div className={styles.actions}>
-        <button type="button" className={styles.approve} disabled={actionBusy} onClick={onApprove}>
-          Aprobar
-        </button>
-        <button type="button" className={styles.reject} disabled={actionBusy} onClick={onStartReject}>
-          Rechazar
-        </button>
-      </div>
-    );
-  } else if (row.state === 'REJECTED') {
-    decision = (
-      <button
-        type="button"
-        className={styles.return}
-        disabled={actionBusy}
-        onClick={onReturnToReview}
-      >
-        Volver a revisión
-      </button>
-    );
-  }
-  // INVITED_APPROVED y CANCELLED son estados de solo lectura: sin botones.
+  const canConfirmReject = isValidRejectionReason(rejectReason);
 
   return (
     <aside className={styles.panel} aria-label="Detalle de solicitud">
-      <header className={styles.header}>
-        <div>
+      <div className={styles.header}>
+        <div className={styles.headerText}>
           <p className={styles.eyebrow}>Detalle de solicitud</p>
           <h2 className={styles.title}>{row.orgName}</h2>
         </div>
@@ -165,87 +86,159 @@ export function RequestDetailPanel({
         >
           ×
         </button>
-      </header>
+      </div>
 
       <div className={styles.body}>
-        <section>
-          <h3 className={styles.sectionLabel}>Datos FSR</h3>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Empresa</span>
-            <span className={styles.fieldValue}>{row.orgName}</span>
+        <div className={styles.section}>
+          <div className={styles.sectionLabel}>Datos FSR</div>
+
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>Empresa</span>
+            <span className={styles.dataValue}>{row.orgName}</span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>País</span>
-            <span className={styles.fieldValue}>{`${row.countryLabel} · ${row.country}`}</span>
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>País</span>
+            <span className={styles.dataValue}>{`${row.countryLabel} · ${row.country}`}</span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Nombre solicitante</span>
-            <span className={styles.fieldValue}>{row.applicantName}</span>
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>Nombre solicitante</span>
+            <span className={styles.dataValue}>{row.applicantName}</span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Email</span>
-            <span className={`${styles.fieldValue} ${styles.valueMono}`}>{row.email}</span>
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>Email</span>
+            <span className={`${styles.dataValue} ${styles.dataValueMono}`}>{row.email}</span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Teléfono</span>
-            <span className={`${styles.fieldValue} ${styles.valueMono}`}>
-              {row.phone === '' ? '—' : row.phone}
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>Teléfono</span>
+            <span className={`${styles.dataValue} ${styles.dataValueMono}`}>
+              {row.phone ? row.phone : '—'}
             </span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Sitio web</span>
-            <span className={styles.fieldValue}>
-              {row.website === '' ? (
-                '—'
-              ) : (
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>Sitio web</span>
+            <span className={styles.dataValue}>
+              {row.website ? (
                 <a
-                  className={styles.extLink}
+                  className={styles.link}
                   href={websiteHref(row.website)}
                   target="_blank"
                   rel="noreferrer"
                 >
                   {row.website}
                 </a>
+              ) : (
+                '—'
               )}
             </span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Enviado</span>
-            <span className={`${styles.fieldValue} ${styles.valueMono}`}>
-              {requestDateLabel(utcClock(row.submittedAt))}
+          <div className={styles.dataRow}>
+            <span className={styles.dataLabel}>Enviado</span>
+            <span className={`${styles.dataValue} ${styles.dataValueMono}`}>
+              {requestDateLabel(row.submittedAt)}
             </span>
           </div>
-        </section>
+        </div>
 
-        <section>
-          <h3 className={styles.sectionLabel}>Historial de estado</h3>
+        <div className={styles.section}>
+          <div className={styles.sectionLabel}>Historial de estado</div>
           {historyLoading ? (
             <p className={styles.historyLoading}>Cargando historial…</p>
           ) : (
-            <ul className={styles.history}>
+            <ul className={styles.historyList}>
               {history.map((event) => (
                 <li key={event.id} className={styles.historyItem}>
-                  <span className={`${styles.stateBadge} ${STATE_CLASS[event.state] ?? ''}`}>
+                  <span className={`${styles.stateBadge} ${STATE_CLASS[event.state]}`}>
                     {event.state}
                   </span>
-                  <span className={styles.historyDate}>
-                    {requestDateLabel(utcClock(event.at))}
-                  </span>
-                  {event.note !== '' && <span className={styles.historyNote}>{event.note}</span>}
+                  <div className={styles.historyBody}>
+                    <div className={styles.historyTime}>{requestDateLabel(event.at)}</div>
+                    {event.note ? <div className={styles.historyNote}>{event.note}</div> : null}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </div>
       </div>
 
       <footer className={styles.footer}>
+        {/*
+          El error no oculta lo que venga detrás: si el `UPDATE` falló, la fila
+          sigue en su estado y los botones de decisión siguen ahí para reintentar.
+        */}
         {actionError !== null && (
-          <div className={styles.alert} role="alert">
+          <div role="alert" className={styles.actionError}>
             {actionError}
           </div>
         )}
-        {decision}
+
+        {feedback === 'approved' ? (
+          /* No se menciona ningún email: no existe proveedor de correo en el
+             proyecto y esta pantalla no puede afirmar un envío que no ocurre. */
+          <div className={styles.feedbackApproved}>Aprobación registrada.</div>
+        ) : feedback === 'rejected' ? (
+          <div className={styles.feedbackRejected}>Solicitud rechazada.</div>
+        ) : rejecting ? (
+          <div className={styles.rejectForm}>
+            <textarea
+              className={styles.textarea}
+              placeholder="Explica el motivo del rechazo — se enviará al solicitante"
+              maxLength={500}
+              value={rejectReason}
+              onChange={(e) => onRejectReasonChange(e.target.value)}
+            />
+            <p className={styles.hint}>
+              Este texto se incluirá en el email de rechazo (EML-08) · Mín 10 / máx 500 caracteres
+            </p>
+            <div className={styles.rejectButtons}>
+              <button
+                type="button"
+                className={styles.primaryDanger}
+                disabled={actionBusy || !canConfirmReject}
+                onClick={onConfirmReject}
+              >
+                Confirmar rechazo
+              </button>
+              <button
+                type="button"
+                className={styles.plain}
+                disabled={actionBusy}
+                onClick={onCancelReject}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : row.state === 'PENDING_REVIEW' ? (
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.primary}
+              disabled={actionBusy}
+              onClick={onApprove}
+            >
+              Aprobar
+            </button>
+            {/* Abre el formulario; quien confirma el rechazo es `onConfirmReject`. */}
+            <button
+              type="button"
+              className={styles.plain}
+              disabled={actionBusy}
+              onClick={onStartReject}
+            >
+              Rechazar
+            </button>
+          </div>
+        ) : row.state === 'REJECTED' ? (
+          <button
+            type="button"
+            className={styles.plain}
+            disabled={actionBusy}
+            onClick={onReturnToReview}
+          >
+            Volver a revisión
+          </button>
+        ) : null}
       </footer>
     </aside>
   );

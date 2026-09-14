@@ -1,11 +1,8 @@
 .screen {
+  font-family: var(--bw-font-body);
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  min-height: 100%;
-  padding: 24px 28px 40px;
-  background: var(--bw-cold-white);
-  font-family: var(--bw-font-body);
+  min-width: 0;
 }
 
 .eyebrow {
@@ -19,25 +16,24 @@
 }
 
 .title {
-  margin: 0 0 3px;
+  margin: 0 0 6px;
   font-family: var(--bw-font-title);
   font-size: var(--bw-size-title);
   font-weight: 700;
   letter-spacing: var(--bw-ls-title);
   color: var(--bw-deep-steel);
+  line-height: 1.2;
 }
 
 .subtitle {
   margin: 0 0 16px;
-  max-width: 600px;
-  font-size: var(--bw-size-body);
+  max-width: 640px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--bw-steel-mist);
 }
 
-/* ── Chips de filtro por estado ─────────────────────────────────────────── */
-
-.chips {
+.filters {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -45,21 +41,17 @@
 }
 
 .chip {
-  display: inline-flex;
-  align-items: center;
   height: 28px;
   padding: 0 14px;
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: 14px;
-  /* El token de superficie más claro del sistema: no hay un blanco puro
-     declarado y §6.1 prohíbe escribirlo a mano. */
-  background: var(--bw-warm-cream);
-  color: var(--bw-steel-mist);
+  background: var(--bw-surface-mist);
   font-family: inherit;
-  font-size: var(--bw-size-label);
+  font-size: 12px;
   font-weight: 500;
+  color: var(--bw-steel-mist);
   cursor: pointer;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+  transition: all 0.12s;
 }
 
 .chip:hover {
@@ -67,23 +59,14 @@
   color: var(--bw-ink-steel);
 }
 
-.chip:focus-visible {
-  outline: none;
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
-}
-
-.chipActive,
-.chipActive:hover {
+/* Doble clase para ganar a `.chip:hover` sin escribir un valor literal. */
+.chip.chipActive {
   background: var(--bw-chip-active-bg);
   border-color: var(--bw-chip-active-border);
   color: var(--bw-primary-dark);
-  font-weight: 600;
 }
 
-/* ── Zona de la tabla ───────────────────────────────────────────────────── */
-
-.layout {
+.body {
   display: flex;
   align-items: flex-start;
   gap: 16px;
@@ -95,20 +78,21 @@
   min-width: 0;
 }
 
-.loading,
-.error {
+.loading {
   padding: 32px 16px;
-  border: 1px solid var(--bw-line-steel);
-  border-radius: 8px;
-  background: var(--bw-warm-cream);
-  font-size: var(--bw-size-input);
-  color: var(--bw-steel-mist);
   text-align: center;
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
 }
 
-.error {
-  border-color: var(--bw-badge-danger-border);
+.loadError {
+  padding: 16px;
+  font-size: 13px;
+  color: var(--bw-sensitive-text);
   background: var(--bw-sensitive-bg);
-  color: var(--bw-error-text);
-  text-align: left;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
 }

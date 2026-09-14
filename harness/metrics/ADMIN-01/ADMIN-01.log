@@ -155,3 +155,43 @@ expected document not to contain element, found <span
     170|   });
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+==============================================================================
+· corrida arrancada 2026-09-14 17:15:58 · harness/tasks/ADMIN-01.json
+==============================================================================
+Log de esta corrida: harness\metrics\ADMIN-01\ADMIN-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/admin/AdminRequests.module.css', 'app/src/screens/admin/AdminRequests.tsx', 'app/src/screens/admin/RequestDetailPanel.module.css', 'app/src/screens/admin/RequestDetailPanel.tsx', 'app/src/screens/admin/RequestsTable.module.css', 'app/src/screens/admin/RequestsTable.tsx']
+  tokens in/out: 26507/26298   cache: 99.48% hit
+  coste real: $0.035144   en frio: $0.046376
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\ADMIN-01\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/admin/AdminRequests.module.css', 'app/src/screens/admin/AdminRequests.tsx', 'app/src/screens/admin/RequestDetailPanel.module.css', 'app/src/screens/admin/RequestDetailPanel.tsx', 'app/src/screens/admin/RequestsTable.module.css', 'app/src/screens/admin/RequestsTable.tsx']
+  tokens in/out: 37444/10844   cache: 70.42% hit
+  coste real: $0.019557   en frio: $0.030789
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\ADMIN-01\attempt_2.json (F-122)
+  CSV: 2026-09-14,ADMIN-01,ADMIN-01,deepseek-v4-flash,26507,26298,0.035144,1,1.4,app/src/screens/admin/AdminRequests.module.css;app/src/screens/admin/AdminRequests.tsx;app/src/screens/admin/RequestDetailPanel.module.css;app/src/screens/admin/RequestDetailPanel.tsx;app/src/screens/admin/RequestsTable.module.css;app/src/screens/admin/RequestsTable.tsx,99.48,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-14,ADMIN-01,ADMIN-01,deepseek-v4-flash,37444,10844,0.019557,2,0.5,app/src/screens/admin/AdminRequests.module.css;app/src/screens/admin/AdminRequests.tsx;app/src/screens/admin/RequestDetailPanel.module.css;app/src/screens/admin/RequestDetailPanel.tsx;app/src/screens/admin/RequestsTable.module.css;app/src/screens/admin/RequestsTable.tsx,70.42,no,-,-,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\ADMIN-01\attempt_1.json
+  harness\metrics\ADMIN-01\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  ⚠ Y estos son de una corrida ANTERIOR, no de esta:
+      harness\metrics\ADMIN-01\attempt_3.json
+      Quien los lea mañana los leera como si fueran de hoy.
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

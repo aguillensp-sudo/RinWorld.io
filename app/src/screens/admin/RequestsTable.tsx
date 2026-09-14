@@ -3,7 +3,6 @@ import {
   queueAgeLevel,
   requestDateLabel,
   websiteHref,
-  type QueueAgeLevel,
   type RequestRow,
   type RequestState,
 } from '../../lib/admin-requests';
@@ -17,9 +16,12 @@ interface Props {
 }
 
 /**
- * Las ocho columnas de la spec §3, en orden fijo. NINGUNA es ordenable: el orden
- * "más antigua primero" ya lo resuelve `fetchRequests`, y esta tabla no reordena
- * ni llama a la red.
+ * Las OCHO columnas de la spec §3, en su orden fijo e inamovible.
+ *
+ * Ninguna es ordenable: a diferencia de DIR-01/SRCH-01, aquí el orden lo decide
+ * la consulta («de más antigua a más reciente») y no hay `aria-sort` ni botón en
+ * la cabecera. Son texto plano, y por eso no hay ningún `<button>` dentro de un
+ * `<th>`.
  */
 const COLUMNS = [
   'Organización',
@@ -30,49 +32,33 @@ const COLUMNS = [
   'Fecha solicitud',
   'Antigüedad en cola',
   'Estado',
-] as const;
+];
 
 /**
- * Columna 8: el literal del enum tal cual, con su color.
- *
- * `styles` es un índice de strings —una clase puede faltar en una build sin
- * CSS—, así que el valor admite `undefined` y quien lo compone lo descarta.
+ * El valor es `string | undefined` a propósito: con `noUncheckedIndexedAccess`,
+ * la declaración de los CSS Modules del repo es una firma de índice y cada
+ * `styles.x` puede ser `undefined`. Se declara tal cual en vez de forzar un
+ * `as string`, que sería mentir sobre lo que el tipo dice de verdad.
  */
 const STATE_CLASS: Record<RequestState, string | undefined> = {
-  PENDING_REVIEW: styles.pending,
-  INVITED_APPROVED: styles.approved,
-  REJECTED: styles.rejected,
-  CANCELLED: styles.cancelled,
+  PENDING_REVIEW: styles.statePending,
+  INVITED_APPROVED: styles.stateApproved,
+  REJECTED: styles.stateRejected,
+  CANCELLED: styles.stateCancelled,
 };
-
-/** Columna 7: los tres niveles de `queueAgeLevel`, con sus colores. */
-const AGE_CLASS: Record<QueueAgeLevel, string | undefined> = {
-  normal: styles.ageNormal,
-  warn: styles.ageWarn,
-  alert: styles.ageAlert,
-};
-
-/**
- * El formato de fecha es SIEMPRE el de la capa de datos —aquí no se escribe
- * ninguna fecha a mano—, pero el instante se le pasa normalizado a su reloj UTC:
- * la cola del Operador se audita en UTC y así la misma solicitud no sale con una
- * hora distinta según la zona horaria de la máquina que la mira. En un entorno
- * en UTC el desplazamiento es cero.
- */
-function utcClock(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return iso;
-  return new Date(t + new Date(t).getTimezoneOffset() * 60_000).toISOString();
-}
 
 /**
  * Tabla de la cola de solicitudes de ADMIN-01.
  *
- * Presentacional: pinta las filas en el orden que recibe y no carga datos. El
- * estado vacío vive aquí dentro, porque "no hay filas" es un estado de la lista
- * y no de la pantalla.
+ * Presentacional: pinta las filas en el orden que recibe —el «más antigua
+ * primero» ya lo resuelve `fetchRequests`— y no carga ni reordena nada. El
+ * estado vacío vive aquí dentro porque «no hay filas» es un estado de la lista.
+ *
+ * `onSelect` recibe la fila ENTERA, no el id: la pantalla la guarda tal cual
+ * para que el panel de detalle siga teniendo datos después de decidir, cuando la
+ * fila ya no está en la lista filtrada.
  */
-export function RequestsTable({ rows = [], now, selectedId, onSelect }: Props) {
+export function RequestsTable({ rows, now, selectedId, onSelect }: Props) {
   const nowValue = now ?? new Date();
 
   return (
@@ -97,57 +83,60 @@ export function RequestsTable({ rows = [], now, selectedId, onSelect }: Props) {
           ) : (
             rows.map((row) => {
               const level = queueAgeLevel(row.submittedAt, nowValue);
-              const rowClass =
-                row.id === selectedId ? `${styles.row} ${styles.rowSelected}` : styles.row;
+              const ageClass =
+                level === 'alert'
+                  ? styles.ageAlert
+                  : level === 'warn'
+                    ? styles.ageWarn
+                    : styles.ageNormal;
+
               return (
-                <tr key={row.id} className={rowClass}>
+                <tr
+                  key={row.id}
+                  className={row.id === selectedId ? `${styles.row} ${styles.rowSelected}` : styles.row}
+                >
                   <td className={styles.td}>
-                    {/*
-                     * Se llama a `onSelect` CON LA FILA ENTERA, no con el id: la
-                     * pantalla la guarda tal cual y así el panel sigue teniendo
-                     * qué pintar cuando la fila desaparezca de la lista filtrada.
-                     */}
-                    <button
-                      type="button"
-                      className={styles.orgButton}
-                      onClick={() => onSelect(row)}
-                    >
+                    <button type="button" className={styles.orgButton} onClick={() => onSelect(row)}>
                       {row.orgName}
                     </button>
                   </td>
                   <td className={styles.td}>
+                    {/* Código ISO, nunca el nombre del país: columna 2 de la spec. */}
                     <span className={styles.countryBadge}>{row.country}</span>
                   </td>
                   <td className={styles.td}>{row.email}</td>
-                  <td className={styles.td}>{row.phone === '' ? '—' : row.phone}</td>
+                  <td className={styles.td}>{row.phone ? row.phone : '—'}</td>
                   <td className={styles.td}>
-                    {row.website === '' ? (
-                      '—'
-                    ) : (
+                    {row.website ? (
+                      /*
+                       * El `href` pasa por `websiteHref` porque el FSR admite el
+                       * sitio sin esquema: sin él, `nordicbearings.se` sería una
+                       * URL relativa a esta pantalla. El texto visible va SIN
+                       * transformar: el esquema solo existe para el navegador.
+                       */
                       <a
-                        className={styles.extLink}
+                        className={styles.webLink}
                         href={websiteHref(row.website)}
                         target="_blank"
                         rel="noreferrer"
                       >
                         {row.website}
                       </a>
+                    ) : (
+                      '—'
                     )}
                   </td>
                   <td className={styles.td}>
-                    <span className={styles.timestamp}>
-                      {requestDateLabel(utcClock(row.submittedAt))}
-                    </span>
+                    <span className={styles.timestamp}>{requestDateLabel(row.submittedAt)}</span>
                   </td>
                   <td className={styles.td}>
-                    <span className={`${styles.age} ${AGE_CLASS[level] ?? ''}`}>
-                      {queueAgeLabel(row.submittedAt, nowValue)}
-                    </span>
+                    <span className={ageClass}>{queueAgeLabel(row.submittedAt, nowValue)}</span>
                   </td>
                   <td className={styles.td}>
-                    <span className={`${styles.stateBadge} ${STATE_CLASS[row.state] ?? ''}`}>
-                      {row.state}
-                    </span>
+                    {/* El literal del enum tal cual: la spec §3 lista los cuatro
+                        (`PENDING_REVIEW`, `INVITED_APPROVED`, `REJECTED`,
+                        `CANCELLED`), no una traducción. */}
+                    <span className={`${styles.stateBadge} ${STATE_CLASS[row.state]}`}>{row.state}</span>
                   </td>
                 </tr>
               );

@@ -1,19 +1,20 @@
 .tableOuter {
   background: var(--bw-warm-cream);
   border: 1px solid var(--bw-line-steel);
-  border-radius: 8px;
+  border-radius: var(--bw-radius);
   overflow-x: auto;
 }
 
 .table {
   width: 100%;
-  min-width: max-content;
   border-collapse: collapse;
+  min-width: max-content;
 }
 
 .th {
   padding: 9px 14px;
   text-align: left;
+  font-family: var(--bw-font-body);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -26,7 +27,7 @@
 
 .td {
   padding: 11px 14px;
-  font-size: var(--bw-size-input);
+  font-size: 13px;
   color: var(--bw-ink-steel);
   border-bottom: 1px solid var(--bw-divider-mist);
   vertical-align: middle;
@@ -38,7 +39,7 @@
 }
 
 .row {
-  transition: background 0.1s ease;
+  transition: background-color 0.1s;
 }
 
 .row:hover .td {
@@ -49,14 +50,12 @@
   background: var(--bw-tint-consulta);
 }
 
-/* ── Columna 1 · Organización ───────────────────────────────────────────── */
-
 .orgButton {
   padding: 0;
   border: none;
   background: none;
   font-family: inherit;
-  font-size: var(--bw-size-input);
+  font-size: 13px;
   font-weight: 500;
   color: var(--bw-calibration-blue);
   text-align: left;
@@ -64,24 +63,15 @@
 }
 
 .orgButton:hover {
-  color: var(--bw-primary-dark);
   text-decoration: underline;
 }
-
-.orgButton:focus-visible {
-  outline: none;
-  border-radius: var(--bw-radius);
-  box-shadow: var(--bw-focus-halo);
-}
-
-/* ── Columna 2 · País ───────────────────────────────────────────────────── */
 
 .countryBadge {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
   background: var(--bw-cold-white);
-  border: 1px solid var(--bw-badge-neutral-border-soft);
+  border: 1px solid var(--bw-line-steel);
   border-radius: var(--bw-radius);
   font-family: var(--bw-font-mono);
   font-size: 11px;
@@ -89,88 +79,82 @@
   color: var(--bw-ink-steel);
 }
 
-/* ── Columna 5 · Sitio web ──────────────────────────────────────────────── */
-
-.extLink {
-  font-size: var(--bw-size-label);
+.webLink {
+  font-size: 12px;
   color: var(--bw-steel-mist);
   text-decoration: none;
 }
 
-.extLink:hover {
+.webLink:hover {
   color: var(--bw-calibration-blue);
-  text-decoration: underline;
 }
-
-/* ── Columna 6 · Fecha de solicitud ─────────────────────────────────────── */
 
 .timestamp {
   font-family: var(--bw-font-mono);
   font-size: 11px;
-  color: var(--bw-steel-mist);
+  color: var(--bw-input-placeholder);
 }
 
-/* ── Columna 7 · Antigüedad en cola ─────────────────────────────────────── */
-
-.age {
+/* Los tres niveles de `queueAgeLevel`: normal, warn (> 24 h) y alert (> 48 h). */
+.ageNormal {
   font-family: var(--bw-font-mono);
   font-size: 11px;
-}
-
-.ageNormal {
   color: var(--bw-ink-steel);
 }
 
 .ageWarn {
-  color: var(--bw-warning);
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
   font-weight: 500;
+  color: var(--bw-warning);
 }
 
 .ageAlert {
-  color: var(--bw-danger);
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
   font-weight: 600;
+  color: var(--bw-danger);
 }
-
-/* ── Columna 8 · Estado ─────────────────────────────────────────────────── */
 
 .stateBadge {
   display: inline-block;
   padding: 2px 7px;
+  border: 1px solid var(--bw-line-steel);
   border-radius: 2px;
   font-family: var(--bw-font-mono);
-  font-size: var(--bw-size-hint);
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: var(--bw-ls-hint);
+  white-space: nowrap;
 }
 
-.pending {
+.statePending {
   background: var(--bw-badge-warning-bg);
-  border: 1px solid var(--bw-badge-warning-border);
-  color: var(--bw-warning-dark);
+  border-color: var(--bw-badge-warning-border);
+  color: var(--bw-warning);
 }
 
-.approved {
+.stateApproved {
   background: var(--bw-badge-success-bg);
-  border: 1px solid var(--bw-badge-success-border);
+  border-color: var(--bw-badge-success-border);
   color: var(--bw-success-dark);
 }
 
-.rejected {
-  background: var(--bw-sensitive-bg);
-  border: 1px solid var(--bw-badge-danger-border);
-  color: var(--bw-error-text);
+.stateRejected {
+  background: var(--bw-tint-danger);
+  border-color: var(--bw-badge-danger-border);
+  color: var(--bw-sensitive-text);
 }
 
-.cancelled {
+.stateCancelled {
   background: var(--bw-badge-neutral-bg);
-  border: 1px solid var(--bw-badge-neutral-border);
+  border-color: var(--bw-badge-neutral-border);
   color: var(--bw-ink-steel-soft);
 }
 
-/* ── Estado vacío (spec §6) ─────────────────────────────────────────────── */
-
 .emptyCell {
   padding: 32px 16px;
-  color: var(--bw-steel-mist);
   text-align: center;
+  color: var(--bw-steel-mist);
+  font-size: 13px;
 }

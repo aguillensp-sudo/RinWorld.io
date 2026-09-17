@@ -290,6 +290,26 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 
 **Día 16 de V1 · corridas 13/14-sep-2026, C5 y cierre 17-sep-2026 · Estado: CERRADO — el H1 se cierra**
 
+> ⚠ **Adenda del mismo 17-sep-2026, tras el cierre: el commit de este cierre (`7eeb6d8`,
+> sin `[skip ci]`) no disparo CI.** Comprobado, no supuesto: `gh api .../actions/runs`
+> muestra CERO corridas para todo el repo desde el 16-sep, en cualquier commit, no solo
+> este. Descartado uno por uno -- no es `[skip ci]` (no lo lleva), no es un filtro de rutas
+> (no existe ninguno en `ci.yml`), no es el limite de gasto de Actions (el repo es
+> **publico**, minutos gratis), no es una incidencia de GitHub (`githubstatus.com`: todo
+> operativo), no es la cuenta ni el repo (`enabled: true` en ambos). **Aislado con una
+> prueba de control:** un PR de diagnostico (`#2`, rama `diag/ci-trigger-test`, borrada
+> despues) SI disparo CI via el evento `pull_request` -- `App`, `Esquema` y `Arnes`
+> verdes, confirmando de paso que el cierre esta bien; `Playwright` rojo por el contexto
+> de PR, no relevante aqui; `Despliegue` se salto por diseno, correcto en un PR. **El
+> evento `push` a `mvp/bootstrap` es el unico que no dispara nada**, con webhook de
+> Supabase reaccionando normal al mismo push -- la entrega SI llega a GitHub. Sospecha
+> mas probable, sin confirmar: el token que usa `git push` en esta maquina (Windows
+> Credential Manager, `credential.helper=manager`) es distinto del de `gh` -- que si
+> tiene el scope `workflow` -- y podria carecer del permiso que hace falta para que un
+> push dispare una Action. **El paso 5 del ritual (desplegar y comprobarlo en su URL)
+> queda pendiente por esto, no por el contenido del cierre:** ver §5.
+
+
 > **EL DÍA EN NUEVE LÍNEAS.**
 >
 > 1. **Arrancó donde dejó el Día 15:** paso 5 de `UMBRAL-FABRICA-V1.md` §7, las tres
@@ -441,10 +461,13 @@ Sin cambios.
 
 **El H1 está cerrado (§1, §2). Lo que sigue es abrir de verdad la corriente B, no medirla:**
 
-1. **Verificar el CI y el despliegue de este cierre.** Es el primer commit de todo este arco
-   SIN `[skip ci]` —ver Día 16, punto 9—: comprobar los cinco jobs en verde
-   (`mcp__github__actions_get`/`actions_list`, no el mensaje del commit) y la URL de
-   producción con `curl`, antes de dar el paso 5 del ritual por cumplido (§7).
+1. **Arreglar por qué `push` no dispara CI (§5, hallazgo del 17-sep) antes de poder
+   completar el paso 5 del ritual en ningún cierre futuro.** Aislado con un PR de control:
+   `pull_request` sí dispara, `push` no. Sospecha más probable: el `credential.helper` de
+   git en esta máquina. Una vez arreglado, verificar los cinco jobs en verde
+   (`gh run list`/`gh api .../actions/runs`, no el mensaje del commit) y la URL de
+   producción con `curl` sobre el commit de este cierre, antes de dar el paso 5 por
+   cumplido de verdad.
 2. **Decidir con qué pantalla sigue la corriente B**, ya con dos agentes en vez de cuatro
    (§2). Ninguna de las 21 pantallas restantes tiene tarea escrita todavía — eso es
    trabajo nuevo, no continuación de lo de hoy.
@@ -722,6 +745,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 | | Qué | Quién lo quita |
 |---|---|---|
+| 🔴 | **`push` a `mvp/bootstrap` no dispara CI -- confirmado el 17-sep con un PR de diagnostico que SÍ la disparo (`#2`, borrado).** Descartados uno por uno: `[skip ci]`, filtro de rutas, límite de gasto (repo público), incidencia de GitHub, cuenta/repo deshabilitados. Sospecha más probable: el token de `git push` en esta máquina (Windows Credential Manager) es distinto del de `gh` -que sí tiene el scope `workflow`- y podría faltarle el permiso que asocia un push con el disparo de una Action. **Bloquea el paso 5 del ritual (desplegar y comprobarlo en su URL)** para cualquier commit futuro, no solo el de hoy | Álvaro: re-autenticar el `credential.helper` de git para GitHub -por ejemplo `gh auth setup-git`- o revisar los permisos del token guardado en Credential Manager |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |

@@ -564,9 +564,9 @@ En paralelo, sin acción propia desde este lado:
 
 - **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin
   recomprobar hoy — no hay motivo nuevo para gastar la llamada. **No tocar `vera/index.ts`.**
-- **`F-158`, del PO:** sigue abierto. La spec de `ADMIN-01` dice *"naranja si > 24h"* y pinta
-  en naranja una solicitud de 18 horas. El código sigue la regla y lo dice en voz alta, así
-  que no bloqueó nada de lo de hoy; corregir la spec sigue siendo del PO.
+- ✅ **`F-158` cerrado el 17-sep, decisión del PO:** manda la regla (naranja si > 24h) y el
+  ejemplo de la spec de `ADMIN-01` pasa de 18 a 30 horas, en las dos copias de la spec y en el
+  HTML aprobado.
 - **La pregunta de §5 desde el Día 14, sin barrer todavía:** si otras specs aprobadas
   tienen la misma clase de contradicción regla-contra-ejemplo que `F-158`.
 
@@ -783,6 +783,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **En una spec, la regla manda sobre el ejemplo** | 17-sep-2026, PO, al cerrar `F-158`: la de `ADMIN-01` decía *naranja si > 24h* y pintaba en naranja 18 horas. Se corrige el ejemplo (a 30 h), no la regla | `F-158`, spec y HTML de `ADMIN-01` |
 | **La cifra 2 de `ADMIN-01` cuenta, aunque su C2 no ejecutara el e2e en la corrida del arnés** | 17-sep-2026, PO. El contrato se cumple en CI real (66/66) y en local (4/4) contra el artefacto tal cual salió del Coder; el hueco era de la medición, no de la pantalla. Desde `6e25a9a` ese hueco no puede repetirse: un e2e declarado que se salta deja C2 `INEJECUTABLE` | `F-166` |
 | **Se siembra antes de cada corrida, y no a mano** | 17-sep-2026, PO. `resetDemo` devuelve las tres solicitudes de `ADMIN-01` a la cola en cada arranque de la suite y en `npm run demo:reset`: una revisión a mano que pulse Aprobar/Rechazar ya no puede cobrarse al Coder en la corrida siguiente | `F-169`, `app/scripts/demo-reset.mjs` |
 | **Las series de medición pasan de `n=3` a `n=5`** | 5-sep-2026, PO. La serie 16 (réplica exacta de la 15) dio 1 de 3 donde la 15 dio 3 de 3 sobre el MISMO corpus: con tres tiradas el marcador mide tanto el corpus como la suerte. A partir de la serie 17, cinco tiradas por serie. **Primer resultado: la 17 dio 5/5** — ni prueba ni refuta la apuesta por sí solo, pero es el mejor marcador visto hasta hoy | `remedicion-17{a..e}-msg-n5`, $0,336154 |
@@ -853,7 +854,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~Un cliente manipulado puede envolver de más hacia la CONTRAPARTE (backlog de `0023` §4)~~ | **Resuelto 10-sep-2026: `0024`, el guardia recalcula el conjunto exacto vía `thread_public_keys`. De paso salió `F-154` (tercera organización) y `F-155` (helper `security definer` para `otra`, en `0025`)** |
 | ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
 | ⚪ | ~~`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?~~ | **Resuelto 10-sep-2026 (Día 13): sí, un tercero — el guardia "ya has consultado" de `create_inquiry`, cerrado en `0026` (`F-156`). Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos; ninguna otra tenía el hueco** |
-| 🟠 | **`F-158`, y es del PO: la spec aprobada de `ADMIN-01` se contradice a sí misma.** Su tabla de columnas dice *"en naranja si > 24h, en rojo si > 48h"* y su bloque de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Cada lectura lleva a una pantalla distinta. El código sigue la REGLA y lo deja escrito en los tres sitios donde alguien podría arreglarlo al revés, así que **no bloquea la construcción**; lo que no puede arreglar el código es el documento | Producto: corregir la spec |
+| ⚪ | **Resuelto 17-sep: el PO decidió que manda la regla; ejemplo corregido de 18 a 30 h en la spec (dos copias) y en el HTML aprobado.** ~~`F-158`, y es del PO: la spec aprobada de `ADMIN-01` se contradice a sí misma.~~ Su tabla de columnas dice *"en naranja si > 24h, en rojo si > 48h"* y su bloque de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Cada lectura lleva a una pantalla distinta. El código sigue la REGLA y lo deja escrito en los tres sitios donde alguien podría arreglarlo al revés, así que **no bloquea la construcción**; lo que no puede arreglar el código es el documento | Producto: corregir la spec |
 | 🟡 | **Nadie ha mirado si las otras 30 specs aprobadas tienen la misma clase de contradicción que `F-158`.** Salió por casualidad, porque la siembra de demo se verifica a sí misma y exigía una fila de cada color. Un barrido cuesta poco y no se ha hecho | Cualquier sesión, antes de que la fábrica construya sobre ellas |
 | ⚪ | ~~ADMIN-01 no se puede probar de extremo a extremo: no hay cuenta de Operador~~ | **Resuelto 11-sep-2026: cuenta creada por el PO en las dos bases, dada de alta por el MCP, alcance comprobado desde su propia sesión y `E2E_OPERATOR_PASSWORD` en los secretos de CI.** La rama de sesión del shell, que era la otra mitad y no se sabía, también |
 | ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
@@ -1143,8 +1144,8 @@ Orden de lectura, y el orden importa:
     (cerrado — la app de producción no arrancaba desde el 8-sep; ahora `deploy-app` lo
     comprueba por contenido) y `F-169` (cerrado — la C5 de `ADMIN-01` descuadró la siembra de
     producción; ahora `resetDemo` la repone antes de cada suite, decisión del PO). Y trece filas
-    viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. `F-158` sigue siendo
-    el único abierto del corpus, y sigue siendo del PO.
+    viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. Y `F-158`,
+    cerrado el mismo 17-sep por decisión del PO: el ejemplo de la spec de `ADMIN-01` pasa a 30 h.
 
 ---
 

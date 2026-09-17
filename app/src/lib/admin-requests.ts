@@ -69,12 +69,11 @@ export function hoursSince(iso: string, now: Date = new Date()): number {
  * entonces el borde de los 7 días y el de las 24 horas pasarían a depender del
  * mismo código: exactamente la discrepancia que costó `F-026`, pero al revés.
  *
- * ⚠ **Y los umbrales son los de la REGLA de la spec, no los de su ejemplo
- * (`F-158`).** El bloque "Datos de ejemplo" pinta en naranja una solicitud de
- * *"Hace 18 horas"*, y su propia tabla de columnas dice *"en naranja si > 24h"*.
- * Las dos cosas no pueden ser ciertas. Manda la regla. Si alguien ve la fila de
- * ejemplo y "arregla" esto para que 18 horas salga naranja, rompe la regla que
- * la misma spec escribe dos párrafos más arriba.
+ * ⚠ **Y los umbrales son los de la REGLA de la spec: naranja si > 24h, rojo si
+ * > 48h (`F-158`).** Hasta el 17-sep-2026 su bloque "Datos de ejemplo" pintaba
+ * en naranja una solicitud de *"Hace 18 horas"*; el PO corrigió el ejemplo a 30
+ * horas y dejó la regla. Si algún documento vuelve a decir otra cosa, manda la
+ * regla, no el ejemplo.
  */
 export function queueAgeLevel(iso: string, now: Date = new Date()): QueueAgeLevel {
   const horas = hoursSince(iso, now);

@@ -91,12 +91,14 @@ Se despliega a la derecha del área de contenido, sin salir de la pantalla. Mues
 
 ### Datos de ejemplo
 
+> **Corregido el 17-sep-2026 (`F-158`, decisión del PO):** la fila 2 y la respuesta de VERA decían *18 horas* y la pintaban en naranja, contra la regla de la columna 7 (*naranja si > 24h, rojo si > 48h*). Manda la regla: el ejemplo pasa a 30 horas.
+
 ```
 Filtro activo: Pendientes (3 solicitudes)
 Orden: más antigua primero
 
 Fila 1: Distribuciones Álvarez SL · ES · jalvarez@distribalvarez.com · +34 91 234 56 78 · — · Hace 52 horas [rojo] · PENDING_REVIEW
-Fila 2: Nordic Bearings AB       · SE · info@nordicbearings.se      · +46 8 123 456   · https://nordicbearings.se · Hace 18 horas [naranja] · PENDING_REVIEW
+Fila 2: Nordic Bearings AB       · SE · info@nordicbearings.se      · +46 8 123 456   · https://nordicbearings.se · Hace 30 horas [naranja] · PENDING_REVIEW
 Fila 3: Roulements France SAS    · FR · contact@roulementsfrance.fr · +33 1 23 45 67 · https://roulementsfrance.fr · Hace 3 horas · PENDING_REVIEW
 
 Panel lateral abierto → Fila 1:
@@ -141,7 +143,7 @@ Se muestra inline en el panel lateral al pulsar `Rechazar`:
 > ¿Cuántas solicitudes llevan más de 24 horas?
 >
 > **VERA responde:**
-> Dos: Distribuciones Álvarez SL (52h) y Nordic Bearings AB (18h). La tercera, Roulements France, lleva solo 3 horas.
+> Dos: Distribuciones Álvarez SL (52h) y Nordic Bearings AB (30h). La tercera, Roulements France, lleva solo 3 horas.
 
 ---
 

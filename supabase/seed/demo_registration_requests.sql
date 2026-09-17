@@ -7,6 +7,8 @@
 -- se demuestra con un solo color y el indicador no indica nada -- que es
 -- exactamente lo que pasó con el catálogo en `F-094`.
 --
+-- ✅ **Corregido en la spec el 17-sep-2026, decisión del PO: el ejemplo pasa a 30 h
+-- y la regla se queda.** Lo que decía esta nota hasta entonces:
 -- ⚠ **La spec dice 18 horas y las pinta en naranja, y las dos cosas no pueden
 -- ser ciertas a la vez (`F-158`).** Su propia regla es *"en naranja si > 24h,
 -- en rojo si > 48h"*, y 18 < 24. Manda la regla, que es normativa, no el
@@ -17,7 +19,7 @@
 -- ⚠ **RE-ANCLA EL RELOJ CADA VEZ QUE SE CORRE, y por eso el `on conflict` no es
 -- `do nothing`.** Las fechas son relativas a `now()`, así que una siembra de
 -- hace dos semanas deja las tres en rojo. Volver a pasar este fichero las
--- devuelve a 52/18/3 horas y a `PENDING_REVIEW`, limpias de cualquier decisión
+-- devuelve a 52/30/3 horas y a `PENDING_REVIEW`, limpias de cualquier decisión
 -- que se tomara durante un ensayo. Es el mismo remedio que
 -- `reanchor_freshness.sql` para el catálogo.
 --

@@ -1,0 +1,25 @@
+
+==============================================================================
+· corrida arrancada 2026-09-17 19:23:28 · harness/tasks/FORO-02.json
+==============================================================================
+Log de esta corrida: harness\metrics\FORO-02\FORO-02.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/forum/ForumCategory.module.css', 'app/src/screens/forum/ForumCategory.tsx']
+  tokens in/out: 24379/20145   cache: 0.0% hit
+  coste real: $0.037318   en frio: $0.037318
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\FORO-02\attempt_1.json (F-122)
+  CSV: 2026-09-17,FORO-02,FORO-02,deepseek-v4-flash,24379,20145,0.037318,1,1.2,app/src/screens/forum/ForumCategory.module.css;app/src/screens/forum/ForumCategory.tsx,0.00,no,-,-,si,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\FORO-02\attempt_1.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: VERDE en 1 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

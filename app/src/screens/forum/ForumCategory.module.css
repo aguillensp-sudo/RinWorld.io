@@ -1,0 +1,327 @@
+/* FORO-02 · Lista de Hilos de una Categoría.
+   Solo tokens `var(--bw-...)` de app/src/styles/tokens.css: ningún color
+   literal. El panel de contenido es Cold White; las tarjetas de hilo usan el
+   token más claro de la paleta (Warm Cream), que es lo más cerca de un blanco
+   de tarjeta que el sistema de diseño define. */
+
+.page {
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* ── Cabecera ───────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bw-steel-mist);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.breadcrumbLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--bw-steel-mist);
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.breadcrumbLink:hover {
+  color: var(--bw-brass);
+}
+
+.breadcrumbSeparator {
+  color: var(--bw-input-placeholder);
+}
+
+.breadcrumbCurrent {
+  color: var(--bw-steel-mist);
+}
+
+.title {
+  margin: 0 0 3px;
+  font-family: var(--bw-font-title);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  max-width: 600px;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Aviso de confidencialidad (el mismo bloque permanente de FORO-01) ──── */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: 6px;
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 16px;
+  color: var(--bw-brass);
+}
+
+.noticeText {
+  flex: 1;
+  margin: 0;
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bw-steel-mist);
+}
+
+.noticeText strong {
+  color: var(--bw-brass);
+}
+
+/* ── Barra de acciones ──────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  max-width: 340px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.searchInput:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.searchButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+}
+
+.searchButton:hover {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-deep-steel);
+}
+
+.searchIcon {
+  font-size: 15px;
+}
+
+/* FL-FORO-01 no existe: apagado, con su motivo en el `title`. */
+.createButton {
+  height: 36px;
+  padding: 0 18px;
+  flex-shrink: 0;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: 5px;
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-warm-cream);
+  cursor: not-allowed;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+/* ── Cuerpo: estados excluyentes ────────────────────────────────────────── */
+
+.loading {
+  margin: 0;
+  padding: 18px 0;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-steel-mist);
+}
+
+.error {
+  padding: 12px 14px;
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-error-text);
+}
+
+.empty {
+  margin: 0;
+  padding: 18px 0;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-steel-mist);
+}
+
+.clearSearch {
+  margin-top: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  color: var(--bw-calibration-blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Lista de hilos ─────────────────────────────────────────────────────── */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+}
+
+.row:hover {
+  border-color: var(--bw-brass-border-strong);
+}
+
+.rowMain {
+  min-width: 0;
+}
+
+/* El título de hilo es Inter 500 · 14px · ink, y es un control apagado: se
+   pinta como texto, no como botón. */
+.rowTitle {
+  display: block;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--bw-deep-steel);
+  cursor: default;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 3px;
+}
+
+.meta {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+.time {
+  align-self: center;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+}
+
+/* ── Paginación ─────────────────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+}
+
+.pageButton {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 12px;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+}
+
+.pageButton:hover {
+  border-color: var(--bw-brass-border-strong);
+  color: var(--bw-brass);
+}
+
+.currentPage {
+  background: var(--bw-deep-steel);
+  border-color: var(--bw-deep-steel);
+  color: var(--bw-warm-cream);
+  cursor: default;
+}

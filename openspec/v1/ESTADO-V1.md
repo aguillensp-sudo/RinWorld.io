@@ -309,6 +309,59 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 > push dispare una Action. **El paso 5 del ritual (desplegar y comprobarlo en su URL)
 > queda pendiente por esto, no por el contenido del cierre:** ver §5.
 
+> ✅ **Corrección del mismo 17-sep, sesión siguiente: la sospecha de arriba era FALSA, y el
+> rojo de Playwright SÍ era relevante.** Dos hallazgos, íntegros en `findings-register.md`:
+>
+> - **`F-164` · el push no disparó porque el propio mensaje de `7eeb6d8` nombraba el marcador
+>   de salto de CI en su CUERPO** (línea 16: que era el primer commit del arco *sin* el
+>   marcador, escrito literal entre corchetes). GitHub lo busca en el mensaje entero, no en
+>   el título, y el «no lo lleva» de arriba se comprobó mirando el título. El token nunca
+>   tuvo nada que ver: la API de actividad del repo (`/activity?ref=refs/heads/mvp/bootstrap`)
+>   muestra `c6cab7e→7eeb6d8` empujado por el mismo actor que el 13-sep sí disparó CI
+>   (`bab1689`, run `34746060926`), y **`5cfbf2f` —mismas credenciales, sin el marcador en
+>   ninguna línea— creó el run `35200727115` al momento. No hace falta `gh auth setup-git`
+>   ni tocar Credential Manager.** «Cero corridas desde el 16-sep» no era un síntoma: entre
+>   el 14 y el 17 no hubo ningún push sin marcador salvo ese.
+> - **`F-165` · Playwright estaba rojo en el PR `#2` por `ci.yml`, no «por el contexto de
+>   PR»:** el job `e2e` nunca recibió `E2E_OPERATOR_EMAIL`/`E2E_OPERATOR_PASSWORD` y
+>   `admin-requests.spec.ts` lanza a propósito sin ellas en CI. Roto desde que existe ese
+>   e2e (11-sep, `2932e1a`), oculto porque todos los push posteriores llevaban el marcador.
+>   Y como `deploy` tiene `needs: [schema, app, e2e, arnes]`, **nada se desplegaba desde
+>   `f5e1d7e` (11-sep, 15:48 UTC): las tres pantallas del H1 no estaban en producción**
+>   —comprobado antes del arreglo: `rin-world-io.vercel.app` servía `index-BEG5lzgc.js`,
+>   sin ningún literal de las tres—. Arreglado en `5cfbf2f` (el correo literal, como pide
+>   `CLAUDE.md` §10.1; la password desde el secreto). Cerrado: Playwright 66/66, cero
+>   saltados, en el run `35202094852`.
+> - **`F-166` · con las credenciales puestas, el e2e de `ADMIN-01` se ejecutó POR PRIMERA
+>   VEZ, y el arnés lo había contado como verde sin ejecutarlo.** En la máquina del PO no hay
+>   `E2E_OPERATOR_PASSWORD`, el `describe` hace `test.skip` fuera de CI, Playwright sale con 0,
+>   y C2 solo miraba el código de salida: «suite e2e completa (cubre los 1 declarados)» con
+>   los cuatro tests saltados —reproducido en local: exit 0, `4 skipped`—. `F-015` al pie de la
+>   letra. Al correr, dos bugs del PROPIO test (heredaba la sesión de ALPHA; un `getByText`
+>   sin acotar) y un test inestable de `DIR-01` (lectura a mitad de re-render). **Ningún
+>   fichero del Coder tocado:** con los tests arreglados, los cuatro de `ADMIN-01` pasan
+>   contra el artefacto tal cual salió. Y C2 ya no se deja engañar (`6e25a9a`): un test
+>   saltado en un e2e declarado lo deja `INEJECUTABLE`, validado contra la salida real.
+> - **`F-167` · con los cuatro jobs de prueba en verde, el despliegue falló igual:** el
+>   token de Supabase de CI da `401`. VERA iba primero en el mismo job y el paso de Vercel
+>   ni arrancaba. Separados en dos jobs (`05d2f1b`): la app se despliega aunque VERA falle.
+>   **Renovar el token es del PO.**
+> - 🔴 **`F-168` · y al comprobar el despliegue POR CONTENIDO: la app de producción no
+>   arranca, y lleva así desde el 8-sep.** El bundle de `rin-world-io.vercel.app` no tiene ni
+>   una línea de la aplicación y acaba en `Error("Faltan VITE_SUPABASE_URL o
+>   VITE_SUPABASE_PUBLISHABLE_KEY…")`: el proyecto de Vercel creado para cerrar `F-151` nunca
+>   recibió las variables de `despliegue.md` §2. El bundle de antes del despliegue de hoy era
+>   idéntico byte a byte. `F-151` se cerró con `curl` → `HTTP 200`, y un `index.html`
+>   responde 200 aunque su JavaScript reviente — regla 2 de este fichero, en producción.
+>   **Es del PO** (acceso a Vercel y una decisión sobre `VITE_DEMO_KEY_SEED`), ver §3.
+>
+> **Y una comprobación que el cierre no hizo, sobre la cifra 3:** los tres primeros intentos
+> fallaron por errores DISTINTOS y del propio Coder —`DIR-01` un test de orden por «País»,
+> `ADMIN-01` ocho `TS2322` de `string | undefined`, `FORO-01` un test de la sección de
+> actividad— y el intento 2 los arregló sin que cambiara ningún test
+> (`harness/metrics/*/attempt_1.json`, campo `checks`). No hay una causa común del arnés
+> detrás del 0 de 3: la cifra está bien medida y el veredicto se sostiene.
+
 
 > **EL DÍA EN NUEVE LÍNEAS.**
 >
@@ -398,7 +451,9 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 | **Cifra 8 · tiempo de reloj** (≤1 jornada por pantalla, sin esperas del PO) | Tareas validadas `--seco` el 11-sep (Día 15); corridas reales el 13/14-sep; trabajo de ingeniería real por corrida, unos pocos minutos sumando reintentos | **CUMPLE con margen amplio** |
 | **Veredicto del H1** | Regla de decisión de `UMBRAL-FABRICA-V1.md` §4, aplicada a las ocho cifras de arriba | **Funciona con supervisión — escenario base, 21 semanas.** Falla solo la cifra 3, sin ninguna escalada real y con las cifras 4/5 limpias: es exactamente la condición de esa fila, no la del escenario favorable ni la del adverso |
 | Divergencia con `origin/mvp/bootstrap` antes de escribir este cierre | `git fetch origin mvp/bootstrap` + `git status -sb` | Sin desfase |
-| CI de este cierre | Este commit se empuja SIN `[skip ci]` — los siete anteriores lo llevaban por una razón que ya no aplica (§3, Día 16 punto 9) | Se verifica y se anota antes de escribir el pie |
+| CI de este cierre | `gh api .../activity` y `gh run list` sobre `mvp/bootstrap`, no el mensaje del commit (corregido el 17-sep en sesión siguiente) | **El push de `7eeb6d8` no creó ningún run: su cuerpo nombraba el marcador de salto (`F-164`).** La primera CI real del arco fue el run `35200727115` y salió roja por `F-165`; tras `F-165`, `F-166` y `F-167`, el run `35202557849` (`05d2f1b`) da esquema, app, arnés, Playwright 66/66 y `deploy-app` en verde, y `deploy` (VERA) en rojo por `F-167` |
+| Producción, por contenido y no por código HTTP (17-sep) | Bundle servido por `rin-world-io.vercel.app` antes y después del despliegue, contra el `dist/` local | **No arranca (`F-168`).** 148.698 bytes, sin texto de la app, termina en el `throw` de `supabase.ts` por falta de variables; idéntico byte a byte al de antes. El `dist/` local, 480.936 bytes, sí lo contiene |
+| Coste-sombra de la sesión del 17-sep que corrigió el cierre | `python -m harness.core.orchestration_metrics` al terminar | **36,53 $** (sesión `024c6547`, 244 turnos), acumulado **1.160,82 $**. Sin ninguna corrida del Coder: diagnóstico de CI, cuatro arreglos, guardia del arnés y trece filas del registro |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -461,13 +516,30 @@ Sin cambios.
 
 **El H1 está cerrado (§1, §2). Lo que sigue es abrir de verdad la corriente B, no medirla:**
 
-1. **Arreglar por qué `push` no dispara CI (§5, hallazgo del 17-sep) antes de poder
-   completar el paso 5 del ritual en ningún cierre futuro.** Aislado con un PR de control:
-   `pull_request` sí dispara, `push` no. Sospecha más probable: el `credential.helper` de
-   git en esta máquina. Una vez arreglado, verificar los cinco jobs en verde
-   (`gh run list`/`gh api .../actions/runs`, no el mensaje del commit) y la URL de
-   producción con `curl` sobre el commit de este cierre, antes de dar el paso 5 por
-   cumplido de verdad.
+1. ~~Arreglar por qué `push` no dispara CI~~ **Resuelto el 17-sep, y no era el token:**
+   `F-164` (el marcador de salto escrito en el cuerpo del mensaje de cierre) y `F-165`
+   (`ci.yml` sin las credenciales del Operador, que además bloqueaba todo despliegue desde
+   el 11-sep). Ver la corrección bajo la adenda del Día 16. CI verificada job a job en el run
+   `35202557849` (`05d2f1b`): esquema, app, arnés y Playwright (66/66) en verde,
+   `deploy-app` en verde, `deploy` (VERA) en rojo por `F-167`.
+
+**Y por delante de todo lo demás, del PO — el 17-sep cambió el orden de esta lista:**
+
+- 🔴 **`F-168` · producción no arranca desde el 8-sep.** En el proyecto `rin-world-io` de
+  Vercel: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en *Production* y *Preview*
+  (`openspec/mvp/despliegue.md` §2). **Y decidir `VITE_DEMO_KEY_SEED`:** §2 la pide en
+  *Production* para que la demo descifre lo sembrado; §5 dice que en V1 «no debe existir».
+  Después, relanzar `deploy-app` y **verificar por contenido** —que el bundle contenga
+  «Correo electrónico»—, nunca por `HTTP 200`.
+- 🟠 **`F-167` · renovar `SUPABASE_TOKEN`** (panel de Supabase → *Access Tokens*; mirar la
+  caducidad al crearlo) y ponerlo con `gh secret set SUPABASE_TOKEN`. Sin él, VERA no se
+  despliega; hoy no pasa nada porque `vera/index.ts` no cambia desde el 17-ago.
+- 🟡 **`F-166` · `E2E_OPERATOR_PASSWORD` como variable de usuario en la máquina local.** Sin
+  ella, cualquier corrida futura de `ADMIN-01` sale con C2 `INEJECUTABLE` —ahora a propósito—.
+- 🟡 **`F-166` · una decisión sobre el H1:** la cifra 2 de `ADMIN-01` se contó con un C2 que no
+  había ejecutado su e2e. El contrato se cumple (CI, 66/66) y el veredicto no cambia por
+  ello, pero si cuenta o no como medida del arnés es del PO.
+
 2. **Decidir con qué pantalla sigue la corriente B**, ya con dos agentes en vez de cuatro
    (§2). Ninguna de las 21 pantallas restantes tiene tarea escrita todavía — eso es
    trabajo nuevo, no continuación de lo de hoy.
@@ -745,7 +817,10 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🔴 | **`push` a `mvp/bootstrap` no dispara CI -- confirmado el 17-sep con un PR de diagnostico que SÍ la disparo (`#2`, borrado).** Descartados uno por uno: `[skip ci]`, filtro de rutas, límite de gasto (repo público), incidencia de GitHub, cuenta/repo deshabilitados. Sospecha más probable: el token de `git push` en esta máquina (Windows Credential Manager) es distinto del de `gh` -que sí tiene el scope `workflow`- y podría faltarle el permiso que asocia un push con el disparo de una Action. **Bloquea el paso 5 del ritual (desplegar y comprobarlo en su URL)** para cualquier commit futuro, no solo el de hoy | Álvaro: re-autenticar el `credential.helper` de git para GitHub -por ejemplo `gh auth setup-git`- o revisar los permisos del token guardado en Credential Manager |
+| ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |
+| 🔴 | **`F-168` · la app de producción no arranca desde el 8-sep.** El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
+| 🟠 | **`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.** VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
+| 🟡 | **`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local.** Sin ella, `ADMIN-01` sale `INEJECUTABLE` en el arnés, a propósito | Álvaro: variable de entorno de usuario |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
@@ -778,6 +853,24 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 ## 6 · Lo que este fichero NO sabe
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
+
+- **Si alguien de fuera abrió la demo de producción entre el 8 y el 17-sep** y se encontró una
+  página en blanco (`F-168`). No se han mirado las analíticas ni los logs de Vercel.
+- **Si las *Preview deployments* están igual de rotas.** Muy probable —las variables faltan en
+  el proyecto, no en CI—, pero no se ha abierto ninguna para comprobarlo.
+- **Si el `SUPABASE_TOKEN` caducó o lo revocó alguien** (`F-167`), y por tanto si el nuevo
+  caducará igual. Desde aquí solo se ve el `401`. Y la misma pregunta sigue abierta para
+  `VERCEL_NEWACCOUNT_TOKEN`, que hoy funciona.
+- **Si la cifra 2 de `ADMIN-01` debe contarse como la contó el cierre del Día 16** (`F-166`).
+  El contrato se cumple en CI (66/66) contra el artefacto tal cual; lo que no hizo fue medirse
+  en la corrida del arnés. Es del PO.
+- ~~Si otra tarea del corpus declaró un e2e que se saltaba en local sin decirlo.~~
+  **Contestado el 17-sep: no.** Los demás `test.skip` de `app/e2e/` dependen de credenciales
+  de ALPHA/BETA, que están en `app/.env`, y el de `messages.spec.ts:331` de
+  `SUPABASE_SERVICE_KEY`, que está como variable de usuario. Solo `ADMIN-01`.
+- ~~Si el 0 de 3 de la cifra 3 tiene una causa común del arnés detrás.~~ **Contestado el
+  17-sep: no.** Los tres primeros intentos fallaron por errores distintos y del propio Coder
+  (`harness/metrics/*/attempt_1.json`), y el segundo los arregló sin que cambiara ningún test.
 
 - ~~Si las tres tareas del H1 pasan al primer intento, y con qué corrección humana.~~
   **Contestado el 14-sep (Día 16): NINGUNA de las tres pasó al primer intento (0 de 3,
@@ -1028,7 +1121,14 @@ Orden de lectura, y el orden importa:
     `F-161` (cerrado — escalada de `DIR-01` no dependiente del artefacto, contagio de
     `ADMIN-01`), `F-162` (cerrado — escalada de `ADMIN-01`, tres bugs de test más
     contagio de `FORO-01` más un `TZ` sin fijar) y `F-163` (cerrado — tarifa de Haiku 4.5
-    incorrecta, tumbaba el medidor de coste para cualquier pantalla). `F-158` sigue siendo
+    incorrecta, tumbaba el medidor de coste para cualquier pantalla). Del 17-sep, tras el cierre:
+    `F-164` (cerrado — el push no disparó CI por el marcador de salto escrito en el cuerpo
+    del mensaje, NO por el token de git), `F-165` (cerrado — `ci.yml` no pasaba las
+    credenciales del Operador al job `e2e`, y con eso bloqueaba el despliegue), `F-166`
+    (cerrado — C2 contaba como verde un e2e declarado que se había saltado; el de `ADMIN-01`
+    no se había ejecutado nunca), `F-167` (desacoplado; **el token, del PO**) y `F-168`
+    (**ABIERTO, del PO** — la app de producción no arranca desde el 8-sep). Y trece filas
+    viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. `F-158` sigue siendo
     el único abierto del corpus, y sigue siendo del PO.
 
 ---

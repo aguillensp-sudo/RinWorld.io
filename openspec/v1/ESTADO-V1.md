@@ -545,7 +545,8 @@ Sin cambios.
   paso salió `F-169` (la C5 había descuadrado la siembra; repuesta). Lo que decía: ~~`F-166` ·
   `E2E_OPERATOR_PASSWORD` como variable de usuario en la máquina local.~~ Sin
   ella, cualquier corrida futura de `ADMIN-01` sale con C2 `INEJECUTABLE` —ahora a propósito—.
-- 🟡 **`F-166` · una decisión sobre el H1:** la cifra 2 de `ADMIN-01` se contó con un C2 que no
+- ✅ **Decidido por el PO el 17-sep: la cifra 2 de `ADMIN-01` CUENTA** (§4). Lo que se preguntaba:
+  ~~`F-166` · una decisión sobre el H1:~~ la cifra 2 de `ADMIN-01` se contó con un C2 que no
   había ejecutado su e2e. El contrato se cumple (CI, 66/66) y el veredicto no cambia por
   ello, pero si cuenta o no como medida del arnés es del PO.
 
@@ -782,6 +783,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **La cifra 2 de `ADMIN-01` cuenta, aunque su C2 no ejecutara el e2e en la corrida del arnés** | 17-sep-2026, PO. El contrato se cumple en CI real (66/66) y en local (4/4) contra el artefacto tal cual salió del Coder; el hueco era de la medición, no de la pantalla. Desde `6e25a9a` ese hueco no puede repetirse: un e2e declarado que se salta deja C2 `INEJECUTABLE` | `F-166` |
+| **Se siembra antes de cada corrida, y no a mano** | 17-sep-2026, PO. `resetDemo` devuelve las tres solicitudes de `ADMIN-01` a la cola en cada arranque de la suite y en `npm run demo:reset`: una revisión a mano que pulse Aprobar/Rechazar ya no puede cobrarse al Coder en la corrida siguiente | `F-169`, `app/scripts/demo-reset.mjs` |
 | **Las series de medición pasan de `n=3` a `n=5`** | 5-sep-2026, PO. La serie 16 (réplica exacta de la 15) dio 1 de 3 donde la 15 dio 3 de 3 sobre el MISMO corpus: con tres tiradas el marcador mide tanto el corpus como la suerte. A partir de la serie 17, cinco tiradas por serie. **Primer resultado: la 17 dio 5/5** — ni prueba ni refuta la apuesta por sí solo, pero es el mejor marcador visto hasta hoy | `remedicion-17{a..e}-msg-n5`, $0,336154 |
 | **ADR-002** | Ámbito de visibilidad por usuario. Diez decisiones, seis invariantes, ocho objetos de esquema — **seis hechos, dos bloqueados por Q-1** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
 | **Q-1 · CERRADA: buzón abierto + el ADMIN recibe copia de todo** | 4-sep-2026, PO. El elemento entrante llega a **todos** los miembros de la receptora; asume quien responde, sin acción de reparto; y el ADMIN de las dos organizaciones es destinatario criptográfico permanente | `ADR-002` §10 Q-1, D-2 (adenda) |
@@ -830,7 +833,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~**`F-168` · la app de producción no arranca desde el 8-sep.**~~ **Resuelto 17-sep: variables puestas por el PO, verificado por contenido (`index-CHmJc7cl.js`, 480.802 bytes) y en navegador (login pintado, cero errores de consola), y con un paso nuevo en `deploy-app` que lo comprueba en cada despliegue.** Lo que decía: El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
 | ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | ⚪ | ~~`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local~~ | **Resuelto 17-sep: en `app/.env` (no como variable de usuario, como decía esta fila), login comprobado, e2e local 4/4** |
-| 🟡 | **`F-169` · una prueba a mano de `ADMIN-01` sobre la base de producción descuadra la siembra** (pasó en la C5 del 17-sep: una aprobada, una rechazada y devuelta). Repuesta el mismo día; la causa sigue: la próxima corrida del arnés le cobraría al Coder un fallo de datos | PO: resembrar antes de cada corrida de `ADMIN-*`, o C5 sin pulsar acciones |
+| ⚪ | **Resuelto 17-sep: decisión del PO (sembrar antes de cada corrida), automatizada en `resetDemo` y probada reproduciendo el fallo.** ~~`F-169` · una prueba a mano de `ADMIN-01` sobre la base de producción descuadra la siembra~~ (pasó en la C5 del 17-sep: una aprobada, una rechazada y devuelta). Repuesta el mismo día; la causa sigue: la próxima corrida del arnés le cobraría al Coder un fallo de datos | PO: resembrar antes de cada corrida de `ADMIN-*`, o C5 sin pulsar acciones |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
 | 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
@@ -872,9 +875,8 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Si el `SUPABASE_TOKEN` caducó o lo revocó alguien** (`F-167`), y por tanto si el nuevo
   caducará igual. Desde aquí solo se ve el `401`. Y la misma pregunta sigue abierta para
   `VERCEL_NEWACCOUNT_TOKEN`, que hoy funciona.
-- **Si la cifra 2 de `ADMIN-01` debe contarse como la contó el cierre del Día 16** (`F-166`).
-  El contrato se cumple en CI (66/66) contra el artefacto tal cual; lo que no hizo fue medirse
-  en la corrida del arnés. Es del PO.
+- ~~Si la cifra 2 de `ADMIN-01` debe contarse como la contó el cierre del Día 16~~ (`F-166`).
+  **Contestado por el PO el 17-sep: cuenta.** El veredicto del H1 no se mueve.
 - ~~Si otra tarea del corpus declaró un e2e que se saltaba en local sin decirlo.~~
   **Contestado el 17-sep: no.** Los demás `test.skip` de `app/e2e/` dependen de credenciales
   de ALPHA/BETA, que están en `app/.env`, y el de `messages.spec.ts:331` de
@@ -1139,8 +1141,8 @@ Orden de lectura, y el orden importa:
     (cerrado — C2 contaba como verde un e2e declarado que se había saltado; el de `ADMIN-01`
     no se había ejecutado nunca), `F-167` (cerrado — token renovado por el PO; VERA y la app se despliegan en jobs separados) y `F-168`
     (cerrado — la app de producción no arrancaba desde el 8-sep; ahora `deploy-app` lo
-    comprueba por contenido) y `F-169` (mitigado; **la causa, del PO** — la C5 de `ADMIN-01`
-    descuadró la siembra de producción). Y trece filas
+    comprueba por contenido) y `F-169` (cerrado — la C5 de `ADMIN-01` descuadró la siembra de
+    producción; ahora `resetDemo` la repone antes de cada suite, decisión del PO). Y trece filas
     viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. `F-158` sigue siendo
     el único abierto del corpus, y sigue siendo del PO.
 

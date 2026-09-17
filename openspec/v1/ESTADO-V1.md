@@ -535,7 +535,8 @@ Sin cambios.
   *Production* para que la demo descifre lo sembrado; §5 dice que en V1 «no debe existir».
   Después, relanzar `deploy-app` y **verificar por contenido** —que el bundle contenga
   «Correo electrónico»—, nunca por `HTTP 200`.
-- 🟠 **`F-167` · renovar `SUPABASE_TOKEN`** (panel de Supabase → *Access Tokens*; mirar la
+- ✅ **Resuelto el 17-sep: token nuevo puesto por el PO, `deploy` (VERA) verde en el run
+  `35238997261` (intento 2), seis jobs de seis.** Lo que decía: ~~`F-167` · renovar `SUPABASE_TOKEN`~~ (panel de Supabase → *Access Tokens*; mirar la
   caducidad al crearlo) y ponerlo con `gh secret set SUPABASE_TOKEN`. Sin él, VERA no se
   despliega; hoy no pasa nada porque `vera/index.ts` no cambia desde el 17-ago.
 - 🟡 **`F-166` · `E2E_OPERATOR_PASSWORD` como variable de usuario en la máquina local.** Sin
@@ -823,7 +824,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 |---|---|---|
 | ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |
 | ⚪ | ~~**`F-168` · la app de producción no arranca desde el 8-sep.**~~ **Resuelto 17-sep: variables puestas por el PO, verificado por contenido (`index-CHmJc7cl.js`, 480.802 bytes) y en navegador (login pintado, cero errores de consola), y con un paso nuevo en `deploy-app` que lo comprueba en cada despliegue.** Lo que decía: El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
-| 🟠 | **`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.** VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
+| ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | 🟡 | **`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local.** Sin ella, `ADMIN-01` sale `INEJECUTABLE` en el arnés, a propósito | Álvaro: variable de entorno de usuario |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
@@ -1131,7 +1132,7 @@ Orden de lectura, y el orden importa:
     del mensaje, NO por el token de git), `F-165` (cerrado — `ci.yml` no pasaba las
     credenciales del Operador al job `e2e`, y con eso bloqueaba el despliegue), `F-166`
     (cerrado — C2 contaba como verde un e2e declarado que se había saltado; el de `ADMIN-01`
-    no se había ejecutado nunca), `F-167` (desacoplado; **el token, del PO**) y `F-168`
+    no se había ejecutado nunca), `F-167` (cerrado — token renovado por el PO; VERA y la app se despliegan en jobs separados) y `F-168`
     (cerrado — la app de producción no arrancaba desde el 8-sep; ahora `deploy-app` lo
     comprueba por contenido). Y trece filas
     viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. `F-158` sigue siendo

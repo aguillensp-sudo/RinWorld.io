@@ -1,6 +1,6 @@
 import './env';
 import { expect, test } from '@playwright/test';
-import { haveOperatorCreds, OPERATOR, signIn } from './fixtures';
+import { haveOperatorCreds, NO_SESSION, OPERATOR, signIn } from './fixtures';
 
 /**
  * CONTRATO DE ACEPTACIÓN · ADMIN-01 · contra el Supabase real.
@@ -50,6 +50,11 @@ async function nombresVisibles(page: import('@playwright/test').Page): Promise<s
 
 test.describe('ADMIN-01 · cola de solicitudes real', () => {
   test.skip(!haveOperatorCreds, 'sin credenciales E2E_OPERATOR_*');
+  // F-166 · `playwright.config.ts` le pone a TODO el proyecto la sesión de ALPHA,
+  // así que sin esto `signIn` llega a la app ya dentro y espera un formulario de
+  // login que nunca aparece. No se vio antes porque fuera de CI, sin la password
+  // del Operador, este describe entero se salta.
+  test.use({ storageState: NO_SESSION });
 
   test.beforeEach(async ({ page }) => {
     await signIn(page, OPERATOR);

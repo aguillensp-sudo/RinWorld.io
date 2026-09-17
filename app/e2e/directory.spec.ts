@@ -104,9 +104,17 @@ test.describe('DIR-01 · directorio real', () => {
     const antes = await nombres(page);
     await page.getByRole('columnheader', { name: 'Nombre' }).getByRole('button').click();
     await expect(page.getByRole('columnheader', { name: 'Nombre' })).toHaveAttribute('aria-sort', 'descending');
-    const despues = await nombres(page);
-    expect(despues).not.toEqual(antes);
-    expect(despues.slice().sort()).toEqual(antes.slice().sort()); // mismas seis, otro orden
+    // F-166 · `aria-sort` cambia al pulsar, antes de que llegue la consulta, y
+    // `nombres()` lee fila a fila: leer en medio del re-render mezcla las dos
+    // listas (en CI salió una organización repetida y otra ausente, verde al
+    // reintentar). Se espera a que la tabla ENTERA esté en el orden nuevo.
+    await expect
+      .poll(async () => {
+        const despues = await nombres(page);
+        const mismasSeis = JSON.stringify(despues.slice().sort()) === JSON.stringify(antes.slice().sort());
+        return mismasSeis && JSON.stringify(despues) !== JSON.stringify(antes);
+      }, { message: 'mismas seis organizaciones, en otro orden' })
+      .toBe(true);
   });
 
   test('el nombre no lleva a ninguna parte todavía -DIR-02 no existe- y lo dice', async ({ page }) => {

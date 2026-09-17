@@ -186,7 +186,13 @@ jobs:
   # en cada fusión es un riesgo mayor que el que F-091/F-072 describen, y
   # ninguno de los dos lo pide.
   deploy:
-    name: Despliegue continuo · app + VERA
+    # F-167 (17-sep): VERA y la app iban en UN job, VERA primero. El 17-sep el
+    # token de Supabase de CI devolvió 401 y el paso de Vercel ni arrancó: las
+    # pantallas del H1 se quedaron fuera de producción por un fallo que no tenía
+    # nada que ver con ellas (`vera/index.ts` no cambia desde el 17-ago). Dos
+    # jobs, mismas condiciones: cada uno falla a la vista por su cuenta y ninguno
+    # arrastra al otro. El orden VERA-primero de abajo ya no hace falta.
+    name: Despliegue continuo · VERA (Supabase)
     runs-on: ubuntu-latest
     needs: [schema, app, e2e, arnes]
     if: github.event_name == 'push' && github.ref == 'refs/heads/mvp/bootstrap'
@@ -217,6 +223,21 @@ jobs:
         run: npx supabase functions deploy vera --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+
+  deploy-app:
+    name: Despliegue continuo · app (Vercel)
+    runs-on: ubuntu-latest
+    needs: [schema, app, e2e, arnes]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/mvp/bootstrap'
+    environment: production
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: App a Vercel (producción)
         # F-151 (8-sep): la cuenta de Vercel vieja no administraba el equipo
         # dueño del proyecto -- cuatro tokens distintos fallaron con "User

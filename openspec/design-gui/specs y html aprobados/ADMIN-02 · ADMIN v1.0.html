@@ -286,6 +286,15 @@
             </tr>
           </thead>
           <tbody>
+            <tr onclick="openPanel(4)">
+              <td><span class="org-link">Timken Europe GmbH</span></td>
+              <td><span class="country-badge">DE</span></td>
+              <td><span class="st-badge st-candidate">CANDIDATA A BORRADO</span></td>
+              <td><span class="ts">—</span></td>
+              <td><span class="ts-red">28 Dic 2025</span></td>
+              <td><span class="days-danger">−182</span></td>
+              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-del-inline" onclick="event.stopPropagation();openDeleteModal('Timken Europe GmbH')">Iniciar borrado</button></div></td>
+            </tr>
             <tr onclick="openPanel(0)">
               <td><span class="org-link">Distribuciones Ruiz SL</span></td>
               <td><span class="country-badge">ES</span></td>
@@ -321,15 +330,6 @@
               <td><span class="ts">1 Mar 2027</span></td>
               <td><span class="days-ok">246</span></td>
               <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-pay" onclick="event.stopPropagation();openPayModal('NSK Europe Ltd')">Marcar pago recibido</button></div></td>
-            </tr>
-            <tr onclick="openPanel(4)">
-              <td><span class="org-link">Timken Europe GmbH</span></td>
-              <td><span class="country-badge">DE</span></td>
-              <td><span class="st-badge st-candidate">CANDIDATA A BORRADO</span></td>
-              <td><span class="ts">—</span></td>
-              <td><span class="ts-red">28 Dic 2025</span></td>
-              <td><span class="days-danger">−182</span></td>
-              <td onclick="e=>e.stopPropagation()"><div class="tbl-actions"><button class="btn-del-inline" onclick="event.stopPropagation();openDeleteModal('Timken Europe GmbH')">Iniciar borrado</button></div></td>
             </tr>
           </tbody>
         </table>

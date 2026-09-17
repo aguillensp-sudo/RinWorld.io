@@ -232,7 +232,7 @@
 
         <div class="frow">
           <label class="flabel" for="fNew">Nueva passphrase</label>
-          <input class="finput" type="password" id="fNew" placeholder="Mínimo 10 caracteres" autocomplete="new-password" oninput="validateNew()">
+          <input class="finput" type="password" id="fNew" placeholder="Mínimo 12 caracteres" autocomplete="new-password" oninput="validateNew()">
           <div class="pstrength" id="pstrength" style="display:none">
             <div class="pbar-track"><div class="pbar-fill" id="pbarFill"></div></div>
             <div class="pbar-lbl" id="pbarLbl"></div>
@@ -342,7 +342,7 @@
   }
 
   /* Form */
-  function passScore(p){var s=0;if(p.length>=10)s++;if(/[A-Z]/.test(p))s++;if(/[a-z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return s;}
+  function passScore(p){var s=0;if(p.length>=12)s++;if(/[A-Z]/.test(p))s++;if(/[a-z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return s;}
 
   function validateNew(){
     var v=document.getElementById('fNew').value,el=document.getElementById('fNew'),ps=document.getElementById('pstrength'),fill=document.getElementById('pbarFill'),lbl=document.getElementById('pbarLbl');

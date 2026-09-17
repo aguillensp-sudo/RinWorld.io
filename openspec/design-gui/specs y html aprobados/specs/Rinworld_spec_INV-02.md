@@ -105,7 +105,7 @@ Mapeo propuesto por IA:
   "Ref."        → part_number      · Ej: 6205-2RS/C3   · Confianza: 97% [verde]
   "Fabricante"  → brand            · Ej: SKF            · Confianza: 91% [verde]
   "Uds."        → quantity         · Ej: 850            · Confianza: 88% [verde]
-  "País"        → location_country · Ej: ES             · Confianza: 85% [verde]
+  "País"        → location_country · Ej: ES             · Confianza: 86% [verde]
   "PVP"         → price            · Ej: 4.20           · Confianza: 72% [amarillo]
   "Obs."        → — Ignorar —      · Ej: Stock almacén  · Confianza: 12% [rojo]
 
@@ -113,6 +113,9 @@ Columnas ignoradas: ninguna
 Guardar como perfil: desmarcado
 Política: Reemplazo total (default)
 ```
+
+> **Corregido el 17-sep-2026 (`F-170`, recomendación aplicada por el PO):** la fila «País» decía «Confianza: 85% [verde]», y la regla es verde solo si > 85%. El ejemplo pasa a 86%.
+
 
 ---
 

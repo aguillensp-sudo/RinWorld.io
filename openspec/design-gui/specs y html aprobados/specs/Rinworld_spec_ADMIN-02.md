@@ -102,15 +102,17 @@ Se abre al pulsar el botón correspondiente en la tabla o en el panel lateral de
 
 ### Datos de ejemplo
 
+> **Corregido el 17-sep-2026 (`F-170`, recomendación aplicada por el PO):** las filas iban −133, 2, 91, 246, −182 bajo «Orden: días restantes ascendente». Reordenadas según la regla: la más vencida primero.
+
 ```
 Filtro activo: Todos
 Orden: días restantes ascendente
 
-Fila 1: Distribuciones Ruiz SL     · ES · SUSPENDED · —           · 15 Feb 2026 · -133 días [rojo]   · [Reactivar]
-Fila 2: Nordic Bearings AB         · SE · ACTIVE    · 30 Jun 2025 · 30 Jun 2026 · 2 días [naranja]   · [Marcar pago recibido]
-Fila 3: Rodamientos del Sur SL     · ES · EN PRUEBA · —           · 27 Sep 2026 · 91 días [azul]     · [Marcar pago recibido]
-Fila 4: NSK Europe Ltd             · DE · ACTIVE    · 1 Mar 2026  · 1 Mar 2027  · 246 días [verde]   · [Marcar pago recibido]
-Fila 5: Timken Europe GmbH         · DE · CANDIDATA · —           · 28 Dic 2025 · -182 días [rojo]   · [Iniciar borrado]
+Fila 1: Timken Europe GmbH         · DE · CANDIDATA · —           · 28 Dic 2025 · -182 días [rojo]   · [Iniciar borrado]
+Fila 2: Distribuciones Ruiz SL     · ES · SUSPENDED · —           · 15 Feb 2026 · -133 días [rojo]   · [Reactivar]
+Fila 3: Nordic Bearings AB         · SE · ACTIVE    · 30 Jun 2025 · 30 Jun 2026 · 2 días [naranja]   · [Marcar pago recibido]
+Fila 4: Rodamientos del Sur SL     · ES · EN PRUEBA · —           · 27 Sep 2026 · 91 días [azul]     · [Marcar pago recibido]
+Fila 5: NSK Europe Ltd             · DE · ACTIVE    · 1 Mar 2026  · 1 Mar 2027  · 246 días [verde]   · [Marcar pago recibido]
 
 Sección "Candidatas a borrado":
   Timken Europe GmbH · DE · Suspendida desde: 28 Dic 2025 · 6 meses en SUSPENDED · [Iniciar borrado]

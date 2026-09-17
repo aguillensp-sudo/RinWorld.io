@@ -136,8 +136,10 @@ Se abre al pulsar `Crear oferta` dentro de MSG-02 o `Responder con oferta` en un
 ## 6. Estados especiales
 
 **Coste de transporte no informado:**
-- La línea de shipping_cost no aparece en la tarjeta renderizada
-- No se muestra `0` ni `—` — simplemente la línea no existe
+- En la tabla de ofertas, la celda `Transporte` muestra `—` (§4.1), igual que `Plazo` y `Válida hasta` cuando no están informados
+- Nunca `0`: un coste de transporte 0 es un dato distinto de «no informado»
+
+> **Corregido el 17-sep-2026 (`F-170`, recomendación aplicada por el PO):** este estado decía «la línea de shipping_cost no aparece en la tarjeta renderizada · no se muestra `0` ni `—`», un resto del diseño de tarjetas que la v1.2 sustituyó por tablas; la tabla de §4.1 ya pedía `—`.
 
 **Oferta con valid_until expirada:**
 - Badge `EXPIRADA` · Steel Mist

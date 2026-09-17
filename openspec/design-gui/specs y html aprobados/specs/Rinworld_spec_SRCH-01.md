@@ -105,7 +105,7 @@ Columnas en **orden fijo inamovible** (v1.1). No reordenables por el usuario:
 Query VERA: "busco 6205 2RS, mínimo 500 unidades, Europa"
 
 Chips: Ref: 6205-2RS · Qty mín: 500 u · Zona: Europa
-Meta: 5 resultados · 4 con stock ≥ 500 u
+Meta: 5 resultados · 3 con stock ≥ 500 u
 
 Fila 1: 6205-2RS/C3  · SKF    · 850   · 3d · SKF Nordic AB          · Suecia   · Hoy     · ★12 · [Consultar][Contactar]
 Fila 2: 6205-2RS1    · FAG    · 350   · 5d · Schaeffler Iberia SL   · España   · Ayer    · ★8  · [Consultar][Contactar] [qty<mín→gris]
@@ -113,6 +113,9 @@ Fila 3: 6205-2RSC3E  · NSK    · 1.200 · 7d · NSK Europe Ltd         · Alema
 Fila 4: 6205LLB/5K   · NTN    · 200   · 2d · NTN-SNR Roulements     · Francia  · Hace 8d · ★5  · [Consultar][Contactar] [qty<mín→gris][antigüedad→naranja]
 Fila 5: 6205-2RS-JEM · Timken · 600   · 10d· Timken Europe GmbH     · Alemania · Hace 3d · ★9  · [Consultar deshabilitado—ya consultada][Contactar]
 ```
+
+> **Corregido el 17-sep-2026 (`F-170`, recomendación aplicada por el PO):** el meta decía «4 con stock ≥ 500 u» y VERA «Cuatro superan», y de las cinco filas (850, 350, 1.200, 200, 600) solo tres llegan a 500. Pasa a 3 aquí, en el diálogo de VERA y en el HTML aprobado, que además cargaba ordenado por antigüedad en vez de por cantidad descendente.
+
 
 ---
 
@@ -134,7 +137,7 @@ No aplica — todos los inputs son chips editables o la entrada de texto de VERA
 > busco 6205 2RS, mínimo 500 unidades, Europa
 >
 > **VERA responde:**
-> Encontré 5 proveedores con stock de 6205-2RS en Europa. Cuatro superan las 500 unidades.
+> Encontré 5 proveedores con stock de 6205-2RS en Europa. Tres superan las 500 unidades.
 > [Highlights: SKF Nordic AB · Suecia · 3d → 850 u / NSK Europe Ltd · Alemania · 7d → 1.200 u]
 >
 > **Usuario dice:**

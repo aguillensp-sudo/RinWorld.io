@@ -253,7 +253,7 @@
 
       <!-- METABAR -->
       <div class="metabar">
-        <div class="meta-count"><strong>5 resultados</strong> · 4 con stock ≥ 500 u</div>
+        <div class="meta-count"><strong>5 resultados</strong> · 3 con stock ≥ 500 u</div>
         <button class="btn-sel-all" id="btnSelAll" onclick="toggleSelAll()">Seleccionar todos</button>
         <button class="btn-consultar-sel" id="btnConsultarSel" disabled onclick="consultarSeleccionados()">Consultar seleccionados</button>
         <button class="btn-watcher" onclick="crearWatcher()"><i class="ti ti-bell-plus"></i>Crear watcher con estos criterios</button>
@@ -401,7 +401,7 @@
       </div>
       <div class="bwchat" id="bwchat">
         <div class="bwmsg u"><div class="bwbub">busco 6205 2RS, mínimo 500 unidades, Europa</div><div class="bwts">11:24</div></div>
-        <div class="bwmsg v"><div class="bwbub">Encontré 5 proveedores con stock de 6205-2RS en Europa. Cuatro superan las 500 unidades.<br><br>Destacados: <strong>SKF Nordic AB</strong> (Suecia · 3d → 850 u) y <strong>NSK Europe Ltd</strong> (Alemania · 7d → 1.200 u).</div><div class="bwts">11:24</div></div>
+        <div class="bwmsg v"><div class="bwbub">Encontré 5 proveedores con stock de 6205-2RS en Europa. Tres superan las 500 unidades.<br><br>Destacados: <strong>SKF Nordic AB</strong> (Suecia · 3d → 850 u) y <strong>NSK Europe Ltd</strong> (Alemania · 7d → 1.200 u).</div><div class="bwts">11:24</div></div>
         <div class="bwmsg u"><div class="bwbub">¿Alguno en España o Portugal?</div><div class="bwts">11:25</div></div>
         <div class="bwmsg v"><div class="bwbub">Solo Schaeffler Iberia (España) con 350 unidades — por debajo de tu mínimo de 500. ¿Los incluyo igualmente en la consulta?</div><div class="bwts">11:25</div></div>
       </div>
@@ -580,11 +580,11 @@
     rows.forEach(r => tbody.appendChild(r));
   }
 
-  // Init default sort: antigüedad asc (más reciente primero)
+  // Init default sort: cantidad desc (spec §4, «Por defecto: cantidad disponible descendente»)
   document.addEventListener('DOMContentLoaded', () => {
-    const th = document.querySelector('.results-table th[data-col="antiguedad"]');
-    if (th) th.classList.add('sort-asc');
-    applySortDOM('antiguedad', 'asc');
+    const th = document.querySelector('.results-table th[data-col="cantidad"]');
+    if (th) th.classList.add('sort-desc');
+    applySortDOM('cantidad', 'desc');
   });
 
   /* VERA sort command */

@@ -224,7 +224,7 @@
           <div class="frow">
             <label class="flabel" for="fPassphrase">Frase de seguridad</label>
             <input class="finput" type="password" id="fPassphrase" placeholder="Introduce tu backup passphrase" autocomplete="current-password" oninput="onPassInput()">
-            <div class="attempt-row">
+            <div class="attempt-row" id="attemptRow" style="display:none">
               <div class="attempt-dots" id="attemptDots">
                 <div class="adot" id="d1"></div>
                 <div class="adot" id="d2"></div>
@@ -232,7 +232,7 @@
                 <div class="adot" id="d4"></div>
                 <div class="adot" id="d5"></div>
               </div>
-              <span class="attempt-lbl" id="attemptLbl">5 intentos disponibles</span>
+              <span class="attempt-lbl" id="attemptLbl">5 de 5 intentos restantes</span>
             </div>
           </div>
 
@@ -359,7 +359,8 @@
       if(i<fails){d.classList.add(fails>=4?'warn':'used');}
     });
     var rem=5-fails;
-    document.getElementById('attemptLbl').textContent=rem===1?'1 intento restante':rem+' intentos disponibles';
+    document.getElementById('attemptRow').style.display=fails>=2?'flex':'none';
+    document.getElementById('attemptLbl').textContent=rem+' de 5 intentos restantes';
     if(fails>=4)document.getElementById('attemptLbl').style.color='#f97316';
   }
 

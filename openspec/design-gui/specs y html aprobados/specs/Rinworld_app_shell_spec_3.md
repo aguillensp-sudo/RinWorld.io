@@ -2,6 +2,8 @@
 **Documento base · Todas las pantallas autenticadas heredan de este shell**
 *v1.1 · Junio 2026*
 
+> **Corregido el 17-sep-2026 (`F-170`, recomendación aplicada por el PO):** el nav bar decía 46px, la brand bar `#111827` y el nav `#1B2537`, y el icono de Configuración `ti-settings`. El HTML aprobado del shell —que manda desde `F-004`, 5-ago— y la app usan 72px, `#07111F` en las dos barras y `ti-adjustments-horizontal`. Esta spec se pone al día con ellos. La cabecera mínima de 46px de las pantallas sin shell (§ más abajo) no cambia.
+
 ---
 
 ## 1. Concepto
@@ -20,7 +22,7 @@ El App Shell es la estructura permanente de la aplicación que envuelve el conte
 ┌─────────────────────────────────────────────────────────────────┐
 │  BRAND BAR (24px · Deep Steel oscuro · no interactiva)         │
 ├─────────────────────────────────────────────────────────────────┤
-│  NAV BAR (46px · Deep Steel #1B2537 · siempre visible)         │
+│  NAV BAR (72px · Deep Steel Darkest #07111F · siempre visible) │
 ├───────────────────────────────────────────────┬─────────────────┤
 │                                               │                 │
 │   PANEL DE CONTENIDO                          │   PANEL VERA    │
@@ -44,7 +46,7 @@ El App Shell es la estructura permanente de la aplicación que envuelve el conte
 | Propiedad | Valor |
 |---|---|
 | Alto | 24px |
-| Fondo | `#111827` (Deep Steel más oscuro que el nav) |
+| Fondo | Deep Steel Darkest `#07111F` (el mismo que el nav bar) |
 | Posición | Fija en la parte superior · por encima del nav bar |
 | Interactividad | Ninguna — barra puramente informativa/corporativa |
 | Font | Inter 400 · 10px · mayúsculas · letter-spacing 0.08em |
@@ -66,8 +68,8 @@ El App Shell es la estructura permanente de la aplicación que envuelve el conte
 
 | Propiedad | Valor |
 |---|---|
-| Alto | 46px |
-| Fondo | Deep Steel `#1B2537` |
+| Alto | 72px |
+| Fondo | Deep Steel Darkest `#07111F` |
 | Posición | Fija · inmediatamente bajo la brand bar · siempre visible |
 | Z-index | Por encima del contenido y de la sidebar overlay |
 
@@ -122,7 +124,7 @@ Orden fijo inamovible:
 - **Navegación:** mismos 8 ítems que el nav bar en formato vertical con icono Tabler + texto.
 - **Ítem activo:** sincronizado con el ítem activo del nav bar. Border-left 2px azul `#2563EB` · fondo `rgba(37,99,235,0.12)`.
 - **Separador:** entre navegación y footer.
-- **Icono de Configuración** (al pie, antes del usuario): icono `ti-settings` + texto `Configuración`. Redirige a la sección de ajustes de organización y usuarios.
+- **Icono de Configuración** (al pie, antes del usuario): icono `ti-adjustments-horizontal` + texto `Configuración`. Redirige a la sección de ajustes de organización y usuarios.
 - **Usuario:** avatar circular con iniciales en Brass + nombre completo + nombre de organización.
 
 ### 5.3 Iconos por ítem
@@ -137,7 +139,7 @@ Orden fijo inamovible:
 | Empresas | `ti-building` |
 | Foros | `ti-notes` |
 | Contacto | `ti-headset` |
-| Configuración | `ti-settings` |
+| Configuración | `ti-adjustments-horizontal` |
 
 ---
 
@@ -228,8 +230,8 @@ Las pantallas REG-00 y REG-00-WAIT **no usan el shell completo**. En su lugar:
 
 | Nombre | Hex | Uso |
 |---|---|---|
-| Deep Steel Dark | `#111827` | Brand bar |
-| Deep Steel | `#1B2537` | Nav bar · sidebar · burbujas usuario VERA · avatar |
+| Deep Steel Darkest | `#07111F` | Brand bar · nav bar |
+| Deep Steel | `#1B2537` | Sidebar · burbujas usuario VERA · avatar |
 | Blanco | `#FFFFFF` | Fondo panel contenido · tarjeta formulario · burbujas VERA |
 | Warm Cream | `#FAF8F4` | Fondo panel VERA |
 | Cold White | `#F1F3F6` | Chips · fondo tabla cabecera |

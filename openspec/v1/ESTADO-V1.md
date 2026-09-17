@@ -288,30 +288,97 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 
 ---
 
+**Día 16 de V1 · corridas 13/14-sep-2026, C5 y cierre 17-sep-2026 · Estado: CERRADO — el H1 se cierra**
+
+> **EL DÍA EN NUEVE LÍNEAS.**
+>
+> 1. **Arrancó donde dejó el Día 15:** paso 5 de `UMBRAL-FABRICA-V1.md` §7, las tres
+>    corridas reales, cada una en el entorno local del PO. `DEEPSEEK_API_KEY` resuelta:
+>    es variable de usuario en Windows, no `app/.env` como el PO daba por hecho — comprobado
+>    contra la propia máquina, no contra lo dicho.
+> 2. **`DIR-01`, primera corrida: ESCALADO en 3 intentos, pero el artefacto era correcto.**
+>    `C1`/`C2` en rojo los tres intentos porque `RequestDetailPanel.tsx`/`RequestsTable.tsx`
+>    de `ADMIN-01` —tarea siguiente, aún sin correr— no existían, y `C1` corre `npm run
+>    typecheck` sobre TODO el repo a propósito (`F-070`). Ninguno de los dos ficheros estaba
+>    en los `outputs` de `DIR-01`. **`F-161` abierto: la corrida no cuenta para la cifra 2
+>    del umbral (§5.3), se repite tras `ADMIN-01`.**
+> 3. **`ADMIN-01`, primera corrida: mismo síntoma, causa más rica.** Además del contagio de
+>    `FORO-01` (`Forum.test.tsx` contra el marcador de esa pantalla, 11 de 15 fallos de
+>    `C1`), las tres fallas propias eran del PROPIO fichero de tests
+>    (`RequestDetailPanel.test.tsx`), no del Coder: un `getByText` de match único contra un
+>    nombre que pinta dos veces a propósito, un `getByRole` mal usado para negar presencia
+>    (lanza en vez de devolver `null`), y un `/email/i` sin acotar que cazaba un campo
+>    siempre visible. Y una cuarta causa real pero ajena: `requestDateLabel` formatea en la
+>    hora de la máquina, no en UTC — el Coder ya lo había compensado solo con su propio
+>    `utcClock()` en las dos pantallas que generó. **`F-162` abierto y corregido el mismo
+>    día**, sin tocar el artefacto: tres bugs de aserción arreglados y `TZ='UTC'` fijado en
+>    `src/test/setup.ts` para que la suite deje de depender del huso de quien la corra.
+> 4. **`FORO-01`: PASA limpio 4/4 al segundo intento — la primera corrida sin ninguna
+>    sombra de duda.** Con las tres pantallas ya generadas, `npm run typecheck` y `npm run
+>    test:arnes` sobre el repo entero confirmaron que `F-161`/`F-162` no dejaban nada más
+>    pendiente: **770 pruebas en verde, 0 en rojo.**
+> 5. **`F-163`: sin tarifa para `claude-haiku-4-5-20251001`, el medidor de coste no podía
+>    correr para NINGUNA pantalla, no solo para la sesión que lo usaba** —escanea todos los
+>    worktrees vivos, y un solo modelo sin tarifa tumba la medición entera. Una fila añadida
+>    sin que nadie la pidiera, con los números de **Haiku 3.5, retirado**, revertida dos
+>    veces el 13-sep sin verificarla ninguna de las dos. Corregida con la tarifa oficial de
+>    `platform.claude.com/docs/en/about-claude/pricing`, comprobada hoy: `$1/$1.25/$2/
+>    $0.10/$5`.
+> 6. **Con las cuatro causas resueltas, `DIR-01` y `ADMIN-01` se repitieron enteras, en
+>    sesión limpia, sobre el corpus ya completo: las dos PASA 4/4 al segundo intento.**
+>    `attempt_3.json` de cada corrida invalidada, ya preservado en los commits `3c550fe`/
+>    `e329f3e`, se retiró del directorio de trabajo para no confundirse con el de la
+>    repetición.
+> 7. **El PO revisó las tres en local (`npm run dev`) y dio C5 sin ninguna corrección: las
+>    tres, tal cual salieron del Coder.** Dos falsas alarmas resueltas al vuelo, ninguna
+>    era del artefacto: en `FORO-01` nada es clicable porque las tarjetas de categoría y
+>    los hilos recientes están `disabled` a propósito —FORO-02 no existe, y lo dicen en su
+>    `title`—; en `ADMIN-01` lo clicable es el NOMBRE de la organización, un `<button>`
+>    dentro de la primera columna, no la fila entera —confirmado leyendo `RequestsTable.tsx`
+>    antes de responder, no de memoria.
+> 8. **El H1 se cierra con las ocho cifras. Veredicto: Funciona con supervisión — escenario
+>    base, 21 semanas.** Las cifras 1, 2, 4, 5, 6 y 8 cumplen; la 7 cumple con margen amplio
+>    pese a la imprecisión de sesión compartida (§1); **la cifra 3 NO cumple: 0 de 3 verdes
+>    al primer intento (umbral ≥2 de 3)** — las tres pantallas necesitaron su segundo
+>    intento, ninguna llegó limpia a la primera. Es la única cifra que falla, y basta para
+>    mover el veredicto del escenario favorable al escenario base: la corriente B se abre
+>    con **dos** agentes, no cuatro, y se remide al llegar a seis pantallas.
+> 9. **Sin CI real en ningún commit de este arco** —los siete llevan `[skip ci]`, heredado
+>    de cuando el corpus estaba incompleto y la rama estaba roja por diseño—. Con las tres
+>    pantallas ya en verde, esa razón dejó de existir: el commit de este cierre corre CI
+>    de verdad, y el paso 5 del ritual (`desplegar y comprobarlo en su URL`) se cumple con
+>    ese run, no se salta.
+
+**Detalle de las ocho cifras, cada una contra su fuente:** ver §1. **`F-161`, `F-162` y
+`F-163`, íntegros:** `findings-register.md`. **Coste real del Coder por pantalla:**
+`harness-metrics.csv`, filas `2026-09-13`/`2026-09-14` de `DIR-01`/`ADMIN-01`/`FORO-01`.
+
+---
+
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-11` durante el trabajo (commits, 15:48–19:44 UTC); `2026-09-13` al redactar este cierre — la sesión de chat se interrumpió dos días, el trabajo no se alargó (ver Día 15, punto 8) |
-| El cierre del Día 14 llegó a `origin` y su CI acabó en verde | `mcp__github__actions_get`/`actions_list` sobre el run del push, no el mensaje del commit | Run `34618286746` sobre `f5e1d7e`: `success`, los CINCO jobs (arnés, app, esquema, Playwright, despliegue continuo app+VERA) |
-| Que la rama asignada a esta sesión (`claude/amazing-hawking-q7pm45`) tuviera el trabajo de V1 | `git log`, `git merge-base` contra `origin/main` y `origin/mvp/bootstrap` | **No.** Anclada a `43bb222`, el `main` de antes de todo V1 — exactamente el patrón `F-108` que este mismo fichero describe en su aviso de cabecera. Se cambió a trabajar sobre `mvp/bootstrap`, con permiso explícito del PO |
-| Que `--seco` escalaba en falso (nuevo, `F-160`) | `python -m harness.graph.run harness/tasks/DIR-01.json --seco`, y el mismo comando contra `SRCH-01.json` para descartar que fuera cosa de la tarea nueva | Las dos crasheaban con `AssertionError: no deberia haber ninguna fila marcada como escalada` — la causa vive en `dry_run.py`, no en ninguna tarea |
-| La causa exacta de `F-160` | Corrida manual del grafo con el CSV real, leyendo la fila byte a byte | `...,no,-,-,si,PASA...` — el `,si,` de `primer_intento_limpio` (columna añadida por `F-152` el 10-sep) cae justo donde el detector de escalado buscaba el suyo |
-| Que el arreglo de `F-160` funciona y no rompe nada más | `python -m harness.tests.dry_run` (los tres escenarios A/B/C) y `--seco` sobre `DIR-01`, `ADMIN-01`, `FORO-01` y de nuevo `SRCH-01` | Los cinco, verdes |
-| La tarea `DIR-01`, formato fijo | `--seco` | `[DIR-01] tarea valida: 8 inputs, 4 outputs, component_api cubre cada .tsx, ficheros de aceptacion en su sitio` — cero avisos |
-| La tarea `ADMIN-01`, formato fijo | `--seco` | `[ADMIN-01] tarea valida: 8 inputs, 6 outputs...` — cero avisos |
-| La tarea `FORO-01`, formato fijo | `--seco` | `[FORO-01] tarea valida: 8 inputs, 2 outputs...` — cero avisos |
-| Que ADMIN-01 encajara en `AppShell` tal cual | Spec `ADMIN-01` §2, el HTML aprobado (nav propio de cinco ítems, acento brass) y los tipos de `session.ts` (`OperatorProfile` sin `orgName`/`role`) contra las props de `AppShell.tsx` | **No.** `AppShell` está tipado a `MemberProfile` y usa `orgName` en tres sitios. Motivó `OperatorShell.tsx` nuevo |
-| Que `AppShell.tsx` y sus tests quedaran intactos tras crear `OperatorShell` | `git diff -- app/src/shell/AppShell.tsx app/src/shell/AppShell.module.css` | Vacío — cero líneas tocadas |
-| `OperatorShell.tsx` | `npx tsc --noEmit` y `npx vitest run src/shell/OperatorShell.test.tsx` | Typecheck limpio, 12 pruebas nuevas en verde |
-| Que algún envío de correo (EML-07/EML-08) exista en el proyecto | Lectura de `admin-requests.ts`, `supabase/functions/` entera y `CLAUDE.md` | Ninguno. Cero proveedores de correo configurados en ningún sitio del repo — el texto de confirmación de `ADMIN-01` se corrigió para no afirmarlo |
-| `admin-requests.ts` ampliada (`requestDateLabel`, `websiteHref`) | `npx vitest run src/lib/admin-requests.test.ts` | 22 pruebas en verde (18 + 4 nuevas) |
-| El wiring de "Empresas" y "Foros" en `App.tsx`, antes de escribir cualquier e2e | `npx tsc --noEmit` y `npx vitest run` sobre la suite entera, tras cada wiring | Typecheck limpio; suite existente sin ninguna regresión en los dos puntos |
-| El estado de la app tras las tres tareas nuevas | `npx tsc --noEmit` (repo entero) y `npx vitest run` (repo entero) | Typecheck: solo los tres `Cannot find module` esperados (`DirectoryTable`, `RequestsTable`, `RequestDetailPanel` — no los escribe esta sesión). Vitest: **712 pruebas en verde, 36 en rojo contra los marcadores de las tres pantallas (esperado), 23 saltadas** |
-| Que `DEEPSEEK_API_KEY` esté disponible en esta sesión (afirmado por el PO, `app/.env` local) | `uname -a`, `mount`, `ls /` sobre esta misma máquina | **No.** Contenedor Linux (`vm`), raíz en `/dev/vda` propio, sin ningún volumen de red ni de Windows. Sin canal hacia `C:\Users\admin\...` |
-| Coste de orquestación, antes y después de esta sesión | `python -m harness.core.orchestration_metrics`, corrido a mitad de sesión (tras `DIR-01`) y otra vez al cerrar | 997,77 $ → 1.018,06 $ → **1.055,62 $**. El 11-sep entero (Día 14 + Día 15) pasa de 148,75 $ a **206,60 $**: esta sesión sola, **57,85 $**, sin ninguna corrida real |
-| Divergencia con `origin/mvp/bootstrap` antes de escribir este cierre | `git fetch origin mvp/bootstrap` + `git status -sb` | Sin desfase — nadie más ha tocado la rama desde el último push de esta sesión |
-| CI de los commits de esta sesión | `mcp__github__actions_list` sobre `mvp/bootstrap` | El primer push (harness fix + tarea `DIR-01` + métricas) SÍ corrió: `failure` en `App · typecheck` — rojo esperado y por diseño, sin `[skip ci]` por un descuido (corregido en los push siguientes). Los cuatro commits de `OperatorShell`/`ADMIN-01`/`FORO-01` llevan `[skip ci]` en el commit de cabeza de cada push: **GitHub no llegó a arrancar ningún run** — verificado con `actions_list`, sigue siendo el run `34637176421` el más reciente. Lo verde de esos cuatro commits es SOLO la verificación local (typecheck + vitest de arriba), no CI |
+| Fecha de máquina | `date -u` | `2026-09-17`, 07:46 UTC — el cierre se escribe el mismo día del trabajo (regla 3) |
+| `DIR-01`, repetición en sesión limpia | `harness-metrics.csv` (filas `2026-09-14`) + `harness/metrics/DIR-01/attempt_1.json`/`attempt_2.json` | **PASA 4/4 en el intento 2** (intento 1: `FALLA` C1;C2, verde C3;C4). Coste real de los dos intentos: `0,044778 $` |
+| `ADMIN-01`, repetición en sesión limpia | Mismo método, filas `2026-09-14` | **PASA 4/4 en el intento 2** (intento 1: `FALLA` C1;C2, verde C3;C4). Coste real: `0,054701 $` |
+| `FORO-01`, sin repetición | Mismo método, filas `2026-09-13` | **PASA 4/4 en el intento 2** (intento 1: `FALLA` C1;C2, verde C3;C4). Coste real: `0,101430 $` |
+| Que las escaladas de `DIR-01`/`ADMIN-01` del 13-sep no dependían del artefacto | `npm run typecheck` + `npm run test:arnes` corridos a mano contra los ficheros YA generados, sin volver a invocar al Coder | Limpio en los dos casos, una vez corregido el instrumento (tres bugs de test + `TZ`), no el artefacto — `F-161`, `F-162` |
+| El repo entero, con las tres pantallas reales dentro | `npm run typecheck` + `npm run test:arnes` | Typecheck sin errores. **770 pruebas en verde, 0 en rojo, 23 saltadas** |
+| Tarifa de `claude-haiku-4-5-20251001` | `platform.claude.com/docs/en/about-claude/pricing`, comprobado hoy | `$1 / $1,25 / $2 / $0,10 / $5` (input / caché 5m / caché 1h / lectura de caché / output). La fila que había puesta —revertida dos veces el 13-sep sin comprobarla ninguna de las dos— era la tarifa de **Haiku 3.5, retirado** — `F-163` |
+| C5 de las tres pantallas | Revisión del PO en local (`npm run dev`), confirmada en esta misma sesión | Las tres aprobadas **sin ninguna corrección** sobre lo que entregó el Coder |
+| Dos dudas del PO durante la revisión, resueltas contra el código, no de memoria | `RequestsTable.tsx` (columna "Organización") y `Forum.tsx` (`disabled`+`title` en tarjetas e hilos) | `FORO-01`: nada es clicable a propósito, `FORO-02` no existe. `ADMIN-01`: lo clicable es el nombre de la organización, no la fila — confirmado ANTES de responder |
+| **Cifra 1 · pantallas aceptadas** (umbral 3 de 3) | `harness-metrics.csv` + C5 del PO | **3 de 3 — CUMPLE** |
+| **Cifra 2 · corridas sin escalada** (umbral 3 de 3) | `harness-metrics.csv` (columna `resultado`) + `F-161`/`F-162` (las escaladas del 13-sep no cuentan, `UMBRAL-FABRICA-V1.md` §5.3) | **3 de 3 — CUMPLE** |
+| **Cifra 3 · verdes al primer intento** (umbral ≥2 de 3) | Columna `primer_intento_limpio` de las tres filas `PASA` | **0 de 3 — NO CUMPLE.** Las tres pantallas necesitaron su segundo intento; ninguna llegó limpia a la primera |
+| **Cifra 4 · corrección humana** (mediana ≤10 %, ninguna >25 %) | C5 del PO: cero ediciones sobre los ficheros que entregó el Coder | **0 % en las tres — CUMPLE** |
+| **Cifra 5 · ficheros sin tocar en la revisión** (≥ la mitad, en cada una) | Mismo C5 | **100 % en las tres (6/6, 6/6, 2/2) — CUMPLE** |
+| **Cifra 6 · coste del generador** (≤0,25 $ por pantalla, reintentos incluidos) | `harness-metrics.csv`, suma de los dos intentos por pantalla | `0,044778 $` / `0,054701 $` / `0,101430 $` — **CUMPLE** con margen amplio |
+| **Cifra 7 · coste de orquestación** (mediana ≤50 $, ninguna >100 $ por pantalla) | `orchestration-metrics.csv`, delta antes/después de cada corrida — ver la salvedad de abajo | `ADMIN-01` (repetición): **3,46 $**, medido limpio (`1.090,90 $ − 1.087,44 $`). `FORO-01`: **0,06 $** reportados, calculados con la tarifa de Haiku 3.5 (`F-163`, incorrecta en ese momento) — con la tarifa real el número sube ~20 %, sigue siendo trivial. `DIR-01` (repetición): sin línea base limpia, los dos comandos de medición chocaron con `F-163` antes de arreglarse. **CUMPLE con margen amplísimo pase lo que pase con la atribución exacta** — ninguna cifra observada se acerca ni de lejos a 50 $ |
+| **Cifra 8 · tiempo de reloj** (≤1 jornada por pantalla, sin esperas del PO) | Tareas validadas `--seco` el 11-sep (Día 15); corridas reales el 13/14-sep; trabajo de ingeniería real por corrida, unos pocos minutos sumando reintentos | **CUMPLE con margen amplio** |
+| **Veredicto del H1** | Regla de decisión de `UMBRAL-FABRICA-V1.md` §4, aplicada a las ocho cifras de arriba | **Funciona con supervisión — escenario base, 21 semanas.** Falla solo la cifra 3, sin ninguna escalada real y con las cifras 4/5 limpias: es exactamente la condición de esa fila, no la del escenario favorable ni la del adverso |
+| Divergencia con `origin/mvp/bootstrap` antes de escribir este cierre | `git fetch origin mvp/bootstrap` + `git status -sb` | Sin desfase |
+| CI de este cierre | Este commit se empuja SIN `[skip ci]` — los siete anteriores lo llevaban por una razón que ya no aplica (§3, Día 16 punto 9) | Se verifica y se anota antes de escribir el pie |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -346,20 +413,23 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — NO ABIERTA, con el paso 3 del §7 completo
+### Corriente B · Fábrica — ABIERTA, con DOS agentes (Día 16, H1 cerrado)
 
-Se abre cuando la corriente A publique los contratos de datos, y esa condición se cumplió el
-11-sep: `0027`/`directory.ts`, `0028`/`admin-requests.ts` y `0029`/`forum.ts`, verificadas y
-sembradas en las dos bases. Y tiene su vara de medir, `UMBRAL-FABRICA-V1.md`, escrita antes
-de medir.
+**El H1 se cerró el Día 16.** Las tres pantallas —`DIR-01`, `ADMIN-01`, `FORO-01`— tienen
+corrida real limpia, C5 del PO sin ninguna corrección, y las ocho cifras de
+`UMBRAL-FABRICA-V1.md` evaluadas contra su fuente (§1). **Veredicto: Funciona con
+supervisión — escenario base.** Falla solo la cifra 3 (0 de 3 verdes al primer intento,
+umbral ≥2 de 3); las cifras 1, 2, 4, 5, 6 y 8 cumplen, y la 7 cumple con margen amplísimo
+pese a la imprecisión de sesión compartida entre corridas (§1). Eso pone la corriente B en
+el escenario de **21 semanas**, no el de 18: se abre con **dos agentes**, no cuatro, y se
+remide obligatoriamente al llegar a seis pantallas (`UMBRAL-FABRICA-V1.md` §4).
 
-**El Día 15 completó el paso 3: las tres tareas en formato fijo** —`DIR-01`, `ADMIN-01`,
-`FORO-01`, las nueve del corpus— **, cada una validada con `--seco` (cero problemas, cero
-avisos).** Lo único que falta para abrir la corriente son las tres corridas (§3, paso 5), y
-**esta vez la dependencia no es de nadie externo al proyecto, sino de dónde vive
-`DEEPSEEK_API_KEY`:** en el entorno local del PO, no en una sesión remota (Día 15,
-comprobado con `uname`/`mount`, no supuesto). Las corridas no dependen de ninguna
-aprobación ni de ningún tercero — dependen de correrlas en la máquina que tiene la clave.
+**Lo que queda escrito sobre la cifra 3, para cuando llegue la remedición:** las tres
+pantallas necesitaron su segundo intento — ninguna de las tres llegó limpia a la primera,
+a diferencia de las series de `MSG-01` sobre corpus ya conocido (17/18, 4-5 de 5 limpias).
+No se sabe todavía si es el patrón normal de una pantalla NUEVA (nunca antes generada) o
+una señal real de que el primer intento necesita mejor contexto — la remedición a seis lo
+dirá, no esta sesión (§6).
 
 ### Corriente C · Verificación — NO ABIERTA
 
@@ -369,45 +439,65 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-**El H1 sigue siendo lo único con acción propia en el repo. De los cinco pasos de
-`UMBRAL-FABRICA-V1.md` §7, cuatro están hechos y el quinto tiene una dependencia real, no de
-aprobación sino de máquina:**
+**El H1 está cerrado (§1, §2). Lo que sigue es abrir de verdad la corriente B, no medirla:**
 
-| | Paso | Estado |
-|---|---|---|
-| 1 | El PO confirma las tres pantallas | ✅ **11-sep** · `DIR-01`, `ADMIN-01`, `FORO-01` |
-| 2 | Las tres capas de datos, a mano | ✅ **11-sep** · `0027`, `0028`, `0029` |
-| 3 | Las tres tareas en formato fijo | ✅ **11-sep (Día 15)** · las nueve del corpus, `--seco` limpias |
-| 4 | Línea base del coste de orquestación | ✅ **11-sep** · y de ahí salió `F-157` |
-| 5 | **Las tres corridas, su revisión y el C5** | 🔴 **Es lo único que queda** |
-
-1. **Correr las tres tareas** —`DIR-01`, `ADMIN-01`, `FORO-01`, en ese orden: `DIR-01` sigue
-   siendo la única comparable con algo ya medido (`SRCH-01`/`INV-01`)— **en el entorno LOCAL
-   del PO**, donde vive `DEEPSEEK_API_KEY`. Esta sesión remota no puede: comprobado con
-   `uname`/`mount` contra el propio contenedor, no supuesto (Día 15).
-2. **El C5 de cada una**, a mano, del PO.
-3. **El veredicto**, con las ocho cifras, en §1 y contra la regla de decisión del umbral §4.
-
-⚠ **CADA CORRIDA VA EN SESIÓN LIMPIA, y el medidor de orquestación se corre ANTES y
-DESPUÉS.** No es ceremonia: la cifra 7 del umbral —la que decide si la partida de modelos
-del plan se sostiene— se mide por sesión, así que una sesión compartida le imputa a la
-pantalla un coste que no es suyo. **La sesión del Día 14, sin construir ninguna pantalla,
-costó 148,75 $; la del Día 15, escribiendo las tres tareas sin correr ninguna, 57,85 $**
-—ninguna de las dos es la cifra 7 de ninguna pantalla, y el umbral pone su techo en 50 de
-mediana. Si las tres corridas se escriben Y se corren en la MISMA sesión (lo que el propio
-§7 pide), la cifra 7 de cada una sale limpia; si se corren en una sesión que ya trae encima
-el coste de escribir la tarea, no.
+1. **Verificar el CI y el despliegue de este cierre.** Es el primer commit de todo este arco
+   SIN `[skip ci]` —ver Día 16, punto 9—: comprobar los cinco jobs en verde
+   (`mcp__github__actions_get`/`actions_list`, no el mensaje del commit) y la URL de
+   producción con `curl`, antes de dar el paso 5 del ritual por cumplido (§7).
+2. **Decidir con qué pantalla sigue la corriente B**, ya con dos agentes en vez de cuatro
+   (§2). Ninguna de las 21 pantallas restantes tiene tarea escrita todavía — eso es
+   trabajo nuevo, no continuación de lo de hoy.
+3. **Llevar la cuenta hacia la remedición obligatoria a las seis pantallas**
+   (`UMBRAL-FABRICA-V1.md` §4, escenario base). Van tres; faltan tres más antes de volver
+   a evaluar las ocho cifras.
+4. **La pregunta de la cifra 3 (§2, §6): si 0 de 3 limpias al primer intento es el patrón
+   normal de pantalla nueva o una señal real.** Ninguna acción hoy — se contesta sola con
+   más datos en la remedición, no especulando ahora.
 
 En paralelo, sin acción propia desde este lado:
 
-- **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Recomprobado
-  el 11-sep con llamada real: mismo `429 RESOURCE_EXHAUSTED`. **No tocar `vera/index.ts`.**
-- **`F-158`, del PO:** la spec de `ADMIN-01` dice *"naranja si > 24h"* y pinta en naranja una
-  solicitud de 18 horas. El código sigue la regla y lo dice en voz alta, así que no bloquea
-  nada; corregir la spec es suyo.
+- **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin
+  recomprobar hoy — no hay motivo nuevo para gastar la llamada. **No tocar `vera/index.ts`.**
+- **`F-158`, del PO:** sigue abierto. La spec de `ADMIN-01` dice *"naranja si > 24h"* y pinta
+  en naranja una solicitud de 18 horas. El código sigue la regla y lo dice en voz alta, así
+  que no bloqueó nada de lo de hoy; corregir la spec sigue siendo del PO.
+- **La pregunta de §5 desde el Día 14, sin barrer todavía:** si otras specs aprobadas
+  tienen la misma clase de contradicción regla-contra-ejemplo que `F-158`.
 
 Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
 Vercel — ninguno bloquea trabajo de ingeniería.
+
+---
+
+### Lo que se cerró el Día 16 (corridas 13/14-sep, C5 y cierre 17-sep)
+
+- **`F-161` cerrado.** Escalada de `DIR-01` (13-sep): no dependía del artefacto —
+  `RequestDetailPanel.tsx`/`RequestsTable.tsx` de `ADMIN-01`, tarea siguiente, todavía no
+  existían y `C1` corre `npm run typecheck` sobre TODO el repo (`F-070`). No cuenta para
+  la cifra 2 del umbral.
+- **`F-162` cerrado.** Escalada de `ADMIN-01` (13-sep): tres bugs en
+  `RequestDetailPanel.test.tsx` (`getByText` de match único, `getByRole` mal usado para
+  negar presencia, `/email/i` sin acotar) más el contagio de `Forum.test.tsx`
+  (`FORO-01`) más un `TZ` no fijado en `requestDateLabel` —ya compensado por el propio
+  Coder con `utcClock()`—. Los tres bugs de test corregidos sin tocar el artefacto;
+  `TZ='UTC'` fijado en `src/test/setup.ts`.
+- **`F-163` cerrado.** `orchestration_pricing.py` sin tarifa para
+  `claude-haiku-4-5-20251001` tumbaba la medición de coste de CUALQUIER pantalla, no
+  solo la afectada. Una fila puesta sin pedirla, con la tarifa de Haiku 3.5 (retirado),
+  revertida dos veces sin verificarla. Corregida contra
+  `platform.claude.com/docs/en/about-claude/pricing`.
+- **`DIR-01` y `ADMIN-01` repetidas enteras en sesión limpia** (14-sep), sobre el corpus ya
+  completo: las dos `PASA` 4/4 en el intento 2. `FORO-01` corrió una sola vez, `PASA` 4/4
+  en el intento 2 (13-sep).
+- **C5 del PO en las tres pantallas: aprobadas sin ninguna corrección.** Dos dudas
+  resueltas contra el código durante la revisión —ninguna era un defecto—, ver §1.
+- **El H1 se cierra.** Ocho cifras evaluadas contra su fuente (§1): falla solo la cifra 3
+  (0 de 3 verdes al primer intento). **Veredicto: Funciona con supervisión — escenario
+  base, 21 semanas.** La corriente B se abre con dos agentes, no cuatro (§2).
+- **Nueve commits en `mvp/bootstrap`**, ocho con `[skip ci]` —heredado de cuando el corpus
+  estaba incompleto— y el noveno, este cierre, sin él: la razón para saltar CI dejó de
+  existir en cuanto las tres pantallas quedaron en verde.
 
 ### Lo que se cerró el Día 15 (trabajo 11-sep, redactado 13-sep)
 
@@ -656,7 +746,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~ADMIN-01 no se puede probar de extremo a extremo: no hay cuenta de Operador~~ | **Resuelto 11-sep-2026: cuenta creada por el PO en las dos bases, dada de alta por el MCP, alcance comprobado desde su propia sesión y `E2E_OPERATOR_PASSWORD` en los secretos de CI.** La rama de sesión del shell, que era la otra mitad y no se sabía, también |
 | ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
 | ⚪ | ~~`F-160`: `--seco` escalaba en falso en las seis tareas del corpus~~ | **Resuelto 11-sep-2026 (Día 15): `_columna()` en `dry_run.py`, lee el CSV por nombre de columna, no por substring de la línea.** Verificado con `python -m harness.tests.dry_run` y `--seco` sobre las tres tareas nuevas y `SRCH-01` |
-| 🔴 | **Las tres corridas del paso 5 de `UMBRAL-FABRICA-V1.md` §7 no pueden correr en una sesión remota.** `DEEPSEEK_API_KEY` vive solo en el entorno local del PO (`app/.env` no la lleva; es variable de entorno de usuario, `CLAUDE.md` §1). Comprobado el 11-sep (Día 15) contra la propia máquina de esta sesión (`uname`, `mount`): contenedor Linux en la nube, sin ningún canal hacia `C:\Users\admin\...` | El PO, en su terminal local, con `git pull` de `mvp/bootstrap` |
+| ⚪ | ~~Las tres corridas del paso 5 de `UMBRAL-FABRICA-V1.md` §7 no pueden correr en una sesión remota~~ | **Resuelto 13/14-sep-2026 (Día 16): corridas en Claude Code local, en la máquina del PO, donde `DEEPSEEK_API_KEY` sí está** —confirmado como variable de usuario de Windows, no en `app/.env` como se daba por hecho. Las tres pantallas corrieron y llegaron a `PASA` |
+| 🟠 | **`F-163`, cerrado pero con una secuela abierta: la sesión que corre las tareas no fue una sesión limpia por pantalla.** La misma sesión Haiku corrió `ADMIN-01` (original), `FORO-01` y la repetición de `ADMIN-01`; la cifra 7 de cada una se reconstruyó por diferencia de sesión, no midiéndose limpia desde el principio (§1). No cambia el veredicto —todas las cifras observadas están muy por debajo del techo—, pero la próxima tanda de corridas debería abrir una sesión de Code nueva por pantalla de verdad, no reutilizar la del terminal | Quien lance la próxima corrida: sesión nueva de Code, no una terminal reutilizada dentro de la misma |
 
 ---
 
@@ -664,25 +755,29 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
-- **Si las tres tareas del H1 pasan al primer intento, y con qué corrección humana.** Nada de
-  esto se sabrá hasta que corran de verdad. `DIR-01` es la más comparable con algo ya
-  medido; `ADMIN-01` es la más grande de las tres (panel lateral, formulario de rechazo,
-  máquina de tres botones según estado) y la que más riesgo de escalado tiene por tamaño de
-  contrato; `FORO-01` es la más simple y la que menos debería sorprender.
-- **Si la cifra 7 de las tres pantallas va a servir para algo, dado que se escribieron en una
-  sesión y (previsiblemente) se correrán en otra.** `UMBRAL-FABRICA-V1.md` §6 ya avisa de
-  esto: si escribir la tarea y correrla van en sesiones distintas, la cifra sale BAJA, no
-  falsa — pero baja para las tres a la vez, con el mismo sesgo, así que la comparación
-  ENTRE ellas debería seguir siendo válida aunque el número absoluto no sirva para el
-  umbral tal cual está redactado. No se ha decidido si el PO acepta esa lectura o prefiere
-  remedir escribiendo y corriendo junto.
+- ~~Si las tres tareas del H1 pasan al primer intento, y con qué corrección humana.~~
+  **Contestado el 14-sep (Día 16): NINGUNA de las tres pasó al primer intento (0 de 3,
+  cifra 3 del umbral, NO CUMPLE) y la corrección humana fue 0 % en las tres — C5 sin
+  ninguna edición.** Queda abierto lo de detrás: **si 0/3 es el patrón normal de una
+  pantalla NUNCA antes generada** (las tres eran nuevas, a diferencia de las series de
+  `MSG-01` sobre corpus conocido) **o una señal real que la remedición a seis pantallas
+  tendrá que confirmar o descartar.**
+- ~~Si la cifra 7 de las tres pantallas va a servir para algo, dado que se escribieron en una
+  sesión y (previsiblemente) se correrán en otra.~~ **Contestado el 14-sep: la comparación
+  ENTRE las tres sigue siendo válida, pero por un motivo nuevo, no el previsto.** Ninguna
+  de las tres corrió en una sesión verdaderamente limpia —la de Haiku encadenó
+  `ADMIN-01`/`FORO-01`/la repetición de `ADMIN-01`—, así que la cifra 7 se reconstruyó
+  por diferencia de sesión (§1, §5). Los tres valores observados (0,06 $ / 3,46 $ / sin
+  línea base para `DIR-01`) están tan lejos del techo de 50 $ que la imprecisión no cambia
+  nada hoy — pero **no se sabe si eso sigue siendo cierto con pantallas más caras de
+  orquestar**, y la próxima tanda debería medirse con sesiones de verdad separadas.
 - **Si `F-158` es un caso aislado o el primero de varios.** Sigue sin barrerse si las otras
   30 specs aprobadas tienen la misma clase de contradicción regla-contra-ejemplo (§5, fila
   ya existente desde el Día 14).
-- **Si algún otro campo de `DEEPSEEK_API_KEY`/`DS_PRICE_*` falta en el entorno local del PO
-  cuando corra las tres tareas.** Esta sesión no lo puede comprobar: solo puede confirmar
-  que AQUÍ no está, no que allí sí lo esté completo — `harness/README.md` dice que el
-  arnés no arranca si `DS_PRICE_IN_HIT`/`DS_PRICE_IN_MISS`/`DS_PRICE_OUT` están a cero.
+- ~~Si algún otro campo de `DEEPSEEK_API_KEY`/`DS_PRICE_*` falta en el entorno local del PO
+  cuando corra las tres tareas.~~ **Contestado el 13/14-sep: no.** Las tres corridas
+  llamaron a `deepseek-v4-flash` y calcularon coste real sin ningún aviso de precio a
+  cero — el entorno local del PO tiene los cuatro campos completos.
 - ~~Si el 3 de 3 de la serie 15 se sostiene.~~ **Contestado el mismo día: no.** La réplica
   exacta dio 1 de 3. Lo que queda abierto es lo de detrás: **cuántas tiradas hacen falta para
   que este marcador signifique algo**. Con `n=3`, seis corridas dieron 4 de 6, oscilando
@@ -802,12 +897,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   Lo que no se sabe es si el mensaje de error basta para que una sesión que no conoce
   la historia de `F-148`/`F-155`/`F-156` haga la auditoría en vez de añadir el nombre a
   la lista y seguir.
-- **Si la rama de sesión del Operador funciona contra la API real.** Está probada con mock
-  de red (seis pruebas que miran la consulta, no solo el resultado) y el esquema está
-  probado desde la sesión del propio Operador, pero **nadie ha entrado con esa cuenta en la
-  aplicación**: hacerlo es teclear una contraseña y eso no lo hace esta sesión. Si al entrar
-  saliera la pantalla de login en vez del hueco con nombre, lo que falla es el puente entre
-  las dos mitades, no ninguna de las dos.
+- ~~Si la rama de sesión del Operador funciona contra la API real.~~ **Contestado el
+  17-sep-2026 (Día 16): sí.** El PO entró con `operador@bearingworld.test` de verdad
+  para dar el C5 de `ADMIN-01` —vio la cola, abrió el panel de detalle por el nombre
+  de la organización, y aprobó la pantalla—. El puente entre el esquema y la sesión
+  funciona con el cliente real, no solo con mocks.
 - **Cuánto de los 148,75 $ de esta sesión es fábrica y cuánto es todo lo demás.** El dato
   existe por sesión, no por tarea (`F-157` lo dejó escrito), así que una jornada que audita,
   lee un plan, escribe un umbral y tres capas de datos produce **un solo número**. Para la
@@ -906,8 +1000,12 @@ Orden de lectura, y el orden importa:
     `ADMIN-01` se contradice a sí misma en el umbral de color de la antigüedad en cola) y
     `F-159` (cerrado — un e2e que fallaba por carrera, arreglado justo antes de que la
     fábrica empiece a medirse con esa suite). Del Día 15: `F-160` (cerrado — `--seco`
-    escalaba en falso por una columna del CSV que el detector no sabía leer). `F-158`
-    sigue siendo el único abierto del corpus, y sigue siendo del PO.
+    escalaba en falso por una columna del CSV que el detector no sabía leer). Del Día 16:
+    `F-161` (cerrado — escalada de `DIR-01` no dependiente del artefacto, contagio de
+    `ADMIN-01`), `F-162` (cerrado — escalada de `ADMIN-01`, tres bugs de test más
+    contagio de `FORO-01` más un `TZ` sin fijar) y `F-163` (cerrado — tarifa de Haiku 4.5
+    incorrecta, tumbaba el medidor de coste para cualquier pantalla). `F-158` sigue siendo
+    el único abierto del corpus, y sigue siendo del PO.
 
 ---
 
@@ -943,3 +1041,29 @@ cierre: **1.055,62 $** acumulados; el 11-sep entero (Día 14 + Día 15) pasa de 
 `F-158` sigue abierto, es del PO · `git status --short` releído antes de escribir este pie:
 limpio salvo los dos ficheros de este mismo cierre (`ESTADO-V1.md`,
 `orchestration-metrics.csv`) · Dirección Técnica, Nortex Systems*
+
+*Día 16 de V1 · corridas hechas el 13/14-sep-2026, C5 y cierre el 17-sep-2026 · fecha
+leída de la máquina (`date -u`) al escribir este cierre: `2026-09-17`, 07:46 UTC · arrancó
+donde dejó el Día 15: paso 5 de `UMBRAL-FABRICA-V1.md` §7, las tres corridas reales ·
+`DIR-01` y `ADMIN-01` escalaron primero (13-sep) por un instrumento roto, no por el
+artefacto —`F-161`: contagio de `ADMIN-01` sobre `C1`; `F-162`: tres bugs en
+`RequestDetailPanel.test.tsx` más contagio de `FORO-01` más un `TZ` sin fijar, ya
+compensado por el propio Coder con su `utcClock()`—, los dos corregidos el mismo día sin
+tocar el artefacto · `FORO-01` corrió limpia a la primera, `PASA` 4/4, y confirmó contra el
+repo entero (`typecheck` + `test:arnes`, 770 pruebas) que no quedaba nada más pendiente ·
+`F-163`: la tarifa de `claude-haiku-4-5-20251001` faltaba —y la que había puesta,
+revertida dos veces sin comprobarla, era la de Haiku 3.5, retirado—, y sin ella el medidor
+de coste no podía correr para NINGUNA pantalla; corregida contra la fuente oficial · con
+las cuatro causas resueltas, `DIR-01` y `ADMIN-01` se repitieron enteras en sesión limpia:
+las dos `PASA` 4/4 al segundo intento · **el PO dio C5 a las tres pantallas, sin ninguna
+corrección**, resolviendo dos dudas contra el código en vivo (`RequestsTable.tsx`,
+`Forum.tsx`) antes de responder · **el H1 se cierra: ocho cifras contra su fuente (§1),
+falla solo la cifra 3 (0 de 3 al primer intento), veredicto Funciona con supervisión —
+escenario base, 21 semanas, corriente B con dos agentes** · coste-sombra de orquestación al
+cierre: **1.111,05 $** acumulados · nueve commits en `mvp/bootstrap`; los ocho primeros con
+`[skip ci]` heredado de cuando el corpus estaba incompleto, el noveno —este cierre— sin él,
+porque esa razón dejó de existir en cuanto las tres pantallas quedaron en verde: el paso 5
+del ritual (desplegar y comprobarlo en su URL) se cumple con el CI de este push, no se
+salta · `git status --short` releyéndose antes de empujar: limpio salvo los dos ficheros de
+este mismo cierre (`ESTADO-V1.md`, `orchestration-metrics.csv`) · Dirección Técnica, Nortex
+Systems*

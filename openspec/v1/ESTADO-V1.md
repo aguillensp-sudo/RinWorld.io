@@ -288,145 +288,80 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 
 ---
 
-**Día 16 de V1 · corridas 13/14-sep-2026, C5 y cierre 17-sep-2026 · Estado: CERRADO — el H1 se cierra**
+**Día 16 de V1 · corridas 13/14-sep-2026, C5 y cierre 17-sep-2026 · Estado: CERRADO — el H1 se
+cierra.** Las tres pantallas del H1 (`DIR-01`, `ADMIN-01`, `FORO-01`) con corrida real limpia y C5
+del PO sin ninguna corrección; las ocho cifras evaluadas contra su fuente y **veredicto «Funciona
+con supervisión» — escenario base, 21 semanas, la corriente B con dos agentes**, con la cifra 3
+como única que falla (0 de 3 verdes al primer intento). `F-161`, `F-162` y `F-163` cerrados,
+ninguno defecto del Coder. El detalle completo vive en `git show fc9f34e:openspec/v1/ESTADO-V1.md`,
+no se repite aquí. **Su adenda del 17-sep —«`push` no dispara CI; sospecha: el token de git»— era
+falsa, y lo que había detrás llenó el Día 17.**
 
-> ⚠ **Adenda del mismo 17-sep-2026, tras el cierre: el commit de este cierre (`7eeb6d8`,
-> sin `[skip ci]`) no disparo CI.** Comprobado, no supuesto: `gh api .../actions/runs`
-> muestra CERO corridas para todo el repo desde el 16-sep, en cualquier commit, no solo
-> este. Descartado uno por uno -- no es `[skip ci]` (no lo lleva), no es un filtro de rutas
-> (no existe ninguno en `ci.yml`), no es el limite de gasto de Actions (el repo es
-> **publico**, minutos gratis), no es una incidencia de GitHub (`githubstatus.com`: todo
-> operativo), no es la cuenta ni el repo (`enabled: true` en ambos). **Aislado con una
-> prueba de control:** un PR de diagnostico (`#2`, rama `diag/ci-trigger-test`, borrada
-> despues) SI disparo CI via el evento `pull_request` -- `App`, `Esquema` y `Arnes`
-> verdes, confirmando de paso que el cierre esta bien; `Playwright` rojo por el contexto
-> de PR, no relevante aqui; `Despliegue` se salto por diseno, correcto en un PR. **El
-> evento `push` a `mvp/bootstrap` es el unico que no dispara nada**, con webhook de
-> Supabase reaccionando normal al mismo push -- la entrega SI llega a GitHub. Sospecha
-> mas probable, sin confirmar: el token que usa `git push` en esta maquina (Windows
-> Credential Manager, `credential.helper=manager`) es distinto del de `gh` -- que si
-> tiene el scope `workflow` -- y podria carecer del permiso que hace falta para que un
-> push dispare una Action. **El paso 5 del ritual (desplegar y comprobarlo en su URL)
-> queda pendiente por esto, no por el contenido del cierre:** ver §5.
+---
 
-> ✅ **Corrección del mismo 17-sep, sesión siguiente: la sospecha de arriba era FALSA, y el
-> rojo de Playwright SÍ era relevante.** Dos hallazgos, íntegros en `findings-register.md`:
+**Día 17 de V1 · 17-sep-2026 · Estado: CERRADO**
+
+> **EL DÍA EN DIEZ LÍNEAS.**
 >
-> - **`F-164` · el push no disparó porque el propio mensaje de `7eeb6d8` nombraba el marcador
->   de salto de CI en su CUERPO** (línea 16: que era el primer commit del arco *sin* el
->   marcador, escrito literal entre corchetes). GitHub lo busca en el mensaje entero, no en
->   el título, y el «no lo lleva» de arriba se comprobó mirando el título. El token nunca
->   tuvo nada que ver: la API de actividad del repo (`/activity?ref=refs/heads/mvp/bootstrap`)
->   muestra `c6cab7e→7eeb6d8` empujado por el mismo actor que el 13-sep sí disparó CI
->   (`bab1689`, run `34746060926`), y **`5cfbf2f` —mismas credenciales, sin el marcador en
->   ninguna línea— creó el run `35200727115` al momento. No hace falta `gh auth setup-git`
->   ni tocar Credential Manager.** «Cero corridas desde el 16-sep» no era un síntoma: entre
->   el 14 y el 17 no hubo ningún push sin marcador salvo ese.
-> - **`F-165` · Playwright estaba rojo en el PR `#2` por `ci.yml`, no «por el contexto de
->   PR»:** el job `e2e` nunca recibió `E2E_OPERATOR_EMAIL`/`E2E_OPERATOR_PASSWORD` y
->   `admin-requests.spec.ts` lanza a propósito sin ellas en CI. Roto desde que existe ese
->   e2e (11-sep, `2932e1a`), oculto porque todos los push posteriores llevaban el marcador.
->   Y como `deploy` tiene `needs: [schema, app, e2e, arnes]`, **nada se desplegaba desde
->   `f5e1d7e` (11-sep, 15:48 UTC): las tres pantallas del H1 no estaban en producción**
->   —comprobado antes del arreglo: `rin-world-io.vercel.app` servía `index-BEG5lzgc.js`,
->   sin ningún literal de las tres—. Arreglado en `5cfbf2f` (el correo literal, como pide
->   `CLAUDE.md` §10.1; la password desde el secreto). Cerrado: Playwright 66/66, cero
->   saltados, en el run `35202094852`.
-> - **`F-166` · con las credenciales puestas, el e2e de `ADMIN-01` se ejecutó POR PRIMERA
->   VEZ, y el arnés lo había contado como verde sin ejecutarlo.** En la máquina del PO no hay
->   `E2E_OPERATOR_PASSWORD`, el `describe` hace `test.skip` fuera de CI, Playwright sale con 0,
->   y C2 solo miraba el código de salida: «suite e2e completa (cubre los 1 declarados)» con
->   los cuatro tests saltados —reproducido en local: exit 0, `4 skipped`—. `F-015` al pie de la
->   letra. Al correr, dos bugs del PROPIO test (heredaba la sesión de ALPHA; un `getByText`
->   sin acotar) y un test inestable de `DIR-01` (lectura a mitad de re-render). **Ningún
->   fichero del Coder tocado:** con los tests arreglados, los cuatro de `ADMIN-01` pasan
->   contra el artefacto tal cual salió. Y C2 ya no se deja engañar (`6e25a9a`): un test
->   saltado en un e2e declarado lo deja `INEJECUTABLE`, validado contra la salida real.
-> - **`F-167` · con los cuatro jobs de prueba en verde, el despliegue falló igual:** el
->   token de Supabase de CI da `401`. VERA iba primero en el mismo job y el paso de Vercel
->   ni arrancaba. Separados en dos jobs (`05d2f1b`): la app se despliega aunque VERA falle.
->   **Renovar el token es del PO.**
-> - 🔴 **`F-168` · y al comprobar el despliegue POR CONTENIDO: la app de producción no
->   arranca, y lleva así desde el 8-sep.** El bundle de `rin-world-io.vercel.app` no tiene ni
->   una línea de la aplicación y acaba en `Error("Faltan VITE_SUPABASE_URL o
->   VITE_SUPABASE_PUBLISHABLE_KEY…")`: el proyecto de Vercel creado para cerrar `F-151` nunca
->   recibió las variables de `despliegue.md` §2. El bundle de antes del despliegue de hoy era
->   idéntico byte a byte. `F-151` se cerró con `curl` → `HTTP 200`, y un `index.html`
->   responde 200 aunque su JavaScript reviente — regla 2 de este fichero, en producción.
->   **Resuelto el mismo día por el PO** (variables en Vercel y redespliegue; `VITE_DEMO_KEY_SEED`
-  solo en *Production* mientras `F-067` siga abierto) y verificado por contenido y en
-  navegador: login pintado, cero errores de consola.
->
-> **Y una comprobación que el cierre no hizo, sobre la cifra 3:** los tres primeros intentos
-> fallaron por errores DISTINTOS y del propio Coder —`DIR-01` un test de orden por «País»,
-> `ADMIN-01` ocho `TS2322` de `string | undefined`, `FORO-01` un test de la sección de
-> actividad— y el intento 2 los arregló sin que cambiara ningún test
-> (`harness/metrics/*/attempt_1.json`, campo `checks`). No hay una causa común del arnés
-> detrás del 0 de 3: la cifra está bien medida y el veredicto se sostiene.
+> 1. **El cierre del Día 16 no había disparado CI, y el diagnóstico que dejó escrito era falso**
+>    (`F-164`): el cuerpo de su propio mensaje nombraba el marcador de salto de CI, y GitHub lo
+>    busca en el mensaje entero. No era el token de `git push`: no hubo que tocar ninguna credencial.
+> 2. **Detrás había una CI que nadie había visto entera desde el 11-sep** (`F-165`): `ci.yml` no le
+>    pasaba las credenciales del Operador al job `e2e`, Playwright reventaba siempre y, como
+>    `deploy` depende de él, **nada se desplegaba desde el 11-sep**.
+> 3. **`F-166`: el e2e de `ADMIN-01` no se había ejecutado NUNCA, y el arnés lo contaba como verde.**
+>    Fuera de CI, sin la contraseña del Operador, su `describe` entero se salta y Playwright sale
+>    con 0. C2 deja ahora `INEJECUTABLE` un e2e declarado que se salta — validado contra la salida
+>    REAL de Playwright, no contra una inventada.
+> 4. **`F-167`: con los cuatro jobs de prueba en verde, el despliegue seguía roto** — el token de
+>    Supabase de CI daba `401`. VERA y la app pasan a dos jobs independientes; el PO renovó el token
+>    y VERA volvió a desplegarse.
+> 5. **`F-168`, el peor del día: la app de producción no arrancaba desde el 8-sep.** El proyecto de
+>    Vercel nunca tuvo las `VITE_*` y el bundle servido era solo el `throw` de `supabase.ts`;
+>    `F-151` se había cerrado con `curl` → `HTTP 200`. El PO puso las variables, se verificó por
+>    CONTENIDO y en navegador, y `deploy-app` tiene ya un paso que falla si producción no sirve la app.
+> 6. **`F-169`: la C5 del Día 16 había descuadrado la siembra de producción** —una solicitud
+>    aprobada, otra rechazada y devuelta—. Repuesta, y decisión del PO: se siembra antes de cada
+>    corrida. Automatizado en `resetDemo`, que corre al arrancar cada suite; probado reproduciendo
+>    el fallo.
+> 7. **`F-158` cerrado y `F-170` abierto y cerrado el mismo día: el barrido de las specs aprobadas.**
+>    No era un caso aislado: **once contradicciones más** de la clase regla-contra-ejemplo, leídas
+>    por cuatro agentes y **recomprobadas a mano una por una** contra su fichero. Dos las decidió el
+>    PO (`INVT-01`, `REG-09`) y nueve se aplicaron con su recomendación, en specs y en HTML.
+> 8. **Trece filas del registro que decían «Abierto» con el trabajo hecho, cerradas contra el
+>    código**, y la carpeta `Ingles/` archivada por decisión del PO para que deje de reaparecer en
+>    cada relevo.
+> 9. **La corriente B se abre de verdad: `FORO-02` construida.** Primero la capa de datos a mano
+>    —migración `0030`, reacciones y la vista de la lista, validada en un Postgres desechable y
+>    aplicada y comprobada contra el catálogo de las DOS bases— y después la tarea. **PASA 4/4 AL
+>    PRIMER INTENTO: la primera pantalla del proyecto que lo consigue**, 0,037318 $ del Coder y 1,2
+>    minutos, sin una corrección a mano.
+> 10. **Lo que este día NO cierra:** el C5 de `FORO-02` es del PO, y la cifra 7 de esta pantalla
+>    (21,96 $) se midió en una sesión que traía encima todo lo anterior: es un techo, no la medida
+>    limpia que pide el umbral.
 
+**`F-166`, en detalle, porque es el que medía mal.** `admin-requests.spec.ts` hace
+`test.skip(!haveOperatorCreds)` fuera de CI; en la máquina del PO no existía
+`E2E_OPERATOR_PASSWORD`, así que sus cuatro tests se saltaban y `npx playwright test` salía con 0.
+C2 solo miraba el código de salida: escribió «suite e2e completa (cubre los 1 declarados)» con
+CERO tests del contrato ejecutados. Es `F-015` al pie de la letra, cinco semanas después de
+escribirlo. El guardia nuevo lee los saltados del reporter, los cruza con los e2e que la tarea
+DECLARA y deja C2 `INEJECUTABLE` —ni verde ni rojo: no dice nada del Coder, pero tampoco vale como
+prueba—, con una cerradura para cuando el recuento no se pueda leer. Reproducido primero en local
+(`exit 0`, `4 skipped`) y solo después arreglado. Los dos bugs de los tests que aparecieron al
+ejecutarlos por fin —la sesión de ALPHA heredada y un `getByText` sin acotar— eran míos, no del
+Coder: el artefacto de `ADMIN-01` pasa su contrato sin tocarlo.
 
-> **EL DÍA EN NUEVE LÍNEAS.**
->
-> 1. **Arrancó donde dejó el Día 15:** paso 5 de `UMBRAL-FABRICA-V1.md` §7, las tres
->    corridas reales, cada una en el entorno local del PO. `DEEPSEEK_API_KEY` resuelta:
->    es variable de usuario en Windows, no `app/.env` como el PO daba por hecho — comprobado
->    contra la propia máquina, no contra lo dicho.
-> 2. **`DIR-01`, primera corrida: ESCALADO en 3 intentos, pero el artefacto era correcto.**
->    `C1`/`C2` en rojo los tres intentos porque `RequestDetailPanel.tsx`/`RequestsTable.tsx`
->    de `ADMIN-01` —tarea siguiente, aún sin correr— no existían, y `C1` corre `npm run
->    typecheck` sobre TODO el repo a propósito (`F-070`). Ninguno de los dos ficheros estaba
->    en los `outputs` de `DIR-01`. **`F-161` abierto: la corrida no cuenta para la cifra 2
->    del umbral (§5.3), se repite tras `ADMIN-01`.**
-> 3. **`ADMIN-01`, primera corrida: mismo síntoma, causa más rica.** Además del contagio de
->    `FORO-01` (`Forum.test.tsx` contra el marcador de esa pantalla, 11 de 15 fallos de
->    `C1`), las tres fallas propias eran del PROPIO fichero de tests
->    (`RequestDetailPanel.test.tsx`), no del Coder: un `getByText` de match único contra un
->    nombre que pinta dos veces a propósito, un `getByRole` mal usado para negar presencia
->    (lanza en vez de devolver `null`), y un `/email/i` sin acotar que cazaba un campo
->    siempre visible. Y una cuarta causa real pero ajena: `requestDateLabel` formatea en la
->    hora de la máquina, no en UTC — el Coder ya lo había compensado solo con su propio
->    `utcClock()` en las dos pantallas que generó. **`F-162` abierto y corregido el mismo
->    día**, sin tocar el artefacto: tres bugs de aserción arreglados y `TZ='UTC'` fijado en
->    `src/test/setup.ts` para que la suite deje de depender del huso de quien la corra.
-> 4. **`FORO-01`: PASA limpio 4/4 al segundo intento — la primera corrida sin ninguna
->    sombra de duda.** Con las tres pantallas ya generadas, `npm run typecheck` y `npm run
->    test:arnes` sobre el repo entero confirmaron que `F-161`/`F-162` no dejaban nada más
->    pendiente: **770 pruebas en verde, 0 en rojo.**
-> 5. **`F-163`: sin tarifa para `claude-haiku-4-5-20251001`, el medidor de coste no podía
->    correr para NINGUNA pantalla, no solo para la sesión que lo usaba** —escanea todos los
->    worktrees vivos, y un solo modelo sin tarifa tumba la medición entera. Una fila añadida
->    sin que nadie la pidiera, con los números de **Haiku 3.5, retirado**, revertida dos
->    veces el 13-sep sin verificarla ninguna de las dos. Corregida con la tarifa oficial de
->    `platform.claude.com/docs/en/about-claude/pricing`, comprobada hoy: `$1/$1.25/$2/
->    $0.10/$5`.
-> 6. **Con las cuatro causas resueltas, `DIR-01` y `ADMIN-01` se repitieron enteras, en
->    sesión limpia, sobre el corpus ya completo: las dos PASA 4/4 al segundo intento.**
->    `attempt_3.json` de cada corrida invalidada, ya preservado en los commits `3c550fe`/
->    `e329f3e`, se retiró del directorio de trabajo para no confundirse con el de la
->    repetición.
-> 7. **El PO revisó las tres en local (`npm run dev`) y dio C5 sin ninguna corrección: las
->    tres, tal cual salieron del Coder.** Dos falsas alarmas resueltas al vuelo, ninguna
->    era del artefacto: en `FORO-01` nada es clicable porque las tarjetas de categoría y
->    los hilos recientes están `disabled` a propósito —FORO-02 no existe, y lo dicen en su
->    `title`—; en `ADMIN-01` lo clicable es el NOMBRE de la organización, un `<button>`
->    dentro de la primera columna, no la fila entera —confirmado leyendo `RequestsTable.tsx`
->    antes de responder, no de memoria.
-> 8. **El H1 se cierra con las ocho cifras. Veredicto: Funciona con supervisión — escenario
->    base, 21 semanas.** Las cifras 1, 2, 4, 5, 6 y 8 cumplen; la 7 cumple con margen amplio
->    pese a la imprecisión de sesión compartida (§1); **la cifra 3 NO cumple: 0 de 3 verdes
->    al primer intento (umbral ≥2 de 3)** — las tres pantallas necesitaron su segundo
->    intento, ninguna llegó limpia a la primera. Es la única cifra que falla, y basta para
->    mover el veredicto del escenario favorable al escenario base: la corriente B se abre
->    con **dos** agentes, no cuatro, y se remide al llegar a seis pantallas.
-> 9. **Sin CI real en ningún commit de este arco** —los siete llevan `[skip ci]`, heredado
->    de cuando el corpus estaba incompleto y la rama estaba roja por diseño—. Con las tres
->    pantallas ya en verde, esa razón dejó de existir: el commit de este cierre corre CI
->    de verdad, y el paso 5 del ritual (`desplegar y comprobarlo en su URL`) se cumple con
->    ese run, no se salta.
-
-**Detalle de las ocho cifras, cada una contra su fuente:** ver §1. **`F-161`, `F-162` y
-`F-163`, íntegros:** `findings-register.md`. **Coste real del Coder por pantalla:**
-`harness-metrics.csv`, filas `2026-09-13`/`2026-09-14` de `DIR-01`/`ADMIN-01`/`FORO-01`.
+**`FORO-02`, y por qué su capa de datos costó más que la pantalla.** La spec pinta `👍 Y` por hilo
+y `0029` no tenía dónde guardar una sola reacción. `0030` añade `forum_reactions` (una por usuario
+y publicación, retirable, con la firma puesta por la base como en `0029`) y la vista
+`forum_thread_list`, que calcula respuestas —publicaciones menos la inicial— y reacciones —el total
+del hilo, que es lo que dice el Módulo 08 §3, no solo las de la inicial—. Se validó con la suite de
+esquema entera en un Postgres desechable (seis asertos nuevos: firma, duplicado, recuentos, borrar
+solo lo propio, RLS y privilegios) ANTES de aplicarla, y después se comprobó contra el catálogo de
+las dos bases, que es lo que pide `F-146`. La tarea declara explícitamente la trampa de `F-145`
+—los botones de página no llevan `aria-label`, su nombre accesible es el número— porque su propia
+referencia de estilo, `DIR-01`, hace lo contrario.
 
 ---
 
@@ -434,28 +369,32 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-17`, 07:46 UTC — el cierre se escribe el mismo día del trabajo (regla 3) |
-| `DIR-01`, repetición en sesión limpia | `harness-metrics.csv` (filas `2026-09-14`) + `harness/metrics/DIR-01/attempt_1.json`/`attempt_2.json` | **PASA 4/4 en el intento 2** (intento 1: `FALLA` C1;C2, verde C3;C4). Coste real de los dos intentos: `0,044778 $` |
-| `ADMIN-01`, repetición en sesión limpia | Mismo método, filas `2026-09-14` | **PASA 4/4 en el intento 2** (intento 1: `FALLA` C1;C2, verde C3;C4). Coste real: `0,054701 $` |
-| `FORO-01`, sin repetición | Mismo método, filas `2026-09-13` | **PASA 4/4 en el intento 2** (intento 1: `FALLA` C1;C2, verde C3;C4). Coste real: `0,101430 $` |
-| Que las escaladas de `DIR-01`/`ADMIN-01` del 13-sep no dependían del artefacto | `npm run typecheck` + `npm run test:arnes` corridos a mano contra los ficheros YA generados, sin volver a invocar al Coder | Limpio en los dos casos, una vez corregido el instrumento (tres bugs de test + `TZ`), no el artefacto — `F-161`, `F-162` |
-| El repo entero, con las tres pantallas reales dentro | `npm run typecheck` + `npm run test:arnes` | Typecheck sin errores. **770 pruebas en verde, 0 en rojo, 23 saltadas** |
-| Tarifa de `claude-haiku-4-5-20251001` | `platform.claude.com/docs/en/about-claude/pricing`, comprobado hoy | `$1 / $1,25 / $2 / $0,10 / $5` (input / caché 5m / caché 1h / lectura de caché / output). La fila que había puesta —revertida dos veces el 13-sep sin comprobarla ninguna de las dos— era la tarifa de **Haiku 3.5, retirado** — `F-163` |
-| C5 de las tres pantallas | Revisión del PO en local (`npm run dev`), confirmada en esta misma sesión | Las tres aprobadas **sin ninguna corrección** sobre lo que entregó el Coder |
-| Dos dudas del PO durante la revisión, resueltas contra el código, no de memoria | `RequestsTable.tsx` (columna "Organización") y `Forum.tsx` (`disabled`+`title` en tarjetas e hilos) | `FORO-01`: nada es clicable a propósito, `FORO-02` no existe. `ADMIN-01`: lo clicable es el nombre de la organización, no la fila — confirmado ANTES de responder |
-| **Cifra 1 · pantallas aceptadas** (umbral 3 de 3) | `harness-metrics.csv` + C5 del PO | **3 de 3 — CUMPLE** |
-| **Cifra 2 · corridas sin escalada** (umbral 3 de 3) | `harness-metrics.csv` (columna `resultado`) + `F-161`/`F-162` (las escaladas del 13-sep no cuentan, `UMBRAL-FABRICA-V1.md` §5.3) | **3 de 3 — CUMPLE** |
-| **Cifra 3 · verdes al primer intento** (umbral ≥2 de 3) | Columna `primer_intento_limpio` de las tres filas `PASA` | **0 de 3 — NO CUMPLE.** Las tres pantallas necesitaron su segundo intento; ninguna llegó limpia a la primera |
-| **Cifra 4 · corrección humana** (mediana ≤10 %, ninguna >25 %) | C5 del PO: cero ediciones sobre los ficheros que entregó el Coder | **0 % en las tres — CUMPLE** |
-| **Cifra 5 · ficheros sin tocar en la revisión** (≥ la mitad, en cada una) | Mismo C5 | **100 % en las tres (6/6, 6/6, 2/2) — CUMPLE** |
-| **Cifra 6 · coste del generador** (≤0,25 $ por pantalla, reintentos incluidos) | `harness-metrics.csv`, suma de los dos intentos por pantalla | `0,044778 $` / `0,054701 $` / `0,101430 $` — **CUMPLE** con margen amplio |
-| **Cifra 7 · coste de orquestación** (mediana ≤50 $, ninguna >100 $ por pantalla) | `orchestration-metrics.csv`, delta antes/después de cada corrida — ver la salvedad de abajo | `ADMIN-01` (repetición): **3,46 $**, medido limpio (`1.090,90 $ − 1.087,44 $`). `FORO-01`: **0,06 $** reportados, calculados con la tarifa de Haiku 3.5 (`F-163`, incorrecta en ese momento) — con la tarifa real el número sube ~20 %, sigue siendo trivial. `DIR-01` (repetición): sin línea base limpia, los dos comandos de medición chocaron con `F-163` antes de arreglarse. **CUMPLE con margen amplísimo pase lo que pase con la atribución exacta** — ninguna cifra observada se acerca ni de lejos a 50 $ |
-| **Cifra 8 · tiempo de reloj** (≤1 jornada por pantalla, sin esperas del PO) | Tareas validadas `--seco` el 11-sep (Día 15); corridas reales el 13/14-sep; trabajo de ingeniería real por corrida, unos pocos minutos sumando reintentos | **CUMPLE con margen amplio** |
-| **Veredicto del H1** | Regla de decisión de `UMBRAL-FABRICA-V1.md` §4, aplicada a las ocho cifras de arriba | **Funciona con supervisión — escenario base, 21 semanas.** Falla solo la cifra 3, sin ninguna escalada real y con las cifras 4/5 limpias: es exactamente la condición de esa fila, no la del escenario favorable ni la del adverso |
-| Divergencia con `origin/mvp/bootstrap` antes de escribir este cierre | `git fetch origin mvp/bootstrap` + `git status -sb` | Sin desfase |
-| CI de este cierre | `gh api .../activity` y `gh run list` sobre `mvp/bootstrap`, no el mensaje del commit (corregido el 17-sep en sesión siguiente) | **El push de `7eeb6d8` no creó ningún run: su cuerpo nombraba el marcador de salto (`F-164`).** La primera CI real del arco fue el run `35200727115` y salió roja por `F-165`; tras `F-165`, `F-166` y `F-167`, el run `35202557849` (`05d2f1b`) da esquema, app, arnés, Playwright 66/66 y `deploy-app` en verde, y `deploy` (VERA) en rojo por `F-167` |
-| Producción, por contenido y no por código HTTP (17-sep) | Bundle servido por `rin-world-io.vercel.app` antes y después del despliegue, contra el `dist/` local | **No arranca (`F-168`).** 148.698 bytes, sin texto de la app, termina en el `throw` de `supabase.ts` por falta de variables; idéntico byte a byte al de antes. El `dist/` local, 480.936 bytes, sí lo contiene |
-| Coste-sombra de la sesión del 17-sep que corrigió el cierre | `python -m harness.core.orchestration_metrics` al terminar | **36,53 $** (sesión `024c6547`, 244 turnos), acumulado **1.160,82 $**. Sin ninguna corrida del Coder: diagnóstico de CI, cuatro arreglos, guardia del arnés y trece filas del registro |
+| Fecha de máquina | `date -u` | `2026-09-17`, 20:11 UTC — el cierre se escribe el mismo día del trabajo (regla 3) |
+| Que el push del cierre del Día 16 no creó ningún run, y por qué | `gh api .../activity?ref=refs/heads/mvp/bootstrap` y el cuerpo ENTERO de `7eeb6d8`, no su título | El push existe y lo hizo el mismo actor que sí disparó CI el 13-sep; su línea 16 nombra el marcador de salto (`F-164`) |
+| Que con el mensaje limpio el push sí dispara | `5cfbf2f`, mismas credenciales, sin el marcador en ninguna línea | Creó el run `35200727115` al momento. **No hacía falta `gh auth setup-git` ni tocar Credential Manager** |
+| Por qué Playwright llevaba roto desde el 11-sep | log del job, no el resumen del run | `Error: En CI hacen falta E2E_OPERATOR_EMAIL/PASSWORD` — el job `e2e` de `ci.yml` no las pasaba (`F-165`) |
+| Que el e2e declarado de `ADMIN-01` nunca se había ejecutado | corrida local de `admin-requests.spec.ts` sin credenciales | `exit 0` y «4 skipped»: Playwright sale con 0 aunque se salte todo (`F-166`) |
+| Que el guardia nuevo de C2 lo detecta | `_e2e_sin_ejecutar` contra ESA salida real + 5 asertos nuevos en `test_checks.py` | Nombra los cuatro saltados; `test_checks` y `dry_run` en verde |
+| Que el contrato de `ADMIN-01` se cumple contra el artefacto del Coder | run `35202094852` | Playwright **66/66, cero saltados, cero inestables** |
+| Producción, por CONTENIDO y no por código HTTP | bundle servido antes y después del arreglo, contra el `dist/` local | Antes: 148.698 bytes, sin un literal de la app, terminando en el `throw` de `supabase.ts` (`F-168`). Después: 480.802 bytes con la app, `troxminloxkjwihwfevs.supabase.co` dentro |
+| Que producción arranca de verdad | navegador (subagente): texto de la página y consola | Formulario de login pintado, **cero errores de consola** |
+| Que esto no puede volver a pasar desapercibido | paso nuevo de `deploy-app`, probado en local contra el bundle bueno Y contra el roto de esta mañana | Verde con el bueno, rojo con el roto. En CI: «producción sirve la app: assets/index-CHmJc7cl.js (480802 bytes)» |
+| VERA desplegada con el token nuevo del PO | run `35238997261`, intento 2 | «Deployed Functions on project troxminloxkjwihwfevs: vera» — **seis jobs de seis en verde** |
+| Que la C5 del Día 16 descuadró la siembra de producción | `registration_request_events` por SQL (MCP), no por memoria | Álvarez aprobada 07:44 UTC, Nordic rechazada 07:45:16 y devuelta 07:45:42 (`F-169`) |
+| Que la siembra repuesta ya no depende de acordarse | Nordic puesta en `REJECTED` a mano y suite de `ADMIN-01` con su setup | 7/7 y la base con las tres en cola, sin decisor |
+| El barrido de specs (`F-170`) | las 29 specs de pantalla y base, `REG-05.pdf` y sus 32 HTML, leídos por cuatro agentes; **cada hallazgo recomprobado a mano contra el fichero, con cita y línea** | Once contradicciones; ninguna estaba en `notas/inconsistencias.md` ni en `revisar.md` |
+| Que `0030` no rompe nada del esquema | `bash supabase/tests/run.sh` — Postgres desechable, todas las migraciones y la suite entera | Verde, incluidos los seis asertos nuevos de `0030` |
+| Los privilegios y la RLS de `0030` en las DOS bases | `information_schema.role_table_grants` y `pg_policies` por el MCP, no el `.sql` (`F-146`) | `anon` nada; `authenticated` SELECT/INSERT/DELETE en la tabla y SELECT en la vista; RLS con sus tres políticas; vista `security_invoker=true` |
+| Que las dos bases tienen la misma siembra de foro | misma consulta a `forum_thread_list` en producción y en `bearingworld-e2e` | Idénticas: Equivalencia FAG 3 respuestas / 👍 3; Juego interno C3 2 / 👍 1 |
+| La capa de datos de `FORO-02` | `forum.queries.test.ts` (31 pruebas, consultas incluidas) y `tsc` | Verde: filtro de categoría, orden por actividad con desempate, `ilike` solo al título, rango de la página, reencaje de página inexistente |
+| El wiring FORO-01 → FORO-02 | e2e de FORO-01 en local, con el marcador puesto | 7/7 |
+| Que el contrato de `FORO-02` prueba algo | los 23 tests de unidad contra el MARCADOR, antes de la corrida | **23 de 23 en rojo** |
+| La tarea `FORO-02`, formato fijo | `--seco` | `tarea valida: 8 inputs, 2 outputs, component_api cubre cada .tsx` — cero avisos tras declarar las dos comprobaciones de ausencia |
+| **La corrida real de `FORO-02`** | `harness-metrics.csv` y `harness/metrics/FORO-02/attempt_1.json` | **PASA 4/4 en el INTENTO 1** · 24.379 in / 20.145 out · **0,037318 $** · 1,2 min · `primer_intento_limpio = si` |
+| El artefacto, aparte de los cuatro checks | 23/23 de unidad, e2e de FORO-02 y FORO-01 (11/11 con setup y teardown), `npm run typecheck`, `grep` de colores en el CSS | Todo verde; 70 `var(--bw-*)` y **cero** hex |
+| Coste-sombra de orquestación | `python -m harness.core.orchestration_metrics`, antes y después de la corrida | 1.281,36 $ → **1.303,32 $**. La sesión entera: **179,02 $**. La corrida de `FORO-02`: **21,96 $**, en sesión compartida — techo, no cifra 7 limpia |
+| CI y despliegue del artefacto | `gh run` sobre `64f8b90` | **Run `35269279509`: seis jobs de seis en verde**, VERA y app desplegadas |
+| Que produccion sirve de verdad `FORO-02` | bundle enlazado por `rin-world-io.vercel.app`, leido a mano DESPUES del run | `index-Um-cewNV.js`, 487.699 bytes, con «Buscar en esta categoría», «Cargando hilos» y «Limpiar búsqueda» dentro. **El paso automatico del propio job habia impreso el bundle ANTERIOR: `F-171`** |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -488,9 +427,21 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 | Entregable 2 · despliegue continuo | ✅ **HECHO — 8-sep** — VERA y Vercel, los dos verdes en CI real (`gh run` `34219861643`). `F-151` cerrado: cuenta y proyecto de Vercel nuevos, ver §4/§5 |
 | Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep, Preview deployments recuperadas el 10-sep sin duplicar producción** (`F-153`) — `entornos.md`, los tres entornos con `environment:` de GitHub donde aplica |
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
+| **`0030` · reacciones del foro y la vista de la lista de hilos** | ✅ **17-sep** — `forum_reactions` y `forum_thread_list`, capa de datos de `FORO-02`. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — ABIERTA, con DOS agentes (Día 16, H1 cerrado)
+### Corriente B · Fábrica — ABIERTA y EN MARCHA · 4 pantallas de 24 (Día 17)
+
+**`FORO-02` es la primera pantalla construida después del H1, y la primera del proyecto que pasa
+los cuatro checks al PRIMER intento** (`harness-metrics.csv`, 17-sep): 0,037318 $ del Coder, 1,2
+minutos, sin una corrección a mano. Su capa de datos —`0030` y las dos consultas de `forum.ts`— la
+escribió Claude Code antes, como en las tres del H1. **Falta su C5**, que es del PO.
+
+**Van 4 de las 24; la remedición obligatoria es a las 6** (`UMBRAL-FABRICA-V1.md` §4, escenario
+base). Con `FORO-02`, la cifra 3 pasa de 0 de 3 a **1 de 4** limpias al primer intento; el umbral
+se evalúa entero solo en la remedición, no fila a fila.
+
+
 
 **El H1 se cerró el Día 16.** Las tres pantallas —`DIR-01`, `ADMIN-01`, `FORO-01`— tienen
 corrida real limpia, C5 del PO sin ninguna corrección, y las ocho cifras de
@@ -501,12 +452,12 @@ pese a la imprecisión de sesión compartida entre corridas (§1). Eso pone la c
 el escenario de **21 semanas**, no el de 18: se abre con **dos agentes**, no cuatro, y se
 remide obligatoriamente al llegar a seis pantallas (`UMBRAL-FABRICA-V1.md` §4).
 
-**Lo que queda escrito sobre la cifra 3, para cuando llegue la remedición:** las tres
-pantallas necesitaron su segundo intento — ninguna de las tres llegó limpia a la primera,
-a diferencia de las series de `MSG-01` sobre corpus ya conocido (17/18, 4-5 de 5 limpias).
-No se sabe todavía si es el patrón normal de una pantalla NUEVA (nunca antes generada) o
-una señal real de que el primer intento necesita mejor contexto — la remedición a seis lo
-dirá, no esta sesión (§6).
+**Lo que queda escrito sobre la cifra 3, para cuando llegue la remedición:** las tres del H1
+necesitaron su segundo intento y `FORO-02` no necesitó ninguno. Lo que cambió entre ellas no es
+solo la pantalla: su tarea declara explícitamente las dos trampas que costaron los reintentos del
+H1 —el nombre accesible de los botones de página (`F-145`) y qué NO se recalcula de la capa de
+datos—. **Con un solo dato no se puede separar «pantalla más simple» de «tarea mejor escrita»**
+(§6).
 
 ### Corriente C · Verificación — NO ABIERTA
 
@@ -516,64 +467,39 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-**El H1 está cerrado (§1, §2). Lo que sigue es abrir de verdad la corriente B, no medirla:**
+**La fábrica está en marcha y el camino a la remedición es la cuenta que manda: van 4 de 6.**
 
-1. ~~Arreglar por qué `push` no dispara CI~~ **Resuelto el 17-sep, y no era el token:**
-   `F-164` (el marcador de salto escrito en el cuerpo del mensaje de cierre) y `F-165`
-   (`ci.yml` sin las credenciales del Operador, que además bloqueaba todo despliegue desde
-   el 11-sep). Ver la corrección bajo la adenda del Día 16. CI verificada job a job en el run
-   `35202557849` (`05d2f1b`): esquema, app, arnés y Playwright (66/66) en verde,
-   `deploy-app` en verde, `deploy` (VERA) en rojo por `F-167`.
-
-**Y por delante de todo lo demás, del PO — el 17-sep cambió el orden de esta lista:**
-
-- ✅ ~~`F-168` · producción no arranca desde el 8-sep.~~ **Resuelto el 17-sep por el PO**
-  (variables puestas, `VITE_DEMO_KEY_SEED` solo en *Production* mientras `F-067` siga abierto)
-  y verificado por contenido y en navegador. Lo que decía esta entrada: en el proyecto `rin-world-io` de
-  Vercel: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en *Production* y *Preview*
-  (`openspec/mvp/despliegue.md` §2). **Y decidir `VITE_DEMO_KEY_SEED`:** §2 la pide en
-  *Production* para que la demo descifre lo sembrado; §5 dice que en V1 «no debe existir».
-  Después, relanzar `deploy-app` y **verificar por contenido** —que el bundle contenga
-  «Correo electrónico»—, nunca por `HTTP 200`.
-- ✅ **Resuelto el 17-sep: token nuevo puesto por el PO, `deploy` (VERA) verde en el run
-  `35238997261` (intento 2), seis jobs de seis.** Lo que decía: ~~`F-167` · renovar `SUPABASE_TOKEN`~~ (panel de Supabase → *Access Tokens*; mirar la
-  caducidad al crearlo) y ponerlo con `gh secret set SUPABASE_TOKEN`. Sin él, VERA no se
-  despliega; hoy no pasa nada porque `vera/index.ts` no cambia desde el 17-ago.
-- ✅ **Resuelto el 17-sep:** contraseña nueva de la cuenta de Operador en la base de producción,
-  puesta por el PO con un script que no la imprime, en `app/.env` (`CLAUDE.md` §10.1 —no como
-  variable de usuario, como decía esta línea—). E2E local de `ADMIN-01`: 4/4, cero saltados. De
-  paso salió `F-169` (la C5 había descuadrado la siembra; repuesta). Lo que decía: ~~`F-166` ·
-  `E2E_OPERATOR_PASSWORD` como variable de usuario en la máquina local.~~ Sin
-  ella, cualquier corrida futura de `ADMIN-01` sale con C2 `INEJECUTABLE` —ahora a propósito—.
-- ✅ **Decidido por el PO el 17-sep: la cifra 2 de `ADMIN-01` CUENTA** (§4). Lo que se preguntaba:
-  ~~`F-166` · una decisión sobre el H1:~~ la cifra 2 de `ADMIN-01` se contó con un C2 que no
-  había ejecutado su e2e. El contrato se cumple (CI, 66/66) y el veredicto no cambia por
-  ello, pero si cuenta o no como medida del arnés es del PO.
-
-2. **Decidir con qué pantalla sigue la corriente B**, ya con dos agentes en vez de cuatro
-   (§2). Ninguna de las 21 pantallas restantes tiene tarea escrita todavía — eso es
-   trabajo nuevo, no continuación de lo de hoy.
-3. **Llevar la cuenta hacia la remedición obligatoria a las seis pantallas**
-   (`UMBRAL-FABRICA-V1.md` §4, escenario base). Van tres; faltan tres más antes de volver
-   a evaluar las ocho cifras.
-4. **La pregunta de la cifra 3 (§2, §6): si 0 de 3 limpias al primer intento es el patrón
-   normal de pantalla nueva o una señal real.** Ninguna acción hoy — se contesta sola con
-   más datos en la remedición, no especulando ahora.
+1. 🟠 **El C5 de `FORO-02`, del PO.** Es lo único que separa la pantalla de «aceptada»: el grafo
+   llega a C4. Con `npm run dev`, entrar en Foros → una categoría. **Y sin pulsar Aprobar/Rechazar
+   en `ADMIN-01` durante la revisión** (`F-169`); si se pulsa, la siembra se repone sola en la
+   siguiente suite, pero conviene saberlo.
+2. **La quinta pantalla, y con qué pareja.** Las dos candidatas, con su precio:
+   - **`FORO-03`** (detalle del hilo) — la más barata: mismo módulo, `0030` ya tiene reacciones y
+     publicaciones, y cierra la navegación que `FORO-02` deja abierta (hoy el título del hilo está
+     apagado). Suma escritura: publicar respuesta y reaccionar, con el límite de 10/hora
+     (RNG-FORO-06) que **no existe en la base todavía**.
+   - **`ADMIN-02`** (panel de cobros) — prioridad «Alta» en su spec, módulo independiente, pero
+     **no hay ni una tabla de suscripciones ni de pagos**: su capa de datos es trabajo de corriente
+     A antes de que la fábrica pueda tocarla, y arrastra acciones delicadas (marcar pago,
+     reactivar, iniciar borrado de una organización).
+   **Recomendación: `FORO-03` como quinta, `ADMIN-02` como sexta** —empezando ya por su esquema—,
+   para que la remedición a seis tenga una pantalla sobre esquema existente y otra sobre tablas
+   nuevas, igual que exigió la mezcla del H1.
+3. **Llevar la cuenta de la remedición.** A las seis se reevalúan las ocho cifras enteras. Dos de
+   las cuatro que hay medidas tienen la cifra 7 sucia (sesión compartida): `ADMIN-01` y `FORO-02`.
+   Si se quiere una cifra 7 limpia de las próximas, **cada corrida en su sesión**, midiendo antes y
+   después.
+4. **La deuda que dejó `F-170`:** el barrido buscó contradicciones DENTRO de cada spec y contra su
+   HTML. Siguen sin barrerse las contradicciones ENTRE specs distintas (como `F-039`) y entre spec
+   y esquema (como `F-027`). Es barato y no se ha hecho.
 
 En paralelo, sin acción propia desde este lado:
 
-- **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin
-  recomprobar hoy — no hay motivo nuevo para gastar la llamada. **No tocar `vera/index.ts`.**
-- ✅ **`F-158` cerrado el 17-sep, decisión del PO:** manda la regla (naranja si > 24h) y el
-  ejemplo de la spec de `ADMIN-01` pasa de 18 a 30 horas, en las dos copias de la spec y en el
-  HTML aprobado.
-- **Barrido hecho el 17-sep (`F-170`): once contradicciones más de la clase de `F-158`**, en
-  `openspec/v1/barrido-specs-F158.md`. **Cerrado el mismo día:** las dos de producto por
-  decisión del PO (`INVT-01`, `REG-09`) y las nueve restantes aplicando la recomendación, en
-  specs y HTML aprobados. Las tareas de esas pantallas ya se escriben sobre specs coherentes.
+- **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin recomprobar
+  hoy. **No tocar `vera/index.ts`.**
+- Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de Vercel
+  —ninguno bloquea trabajo de ingeniería.
 
-Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
-Vercel — ninguno bloquea trabajo de ingeniería.
 
 ---
 
@@ -839,6 +765,9 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~**`F-168` · la app de producción no arranca desde el 8-sep.**~~ **Resuelto 17-sep: variables puestas por el PO, verificado por contenido (`index-CHmJc7cl.js`, 480.802 bytes) y en navegador (login pintado, cero errores de consola), y con un paso nuevo en `deploy-app` que lo comprueba en cada despliegue.** Lo que decía: El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
 | ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | ⚪ | ~~`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local~~ | **Resuelto 17-sep: en `app/.env` (no como variable de usuario, como decía esta fila), login comprobado, e2e local 4/4** |
+| 🟠 | **El C5 de `FORO-02` está pendiente, y es del PO.** La pantalla pasa los cuatro checks y sus 27 pruebas de contrato, pero «¿lo mantendrías?» no lo contesta el grafo (`harness/README.md`) | Álvaro: `npm run dev` → Foros → una categoría |
+| 🟡 | **La cifra 7 de `FORO-02` (21,96 $) se midió en sesión compartida**, igual que la de `ADMIN-01`: es un techo. Dos de las cuatro pantallas medidas tienen ese defecto, y el umbral se reevalúa a las seis | Quien corra la quinta y la sexta: una corrida por sesión |
+| 🟡 | **El límite de 10 publicaciones por hora (RNG-FORO-06) no existe en la base.** `FORO-02` no lo necesita -no escribe-, pero `FORO-03` sí: hay que escribirlo antes de su tarea | Corriente A, antes de `FORO-03` |
 | ⚪ | **Resuelto 17-sep: decisión del PO (sembrar antes de cada corrida), automatizada en `resetDemo` y probada reproduciendo el fallo.** ~~`F-169` · una prueba a mano de `ADMIN-01` sobre la base de producción descuadra la siembra~~ (pasó en la C5 del 17-sep: una aprobada, una rechazada y devuelta). Repuesta el mismo día; la causa sigue: la próxima corrida del arnés le cobraría al Coder un fallo de datos | PO: resembrar antes de cada corrida de `ADMIN-*`, o C5 sin pulsar acciones |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
@@ -872,6 +801,29 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 ## 6 · Lo que este fichero NO sabe
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
+
+- **Si el 4/4 al primer intento de `FORO-02` es la tarea o la pantalla.** Su `component_api`
+  declara las dos trampas que costaron reintentos en el H1 —el nombre accesible de los botones de
+  página y qué no se recalcula de la capa—, y además es una lista de solo lectura sin columnas
+  ordenables. **Un solo dato no separa las dos causas**, y la diferencia importa: si es la tarea, la
+  cifra 3 mejora escribiéndolas mejor; si es la pantalla, no.
+- **Si la vista `forum_thread_list` aguanta un foro de verdad.** Cuenta con dos `left join` y un
+  `count(distinct)` por hilo, y hoy la siembra tiene 8 hilos y 20 publicaciones. Nadie la ha medido
+  con volumen, y la paginación pide `count: 'exact'` en cada página.
+- **Si reaccionar y quitar la reacción funciona desde una interfaz.** El esquema lo permite y el
+  banco de esquema lo prueba (firma, duplicado, borrar solo lo propio), pero **ninguna pantalla lo
+  hace todavía**: `FORO-02` solo muestra el total. Hasta `FORO-03`, la mitad de escritura de `0030`
+  vive sin usarse — el mismo estado en el que estuvo `quantity` en `OFERTA`.
+- **Si el badge de categoría de `FORO-02` hará falta alguna vez.** La spec lo condiciona a llegar
+  «desde los hilos recientes de FORO-01», y esos hilos llevan al DETALLE (`FORO-03`), no a la lista.
+  Si esa puerta no existe nunca, el badge es una regla sin caso.
+- **Cuántas veces el paso de «producción sirve la app» ha estado midiendo el despliegue anterior**
+  (`F-171`). Hoy se estrenó y ya lo hizo una vez: el alias de Vercel cambia después de que el job
+  haga su `curl`. No se sabe si en despliegues más lentos falla al revés —quedarse sin app que
+  medir— ni cuánto tarda el alias de media.
+- **Cuánto de los 179 $ de esta sesión es fábrica.** La corrida de `FORO-02` midió 21,96 $ de delta,
+  pero la sesión traía encima siete hallazgos, un barrido de 29 specs y cuatro arreglos de CI: el
+  reparto real por pantalla sigue sin poder medirse en una sesión así (`F-157`, y la regla de §3).
 
 - **Si alguien de fuera abrió la demo de producción entre el 8 y el 17-sep** y se encontró una
   página en blanco (`F-168`). No se han mirado las analíticas ni los logs de Vercel.
@@ -1213,3 +1165,19 @@ del ritual (desplegar y comprobarlo en su URL) se cumple con el CI de este push,
 salta · `git status --short` releyéndose antes de empujar: limpio salvo los dos ficheros de
 este mismo cierre (`ESTADO-V1.md`, `orchestration-metrics.csv`) · Dirección Técnica, Nortex
 Systems*
+
+*Día 17 de V1 · 17-sep-2026 · fecha leída de la máquina (`date -u`) al escribir este cierre:
+`2026-09-17`, 20:11 UTC, el mismo día del trabajo · empezó contestando «¿listo?» con el relevo del
+Día 16 delante y encontró que su adenda se equivocaba: `F-164` (el marcador de salto escrito en el
+cuerpo del mensaje, no el token de git) · detrás, en cadena, `F-165` (CI sin credenciales del
+Operador, y con ella nueve días sin desplegar), `F-166` (un e2e declarado que no se ejecutaba nunca
+y que C2 contaba como verde), `F-167` (token de Supabase caducado, VERA y app desacopladas) y
+`F-168` (**producción sin arrancar desde el 8-sep**, cerrada en su día con `curl` → 200) · `F-169`
+(la C5 descuadró la siembra; repuesta y automatizada) · `F-158` cerrado y `F-170` cerrado el mismo
+día: once contradicciones más en las specs aprobadas, cada una recomprobada a mano, dos decididas
+por el PO y nueve aplicadas · trece filas del registro puestas al día contra el código · la carpeta
+`Ingles/` archivada por decisión del PO · y la corriente B en marcha: `0030` a mano y **`FORO-02`
+PASA 4/4 al primer intento**, la primera del proyecto, 0,037318 $ y 1,2 minutos · coste-sombra de
+orquestación al cierre: **1.303,32 $** acumulados, **179,02 $** esta sesión, de los que **21,96 $**
+son la corrida de `FORO-02` · 22 commits en `mvp/bootstrap` · queda el C5 de `FORO-02`, del PO ·
+Dirección Técnica, Nortex Systems*

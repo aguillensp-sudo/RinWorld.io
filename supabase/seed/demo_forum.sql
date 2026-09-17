@@ -114,6 +114,28 @@ update public.forum_threads t
           from public.forum_posts group by thread_id) p
  where p.thread_id = t.id;
 
+-- Reacciones (0030). Se borran solas con las publicaciones de arriba (`on delete
+-- cascade`), asi que volver a pasar este fichero las repone sin duplicar. Las
+-- publicaciones no tienen id fijo: se eligen por hilo y por orden de publicacion.
+-- Cifras que FORO-02 pinta y que el e2e comprueba contra esta siembra:
+--   c003 · Equivalencia FAG 6205-2RS ↔ NSK -> 3 respuestas · 👍 3
+--   c004 · Juego interno C3 frente a CN   -> 2 respuestas · 👍 1
+--   c001 · Bienvenidos al foro            -> 2 respuestas · 👍 1
+insert into public.forum_reactions (post_id, member_id)
+select p.id, m.member_id
+  from (select id, thread_id,
+               row_number() over (partition by thread_id order by created_at) as n
+          from public.forum_posts) p
+  join (values
+          ('44440000-0000-4000-8000-00000000c003'::uuid, 1, :memA::uuid),
+          ('44440000-0000-4000-8000-00000000c003'::uuid, 1, :memB::uuid),
+          ('44440000-0000-4000-8000-00000000c003'::uuid, 2, :memB::uuid),
+          ('44440000-0000-4000-8000-00000000c004'::uuid, 1, :memB::uuid),
+          ('44440000-0000-4000-8000-00000000c001'::uuid, 1, :memB::uuid)
+       ) as m (thread_id, n, member_id)
+    on m.thread_id = p.thread_id and m.n = p.n
+on conflict (post_id, member_id) do nothing;
+
 -- -----------------------------------------------------------------------------
 -- 4 · Comprobación
 -- -----------------------------------------------------------------------------
@@ -135,7 +157,13 @@ begin
   assert reciente < interval '12 hours',
     format('La seccion de hilos recientes necesita actividad de hoy y lo mas nuevo es de hace %s', reciente);
 
-  raise notice 'OK · foro sembrado: cuatro categorias con hilos y actividad de hace menos de 12 horas';
+  assert (select reaction_count from public.forum_thread_list
+           where id = '44440000-0000-4000-8000-00000000c003') = 3,
+    'Las reacciones de demo (0030) tienen que sumar 3 en la equivalencia FAG ↔ NSK';
+  assert (select reply_count from public.forum_thread_list
+           where id = '44440000-0000-4000-8000-00000000c003') = 3,
+    'Y esa misma fila, 3 respuestas: cuatro publicaciones menos la inicial';
+  raise notice 'OK · foro sembrado: cuatro categorias con hilos, actividad de hace menos de 12 horas y reacciones';
 end
 $$;
 

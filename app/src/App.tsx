@@ -12,6 +12,7 @@ import { Panel } from './screens/panel/Panel';
 import { AdminRequests } from './screens/admin/AdminRequests';
 import { Directory } from './screens/directory/Directory';
 import { Forum } from './screens/forum/Forum';
+import { ForumCategory } from './screens/forum/ForumCategory';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
@@ -109,6 +110,13 @@ export function App() {
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
 
   /**
+   * La categoría del foro abierta en FORO-02, o `null` en FORO-01. Mismo criterio
+   * que `openThreadId`: se limpia al cambiar de ítem de nav, para que volver a
+   * `Foros` lleve a las categorías y no a la lista que estaba abierta.
+   */
+  const [forumCategorySlug, setForumCategorySlug] = useState<string | null>(null);
+
+  /**
    * Lo último que VERA ha escrito como criterios de búsqueda, o `null` si aún no
    * ha escrito nada. Vive aquí y no en SRCH-01 porque VERA puede escribirlo
    * estando el usuario en otra pantalla — y entonces hay que llevarle a ella.
@@ -127,6 +135,7 @@ export function App() {
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
+    setForumCategorySlug(null);
   };
 
   if (state.status === 'loading') {
@@ -323,7 +332,18 @@ export function App() {
          * que INV-01/SRCH-01/MSG-01: las tarjetas de categoría y la actividad
          * reciente son tiempo relativo ("hace N horas"), y un `now` congelado
          * al montar dejaría una sesión larga con esas cifras rancias. */
-        <Forum profile={state.profile} now={new Date()} />
+        forumCategorySlug ? (
+          /* FORO-02. Se abre desde una tarjeta de FORO-01 y vuelve con el
+           * enlace "Foros" del breadcrumb. */
+          <ForumCategory
+            profile={state.profile}
+            slug={forumCategorySlug}
+            onBack={() => setForumCategorySlug(null)}
+            now={new Date()}
+          />
+        ) : (
+          <Forum profile={state.profile} now={new Date()} onOpenCategory={setForumCategorySlug} />
+        )
       ) : (
         /*
          * PANEL-01, el punto de entrada tras el login. Sustituye al andamiaje

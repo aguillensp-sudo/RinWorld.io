@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { Category, RecentThread } from '../../lib/forum';
 import type { MemberProfile } from '../../lib/session';
 
@@ -128,11 +128,22 @@ describe('Forum', () => {
     expect(within(tarjeta).queryByText(/Última actividad/)).not.toBeInTheDocument();
   });
 
-  it('las tarjetas de categoría están apagadas -FORO-02 no existe- y lo dicen', async () => {
+  it('sin quien sepa adónde llevar, las tarjetas se apagan y lo dicen', async () => {
     render(<Forum profile={profile} now={NOW} />);
     const tarjeta = await screen.findByRole('button', { name: /General/ });
     expect(tarjeta).toBeDisabled();
     expect(tarjeta).toHaveAttribute('title', 'FORO-02 (la lista de hilos) llega en una próxima versión.');
+  });
+
+  it('con `onOpenCategory`, la tarjeta abre FORO-02 con el slug de SU categoría', async () => {
+    const onOpenCategory = vi.fn();
+    render(<Forum profile={profile} now={NOW} onOpenCategory={onOpenCategory} />);
+    const tarjeta = await screen.findByRole('button', { name: /General/ });
+    expect(tarjeta).toBeEnabled();
+    expect(tarjeta).not.toHaveAttribute('title');
+    fireEvent.click(tarjeta);
+    expect(onOpenCategory).toHaveBeenCalledTimes(1);
+    expect(onOpenCategory).toHaveBeenCalledWith('general');
   });
 
   it('con actividad reciente, pinta la sección con sus cuatro datos por hilo', async () => {
@@ -146,11 +157,11 @@ describe('Forum', () => {
     expect(screen.getByText('hace 2h')).toBeInTheDocument();
   });
 
-  it('el hilo reciente también está apagado -FORO-02 no existe- y lo dice', async () => {
-    render(<Forum profile={profile} now={NOW} />);
+  it('el hilo reciente sigue apagado -lleva al detalle, FORO-03, que no existe- y lo dice', async () => {
+    render(<Forum profile={profile} now={NOW} onOpenCategory={vi.fn()} />);
     const hilo = await screen.findByRole('button', { name: /aranceles a Marruecos/ });
     expect(hilo).toBeDisabled();
-    expect(hilo).toHaveAttribute('title', 'FORO-02 (la lista de hilos) llega en una próxima versión.');
+    expect(hilo).toHaveAttribute('title', 'FORO-03 (el detalle del hilo) llega en una próxima versión.');
   });
 
   it('sin actividad reciente, la sección entera -con su cabecera- se oculta (spec §3)', async () => {

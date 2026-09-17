@@ -18,11 +18,17 @@ const SUBTITLE =
   'Un espacio de discusión pública entre miembros. El contenido del foro no está cifrado — es visible para toda la comunidad.';
 
 /**
- * Las tarjetas de categoría y los hilos recientes apuntan a FORO-02, que todavía
- * no existe (spec §3). Los dos se pintan apagados y dicen por qué en su `title`,
- * en vez de fingir una navegación que no lleva a ninguna parte.
+ * Las tarjetas de categoría apuntan a FORO-02 (spec §3). Desde el 17-sep FORO-02
+ * existe, y la tarjeta navega en cuanto quien la monta le pasa `onOpenCategory`;
+ * sin él, sigue apagada y dice por qué, en vez de fingir una navegación.
+ *
+ * Los hilos recientes apuntan al DETALLE del hilo, FORO-03, que todavía no
+ * existe: siguen apagados, y su `title` nombra la pantalla que de verdad falta.
+ * (Cambio a mano de Claude Code sobre el artefacto aceptado de FORO-01,
+ * precondición de la tarea de FORO-02.)
  */
 const FORO02_TITLE = 'FORO-02 (la lista de hilos) llega en una próxima versión.';
+const FORO03_TITLE = 'FORO-03 (el detalle del hilo) llega en una próxima versión.';
 
 interface Props {
   /**
@@ -33,9 +39,11 @@ interface Props {
   profile: MemberProfile;
   /** Inyectable para que los tests no dependan del reloj (INV-01/SRCH-01/PANEL-01). */
   now?: Date;
+  /** Abre FORO-02 con el `slug` de la categoría. Sin él, las tarjetas no navegan. */
+  onOpenCategory?: (slug: string) => void;
 }
 
-export function Forum({ now }: Props) {
+export function Forum({ now, onOpenCategory }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [threads, setThreads] = useState<RecentThread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +123,7 @@ export function Forum({ now }: Props) {
                     className={styles.recentItem}
                     data-testid={`forum-recent-${thread.id}`}
                     disabled
-                    title={FORO02_TITLE}
+                    title={FORO03_TITLE}
                   >
                     <span className={styles.recentTitle}>{thread.title}</span>
                     {/* El badge del HTML aprobado va en mayúsculas (mono, 9px).
@@ -150,8 +158,9 @@ export function Forum({ now }: Props) {
                   type="button"
                   className={styles.catCard}
                   data-testid={`forum-category-${category.slug}`}
-                  disabled
-                  title={FORO02_TITLE}
+                  disabled={!onOpenCategory}
+                  title={onOpenCategory ? undefined : FORO02_TITLE}
+                  onClick={onOpenCategory ? () => onOpenCategory(category.slug) : undefined}
                 >
                   <span className={styles.catName}>{category.name}</span>
                   <span className={styles.catDesc}>{category.description}</span>

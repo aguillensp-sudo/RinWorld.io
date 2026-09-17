@@ -63,11 +63,12 @@ test.describe('FORO-01 · foro real', () => {
     await expect(page.getByText('Rodamientos del Sur SL')).not.toBeVisible();
   });
 
-  test('ni las categorías ni los hilos recientes navegan todavía -FORO-02 no existe-', async ({ page }) => {
-    const tarjeta = page.getByRole('button', { name: /General/ });
-    await expect(tarjeta).toBeDisabled();
-    const urlAntes = page.url();
-    await tarjeta.click({ force: true });
-    expect(page.url()).toBe(urlAntes);
+  test('la tarjeta de categoría abre FORO-02; el hilo reciente todavía no -FORO-03 no existe-', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /aranceles a Marruecos/ })).toBeDisabled();
+    await page.getByRole('button', { name: /General/ }).click();
+    // `toBeAttached` y no `toBeVisible`: vale igual para el marcador vacio de
+    // antes de la tarea y para la pantalla de verdad.
+    await expect(page.getByTestId('forum-category')).toBeAttached();
+    await expect(page.getByTestId('forum-category')).toHaveAttribute('data-slug', 'general');
   });
 });

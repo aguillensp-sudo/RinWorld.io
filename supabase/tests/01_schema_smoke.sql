@@ -2419,6 +2419,127 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0030 · reacciones del foro y la lista de hilos de FORO-02
+-- -----------------------------------------------------------------------------
+-- En este punto `bbb1` tiene TRES publicaciones (las dos sembradas arriba y la
+-- de "la firma de otro") y `bbb2`, una.
+
+-- 1 · Reaccionar a nombre de otro no se puede: la firma la pone la base.
+begin;
+  select set_config('request.jwt.claim.sub', :b1, true);
+  set local role authenticated;
+  insert into public.forum_reactions (post_id, member_id)
+  select id, '0a000001-0000-0000-0000-000000000001'   -- a1: NO es quien llama
+    from public.forum_posts where body = 'Primer mensaje.';
+commit;
+
+do $$
+begin
+  assert (select member_id from public.forum_reactions r
+            join public.forum_posts p on p.id = r.post_id
+           where p.body = 'Primer mensaje.') = '0b000001-0000-0000-0000-000000000001',
+    '0030: la reaccion es de quien llama, no del member_id que venia en el INSERT';
+  raise notice 'OK · 0030: la firma de una reaccion la pone la base';
+end
+$$;
+
+-- 2 · Una por usuario y publicacion; dos usuarios cuentan dos (Scenario
+--     "reacciones independientes"), y se suman todas las del hilo.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  insert into public.forum_reactions (post_id)
+  select id from public.forum_posts where body in ('Primer mensaje.', 'Segundo mensaje.');
+  select public.expect_fail(
+    $$insert into public.forum_reactions (post_id)
+      select id from public.forum_posts where body = 'Primer mensaje.'$$,
+    '0030: el mismo usuario no reacciona dos veces a la misma publicacion');
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select reply_count from public.forum_thread_list
+             where id = '22220000-0000-4000-8000-00000000bbb1') = 2,
+      '0030: tres publicaciones son DOS respuestas -- la inicial no cuenta';
+    assert (select reaction_count from public.forum_thread_list
+             where id = '22220000-0000-4000-8000-00000000bbb1') = 3,
+      '0030: las reacciones del hilo son la suma de TODAS sus publicaciones (2 en la inicial + 1 en la segunda)';
+    assert (select reply_count from public.forum_thread_list
+             where id = '22220000-0000-4000-8000-00000000bbb2') = 0,
+      '0030: un hilo sin respuestas cuenta cero, no menos uno';
+    assert (select reaction_count from public.forum_thread_list
+             where id = '22220000-0000-4000-8000-00000000bbb2') = 0,
+      '0030: y sin reacciones, cero';
+    assert (select author_org_name from public.forum_thread_list
+             where id = '22220000-0000-4000-8000-00000000bbb2') is not null,
+      '0030: ANCLA POSITIVA -- la organizacion autora llega con nombre';
+    raise notice 'OK · 0030: la lista cuenta respuestas sin la inicial y reacciones de todo el hilo';
+  end
+  $$;
+commit;
+
+-- 3 · Cada uno quita SOLO lo suyo.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  delete from public.forum_reactions
+   where post_id = (select id from public.forum_posts where body = 'Primer mensaje.');
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.forum_reactions r
+            join public.forum_posts p on p.id = r.post_id
+           where p.body = 'Primer mensaje.') = 1,
+    '0030: a1 quita su reaccion y la de b1 sigue ahi -- un DELETE sin filtro no borra lo ajeno';
+  assert (select member_id from public.forum_reactions r
+            join public.forum_posts p on p.id = r.post_id
+           where p.body = 'Primer mensaje.') = '0b000001-0000-0000-0000-000000000001',
+    '0030: y la que queda es precisamente la de b1';
+  raise notice 'OK · 0030: quitar una reaccion solo quita la propia';
+end
+$$;
+
+-- 4 · Quien no es miembro no ve ni reacciones ni lista.
+begin;
+  select set_config('request.jwt.claim.sub', '0f000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.forum_reactions) = 0,
+      '0030: quien no es miembro no ve reacciones';
+    assert (select count(*) from public.forum_thread_list) = 0,
+      '0030: y la vista de la lista NO se salta la RLS -- es el security_invoker';
+    raise notice 'OK · 0030: reacciones y lista respetan la RLS de quien consulta';
+  end
+  $$;
+commit;
+
+-- 5 · Privilegios: anon nada; authenticated no edita reacciones ni la vista.
+do $$
+declare
+  sobran text;
+begin
+  select string_agg(grantee || ':' || privilege_type || ' en ' || table_name, ', '
+                    order by grantee, table_name, privilege_type)
+    into sobran
+    from information_schema.role_table_grants
+   where table_schema = 'public'
+     and table_name in ('forum_reactions','forum_thread_list')
+     and (grantee = 'anon'
+          or (grantee = 'authenticated' and privilege_type in ('UPDATE','TRUNCATE','REFERENCES','TRIGGER'))
+          or (grantee = 'authenticated' and table_name = 'forum_thread_list' and privilege_type <> 'SELECT'));
+
+  assert sobran is null,
+    '0030: privilegios que no deberia haber: ' || coalesce(sobran, '');
+  raise notice 'OK · 0030: anon no tiene nada y nadie edita reacciones';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

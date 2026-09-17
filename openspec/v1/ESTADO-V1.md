@@ -353,7 +353,9 @@ tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
 >   recibió las variables de `despliegue.md` §2. El bundle de antes del despliegue de hoy era
 >   idéntico byte a byte. `F-151` se cerró con `curl` → `HTTP 200`, y un `index.html`
 >   responde 200 aunque su JavaScript reviente — regla 2 de este fichero, en producción.
->   **Es del PO** (acceso a Vercel y una decisión sobre `VITE_DEMO_KEY_SEED`), ver §3.
+>   **Resuelto el mismo día por el PO** (variables en Vercel y redespliegue; `VITE_DEMO_KEY_SEED`
+  solo en *Production* mientras `F-067` siga abierto) y verificado por contenido y en
+  navegador: login pintado, cero errores de consola.
 >
 > **Y una comprobación que el cierre no hizo, sobre la cifra 3:** los tres primeros intentos
 > fallaron por errores DISTINTOS y del propio Coder —`DIR-01` un test de orden por «País»,
@@ -525,7 +527,9 @@ Sin cambios.
 
 **Y por delante de todo lo demás, del PO — el 17-sep cambió el orden de esta lista:**
 
-- 🔴 **`F-168` · producción no arranca desde el 8-sep.** En el proyecto `rin-world-io` de
+- ✅ ~~`F-168` · producción no arranca desde el 8-sep.~~ **Resuelto el 17-sep por el PO**
+  (variables puestas, `VITE_DEMO_KEY_SEED` solo en *Production* mientras `F-067` siga abierto)
+  y verificado por contenido y en navegador. Lo que decía esta entrada: en el proyecto `rin-world-io` de
   Vercel: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en *Production* y *Preview*
   (`openspec/mvp/despliegue.md` §2). **Y decidir `VITE_DEMO_KEY_SEED`:** §2 la pide en
   *Production* para que la demo descifre lo sembrado; §5 dice que en V1 «no debe existir».
@@ -818,7 +822,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | | Qué | Quién lo quita |
 |---|---|---|
 | ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |
-| 🔴 | **`F-168` · la app de producción no arranca desde el 8-sep.** El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
+| ⚪ | ~~**`F-168` · la app de producción no arranca desde el 8-sep.**~~ **Resuelto 17-sep: variables puestas por el PO, verificado por contenido (`index-CHmJc7cl.js`, 480.802 bytes) y en navegador (login pintado, cero errores de consola), y con un paso nuevo en `deploy-app` que lo comprueba en cada despliegue.** Lo que decía: El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
 | 🟠 | **`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.** VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | 🟡 | **`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local.** Sin ella, `ADMIN-01` sale `INEJECUTABLE` en el arnés, a propósito | Álvaro: variable de entorno de usuario |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
@@ -856,8 +860,9 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
 - **Si alguien de fuera abrió la demo de producción entre el 8 y el 17-sep** y se encontró una
   página en blanco (`F-168`). No se han mirado las analíticas ni los logs de Vercel.
-- **Si las *Preview deployments* están igual de rotas.** Muy probable —las variables faltan en
-  el proyecto, no en CI—, pero no se ha abierto ninguna para comprobarlo.
+- **Si las *Preview deployments* arrancan ya.** Las dos `VITE_SUPABASE_*` están puestas en
+  *Preview* desde el 17-sep, pero ninguna *preview* se ha construido después ni abierto para
+  comprobarlo, y el paso nuevo de `deploy-app` solo mira producción.
 - **Si el `SUPABASE_TOKEN` caducó o lo revocó alguien** (`F-167`), y por tanto si el nuevo
   caducará igual. Desde aquí solo se ve el `401`. Y la misma pregunta sigue abierta para
   `VERCEL_NEWACCOUNT_TOKEN`, que hoy funciona.
@@ -1127,7 +1132,8 @@ Orden de lectura, y el orden importa:
     credenciales del Operador al job `e2e`, y con eso bloqueaba el despliegue), `F-166`
     (cerrado — C2 contaba como verde un e2e declarado que se había saltado; el de `ADMIN-01`
     no se había ejecutado nunca), `F-167` (desacoplado; **el token, del PO**) y `F-168`
-    (**ABIERTO, del PO** — la app de producción no arranca desde el 8-sep). Y trece filas
+    (cerrado — la app de producción no arrancaba desde el 8-sep; ahora `deploy-app` lo
+    comprueba por contenido). Y trece filas
     viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. `F-158` sigue siendo
     el único abierto del corpus, y sigue siendo del PO.
 

@@ -83,8 +83,12 @@ test.describe('ADMIN-01 · cola de solicitudes real', () => {
     await page.getByRole('button', { name: 'Nordic Bearings AB' }).click();
     const panel = page.getByText('Detalle de solicitud').locator('..');
     await expect(panel.getByText('Nordic Bearings AB')).toBeVisible();
-    await expect(page.getByText('Sven Lindqvist')).toBeVisible();
-    await expect(page.getByText('info@nordicbearings.test')).toBeVisible();
+    // F-166 · acotado al panel: el correo sale TAMBIÉN en su columna de la tabla,
+    // a propósito, y un `getByText` suelto casa con los dos (strict mode) -la
+    // misma forma que el primero de los tres bugs de `F-162`-.
+    const detalle = page.getByLabel('Detalle de solicitud');
+    await expect(detalle.getByText('Sven Lindqvist')).toBeVisible();
+    await expect(detalle.getByText('info@nordicbearings.test')).toBeVisible();
   });
 
   test('el filtro "Aprobadas" no enseña las tres pendientes de la siembra', async ({ page }) => {

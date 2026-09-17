@@ -567,8 +567,9 @@ En paralelo, sin acción propia desde este lado:
 - ✅ **`F-158` cerrado el 17-sep, decisión del PO:** manda la regla (naranja si > 24h) y el
   ejemplo de la spec de `ADMIN-01` pasa de 18 a 30 horas, en las dos copias de la spec y en el
   HTML aprobado.
-- **La pregunta de §5 desde el Día 14, sin barrer todavía:** si otras specs aprobadas
-  tienen la misma clase de contradicción regla-contra-ejemplo que `F-158`.
+- **Barrido hecho el 17-sep (`F-170`): once contradicciones más de la clase de `F-158`**, en
+  `openspec/v1/barrido-specs-F158.md`, cada una con su recomendación. Decisiones del PO antes de
+  escribir las tareas de esas pantallas; dos son de producto (`INVT-01`, `REG-09`).
 
 Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
 Vercel — ninguno bloquea trabajo de ingeniería.
@@ -856,7 +857,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
 | ⚪ | ~~`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?~~ | **Resuelto 10-sep-2026 (Día 13): sí, un tercero — el guardia "ya has consultado" de `create_inquiry`, cerrado en `0026` (`F-156`). Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos; ninguna otra tenía el hueco** |
 | ⚪ | **Resuelto 17-sep: el PO decidió que manda la regla; ejemplo corregido de 18 a 30 h en la spec (dos copias) y en el HTML aprobado.** ~~`F-158`, y es del PO: la spec aprobada de `ADMIN-01` se contradice a sí misma.~~ Su tabla de columnas dice *"en naranja si > 24h, en rojo si > 48h"* y su bloque de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Cada lectura lleva a una pantalla distinta. El código sigue la REGLA y lo deja escrito en los tres sitios donde alguien podría arreglarlo al revés, así que **no bloquea la construcción**; lo que no puede arreglar el código es el documento | Producto: corregir la spec |
-| 🟡 | **Nadie ha mirado si las otras 30 specs aprobadas tienen la misma clase de contradicción que `F-158`.** Salió por casualidad, porque la siembra de demo se verifica a sí misma y exigía una fila de cada color. Un barrido cuesta poco y no se ha hecho | Cualquier sesión, antes de que la fábrica construya sobre ellas |
+| ⚪ | **Barrido hecho 17-sep: once contradicciones más, `F-170`, en `openspec/v1/barrido-specs-F158.md` — pendientes de decisión del PO.** ~~Nadie ha mirado si las otras 30 specs aprobadas tienen la misma clase de contradicción que `F-158`.~~ Salió por casualidad, porque la siembra de demo se verifica a sí misma y exigía una fila de cada color. Un barrido cuesta poco y no se ha hecho | Cualquier sesión, antes de que la fábrica construya sobre ellas |
 | ⚪ | ~~ADMIN-01 no se puede probar de extremo a extremo: no hay cuenta de Operador~~ | **Resuelto 11-sep-2026: cuenta creada por el PO en las dos bases, dada de alta por el MCP, alcance comprobado desde su propia sesión y `E2E_OPERATOR_PASSWORD` en los secretos de CI.** La rama de sesión del shell, que era la otra mitad y no se sabía, también |
 | ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
 | ⚪ | ~~`F-160`: `--seco` escalaba en falso en las seis tareas del corpus~~ | **Resuelto 11-sep-2026 (Día 15): `_columna()` en `dry_run.py`, lee el CSV por nombre de columna, no por substring de la línea.** Verificado con `python -m harness.tests.dry_run` y `--seco` sobre las tres tareas nuevas y `SRCH-01` |
@@ -903,9 +904,10 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   línea base para `DIR-01`) están tan lejos del techo de 50 $ que la imprecisión no cambia
   nada hoy — pero **no se sabe si eso sigue siendo cierto con pantallas más caras de
   orquestar**, y la próxima tanda debería medirse con sesiones de verdad separadas.
-- **Si `F-158` es un caso aislado o el primero de varios.** Sigue sin barrerse si las otras
-  30 specs aprobadas tienen la misma clase de contradicción regla-contra-ejemplo (§5, fila
-  ya existente desde el Día 14).
+- ~~Si `F-158` es un caso aislado o el primero de varios.~~ **Contestado el 17-sep: el
+  primero de varios** — once más (`F-170`). Lo que sigue sin saberse: contradicciones ENTRE
+  specs distintas (como `F-039`) y specs contra el esquema (como `F-027`); el barrido no las
+  buscó.
 - ~~Si algún otro campo de `DEEPSEEK_API_KEY`/`DS_PRICE_*` falta en el entorno local del PO
   cuando corra las tres tareas.~~ **Contestado el 13/14-sep: no.** Las tres corridas
   llamaron a `deepseek-v4-flash` y calcularon coste real sin ningún aviso de precio a

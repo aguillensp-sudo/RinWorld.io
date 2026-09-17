@@ -1,0 +1,64 @@
+{
+  "task_id": "FORO-02",
+  "screen": "FORO-02",
+  "goal": "Panel de contenido de FORO-02 (Lista de Hilos de una Categoria): breadcrumb de vuelta a FORO-01, cabecera con el nombre y la descripcion de la categoria, aviso de confidencialidad permanente, barra de busqueda por titulo (server-side, al pulsar Enter o la lupa), lista de hilos por actividad reciente con organizacion, respuestas, reacciones y tiempo relativo, paginacion numerica de 20 en 20 y sus estados (carga, error, categoria inexistente, categoria vacia, busqueda sin resultados). El shell es el estandar de un miembro y ya esta wireado; no se toca. Primera pantalla de la corriente B tras el H1 (ESTADO-V1.md, 17-sep-2026).",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §1 y §7: la capa de datos es precondicion de la pantalla, ya escrita y entregada por Claude Code -no la construye esta tarea-: migracion 0030 (tabla `forum_reactions` y vista `forum_thread_list`, aplicada y comprobada en las dos bases) y `fetchCategory`/`fetchThreads` en `forum.ts` (commit 8ea3d83). Escenario base: se remide al llegar a seis pantallas; esta es la cuarta.",
+  "_nota_wiring": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea (mismo patron que 'Empresas' para DIR-01 y 'Foros' para FORO-01): las tarjetas de FORO-01 ya llaman a `onOpenCategory(slug)`, `App.tsx` guarda la categoria abierta y monta `ForumCategory` con `slug`, `onBack` y `now`, y `app/src/screens/forum/ForumCategory.tsx` es hoy un MARCADOR (`data-testid=\"forum-category\"`). Los `outputs` de esta tarea sustituyen ese fichero entero.",
+  "_nota_un_solo_fichero": "Como FORO-01, un unico componente: la lista es una columna de filas de solo lectura sin columnas ordenables, y partirla en pantalla+tabla (DIR-01/ADMIN-01) no compra nada.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_FORO-02.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/FORO-02 · FORO v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/directory/Directory.tsx",
+    "_nota_style_reference": "DIR-01 ya resolvio la misma mecanica -busqueda que NO es live search (teclear no consulta; Enter o la lupa si), paginacion server-side, estados de carga/error/vacio y un efecto que pide de nuevo al cambiar criterio o pagina-. Mirala antes de inventar la estructura. ⚠ PERO NO COPIES SUS NOMBRES ACCESIBLES: alli los botones de pagina llevan `aria-label=\"Pagina N\"` y la lupa 'Buscar organizacion'; aqui el contrato es otro -ver `component_api`-.",
+    "data_layer": "app/src/lib/forum.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `fetchCategory`, `fetchThreads`, `THREADS_PAGE_SIZE`, `threadPageCount`, `clampThreadPage`, `replyCountLabel`, `reactionLabel`, `relativeShort`, `toThreadRow` y los tipos `Category`/`ThreadRow`/`ThreadPage`/`ThreadQuery` estan escritos y probados. Ni una sola de esas reglas se reimplementa: NO se ordena en el cliente (el servidor ya ordena por actividad reciente), NO se cuentan respuestas ni reacciones (vienen calculadas de `forum_thread_list`: respuestas = publicaciones menos la inicial, reacciones = total del hilo), NO se filtra la busqueda en memoria (`fetchThreads` hace el `ilike` en el servidor y lava el texto), y NO se calcula la pagina valida (`fetchThreads` devuelve `page` ya encajada y `pageCount`)."
+  },
+  "outputs": [
+    "app/src/screens/forum/ForumCategory.tsx",
+    "app/src/screens/forum/ForumCategory.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos.",
+    "_nota_accesibilidad": "Todo lo accionable es `<button type=\"button\">`, nunca un `<div onClick>`. Los controles que todavia no llevan a ninguna parte (titulo de hilo, 'Crear hilo') son `<button type=\"button\" disabled>` con `title` explicando por que. El NOMBRE ACCESIBLE de cada boton es exactamente su texto visible: ningun `aria-label` que lo sustituya, salvo el de la lupa, que no tiene texto (F-145).",
+    "app/src/screens/forum/ForumCategory.tsx": "export function ForumCategory({ profile, slug, onBack, now }: { profile: MemberProfile; slug: string; onBack: () => void; now?: Date }). Importa `type MemberProfile` y `errorMessage` de '../../lib/session', y de '../../lib/forum' lo que necesite (`fetchCategory`, `fetchThreads`, `relativeShort`, `replyCountLabel`, `reactionLabel` y los tipos). `profile` no se usa -el foro es comun a todos- pero va en la firma, como en FORO-01. `now` inyectable, por defecto `new Date()`. RAIZ: un unico elemento con `data-testid=\"forum-category\"` y `data-slug={slug}`, SIEMPRE -tambien mientras carga o con error-: FORO-01 se ancla en el. DATOS: al montar (y si cambia `slug`) llama a `fetchCategory(slug)`. Si devuelve `null`, pinta el estado 'categoria inexistente' y NO llama a `fetchThreads`. Si devuelve la categoria, llama a `fetchThreads({ categoryId: categoria.id, search: <busqueda aplicada>, page: <pagina pedida> })` con busqueda aplicada '' y pagina 1 al empezar, y vuelve a llamar cada vez que cambian la busqueda aplicada o la pagina pedida. Una respuesta que llega tarde de una peticion anterior se descarta. La pagina que se marca como actual es `resultado.page` (la que devolvio la capa, ya encajada). ESTRUCTURA, DE ARRIBA A ABAJO: (1) eyebrow, texto VERBATIM 'Módulo 08 · Foro de la Comunidad', sin rol de encabezado. (2) breadcrumb en `<nav aria-label=\"Breadcrumb\">`: un `<button type=\"button\">` con texto VERBATIM 'Foros' que llama a `onBack()`, un separador '›' con `aria-hidden=\"true\"` y el nombre de la categoria en texto (un `<span>`), cuando ya se conoce. (3) el titulo en un `<h1>` de verdad con el NOMBRE de la categoria (`categoria.name`). (4) un `<p>` con la DESCRIPCION de la categoria (`categoria.description`). (5) el aviso de confidencialidad, el MISMO bloque permanente de FORO-01 (spec §3/§7): icono `ti ti-alert-circle` con `aria-hidden=\"true\"` y un `<p>` cuyo contenido es VERBATIM 'El contenido publicado en el Foro es texto plano, visible para todos los miembros de Bearingworld.io. ' seguido de `<strong>Nada de lo escrito aquí tiene ninguna garantía de confidencialidad.</strong>` seguido de ' Para conversaciones privadas, usa la mensajería cifrada.' -el `<strong>` es hijo DIRECTO de ese `<p>`-. Se pinta siempre, sin boton de cerrar ni estado. (6) barra de acciones: un `<input>` con placeholder VERBATIM 'Buscar en esta categoría...' (tres puntos ASCII, no el caracter '…'), un `<button type=\"button\" aria-label=\"Buscar\">` con el icono `ti ti-search` (`aria-hidden=\"true\"`) y un `<button type=\"button\" disabled>` con texto VERBATIM 'Crear hilo' y `title` VERBATIM 'El formulario de creación de hilo (FL-FORO-01) llega en una próxima versión.'. TECLEAR NO BUSCA: el input solo actualiza un borrador. Enter en el input (onKeyDown, `key === 'Enter'`) o pulsar la lupa copian el borrador (recortado con `trim()`) a la busqueda aplicada y vuelven a la PAGINA 1. (7) el cuerpo, EXCLUYENTE: mientras carga la categoria o la lista, un `<p aria-busy=\"true\">` con texto VERBATIM 'Cargando hilos…' (este SI con el caracter '…'); si una llamada falla, un elemento con `role=\"alert\"` y el texto `errorMessage(e)`; si la categoria no existe, un `<p>` VERBATIM 'Esta categoría no existe.'; si la lista llega vacia SIN busqueda aplicada, un `<p>` VERBATIM 'Todavía no hay hilos en esta categoría. ¡Sé el primero en abrir uno!'; si llega vacia CON busqueda aplicada, un `<p>` cuyo texto ENTERO, en UN SOLO NODO de texto (F-147: sin partirlo en varios `<span>` ni `<strong>`), es `No hemos encontrado hilos que coincidan con \"<busqueda aplicada>\".` -comillas rectas ASCII y punto final-, seguido de un `<button type=\"button\">` con texto VERBATIM 'Limpiar búsqueda' que vacia el borrador (el input queda en '') y la busqueda aplicada y vuelve a la pagina 1; y si hay filas, la lista. (8) la lista: una fila por `ThreadRow`, EN EL ORDEN EN QUE LLEGAN, cada una en un contenedor con `data-testid={`forum-thread-${row.id}`}` (ningun otro elemento de la pantalla usa ese prefijo). Dentro, cada dato en su propio nodo de texto: el TITULO en un `<button type=\"button\" disabled>` cuyo texto es SOLO `row.title` y con `title` VERBATIM 'FORO-03 (el detalle del hilo) llega en una próxima versión.'; la organizacion (`row.authorOrgName`); `replyCountLabel(row.replyCount)`; `reactionLabel(row.reactionCount)`; y `relativeShort(row.lastPostAt, now)`. SIN badge de categoria (spec §7: dentro de una categoria no se repite): ninguna fila pinta el nombre de la categoria, tampoco en mayusculas ('REFERENCIAS TÉCNICAS'). (9) paginacion, SOLO si `resultado.pageCount > 1`: un `<nav aria-label=\"Paginación\">` con un `<button type=\"button\">` por pagina, de 1 a `pageCount`, cuyo texto es SOLO el numero y SIN `aria-label` (el numero es su nombre accesible, F-145), el de la pagina actual con `aria-current=\"page\"` y los demas sin ese atributo. Sin botones de anterior/siguiente dentro de ese `<nav>`. Pulsar un numero pide esa pagina con la busqueda aplicada que haya.",
+    "app/src/screens/forum/ForumCategory.module.css": "CSS Module de la pantalla. Solo tokens `var(--bw-...)` de `app/src/styles/tokens.css`. El bloque de confidencialidad con `--bw-brass`/`--bw-tag-bg`, como en FORO-01. Titulo de hilo Inter 500 14px ink; organizacion, contadores y tiempo en Steel Mist 12px, el tiempo en IBM Plex Mono 11px (spec §3)."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/forum/ForumCategory.test.tsx"
+    ],
+    "e2e": [
+      "app/e2e/forum-category.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e va contra el Supabase real -la siembra `demo_forum.sql` con reacciones de 0030: 'Referencias técnicas' tiene dos hilos, con 2 y 3 respuestas y 1 y 3 reacciones- porque los tests de unidad mockean la capa de datos y no pueden cazar un orden, un recuento o una busqueda hechos en el cliente. Comprueba tambien que NO aparece 'aranceles a Marruecos', un hilo de OTRA categoria de la siembra: es un dato del fixture, no un literal a pintar. Es DE SOLO LECTURA."
+  },
+  "out_of_scope": [
+    "FORO-03, el detalle de un hilo (spec §3: el titulo es 'enlace a FORO-03'). No existe todavia: el titulo se pinta apagado con su motivo, ver `component_api`.",
+    "El flujo de creacion de hilo FL-FORO-01 (spec §3 'Crear hilo', §5 VERA redactando) y el estado 'Limite de publicacion alcanzado' (spec §6, RNG-FORO-06): dependen de un formulario que no existe. 'Crear hilo' se pinta apagado con su motivo.",
+    "El badge de categoria en las filas (spec §3 y §7: 'solo visible si se llega desde hilos recientes de FORO-01'). Desde FORO-01 solo se llega a FORO-02 por una tarjeta de categoria; los hilos recientes llevan a FORO-03. En esta tarea NUNCA se pinta.",
+    "Reaccionar o quitar una reaccion: la lista solo muestra el total. Reaccionar es de FORO-03.",
+    "El cableado VERA<->foro de la spec §5 (VERA proponiendo titulo y cuerpo). Es conversacion de demostracion del documento de diseno, no una herramienta conectada -mismo criterio que el resto de pantallas-.",
+    "El wiring FORO-01 -> FORO-02 en `Forum.tsx` y `App.tsx`: ya hecho a mano por Claude Code como precondicion (ver `_nota_wiring`).",
+    "Redirigir a una organizacion SUSPENDED o a un usuario sin sesion (RNG-FORO-01/02): lo resuelven la sesion y el shell antes de montar cualquier pantalla."
+  ],
+  "constraints": [
+    "Ni un color literal: todo `var(--bw-...)`.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`.",
+    "No tocar `app/src/shell/**`, `App.tsx` ni `app/src/screens/forum/Forum.tsx`: tienen contrato y tests propios, y el wiring de esta pantalla ya esta hecho -ver `_nota_wiring`-.",
+    "No reimplementar nada de `app/src/lib/forum.ts` (ver `_nota_data_layer`): ni orden, ni recuentos, ni busqueda en memoria, ni tiempo relativo, ni el singular de 'respuesta'.",
+    "La busqueda NO es live search: teclear no llama a `fetchThreads`; solo Enter o la lupa (spec §3).",
+    "El TITULO de la pantalla es el nombre de la categoria, en un `<h1>` de verdad.",
+    "El aviso de confidencialidad no lleva boton de cerrar, `dismiss` ni estado propio: es permanente por contrato (spec §7).",
+    "Los titulos de hilo y 'Crear hilo' son controles APAGADOS (`disabled`) con `title`, nunca enlaces ni navegacion a ningun sitio: FORO-03 y FL-FORO-01 no existen."
+  ]
+}

@@ -568,8 +568,8 @@ En paralelo, sin acción propia desde este lado:
   ejemplo de la spec de `ADMIN-01` pasa de 18 a 30 horas, en las dos copias de la spec y en el
   HTML aprobado.
 - **Barrido hecho el 17-sep (`F-170`): once contradicciones más de la clase de `F-158`**, en
-  `openspec/v1/barrido-specs-F158.md`, cada una con su recomendación. Decisiones del PO antes de
-  escribir las tareas de esas pantallas; dos son de producto (`INVT-01`, `REG-09`).
+  `openspec/v1/barrido-specs-F158.md`, cada una con su recomendación. Las dos de producto,
+  decididas y aplicadas el mismo día (`INVT-01`, `REG-09`); quedan nueve, con recomendación.
 
 Fuera de sesión, sin moverse: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de
 Vercel — ninguno bloquea trabajo de ingeniería.
@@ -785,6 +785,8 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | # | Decisión | Dónde |
 |---|---|---|
 | **`openspec/design-gui/Ingles/` se olvida para siempre** | 17-sep-2026, PO. Copia puntual de las specs para traducir; se deja como está, no se versiona, no se revisa ni se sincroniza, y **no se menciona en ningún relevo ni cierre**. Llevaba días apareciendo como `??` en `git status` y colándose en cada resumen | `.gitignore`, `Ingles/_CARPETA-ARCHIVADA-NO-TOCAR.md` |
+| **Las invitaciones pendientes ocupan plaza en el tope de 5 usuarios** | 17-sep-2026, PO (`F-170`, `INVT-01`). Si no la ocuparan, se podrían enviar más invitaciones que plazas y acabar con más de 5 usuarios. `Reenviar` una expirada respeta el mismo límite | Spec `INVT-01` §3, `barrido-specs-F158.md` |
+| **Al llegar al límite de usuarios, el mensaje se muestra** | 17-sep-2026, PO (`F-170`, `REG-09`): «hay que mostrarlo al usuario sin dudarlo». La spec decía «sin mensaje» | Spec `REG-09` §6 |
 | **En una spec, la regla manda sobre el ejemplo** | 17-sep-2026, PO, al cerrar `F-158`: la de `ADMIN-01` decía *naranja si > 24h* y pintaba en naranja 18 horas. Se corrige el ejemplo (a 30 h), no la regla | `F-158`, spec y HTML de `ADMIN-01` |
 | **La cifra 2 de `ADMIN-01` cuenta, aunque su C2 no ejecutara el e2e en la corrida del arnés** | 17-sep-2026, PO. El contrato se cumple en CI real (66/66) y en local (4/4) contra el artefacto tal cual salió del Coder; el hueco era de la medición, no de la pantalla. Desde `6e25a9a` ese hueco no puede repetirse: un e2e declarado que se salta deja C2 `INEJECUTABLE` | `F-166` |
 | **Se siembra antes de cada corrida, y no a mano** | 17-sep-2026, PO. `resetDemo` devuelve las tres solicitudes de `ADMIN-01` a la cola en cada arranque de la suite y en `npm run demo:reset`: una revisión a mano que pulse Aprobar/Rechazar ya no puede cobrarse al Coder en la corrida siguiente | `F-169`, `app/scripts/demo-reset.mjs` |

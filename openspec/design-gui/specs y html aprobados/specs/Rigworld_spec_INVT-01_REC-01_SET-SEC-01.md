@@ -32,11 +32,12 @@ Gestión de invitaciones
 - Label: `Invitar nuevo usuario`
 - Input email + botón `Enviar invitación` (primario, en línea)
 - Validación en tiempo real: email no debe estar ya registrado en la plataforma
-- Deshabilitado si la organización ya tiene 5 usuarios activos (límite alcanzado)
+- Deshabilitado si los usuarios de la organización **más las invitaciones en estado Pendiente** ya suman 5 (límite alcanzado). Una invitación pendiente ocupa plaza: si no la ocupara, se podrían enviar más invitaciones que plazas libres y acabar con más de 5 usuarios. `Reenviar` una invitación expirada respeta el mismo límite.
+  > **Corregido el 17-sep-2026 (`F-170`, decisión del PO):** esta línea decía «5 usuarios activos», y el ejemplo de VERA y el HTML aprobado ya contaban las pendientes («2 activos y 1 invitación pendiente → puedes invitar a 2 más»). Manda el ejemplo: las pendientes cuentan.
 - Sin selector de rol — el invitado se asigna automáticamente como Editor
 
 **Aviso de límite** (cuando quedan 0 plazas):
-> Tu organización ha alcanzado el límite de 5 usuarios. Para añadir uno nuevo, debes eliminar uno existente.
+> Tu organización ha alcanzado el límite de 5 usuarios, contando las invitaciones pendientes. Para añadir uno nuevo, elimina un usuario o espera a que caduque una invitación.
 
 **Tabla de invitaciones enviadas** (solo lectura)
 

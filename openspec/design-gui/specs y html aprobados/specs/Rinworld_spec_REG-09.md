@@ -91,7 +91,9 @@ No aplica — pantalla de decisión, no formulario.
 El título cambia a `¿Quieres añadir otro usuario?` y el contador muestra `X de 5 usuarios registrados`. Si ya se han añadido 4 (límite de 5 con el Administrador), el botón "Sí, añadir un usuario" desaparece y solo queda "Ir al panel".
 
 **Límite alcanzado (5 usuarios):**
-Solo muestra el botón `Ir al panel`. Sin mensaje de error — simplemente el botón de añadir no existe.
+El título cambia a `¡Equipo al completo!`, se muestra el mensaje `Has alcanzado el límite de 5 usuarios por organización.` y solo queda el botón `Ir al panel`. **El mensaje es obligatorio:** el usuario tiene que saber por qué ya no puede añadir a nadie más.
+
+> **Corregido el 17-sep-2026 (`F-170`, decisión del PO):** esta sección decía «Sin mensaje de error — simplemente el botón de añadir no existe», y el HTML aprobado sí mostraba el mensaje. Manda el HTML: el mensaje se muestra, con sus textos.
 
 ---
 

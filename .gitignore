@@ -20,6 +20,14 @@
 # alguien acaba añadiendo con un `git add .`. No se versionan nunca.
 **/.claude/worktrees/
 
+# `openspec/design-gui/Ingles/` · DECISIÓN DEL PO, 17-sep-2026: fue un tema PUNTUAL
+# (una copia de `specs y html aprobados/` hecha para traducir) y SE DEJA COMO ESTÁ.
+# No se versiona, no se revisa, no se corrige, no se sincroniza con las specs
+# aprobadas y no se menciona en ningún relevo ni cierre. La fuente de verdad es
+# `openspec/design-gui/specs y html aprobados/`. Si una sesión la encuentra y piensa
+# «esto está desfasado» o «esto está sin seguir», la respuesta es esta nota: olvídala.
+openspec/design-gui/Ingles/
+
 # Artefactos de Python
 __pycache__/
 *.pyc

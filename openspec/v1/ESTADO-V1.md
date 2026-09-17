@@ -783,6 +783,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **`openspec/design-gui/Ingles/` se olvida para siempre** | 17-sep-2026, PO. Copia puntual de las specs para traducir; se deja como está, no se versiona, no se revisa ni se sincroniza, y **no se menciona en ningún relevo ni cierre**. Llevaba días apareciendo como `??` en `git status` y colándose en cada resumen | `.gitignore`, `Ingles/_CARPETA-ARCHIVADA-NO-TOCAR.md` |
 | **En una spec, la regla manda sobre el ejemplo** | 17-sep-2026, PO, al cerrar `F-158`: la de `ADMIN-01` decía *naranja si > 24h* y pintaba en naranja 18 horas. Se corrige el ejemplo (a 30 h), no la regla | `F-158`, spec y HTML de `ADMIN-01` |
 | **La cifra 2 de `ADMIN-01` cuenta, aunque su C2 no ejecutara el e2e en la corrida del arnés** | 17-sep-2026, PO. El contrato se cumple en CI real (66/66) y en local (4/4) contra el artefacto tal cual salió del Coder; el hueco era de la medición, no de la pantalla. Desde `6e25a9a` ese hueco no puede repetirse: un e2e declarado que se salta deja C2 `INEJECUTABLE` | `F-166` |
 | **Se siembra antes de cada corrida, y no a mano** | 17-sep-2026, PO. `resetDemo` devuelve las tres solicitudes de `ADMIN-01` a la cola en cada arranque de la suite y en `npm run demo:reset`: una revisión a mano que pulse Aprobar/Rechazar ya no puede cobrarse al Coder en la corrida siguiente | `F-169`, `app/scripts/demo-reset.mjs` |

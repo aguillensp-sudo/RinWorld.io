@@ -312,6 +312,24 @@ def _check_c1(runner) -> dict:
 _E2E_FALLO = re.compile(r"^\s*\[[^\]\n]+\]\s*›\s*(\S.*?)\s*$", re.M)
 _E2E_CUANTOS = re.compile(r"^\s*(\d+)\s+failed\s*$", re.M)
 
+# F-166 · un e2e DECLARADO que se salta no ha mirado nada, y C2 lo daba por verde.
+#
+# `admin-requests.spec.ts` hace `test.skip(!haveOperatorCreds)` fuera de CI, y en
+# la maquina del PO no habia `E2E_OPERATOR_PASSWORD`: la corrida de ADMIN-01 del
+# 14-sep salio "suite e2e completa (cubre los 1 declarados)" con sus cuatro tests
+# saltados. Es F-015 al pie de la letra -un `skip` condicional contado como
+# verde- y paso igual, porque C2 miraba el codigo de salida y no QUE se ejecuto.
+# Playwright sale con 0 aunque se salte todo.
+#
+# Se lee del reporter `list` (el de fuera de CI): cada test saltado es una linea
+# `  -   12 [chromium] › e2e/x.spec.ts:63:3 › ...` (con `\` en Windows), y el
+# resumen dice `N skipped`. Cerradura: si el resumen cuenta saltados y no se
+# pueden leer uno por uno, no se puede saber si el contrato declarado corrio, y
+# eso tampoco es verde.
+_E2E_SALTADO = re.compile(
+    r"^\s*-\s+\d+\s+\[[^\]\n]+\]\s*›\s*(\S+?):\d+:\d+\s*›\s*(.*?)\s*$", re.M)
+_E2E_SALTADOS_CUANTOS = re.compile(r"^\s*(\d+)\s+skipped\s*$", re.M)
+
 
 def _excusas_de_la_tarea(task: dict) -> list:
     """Los tests del e2e que la TAREA declara imposibles para el Coder."""
@@ -337,6 +355,29 @@ def _repartir_culpas(out: str, excusas: list) -> tuple:
             usadas.add(d["test"])
     muertas = [d["test"] for d in excusas if d["test"] not in usadas]
     return imputables, excusados, muertas, True
+
+
+def _e2e_sin_ejecutar(out: str, e2e: list) -> str:
+    """F-166 · por que el e2e declarado NO ha mirado el artefacto, o "" si lo miro."""
+    lineas = _E2E_SALTADO.findall(out or "")
+    dice = sum(int(n) for n in _E2E_SALTADOS_CUANTOS.findall(out or ""))
+    if dice and dice != len(lineas):
+        return (f"playwright dice {dice} test(s) saltados y solo se leen {len(lineas)} "
+                f"uno por uno: no se puede saber si el e2e declarado se ejecuto")
+    declarados = {str(pathlib.PurePosixPath(p).relative_to("app")) for p in e2e}
+    saltados = [f"{f} › {t}" for f, t in lineas if f.replace("\\", "/") in declarados]
+    if not saltados:
+        return ""
+    return (f"{len(saltados)} test(s) del e2e DECLARADO se saltaron y no miraron nada:\n"
+            + "\n".join(f"  · {t}" for t in saltados)
+            + "\nCausa habitual: faltan credenciales en este entorno (p. ej. "
+              "E2E_OPERATOR_PASSWORD para ADMIN-01)")
+
+
+def _c2_sin_ejecutar(motivo: str) -> dict:
+    return {"id": "C2", "ok": False, "estado": INEJECUTABLE,
+            "detail": "F-166 · " + motivo + ".\nF-015: un check que no se puede "
+                      "ejecutar no es verde"}
 
 
 def _parte_de_excusas(excusados: list, muertas: list) -> str:
@@ -429,6 +470,9 @@ def _check_c2(task, runner) -> dict:
                              + "\n".join(f"  · {t}" for t in imputables))
             return _rojo("C2", _detalle(cabecera, out) + ("\n" + parte if parte else ""),
                          code, out)
+        sin_ejecutar = _e2e_sin_ejecutar(out, e2e)
+        if sin_ejecutar:
+            return _c2_sin_ejecutar(sin_ejecutar)
         # Fallo la suite y NINGUNO de los fallos es imputable al Coder. Verde —
         # pero un verde que lleva escrito de que se le ha perdonado y por que, y
         # que queda contado en la fila del CSV (`excusados`), porque un verde con
@@ -437,6 +481,9 @@ def _check_c2(task, runner) -> dict:
                 "detail": "aceptacion en verde CON EXCUSAS: "
                           + " + ".join(partes + ["suite e2e completa"]) + "\n" + parte}
 
+    sin_ejecutar = _e2e_sin_ejecutar(out, e2e)
+    if sin_ejecutar:
+        return _c2_sin_ejecutar(sin_ejecutar)
     partes.append("suite e2e completa" + (f" (cubre los {len(e2e)} declarados)" if e2e else ""))
     salida = {"id": "C2", "ok": True, "estado": VERDE,
               "detail": "aceptacion en verde: " + " + ".join(partes)}

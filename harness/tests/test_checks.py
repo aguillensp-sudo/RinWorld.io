@@ -315,6 +315,58 @@ def test_c2_paths():
           not [a for a in cmd if a.endswith((".ts", ".tsx"))], cmd)
 
 
+def test_c2_no_cuenta_un_e2e_saltado():
+    """F-166 · un e2e declarado que se salta NO es verde.
+
+    ADMIN-01 salio 4/4 el 14-sep con los cuatro tests de su e2e saltados: fuera de
+    CI, sin `E2E_OPERATOR_PASSWORD`, el `describe` entero hace `test.skip`, y
+    Playwright sale con 0. C2 miraba el codigo de salida. Es F-015 otra vez."""
+    print("\nF-166 · un e2e declarado que se salta no mira nada")
+
+    task = json.loads((ROOT / "harness" / "tasks" / "ADMIN-01.json")
+                      .read_text(encoding="utf-8"))
+
+    # Salida con la forma del reporter `list` en Windows: `-` es saltado.
+    saltada = (
+        "Running 66 tests using 4 workers\n"
+        "  ok   1 [setup] › e2e\\auth.setup.ts:9:1 › alpha inicia sesion\n"
+        "  -    7 [chromium] › e2e\\admin-requests.spec.ts:63:3 › ADMIN-01 · cola de "
+        "solicitudes real › pinta las tres solicitudes reales\n"
+        "  -    8 [chromium] › e2e\\admin-requests.spec.ts:71:3 › ADMIN-01 · cola de "
+        "solicitudes real › los correos son los de la siembra real\n"
+        "  ok   9 [chromium] › e2e\\directory.spec.ts:70:3 › DIR-01 · directorio real "
+        "› pinta las organizaciones de la base\n"
+        "\n  2 skipped\n  64 passed (2.1m)\n")
+
+    def runner_con(out):
+        return lambda cmd, cwd: (0, out if cmd[1] == "playwright" else "")
+
+    r = _check_c2(task, runner_con(saltada))
+    check("⚠ exit 0 con el e2e declarado saltado NO es verde",
+          not r["ok"] and r["estado"] == "inejecutable", r)
+    check("y dice cuales se saltaron",
+          "pinta las tres solicitudes reales" in r["detail"] and "2 test(s)" in r["detail"],
+          r["detail"])
+
+    # Un saltado de OTRO fichero no le toca a esta tarea.
+    ajena = saltada.replace("admin-requests.spec.ts", "session.spec.ts")
+    r = _check_c2(task, runner_con(ajena))
+    check("un saltado en un e2e NO declarado no cambia el verde de la tarea",
+          r["ok"] and r["estado"] == "verde", r)
+
+    # La salida de CI (sin saltados) sigue en verde.
+    limpia = saltada.replace("  -    7", "  ok   7").replace("  -    8", "  ok   8") \
+                    .replace("  2 skipped\n", "")
+    r = _check_c2(task, runner_con(limpia))
+    check("sin saltados, verde como siempre", r["ok"] and r["estado"] == "verde", r)
+
+    # Cerradura: el resumen cuenta saltados que no se pueden leer uno por uno.
+    ilegible = limpia.replace("  64 passed", "  2 skipped\n  64 passed")
+    r = _check_c2(task, runner_con(ilegible))
+    check("⚠ si playwright dice 2 saltados y no se lee ninguno, tampoco es verde",
+          not r["ok"] and r["estado"] == "inejecutable", r)
+
+
 def test_prompt_inputs():
     """Todo input declarado en la tarea tiene que llegar al prompt.
 
@@ -1366,6 +1418,7 @@ def main() -> int:
     test_parse()
     test_toolchain()
     test_c2_paths()
+    test_c2_no_cuenta_un_e2e_saltado()
     test_prompt_inputs()
     test_ansi_no_llega_al_modelo()
     test_reintento_ensena_el_artefacto()

@@ -116,6 +116,12 @@ jobs:
           # Nombres de secret sin el prefijo `VITE_`, como SUPABASE_URL.
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_E2E_SERVICE_KEY }}
           VITE_DEMO_KEY_SEED: ${{ secrets.DEMO_KEY_SEED }}
+          # F-165 · ADMIN-01 (e2e/admin-requests.spec.ts) lanza un error en CI
+          # sin credenciales de Operador. El secreto existe desde el 11-sep, pero
+          # este bloque nunca lo leía -- la misma forma que F-071. El correo NO es
+          # secreto y va literal (CLAUDE.md §10.1); solo la password lo es.
+          E2E_OPERATOR_EMAIL: operador@bearingworld.test
+          E2E_OPERATOR_PASSWORD: ${{ secrets.E2E_OPERATOR_PASSWORD }}
       # DECISIÓN DEL PO, 12-ago: se queda como está — opción (a) de las tres que
       # había sobre la mesa. Yo recomendaba la (b), subirlo solo al fallar; el PO
       # eligió dejarlo, y queda anotado aquí para que nadie lo "arregle" sin saber

@@ -63,6 +63,54 @@ function orLanza(paso, { error }) {
 }
 
 /**
+ * ADMIN-01 · las tres solicitudes de `supabase/seed/demo_registration_requests.sql`,
+ * de vuelta a `PENDING_REVIEW` y con el reloj re-anclado: una roja (>48 h), una
+ * naranja (>24 h) y una normal.
+ *
+ * F-169 (17-sep): la C5 de ADMIN-01 pulsó Aprobar y Rechazar sobre la base de
+ * producción, la cola quedó descuadrada y el e2e local salió 3 de 4 en rojo; la
+ * siguiente corrida del arnés le habría cobrado al Coder un fallo de datos.
+ * Decisión del PO: se siembra antes de cada corrida. Y para que no dependa de que
+ * alguien se acuerde, lo hace este reseteo, que `e2e/fixture.setup.ts` corre al
+ * arrancar cada suite -y C2 corre siempre la suite entera-.
+ *
+ * Solo `update`: las filas las crea el `.sql`, que sigue siendo la fuente de verdad
+ * de sus datos. Si falta alguna, se lanza en vez de inventarla. Pasa
+ * `app.guard_registration_request` porque `service_role` está exento (0028). El
+ * historial (`registration_request_events`) no se toca: es un registro.
+ */
+const SOLICITUDES_DEMO = [
+  ['11110000-0000-4000-8000-00000000aaa1', 52],
+  ['11110000-0000-4000-8000-00000000aaa2', 30],
+  ['11110000-0000-4000-8000-00000000aaa3', 3],
+];
+
+async function reponerSolicitudes(db, log) {
+  const ahora = Date.now();
+  for (const [id, horas] of SOLICITUDES_DEMO) {
+    const { data, error } = await db
+      .from('registration_requests')
+      .update({
+        state: 'PENDING_REVIEW',
+        rejection_reason: null,
+        decided_by: null,
+        decided_at: null,
+        submitted_at: new Date(ahora - horas * 3_600_000).toISOString(),
+      })
+      .eq('id', id)
+      .select('id');
+    orLanza(`reponiendo la solicitud de registro ${id}`, { error });
+    if (!data?.length) {
+      throw new Error(
+        `RESETEO FALLIDO · la solicitud ${id} no existe en esta base. ` +
+          'Siémbrala una vez con supabase/seed/demo_registration_requests.sql.',
+      );
+    }
+  }
+  log('· tres solicitudes de registro de ADMIN-01 en cola · 52 h, 30 h y 3 h');
+}
+
+/**
  * Repone la siembra congelada y devuelve el estado **consultado**, no el supuesto.
  *
  * @param {object}   o
@@ -158,6 +206,8 @@ export async function resetDemo({ url, serviceKey, seed, reanchor = true, log = 
     await db.from('threads').update({ state: 'CERRADO SIN ACUERDO' }).eq('id', HILO_ANADOLU),
   );
   log('· cinco hilos repuestos · Anadolu devuelto a CERRADO SIN ACUERDO');
+
+  await reponerSolicitudes(db, log);
 
   if (reanchor) {
     const { data, error } = await db.rpc('demo_reanchor_freshness');

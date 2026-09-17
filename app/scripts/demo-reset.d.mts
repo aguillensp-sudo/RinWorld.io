@@ -62,7 +62,9 @@ export interface OpcionesReseteo {
 }
 
 /**
- * Repone la siembra congelada de demo y **verifica el resultado**: cinco hilos,
+ * Repone la siembra congelada de demo -incluidas las tres solicitudes de registro
+ * de ADMIN-01, en `PENDING_REVIEW` y con el reloj re-anclado (F-169)- y
+ * **verifica el resultado**: cinco hilos,
  * cinco estados distintos, un elemento cada uno y ninguna fecha en el futuro.
  * Lanza con el motivo dicho si algo de eso no se cumple.
  */

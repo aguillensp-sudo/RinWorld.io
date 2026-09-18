@@ -2540,6 +2540,132 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0031 · limite de publicaciones por hora (RNG-FORO-06)
+-- -----------------------------------------------------------------------------
+-- orgA (a1) no tiene NINGUNA publicacion en la hora natural actual todavia:
+-- las suyas de la siembra de 0029 son de hace dias, y la unica publicacion
+-- "de ahora mismo" hasta este punto (la de "firma de otro", mas arriba) quedo
+-- firmada por orgB, no por orgA -- es la propia base la que decide el autor.
+-- Partir de cero en orgA evita depender de cuantas lleve ya sembradas orgB.
+
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+
+  do $$
+  declare
+    estado record;
+  begin
+    select * into estado from app.forum_rate_limit_status();
+    assert estado.used = 0,
+      '0031: orgA no tiene ninguna publicacion en esta hora natural todavia';
+    assert estado."limit" = 10,
+      '0031: el limite es 10, literal de RNG-FORO-06';
+    assert estado.seconds_until_reset > 0 and estado.seconds_until_reset <= 3600,
+      '0031: quedan entre 1 segundo y una hora para que cambie la hora natural';
+    raise notice 'OK · 0031: el estado se puede consultar ANTES de publicar, para pintar el aviso';
+  end
+  $$;
+
+  -- Diez publicaciones dentro de la hora: las diez tienen que pasar.
+  do $$
+  declare
+    i int;
+  begin
+    -- Literales, no :a1/:orgA: psql NO interpola variables dentro de un
+    -- cuerpo "do" dolar-entrecomillado -- se descubrio corriendo esto
+    -- contra el Postgres desechable (la razon de que este banco exista).
+    for i in 1..10 loop
+      insert into public.forum_posts (thread_id, author_member_id, author_org_id, body)
+      values ('22220000-0000-4000-8000-00000000bbb1',
+              '0a000001-0000-0000-0000-000000000001',
+              '11111111-1111-1111-1111-111111111111',
+              'Publicacion de limite numero ' || i::text || '.');
+    end loop;
+  end
+  $$;
+
+  do $$
+  begin
+    assert (select used from app.forum_rate_limit_status()) = 10,
+      '0031: diez publicaciones dentro de la misma hora, las diez contadas';
+    raise notice 'OK · 0031: diez publicaciones en la hora, todas contadas';
+  end
+  $$;
+
+  select public.expect_fail(
+    $$insert into public.forum_posts (thread_id, author_member_id, author_org_id, body)
+      values ('22220000-0000-4000-8000-00000000bbb1', '0a000001-0000-0000-0000-000000000001',
+              '11111111-1111-1111-1111-111111111111', 'La publicacion numero once.')$$,
+    '0031: RNG-FORO-06 -- la publicacion numero once en la misma hora se bloquea');
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.forum_posts
+           where author_org_id = '11111111-1111-1111-1111-111111111111'
+             and created_at >= date_trunc('hour', now())) = 10,
+    '0031: el intento numero once no dejo huella -- expect_fail corrio dentro de su propia transaccion y se deshizo';
+  raise notice 'OK · 0031: el intento bloqueado no se cuela en el recuento';
+end
+$$;
+
+-- Reaccionar NO es publicar: a1 ya reacciono a dos publicaciones en el bloque
+-- de 0030 y el recuento de arriba (10, ni una mas) no se movio por eso.
+do $$
+begin
+  assert (select count(*) from public.forum_reactions
+           where member_id = '0a000001-0000-0000-0000-000000000001') >= 1,
+    '0031: (sanity) a1 tiene alguna reaccion puesta desde el bloque de 0030';
+  raise notice 'OK · 0031: reaccionar no cuenta para RNG-FORO-06 -- forum_rate_limit_status solo mira forum_posts';
+end
+$$;
+
+-- Quien no es miembro, no tiene organizacion que consultar.
+begin;
+  select set_config('request.jwt.claim.sub', '0f000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select used from app.forum_rate_limit_status()) = 0,
+      '0031: sin organizacion (app.current_org_id() es NULL), el estado no revienta y cuenta cero';
+    raise notice 'OK · 0031: quien no es miembro de ninguna organizacion no rompe la consulta de estado';
+  end
+  $$;
+commit;
+
+-- Privilegios: ninguna funcion nueva la puede ejecutar `anon` -- lo cubre ya
+-- el aserto general de F-146 mas abajo, que barre TODO `public`. Las dos
+-- funciones de esta migracion viven en `app`, y `anon` no tiene ni USAGE
+-- sobre ese esquema (0001): no hace falta revocar EXECUTE una a una.
+do $$
+begin
+  assert not exists (
+    select 1 from information_schema.role_usage_grants
+     where object_type = 'SCHEMA' and object_name = 'app' and grantee = 'anon'
+  ), '0031: anon no deberia tener USAGE sobre el esquema app -- si lo tiene, SI hace falta revocar EXECUTE aqui';
+  raise notice 'OK · 0031: anon sigue sin USAGE sobre app; sus funciones son inalcanzables sin tocar nada mas';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 0032 · el envoltorio publico de RNG-FORO-06, el que SI puede llamar el cliente
+-- -----------------------------------------------------------------------------
+-- `app.forum_rate_limit_status()` no lo alcanza PostgREST (0032, cabecera):
+-- este aserto prueba el camino que de verdad usara `forum.ts`, no el interno.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select used from public.forum_rate_limit_status()) = 10,
+      '0032: el envoltorio publico devuelve lo mismo que app.forum_rate_limit_status() -- orgA sigue en 10 desde el bloque de 0031';
+    raise notice 'OK · 0032: el cliente puede llamar public.forum_rate_limit_status() con supabase.rpc()';
+  end
+  $$;
+commit;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde
@@ -2618,6 +2744,18 @@ drop function public.f146_canaria();
 --   · `guard_member_privileges` — falso positivo del detector, y se deja dentro
 --     a propósito para que se vea: lo único que nombra es `members.role` DENTRO
 --     del texto de una excepción. No lee nada.
+--   · `guard_forum_rate_limit` (0031, RNG-FORO-06) — SÍ lee `forum_posts` de
+--     verdad, para contar y decidir si bloquea. Entra en la lista porque su
+--     política de SELECT (`forum_posts_select_member`) no restringe por
+--     organización -cualquier miembro activo ve TODAS las publicaciones, es
+--     un foro público-, así que el recuento por `author_org_id` da el mismo
+--     número sea quien sea que llama: no hay conjunto oculto que un invoker
+--     pueda ver de menos, que es justo lo que esta familia vigila. (Y no es
+--     casualidad que sea invoker: la primera versión la hizo `security
+--     definer` y eso rompió el propio guardia -- `current_user` dentro de una
+--     función definer es su DUEÑO, no quien llama, así que el bypass de
+--     siembra se activaba siempre. Cazado por la prueba de abajo, antes de
+--     tocar las bases reales.)
 create or replace function app.f155_detector() returns text
   language sql security definer set search_path to 'pg_catalog','public' as $detector$
   select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname)
@@ -2633,7 +2771,8 @@ create or replace function app.f155_detector() returns text
            'public.counter_offer',
            'public.demo_state',
            'public.demo_reanchor_freshness',
-           'app.guard_member_privileges')
+           'app.guard_member_privileges',
+           'app.guard_forum_rate_limit')
      and exists (
            select 1
              from pg_class c

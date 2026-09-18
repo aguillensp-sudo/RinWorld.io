@@ -322,9 +322,10 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 
 ---
 
-**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO**
+**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO -con una reapertura por la regla 4: el primer
+cierre fue a las 16:23 UTC y el esquema de `ADMIN-02` se escribió después, hasta las 18:12 UTC**
 
-> **EL DÍA EN OCHO LÍNEAS.**
+> **EL DÍA EN NUEVE LÍNEAS.**
 >
 > 1. **Sesión nueva, lanzada sobre uno de los cuatro worktrees fantasma que este fichero
 >    lleva semanas señalando** (`dia-14-correcciones-mvp-8160b9`, anclado a `43bb222`, sin
@@ -363,62 +364,16 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 > 8. **Lo que queda pendiente, y no se da por hecho:** el C5 de `FORO-02` no tiene
 >    confirmación final del PO tras la corrección del buscador, y `FORO-03` no tiene
 >    ningún C5 todavía — las dos siguen sin contar como aceptadas.
-> 2. **Detrás había una CI que nadie había visto entera desde el 11-sep** (`F-165`): `ci.yml` no le
->    pasaba las credenciales del Operador al job `e2e`, Playwright reventaba siempre y, como
->    `deploy` depende de él, **nada se desplegaba desde el 11-sep**.
-> 3. **`F-166`: el e2e de `ADMIN-01` no se había ejecutado NUNCA, y el arnés lo contaba como verde.**
->    Fuera de CI, sin la contraseña del Operador, su `describe` entero se salta y Playwright sale
->    con 0. C2 deja ahora `INEJECUTABLE` un e2e declarado que se salta — validado contra la salida
->    REAL de Playwright, no contra una inventada.
-> 4. **`F-167`: con los cuatro jobs de prueba en verde, el despliegue seguía roto** — el token de
->    Supabase de CI daba `401`. VERA y la app pasan a dos jobs independientes; el PO renovó el token
->    y VERA volvió a desplegarse.
-> 5. **`F-168`, el peor del día: la app de producción no arrancaba desde el 8-sep.** El proyecto de
->    Vercel nunca tuvo las `VITE_*` y el bundle servido era solo el `throw` de `supabase.ts`;
->    `F-151` se había cerrado con `curl` → `HTTP 200`. El PO puso las variables, se verificó por
->    CONTENIDO y en navegador, y `deploy-app` tiene ya un paso que falla si producción no sirve la app.
-> 6. **`F-169`: la C5 del Día 16 había descuadrado la siembra de producción** —una solicitud
->    aprobada, otra rechazada y devuelta—. Repuesta, y decisión del PO: se siembra antes de cada
->    corrida. Automatizado en `resetDemo`, que corre al arrancar cada suite; probado reproduciendo
->    el fallo.
-> 7. **`F-158` cerrado y `F-170` abierto y cerrado el mismo día: el barrido de las specs aprobadas.**
->    No era un caso aislado: **once contradicciones más** de la clase regla-contra-ejemplo, leídas
->    por cuatro agentes y **recomprobadas a mano una por una** contra su fichero. Dos las decidió el
->    PO (`INVT-01`, `REG-09`) y nueve se aplicaron con su recomendación, en specs y en HTML.
-> 8. **Trece filas del registro que decían «Abierto» con el trabajo hecho, cerradas contra el
->    código**, y la carpeta `Ingles/` archivada por decisión del PO para que deje de reaparecer en
->    cada relevo.
-> 9. **La corriente B se abre de verdad: `FORO-02` construida.** Primero la capa de datos a mano
->    —migración `0030`, reacciones y la vista de la lista, validada en un Postgres desechable y
->    aplicada y comprobada contra el catálogo de las DOS bases— y después la tarea. **PASA 4/4 AL
->    PRIMER INTENTO: la primera pantalla del proyecto que lo consigue**, 0,037318 $ del Coder y 1,2
->    minutos, sin una corrección a mano.
-> 10. **Lo que este día NO cierra:** el C5 de `FORO-02` es del PO, y la cifra 7 de esta pantalla
->    (21,96 $) se midió en una sesión que traía encima todo lo anterior: es un techo, no la medida
->    limpia que pide el umbral.
-
-**`F-166`, en detalle, porque es el que medía mal.** `admin-requests.spec.ts` hace
-`test.skip(!haveOperatorCreds)` fuera de CI; en la máquina del PO no existía
-`E2E_OPERATOR_PASSWORD`, así que sus cuatro tests se saltaban y `npx playwright test` salía con 0.
-C2 solo miraba el código de salida: escribió «suite e2e completa (cubre los 1 declarados)» con
-CERO tests del contrato ejecutados. Es `F-015` al pie de la letra, cinco semanas después de
-escribirlo. El guardia nuevo lee los saltados del reporter, los cruza con los e2e que la tarea
-DECLARA y deja C2 `INEJECUTABLE` —ni verde ni rojo: no dice nada del Coder, pero tampoco vale como
-prueba—, con una cerradura para cuando el recuento no se pueda leer. Reproducido primero en local
-(`exit 0`, `4 skipped`) y solo después arreglado. Los dos bugs de los tests que aparecieron al
-ejecutarlos por fin —la sesión de ALPHA heredada y un `getByText` sin acotar— eran míos, no del
-Coder: el artefacto de `ADMIN-01` pasa su contrato sin tocarlo.
-
-**`FORO-02`, y por qué su capa de datos costó más que la pantalla.** La spec pinta `👍 Y` por hilo
-y `0029` no tenía dónde guardar una sola reacción. `0030` añade `forum_reactions` (una por usuario
-y publicación, retirable, con la firma puesta por la base como en `0029`) y la vista
-`forum_thread_list`, que calcula respuestas —publicaciones menos la inicial— y reacciones —el total
-del hilo, que es lo que dice el Módulo 08 §3, no solo las de la inicial—. Se validó con la suite de
-esquema entera en un Postgres desechable (seis asertos nuevos: firma, duplicado, recuentos, borrar
-solo lo propio, RLS y privilegios) ANTES de aplicarla, y después se comprobó contra el catálogo de
-las dos bases, que es lo que pide `F-146`. La tarea declara explícitamente la trampa de `F-145`
-—los botones de página no llevan `aria-label`, su nombre accesible es el número— porque su propia
-referencia de estilo, `DIR-01`, hace lo contrario.
+> 9. **`ADMIN-02` (la sexta pantalla de la remedición) tiene ya su esquema** (`0034`):
+>    `billing_accounts`/`billing_payments`/`billing_status_events`, la vista
+>    `billing_org_status` y los verbos de confirmar pago y suspender. "ACTIVE"/"EN
+>    PRUEBA" de la spec son la MISMA fila que `organizations.status='APPROVED'`
+>    -calculada, no guardada-; `SUSPENDED` reusa el status que ya usan la visibilidad
+>    y la búsqueda desde `0001`. `Iniciar borrado` queda fuera a propósito -un borrado
+>    en cascada real merece su propia auditoría, no una casilla de esta tarea-. De
+>    paso, comprobado empíricamente que el `GRANT` de tabla de sobra que la plataforma
+>    concede en casi todo `public` no es una puerta abierta -RLS bloquea la escritura
+>    sin política, con o sin ese `GRANT`- (`F-177`).
 
 ---
 
@@ -478,6 +433,8 @@ referencia de estilo, `DIR-01`, hace lo contrario.
 | **`0030` · reacciones del foro y la vista de la lista de hilos** | ✅ **17-sep** — `forum_reactions` y `forum_thread_list`, capa de datos de `FORO-02`. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
 | **`0031`/`0032` · límite de publicaciones por hora (RNG-FORO-06)** | ✅ **18-sep** — disparador + estado público, precondición de `FORO-03`. Validadas en Postgres desechable, aplicadas y comprobadas contra el catálogo de las dos bases |
 | **`0033` · `forum_post_detail`, capa de datos de `FORO-03`** | ✅ **18-sep** — reacciones y `reacted_by_me` POR PUBLICACIÓN. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
+| **`0034` · esquema de billing y suscripción anual (ADMIN-02)** | ✅ **18-sep** — `billing_accounts`/`billing_payments`/`billing_status_events`, vista `billing_org_status`, `billing_confirm_payment`/`billing_suspend_organization`/`app.billing_evaluate_expirations`. Validado en Postgres desechable y comprobado contra el catálogo Y contra los datos reales de las dos bases (las seis organizaciones calculan EN PRUEBA con los días exactos). **Iniciar borrado, el email de aviso y el enganche a `pg_cron` quedan fuera, documentados en la cabecera de `0034`** |
+| **`F-177` · el GRANT de tabla de sobra en casi todo `public` no es un agujero** | ✅ **18-sep**, comprobado empíricamente en Postgres desechable (no solo leído): RLS bloquea la escritura sin política pase lo que pase con el `GRANT`. Deuda de higiene, no de seguridad |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
 ### Corriente B · Fábrica — ABIERTA y EN MARCHA · 5 pantallas de 24 (Día 18)
@@ -497,6 +454,10 @@ para la cifra 3 del umbral: la escalada cuenta, sea cual sea la causa (mismo cri
 base) — **queda UNA pantalla para la remedición.** La cifra 3 (verdes al primer intento) queda en
 **1 de 5** tras `FORO-03`: de las cinco pantallas medidas de la fábrica, solo `FORO-02` pasó sin
 ningún reintento ni corrección. El umbral se evalúa entero solo en la remedición, no fila a fila.
+
+**`ADMIN-02` (la sexta) tiene ya su esquema (`0034`), como pidió el Día 17 -"empezando ya por su
+esquema"-.** Falta escribir su tarea del arnés, sus tests de aceptación y correrla de verdad:
+todavía no cuenta como la sexta pantalla ni mueve ninguna de las ocho cifras del umbral.
 
 **El H1 se cerró el Día 16.** Las tres pantallas —`DIR-01`, `ADMIN-01`, `FORO-01`— tienen
 corrida real limpia, C5 del PO sin ninguna corrección, y las ocho cifras de
@@ -533,11 +494,15 @@ UNA pantalla.**
    dev`: Foros → una categoría → el título de un hilo. **Y sin pulsar Aprobar/Rechazar en
    `ADMIN-01` durante ninguna revisión** (`F-169`); si se pulsa, la siembra se repone sola en la
    siguiente suite, pero conviene saberlo.
-2. **La sexta pantalla, la de la remedición.** Sigue en pie la recomendación del Día 17:
-   **`ADMIN-02`** (panel de cobros) — prioridad «Alta» en su spec, pero **no hay ni una tabla de
-   suscripciones ni de pagos**: su capa de datos es trabajo de corriente A antes de que la fábrica
-   pueda tocarla, y arrastra acciones delicadas (marcar pago, reactivar, iniciar borrado de una
-   organización). Empezar por su esquema, como se hizo con `0030`/`0031`-`0033` para el foro.
+2. **La sexta pantalla, la de la remedición: `ADMIN-02`, con su esquema ya hecho (`0034`, 18-sep).**
+   `billing_accounts`/`billing_payments`/`billing_status_events`, la vista `billing_org_status` y
+   los dos verbos (`billing_confirm_payment`/`billing_suspend_organization`) están aplicados y
+   comprobados en las dos bases. **Lo que falta:** el wiring de precondición (ADMIN-02 se abre
+   "desde el panel de administración del Operador" — `OperatorShell` necesita un enlace, hoy no
+   existe ninguno), la tarea del arnés y sus tests de aceptación, y la corrida real. `Iniciar
+   borrado` (el botón que borra de verdad) sigue fuera de alcance a propósito — ver la cabecera de
+   `0034` — y no debería entrar en esta tarea tampoco: es un borrado en cascada que merece su
+   propia auditoría, no una casilla más del `component_api`.
 3. **La remedición en sí, en cuanto `ADMIN-02` cierre su corrida.** Se reevalúan las ocho cifras
    enteras de `UMBRAL-FABRICA-V1.md`. Estado de cada una hoy, para no repetir el cálculo desde
    cero: la cifra 3 (verdes al primer intento) está en 1 de 5, y la 7 (coste de orquestación) sigue
@@ -985,9 +950,13 @@ Orden de lectura, y el orden importa:
     `security definer` rompía el propio guardia de `RNG-FORO-06`, cazado antes de tocar las
     bases reales), `F-174` (cerrado — la escalada de `FORO-03` era un test roto, no el
     artefacto), `F-175` (cerrado, sin acción — un commit intermedio heredó un rojo ya
-    esperado sin saltar CI él mismo) y `F-176` (cerrado, sin acción posible — un commit de
+    esperado sin saltar CI él mismo), `F-176` (cerrado, sin acción posible — un commit de
     documentación citó el marcador de salto ENTRE COMILLAS para explicar `F-175`, y eso
-    bastó para que no disparara CI: mismo mecanismo que `F-164`, otra vez).
+    bastó para que no disparara CI: mismo mecanismo que `F-164`, otra vez) y `F-177`
+    (cerrado como comprobación, no como parche — el `GRANT` de tabla de sobra que la
+    plataforma concede en casi todo `public` a `authenticated`/`anon` no es un agujero,
+    comprobado empíricamente en Postgres desechable: RLS bloquea la escritura sin
+    política pase lo que pase con el `GRANT`).
 
 ---
 
@@ -1087,6 +1056,16 @@ final en seis jobs de seis verdes y producción sirviendo `FORO-03` verificado p
 (`index-DkCZ8HQ8.js`, 495.540 bytes) · coste-sombra de orquestación al cierre: **1.371,48 $**
 acumulados, **54,45 $** esta sesión — sigue sin poder medirse limpia por pantalla (§1, §5), el
 Coder: **0,143118 $** en los tres intentos de `FORO-03` · **van 5 de las 24 pantallas de la
-fábrica, cifra 3 en 1 de 5, queda UNA para la remedición obligatoria** · 11 commits en
-`mvp/bootstrap` · quedan DOS C5 sin cerrar, `FORO-02` (con su corrección ya aplicada) y `FORO-03`
-entera — ninguna se cuenta como aceptada · Dirección Técnica, Nortex Systems*
+fábrica, cifra 3 en 1 de 5, queda UNA para la remedición obligatoria** · el día siguió después de
+ese primer cierre (regla 4): esquema de `ADMIN-02` escrito y aplicado (`0034`) —
+`billing_accounts`/`billing_payments`/`billing_status_events`, la vista `billing_org_status`, los
+verbos de confirmar pago y suspender, "ACTIVE"/"EN PRUEBA" como la misma fila
+`organizations.status='APPROVED'` calculada y no guardada— validado en Postgres desechable y
+comprobado contra el catálogo Y los datos reales de las dos bases; `Iniciar borrado` queda fuera a
+propósito, documentado en la cabecera de `0034` · de paso, comprobado empíricamente que el `GRANT`
+de tabla de sobra que la plataforma concede en casi todo `public` no es una puerta abierta —RLS
+bloquea la escritura sin política pase lo que pase con el `GRANT`— deuda de higiene, no de
+seguridad (`F-177`) · fecha releída al escribir este pie: `2026-09-18`, 18:12 UTC, sigue el mismo
+día · 13 commits en `mvp/bootstrap` · quedan DOS C5 sin cerrar (`FORO-02` con su corrección ya
+aplicada, y `FORO-03` entera) y `ADMIN-02` sin tarea del arnés ni wiring de precondición —ninguno
+de los tres cuenta como hecho · Dirección Técnica, Nortex Systems*

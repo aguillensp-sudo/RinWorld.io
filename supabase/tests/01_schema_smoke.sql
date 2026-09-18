@@ -2732,6 +2732,314 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0034 · billing y suscripcion (ADMIN-02)
+-- -----------------------------------------------------------------------------
+-- Dos organizaciones nuevas, para no interferir con orgA/orgB (ya tienen
+-- historial del foro por encima). :op1 (0e000001-...) ya es Operador desde
+-- el bloque de 0028.
+
+insert into public.organizations (id, name, country, continent, status, created_at) values
+  ('66660000-0000-4000-8000-000000000001', 'Timken Europe GmbH', 'DE', 'EU', 'APPROVED', now() - interval '100 days'),
+  ('66660000-0000-4000-8000-000000000002', 'Nordic Bearings AB', 'SE', 'EU', 'APPROVED', now() - interval '10 days')
+on conflict (id) do nothing;
+
+do $$
+begin
+  assert (select count(*) from public.billing_accounts
+           where org_id in ('66660000-0000-4000-8000-000000000001',
+                             '66660000-0000-4000-8000-000000000002')) = 2,
+    '0034: el disparador crea la fila de billing al nacer la organizacion, sin hueco que rellenar';
+  assert (select count(*) from public.billing_accounts) >= 8,
+    '0034: y el backfill cubre TAMBIEN las organizaciones que ya existian (orgA, orgB y las seis de la siembra real)';
+  raise notice 'OK · 0034: toda organizacion tiene su fila de billing, nueva o vieja';
+end
+$$;
+
+-- 1 · La vista, para un Operador. Timken (100 dias, sin pago) ya paso los 90
+-- de prueba y esta VENCIDA -pero sigue APPROVED hasta que algo la suspenda,
+-- que es justo lo que esta seccion comprueba luego-. Nordic (10 dias) sigue
+-- EN PRUEBA de sobra.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare
+    fila record;
+  begin
+    select * into fila from public.billing_org_status
+     where org_id = '66660000-0000-4000-8000-000000000002';
+    assert fila.billing_state = 'EN PRUEBA',
+      '0034: Nordic Bearings, 10 dias, sigue en prueba (fecha de aprobacion + 90 sin pago)';
+    assert fila.days_remaining = 80,
+      '0034: y le quedan 80 dias de los 90 -- calculado, no guardado';
+
+    select * into fila from public.billing_org_status
+     where org_id = '66660000-0000-4000-8000-000000000001';
+    assert fila.billing_state = 'ACTIVE',
+      '0034: Timken vencio su prueba SIN pago -- organizations.status sigue en APPROVED hasta que algo la suspenda, y la regla de la vista lee eso: sin SUSPENDED, no hay EN PRUEBA que aplicar, así que cae en ACTIVE';
+    assert fila.days_remaining = -10,
+      '0034: dias_restantes negativo -- ya establecido en la organizacion vencida (100 - 90 = 10 dias de mas)';
+    raise notice 'OK · 0034: billing_org_status calcula el estado y los dias restantes contra la fecha real, no un valor guardado';
+  end
+  $$;
+commit;
+
+-- 2 · Quien no es Operador no ve NADA de billing, ni de su propia organizacion.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.billing_org_status) = 0,
+      '0034: un miembro normal no ve ninguna fila -- el INNER JOIN con billing_accounts (solo Operador) la deja vacia';
+    assert (select count(*) from public.billing_accounts) = 0,
+      '0034: ni billing_accounts directamente';
+    assert (select count(*) from public.billing_payments) = 0,
+      '0034: ni billing_payments';
+    raise notice 'OK · 0034: ADMIN-02 es invisible para cualquier miembro distribuidor (spec §7)';
+  end
+  $$;
+
+  select public.expect_fail(
+    $$select public.billing_confirm_payment('66660000-0000-4000-8000-000000000001', current_date, null)$$,
+    '0034: un miembro normal no puede confirmar un pago');
+  select public.expect_fail(
+    $$select public.billing_suspend_organization('66660000-0000-4000-8000-000000000001')$$,
+    '0034: ni suspender una organizacion');
+commit;
+
+-- 3 · Operador: no se puede ver el futuro, ni pasarse de 300 caracteres.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.billing_confirm_payment('66660000-0000-4000-8000-000000000001', current_date + 1, null)$$,
+    '0034: la fecha de pago no puede ser futura');
+  select public.expect_fail(
+    format($$select public.billing_confirm_payment('66660000-0000-4000-8000-000000000001', current_date, %L)$$,
+           repeat('x', 301)),
+    '0034: la nota interna no puede pasar de 300 caracteres');
+commit;
+
+-- 4 · Suspender manualmente Timken (ACTIVE, vencida de hecho) y comprobar el
+-- rastro completo: estado, suspended_since, historial, y que desaparece de
+-- "candidata a borrado" hasta que pasen los 6 meses.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.billing_suspend_organization('66660000-0000-4000-8000-000000000001');
+commit;
+
+do $$
+begin
+  assert (select status from public.organizations
+           where id = '66660000-0000-4000-8000-000000000001') = 'SUSPENDED',
+    '0034: Timken queda SUSPENDED tras la suspension manual';
+  assert (select suspended_since from public.billing_accounts
+           where org_id = '66660000-0000-4000-8000-000000000001') is not null,
+    '0034: y suspended_since queda marcado';
+  assert (select billing_state from public.billing_org_status
+           where org_id = '66660000-0000-4000-8000-000000000001') = 'SUSPENDED',
+    '0034: recien suspendida, SUSPENDED -- CANDIDATA A BORRADO exige 6 meses';
+  assert (select to_status from public.billing_status_events
+           where org_id = '66660000-0000-4000-8000-000000000001'
+           order by created_at desc limit 1) = 'SUSPENDED',
+    '0034: y queda en el historial, con el operador que la suspendio';
+  assert (select changed_by from public.billing_status_events
+           where org_id = '66660000-0000-4000-8000-000000000001'
+           order by created_at desc limit 1) = '0e000001-0000-0000-0000-000000000001',
+    '0034: changed_by es el operador -- NULL es solo para la transicion automatica';
+  raise notice 'OK · 0034: suspender deja rastro completo -- estado, fecha y quien lo hizo';
+end
+$$;
+
+-- No se puede suspender dos veces, ni confirmar un pago sobre una organizacion
+-- que no existe.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.billing_suspend_organization('66660000-0000-4000-8000-000000000001')$$,
+    '0034: no se puede suspender una organizacion que ya esta SUSPENDED');
+  select public.expect_fail(
+    $$select public.billing_confirm_payment(gen_random_uuid(), current_date, null)$$,
+    '0034: no se puede confirmar un pago sobre una organizacion que no existe');
+commit;
+
+-- 5 · Confirmar el pago: reactiva, recalcula el vencimiento a 365 dias desde
+-- la fecha del pago (no desde hoy), y limpia suspended_since.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.billing_confirm_payment(
+    '66660000-0000-4000-8000-000000000001', current_date - 3, 'Transferencia recibida, ref. 88213');
+commit;
+
+do $$
+begin
+  assert (select status from public.organizations
+           where id = '66660000-0000-4000-8000-000000000001') = 'APPROVED',
+    '0034: el pago reactiva Timken de inmediato';
+  assert (select suspended_since from public.billing_accounts
+           where org_id = '66660000-0000-4000-8000-000000000001') is null,
+    '0034: y limpia suspended_since -- si vuelve a suspenderse, el contador de 6 meses se reinicia (RNG-BILL-08)';
+  assert (select days_remaining from public.billing_org_status
+           where org_id = '66660000-0000-4000-8000-000000000001') = 362,
+    '0034: 365 dias desde la fecha DEL PAGO (hace 3 dias), no desde hoy -- 365 - 3 = 362';
+  assert (select recorded_by from public.billing_payments
+           where org_id = '66660000-0000-4000-8000-000000000001') = '0e000001-0000-0000-0000-000000000001',
+    '0034: el pago queda firmado por el operador que lo registro';
+  assert (select note from public.billing_payments
+           where org_id = '66660000-0000-4000-8000-000000000001') = 'Transferencia recibida, ref. 88213',
+    '0034: con su nota interna, verbatim';
+  assert (select to_status from public.billing_status_events
+           where org_id = '66660000-0000-4000-8000-000000000001'
+           order by created_at desc limit 1) = 'APPROVED',
+    '0034: y la reactivacion tambien queda en el historial de estados';
+  raise notice 'OK · 0034: confirmar un pago reactiva, recalcula desde la fecha real del pago y limpia el rastro de suspension';
+end
+$$;
+
+-- Pagar sobre una organizacion YA activa no falla -- solo suma un pago y no
+-- toca el historial de estados, porque no hubo transicion.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.billing_confirm_payment(
+    '66660000-0000-4000-8000-000000000002', current_date, null);
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.billing_payments
+           where org_id = '66660000-0000-4000-8000-000000000002') = 1,
+    '0034: pagar en EN PRUEBA (sin estar suspendida) simplemente registra el pago';
+  assert (select count(*) from public.billing_status_events
+           where org_id = '66660000-0000-4000-8000-000000000002') = 0,
+    '0034: sin transicion de estado, no hay fila de historial que escribir';
+  assert (select billing_state from public.billing_org_status
+           where org_id = '66660000-0000-4000-8000-000000000002') = 'ACTIVE',
+    '0034: y Nordic pasa de EN PRUEBA a ACTIVE en cuanto hay un pago, aunque su prueba no hubiera terminado';
+  raise notice 'OK · 0034: pagar durante la prueba adelanta a ACTIVE sin pasar por SUSPENDED';
+end
+$$;
+
+-- 6 · Candidata a borrado: 6+ meses en SUSPENDED, no antes.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.billing_suspend_organization('66660000-0000-4000-8000-000000000002');
+commit;
+
+update public.billing_accounts
+   set suspended_since = now() - interval '7 months'
+ where org_id = '66660000-0000-4000-8000-000000000002';
+
+do $$
+begin
+  assert (select billing_state from public.billing_org_status
+           where org_id = '66660000-0000-4000-8000-000000000002') = 'CANDIDATA A BORRADO',
+    '0034: 7 meses en SUSPENDED -- ya es candidata a borrado';
+end
+$$;
+
+update public.billing_accounts
+   set suspended_since = now() - interval '3 months'
+ where org_id = '66660000-0000-4000-8000-000000000002';
+
+do $$
+begin
+  assert (select billing_state from public.billing_org_status
+           where org_id = '66660000-0000-4000-8000-000000000002') = 'SUSPENDED',
+    '0034: 3 meses en SUSPENDED -- todavia no, sin acortar el umbral de 6';
+  raise notice 'OK · 0034: candidata a borrado exige 6 meses exactos, ni un dia menos por interpretacion generosa';
+end
+$$;
+
+-- 7 · app.billing_evaluate_expirations(): revocada de authenticated, corre
+-- como postgres/service_role (la siembra y los jobs futuros).
+--
+-- ⚠ NO se prueba llamandola como `authenticated` y esperando el fallo con
+-- `expect_fail`: un `permission denied` es SQLSTATE 42501, y ese detector
+-- trata TODO lo que empieza por "42" como "el test esta roto" (F-081), no
+-- como un bloqueo legitimo -- confundiria una funcion sin permiso con un
+-- nombre mal escrito. Se comprueba contra el catalogo, como el resto de
+-- privilegios de este fichero (F-146).
+do $$
+begin
+  assert not exists (
+    select 1 from information_schema.role_routine_grants
+     where routine_schema = 'app' and routine_name = 'billing_evaluate_expirations'
+       and grantee in ('anon', 'authenticated') and privilege_type = 'EXECUTE'
+  ), '0034: app.billing_evaluate_expirations no deberia ser ejecutable por anon ni authenticated -- ni el Operador la llama directamente';
+  raise notice 'OK · 0034: la evaluacion masiva de vencimientos no es un verbo de cliente, revocada de authenticated y anon';
+end
+$$;
+
+-- Nordic (ahora SUSPENDED, no vale para esta prueba) -- se prueba con una
+-- organizacion nueva, ACTIVE y vencida de verdad, sin pago.
+insert into public.organizations (id, name, country, continent, status, created_at) values
+  ('66660000-0000-4000-8000-000000000003', 'Distribuciones Ruiz SL', 'ES', 'EU', 'APPROVED', now() - interval '200 days')
+on conflict (id) do nothing;
+
+do $$
+declare
+  n int;
+begin
+  n := app.billing_evaluate_expirations();
+  assert n >= 1,
+    '0034: evalua y suspende al menos Distribuciones Ruiz (200 dias, sin pago, vencida hace 110)';
+  assert (select status from public.organizations
+           where id = '66660000-0000-4000-8000-000000000003') = 'SUSPENDED',
+    '0034: Distribuciones Ruiz queda SUSPENDED';
+  assert (select changed_by from public.billing_status_events
+           where org_id = '66660000-0000-4000-8000-000000000003') is null,
+    '0034: changed_by NULL -- fue automatica, no un operador';
+  assert (select status from public.organizations
+           where id = '66660000-0000-4000-8000-000000000001') = 'APPROVED',
+    '0034: y Timken (activa, con pago reciente) no se toca -- la evaluacion no suspende de mas';
+  raise notice 'OK · 0034: la evaluacion automatica suspende solo lo vencido, con changed_by NULL, y no toca lo que esta al dia';
+end
+$$;
+
+-- 8 · El Operador ve TODAS las organizaciones, incluidas las SUSPENDED --
+-- sin esto el panel que gestiona suspensiones no podria ver a quien suspendio.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.organizations
+             where id in ('66660000-0000-4000-8000-000000000002',
+                          '66660000-0000-4000-8000-000000000003')) = 2,
+      '0034: el Operador ve las dos SUSPENDED, que un miembro normal no vería';
+    raise notice 'OK · 0034: organizations_select_operator da visibilidad completa, sin excepcion de estado';
+  end
+  $$;
+commit;
+
+-- 9 · Privilegios: anon nada; authenticated solo SELECT, nunca escritura
+-- directa a las tres tablas.
+do $$
+declare
+  sobran text;
+begin
+  select string_agg(grantee || ':' || privilege_type || ' en ' || table_name, ', '
+                    order by grantee, table_name, privilege_type)
+    into sobran
+    from information_schema.role_table_grants
+   where table_schema = 'public'
+     and table_name in ('billing_accounts', 'billing_payments', 'billing_status_events', 'billing_org_status')
+     and (grantee = 'anon'
+          or (grantee = 'authenticated' and privilege_type <> 'SELECT'));
+
+  assert sobran is null,
+    '0034: privilegios que no deberia haber: ' || coalesce(sobran, '');
+  raise notice 'OK · 0034: anon nada, authenticated solo SELECT en las cuatro piezas de billing';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

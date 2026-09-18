@@ -288,11 +288,21 @@ describe('FORO-03 · reaccionar (spec §3, CA-FORO-05)', () => {
   });
 
   it('el contador se actualiza -- CA-FORO-05, "actualiza inmediatamente"', async () => {
+    // La "actualizacion inmediata" es el resultado de volver a preguntar a la
+    // base, no un calculo optimista en el cliente (component_api de FORO-03):
+    // la SEGUNDA llamada a fetchThreadPosts -la que dispara reaccionar- tiene
+    // que devolver ya el recuento nuevo, como haria forum_post_detail de verdad.
+    fetchThreadPosts
+      .mockResolvedValueOnce(TRES_PUBLICACIONES)
+      .mockResolvedValueOnce(
+        TRES_PUBLICACIONES.map((p) => (p.id === 'p2' ? { ...p, reactionCount: 2, reactedByMe: true } : p)),
+      );
     montar();
     await listo();
     const p2 = screen.getByTestId('forum-post-p2');
     fireEvent.click(within(p2).getByRole('button', { name: '👍 1' }));
     await waitFor(() => expect(within(p2).getByRole('button', { name: '👍 2' })).toBeInTheDocument());
+    expect(within(p2).getByRole('button', { name: '👍 2' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 

@@ -217,7 +217,11 @@
   font-weight: 500;
   line-height: 1.4;
   color: var(--bw-deep-steel);
-  cursor: default;
+  cursor: pointer;
+}
+
+.rowTitle:hover {
+  text-decoration: underline;
 }
 
 .rowMeta {

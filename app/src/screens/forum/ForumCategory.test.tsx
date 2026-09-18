@@ -67,12 +67,19 @@ const PAGINA: ThreadPage = {
 
 const VACIA: ThreadPage = { rows: [], total: 0, page: 1, pageCount: 1 };
 
-const FORO03_TITLE = 'FORO-03 (el detalle del hilo) llega en una próxima versión.';
 const CREAR_TITLE = 'El formulario de creación de hilo (FL-FORO-01) llega en una próxima versión.';
 
-function montar(onBack = vi.fn()) {
-  render(<ForumCategory profile={profile} slug="referencias-tecnicas" onBack={onBack} now={NOW} />);
-  return onBack;
+function montar(onBack = vi.fn(), onOpenThread = vi.fn()) {
+  render(
+    <ForumCategory
+      profile={profile}
+      slug="referencias-tecnicas"
+      onBack={onBack}
+      onOpenThread={onOpenThread}
+      now={NOW}
+    />,
+  );
+  return { onBack, onOpenThread };
 }
 
 /** Espera a que la lista haya llegado: leer antes encuentra cero filas (F-159). */
@@ -120,7 +127,7 @@ describe('FORO-02 · cabecera (spec §3)', () => {
   });
 
   it('el breadcrumb "Foros" vuelve a FORO-01', async () => {
-    const onBack = montar();
+    const { onBack } = montar();
     await listo();
     const nav = screen.getByRole('navigation', { name: 'Breadcrumb' });
     fireEvent.click(within(nav).getByRole('button', { name: 'Foros' }));
@@ -181,12 +188,12 @@ describe('FORO-02 · la lista', () => {
     expect(within(screen.getByTestId('forum-thread-t4')).getByText('👍 0')).toBeInTheDocument();
   });
 
-  it('el título está apagado -lleva a FORO-03, que no existe- y lo dice', async () => {
-    montar();
+  it('el título abre el hilo por su id (FORO-03)', async () => {
+    const { onOpenThread } = montar();
     await listo();
-    const titulo = screen.getByRole('button', { name: 'Equivalencia FAG 6205-2RS ↔ NSK' });
-    expect(titulo).toBeDisabled();
-    expect(titulo).toHaveAttribute('title', FORO03_TITLE);
+    fireEvent.click(screen.getByRole('button', { name: 'Equivalencia FAG 6205-2RS ↔ NSK' }));
+    expect(onOpenThread).toHaveBeenCalledWith('t1');
+    expect(onOpenThread).toHaveBeenCalledTimes(1);
   });
 
   it('sin badge de categoría: dentro de una categoría no se repite (spec §7)', async () => {

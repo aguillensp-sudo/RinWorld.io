@@ -13,6 +13,7 @@ import { AdminRequests } from './screens/admin/AdminRequests';
 import { Directory } from './screens/directory/Directory';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
+import { ForumThread } from './screens/forum/ForumThread';
 import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
@@ -117,6 +118,14 @@ export function App() {
   const [forumCategorySlug, setForumCategorySlug] = useState<string | null>(null);
 
   /**
+   * El hilo abierto en FORO-03, o `null` en FORO-02. Mismo criterio que
+   * `forumCategorySlug`: se limpia al cambiar de ítem de nav (junto con la
+   * categoría), para que volver a `Foros` lleve a las categorías, no al hilo
+   * que estaba abierto.
+   */
+  const [forumThreadId, setForumThreadId] = useState<string | null>(null);
+
+  /**
    * Lo último que VERA ha escrito como criterios de búsqueda, o `null` si aún no
    * ha escrito nada. Vive aquí y no en SRCH-01 porque VERA puede escribirlo
    * estando el usuario en otra pantalla — y entonces hay que llevarle a ella.
@@ -136,6 +145,7 @@ export function App() {
     setNav(index);
     setOpenThreadId(null);
     setForumCategorySlug(null);
+    setForumThreadId(null);
   };
 
   if (state.status === 'loading') {
@@ -333,14 +343,32 @@ export function App() {
          * reciente son tiempo relativo ("hace N horas"), y un `now` congelado
          * al montar dejaría una sesión larga con esas cifras rancias. */
         forumCategorySlug ? (
-          /* FORO-02. Se abre desde una tarjeta de FORO-01 y vuelve con el
-           * enlace "Foros" del breadcrumb. */
-          <ForumCategory
-            profile={state.profile}
-            slug={forumCategorySlug}
-            onBack={() => setForumCategorySlug(null)}
-            now={new Date()}
-          />
+          forumThreadId ? (
+            /* FORO-03. Se abre desde el título de un hilo en FORO-02. El
+             * breadcrumb tiene DOS enlaces de vuelta (spec §3): "Foros" lleva
+             * a FORO-01 -limpia categoría e hilo-, "[Categoría]" lleva a
+             * FORO-02 -limpia solo el hilo, la categoría es la misma-. */
+            <ForumThread
+              profile={state.profile}
+              threadId={forumThreadId}
+              onBackToForum={() => {
+                setForumCategorySlug(null);
+                setForumThreadId(null);
+              }}
+              onBackToCategory={() => setForumThreadId(null)}
+              now={new Date()}
+            />
+          ) : (
+            /* FORO-02. Se abre desde una tarjeta de FORO-01 y vuelve con el
+             * enlace "Foros" del breadcrumb. */
+            <ForumCategory
+              profile={state.profile}
+              slug={forumCategorySlug}
+              onBack={() => setForumCategorySlug(null)}
+              onOpenThread={setForumThreadId}
+              now={new Date()}
+            />
+          )
         ) : (
           <Forum profile={state.profile} now={new Date()} onOpenCategory={setForumCategorySlug} />
         )

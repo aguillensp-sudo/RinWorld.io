@@ -16,6 +16,8 @@ interface Props {
   profile: MemberProfile;
   slug: string;
   onBack: () => void;
+  /** FORO-03: abre el hilo por su id, al pulsar el título de una fila. */
+  onOpenThread: (threadId: string) => void;
   now?: Date;
 }
 
@@ -40,7 +42,7 @@ interface Props {
  * El foro es común a todos los miembros: el perfil no decide nada aquí, pero va
  * en la firma porque el shell lo inyecta en todas las pantallas (como FORO-01).
  */
-export function ForumCategory({ profile, slug, onBack, now = new Date() }: Props) {
+export function ForumCategory({ profile, slug, onBack, onOpenThread, now = new Date() }: Props) {
   void profile;
 
   const [category, setCategory] = useState<Category | null | undefined>(undefined);
@@ -252,15 +254,10 @@ export function ForumCategory({ profile, slug, onBack, now = new Date() }: Props
             {rows.map((row) => (
               <div key={row.id} className={styles.row} data-testid={`forum-thread-${row.id}`}>
                 <div className={styles.rowMain}>
-                  {/* FORO-03 no existe: el título es un control apagado.
-                      Sin badge de categoría: dentro de una categoría no aporta
-                      (spec §7). */}
-                  <button
-                    type="button"
-                    className={styles.rowTitle}
-                    disabled
-                    title="FORO-03 (el detalle del hilo) llega en una próxima versión."
-                  >
+                  {/* FORO-03 ya existe (precondición de su tarea, como "Foros"
+                      lo fue para FORO-02): el título navega al hilo. Sin badge
+                      de categoría: dentro de una categoría no aporta (spec §7). */}
+                  <button type="button" className={styles.rowTitle} onClick={() => onOpenThread(row.id)}>
                     {row.title}
                   </button>
                   <div className={styles.rowMeta}>

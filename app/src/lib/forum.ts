@@ -358,3 +358,198 @@ export async function fetchThreads({ categoryId, search, page }: ThreadQuery): P
     pageCount: threadPageCount(count ?? total),
   };
 }
+
+// -----------------------------------------------------------------------------
+// FORO-03 · el hilo: su cabecera, sus publicaciones, responder y reaccionar
+// -----------------------------------------------------------------------------
+//
+// Escrito a mano por Claude Code ANTES de la tarea de FORO-03, mismo patrón que
+// las cuatro capas anteriores del módulo. Alcance de ESTA pantalla (lo que el
+// PO pidió sumar sobre FORO-02): ver el hilo, publicar una respuesta y
+// reaccionar/quitar reacción, con el límite de RNG-FORO-06 (0031/0032).
+// `Editar`/`Eliminar` NO se construyen: `0029` no tiene UPDATE ni DELETE en
+// `forum_posts`, y crear un hilo (FL-FORO-01) sigue sin existir -- FORO-03 se
+// abre siempre sobre un hilo YA CREADO, nunca en "modo creación" (spec §6).
+
+export interface ThreadHeaderRaw {
+  id: string;
+  title: string;
+  category_id: string;
+  forum_categories: { slug: string; name: string } | null;
+}
+
+/** La cabecera del hilo: lo que arma el breadcrumb y el título (spec §3). */
+export interface ThreadHeader {
+  id: string;
+  title: string;
+  categoryId: string;
+  categorySlug: string;
+  categoryName: string;
+}
+
+export function toThreadHeader(raw: ThreadHeaderRaw): ThreadHeader {
+  return {
+    id: raw.id,
+    title: raw.title,
+    categoryId: raw.category_id,
+    categorySlug: raw.forum_categories?.slug ?? '',
+    categoryName: raw.forum_categories?.name ?? '',
+  };
+}
+
+const THREAD_HEADER_COLUMNS =
+  'id, title, category_id, forum_categories!forum_threads_category_id_fkey(slug, name)';
+
+/**
+ * El hilo por su `id`, para la cabecera. `null` si no existe -- spec §6 no
+ * define ese estado explícitamente para FORO-03, pero es el mismo criterio que
+ * "esta categoría no existe" en FORO-02: un hilo borrado o un enlace viejo no
+ * puede pintar un título vacío como si fuera uno real.
+ */
+export async function fetchThread(threadId: string): Promise<ThreadHeader | null> {
+  const { data, error } = await supabase
+    .from('forum_threads')
+    .select(THREAD_HEADER_COLUMNS)
+    .eq('id', threadId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? toThreadHeader(data as unknown as ThreadHeaderRaw) : null;
+}
+
+export interface ForumPostRaw {
+  id: string;
+  author_org_id: string;
+  author_org_name: string | null;
+  author_org_country: string | null;
+  body: string;
+  created_at: string;
+  reaction_count: number | string | null;
+  reacted_by_me: boolean | null;
+}
+
+/** Una publicación del hilo -- la inicial o una respuesta, misma forma (spec §3). */
+export interface ForumPost {
+  id: string;
+  authorOrgId: string;
+  authorOrgName: string;
+  /** ISO-3166-1 alfa-2, como `organizations.country` (badge de país, spec §3). */
+  authorOrgCountry: string;
+  body: string;
+  createdAt: string;
+  /** De ESTA publicación, no el total del hilo (esa cifra es de FORO-02). */
+  reactionCount: number;
+  /** Si el miembro que consulta ya reaccionó a ESTA publicación. */
+  reactedByMe: boolean;
+}
+
+export function toForumPost(raw: ForumPostRaw): ForumPost {
+  return {
+    id: raw.id,
+    authorOrgId: raw.author_org_id,
+    authorOrgName: raw.author_org_name ?? '',
+    authorOrgCountry: (raw.author_org_country ?? '').toUpperCase(),
+    body: raw.body,
+    createdAt: raw.created_at,
+    reactionCount: Number(raw.reaction_count ?? 0),
+    reactedByMe: raw.reacted_by_me === true,
+  };
+}
+
+const POST_COLUMNS =
+  'id, author_org_id, author_org_name, author_org_country, body, created_at, reaction_count, reacted_by_me';
+
+/**
+ * Todas las publicaciones del hilo, en orden cronológico -- la primera fila
+ * ES la publicación inicial (spec §3): ningún hilo se crea sin ella, así que
+ * no hace falta una columna aparte para distinguirla.
+ */
+export async function fetchThreadPosts(threadId: string): Promise<ForumPost[]> {
+  const { data, error } = await supabase
+    .from('forum_post_detail')
+    .select(POST_COLUMNS)
+    .eq('thread_id', threadId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((r) => toForumPost(r as unknown as ForumPostRaw));
+}
+
+/**
+ * Publicar una respuesta (spec §3, "Publicar respuesta"). Ni `author_member_id`
+ * ni `author_org_id` van en el `insert`: los pone la base (`app.guard_forum_author`,
+ * `0029`), igual que en cualquier otra escritura del foro -- pasarlos aquí solo
+ * invitaría a alguien a creer que se pueden elegir.
+ */
+export async function postReply(threadId: string, body: string): Promise<void> {
+  const { error } = await supabase.from('forum_posts').insert({ thread_id: threadId, body });
+  if (error) throw error;
+}
+
+/** Reaccionar a una publicación (spec §3, `👍`). La firma la pone la base (`0030`). */
+export async function reactToPost(postId: string): Promise<void> {
+  const { error } = await supabase.from('forum_reactions').insert({ post_id: postId });
+  if (error) throw error;
+}
+
+/**
+ * Quitar la propia reacción. Sin filtrar por `member_id`: la política de
+ * `DELETE` de `forum_reactions` (`0030`) ya restringe a `member_id = auth.uid()`,
+ * así que esto nunca puede borrar la reacción de otro aunque se equivoque el
+ * `post_id`.
+ */
+export async function unreactToPost(postId: string): Promise<void> {
+  const { error } = await supabase.from('forum_reactions').delete().eq('post_id', postId);
+  if (error) throw error;
+}
+
+export interface ForumRateLimitStatusRaw {
+  used: number | string;
+  limit: number | string;
+  seconds_until_reset: number | string;
+}
+
+/** RNG-FORO-06: cuánto lleva publicado la organización de quien consulta en la hora natural actual. */
+export interface ForumRateLimitStatus {
+  used: number;
+  limit: number;
+  secondsUntilReset: number;
+}
+
+export function toForumRateLimitStatus(raw: ForumRateLimitStatusRaw): ForumRateLimitStatus {
+  return {
+    used: Number(raw.used),
+    limit: Number(raw.limit),
+    secondsUntilReset: Number(raw.seconds_until_reset),
+  };
+}
+
+const RATE_LIMIT_FALLBACK: ForumRateLimitStatus = { used: 0, limit: 10, secondsUntilReset: 0 };
+
+/**
+ * Se consulta ANTES de intentar publicar, para bloquear el botón con su
+ * mensaje (spec §6) en vez de dejar que el `INSERT` falle. `public.forum_rate_limit_status()`
+ * (`0032`) es el envoltorio que sí puede llamar el cliente -- la función real
+ * (`0031`) vive en `app`, que PostgREST no expone.
+ */
+export async function fetchForumRateLimitStatus(): Promise<ForumRateLimitStatus> {
+  const { data, error } = await supabase.rpc('forum_rate_limit_status');
+  if (error) throw error;
+  const fila = (data ?? [])[0] as ForumRateLimitStatusRaw | undefined;
+  return fila ? toForumRateLimitStatus(fila) : RATE_LIMIT_FALLBACK;
+}
+
+/** Spec §6, RNG-FORO-06: "alcanzado el límite" es `used >= limit`, no `>`. */
+export function rateLimitReached(status: ForumRateLimitStatus): boolean {
+  return status.used >= status.limit;
+}
+
+/**
+ * Spec §6: *"Podrás publicar en [X minutos]"*. Redondea SIEMPRE hacia arriba:
+ * si falta un segundo para la hora en punto, sigue siendo "en 1 minuto", nunca
+ * "en 0 minutos" -- cero minutos le diría al usuario que ya puede publicar.
+ */
+export function rateLimitMinutesLabel(secondsUntilReset: number): string {
+  const minutos = Math.max(1, Math.ceil(secondsUntilReset / 60));
+  return minutos === 1 ? '1 minuto' : `${minutos} minutos`;
+}

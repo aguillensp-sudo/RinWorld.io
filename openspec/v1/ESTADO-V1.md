@@ -322,10 +322,11 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 
 ---
 
-**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO -con una reapertura por la regla 4: el primer
-cierre fue a las 16:23 UTC y el esquema de `ADMIN-02` se escribió después, hasta las 18:12 UTC**
+**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO -con DOS reaperturas por la regla 4: el primer
+cierre fue a las 16:23 UTC, el esquema de `ADMIN-02` se escribió después hasta las 18:12 UTC, y
+un hallazgo de CI (`F-178`) se investigó y resolvió después de eso, hasta las 18:45 UTC**
 
-> **EL DÍA EN NUEVE LÍNEAS.**
+> **EL DÍA EN DIEZ LÍNEAS.**
 >
 > 1. **Sesión nueva, lanzada sobre uno de los cuatro worktrees fantasma que este fichero
 >    lleva semanas señalando** (`dia-14-correcciones-mvp-8160b9`, anclado a `43bb222`, sin
@@ -374,6 +375,17 @@ cierre fue a las 16:23 UTC y el esquema de `ADMIN-02` se escribió después, has
 >    paso, comprobado empíricamente que el `GRANT` de tabla de sobra que la plataforma
 >    concede en casi todo `public` no es una puerta abierta -RLS bloquea la escritura
 >    sin política, con o sin ese `GRANT`- (`F-177`).
+> 10. **Empujar `0034` disparó una CI que escaló 2/4 en cuatro intentos seguidos, y no era
+>     la migración** (`F-178`): el job `e2e` corre contra el proyecto AISLADO
+>     `bearingworld-e2e`, no contra `troxminloxkjwihwfevs` -donde se había probado todo a
+>     mano, detalle que esta misma sesión olvidó al ver los 14/14 locales-, y ese proyecto
+>     tenía una reacción huérfana: el test propio "reaccionar y quitar la reacción" quedó a
+>     medias cuando una corrida se canceló por un push posterior, lo mismo que ya había
+>     pasado dos veces hoy (`F-171`). Borrada la fila exacta por SQL, `forum_thread_list`
+>     verificado de vuelta a sus cifras correctas, CI reintentado y verde en los seis jobs
+>     (`35378570024`). Deuda sin resolver: el foro no tiene teardown ni entra en
+>     `resetDemo`, así que el mismo residuo puede repetirse con cualquier test futuro que
+>     reaccione y desreaccione dentro de la misma corrida.
 
 ---
 
@@ -397,6 +409,7 @@ cierre fue a las 16:23 UTC y el esquema de `ADMIN-02` se escribió después, has
 | Que un commit intermedio salió rojo, y por qué (`F-175`) | `gh run view` sobre `b5a0c29` | `Vitest` en rojo por heredar el test aún no corregido de un commit `[skip ci]` anterior — no por su propio contenido. Sin acción: el push siguiente ya iba verde |
 | Que producción sirve de verdad `FORO-03` | bundle enlazado por `rin-world-io.vercel.app`, leído a mano DESPUÉS del run | `index-DkCZ8HQ8.js`, 495.540 bytes, con «Todavía no hay respuestas…» y el `title` de "Editar todavía no está disponible…" dentro |
 | Coste-sombra de orquestación | `python -m harness.core.orchestration_metrics`, antes y después de la corrida | 1.363,42 $ → **1.371,48 $**. La sesión entera del día: 46,63 $ → **54,45 $** — sesión compartida con todo lo demás del día, no cifra 7 limpia (misma limitación que `ADMIN-01`/`FORO-02`) |
+| Por qué el CI de `0034` escaló 2/4 en cuatro intentos seguidos cuando lo mismo pasaba 14/14 en local (`F-178`) | `.github/workflows/ci.yml` líneas 59-119; consulta directa a `ogdhyzgjjbbikjbkhxmu` por el MCP de Supabase | El job `e2e` usa `secrets.SUPABASE_E2E_URL` -el proyecto AISLADO, nunca producción, decisión de `F-149`-. El post de `c003` tenía **2 reacciones en vez de 1**: `alpha@bearingworld.test` reaccionó dentro de la ventana de una corrida de CI que se canceló a medias. Borrada la fila exacta por `member_id`+`created_at`, `forum_thread_list` verificado de vuelta a `👍 3` en `c003` sin tocar `c004`, `gh run rerun 35378570024 --failed` → **seis jobs de seis en verde**, `e2e` incluido |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -515,6 +528,11 @@ UNA pantalla.**
 5. **La deuda que dejó `F-172`:** el estándar de buscador (input+lupa integrada+"x" al escribir)
    solo está en `DIR-01` y `FORO-02`. `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen
    con su implementación propia — migrarlos cuando se toque cada pantalla, no de golpe.
+6. **La deuda que dejó `F-178`:** el foro no tiene teardown ni entra en `resetDemo`/
+   `fixture.setup.ts`. Un e2e que reaccione y desreaccione dentro de la misma corrida puede dejar
+   un residuo permanente si esa corrida se cancela a medias — ya pasó una vez, en el proyecto
+   aislado de e2e. Dos vías sin aplicar: sumar el foro a `resetDemo`, o probar reacciones solo con
+   mocks (como ya se hace con `postReply`).
 
 En paralelo, sin acción propia desde este lado:
 
@@ -591,6 +609,7 @@ En paralelo, sin acción propia desde este lado:
 | 🟡 | **La cifra 7 está sucia en tres de las cinco pantallas medidas** (`ADMIN-01`, `FORO-02` y ahora `FORO-03`, 18-sep: 7,82 $ de delta en una sesión que ya traía encima el buscador y tres migraciones): son techos, no medidas limpias. Solo queda una pantalla (la sexta, de la remedición) para intentar una cifra 7 real | Quien corra la sexta: sesión nueva, solo para esa pantalla |
 | ⚪ | ~~**El límite de 10 publicaciones por hora (RNG-FORO-06) no existe en la base.**~~ **Resuelto 18-sep-2026: `0031`/`0032`, aplicadas y comprobadas contra el catálogo de las dos bases.** La primera versión del disparador tenía un bug real (`F-173`: `security definer` hacía que el bypass de siembra se activara siempre) cazado en Postgres desechable antes de tocar nada real | Corriente A |
 | 🟡 | **`F-172`: el estándar de buscador (input+lupa integrada+"x" al escribir) solo está aplicado en DIR-01 y FORO-02.** `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen con su implementación propia, sin la "x" y (en INV-01) con la lupa a la izquierda | Quien toque esas pantallas: migrar a `components/SearchField.tsx` |
+| 🟡 | **`F-178`: el foro no tiene reset/teardown, así que un e2e que reaccione y desreaccione en la misma corrida puede dejar un residuo si esa corrida se cancela a medias** — ya pasó una vez (reacción huérfana de `alpha@bearingworld.test` en `ogdhyzgjjbbikjbkhxmu`, borrada a mano el 18-sep). Dos vías sin aplicar: sumar el foro a `resetDemo`, o probar reacciones solo con mocks | Quien toque el e2e del foro de nuevo |
 | ⚪ | **Resuelto 17-sep: decisión del PO (sembrar antes de cada corrida), automatizada en `resetDemo` y probada reproduciendo el fallo.** ~~`F-169` · una prueba a mano de `ADMIN-01` sobre la base de producción descuadra la siembra~~ (pasó en la C5 del 17-sep: una aprobada, una rechazada y devuelta). Repuesta el mismo día; la causa sigue: la próxima corrida del arnés le cobraría al Coder un fallo de datos | PO: resembrar antes de cada corrida de `ADMIN-*`, o C5 sin pulsar acciones |
 | 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
 | 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
@@ -665,6 +684,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Cuánto de los 179 $ de esta sesión es fábrica.** La corrida de `FORO-02` midió 21,96 $ de delta,
   pero la sesión traía encima siete hallazgos, un barrido de 29 specs y cuatro arreglos de CI: el
   reparto real por pantalla sigue sin poder medirse en una sesión así (`F-157`, y la regla de §3).
+- **Si el residuo de `F-178` se va a repetir.** Depende de cuántas más corridas de CI se cancelen a
+  medias mientras sigan pasando pushes rápidos y sucesivos (ya documentado dos veces hoy, `F-171`)
+  y de si algún test futuro añade otro ciclo real de reacción/desreacción. Ninguna de las dos vías
+  propuestas (sumar el foro a `resetDemo`, o mockear en vez de reaccionar de verdad) se ha aplicado
+  todavía — quedó como deuda, no como decisión tomada.
 
 - **Si alguien de fuera abrió la demo de producción entre el 8 y el 17-sep** y se encontró una
   página en blanco (`F-168`). No se han mirado las analíticas ni los logs de Vercel.
@@ -956,7 +980,11 @@ Orden de lectura, y el orden importa:
     (cerrado como comprobación, no como parche — el `GRANT` de tabla de sobra que la
     plataforma concede en casi todo `public` a `authenticated`/`anon` no es un agujero,
     comprobado empíricamente en Postgres desechable: RLS bloquea la escritura sin
-    política pase lo que pase con el `GRANT`).
+    política pase lo que pase con el `GRANT`) y `F-178` (cerrado el mismo día, con deuda
+    real pendiente — el job `e2e` de CI corre contra el proyecto aislado, no producción,
+    y una reacción huérfana de un e2e cancelado a medias hizo escalar el CI de `0034`
+    cuatro veces; borrada a mano, CI verde, pero el foro sigue sin teardown ni entra en
+    `resetDemo`, así que el mismo residuo puede repetirse).
 
 ---
 
@@ -1065,7 +1093,22 @@ comprobado contra el catálogo Y los datos reales de las dos bases; `Iniciar bor
 propósito, documentado en la cabecera de `0034` · de paso, comprobado empíricamente que el `GRANT`
 de tabla de sobra que la plataforma concede en casi todo `public` no es una puerta abierta —RLS
 bloquea la escritura sin política pase lo que pase con el `GRANT`— deuda de higiene, no de
-seguridad (`F-177`) · fecha releída al escribir este pie: `2026-09-18`, 18:12 UTC, sigue el mismo
-día · 13 commits en `mvp/bootstrap` · quedan DOS C5 sin cerrar (`FORO-02` con su corrección ya
-aplicada, y `FORO-03` entera) y `ADMIN-02` sin tarea del arnés ni wiring de precondición —ninguno
-de los tres cuenta como hecho · Dirección Técnica, Nortex Systems*
+seguridad (`F-177`) · fecha releída al escribir ese pie: `2026-09-18`, 18:12 UTC, sigue el mismo
+día · **el día siguió otra vez, regla 4:** empujar `0034` hizo escalar el CI 2/4 en cuatro
+intentos seguidos, tres de ellos aislados sin ninguna otra corrida a la vez, mientras el mismo
+e2e pasaba 14/14 en local — `F-178`: el job `e2e` corre contra el proyecto AISLADO
+`bearingworld-e2e`, no contra `troxminloxkjwihwfevs` donde se había probado todo a mano, olvido
+de esta misma sesión; ese proyecto tenía una reacción huérfana en el post de `c003` (2 en vez de
+1), dejada por el propio test "reaccionar y quitar la reacción" cuando una corrida se canceló a
+medias por un push posterior, lo mismo que ya había pasado dos veces hoy (`F-171`) · borrada la
+fila exacta por SQL contra el catálogo de `ogdhyzgjjbbikjbkhxmu`, `forum_thread_list` verificado
+de vuelta a sus cifras correctas, CI reintentado (`gh run rerun 35378570024 --failed`) y
+**verde en los seis jobs**, `e2e` incluido · deuda real, sin resolver: el foro no tiene teardown
+ni entra en `resetDemo`, así que el mismo residuo puede repetirse con cualquier test futuro que
+reaccione y desreaccione dentro de la misma corrida — dos vías sin aplicar (sumar el foro a
+`resetDemo`, o probar reacciones solo con mocks) quedan escritas en `F-178` y en §3/§5/§6, no
+decididas · fecha releída de nuevo: `2026-09-18`, 18:45 UTC, sigue el mismo día · `git status
+--short` limpio salvo este mismo cierre (`ESTADO-V1.md`) · 15 commits en `mvp/bootstrap` desde
+el cierre del Día 17 · quedan DOS C5 sin cerrar (`FORO-02` con su corrección ya aplicada, y
+`FORO-03` entera) y `ADMIN-02` sin tarea del arnés ni wiring de precondición —ninguno de los
+tres cuenta como hecho · Dirección Técnica, Nortex Systems*

@@ -35,6 +35,15 @@ absolutos.**
 > con copia de seguridad fuera del repo. **Y NO se ha metido en `.gitignore`, a propósito:**
 > ignorarla la haría invisible en `git status`, y fue justamente aparecer como `??` lo que
 > hizo que alguien la descubriera. Si alguna herramienta la recrea, se quiere ver.
+>
+> **18-sep: uno de los cuatro cambió de sitio, sin resolver el misterio.** Esta sesión se
+> lanzó sobre `dia-14-correcciones-mvp-8160b9`, todavía en `43bb222`, y siguió la
+> instrucción de arriba: reseteó su rama a `origin/mvp/bootstrap` y trabajó ahí de verdad
+> —es de donde salen los commits de hoy—. `git worktree list` ahora lo muestra en `e9366bd`,
+> no en `43bb222`: no es que el ghost se resolviera, es que esta sesión lo USÓ. Los otros
+> tres (`dia-4-f131-pending-003608`, `seccion-3-relevo-8cef0a`, `sweet-mayer-f17466`) siguen
+> anclados a `43bb222`, sin tocar. **La hipótesis de lanzar desde la raíz sigue sin
+> probarse ni refutarse por esto.**
 
 > 🔑 **¿Vas a tocar Supabase? Lee `CLAUDE.md` §10 ANTES de la primera consulta.**
 
@@ -299,13 +308,58 @@ falsa, y lo que había detrás llenó el Día 17.**
 
 ---
 
-**Día 17 de V1 · 17-sep-2026 · Estado: CERRADO**
+**Día 17 de V1 · 17-sep-2026 · Estado: CERRADO.** Cadena de cinco hallazgos que empezó
+comprobando por qué el cierre del Día 16 no había disparado CI (`F-164`, el marcador de
+salto en el cuerpo del mensaje) y siguió una CI rota desde el 11-sep (`F-165`, sin
+credenciales del Operador), un e2e declarado que nunca se había ejecutado y que el arnés
+contaba como verde (`F-166`), un token de Supabase caducado (`F-167`) y la app de
+producción sin arrancar desde el 8-sep, verificado y cerrado por CONTENIDO, no por HTTP
+200 (`F-168`). Barrido de once contradicciones más de la familia `F-158` (`F-170`),
+trece filas del registro puestas al día y la carpeta `Ingles/` archivada por decisión del
+PO. La corriente B se abrió de verdad: `0030` a mano y `FORO-02` **PASA 4/4 al primer
+intento**, la primera del proyecto. El detalle completo —las diez líneas y las cuatro
+adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
-> **EL DÍA EN DIEZ LÍNEAS.**
+---
+
+**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO**
+
+> **EL DÍA EN OCHO LÍNEAS.**
 >
-> 1. **El cierre del Día 16 no había disparado CI, y el diagnóstico que dejó escrito era falso**
->    (`F-164`): el cuerpo de su propio mensaje nombraba el marcador de salto de CI, y GitHub lo
->    busca en el mensaje entero. No era el token de `git push`: no hubo que tocar ninguna credencial.
+> 1. **Sesión nueva, lanzada sobre uno de los cuatro worktrees fantasma que este fichero
+>    lleva semanas señalando** (`dia-14-correcciones-mvp-8160b9`, anclado a `43bb222`, sin
+>    `harness/` ni `app/`). Reseteada su rama a `origin/mvp/bootstrap` para poder trabajar
+>    y empujar de verdad desde ahí — la hipótesis de "lanzar desde la raíz" sigue sin
+>    probarse, esta sesión no la prueba ni la refuta.
+> 2. **El C5 de `FORO-02` no salió limpio, y el PO señaló dos síntomas.** Uno era
+>    percepción, no defecto: "Crear hilo" está apagado a propósito, documentado. El otro
+>    era real pero distinto de lo que parecía: **ningún** input del proyecto tenía ya la
+>    "x" que el PO recordaba en `DIR-01` —ni `DIR-01` la tenía—. El PO decidió el estándar
+>    ahí mismo (`F-172`): input con lupa integrada + "x" que aparece al escribir y solo
+>    borra el campo, sin disparar la búsqueda (que sigue siendo server-side, decisión
+>    explícita del PO). Nuevo componente `app/src/components/SearchField.tsx`, aplicado en
+>    `DIR-01` y `FORO-02`; `INV-01`/`MSG-01`/`SentOffers` quedan de deuda.
+> 3. **`RNG-FORO-06` escrito, con un bug real cazado antes de tocar las bases** (`F-173`):
+>    la primera versión del guardia era `security definer`, y dentro de una función así
+>    `current_user` es el DUEÑO de la función, no quien llama — el límite no limitaba a
+>    nadie. Corregido a invoker. `0031`/`0032`/`0033` aplicadas y comprobadas contra el
+>    catálogo de las dos bases.
+> 4. **`FORO-03` construida: capa de datos, wiring, contrato de aceptación (23 pruebas de
+>    unidad + e2e real) y la tarea, validada `--seco` sin avisos.**
+> 5. **La corrida real escaló 2/4 en los tres intentos, y no era el Coder** (`F-174`): un
+>    test propio mockeaba datos que nunca cambiaban entre llamadas. Corregido sin tocar ni
+>    una línea del artefacto: 23/23 de unidad, 871 del repo entero y **10/10 del e2e
+>    contra `troxminloxkjwihwfevs`**, incluida la reacción que se autolimpia. Cuenta como
+>    ESCALADO para la cifra 3 del umbral — el CSV no se recalcula.
+> 6. **Un commit intermedio salió rojo en CI por heredar el test roto de uno anterior con
+>    `[skip ci]`** (`F-175`): sin acción, el siguiente push ya iba verde en los seis jobs,
+>    y producción sirve `FORO-03` verificado por contenido.
+> 7. **Coste-sombra de orquestación: de $1.363,42 a $1.371,48** — la sesión entera del día,
+>    no solo `FORO-03`, sigue sin poder medirse limpia (misma limitación que `ADMIN-01`/
+>    `FORO-02`, §1). El Coder: 0,143118 $ en los tres intentos, 5,9 minutos.
+> 8. **Lo que queda pendiente, y no se da por hecho:** el C5 de `FORO-02` no tiene
+>    confirmación final del PO tras la corrección del buscador, y `FORO-03` no tiene
+>    ningún C5 todavía — las dos siguen sin contar como aceptadas.
 > 2. **Detrás había una CI que nadie había visto entera desde el 11-sep** (`F-165`): `ci.yml` no le
 >    pasaba las credenciales del Operador al job `e2e`, Playwright reventaba siempre y, como
 >    `deploy` depende de él, **nada se desplegaba desde el 11-sep**.
@@ -369,32 +423,22 @@ referencia de estilo, `DIR-01`, hace lo contrario.
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-17`, 20:11 UTC — el cierre se escribe el mismo día del trabajo (regla 3) |
-| Que el push del cierre del Día 16 no creó ningún run, y por qué | `gh api .../activity?ref=refs/heads/mvp/bootstrap` y el cuerpo ENTERO de `7eeb6d8`, no su título | El push existe y lo hizo el mismo actor que sí disparó CI el 13-sep; su línea 16 nombra el marcador de salto (`F-164`) |
-| Que con el mensaje limpio el push sí dispara | `5cfbf2f`, mismas credenciales, sin el marcador en ninguna línea | Creó el run `35200727115` al momento. **No hacía falta `gh auth setup-git` ni tocar Credential Manager** |
-| Por qué Playwright llevaba roto desde el 11-sep | log del job, no el resumen del run | `Error: En CI hacen falta E2E_OPERATOR_EMAIL/PASSWORD` — el job `e2e` de `ci.yml` no las pasaba (`F-165`) |
-| Que el e2e declarado de `ADMIN-01` nunca se había ejecutado | corrida local de `admin-requests.spec.ts` sin credenciales | `exit 0` y «4 skipped»: Playwright sale con 0 aunque se salte todo (`F-166`) |
-| Que el guardia nuevo de C2 lo detecta | `_e2e_sin_ejecutar` contra ESA salida real + 5 asertos nuevos en `test_checks.py` | Nombra los cuatro saltados; `test_checks` y `dry_run` en verde |
-| Que el contrato de `ADMIN-01` se cumple contra el artefacto del Coder | run `35202094852` | Playwright **66/66, cero saltados, cero inestables** |
-| Producción, por CONTENIDO y no por código HTTP | bundle servido antes y después del arreglo, contra el `dist/` local | Antes: 148.698 bytes, sin un literal de la app, terminando en el `throw` de `supabase.ts` (`F-168`). Después: 480.802 bytes con la app, `troxminloxkjwihwfevs.supabase.co` dentro |
-| Que producción arranca de verdad | navegador (subagente): texto de la página y consola | Formulario de login pintado, **cero errores de consola** |
-| Que esto no puede volver a pasar desapercibido | paso nuevo de `deploy-app`, probado en local contra el bundle bueno Y contra el roto de esta mañana | Verde con el bueno, rojo con el roto. En CI: «producción sirve la app: assets/index-CHmJc7cl.js (480802 bytes)» |
-| VERA desplegada con el token nuevo del PO | run `35238997261`, intento 2 | «Deployed Functions on project troxminloxkjwihwfevs: vera» — **seis jobs de seis en verde** |
-| Que la C5 del Día 16 descuadró la siembra de producción | `registration_request_events` por SQL (MCP), no por memoria | Álvarez aprobada 07:44 UTC, Nordic rechazada 07:45:16 y devuelta 07:45:42 (`F-169`) |
-| Que la siembra repuesta ya no depende de acordarse | Nordic puesta en `REJECTED` a mano y suite de `ADMIN-01` con su setup | 7/7 y la base con las tres en cola, sin decisor |
-| El barrido de specs (`F-170`) | las 29 specs de pantalla y base, `REG-05.pdf` y sus 32 HTML, leídos por cuatro agentes; **cada hallazgo recomprobado a mano contra el fichero, con cita y línea** | Once contradicciones; ninguna estaba en `notas/inconsistencias.md` ni en `revisar.md` |
-| Que `0030` no rompe nada del esquema | `bash supabase/tests/run.sh` — Postgres desechable, todas las migraciones y la suite entera | Verde, incluidos los seis asertos nuevos de `0030` |
-| Los privilegios y la RLS de `0030` en las DOS bases | `information_schema.role_table_grants` y `pg_policies` por el MCP, no el `.sql` (`F-146`) | `anon` nada; `authenticated` SELECT/INSERT/DELETE en la tabla y SELECT en la vista; RLS con sus tres políticas; vista `security_invoker=true` |
-| Que las dos bases tienen la misma siembra de foro | misma consulta a `forum_thread_list` en producción y en `bearingworld-e2e` | Idénticas: Equivalencia FAG 3 respuestas / 👍 3; Juego interno C3 2 / 👍 1 |
-| La capa de datos de `FORO-02` | `forum.queries.test.ts` (31 pruebas, consultas incluidas) y `tsc` | Verde: filtro de categoría, orden por actividad con desempate, `ilike` solo al título, rango de la página, reencaje de página inexistente |
-| El wiring FORO-01 → FORO-02 | e2e de FORO-01 en local, con el marcador puesto | 7/7 |
-| Que el contrato de `FORO-02` prueba algo | los 23 tests de unidad contra el MARCADOR, antes de la corrida | **23 de 23 en rojo** |
-| La tarea `FORO-02`, formato fijo | `--seco` | `tarea valida: 8 inputs, 2 outputs, component_api cubre cada .tsx` — cero avisos tras declarar las dos comprobaciones de ausencia |
-| **La corrida real de `FORO-02`** | `harness-metrics.csv` y `harness/metrics/FORO-02/attempt_1.json` | **PASA 4/4 en el INTENTO 1** · 24.379 in / 20.145 out · **0,037318 $** · 1,2 min · `primer_intento_limpio = si` |
-| El artefacto, aparte de los cuatro checks | 23/23 de unidad, e2e de FORO-02 y FORO-01 (11/11 con setup y teardown), `npm run typecheck`, `grep` de colores en el CSS | Todo verde; 70 `var(--bw-*)` y **cero** hex |
-| Coste-sombra de orquestación | `python -m harness.core.orchestration_metrics`, antes y después de la corrida | 1.281,36 $ → **1.303,32 $**. La sesión entera: **179,02 $**. La corrida de `FORO-02`: **21,96 $**, en sesión compartida — techo, no cifra 7 limpia |
-| CI y despliegue del artefacto | `gh run` sobre `64f8b90` | **Run `35269279509`: seis jobs de seis en verde**, VERA y app desplegadas |
-| Que produccion sirve de verdad `FORO-02` | bundle enlazado por `rin-world-io.vercel.app`, leido a mano DESPUES del run | `index-Um-cewNV.js`, 487.699 bytes, con «Buscar en esta categoría», «Cargando hilos» y «Limpiar búsqueda» dentro. **El paso automatico del propio job habia impreso el bundle ANTERIOR: `F-171`** |
+| Fecha de máquina | `date -u` | `2026-09-18`, 16:23 UTC — el cierre se escribe el mismo día del trabajo (regla 3) |
+| El worktree de lanzamiento era uno de los fantasma | `git branch --show-current` y `ls` dentro de él | `claude/foro-03-detalle-hilo-df35a2`, sin `harness/` ni `app/`, HEAD en `43bb222`. Reseteado a `origin/mvp/bootstrap` (`9e546d1`) antes de tocar nada |
+| Que DIR-01 tenía la "x" que el PO recordaba | `Directory.tsx`/`.module.css` leídos línea a línea, agente de exploración | **No la tenía**: lo que hay es "Limpiar filtros", condicionado a un filtro ya APLICADO, no al teclear. Ninguna pantalla del proyecto tenía la "x" (`F-172`) |
+| El estándar de búsqueda nuevo, en DIR-01 y FORO-02 | `npx vitest run` (49 pruebas de los dos ficheros) y `tsc --noEmit` | Verde; nuevo componente `app/src/components/SearchField.tsx`, `Directory.module.css`/`ForumCategory.module.css` sin el CSS del buscador viejo |
+| El guardia de `RNG-FORO-06` limitaba de verdad | Postgres desechable, `bash supabase/tests/run.sh`, ANTES de tocar las bases reales | Primera versión (`security definer`): 0 de 1 publicaciones bloqueadas — el bypass de siembra se activaba siempre (`F-173`). Corregida a invoker: bloquea la 11.ª, dentro de la hora natural |
+| `0031`/`0032`/`0033`, en el catálogo de las DOS bases, no el `.sql` (`F-146`) | `pg_trigger`, `pg_proc.prosecdef`, `information_schema.role_usage_grants`/`role_table_grants` por el MCP | `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu` idénticas: disparador activo, guardia invoker, envoltorio público sin `anon`, `forum_post_detail` solo `SELECT` para `authenticated` |
+| `get_advisors` tras las tres migraciones | Supabase, las dos bases | Mismos tres avisos preexistentes (`demo_reanchor_freshness`/`demo_state` sin `search_path`, dos RPC `security definer` ya conocidas, *leaked password protection*) — ninguno nuevo |
+| El contrato de `FORO-03` prueba algo | `ForumThread.test.tsx` (23 pruebas) contra el MARCADOR | **22 de 23 en rojo** (el único verde es el testid de la raíz, que el marcador ya cumple) |
+| La tarea `FORO-03`, formato fijo | `--seco` | `tarea valida: 8 inputs, 2 outputs, component_api cubre cada .tsx` — cero avisos |
+| **La corrida real de `FORO-03`** | `harness-metrics.csv` y `harness/metrics/FORO-03/attempt_{1,2,3}.json` | **ESCALADO 2/4 en los tres intentos** (C1/C2 rojo, C3/C4 verde) · 0,046808 $ + 0,020407 $ + 0,075903 $ = **0,143118 $** · 5,9 min · `primer_intento_limpio = -` |
+| Que el escalado era del test, no del artefacto (`F-174`) | El MISMO artefacto (intento 3), sin tocar una línea, contra el test corregido | 23/23 de unidad, `tsc --noEmit` limpio, 871/871 del repo entero, `grep` de colores en el CSS: **cero** hex |
+| El e2e real de `FORO-03` | `npx playwright test e2e/forum-thread.spec.ts` contra `troxminloxkjwihwfevs`, cuenta ALPHA | **10/10**, incluida "reaccionar y quitar la reacción" (autolimpia: 1→2→1) |
+| CI del artefacto final | `gh run view` job a job sobre `80f7b30` | **Run `35367495159`: seis jobs de seis en verde** |
+| Que un commit intermedio salió rojo, y por qué (`F-175`) | `gh run view` sobre `b5a0c29` | `Vitest` en rojo por heredar el test aún no corregido de un commit `[skip ci]` anterior — no por su propio contenido. Sin acción: el push siguiente ya iba verde |
+| Que producción sirve de verdad `FORO-03` | bundle enlazado por `rin-world-io.vercel.app`, leído a mano DESPUÉS del run | `index-DkCZ8HQ8.js`, 495.540 bytes, con «Todavía no hay respuestas…» y el `title` de "Editar todavía no está disponible…" dentro |
+| Coste-sombra de orquestación | `python -m harness.core.orchestration_metrics`, antes y después de la corrida | 1.363,42 $ → **1.371,48 $**. La sesión entera del día: 46,63 $ → **54,45 $** — sesión compartida con todo lo demás del día, no cifra 7 limpia (misma limitación que `ADMIN-01`/`FORO-02`) |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -413,6 +457,7 @@ referencia de estilo, `DIR-01`, hace lo contrario.
 | `MSG-01` a 4/4 sin reintentos | 🟢 **13 de 16 sobre el mismo corpus, contando solo el primer intento (así mide esta fila)** — serie 15 (n=3): 3/3; serie 16, réplica (n=3): 1/3; serie 17 (n=5): 5/5, las cinco al primer intento; serie 18, réplica de la 17 (n=5): **4 de 5 limpias al primer intento** — `18a` roja en `C1`/`C2` en los intentos 1 y 2, verde recién en el 3 (`F-152`); no cuenta como limpia para esta fila aunque el veredicto final de la corrida sea verde |
 | Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · series 15 y 16**, seis corridas. La 15 no encontró nada; **la 16 encontró `F-147`** |
 | **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — **remedido 5-sep, serie 17 (n=5): sin recurrencia en las cinco** |
+| **`RNG-FORO-06` · límite de 10 publicaciones por hora natural** | ✅ **18-sep · `0031`/`0032`**, `F-173` (bug de `security definer` cazado antes de aplicar). Disparador + estado consultable, aplicados y comprobados contra el catálogo de las dos bases |
 
 ### Fundación V1
 
@@ -428,20 +473,27 @@ referencia de estilo, `DIR-01`, hace lo contrario.
 | Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep, Preview deployments recuperadas el 10-sep sin duplicar producción** (`F-153`) — `entornos.md`, los tres entornos con `environment:` de GitHub donde aplica |
 | Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
 | **`0030` · reacciones del foro y la vista de la lista de hilos** | ✅ **17-sep** — `forum_reactions` y `forum_thread_list`, capa de datos de `FORO-02`. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
+| **`0031`/`0032` · límite de publicaciones por hora (RNG-FORO-06)** | ✅ **18-sep** — disparador + estado público, precondición de `FORO-03`. Validadas en Postgres desechable, aplicadas y comprobadas contra el catálogo de las dos bases |
+| **`0033` · `forum_post_detail`, capa de datos de `FORO-03`** | ✅ **18-sep** — reacciones y `reacted_by_me` POR PUBLICACIÓN. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — ABIERTA y EN MARCHA · 4 pantallas de 24 (Día 17)
+### Corriente B · Fábrica — ABIERTA y EN MARCHA · 5 pantallas de 24 (Día 18)
 
-**`FORO-02` es la primera pantalla construida después del H1, y la primera del proyecto que pasa
-los cuatro checks al PRIMER intento** (`harness-metrics.csv`, 17-sep): 0,037318 $ del Coder, 1,2
-minutos, sin una corrección a mano. Su capa de datos —`0030` y las dos consultas de `forum.ts`— la
-escribió Claude Code antes, como en las tres del H1. **Falta su C5**, que es del PO.
+**`FORO-02` sigue sin C5 cerrado.** El PO la revisó el 18-sep y señaló dos síntomas; uno era
+percepción (`F-172`), el otro real pero de un estándar transversal, no de la pantalla —el
+buscador—, ya corregido en el mismo día. **Falta la confirmación final del PO tras la
+corrección**, que no se da por hecha aquí.
 
-**Van 4 de las 24; la remedición obligatoria es a las 6** (`UMBRAL-FABRICA-V1.md` §4, escenario
-base). Con `FORO-02`, la cifra 3 pasa de 0 de 3 a **1 de 4** limpias al primer intento; el umbral
-se evalúa entero solo en la remedición, no fila a fila.
+**`FORO-03` corrió, escaló 2/4 en los tres intentos y el artefacto no tenía ningún defecto**
+(`harness-metrics.csv`, 18-sep): el escalado era de un test propio (`F-174`), corregido sin tocar
+el artefacto del Coder — 23/23 de unidad, 10/10 de e2e real. **`primer_intento_limpio = no`**
+para la cifra 3 del umbral: la escalada cuenta, sea cual sea la causa (mismo criterio que
+`F-161`/`F-162` en el H1). **Tampoco tiene C5 todavía.**
 
-
+**Van 5 de las 24; la remedición obligatoria es a las 6** (`UMBRAL-FABRICA-V1.md` §4, escenario
+base) — **queda UNA pantalla para la remedición.** La cifra 3 (verdes al primer intento) queda en
+**1 de 5** tras `FORO-03`: de las cinco pantallas medidas de la fábrica, solo `FORO-02` pasó sin
+ningún reintento ni corrección. El umbral se evalúa entero solo en la remedición, no fila a fila.
 
 **El H1 se cerró el Día 16.** Las tres pantallas —`DIR-01`, `ADMIN-01`, `FORO-01`— tienen
 corrida real limpia, C5 del PO sin ninguna corrección, y las ocho cifras de
@@ -453,11 +505,14 @@ el escenario de **21 semanas**, no el de 18: se abre con **dos agentes**, no cua
 remide obligatoriamente al llegar a seis pantallas (`UMBRAL-FABRICA-V1.md` §4).
 
 **Lo que queda escrito sobre la cifra 3, para cuando llegue la remedición:** las tres del H1
-necesitaron su segundo intento y `FORO-02` no necesitó ninguno. Lo que cambió entre ellas no es
-solo la pantalla: su tarea declara explícitamente las dos trampas que costaron los reintentos del
-H1 —el nombre accesible de los botones de página (`F-145`) y qué NO se recalcula de la capa de
-datos—. **Con un solo dato no se puede separar «pantalla más simple» de «tarea mejor escrita»**
-(§6).
+necesitaron su segundo intento, `FORO-02` no necesitó ninguno y `FORO-03` escaló los tres —pero
+por un test roto, no por el artefacto (`F-174`): el mismo código que escaló pasa 23/23 y 10/10 en
+cuanto se corrige la prueba. Eso añade un tercer tipo de dato a los dos que ya había: ni «pantalla
+más simple» ni «tarea mejor escrita» explican esta fila, la explica el instrumento. **La cuenta de
+la cifra 3 no distingue el porqué** —una escalada por instrumento cuenta igual que una por el
+Coder, mismo criterio que `F-161`/`F-162`—, así que el umbral seguirá midiendo lo que mide, pero
+quien lea el 1 de 5 debería saber que al menos una de las cuatro filas que fallan no es una señal
+sobre el Coder ni sobre la pantalla (§6).
 
 ### Corriente C · Verificación — NO ABIERTA
 
@@ -467,31 +522,31 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-**La fábrica está en marcha y el camino a la remedición es la cuenta que manda: van 4 de 6.**
+**La fábrica está en marcha y el camino a la remedición es la cuenta que manda: van 5 de 6, queda
+UNA pantalla.**
 
-1. 🟠 **El C5 de `FORO-02`, del PO.** Es lo único que separa la pantalla de «aceptada»: el grafo
-   llega a C4. Con `npm run dev`, entrar en Foros → una categoría. **Y sin pulsar Aprobar/Rechazar
-   en `ADMIN-01` durante la revisión** (`F-169`); si se pulsa, la siembra se repone sola en la
+1. 🟠 **Dos C5 pendientes del PO, ninguno cerrado.** `FORO-02` con la corrección del buscador ya
+   aplicada (falta la confirmación final) y `FORO-03` entera, todavía sin revisar. Con `npm run
+   dev`: Foros → una categoría → el título de un hilo. **Y sin pulsar Aprobar/Rechazar en
+   `ADMIN-01` durante ninguna revisión** (`F-169`); si se pulsa, la siembra se repone sola en la
    siguiente suite, pero conviene saberlo.
-2. **La quinta pantalla, y con qué pareja.** Las dos candidatas, con su precio:
-   - **`FORO-03`** (detalle del hilo) — la más barata: mismo módulo, `0030` ya tiene reacciones y
-     publicaciones, y cierra la navegación que `FORO-02` deja abierta (hoy el título del hilo está
-     apagado). Suma escritura: publicar respuesta y reaccionar, con el límite de 10/hora
-     (RNG-FORO-06) que **no existe en la base todavía**.
-   - **`ADMIN-02`** (panel de cobros) — prioridad «Alta» en su spec, módulo independiente, pero
-     **no hay ni una tabla de suscripciones ni de pagos**: su capa de datos es trabajo de corriente
-     A antes de que la fábrica pueda tocarla, y arrastra acciones delicadas (marcar pago,
-     reactivar, iniciar borrado de una organización).
-   **Recomendación: `FORO-03` como quinta, `ADMIN-02` como sexta** —empezando ya por su esquema—,
-   para que la remedición a seis tenga una pantalla sobre esquema existente y otra sobre tablas
-   nuevas, igual que exigió la mezcla del H1.
-3. **Llevar la cuenta de la remedición.** A las seis se reevalúan las ocho cifras enteras. Dos de
-   las cuatro que hay medidas tienen la cifra 7 sucia (sesión compartida): `ADMIN-01` y `FORO-02`.
-   Si se quiere una cifra 7 limpia de las próximas, **cada corrida en su sesión**, midiendo antes y
-   después.
+2. **La sexta pantalla, la de la remedición.** Sigue en pie la recomendación del Día 17:
+   **`ADMIN-02`** (panel de cobros) — prioridad «Alta» en su spec, pero **no hay ni una tabla de
+   suscripciones ni de pagos**: su capa de datos es trabajo de corriente A antes de que la fábrica
+   pueda tocarla, y arrastra acciones delicadas (marcar pago, reactivar, iniciar borrado de una
+   organización). Empezar por su esquema, como se hizo con `0030`/`0031`-`0033` para el foro.
+3. **La remedición en sí, en cuanto `ADMIN-02` cierre su corrida.** Se reevalúan las ocho cifras
+   enteras de `UMBRAL-FABRICA-V1.md`. Estado de cada una hoy, para no repetir el cálculo desde
+   cero: la cifra 3 (verdes al primer intento) está en 1 de 5, y la 7 (coste de orquestación) sigue
+   sucia en `ADMIN-01`, `FORO-02` y ahora también `FORO-03` —tres de las cinco pantallas medidas—.
+   Si se quiere una cifra 7 limpia de la sexta, **una sesión nueva, solo para esa pantalla**,
+   midiendo antes y después sin haber tocado nada más.
 4. **La deuda que dejó `F-170`:** el barrido buscó contradicciones DENTRO de cada spec y contra su
    HTML. Siguen sin barrerse las contradicciones ENTRE specs distintas (como `F-039`) y entre spec
    y esquema (como `F-027`). Es barato y no se ha hecho.
+5. **La deuda que dejó `F-172`:** el estándar de buscador (input+lupa integrada+"x" al escribir)
+   solo está en `DIR-01` y `FORO-02`. `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen
+   con su implementación propia — migrarlos cuando se toque cada pantalla, no de golpe.
 
 En paralelo, sin acción propia desde este lado:
 
@@ -503,214 +558,13 @@ En paralelo, sin acción propia desde este lado:
 
 ---
 
-### Lo que se cerró el Día 16 (corridas 13/14-sep, C5 y cierre 17-sep)
-
-- **`F-161` cerrado.** Escalada de `DIR-01` (13-sep): no dependía del artefacto —
-  `RequestDetailPanel.tsx`/`RequestsTable.tsx` de `ADMIN-01`, tarea siguiente, todavía no
-  existían y `C1` corre `npm run typecheck` sobre TODO el repo (`F-070`). No cuenta para
-  la cifra 2 del umbral.
-- **`F-162` cerrado.** Escalada de `ADMIN-01` (13-sep): tres bugs en
-  `RequestDetailPanel.test.tsx` (`getByText` de match único, `getByRole` mal usado para
-  negar presencia, `/email/i` sin acotar) más el contagio de `Forum.test.tsx`
-  (`FORO-01`) más un `TZ` no fijado en `requestDateLabel` —ya compensado por el propio
-  Coder con `utcClock()`—. Los tres bugs de test corregidos sin tocar el artefacto;
-  `TZ='UTC'` fijado en `src/test/setup.ts`.
-- **`F-163` cerrado.** `orchestration_pricing.py` sin tarifa para
-  `claude-haiku-4-5-20251001` tumbaba la medición de coste de CUALQUIER pantalla, no
-  solo la afectada. Una fila puesta sin pedirla, con la tarifa de Haiku 3.5 (retirado),
-  revertida dos veces sin verificarla. Corregida contra
-  `platform.claude.com/docs/en/about-claude/pricing`.
-- **`DIR-01` y `ADMIN-01` repetidas enteras en sesión limpia** (14-sep), sobre el corpus ya
-  completo: las dos `PASA` 4/4 en el intento 2. `FORO-01` corrió una sola vez, `PASA` 4/4
-  en el intento 2 (13-sep).
-- **C5 del PO en las tres pantallas: aprobadas sin ninguna corrección.** Dos dudas
-  resueltas contra el código durante la revisión —ninguna era un defecto—, ver §1.
-- **El H1 se cierra.** Ocho cifras evaluadas contra su fuente (§1): falla solo la cifra 3
-  (0 de 3 verdes al primer intento). **Veredicto: Funciona con supervisión — escenario
-  base, 21 semanas.** La corriente B se abre con dos agentes, no cuatro (§2).
-- **Nueve commits en `mvp/bootstrap`**, ocho con `[skip ci]` —heredado de cuando el corpus
-  estaba incompleto— y el noveno, este cierre, sin él: la razón para saltar CI dejó de
-  existir en cuanto las tres pantallas quedaron en verde.
-
-### Lo que se cerró el Día 15 (trabajo 11-sep, redactado 13-sep)
-
-- **`F-160` cerrado.** `--seco` escalaba en falso en las seis tareas del corpus por una
-  columna del CSV (`primer_intento_limpio`, `F-152`) que `dry_run.py` no sabía leer.
-  Arreglado leyendo el CSV por nombre de columna, no por substring de la línea.
-- **Las tres tareas del paso 3 escritas, con sus tests de aceptación, y validadas `--seco`**:
-  `DIR-01`, `ADMIN-01`, `FORO-01`. Corpus de seis a nueve tareas.
-- **`OperatorShell.tsx` nuevo**, porque el Operador no encaja en `AppShell` (nav propio,
-  `OperatorProfile` sin organización). `AppShell.tsx` y sus tests, intactos.
-- **Hallazgo sobre `ADMIN-01`: ningún envío de correo existe en el proyecto.** El texto de
-  confirmación de Aprobar/Rechazar se corrigió para no afirmar un email que nadie manda.
-- **Aclarado sin ambigüedad: esta sesión remota no ve `C:\Users\admin\...`.** El PO dio por
-  hecho lo contrario; comprobado contra la propia máquina (`uname`, `mount`), no discutido
-  de oídas. Las tres corridas del paso 5 necesitan el entorno local.
-- **Siete commits en `mvp/bootstrap`**: el de la tarea `DIR-01` salió rojo por diseño SIN
-  `[skip ci]` —se me olvidó, primer descuido de la sesión—; corregido desde `ADMIN-01` en
-  adelante, con `[skip ci]` en los dos commits de tarea que quedaban. Ver §1.
-
-### Lo que se cerró el Día 14 (11-sep)
-
-- **Contestada la última pregunta abierta de la familia `F-155`, y la respuesta es que no
-  hay nada que arreglar.** Auditados contra el criterio exacto —un `SELECT`/`EXISTS` bajo
-  RLS dentro de código `security invoker` cuyo resultado vacío decide en vez de fallar—
-  los siete disparadores de `app`, las 20 políticas de RLS de `public` y la función Edge
-  `vera/index.ts`. Ninguno tiene la forma: **los disparadores no leen tablas**, las dos
-  políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada
-  aplicaría, y `vera` no toca Postgres.
-- **Un resultado negativo no se guarda en un documento: se ancla.** Tres asertos nuevos
-  en `01_schema_smoke.sql`, ninguno con nombres de tabla escritos a mano —salen de
-  `pg_class`, así que una tabla con RLS nueva queda cubierta sin tocar el fichero:
-  1. ninguna función `security invoker` de `app`/`public` fuera de la superficie auditada
-     (seis, listadas con su porqué) puede nombrar una tabla con RLS;
-  2. **una canaria que demuestra que el detector detecta** — se crea una función `invoker`
-     que lee `thread_items` y se exige que el detector la nombre. Sin esto, el aserto de
-     arriba pasaría en vacío el día que el barrido dejara de medir, que es exactamente
-     como `F-146` sobrevivió desde `0012`;
-  3. la premisa de la inmunidad de `security definer`: ninguna tabla con `FORCE ROW LEVEL
-     SECURITY` y ninguna función `definer` de otro dueño. Si alguna de las dos cae,
-     `F-148` renace entero, en silencio y en todas partes a la vez.
-- **Sin migración nueva, a propósito.** No hay nada que corregir en la base: lo de hoy es
-  una auditoría y su ancla. `0026` sigue siendo la última migración, y el número de
-  hallazgos sigue en `F-156`.
-- **Entregable 6: recomprobado con llamada real, sigue bloqueado.** Mismo `429`.
-
-### Lo que se cerró el Día 13 (10-sep)
-
-- **`F-156` (nuevo, respondiendo la pregunta abierta de `F-155`): cerrado en `0026`.**
-  El guardia "ya has consultado esta referencia con este distribuidor" de
-  `create_inquiry` se saltaba en silencio para cualquier EDITOR de la organización que
-  no fuera quien escribió la consulta original ni un ADMIN — permitiendo duplicar una
-  consulta a la misma línea y al mismo distribuidor. Nuevo helper
-  `app.org_already_inquired`, `security definer`, mismo patrón que
-  `app.thread_counterpart`/`app.resolve_thread`/`app.is_item_sender`.
-- **Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos contra
-  el criterio de `F-155`.** Solo `create_inquiry` tenía el hueco; las otras cuatro ya
-  estaban limpias (dos `security definer` desde `0012`/`0023`, dos arregladas en
-  `0025`).
-
-### Lo que se cerró el Día 12 (10-sep)
-
-- **Entregable 6: recomprobado, sigue bloqueado.** Mismo `429 RESOURCE_EXHAUSTED`, sin
-  movimiento posible desde este repo. CI del cierre del Día 11 confirmada en verde.
-- **Backlog de `0023` §4 (reparto exacto hacia la CONTRAPARTE): cerrado en `0024`.**
-  Nueva comprobación aditiva en `app.guard_cek_recipients`: con hilo existente, el
-  reparto tiene que ser subconjunto exacto de `thread_public_keys(thread_id)`.
-- **`F-154` (nuevo, no declarado antes): cerrado en `0024`.** Ningún destinatario de la
-  CEK puede pertenecer a una tercera organización ajena al intercambio — ni V-1 ni V-2
-  de `0023` lo comprobaban nunca.
-- **`F-155` (nuevo, descubierto verificando `0024`): cerrado en `0025`.** `otra` (la
-  organización de enfrente) se calculaba con un `SELECT` bajo RLS que devolvía `NULL`
-  para quien escribe su primer elemento en un hilo con el ámbito encendido — mismo
-  patrón que `F-148`. Nuevo helper `app.thread_counterpart()`, `security definer`.
-- **`F-152`: cerrado.** Columna `primer_intento_limpio` en `harness-metrics.csv` —
-  distingue un veredicto verde limpio de uno rescatado por reintentos, sin recalcular
-  las 143 filas históricas.
-
-### Lo que se cerró el Día 11 (10-sep) — resumen; el detalle vive en `git show c395432`
-
-- **Infraestructura GCP del entregable 6, creada y verificada.** Bloqueada en la
-  aprobación de Anthropic (Model Garden), sin fecha.
-- **Serie 18 (réplica n=5 de la 17): 5/5 en veredicto, con un matiz nuevo — `F-152`**
-  (cerrado el Día 12, ver arriba).
-- **Catálogo de `bearingworld-e2e`: sin *gap* con producción**, 221 filas / 6
-  organizaciones en las dos bases.
-- **Vercel Preview deployments: recuperadas, tres causas encadenadas resueltas — `F-153`.**
-
-### Lo que se cerró el Día 10 (8-sep) — resumen; el detalle vive en `git show 522b94a`
-
-- **`F-151` cerrado.** Cuenta y proyecto de Vercel nuevos (`alvaro-7494` / `rin-world-io`),
-  `ci.yml` apuntado con `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` literales en vez de
-  `--scope`, verificado en CI real (`gh run` `34219861643`) y con `curl` (`HTTP 200`).
-- **Entregable 2 (despliegue continuo) quedó cerrado del todo.** VERA y Vercel, los dos
-  verdes en CI real — nada a medias, a diferencia del cierre del 7-sep.
-- **Cuenta vieja de Vercel, dada por perdida sin intentar recuperarla.** El PO tomó
-  directamente la tercera vía que el propio `F-151` dejaba escrita — `bearingworld.vercel.app`
-  y sus variables de entorno no se recuperaron ni se intentó.
-
-### Lo que se cerró el Día 9 (6/7-sep) — resumen; el detalle vive en `git show 9d29222`
-
-- **Entregable 1 (tres entornos): hecho.** `entornos.md`, producción y staging reales.
-- **Entregable 3 (aislamiento demo/e2e): hecho, con prueba real.** `motioniq-rag`
-  borrado por el PO, `bearingworld-e2e` creado, sembrado, probado con Playwright
-  (53/53) ANTES de conectar CI, y CI ya apuntando ahí. `F-149` cerrado de raíz.
-- **Entregable 6 (residencia UE): runbook listo, código sin aplicar.**
-  `vera-vertex-eu-migracion.md`.
-- **Entregable 2: quedó a medias** — VERA verde en CI real, Vercel bloqueado por
-  `F-151`. Cerrado hoy, Día 10 (ver arriba).
-
-### Lo que se cerró el Día 8 — el detalle vive en `git show 591ea20`
-
-> ~~1. Encender el interruptor de D-7 en una organización de prueba y usar la aplicación de
-> verdad.~~ **Hecho 5-sep-2026, y cerrado del todo.** D-7 encendido en `Nordwälz Lager`,
-> las tres vías de escritura de `0023` probadas con el cliente real como ADMIN (§1) **y
-> luego como EDITOR de verdad** (punto 3 de esta lista, ya hecho también) — la rama de
-> `caller_bypasses_visibility_scope()` que ninguna prueba anterior tocó, incluido el
-> hallazgo original de `F-148`, queda ejercitada y en verde.
->
-> ~~2. Lo que `F-148` deja abierto: si queda algún OTRO camino de escritura que dependa de
-> una política de lectura.~~ **Hecho 5-sep-2026.** `inventory_lines`, `favorite_distributors`
-> y las dos funciones de demo revisadas — ninguna tiene el hueco de `F-148`. Y salió un
-> CUARTO camino que no estaba en la lista original: `acceptOffer`/`rejectOffer` en
-> `offers.ts`, con la misma forma (`update().select()`) pero sin el mismo riesgo, porque
-> actúa sobre una fila YA visible, no una recién creada. Razonado y probado con el cliente
-> real (§1).
->
-> ~~3. Opcional y barato: meter `noUnusedLocals` en los `constraints` de la tarea.~~
-> **Hecho 5-sep-2026**, `a385eba`. `test_checks` en verde.
->
-> ~~4. Vercel sigue sin redesplegar, con DOS cambios de cliente pendientes.~~ **Hecho
-> 5-sep-2026.** `vercel --prod` desde `app/`, alias `https://bearingworld.vercel.app` en
-> `HTTP 200`, bundle servido confirmado con `p_quantity` dentro (§1).
-
-1. ~~Serie 17, con `F-147` puesto, y la pregunta de `n=3`.~~ **Decidido 5-sep-2026, PO:
-   subir las tiradas por serie.** A partir de la 17, una serie mide con **`n=5`**, no
-   `n=3` — ver la fila de §4. **Corrida y terminada: `17a`-`17e`, las CINCO en VERDE al
-   primer intento** — la primera serie 5/5 del proyecto (la 15 fue 3/3 y no sobrevivió a
-   la réplica, serie 16: 1/3). $0,336154 en total, sin ningún hueco nuevo. Ver §1 para el
-   detalle fila a fila.
-2. ~~Decidir si el guardia de `cruzar_con_el_contrato` aprende a mirar nombres
-   accesibles (`F-145`).~~ **Decidido 5-sep-2026: NO, y no por ruido — por algo peor: la
-   corrección obvia no funciona.** Medido antes de escribir nada (§1): el `name: '2'` que
-   se le escapó a `F-145` SÍ lo parsea el guardia (`'2' in nombres_u` es `True`) — lo que
-   falla es `_declarado()`, cuyo último recurso es `nombre in tarea`, una subcadena SIN
-   borde de palabra sobre un blob de 73 KB donde el carácter `'2'` aparece **468 veces**
-   por casualidad (fechas, `F-125`, `0012:185`...). Probé el arreglo obvio —exigir borde
-   de palabra para nombres de 1-2 caracteres o puramente numéricos— contra las seis
-   tareas: **cero avisos nuevos en las seis**, incluida `MSG-01`. No porque el arreglo no
-   sirva en general, sino porque el propio `component_api` de `MSG-01`, AL EXPLICAR
-   `F-145`, cita el HTML de ejemplo `<button aria-label="Pagina 2">2</button>` — y ese
-   `>2<` respeta el borde de palabra igual de bien que un `2` de verdad. **El guardia no
-   necesita aprender a mirar nombres accesibles: necesitaría aprender a distinguir una
-   declaración de un ejemplo ilustrativo dentro de la misma prosa**, que es un problema
-   mucho más caro y con su propio riesgo de huecos nuevos. No se escribe.
-3. ~~Añadir un miembro EDITOR real a una organización de prueba, para probar la rama de
-   `caller_bypasses_visibility_scope()` que ningún ADMIN ejercita.~~ **Hecho 5-sep-2026**,
-   con permiso explícito del PO. Cuenta creada por el Admin API de Supabase (no por SQL
-   directo sobre `auth.users` — la lección de `F-013`), `members` la asignó sola a
-   `role='EDITOR'`/`visibility_scope='OWN'` (segundo miembro de la organización, trigger
-   de `0001`/`0018`), y el llavero se publicó solo al iniciar sesión, sin tocar nada a
-   mano (§1). **D-8 confirmado con el cliente real por primera vez:** el EDITOR vio
-   «0 hilos» con la organización ya teniendo una conversación activa. Escribió una
-   `CONSULTA` de verdad (`create_inquiry`, no-ADMIN, D-7 encendido) y a partir de ahí vio
-   «1 hilo» — la rama que exige clave ya envuelta, verde con el cliente real. Por el
-   camino salió `F-149` (§1): probar a mano contra el proyecto compartido mientras se
-   sigue haciendo `git push` dispara CI → Playwright, que resetea la siembra debajo de
-   la prueba en curso — no un bug, una regla de proceso nueva.
-
-**Los seis puntos del Día 7 quedaron completos, y el PO pidió el ritual de cierre
-entero** — corrido de verdad, no dado por hecho: §1 con las comprobaciones de cierre,
-§2 revisado, §6 con lo que sigue sin saberse, hallazgos y métricas volcados, commit y
-push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el entregable 3
-— ver §3 de arriba para el punto exacto donde retoma el Día 10.
-
----
-
 ## 4 · Decisiones vivas
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **Estándar de buscador: input con lupa integrada + "x" al escribir, server-side** | 18-sep-2026, PO (`F-172`), en la C5 de `FORO-02`. Manda sobre lo que diga la spec de cada pantalla, incluidas las ya aprobadas. La búsqueda sigue siendo server-side (Enter/lupa), no live search — decisión explícita, distinta de la "x" | `app/src/components/SearchField.tsx`, `design-system.md` |
+| **`RNG-FORO-06` cuenta por HORA NATURAL, no por ventana móvil** | 18-sep-2026, resuelta al escribir `0031`: la spec se contradice entre su `Requirement` ("hora natural") y su `Scenario` ("en la última hora"). Gana la regla, mismo criterio que `F-158`/`F-170`. La ventana es siempre `[HH:00:00, HH:59:59]` del reloj | `0031`, `supabase/specs/community-forum/spec.md` |
+| **Un guardia que se salta a sí mismo comparando `current_user` NO puede ser `security definer`** | 18-sep-2026, `F-173`. Dentro de una función definer, `current_user` es el DUEÑO de la función, no quien llama: el bypass de siembra se vuelve permanente y el guardia deja de guardar. Regla general, no solo del foro | `F-173`, `app.guard_forum_rate_limit` (0031) |
 | **`openspec/design-gui/Ingles/` se olvida para siempre** | 17-sep-2026, PO. Copia puntual de las specs para traducir; se deja como está, no se versiona, no se revisa ni se sincroniza, y **no se menciona en ningún relevo ni cierre**. Llevaba días apareciendo como `??` en `git status` y colándose en cada resumen | `.gitignore`, `Ingles/_CARPETA-ARCHIVADA-NO-TOCAR.md` |
 | **Las invitaciones pendientes ocupan plaza en el tope de 5 usuarios** | 17-sep-2026, PO (`F-170`, `INVT-01`). Si no la ocuparan, se podrían enviar más invitaciones que plazas y acabar con más de 5 usuarios. `Reenviar` una expirada respeta el mismo límite | Spec `INVT-01` §3, `barrido-specs-F158.md` |
 | **Al llegar al límite de usuarios, el mensaje se muestra** | 17-sep-2026, PO (`F-170`, `REG-09`): «hay que mostrarlo al usuario sin dudarlo». La spec decía «sin mensaje» | Spec `REG-09` §6 |
@@ -766,7 +620,7 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 | ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | ⚪ | ~~`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local~~ | **Resuelto 17-sep: en `app/.env` (no como variable de usuario, como decía esta fila), login comprobado, e2e local 4/4** |
 | 🟠 | **El C5 de `FORO-02` sigue sin cerrarse del todo (18-sep).** El PO revisó en `npm run dev` y señaló dos síntomas (`F-172`): "Crear hilo" sin acción y el buscador inconsistente con DIR-01. El primero era intencional (documentado, `disabled` con motivo). El segundo era real pero distinto de lo que parecía: ninguna pantalla tenía la "x" que el PO recordaba en DIR-01. El PO decidió el estándar y ya está aplicado en las dos pantallas (`F-172`) — **falta la confirmación final del PO sobre el resultado** | Álvaro: revisar de nuevo y confirmar C5 |
-| 🟡 | **La cifra 7 de `FORO-02` (21,96 $) se midió en sesión compartida**, igual que la de `ADMIN-01`: es un techo. Dos de las cuatro pantallas medidas tienen ese defecto, y el umbral se reevalúa a las seis | Quien corra la quinta y la sexta: una corrida por sesión |
+| 🟡 | **La cifra 7 está sucia en tres de las cinco pantallas medidas** (`ADMIN-01`, `FORO-02` y ahora `FORO-03`, 18-sep: 7,82 $ de delta en una sesión que ya traía encima el buscador y tres migraciones): son techos, no medidas limpias. Solo queda una pantalla (la sexta, de la remedición) para intentar una cifra 7 real | Quien corra la sexta: sesión nueva, solo para esa pantalla |
 | ⚪ | ~~**El límite de 10 publicaciones por hora (RNG-FORO-06) no existe en la base.**~~ **Resuelto 18-sep-2026: `0031`/`0032`, aplicadas y comprobadas contra el catálogo de las dos bases.** La primera versión del disparador tenía un bug real (`F-173`: `security definer` hacía que el bypass de siembra se activara siempre) cazado en Postgres desechable antes de tocar nada real | Corriente A |
 | 🟡 | **`F-172`: el estándar de buscador (input+lupa integrada+"x" al escribir) solo está aplicado en DIR-01 y FORO-02.** `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen con su implementación propia, sin la "x" y (en INV-01) con la lupa a la izquierda | Quien toque esas pantallas: migrar a `components/SearchField.tsx` |
 | ⚪ | **Resuelto 17-sep: decisión del PO (sembrar antes de cada corrida), automatizada en `resetDemo` y probada reproduciendo el fallo.** ~~`F-169` · una prueba a mano de `ADMIN-01` sobre la base de producción descuadra la siembra~~ (pasó en la C5 del 17-sep: una aprobada, una rechazada y devuelta). Repuesta el mismo día; la causa sigue: la próxima corrida del arnés le cobraría al Coder un fallo de datos | PO: resembrar antes de cada corrida de `ADMIN-*`, o C5 sin pulsar acciones |
@@ -803,6 +657,23 @@ push. El Día 9 empezó en el punto 1 de esa lista y terminó bloqueado en el en
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 
+- **Si `postReply` funciona de verdad contra la base real.** El e2e de `FORO-03` la deja fuera a
+  propósito (sin `DELETE` en `forum_posts` y sin teardown de foro, una respuesta real se quedaría
+  para siempre y gastaría el cupo de `RNG-FORO-06`). Lo que SÍ está probado: el `INSERT` bajo el
+  mismo patrón de firma y RLS en el banco de esquema (`0031`) y en `ForumThread.test.tsx` contra un
+  mock. Lo que NO: que la pantalla de verdad, en un navegador, publique una respuesta y la vea
+  aparecer. La primera vez que alguien la pruebe a mano debería ser el C5 del PO, con cuidado —
+  cada respuesta real cuenta para el límite de la hora y no hay forma de deshacerla.
+- **Si "hora natural" (reloj de pared) es lo que el PO quiere para `RNG-FORO-06`, o si la ventana
+  móvil de la que habla el `Scenario` de la spec era la intención real.** La decisión de hoy sigue
+  la regla del `Requirement` sobre el ejemplo del `Scenario` (mismo criterio que `F-158`), pero es
+  la primera vez que esa regla se aplica a un comportamiento de PRODUCTO —cuándo se resetea un
+  límite—, no a un umbral visual. Nadie se lo ha preguntado al PO todavía.
+- **Si una escalada por un test roto (`F-174`) es rara o va a repetirse.** Es la primera de esta
+  clase concreta —las anteriores (`F-161`/`F-162`) eran contagio entre tareas o un bug de zona
+  horaria—. El validador `--seco` comprueba que los nombres accesibles estén declarados, pero no
+  comprueba que los MOCKS del propio test simulen un servidor que cambia entre llamadas. No se sabe
+  si vale la pena escribir ese chequeo o si es demasiado específico para generalizarse.
 - **Si el 4/4 al primer intento de `FORO-02` es la tarea o la pantalla.** Su `component_api`
   declara las dos trampas que costaron reintentos en el H1 —el nombre accesible de los botones de
   página y qué no se recalcula de la capa—, y además es una lista de solo lectura sin columnas
@@ -811,10 +682,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Si la vista `forum_thread_list` aguanta un foro de verdad.** Cuenta con dos `left join` y un
   `count(distinct)` por hilo, y hoy la siembra tiene 8 hilos y 20 publicaciones. Nadie la ha medido
   con volumen, y la paginación pide `count: 'exact'` en cada página.
-- **Si reaccionar y quitar la reacción funciona desde una interfaz.** El esquema lo permite y el
-  banco de esquema lo prueba (firma, duplicado, borrar solo lo propio), pero **ninguna pantalla lo
-  hace todavía**: `FORO-02` solo muestra el total. Hasta `FORO-03`, la mitad de escritura de `0030`
-  vive sin usarse — el mismo estado en el que estuvo `quantity` en `OFERTA`.
+- ~~Si reaccionar y quitar la reacción funciona desde una interfaz.~~ **Contestado el 18-sep:
+  sí.** `FORO-03` lo construye (botón `👍` con `aria-pressed`) y el e2e real lo prueba
+  reaccionando y quitando la reacción contra `troxminloxkjwihwfevs`, autolimpiándose. Lo que
+  sigue sin probarse es `postReply` (ver arriba) — reaccionar y publicar son caminos de
+  escritura distintos y uno sí quedó cubierto de punta a punta.
 - **Si el badge de categoría de `FORO-02` hará falta alguna vez.** La spec lo condiciona a llegar
   «desde los hilos recientes de FORO-01», y esos hilos llevan al DETALLE (`FORO-03`), no a la lista.
   Si esa puerta no existe nunca, el badge es una regla sin caso.
@@ -1105,6 +977,12 @@ Orden de lectura, y el orden importa:
     producción; ahora `resetDemo` la repone antes de cada suite, decisión del PO). Y trece filas
     viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. Y `F-158`,
     cerrado el mismo 17-sep por decisión del PO: el ejemplo de la spec de `ADMIN-01` pasa a 30 h.
+    Del 18-sep: `F-172` (cerrado en `DIR-01`/`FORO-02`, abierto en `INV-01`/`MSG-01`/`SentOffers`
+    — estándar de buscador nuevo, decisión del PO en la C5 de `FORO-02`), `F-173` (cerrado —
+    `security definer` rompía el propio guardia de `RNG-FORO-06`, cazado antes de tocar las
+    bases reales), `F-174` (cerrado — la escalada de `FORO-03` era un test roto, no el
+    artefacto) y `F-175` (cerrado, sin acción — un commit intermedio heredó un rojo ya
+    esperado sin su propio `[skip ci]`).
 
 ---
 
@@ -1182,3 +1060,26 @@ PASA 4/4 al primer intento**, la primera del proyecto, 0,037318 $ y 1,2 minutos 
 orquestación al cierre: **1.303,32 $** acumulados, **179,02 $** esta sesión, de los que **21,96 $**
 son la corrida de `FORO-02` · 22 commits en `mvp/bootstrap` · queda el C5 de `FORO-02`, del PO ·
 Dirección Técnica, Nortex Systems*
+
+*Día 18 de V1 · 18-sep-2026 · fecha leída de la máquina (`date -u`) al escribir este cierre:
+`2026-09-18`, 16:23 UTC, el mismo día del trabajo · sesión lanzada sobre uno de los cuatro
+worktrees fantasma (`dia-14-correcciones-mvp-8160b9`, en `43bb222`), reseteado a
+`origin/mvp/bootstrap` para trabajar de verdad · el C5 de `FORO-02` no salió limpio: el PO señaló
+"Crear hilo" (intencional, no defecto) y un buscador inconsistente con `DIR-01` — que tampoco
+tenía la "x" que se recordaba —, y decidió ahí mismo el estándar transversal (`F-172`): nuevo
+`app/src/components/SearchField.tsx`, aplicado en `DIR-01`/`FORO-02`, deuda en `INV-01`/`MSG-01`/
+`SentOffers` · `RNG-FORO-06` escrito a mano (`0031`/`0032`/`0033`) con un bug real cazado en
+Postgres desechable antes de tocar las bases (`F-173`: `security definer` volvía permanente el
+bypass de siembra del guardia) · `FORO-03` construida entera: capa de datos, wiring, contrato de
+aceptación (23 pruebas + e2e real) y tarea, validada `--seco` sin avisos · la corrida real escaló
+2/4 en los tres intentos, y no era el Coder (`F-174`: un test propio con datos mockeados que nunca
+cambiaban) — corregido sin tocar el artefacto, 23/23 de unidad y **10/10 del e2e real** contra
+`troxminloxkjwihwfevs`, incluida la reacción que se autolimpia · un commit intermedio salió rojo
+por heredar ese mismo test roto sin su propio `[skip ci]` (`F-175`, sin acción) · CI final en seis
+jobs de seis verdes y producción sirviendo `FORO-03` verificado por contenido
+(`index-DkCZ8HQ8.js`, 495.540 bytes) · coste-sombra de orquestación al cierre: **1.371,48 $**
+acumulados, **54,45 $** esta sesión — sigue sin poder medirse limpia por pantalla (§1, §5), el
+Coder: **0,143118 $** en los tres intentos de `FORO-03` · **van 5 de las 24 pantallas de la
+fábrica, cifra 3 en 1 de 5, queda UNA para la remedición obligatoria** · 11 commits en
+`mvp/bootstrap` · quedan DOS C5 sin cerrar, `FORO-02` (con su corrección ya aplicada) y `FORO-03`
+entera — ninguna se cuenta como aceptada · Dirección Técnica, Nortex Systems*

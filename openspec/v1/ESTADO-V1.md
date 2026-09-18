@@ -351,9 +351,12 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 >    una línea del artefacto: 23/23 de unidad, 871 del repo entero y **10/10 del e2e
 >    contra `troxminloxkjwihwfevs`**, incluida la reacción que se autolimpia. Cuenta como
 >    ESCALADO para la cifra 3 del umbral — el CSV no se recalcula.
-> 6. **Un commit intermedio salió rojo en CI por heredar el test roto de uno anterior con
->    `[skip ci]`** (`F-175`): sin acción, el siguiente push ya iba verde en los seis jobs,
->    y producción sirve `FORO-03` verificado por contenido.
+> 6. **Un commit intermedio salió rojo en CI por heredar el test roto de uno anterior que sí
+>    saltaba CI** (`F-175`): sin acción, el siguiente push ya iba verde en los seis jobs, y
+>    producción sirve `FORO-03` verificado por contenido. Y un commit de documentación
+>    **no disparó ningún run**, sin pedirlo: su cuerpo citaba entre comillas el marcador de
+>    salto para EXPLICAR `F-175`, y GitHub lo lee igual venga o no entre comillas —
+>    exactamente `F-164`, cometido por quien acababa de leer sobre `F-164` (`F-176`).
 > 7. **Coste-sombra de orquestación: de $1.363,42 a $1.371,48** — la sesión entera del día,
 >    no solo `FORO-03`, sigue sin poder medirse limpia (misma limitación que `ADMIN-01`/
 >    `FORO-02`, §1). El Coder: 0,143118 $ en los tres intentos, 5,9 minutos.
@@ -981,8 +984,10 @@ Orden de lectura, y el orden importa:
     — estándar de buscador nuevo, decisión del PO en la C5 de `FORO-02`), `F-173` (cerrado —
     `security definer` rompía el propio guardia de `RNG-FORO-06`, cazado antes de tocar las
     bases reales), `F-174` (cerrado — la escalada de `FORO-03` era un test roto, no el
-    artefacto) y `F-175` (cerrado, sin acción — un commit intermedio heredó un rojo ya
-    esperado sin su propio `[skip ci]`).
+    artefacto), `F-175` (cerrado, sin acción — un commit intermedio heredó un rojo ya
+    esperado sin saltar CI él mismo) y `F-176` (cerrado, sin acción posible — un commit de
+    documentación citó el marcador de salto ENTRE COMILLAS para explicar `F-175`, y eso
+    bastó para que no disparara CI: mismo mecanismo que `F-164`, otra vez).
 
 ---
 
@@ -1075,8 +1080,10 @@ aceptación (23 pruebas + e2e real) y tarea, validada `--seco` sin avisos · la 
 2/4 en los tres intentos, y no era el Coder (`F-174`: un test propio con datos mockeados que nunca
 cambiaban) — corregido sin tocar el artefacto, 23/23 de unidad y **10/10 del e2e real** contra
 `troxminloxkjwihwfevs`, incluida la reacción que se autolimpia · un commit intermedio salió rojo
-por heredar ese mismo test roto sin su propio `[skip ci]` (`F-175`, sin acción) · CI final en seis
-jobs de seis verdes y producción sirviendo `FORO-03` verificado por contenido
+por heredar ese mismo test roto sin saltar CI él mismo (`F-175`, sin acción), y uno de
+documentación no disparó ningún run al citar el marcador de salto entre comillas para explicar
+eso mismo -- mecanismo de `F-164`, otra vez (`F-176`, sin acción posible sobre lo ya hecho) · CI
+final en seis jobs de seis verdes y producción sirviendo `FORO-03` verificado por contenido
 (`index-DkCZ8HQ8.js`, 495.540 bytes) · coste-sombra de orquestación al cierre: **1.371,48 $**
 acumulados, **54,45 $** esta sesión — sigue sin poder medirse limpia por pantalla (§1, §5), el
 Coder: **0,143118 $** en los tres intentos de `FORO-03` · **van 5 de las 24 pantallas de la

@@ -2666,6 +2666,72 @@ begin;
 commit;
 
 -- -----------------------------------------------------------------------------
+-- 0033 · forum_post_detail -- reacciones POR PUBLICACION, para FORO-03
+-- -----------------------------------------------------------------------------
+-- En este punto, gracias al bloque de 0031, "Primer mensaje." (bbb1) tiene DOS
+-- reacciones (a1 la quito, b1 sigue) y "Segundo mensaje." tiene UNA (a1). Las
+-- diez publicaciones de limite de 0031 no tienen ninguna reaccion.
+do $$
+begin
+  assert (select reaction_count from public.forum_post_detail
+           where body = 'Primer mensaje.') = 1,
+    '0033: "Primer mensaje." tiene la reaccion de b1 -- a1 quito la suya en 0030';
+  assert (select reaction_count from public.forum_post_detail
+           where body = 'Segundo mensaje.') = 1,
+    '0033: "Segundo mensaje." tiene la de a1';
+  assert (select reaction_count from public.forum_post_detail
+           where body = 'Publicacion de limite numero 1.') = 0,
+    '0033: una publicacion sin ninguna reaccion cuenta cero, no NULL';
+  raise notice 'OK · 0033: el recuento es POR PUBLICACION, no el total del hilo (eso es forum_thread_list, otra cosa)';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', :b1, true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select reacted_by_me from public.forum_post_detail
+             where body = 'Primer mensaje.') = true,
+      '0033: b1 SI reacciono a "Primer mensaje." -- reacted_by_me lo dice';
+    assert (select reacted_by_me from public.forum_post_detail
+             where body = 'Tercer mensaje.') = false,
+      '0033: b1 no reacciono a "Tercer mensaje." -- false, no NULL, aunque esa publicacion no tenga ninguna reaccion de nadie';
+    raise notice 'OK · 0033: reacted_by_me distingue "reacciono otro", "no reacciono nadie" y "reacciono quien consulta"';
+  end
+  $$;
+commit;
+
+-- Quien no es miembro, no ve nada -- mismo criterio que forum_thread_list.
+begin;
+  select set_config('request.jwt.claim.sub', '0f000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.forum_post_detail) = 0,
+      '0033: quien no es miembro no ve el detalle de ninguna publicacion';
+    raise notice 'OK · 0033: forum_post_detail respeta la RLS de quien consulta';
+  end
+  $$;
+commit;
+
+do $$
+declare
+  sobran text;
+begin
+  select string_agg(grantee || ':' || privilege_type, ', ' order by grantee, privilege_type)
+    into sobran
+    from information_schema.role_table_grants
+   where table_schema = 'public' and table_name = 'forum_post_detail'
+     and (grantee = 'anon' or (grantee = 'authenticated' and privilege_type <> 'SELECT'));
+
+  assert sobran is null,
+    '0033: privilegios que no deberia haber en forum_post_detail: ' || coalesce(sobran, '');
+  raise notice 'OK · 0033: anon nada, authenticated solo SELECT';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

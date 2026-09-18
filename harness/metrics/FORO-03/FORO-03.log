@@ -1,0 +1,140 @@
+
+==============================================================================
+· corrida arrancada 2026-09-18 18:05:07 · harness/tasks/FORO-03.json
+==============================================================================
+Log de esta corrida: harness\metrics\FORO-03\FORO-03.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/forum/ForumThread.module.css', 'app/src/screens/forum/ForumThread.tsx']
+  tokens in/out: 29315/25689   cache: 0.0% hit
+  coste real: $0.046808   en frio: $0.046808
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\FORO-03\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/forum/ForumThread.module.css', 'app/src/screens/forum/ForumThread.tsx']
+  tokens in/out: 36141/12790   cache: 80.4% hit
+  coste real: $0.020407   en frio: $0.032785
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\FORO-03\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/forum/ForumThread.module.css', 'app/src/screens/forum/ForumThread.tsx']
+  tokens in/out: 36526/56067   cache: 91.11% hit
+  coste real: $0.075903   en frio: $0.090080
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\FORO-03\attempt_3.json (F-122)
+  CSV: 2026-09-18,FORO-03,FORO-03,deepseek-v4-flash,29315,25689,0.046808,1,1.5,app/src/screens/forum/ForumThread.module.css;app/src/screens/forum/ForumThread.tsx,0.00,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-18,FORO-03,FORO-03,deepseek-v4-flash,36141,12790,0.020407,2,0.7,app/src/screens/forum/ForumThread.module.css;app/src/screens/forum/ForumThread.tsx,80.40,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-18,FORO-03,FORO-03,deepseek-v4-flash,36526,56067,0.075903,3,3.7,app/src/screens/forum/ForumThread.module.css;app/src/screens/forum/ForumThread.tsx,91.11,si,-,-,-,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\FORO-03\attempt_1.json
+  harness\metrics\FORO-03\attempt_2.json
+  harness\metrics\FORO-03\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run test:arnes (exit 1)
+1 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/forum/ForumThread.test.tsx > FORO-03 · reaccionar (spec §3, CA-FORO-05) > el contador se actualiza -- CA-FORO-05, "actualiza inmediatamente"
+
+--- ultimas lineas de la salida ---
+                <button
+                  class="_postAction_98a3fb"
+                  disabled=""
+                  title="Editar todavía no está disponible: el esquema no permite modificar publicaciones."
+                  type="button"
+                >
+                  Editar
+                </button>
+                <button
+                  class="_postAction_98a3fb"
+                  disabled=""
+                  title="Eliminar todavía no está disponible: el esquema no permite borrar publicaciones."
+                  type="button"
+                >
+                  Eliminar
+                </button>
+              </span>
+            </div>
+          </div>
+          <div
+            class="_post_98a3fb"
+            data-testid="forum-post-p3"
+          >
+            <div
+              class="_postHead_98a3fb"
+            >
+              <span
+                class="_postOrg_98a3fb"
+              >
+                Nordwälz Lager[...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/screens/forum/ForumThread.test.tsx:295:11
+    293|     const p2 = screen.getByTestId('forum-post-p2');
+    294|     fireEvent.click(within(p2).getByRole('button', { name: '👍 1' }));
+    295|     await waitFor(() => expect(within(p2).getByRole('button', { name: …
+       |           ^
+    296|   });
+    297| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+### C2 ROJO
+vitest de aceptacion (exit 1)
+1 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/forum/ForumThread.test.tsx > FORO-03 · reaccionar (spec §3, CA-FORO-05) > el contador se actualiza -- CA-FORO-05, "actualiza inmediatamente"
+
+--- ultimas lineas de la salida ---
+                <button
+                  class="_postAction_98a3fb"
+                  disabled=""
+                  title="Editar todavía no está disponible: el esquema no permite modificar publicaciones."
+                  type="button"
+                >
+                  Editar
+                </button>
+                <button
+                  class="_postAction_98a3fb"
+                  disabled=""
+                  title="Eliminar todavía no está disponible: el esquema no permite borrar publicaciones."
+                  type="button"
+                >
+                  Eliminar
+                </button>
+              </span>
+            </div>
+          </div>
+          <div
+            class="_post_98a3fb"
+            data-testid="forum-post-p3"
+          >
+            <div
+              class="_postHead_98a3fb"
+            >
+              <span
+                class="_postOrg_98a3fb"
+              >
+                Nordwälz Lager[...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/screens/forum/ForumThread.test.tsx:295:11
+    293|     const p2 = screen.getByTestId('forum-post-p2');
+    294|     fireEvent.click(within(p2).getByRole('button', { name: '👍 1' }));
+    295|     await waitFor(() => expect(within(p2).getByRole('button', { name: …
+       |           ^
+    296|   });
+    297| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

@@ -1,1 +1,341 @@
-/* Marcador: la CSS de verdad la escribe la tarea del arnés de FORO-03. */
+/* FORO-03 · Vista de un Hilo.
+   Todos los colores salen de los tokens de app/src/styles/tokens.css: en este
+   fichero no hay ningún literal, ni hex ni rgba. Si algún valor no encaja con
+   un token existente, se usa el más cercano y se dice aquí. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+}
+
+/* ── Cabecera: eyebrow, breadcrumb y título ──────────────────────────────── */
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--bw-font-title);
+  /* La spec del módulo lo pide a 10px; el token más cercano es --bw-size-brand. */
+  font-size: var(--bw-size-brand);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-steel-mist);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-family: var(--bw-font-mono);
+  /* La spec lo pide a 11px en IBM Plex Mono; el token más cercano es label. */
+  font-size: var(--bw-size-label);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+/* Los dos enlaces del breadcrumb son botones de verdad: navegar es un acto, no
+   un texto con un manejador colgando. Se visten como el texto que los rodea. */
+.breadcrumbLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.breadcrumbLink:hover {
+  color: var(--bw-brass);
+}
+
+.breadcrumbSeparator {
+  color: var(--bw-input-placeholder);
+}
+
+.title {
+  margin: 0 0 14px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+/* ── Aviso de confidencialidad (permanente, brass, sin cierre) ───────────── */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: var(--bw-radius);
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 16px;
+  color: var(--bw-brass);
+}
+
+.noticeText {
+  flex: 1;
+  margin: 0;
+  font-size: var(--bw-size-label);
+  line-height: 1.55;
+  color: var(--bw-steel-mist);
+}
+
+.noticeText strong {
+  color: var(--bw-brass);
+}
+
+/* ── Cuerpo: carga, error y hilo inexistente ─────────────────────────────── */
+
+.loading,
+.empty {
+  margin: 0;
+  padding: 18px 0;
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+}
+
+.error {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+}
+
+/* ── Publicaciones ───────────────────────────────────────────────────────── */
+
+.posts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.post {
+  /* La superficie de la tarjeta: el panel es Cold White y no hay token de
+     blanco puro, así que la tarjeta usa el cálido claro del sistema. */
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  padding: 18px 20px;
+}
+
+/* La publicación propia se distingue por el borde, como en el HTML aprobado. */
+.ownPost {
+  border-color: var(--bw-brass-border-strong);
+}
+
+.postHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Organización, país y tiempo relativo en Steel Mist: lo secundario de la fila.
+   El quién está en el cuerpo, que es lo primario. */
+.postOrg {
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-steel-mist);
+}
+
+.postCountry {
+  padding: 2px 7px;
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border-soft);
+  border-radius: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-brand);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-hint);
+  color: var(--bw-steel-mist);
+}
+
+.postTime {
+  margin-left: auto;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.postBody {
+  margin: 0 0 14px;
+  font-size: var(--bw-size-body);
+  line-height: 1.65;
+  color: var(--bw-deep-steel);
+  /* El foro es texto plano: los saltos de línea que escribió su autor se ven. */
+  white-space: pre-wrap;
+}
+
+.postActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.react {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  background: none;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+}
+
+.react:hover {
+  border-color: var(--bw-calibration-blue);
+  color: var(--bw-calibration-blue);
+}
+
+/* `aria-pressed` es el estado; esto solo lo pinta. */
+.reacted {
+  border-color: var(--bw-chip-active-border);
+  background: var(--bw-chip-active-bg);
+  color: var(--bw-calibration-blue);
+}
+
+.ownActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Editar y Eliminar: apagados y con su motivo en el `title`. Nunca un enlace,
+   nunca una acción que no exista todavía. */
+.postAction {
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}
+
+/* ── Contador de respuestas y hilo sin respuestas ────────────────────────── */
+
+.replyCount {
+  margin: 4px 0 2px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-brand);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.noReplies {
+  margin: 0;
+  padding: 18px 20px;
+  background: var(--bw-surface-mist);
+  border: 1px dashed var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  text-align: center;
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+}
+
+/* ── Formulario de respuesta ─────────────────────────────────────────────── */
+
+.replyForm {
+  margin-top: 6px;
+  padding: 18px 20px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.replyInput {
+  width: 100%;
+  min-height: 80px;
+  box-sizing: border-box;
+  padding: var(--bw-pad-input);
+  background: none;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.6;
+  color: var(--bw-input-text);
+  resize: vertical;
+}
+
+.replyInput::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.replyInput:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.replyHint {
+  margin: 6px 0 10px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+/* RNG-FORO-06: el límite de la hora natural es un aviso, no un error del
+   usuario, así que va en el ámbar de aviso y no en el rojo de error. */
+.replyLimit {
+  margin: 0 0 10px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-warning-dark);
+}
+
+.replyError {
+  margin: 0 0 10px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.replySubmit {
+  height: 34px;
+  padding: 0 18px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-cold-white);
+  cursor: pointer;
+}
+
+.replySubmit:not(:disabled):hover {
+  background: var(--bw-primary-dark);
+}
+
+.replySubmit:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}

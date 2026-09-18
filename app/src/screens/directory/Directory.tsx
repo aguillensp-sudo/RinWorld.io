@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import {
   DEFAULT_SORT,
   EMPTY_FILTERS,
@@ -13,6 +13,7 @@ import {
   type DirectorySortField,
 } from '../../lib/directory';
 import { errorMessage, type MemberProfile } from '../../lib/session';
+import { SearchField } from '../../components/SearchField';
 import { DirectoryTable } from './DirectoryTable';
 import styles from './Directory.module.css';
 
@@ -144,13 +145,6 @@ export function Directory({ profile }: Props) {
     setPage(1);
   }
 
-  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      runSearch();
-    }
-  }
-
   /**
    * `Limpiar filtros` sobre los filtros APLICADOS, no sobre lo que haya sin
    * confirmar en el campo: vacía el campo también en pantalla, devuelve los dos
@@ -214,36 +208,14 @@ export function Directory({ profile }: Props) {
           ))}
         </select>
 
-        <div className={styles.searchWrap}>
-          <input
-            type="search"
-            className={styles.searchInput}
-            aria-label="Buscar organización por nombre"
-            placeholder="Buscar organización..."
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={handleSearchKeyDown}
-          />
-          <button
-            type="button"
-            className={styles.searchButton}
-            aria-label="Buscar organización"
-            onClick={runSearch}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
-              <line
-                x1="16.2"
-                y1="16.2"
-                x2="21"
-                y2="21"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
+        <SearchField
+          value={draft}
+          onChange={setDraft}
+          onSubmit={runSearch}
+          placeholder="Buscar organización..."
+          inputLabel="Buscar organización por nombre"
+          submitLabel="Buscar organización"
+        />
 
         {hasActiveFilters(filters) && (
           <button type="button" className={styles.clearButton} onClick={handleClear}>

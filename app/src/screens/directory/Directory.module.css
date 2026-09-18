@@ -75,66 +75,8 @@
   box-shadow: var(--bw-focus-halo);
 }
 
-.searchWrap {
-  position: relative;
-  flex: 1;
-  max-width: 280px;
-  min-width: 180px;
-}
-
-.searchInput {
-  width: 100%;
-  height: 36px;
-  padding: 0 36px 0 12px;
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: 5px;
-  background: var(--bw-warm-cream);
-  font-family: var(--bw-font-body);
-  font-size: var(--bw-size-input);
-  color: var(--bw-input-text);
-  transition: border-color 0.15s;
-}
-
-.searchInput::placeholder {
-  color: var(--bw-input-placeholder);
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
-}
-
-/* La lupa es un botón de verdad: la spec §3 pide que la búsqueda se dispare
-   «al pulsar Enter o icono lupa», y un icono que no es un control no existe
-   para el teclado. */
-.searchButton {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: var(--bw-radius);
-  background: none;
-  color: var(--bw-steel-mist);
-  cursor: pointer;
-  transition: color 0.12s;
-}
-
-.searchButton:hover {
-  color: var(--bw-calibration-blue);
-}
-
-.searchButton:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-halo);
-}
+/* El campo de búsqueda (input + lupa + "x") vive en el componente compartido
+   `components/SearchField`, no aquí (decisión del PO, 18-sep-2026). */
 
 .clearButton {
   padding: 4px 8px;

@@ -180,6 +180,22 @@ describe('Directory', () => {
     });
   });
 
+  it('la "x" del campo aparece al escribir y borra solo el borrador, sin repetir la consulta', async () => {
+    const user = userEvent.setup();
+    render(<Directory profile={profile} />);
+    await waitFor(() => expect(fetchOrganizations).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('button', { name: 'Borrar búsqueda' })).not.toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText('Buscar organización...');
+    await user.type(input, 'Acme');
+    const borrar = await screen.findByRole('button', { name: 'Borrar búsqueda' });
+
+    await user.click(borrar);
+    expect(input).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Borrar búsqueda' })).not.toBeInTheDocument();
+    expect(fetchOrganizations).toHaveBeenCalledTimes(1); // borrar el borrador no consulta
+  });
+
   it('"Limpiar filtros" está oculto sin filtros activos, aparece con uno aplicado, y al pulsarlo limpia los dos y repide', async () => {
     const user = userEvent.setup();
     render(<Directory profile={profile} />);

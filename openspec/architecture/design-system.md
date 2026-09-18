@@ -211,6 +211,19 @@ overflow:hidden`). Para pantalla completa: `position:fixed; inset:0`.
 - **Input :focus:** `border-color:#2563EB; box-shadow:0 0 0 3px rgba(37,99,235,0.08)`.
 - **Field hint:** IBM Plex Mono 10px uppercase, `letter-spacing:0.04em`, color `#6B7A99`.
 
+### Campo de búsqueda (estándar, decisión del PO 18-sep-2026)
+- Un único input con la lupa **dentro**, pegada al borde derecho (nunca una
+  caja separada al lado) — componente compartido `app/src/components/SearchField.tsx`.
+- La lupa dispara la búsqueda (server-side, nunca en cada tecla); Enter hace
+  lo mismo. Teclear solo actualiza el borrador.
+- En cuanto el campo tiene texto sin confirmar aparece una **"x"** a la
+  izquierda de la lupa, dentro del propio input, que borra el campo sin
+  disparar ninguna consulta.
+- Manda sobre lo que diga la spec de cada pantalla en concreto: es un
+  estándar transversal, no una decisión por pantalla. Migrado en DIR-01 y
+  FORO-02 (18-sep-2026); INV-01/MSG-01/`SentOffers` quedan pendientes
+  (`ESTADO-V1.md` §5).
+
 ### Botones
 - **Primario:** `background:#2563EB; border-radius:3px; font-size:14px; font-weight:600`.
 - **Deshabilitado:** `background:rgba(37,99,235,0.32); cursor:not-allowed`.

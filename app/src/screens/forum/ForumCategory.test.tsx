@@ -247,6 +247,21 @@ describe('FORO-02 · la búsqueda (spec §3, §7)', () => {
     );
   });
 
+  it('la "x" del campo aparece al escribir y borra solo el borrador, sin consultar', async () => {
+    montar();
+    await listo();
+    expect(screen.queryByRole('button', { name: 'Borrar búsqueda' })).not.toBeInTheDocument();
+
+    const buscador = screen.getByPlaceholderText('Buscar en esta categoría...');
+    fireEvent.change(buscador, { target: { value: 'NSK' } });
+    const borrar = await screen.findByRole('button', { name: 'Borrar búsqueda' });
+
+    fireEvent.click(borrar);
+    expect(buscador).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Borrar búsqueda' })).not.toBeInTheDocument();
+    expect(fetchThreads).toHaveBeenCalledTimes(1); // borrar el borrador no consulta
+  });
+
   it('sin resultados, la frase va entera en UN nodo, con el texto buscado, y "Limpiar búsqueda" la quita', async () => {
     montar();
     await listo();

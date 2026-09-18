@@ -117,58 +117,8 @@
   margin-bottom: 14px;
 }
 
-.searchWrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  max-width: 340px;
-}
-
-.searchInput {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 10px;
-  background: var(--bw-warm-cream);
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: 5px;
-  font-family: var(--bw-font-body);
-  font-size: var(--bw-size-input);
-  color: var(--bw-input-text);
-  outline: none;
-}
-
-.searchInput::placeholder {
-  color: var(--bw-input-placeholder);
-}
-
-.searchInput:focus {
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
-}
-
-.searchButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  background: var(--bw-warm-cream);
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: 5px;
-  color: var(--bw-steel-mist);
-  cursor: pointer;
-}
-
-.searchButton:hover {
-  border-color: var(--bw-hover-border);
-  color: var(--bw-deep-steel);
-}
-
-.searchIcon {
-  font-size: 15px;
-}
+/* El campo de búsqueda (input + lupa + "x") vive en el componente compartido
+   `components/SearchField`, no aquí (decisión del PO, 18-sep-2026). */
 
 /* FL-FORO-01 no existe: apagado, con su motivo en el `title`. */
 .createButton {

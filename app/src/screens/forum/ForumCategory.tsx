@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from 'react';
+import { useEffect, useState } from 'react';
 import {
   fetchCategory,
   fetchThreads,
@@ -9,6 +9,7 @@ import {
   type ThreadPage,
 } from '../../lib/forum';
 import { errorMessage, type MemberProfile } from '../../lib/session';
+import { SearchField } from '../../components/SearchField';
 import styles from './ForumCategory.module.css';
 
 interface Props {
@@ -132,12 +133,6 @@ export function ForumCategory({ profile, slug, onBack, now = new Date() }: Props
     setPage(1);
   }
 
-  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      runSearch();
-    }
-  }
 
   /** `Limpiar búsqueda`: vacía el campo y la consulta, y vuelve a la página 1. */
   function handleClearSearch() {
@@ -206,24 +201,13 @@ export function ForumCategory({ profile, slug, onBack, now = new Date() }: Props
       {/* La barra no desaparece mientras carga: se puede seguir escribiendo la
           búsqueda siguiente. */}
       <div className={styles.actions}>
-        <div className={styles.searchWrap}>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Buscar en esta categoría..."
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={handleSearchKeyDown}
-          />
-          <button
-            type="button"
-            className={styles.searchButton}
-            aria-label="Buscar"
-            onClick={runSearch}
-          >
-            <i className={`ti ti-search ${styles.searchIcon}`} aria-hidden="true" />
-          </button>
-        </div>
+        <SearchField
+          value={draft}
+          onChange={setDraft}
+          onSubmit={runSearch}
+          placeholder="Buscar en esta categoría..."
+          submitLabel="Buscar"
+        />
 
         {/* FL-FORO-01 no existe todavía: el control se pinta apagado con su
             motivo, nunca como si llevara a un formulario. */}

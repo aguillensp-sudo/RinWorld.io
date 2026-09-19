@@ -330,3 +330,20 @@ export async function suspendOrganization(orgId: string): Promise<void> {
   const { error } = await supabase.rpc('billing_suspend_organization', { p_org_id: orgId });
   if (error) throw error;
 }
+
+/**
+ * El email de contacto del panel lateral (spec §3). No está en la vista
+ * `billing_org_status`: es `organizations.contact_email` (`0027`), que el Operador
+ * lee por `organizations_select_operator` (`0034`). `null` si la organización no lo
+ * ha informado; el panel pinta `—`.
+ */
+export async function fetchBillingContactEmail(orgId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('contact_email')
+    .eq('id', orgId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { contact_email: string | null } | null)?.contact_email ?? null;
+}

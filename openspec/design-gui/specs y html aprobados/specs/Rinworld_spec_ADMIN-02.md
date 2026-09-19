@@ -135,7 +135,7 @@ Ver sección 3 — Modal "Marcar pago recibido" (detalle de campos).
 **Conversación tipo:**
 
 > **VERA dice (al cargar):**
-> Hay 2 organizaciones con vencimiento en los próximos 15 días: Nordic Bearings AB (2 días) y Acme Bearings Ltd (8 días). También hay 1 candidata a borrado: Timken Europe GmbH lleva 6 meses suspendida.
+> Hay 1 organización con vencimiento en los próximos 15 días: Nordic Bearings AB (2 días). También hay 1 candidata a borrado: Timken Europe GmbH lleva 6 meses suspendida.
 >
 > **Usuario dice:**
 > ¿Cuándo se suspendió Distribuciones Ruiz?

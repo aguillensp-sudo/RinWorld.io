@@ -389,6 +389,42 @@ un hallazgo de CI (`F-178`) se investigó y resolvió después de eso, hasta las
 
 ---
 
+**Día 19 de V1 · 19-sep-2026 · Estado: EN CURSO, no es el cierre de la sexta pantalla — se cierra la
+SESIÓN, no la tarea: `ADMIN-02` queda con esquema, siembra, wiring, capa de datos, contrato de
+aceptación y tarea validada en seco, y SIN correr. Fecha de máquina al escribir: `2026-09-19`,
+17:28 UTC.**
+
+> **EL DÍA EN OCHO LÍNEAS.**
+>
+> 1. **Se empezó revisando `ADMIN-02` a mano en localhost**, con el HTML aprobado servido aparte
+>    (la pantalla aún no existía en la app): cinco de las nueve comprobaciones del PO salieron
+>    limpias, tres eran límites del mock (los chips no filtran, el pago no refresca la tabla, la
+>    fecha del modal es fija) y una era un defecto real: **el mock sombreaba por POSICIÓN la
+>    fila que no era** (`F-179`, herencia de la reordenación de `F-170`). Corregido en el HTML
+>    aprobado por decisión del PO, verificado clicando las cinco filas.
+> 2. **`F-179` también cierra la cita a *Acme Bearings Ltd*** que la spec ponía en el saludo
+>    de VERA sin que existiera en los datos de ejemplo: manda la tabla (opción 1 del PO). Saludo
+>    y contador del chip `Próximos a vencer`, de 2 a 1, corregidos en la spec y en el HTML.
+> 3. **Wiring de precondición hecho (`F-180`):** el HTML aprobado de `ADMIN-02` pinta el nav del
+>    Operador con SEIS ítems -`Cobros` entre `Solicitudes` y `Organizaciones`-, no cinco.
+>    `OperatorShell` lo tiene y `App.tsx` monta un marcador `AdminBilling`.
+> 4. **Capa de datos `admin-billing.ts`** (22 pruebas): filtros de los cinco chips, fechas,
+>    tono de color, validación del modal y las llamadas de red. El email de contacto NO viene
+>    en la vista: es `organizations.contact_email` (`0027`), y se lee aparte.
+> 5. **Siembra `supabase/seed/demo_billing.sql`, aplicada en las dos bases:** los cuatro estados
+>    con datos reales. Las dos suspendidas son organizaciones NUEVAS -suspender una de las seis
+>    las sacaría de directorio y búsqueda y descuadraría los e2e que las cuentan-.
+> 6. **Contrato de aceptación:** 58 pruebas de unidad en rojo contra marcadores y 12 e2e de solo
+>    lectura (`billing_payments` no admite `DELETE`). `Iniciar borrado` va DESHABILITADO en tabla,
+>    sección y panel, y sin modal ni checkbox: es una desviación consciente del HTML aprobado.
+> 7. **`harness/tasks/ADMIN-02.json`, `--seco` verde:** cuatro componentes (pantalla, tabla,
+>    panel, modal de pago), `Iniciar borrado` fuera de alcance.
+> 8. **Lo que NO se ha hecho, y no cuenta como hecho:** la corrida real, las C5 del PO de
+>    `FORO-02`/`FORO-03`, y la deuda de `F-178` (el foro sin teardown ni `resetDemo`). Ninguna
+>    de las ocho cifras del umbral se ha movido hoy.
+
+---
+
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
@@ -410,6 +446,16 @@ un hallazgo de CI (`F-178`) se investigó y resolvió después de eso, hasta las
 | Que producción sirve de verdad `FORO-03` | bundle enlazado por `rin-world-io.vercel.app`, leído a mano DESPUÉS del run | `index-DkCZ8HQ8.js`, 495.540 bytes, con «Todavía no hay respuestas…» y el `title` de "Editar todavía no está disponible…" dentro |
 | Coste-sombra de orquestación | `python -m harness.core.orchestration_metrics`, antes y después de la corrida | 1.363,42 $ → **1.371,48 $**. La sesión entera del día: 46,63 $ → **54,45 $** — sesión compartida con todo lo demás del día, no cifra 7 limpia (misma limitación que `ADMIN-01`/`FORO-02`) |
 | Por qué el CI de `0034` escaló 2/4 en cuatro intentos seguidos cuando lo mismo pasaba 14/14 en local (`F-178`) | `.github/workflows/ci.yml` líneas 59-119; consulta directa a `ogdhyzgjjbbikjbkhxmu` por el MCP de Supabase | El job `e2e` usa `secrets.SUPABASE_E2E_URL` -el proyecto AISLADO, nunca producción, decisión de `F-149`-. El post de `c003` tenía **2 reacciones en vez de 1**: `alpha@bearingworld.test` reaccionó dentro de la ventana de una corrida de CI que se canceló a medias. Borrada la fila exacta por `member_id`+`created_at`, `forum_thread_list` verificado de vuelta a `👍 3` en `c003` sin tocar `c004`, `gh run rerun 35378570024 --failed` → **seis jobs de seis en verde**, `e2e` incluido |
+| **Día 19** · fecha de máquina | `date -u` | `2026-09-19`, 17:28 UTC |
+| Que el sombreado del mock era por posición (`F-179`), y que el arreglo lo cura | Clic en las cinco filas del HTML servido, `javascript_tool` del navegador integrado, antes y después | Antes: la fila 0 sombreaba la 4, la 1 la 0…; después: `0→0 · 1→1 · 2→2 · 3→3 · 4→4`, el panel siempre el de la fila pulsada |
+| Que el checkbox del modal de borrado existe | `ADMIN-02 · ADMIN v1.0.html` líneas 443-450 y CSS 195-197; el PO lo confirmó a mano | Existe y se ve; era un malentendido, no hay hallazgo |
+| El nav del Operador en ADMIN-02 (`F-180`) | `nav.js` y el HTML aprobado de ADMIN-02 (líneas 215-221, 235-239) contra el de ADMIN-01 | Seis ítems con `Cobros` (`ti-credit-card`) en el aprobado de ADMIN-02; cinco en el de ADMIN-01 |
+| Wiring de `Cobros` | `tsc --noEmit` y `npx vitest run` (repo entero) | Limpio · 871 verdes, 23 saltadas (las de siempre) |
+| La capa de datos `admin-billing.ts` | `npx vitest run src/lib/admin-billing` y `tsc --noEmit` | 22 de 22 |
+| La siembra da los cuatro estados en las DOS bases | `select … from billing_org_status` tras el `do $$` por el MCP, en `ogdhyzgjjbbikjbkhxmu` Y en `troxminloxkjwihwfevs` | Las dos: Timken `CANDIDATA A BORRADO` (-190), Ruiz `SUSPENDED` (-133), Cuscinetti `ACTIVE` (10), Rhône `ACTIVE` (246), cuatro `EN PRUEBA`. **Solo se leyó la vista; no se comprobó qué ve la RLS con la sesión de un miembro** (lo hace el e2e, sin correr) |
+| El contrato de unidad prueba algo | `npx vitest run` de los tres ficheros contra los MARCADORES | **58 de 58 en rojo**, `tsc` limpio |
+| El e2e de `ADMIN-02` compila y se lista | `npx playwright test --list e2e/admin-billing.spec.ts` | 12 pruebas listadas. **NO se ha ejecutado** — no hay pantalla contra la que correrlo |
+| La tarea `ADMIN-02` | `python -m harness.graph.run harness/tasks/ADMIN-02.json --seco` | Válida tras declarar tres nombres accesibles que el guardia (`F-125`) echó en falta; cero llamadas al modelo |
 | Estado final del repo | `git status --short` | (ver pie) |
 
 ---
@@ -468,9 +514,11 @@ base) — **queda UNA pantalla para la remedición.** La cifra 3 (verdes al prim
 **1 de 5** tras `FORO-03`: de las cinco pantallas medidas de la fábrica, solo `FORO-02` pasó sin
 ningún reintento ni corrección. El umbral se evalúa entero solo en la remedición, no fila a fila.
 
-**`ADMIN-02` (la sexta) tiene ya su esquema (`0034`), como pidió el Día 17 -"empezando ya por su
-esquema"-.** Falta escribir su tarea del arnés, sus tests de aceptación y correrla de verdad:
-todavía no cuenta como la sexta pantalla ni mueve ninguna de las ocho cifras del umbral.
+**`ADMIN-02` (la sexta) está lista para correr, y sin correr (Día 19).** Tiene esquema (`0034`),
+siembra (`demo_billing.sql`, en las dos bases), wiring (`Cobros` en `OperatorShell`, `F-180`), capa
+de datos (`admin-billing.ts`), contrato de aceptación (58 de unidad en rojo contra marcadores,
+12 e2e de solo lectura) y tarea validada `--seco`. Todavía no cuenta como la sexta pantalla ni
+mueve ninguna de las ocho cifras del umbral: falta la corrida real.
 
 **El H1 se cerró el Día 16.** Las tres pantallas —`DIR-01`, `ADMIN-01`, `FORO-01`— tienen
 corrida real limpia, C5 del PO sin ninguna corrección, y las ocho cifras de
@@ -510,12 +558,14 @@ UNA pantalla.**
 2. **La sexta pantalla, la de la remedición: `ADMIN-02`, con su esquema ya hecho (`0034`, 18-sep).**
    `billing_accounts`/`billing_payments`/`billing_status_events`, la vista `billing_org_status` y
    los dos verbos (`billing_confirm_payment`/`billing_suspend_organization`) están aplicados y
-   comprobados en las dos bases. **Lo que falta:** el wiring de precondición (ADMIN-02 se abre
-   "desde el panel de administración del Operador" — `OperatorShell` necesita un enlace, hoy no
-   existe ninguno), la tarea del arnés y sus tests de aceptación, y la corrida real. `Iniciar
-   borrado` (el botón que borra de verdad) sigue fuera de alcance a propósito — ver la cabecera de
-   `0034` — y no debería entrar en esta tarea tampoco: es un borrado en cascada que merece su
-   propia auditoría, no una casilla más del `component_api`.
+   comprobados en las dos bases. **Hecho el 19-sep:** wiring (`F-180`), capa de datos, siembra,
+   contrato de aceptación y `harness/tasks/ADMIN-02.json`, validada `--seco`. **Lo que falta: la
+   corrida real, y solo eso.** Antes de lanzarla: (a) **sesión limpia**, como pide la tarea, para
+   que la cifra 7 mida ADMIN-02; (b) **resembrar `demo_billing.sql` justo antes**, porque sus
+   fechas envejecen -Cuscinetti sale de `Próximos a vencer` a los ~10 días y Ruiz pasa a
+   candidata a los ~184 desde la suspensión-; el e2e lo cazará en voz alta, pero cuesta una
+   escalada. `Iniciar borrado` sigue fuera de alcance a propósito y va DESHABILITADO; no debe
+   volverse a meter en la tarea: es un borrado en cascada que merece su propia auditoría.
 3. **La remedición en sí, en cuanto `ADMIN-02` cierre su corrida.** Se reevalúan las ocho cifras
    enteras de `UMBRAL-FABRICA-V1.md`. Estado de cada una hoy, para no repetir el cálculo desde
    cero: la cifra 3 (verdes al primer intento) está en 1 de 5, y la 7 (coste de orquestación) sigue
@@ -636,6 +686,8 @@ En paralelo, sin acción propia desde este lado:
 | ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
 | ⚪ | ~~`F-160`: `--seco` escalaba en falso en las seis tareas del corpus~~ | **Resuelto 11-sep-2026 (Día 15): `_columna()` en `dry_run.py`, lee el CSV por nombre de columna, no por substring de la línea.** Verificado con `python -m harness.tests.dry_run` y `--seco` sobre las tres tareas nuevas y `SRCH-01` |
 | ⚪ | ~~Las tres corridas del paso 5 de `UMBRAL-FABRICA-V1.md` §7 no pueden correr en una sesión remota~~ | **Resuelto 13/14-sep-2026 (Día 16): corridas en Claude Code local, en la máquina del PO, donde `DEEPSEEK_API_KEY` sí está** —confirmado como variable de usuario de Windows, no en `app/.env` como se daba por hecho. Las tres pantallas corrieron y llegaron a `PASA` |
+| 🟡 | **La siembra de cobros envejece y ningún reseteo la re-ancla.** `demo_billing.sql` es relativa a hoy y solo se re-ancla corriéndola a mano por psql o por el MCP; `demo-reset.mjs` NO la incluye, porque `billing_payments` solo admite `INSERT` para `service_role` (0034) y desde JS no se puede reponer un pago | Decidir si `resetDemo` la incorpora vía un verbo `security definer` o si se acepta resembrar a mano antes de cada corrida. El e2e falla en voz alta si falta un estado, así que no hay verde falso |
+| 🟡 | **`Suspender manualmente` no pide confirmación** (la spec no la pide) y suspender oculta el inventario de esa organización en búsqueda y directorio | Decisión de producto del PO, sin tomar; hoy se implementa literal |
 | 🟠 | **`F-163`, cerrado pero con una secuela abierta: la sesión que corre las tareas no fue una sesión limpia por pantalla.** La misma sesión Haiku corrió `ADMIN-01` (original), `FORO-01` y la repetición de `ADMIN-01`; la cifra 7 de cada una se reconstruyó por diferencia de sesión, no midiéndose limpia desde el principio (§1). No cambia el veredicto —todas las cifras observadas están muy por debajo del techo—, pero la próxima tanda de corridas debería abrir una sesión de Code nueva por pantalla de verdad, no reutilizar la del terminal | Quien lance la próxima corrida: sesión nueva de Code, no una terminal reutilizada dentro de la misma |
 
 ---
@@ -643,6 +695,25 @@ En paralelo, sin acción propia desde este lado:
 ## 6 · Lo que este fichero NO sabe
 
 Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
+
+- **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan de verdad desde la
+  pantalla.** Lo que SÍ está probado: los tests de unidad con mocks y el esquema en las dos bases.
+  Lo que NO: ninguna llamada real al verbo, porque el e2e no puede escribir (un pago no se
+  borra). **La primera vez que alguien pulse «Confirmar pago recibido» en producción deja un pago
+  permanente**, y `demo_billing.sql` es la única vía de limpieza (corre como `postgres`).
+- **Si un miembro de verdad no ve ninguna fila de los cuatro objetos de billing.** La RLS de
+  `0034` se comprobó al escribirla; el e2e de hoy lo prueba con la sesión de ALPHA pero **no se
+  ha ejecutado**. Hasta la corrida, es una afirmación del `.sql` y del catálogo, no de una sesión
+  viva.
+- **Qué hará el Coder con la regla `Próximos a vencer`.** La spec dice «ACTIVE con vencimiento
+  en los próximos 15 días»; la capa de datos la implementa como 0..15, así que una ACTIVE ya
+  vencida NO entra en el chip. Es una lectura mía de una spec que no nombra ese caso, y nadie se
+  la ha confirmado al PO.
+- **Si el PO quiere `Iniciar borrado` deshabilitado.** Se decidió por el propio ESTADO-V1 §3
+  ("no debería entrar en esta tarea"), pero el HTML aprobado SÍ trae el modal de doble
+  confirmación y el PO no ha visto la pantalla sin él. Puede que la C5 lo eche en falta.
+- **Los tres literales de «sin filas» de `Suspendidos`, `Candidatas a borrado` y `En periodo de
+  prueba`** los escribí yo (`AdminBilling.test.tsx`); la spec §6 solo da el de `Próximos a vencer`.
 
 - **Si `postReply` funciona de verdad contra la base real.** El e2e de `FORO-03` la deja fuera a
   propósito (sin `DELETE` en `forum_posts` y sin teardown de foro, una respuesta real se quedaría
@@ -984,7 +1055,10 @@ Orden de lectura, y el orden importa:
     real pendiente — el job `e2e` de CI corre contra el proyecto aislado, no producción,
     y una reacción huérfana de un e2e cancelado a medias hizo escalar el CI de `0034`
     cuatro veces; borrada a mano, CI verde, pero el foro sigue sin teardown ni entra en
-    `resetDemo`, así que el mismo residuo puede repetirse).
+    `resetDemo`, así que el mismo residuo puede repetirse). Del 19-sep: `F-179` (cerrado —
+    el mock de `ADMIN-02` sombreaba por posición la fila que no era, más la cita a *Acme* y el
+    contador del chip; corregido en el HTML y en la spec por decisión del PO) y `F-180`
+    (cerrado — `Cobros` como sexto ítem del nav del Operador, según el HTML aprobado).
 
 ---
 

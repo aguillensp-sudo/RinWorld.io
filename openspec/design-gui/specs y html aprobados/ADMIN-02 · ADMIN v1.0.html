@@ -465,7 +465,7 @@
   let currentDeleteOrg = '';
 
   function openPanel(i) {
-    document.querySelectorAll('.tbl tbody tr').forEach((r,j)=>r.classList.toggle('row-active',j===i));
+    document.querySelectorAll('.tbl tbody tr').forEach(r=>r.classList.toggle('row-active',r.getAttribute('onclick')==='openPanel('+i+')'));
     const d = orgs[i];
     document.getElementById('dpTitle').textContent = d.org;
     document.getElementById('dpOrg').textContent = d.org;

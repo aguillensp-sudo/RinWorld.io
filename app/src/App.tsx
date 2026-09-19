@@ -10,6 +10,7 @@ import { OperatorShell, operatorNavIndexOf } from './shell/OperatorShell';
 import { Login } from './screens/Login';
 import { Panel } from './screens/panel/Panel';
 import { AdminRequests } from './screens/admin/AdminRequests';
+import { AdminBilling } from './screens/admin/AdminBilling';
 import { Directory } from './screens/directory/Directory';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
@@ -91,6 +92,9 @@ const DIRECTORY_VERA_SUBTITLE = 'Agente del directorio';
 
 /** ADMIN-01 §5: "**Subtítulo del panel:** `Asistente del operador`". */
 const ADMIN_VERA_SUBTITLE = 'Asistente del operador';
+
+/** ADMIN-02 §2: se abre desde el nav propio del Operador; ítem `Cobros` (HTML aprobado). */
+const COBROS_NAV = operatorNavIndexOf('Cobros');
 
 /** FORO-01 §5: "**Subtítulo del panel:** `Agente del foro`". */
 const FORUM_VERA_SUBTITLE = 'Agente del foro';
@@ -177,7 +181,11 @@ export function App() {
         onNavigate={setOperatorNav}
         veraSubtitle={ADMIN_VERA_SUBTITLE}
       >
-        <AdminRequests operator={state.profile} />
+        {operatorNav === COBROS_NAV ? (
+          <AdminBilling operator={state.profile} />
+        ) : (
+          <AdminRequests operator={state.profile} />
+        )}
       </OperatorShell>
     );
   }

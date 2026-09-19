@@ -48,20 +48,20 @@ describe('OperatorShell', () => {
     expect(screen.getByText('Operador')).toBeInTheDocument();
   });
 
-  it('tiene los cinco ítems propios del Operador, no los ocho del miembro', () => {
+  it('tiene los seis ítems propios del Operador, no los ocho del miembro', () => {
     const { topNav } = renderShell();
     const labels = within(topNav)
       .getAllByRole('button')
       .map((b) => b.textContent);
-    expect(labels).toEqual(['Panel', 'Solicitudes', 'Organizaciones', 'Log de auditoría', 'Sistema']);
+    expect(labels).toEqual(['Panel', 'Solicitudes', 'Cobros', 'Organizaciones', 'Log de auditoría', 'Sistema']);
   });
 
-  it('el menú lateral repite los mismos cinco ítems', () => {
+  it('el menú lateral repite los mismos seis ítems', () => {
     const { sideNav } = renderShell();
-    expect(within(sideNav).getAllByRole('button')).toHaveLength(5);
+    expect(within(sideNav).getAllByRole('button')).toHaveLength(6);
   });
 
-  it('arranca con Solicitudes activo -es la única de las cinco con pantalla-', () => {
+  it('arranca con Solicitudes activo -con Cobros, las dos con pantalla-', () => {
     const { topNav } = renderShell();
     expect(
       within(topNav).getByRole('button', { name: 'Solicitudes', current: 'page' }),
@@ -121,7 +121,8 @@ describe('OperatorShell', () => {
   it('operatorNavIndexOf resuelve los ítems por nombre y cae en Panel si no existe', () => {
     expect(operatorNavIndexOf('Panel')).toBe(0);
     expect(operatorNavIndexOf('Solicitudes')).toBe(1);
-    expect(operatorNavIndexOf('Sistema')).toBe(4);
+    expect(operatorNavIndexOf('Cobros')).toBe(2);
+    expect(operatorNavIndexOf('Sistema')).toBe(5);
     expect(operatorNavIndexOf('Pantalla que no existe')).toBe(0);
   });
 });

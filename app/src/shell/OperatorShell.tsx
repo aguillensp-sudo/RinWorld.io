@@ -27,9 +27,15 @@ import styles from './OperatorShell.module.css';
  * que SÍ es nuevo (`OperatorShell.module.css`) son las dos reglas de acento que
  * de verdad cambian, más la píldora "Operador" del HTML aprobado.
  */
+/**
+ * `Cobros` (ADMIN-02) es el sexto ítem: el HTML aprobado de ADMIN-02 lo pinta entre
+ * `Solicitudes` y `Organizaciones` (icono `ti-credit-card`) y `nav.js` lo enlaza;
+ * el de ADMIN-01 es anterior y solo tiene cinco. Ver F-180.
+ */
 export const OPERATOR_NAV_ITEMS = [
   { label: 'Panel', icon: 'ti-layout-dashboard' },
   { label: 'Solicitudes', icon: 'ti-clipboard-list' },
+  { label: 'Cobros', icon: 'ti-credit-card' },
   { label: 'Organizaciones', icon: 'ti-building' },
   { label: 'Log de auditoría', icon: 'ti-file-description' },
   { label: 'Sistema', icon: 'ti-settings-2' },

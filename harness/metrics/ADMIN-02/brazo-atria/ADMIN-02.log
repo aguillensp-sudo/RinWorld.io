@@ -1,0 +1,198 @@
+
+==============================================================================
+· corrida arrancada 2026-09-20 19:18:01 · harness/tasks/ADMIN-02.json --corrida brazo-atria --plazo 2400
+==============================================================================
+Log de esta corrida: harness\metrics\ADMIN-02\brazo-atria\ADMIN-02.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 2400s por paso del grafo (F-122).
+[intento 1] llamando a Atria-Dawn-Preview (timeout 1500s por llamada) ...
+Traceback (most recent call last):
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 127, in call
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 493, in open
+    response = meth(req, response)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 602, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 531, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 464, in _call_chain
+    result = func(*args)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 611, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 502: Bad Gateway
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\experimento\brazo.py", line 232, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\experimento\brazo.py", line 228, in main
+    return run.main(resto)
+           ~~~~~~~~^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\graph\run.py", line 651, in main
+    for estado in app.stream({"task": task, "attempt": 0, "metrics": []},
+                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             {"recursion_limit": MAX_ATTEMPTS * 4},
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             stream_mode="values"):
+                             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\main.py", line 2982, in stream
+    for _ in runner.tick(
+             ~~~~~~~~~~~^
+        [t for t in loop.tasks.values() if not t.writes],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        schedule_task=loop.accept_push,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_runner.py", line 207, in tick
+    run_with_retry(
+    ~~~~~~~~~~~~~~^
+        t,
+        ^^
+    ...<10 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_retry.py", line 617, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 684, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 426, in invoke
+    ret = self.func(*args, **kwargs)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\graph\nodes\coder.py", line 259, in coder_node
+    out = llm.complete(messages, on_truncation=on_truncation, aviso=print)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 162, in complete
+    data, secs = call(messages, maxtok, aviso=aviso)
+                 ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 130, in call
+    raise LLMError(f"HTTP {e.code} {e.read().decode()[:500]}") from e
+harness.core.llm.LLMError: HTTP 502 {"error":{"message":"Inference service is temporarily unavailable.","type":"atria_api_error","code":"upstream_unavailable"}}
+During task with name 'coder' and id '10aefbbe-296d-b489-2712-cd6d51217052'
+
+==============================================================================
+· corrida arrancada 2026-09-20 19:24:50 · harness/tasks/ADMIN-02.json --corrida brazo-atria --plazo 2400
+==============================================================================
+Log de esta corrida: harness\metrics\ADMIN-02\brazo-atria\ADMIN-02.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 2400s por paso del grafo (F-122).
+[intento 1] llamando a Atria-Dawn-Preview (timeout 1500s por llamada) ...
+Traceback (most recent call last):
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 127, in call
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 493, in open
+    response = meth(req, response)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 602, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 531, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 464, in _call_chain
+    result = func(*args)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 611, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 502: Bad Gateway
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\experimento\brazo.py", line 232, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\experimento\brazo.py", line 228, in main
+    return run.main(resto)
+           ~~~~~~~~^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\graph\run.py", line 651, in main
+    for estado in app.stream({"task": task, "attempt": 0, "metrics": []},
+                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             {"recursion_limit": MAX_ATTEMPTS * 4},
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             stream_mode="values"):
+                             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\main.py", line 2982, in stream
+    for _ in runner.tick(
+             ~~~~~~~~~~~^
+        [t for t in loop.tasks.values() if not t.writes],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        schedule_task=loop.accept_push,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_runner.py", line 207, in tick
+    run_with_retry(
+    ~~~~~~~~~~~~~~^
+        t,
+        ^^
+    ...<10 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_retry.py", line 617, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 684, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 426, in invoke
+    ret = self.func(*args, **kwargs)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\graph\nodes\coder.py", line 259, in coder_node
+    out = llm.complete(messages, on_truncation=on_truncation, aviso=print)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 162, in complete
+    data, secs = call(messages, maxtok, aviso=aviso)
+                 ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 130, in call
+    raise LLMError(f"HTTP {e.code} {e.read().decode()[:500]}") from e
+harness.core.llm.LLMError: HTTP 502 {"error":{"message":"Inference service is temporarily unavailable.","type":"atria_api_error","code":"upstream_unavailable"}}
+During task with name 'coder' and id '0b53d415-49b7-3f84-466f-1733dcbbab52'
+
+==============================================================================
+· corrida arrancada 2026-09-20 20:09:56 · harness/tasks/ADMIN-02.json --corrida brazo-atria --plazo 2400
+==============================================================================
+Log de esta corrida: harness\metrics\ADMIN-02\brazo-atria\ADMIN-02.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 2400s por paso del grafo (F-122).
+[intento 1] llamando a Atria-Dawn-Preview (timeout 1500s por llamada) ...
+  ficheros: ['app/src/screens/admin/AdminBilling.module.css', 'app/src/screens/admin/AdminBilling.tsx', 'app/src/screens/admin/BillingDetailPanel.module.css', 'app/src/screens/admin/BillingDetailPanel.tsx', 'app/src/screens/admin/BillingTable.module.css', 'app/src/screens/admin/BillingTable.tsx', 'app/src/screens/admin/PaymentModal.module.css', 'app/src/screens/admin/PaymentModal.tsx']
+  tokens in/out: 27256/37572   cache: 99.56% hit
+  coste real: $0.145423   en frio: $0.145423
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\ADMIN-02\brazo-atria\attempt_1.json (F-122)
+[intento 2] llamando a Atria-Dawn-Preview (timeout 1500s por llamada) ...
+  ficheros: ['app/src/screens/admin/AdminBilling.module.css', 'app/src/screens/admin/AdminBilling.tsx', 'app/src/screens/admin/BillingDetailPanel.module.css', 'app/src/screens/admin/BillingDetailPanel.tsx', 'app/src/screens/admin/BillingTable.module.css', 'app/src/screens/admin/BillingTable.tsx', 'app/src/screens/admin/PaymentModal.module.css', 'app/src/screens/admin/PaymentModal.tsx']
+  tokens in/out: 38174/10715   cache: 71.09% hit
+  coste real: $0.077954   en frio: $0.077954
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\ADMIN-02\brazo-atria\attempt_2.json (F-122)
+  CSV: 2026-09-20,ADMIN-02,ADMIN-02,Atria-Dawn-Preview,27256,37572,0.145423,1,5.6,app/src/screens/admin/AdminBilling.module.css;app/src/screens/admin/AdminBilling.tsx;app/src/screens/admin/BillingDetailPanel.module.css;app/src/screens/admin/BillingDetailPanel.tsx;app/src/screens/admin/BillingTable.module.css;app/src/screens/admin/BillingTable.tsx;app/src/screens/admin/PaymentModal.module.css;app/src/screens/admin/PaymentModal.tsx,99.56,no,-,brazo-atria,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO · COSTE A PRECIO-SOMBRA: no es una factura (F-011)
+  CSV: 2026-09-20,ADMIN-02,ADMIN-02,Atria-Dawn-Preview,38174,10715,0.077954,2,1.8,app/src/screens/admin/AdminBilling.module.css;app/src/screens/admin/AdminBilling.tsx;app/src/screens/admin/BillingDetailPanel.module.css;app/src/screens/admin/BillingDetailPanel.tsx;app/src/screens/admin/BillingTable.module.css;app/src/screens/admin/BillingTable.tsx;app/src/screens/admin/PaymentModal.module.css;app/src/screens/admin/PaymentModal.tsx,71.09,no,-,brazo-atria,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO · COSTE A PRECIO-SOMBRA: no es una factura (F-011)
+
+Artefactos de esta corrida:
+  harness\metrics\ADMIN-02\brazo-atria\attempt_1.json
+  harness\metrics\ADMIN-02\brazo-atria\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

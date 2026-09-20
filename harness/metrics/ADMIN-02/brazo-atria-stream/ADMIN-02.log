@@ -1,0 +1,73 @@
+
+==============================================================================
+· corrida arrancada 2026-09-20 19:47:04 · harness/tasks/ADMIN-02.json --corrida brazo-atria-stream --plazo 2400
+==============================================================================
+Log de esta corrida: harness\metrics\ADMIN-02\brazo-atria-stream\ADMIN-02.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 2400s por paso del grafo (F-122).
+[intento 1] llamando a Atria-Dawn-Preview (timeout 1500s por llamada) ...
+Traceback (most recent call last):
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 203, in call
+    datos = _reensamblar(r) if STREAM else json.load(r)
+            ~~~~~~~~~~~~^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 167, in _reensamblar
+    raise LLMError(
+    ...<3 lines>...
+        "`HARNESS_CODER_STREAM`.")
+harness.core.llm.LLMError: el stream termino sin `usage`: el proveedor ignora `stream_options.include_usage`. Sin tokens no se puede registrar el coste y registrar cero seria mentir (F-010). Corre este brazo sin `HARNESS_CODER_STREAM`.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\experimento\brazo.py", line 248, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\experimento\brazo.py", line 244, in main
+    return run.main(resto)
+           ~~~~~~~~^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\graph\run.py", line 651, in main
+    for estado in app.stream({"task": task, "attempt": 0, "metrics": []},
+                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             {"recursion_limit": MAX_ATTEMPTS * 4},
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             stream_mode="values"):
+                             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\main.py", line 2982, in stream
+    for _ in runner.tick(
+             ~~~~~~~~~~~^
+        [t for t in loop.tasks.values() if not t.writes],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        schedule_task=loop.accept_push,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_runner.py", line 207, in tick
+    run_with_retry(
+    ~~~~~~~~~~~~~~^
+        t,
+        ^^
+    ...<10 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_retry.py", line 617, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 684, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 426, in invoke
+    ret = self.func(*args, **kwargs)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\graph\nodes\coder.py", line 259, in coder_node
+    out = llm.complete(messages, on_truncation=on_truncation, aviso=print)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 238, in complete
+    data, secs = call(messages, maxtok, aviso=aviso)
+                 ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\exp-admin-02-atria\harness\core\llm.py", line 209, in call
+    raise LLMError(
+        f"transporte: {type(e).__name__}: {e}. "
+        f"{vuelta + 1} intento(s) de conexion, ninguno llego") from e
+harness.core.llm.LLMError: transporte: LLMError: el stream termino sin `usage`: el proveedor ignora `stream_options.include_usage`. Sin tokens no se puede registrar el coste y registrar cero seria mentir (F-010). Corre este brazo sin `HARNESS_CODER_STREAM`.. 1 intento(s) de conexion, ninguno llego
+During task with name 'coder' and id 'd7cf0283-d209-2e41-b252-9d5729efb963'

@@ -71,6 +71,20 @@ class LLMError(RuntimeError):
     pass
 
 
+class StreamCortado(LLMError):
+    """El otro extremo cerro a media generacion: ni `[DONE]` ni `usage`.
+
+    Es un CORTE DE CONEXION con otra forma, asi que entra donde F-119 puso los
+    cortes: no gasta intento del modelo y se reintenta con espera creciente. La
+    diferencia con un HTTP 502 es real —alli el servidor CONTESTA que no puede;
+    aqui acepta, empieza a contestar y se queda a medias— y la consecuencia es
+    la contraria: reintentar esto si puede cambiar el resultado.
+
+    ⚠ Lo que se pierde y no se puede recuperar: los tokens que el proveedor ya
+    genero antes del corte. No vienen en ningun `usage`, asi que no se registran
+    y la cuota los ha pagado igual. Queda dicho aqui porque el CSV no puede."""
+
+
 def new_acc() -> dict:
     return {"tokens_in": 0, "tokens_out": 0, "cache_hit": 0, "cache_miss": 0, "calls": 0}
 
@@ -126,6 +140,8 @@ TRANSPORT_BACKOFF = (5, 20, 60)
 def _es_de_transporte(e: Exception) -> bool:
     """Se cayo la conexion, no contesto el servidor. `HTTPError` NO entra: eso
     es una respuesta, y una respuesta no se reintenta a ciegas."""
+    if isinstance(e, StreamCortado):
+        return True
     return isinstance(e, (urllib.error.URLError, TimeoutError, ConnectionError,
                           socket.timeout, OSError)) and not isinstance(
                               e, urllib.error.HTTPError)
@@ -137,12 +153,14 @@ def _reensamblar(respuesta) -> dict:
     Devuelve lo mismo que devolveria la llamada sin streaming, para que ni
     `complete()` ni el grafo sepan por que via llegaron los bytes."""
     contenido, razonamiento, finish, usage, modelo = [], [], None, None, MODEL
+    completo = False
     for cruda in respuesta:
         linea = cruda.decode("utf-8", "replace").strip()
         if not linea.startswith("data:"):
             continue
         dato = linea[5:].strip()
         if dato == "[DONE]":
+            completo = True
             break
         try:
             trozo = json.loads(dato)
@@ -164,11 +182,26 @@ def _reensamblar(respuesta) -> dict:
                 finish = choice["finish_reason"]
     if usage is None:
         # F-010 · sin `usage` no hay tokens, y sin tokens el coste seria inventado.
+        #
+        # ⚠ Pero PRIMERO hay que decir cual de las dos cosas paso, porque el
+        # arreglo no es el mismo y el primer mensaje que escribi acusaba a la
+        # equivocada: sin `[DONE]` el stream se CORTO -el otro extremo cerro a
+        # media generacion- y con `[DONE]` el proveedor si ignora
+        # `include_usage`. Un diagnostico equivocado en el log le cuesta una hora
+        # a quien lo lea.
+        escritos = sum(len(t) for t in contenido)
+        if not completo:
+            raise StreamCortado(
+                f"el stream se CORTO a media respuesta: ni `[DONE]` ni `usage` "
+                f"despues de {escritos} caracteres"
+                + (f" (finish_reason={finish!r})" if finish else " (sin finish_reason)")
+                + ". No es que falte el usage: es que el otro extremo cerro. Lo que "
+                  "haya llegado no se puede dar por respuesta ni cobrar (F-010).")
         raise LLMError(
-            "el stream termino sin `usage`: el proveedor ignora "
-            "`stream_options.include_usage`. Sin tokens no se puede registrar el "
-            "coste y registrar cero seria mentir (F-010). Corre este brazo sin "
-            "`HARNESS_CODER_STREAM`.")
+            f"el stream termino en `[DONE]` pero sin `usage` tras {escritos} "
+            f"caracteres: el proveedor ignora `stream_options.include_usage`. Sin "
+            f"tokens no se puede registrar el coste y registrar cero seria mentir "
+            f"(F-010). Corre este brazo sin `HARNESS_CODER_STREAM`.")
     return {
         "model": modelo,
         "choices": [{

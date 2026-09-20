@@ -1614,14 +1614,29 @@ def test_segundo_proveedor_no_toca_el_primero():
         check("con su cache hit en la forma de OpenAI",
               (acc["cache_hit"], acc["cache_miss"]) == (4, 7), str(acc))
 
-        # ⚠ Sin `usage` no hay coste, y un coste inventado es F-010.
+        # ⚠ Sin `usage` no hay coste, y un coste inventado es F-010. Pero las dos
+        # formas de quedarse sin el no son la misma averia y no se dicen igual.
         try:
             llm._reensamblar(iter([b'data: {"choices":[{"delta":{"content":"x"},'
                                    b'"finish_reason":"stop"}]}\n', b'data: [DONE]\n']))
             check("⚠ un stream sin usage tiene que FALLAR", False, "no fallo")
         except llm.LLMError as e:
-            check("⚠ un stream sin usage FALLA en vez de registrar cero (F-010)",
-                  "usage" in str(e) and "F-010" in str(e), str(e)[:120])
+            check("⚠ con [DONE] y sin usage: el proveedor ignora include_usage",
+                  "include_usage" in str(e) and "F-010" in str(e), str(e)[:140])
+        try:
+            llm._reensamblar(iter([b'data: {"choices":[{"delta":{"content":"medio fich"}}]}\n']))
+            check("⚠ un stream cortado tiene que FALLAR", False, "no fallo")
+        except llm.LLMError as e:
+            check("⚠ y sin [DONE]: se CORTO, que es otra averia y otro arreglo",
+                  "CORTO" in str(e) and "10 caracteres" in str(e), str(e)[:140])
+            # F-119 · un corte es un corte, venga del socket o del stream: se
+            # reintenta y NO gasta intento del modelo. Un 502 no, porque eso el
+            # servidor lo contesta.
+            check("⚠ y cuenta como transporte: se reintenta sin gastar intento",
+                  llm._es_de_transporte(e) and isinstance(e, llm.LLMError))
+            check("mientras que un HTTP sigue sin reintentarse",
+                  not llm._es_de_transporte(
+                      urllib.error.HTTPError("u", 502, "Bad Gateway", {}, None)))
 
         # Un error a mitad del stream llega con el 200 ya enviado.
         try:

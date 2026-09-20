@@ -72,7 +72,14 @@ test.describe('ADMIN-02 · gestión de cobros real', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Gestión de cobros' })).toBeVisible();
     // A la tabla, no solo al título: leer filas antes de que llegue la consulta
     // encuentra cero y falla por carrera, no por defecto (F-159).
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    //
+    // ⚠ Y a una fila DE DATOS, no a «la segunda fila» (F-183, 20-sep). El estado
+    // vacío de la tabla —'No hay organizaciones.'— TAMBIÉN es una fila, y se
+    // pinta al instante: esperar `row.nth(1)` se cumplía antes de que llegara la
+    // consulta y el test leía cero. Los ocho tests de este fichero fallaron así
+    // contra un artefacto correcto, y el arnés lo contó como escalada del Coder.
+    // Una fila de datos tiene las siete celdas; la de vacío tiene una.
+    await expect(page.getByRole('row').nth(1).getByRole('cell')).toHaveCount(7);
   });
 
   test('la siembra está anclada: aparecen los cuatro estados de la spec', async ({ page }) => {
@@ -129,8 +136,15 @@ test.describe('ADMIN-02 · gestión de cobros real', () => {
     await expect(seccion.getByRole('button', { name: /Iniciar borrado/ })).toBeDisabled();
   });
 
+  // ⚠ `exact: true` en los tres clics sobre el nombre de una organización
+  // (F-183, 20-sep). Sin él, `name: 'Cuscinetti Padana'` empareja TAMBIÉN el
+  // botón de acción de esa fila, cuyo nombre accesible es 'Marcar pago recibido
+  // — Cuscinetti Padana' porque la tarea se lo exige (el mismo texto se repite
+  // en cada fila y sin el nombre no se distinguen). Playwright aborta por modo
+  // estricto, y el arnés lo apuntó como fallo del artefacto: el Coder hizo
+  // exactamente lo que el contrato le pedía.
   test('el panel de una organización con pagos muestra el email y los dos pagos sembrados', async ({ page }) => {
-    await page.getByRole('button', { name: 'Cuscinetti Padana' }).click();
+    await page.getByRole('button', { name: 'Cuscinetti Padana', exact: true }).click();
     const panel = page.getByRole('complementary', { name: 'Detalle de organización' });
     await expect(panel.getByRole('heading', { name: 'Cuscinetti Padana' })).toBeVisible();
     await expect(panel.getByText('info@cuscinettipadana.it')).toBeVisible();
@@ -140,7 +154,7 @@ test.describe('ADMIN-02 · gestión de cobros real', () => {
   });
 
   test('el panel de una suspendida enseña la transición automática', async ({ page }) => {
-    await page.getByRole('button', { name: 'Distribuciones Ruiz SL' }).click();
+    await page.getByRole('button', { name: 'Distribuciones Ruiz SL', exact: true }).click();
     const panel = page.getByRole('complementary', { name: 'Detalle de organización' });
     const estados = panel.getByRole('list', { name: 'Historial de estados' });
     await expect(estados.getByRole('listitem').first()).toContainText('ACTIVE → SUSPENDED');
@@ -150,7 +164,7 @@ test.describe('ADMIN-02 · gestión de cobros real', () => {
   });
 
   test('la fila sombreada es la clicada (F-179), sobre datos reales', async ({ page }) => {
-    await page.getByRole('button', { name: 'Timken Europe GmbH' }).click();
+    await page.getByRole('button', { name: 'Timken Europe GmbH', exact: true }).click();
     const actual = page.locator('tr[aria-current="true"]');
     await expect(actual).toHaveCount(1);
     await expect(actual).toContainText('Timken Europe GmbH');

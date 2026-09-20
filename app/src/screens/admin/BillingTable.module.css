@@ -1,0 +1,215 @@
+.tableOuter {
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  background: var(--bw-warm-cream);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+}
+
+.th {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--bw-line-steel);
+  background: var(--bw-surface-mist);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--bw-ls-divider);
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+}
+
+.td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  font-size: 13px;
+  vertical-align: middle;
+  color: var(--bw-ink-steel);
+  white-space: nowrap;
+}
+
+.row {
+  transition: background 0.1s;
+}
+
+.row:last-child .td {
+  border-bottom: none;
+}
+
+.row:hover .td {
+  background: var(--bw-hover-surface);
+}
+
+/*
+ * F-179: el fondo seleccionado sale de `orgId`, jamás de la posición en la
+ * lista. Se pinta en la fila Y en sus celdas para que cualquier lectura del
+ * sombreado —fila o celda— vea el mismo tono.
+ */
+.rowSelected,
+.rowSelected:hover {
+  background: var(--bw-tint-consulta);
+}
+
+.rowSelected .td,
+.rowSelected:hover .td {
+  background: var(--bw-tint-consulta);
+}
+
+.orgButton {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+
+.orgButton:hover {
+  color: var(--bw-primary-dark);
+  text-decoration: underline;
+}
+
+.orgButton:focus-visible {
+  outline: none;
+  border-radius: var(--bw-radius);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.countryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid var(--bw-badge-neutral-border-soft);
+  border-radius: var(--bw-radius);
+  background: var(--bw-cold-white);
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+}
+
+.stateBadge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stateActive {
+  border: 1px solid var(--bw-badge-success-border);
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-signal-green);
+}
+
+.stateSuspended {
+  border: 1px solid var(--bw-badge-warning-border);
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning);
+}
+
+.stateTrial {
+  border: 1px solid var(--bw-chip-active-border);
+  background: var(--bw-chip-active-bg);
+  color: var(--bw-primary-dark);
+}
+
+.stateCandidate {
+  border: 1px solid var(--bw-badge-danger-border);
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-danger);
+}
+
+.dateCell {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+}
+
+/*
+ * Van después de `.td` a propósito: con la misma especificidad gana la última
+ * regla, y el tono tiene que poder pisar el color base de la celda.
+ */
+.dueCell {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.toneDanger {
+  color: var(--bw-danger);
+}
+
+.toneWarn {
+  color: var(--bw-warning);
+}
+
+.toneNormal {
+  color: var(--bw-ink-steel);
+}
+
+.actionPrimary,
+.actionSecondary {
+  height: 26px;
+  padding: 0 11px;
+  border: none;
+  border-radius: var(--bw-radius-hamburger);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bw-warm-cream);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.12s;
+}
+
+.actionPrimary {
+  background: var(--bw-signal-green);
+}
+
+.actionSecondary {
+  background: var(--bw-calibration-blue);
+}
+
+.actionPrimary:hover,
+.actionSecondary:hover {
+  opacity: 0.85;
+}
+
+.actionPrimary:focus-visible,
+.actionSecondary:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
+}
+
+.actionDanger {
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius-hamburger);
+  background: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bw-danger);
+  cursor: not-allowed;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.emptyCell {
+  padding: 18px 14px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--bw-steel-mist);
+}

@@ -1,0 +1,191 @@
+/*
+ * ADMIN-02 · Panel de Gestión de Cobros.
+ *
+ * Ningún color literal: todo sale del vocabulario de tokens. No hay token de
+ * blanco puro, así que las superficies de tarjeta usan el claro más próximo
+ * (`--bw-warm-cream`) y el fondo de pantalla el `--bw-cold-white` de la spec §2.
+ */
+
+.screen {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  min-height: 100%;
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+  box-sizing: border-box;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--bw-brass);
+}
+
+.title {
+  margin: 0 0 3px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  max-width: 640px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-text-secondary);
+}
+
+.feedback {
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--bw-badge-success-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-badge-success-bg);
+  font-size: 12px;
+  color: var(--bw-success-dark);
+}
+
+.alert {
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-sensitive-bg);
+  font-size: 12px;
+  color: var(--bw-error-text);
+}
+
+/* ── Chips de filtro ──────────────────────────────────────────────────────── */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 14px;
+  background: var(--bw-warm-cream);
+  font-family: inherit;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.chip:hover {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-ink-steel);
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
+}
+
+.chipActive {
+  border-color: var(--bw-deep-steel);
+  background: var(--bw-deep-steel);
+  color: var(--bw-on-dark-hover);
+}
+
+.chipCount {
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--bw-cold-white);
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  font-weight: 600;
+  color: var(--bw-steel-mist);
+}
+
+.chipActive .chipCount {
+  background: var(--bw-on-dark-fill-4);
+  color: var(--bw-on-dark-hover);
+}
+
+/* ── Sección «Candidatas a borrado» ──────────────────────────────────────── */
+
+.deletionSection {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-left: 3px solid var(--bw-danger);
+  border-radius: 6px;
+  background: var(--bw-warm-cream);
+}
+
+.deletionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  font-size: 12px;
+  color: var(--bw-ink-steel);
+}
+
+.deletionRow:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.deletionName {
+  flex: 1;
+  font-weight: 500;
+}
+
+.deletionMeta {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+}
+
+.countryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid var(--bw-badge-neutral-border-soft);
+  border-radius: var(--bw-radius);
+  background: var(--bw-cold-white);
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+}
+
+.deletionButton {
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius-hamburger);
+  background: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bw-danger);
+  cursor: not-allowed;
+  opacity: 0.55;
+  white-space: nowrap;
+}

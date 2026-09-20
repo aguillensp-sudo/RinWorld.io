@@ -4,8 +4,16 @@
 comprometer el estándar?* Se mide con la misma pantalla, el mismo contrato y los mismos
 checks, cambiando **solo el Coder**.
 
-> **Estado: preparado, sin correr.** Falta `ATRIA_API_KEY` en el entorno de usuario. Todo
-> lo demás está montado y probado en seco. Ver §8.
+> **Estado: CERRADO el 20-sep-2026. El resultado está en §8** — y el titular no es el que
+> parece: los dos brazos escribieron una pantalla correcta sin una sola corrección a mano,
+> y lo que decide es la fiabilidad de la API, no la calidad del código.
+>
+> **La clave de Atria no está donde dice `CLAUDE.md` §1.1.** Vive en el `.env` de OTRO
+> proyecto —`C:\Users\admin\proyectos\04_01_Ticket_reader_Ninox\.env`—, que es un tercer
+> sitio, y por eso no la encontró ni el `grep` del repo (respeta `.gitignore`) ni la
+> lectura del registro de Windows. Si se va a volver a correr este brazo: o se pasa al
+> entorno de usuario con `setx ATRIA_API_KEY`, o se lee de esa ruta al lanzar. **Queda
+> escrito aquí porque la próxima sesión, si no, repite la búsqueda a ciegas.**
 
 ---
 
@@ -139,8 +147,102 @@ comprobar que no hay ningún servidor en el 4173.
 - **Un `vite preview` huérfano** de una corrida cortada a lo bruto deja el 4173 ocupado y
   para la siguiente corrida (por diseño, salida 5). Se mata a mano.
 
-## 8 · Bitácora
+## 8 · Resultado (20-sep-2026)
+
+### Lo que midió cada brazo
+
+| | **deepseek** | **atria** |
+|---|---|---|
+| Veredicto del arnés | **ESCALADO 3/4** en 3 intentos | **VERDE 4/4** en 2 intentos |
+| Tiempo de pared | 14m 00s | 9m 19s (+ ~21 min de corridas muertas) |
+| Tiempo de modelo | 10,1 min | 7,4 min |
+| Tokens (in / out) | 115 042 / 160 917 | 65 430 / 48 287 |
+| Coste | **$0,2366** real | **$0,2234** a precio-SOMBRA (marginal real: 0, va contra cuota) |
+| Líneas del artefacto | 1 594 | 1 541 |
+| Líneas tocadas a mano | **0** | **0** |
+
+### ⚠ Los dos números de «intentos hasta verde» NO son comparables
+
+**El brazo de DeepSeek corrió contra el contrato de aceptación roto y el de Atria contra
+el corregido** (`F-183`). Corregir el contrato entre una corrida y otra era inevitable
+—sin eso el segundo brazo habría escalado por lo mismo y no habríamos medido nada— pero
+invalida la comparación directa de esa cifra. Lo que sí se puede comparar, porque se midió
+después y sin gastar un token:
+
+**El intento 1 de DeepSeek, recuperado de su JSON y pasado por la batería CORREGIDA, sale
+verde entero: typecheck limpio, 936 pruebas de unidad, 89/89 de e2e.** Es decir, con un
+contrato correcto habría sido **verde 4/4 al primer intento** — el primero de la fábrica.
+
+**El intento 1 de Atria falló por mérito propio**, y por una sola línea:
+`AdminBilling.tsx(55,10): error TS6133: 'loading' is declared but its value is never read`.
+Eso tumbó el build, y con el build cayó también C2 («Process from config.webServer was not
+able to start»). Lo corrigió en el intento 2.
+
+Así que la comparación honesta, a igualdad de contrato, es:
+
+| | deepseek | atria |
+|---|---|---|
+| Intentos hasta verde | **1** | **2** |
+| Tokens hasta verde | 29 491 / 38 352 | 65 430 / 48 287 |
+| Minutos de modelo hasta verde | **2,1** | 7,4 |
+
+### Lo que costó *operar* Atria, que también es un resultado
+
+Tres corridas muertas antes de la buena, y cada una enseñó algo:
+
+1. **HTTP 502 `upstream_unavailable` a los 5m17s.** Su pasarela no sostiene una petición
+   larga **sin streaming**.
+2. **Otro 502 a los 5m40s.** Mismo tope: no era un fallo transitorio.
+3. **Stream cortado a los 605 s**, sin `usage`. Con `stream` la conexión aguanta mucho
+   más, pero no indefinidamente.
+
+Medido aparte con una sonda: **33 399 tokens de salida en 435 s sí completan**, con su
+`usage`. Y su velocidad varía muchísimo entre momentos del día —de 24 a 110 tokens/s en la
+misma tarde—, así que que una respuesta de ocho ficheros quepa antes del corte **depende
+de la carga que tenga su servicio**, no de nosotros.
+
+DeepSeek no necesitó ninguna de estas tres cosas: ni streaming, ni techo de `max_tokens`,
+ni reintentos por corte.
+
+### Veredicto
+
+**Para esta fábrica y a día de hoy, DeepSeek-V4-Flash sigue siendo la elección correcta**, y
+no por calidad de código: Atria escribió una pantalla que pasa los cuatro checks y las 15
+pruebas de aceptación sin una sola corrección a mano, lo cual para un modelo publicado hace
+nueve días es notable. Lo que lo descarta es **la fiabilidad de su API**: tres corridas
+muertas, un tope de tiempo que depende de su carga, y la necesidad de tratamiento especial
+(streaming, techo de salida, reintento por corte) para una respuesta del tamaño que una
+pantalla entera necesita.
+
+**Lo que este experimento NO dice:** que Atria sea peor modelo. Con n=1 por brazo, y con la
+mitad de los confusores de §5 sin controlar, lo único demostrado es que **por su API
+pública, hoy, no sostiene el tamaño de respuesta de esta fábrica**. Si mañana publican un
+endpoint estable, la conversación se reabre — y el arnés ya sabe hablar con él.
+
+### Confusores que quedaron sin controlar, además de los de §5
+
+- **El árbol del brazo de Atria arrancó con el artefacto de DeepSeek dentro.** Se puso al
+  día con `mvp/bootstrap` para recoger el *streaming* y eso arrastró el commit del
+  artefacto. El Coder no lo ve —el prompt no incluye los ficheros de salida— y Atria
+  reescribió los ocho en los dos intentos, así que los checks midieron su código; pero si
+  hubiera escrito siete, el octavo habría sido ajeno. **Error de método, no de resultado.**
+- **La caché de Atria llegó caliente**: 99,56 % de *hit* en su intento 1, porque las tres
+  corridas muertas ya habían mandado el mismo prompt. No afecta al coste registrado (su
+  precio-sombra cobra igual el *hit* que el *miss*), sí a la velocidad.
+- **Los dos brazos no corrieron a la vez.** El de Atria arrancó cuando el otro ya había
+  terminado, así que el turno de checks (§3) no llegó a usarse en una corrida real: el
+  cerrojo está probado, pero no ejercitado en producción.
+- **El feedback del reintento iba degradado en los dos brazos** (`F-184`): 36 de 49 líneas
+  eran avisos de Node. Se dejó SIN arreglar a propósito para no darle ventaja al segundo
+  brazo. Es lo primero que hay que arreglar antes de la próxima pantalla.
+
+---
+
+## 9 · Bitácora
 
 | Fecha | Qué |
 |---|---|
-| 20-sep-2026 | Arnés preparado (`2afa04c`), revisión adversarial y sus arreglos, dos árboles listos con dependencias instaladas, `--seco` verde en los dos brazos, pre-vuelo del árbol limpio (typecheck 0, 58 rojos y solo los de ADMIN-02, 878 verdes). **Pendiente: `ATRIA_API_KEY`.** |
+| 20-sep-2026 | Arnés preparado (`2afa04c`), revisión adversarial y sus arreglos, dos árboles listos, `--seco` verde en los dos brazos, pre-vuelo limpio (typecheck 0, 58 rojos y solo los de ADMIN-02, 878 verdes). |
+| 20-sep-2026 | Corrida `brazo-deepseek`: escalada 3/4 por los mismos ocho e2e. Diagnóstico: el contrato, no el artefacto (`F-183`). Artefacto comiteado tal cual, contrato corregido, CI entera verde y pantalla desplegada. |
+| 20-sep-2026 | Tres corridas de Atria muertas (502, 502, stream cortado). `HARNESS_CODER_STREAM` y el corte tratado como transporte. Corrida `brazo-atria`: **verde 4/4 en 2 intentos**. |
+| 20-sep-2026 | Replay del intento 1 de DeepSeek contra el contrato corregido: **verde entero**. La comparación justa queda 1 intento contra 2. |

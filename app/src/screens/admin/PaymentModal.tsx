@@ -13,21 +13,19 @@ interface Props {
   onCancel: () => void;
 }
 
-/**
- * Ids estables: el diálogo toma su nombre accesible del título por
- * `aria-labelledby`, y hay un solo modal en pantalla a la vez.
- */
+/** Mismo id siempre: solo puede haber un modal de pago abierto a la vez. */
 const TITLE_ID = 'bw-payment-modal-title';
-const DATE_ID = 'bw-payment-modal-date';
-const NOTE_ID = 'bw-payment-modal-note';
 
 /**
  * Modal `Marcar pago recibido` de ADMIN-02.
  *
- * Es el mismo diálogo cuando se abre por `Reactivar`: en la base los dos verbos
- * son `billing_confirm_payment`. Totalmente controlado, sin estado propio, y sin
- * ningún campo de tarjeta ni redirección a pasarela (spec §7): el cobro es por
- * transferencia confirmada a mano. Solo se cierra con Cancelar.
+ * Totalmente controlado y sin estado propio: `date` y `note` son los `value` de
+ * sus campos y cada cambio se notifica hacia arriba. Sirve también para
+ * `Reactivar` —es el mismo verbo en la base— y por eso su título es siempre
+ * «Marcar pago recibido».
+ *
+ * No hay ningún campo de tarjeta ni referencia a pasarela alguna (spec §7): el
+ * cobro es por transferencia bancaria confirmada a mano por el operador.
  */
 export function PaymentModal({
   orgName,
@@ -43,22 +41,22 @@ export function PaymentModal({
   const canConfirm = isValidPaymentDate(date) && isValidPaymentNote(note) && !busy;
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby={TITLE_ID} className={styles.overlay}>
-      <div className={styles.modal}>
-        <header className={styles.header}>
+    <div className={styles.overlay}>
+      <div role="dialog" aria-modal="true" aria-labelledby={TITLE_ID} className={styles.dialog}>
+        <div className={styles.header}>
           <h2 id={TITLE_ID} className={styles.title}>
             Marcar pago recibido
           </h2>
           <p className={styles.orgName}>{orgName}</p>
-        </header>
+        </div>
 
         <div className={styles.body}>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor={DATE_ID}>
+            <label className={styles.label} htmlFor="bw-payment-date">
               Fecha del pago
             </label>
             <input
-              id={DATE_ID}
+              id="bw-payment-date"
               type="date"
               className={styles.input}
               value={date}
@@ -69,34 +67,41 @@ export function PaymentModal({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor={NOTE_ID}>
+            <label className={styles.label} htmlFor="bw-payment-note">
               Nota interna
             </label>
             <textarea
-              id={NOTE_ID}
+              id="bw-payment-note"
               className={styles.textarea}
               value={note}
               maxLength={300}
               onChange={(e) => onNoteChange(e.target.value)}
             />
-            <p className={styles.hint}>Máx 300 caracteres · ej: referencia de transferencia, banco emisor</p>
+            <p className={styles.hint}>
+              Máx 300 caracteres · ej: referencia de transferencia, banco emisor
+            </p>
           </div>
 
-          {error !== null ? (
+          {error ? (
             <p role="alert" className={styles.error}>
               {error}
             </p>
           ) : null}
         </div>
 
-        <footer className={styles.footer}>
-          <button type="button" className={styles.cancel} onClick={onCancel}>
+        <div className={styles.footer}>
+          <button type="button" className={styles.cancelButton} onClick={onCancel}>
             Cancelar
           </button>
-          <button type="button" className={styles.confirm} disabled={!canConfirm} onClick={onConfirm}>
+          <button
+            type="button"
+            className={styles.confirmButton}
+            onClick={onConfirm}
+            disabled={!canConfirm}
+          >
             Confirmar pago recibido
           </button>
-        </footer>
+        </div>
       </div>
     </div>
   );

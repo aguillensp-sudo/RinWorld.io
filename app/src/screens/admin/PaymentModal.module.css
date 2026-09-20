@@ -1,22 +1,19 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  background: var(--bw-sidebar-overlay);
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: var(--bw-sidebar-overlay);
-  box-sizing: border-box;
 }
 
-.modal {
-  display: flex;
-  flex-direction: column;
-  width: 420px;
-  max-width: 100%;
+.dialog {
+  background: var(--bw-surface-mist);
   border-radius: 8px;
-  background: var(--bw-warm-cream);
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  /* No hay token de sombra; --bw-sidebar-overlay es el único negro translúcido. */
   box-shadow: 0 16px 48px var(--bw-sidebar-overlay);
   overflow: hidden;
 }
@@ -27,17 +24,17 @@
 }
 
 .title {
-  margin: 0 0 2px;
   font-family: var(--bw-font-title);
   font-size: 14px;
   font-weight: 700;
   color: var(--bw-deep-steel);
+  margin: 0;
 }
 
 .orgName {
-  margin: 0;
   font-size: 12px;
-  color: var(--bw-steel-mist);
+  color: var(--bw-text-secondary);
+  margin: 2px 0 0;
 }
 
 .body {
@@ -49,103 +46,101 @@
 }
 
 .label {
-  display: block;
-  margin-bottom: 5px;
   font-size: 12px;
   font-weight: 500;
   color: var(--bw-ink-steel);
+  margin-bottom: 5px;
+  display: block;
 }
 
-.input,
+.input {
+  width: 100%;
+  padding: var(--bw-pad-input);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  font-size: var(--bw-size-input);
+  font-family: var(--bw-font-body);
+  color: var(--bw-input-text);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--bw-signal-green);
+}
+
 .textarea {
   width: 100%;
   padding: var(--bw-pad-input);
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: 5px;
-  background: var(--bw-warm-cream);
-  font-family: inherit;
   font-size: var(--bw-size-input);
+  font-family: var(--bw-font-body);
   color: var(--bw-input-text);
-  box-sizing: border-box;
-}
-
-.textarea {
-  min-height: 70px;
-  resize: vertical;
-}
-
-.input:focus,
-.textarea:focus {
   outline: none;
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
+  resize: vertical;
+  min-height: 70px;
+}
+
+.textarea:focus {
+  border-color: var(--bw-signal-green);
 }
 
 .hint {
-  margin: 4px 0 0;
   font-size: var(--bw-size-hint);
   letter-spacing: var(--bw-ls-hint);
-  color: var(--bw-steel-mist);
+  color: var(--bw-input-placeholder);
+  margin: 4px 0 0;
 }
 
 .error {
-  margin: 0;
-  padding: 8px 11px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--bw-error-text);
+  background: var(--bw-sensitive-bg);
   border: 1px solid var(--bw-badge-danger-border);
   border-radius: 5px;
-  background: var(--bw-sensitive-bg);
-  font-size: 12px;
-  color: var(--bw-error-text);
+  padding: 8px 11px;
+  margin: 0;
 }
 
 .footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
   padding: 14px 20px;
   border-top: 1px solid var(--bw-divider-mist);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
-.cancel {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 5px;
-  background: none;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--bw-steel-mist);
-  cursor: pointer;
-}
-
-.cancel:hover {
-  color: var(--bw-deep-steel);
-}
-
-.cancel:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-halo);
-}
-
-.confirm {
+.confirmButton {
   height: 36px;
   padding: 0 18px;
+  background: var(--bw-signal-green);
   border: none;
   border-radius: 5px;
-  background: var(--bw-signal-green);
-  font-family: inherit;
+  /* No hay token de blanco puro para texto sobre color; --bw-cold-white es el más cercano. */
+  color: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
   font-size: 13px;
   font-weight: 500;
-  color: var(--bw-warm-cream);
   cursor: pointer;
 }
 
-.confirm:disabled {
+.confirmButton:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
-  opacity: 0.45;
 }
 
-.confirm:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-halo);
+.cancelButton {
+  height: 36px;
+  padding: 0 14px;
+  background: none;
+  border: none;
+  color: var(--bw-text-secondary);
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  color: var(--bw-deep-steel);
 }

@@ -1,35 +1,36 @@
 .tableOuter {
+  background: var(--bw-surface-mist);
   border: 1px solid var(--bw-line-steel);
   border-radius: 8px;
-  background: var(--bw-warm-cream);
   overflow-x: auto;
 }
 
 .table {
   width: 100%;
-  min-width: max-content;
   border-collapse: collapse;
+  min-width: max-content;
 }
 
 .th {
   padding: 9px 14px;
-  border-bottom: 1px solid var(--bw-line-steel);
-  background: var(--bw-surface-mist);
+  text-align: left;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: var(--bw-ls-divider);
   text-transform: uppercase;
-  text-align: left;
-  color: var(--bw-steel-mist);
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-text-secondary);
+  /* No hay token de superficie blanca pura; el tinte de la cabecera es el divisor claro. */
+  background: var(--bw-divider-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
   white-space: nowrap;
 }
 
 .td {
   padding: 10px 14px;
-  border-bottom: 1px solid var(--bw-divider-mist);
   font-size: 13px;
-  vertical-align: middle;
   color: var(--bw-ink-steel);
+  border-bottom: 1px solid var(--bw-divider-mist);
+  vertical-align: middle;
   white-space: nowrap;
 }
 
@@ -37,179 +38,164 @@
   transition: background 0.1s;
 }
 
-.row:last-child .td {
-  border-bottom: none;
-}
-
 .row:hover .td {
-  background: var(--bw-hover-surface);
+  background: var(--bw-row-hover-tint);
 }
 
-/*
- * F-179: el fondo seleccionado sale de `orgId`, jamás de la posición en la
- * lista. Se pinta en la fila Y en sus celdas para que cualquier lectura del
- * sombreado —fila o celda— vea el mismo tono.
- */
-.rowSelected,
-.rowSelected:hover {
-  background: var(--bw-tint-consulta);
-}
-
-.rowSelected .td,
-.rowSelected:hover .td {
-  background: var(--bw-tint-consulta);
+.rowSelected .td {
+  background: var(--bw-chip-active-bg);
 }
 
 .orgButton {
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: inherit;
+  font-family: var(--bw-font-body);
   font-size: 13px;
   font-weight: 500;
-  text-align: left;
   color: var(--bw-calibration-blue);
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
+  text-align: left;
 }
 
 .orgButton:hover {
-  color: var(--bw-primary-dark);
   text-decoration: underline;
-}
-
-.orgButton:focus-visible {
-  outline: none;
-  border-radius: var(--bw-radius);
-  box-shadow: var(--bw-focus-halo);
 }
 
 .countryBadge {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  border: 1px solid var(--bw-badge-neutral-border-soft);
-  border-radius: var(--bw-radius);
   background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
   font-family: var(--bw-font-mono);
   font-size: 11px;
   font-weight: 500;
   color: var(--bw-ink-steel);
 }
 
-.stateBadge {
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: 2px;
-  font-family: var(--bw-font-mono);
-  font-size: 9px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.stateActive {
-  border: 1px solid var(--bw-badge-success-border);
-  background: var(--bw-badge-success-bg);
-  color: var(--bw-signal-green);
-}
-
-.stateSuspended {
-  border: 1px solid var(--bw-badge-warning-border);
-  background: var(--bw-badge-warning-bg);
-  color: var(--bw-warning);
-}
-
-.stateTrial {
-  border: 1px solid var(--bw-chip-active-border);
-  background: var(--bw-chip-active-bg);
-  color: var(--bw-primary-dark);
-}
-
-.stateCandidate {
-  border: 1px solid var(--bw-badge-danger-border);
-  background: var(--bw-sensitive-bg);
-  color: var(--bw-danger);
-}
-
-.dateCell {
+.mono {
   font-family: var(--bw-font-mono);
   font-size: 11px;
-  color: var(--bw-steel-mist);
+  color: var(--bw-input-placeholder);
 }
 
-/*
- * Van después de `.td` a propósito: con la misma especificidad gana la última
- * regla, y el tono tiene que poder pisar el color base de la celda.
- */
-.dueCell {
+.days {
   font-family: var(--bw-font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
+  color: var(--bw-ink-steel);
 }
 
 .toneDanger {
   color: var(--bw-danger);
+  font-weight: 700;
 }
 
 .toneWarn {
   color: var(--bw-warning);
+  font-weight: 600;
 }
 
-.toneNormal {
-  color: var(--bw-ink-steel);
+.stateBadge {
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 2px;
+  display: inline-block;
+  border: 1px solid transparent;
 }
 
-.actionPrimary,
-.actionSecondary {
+.stateActive {
+  background: var(--bw-badge-success-bg);
+  border-color: var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+.stateSuspended {
+  background: var(--bw-badge-warning-bg);
+  border-color: var(--bw-badge-warning-border);
+  color: var(--bw-warning);
+}
+
+.stateTrial {
+  /* No existe un token `--bw-badge-primary-*`: el azul de `EN PRUEBA` sale del
+     tinte de consulta y del borde del chip activo, ambos derivados del azul de
+     calibración. */
+  background: var(--bw-tint-consulta);
+  border-color: var(--bw-chip-active-border);
+  color: var(--bw-primary-dark);
+}
+
+.stateCandidate {
+  background: var(--bw-sensitive-bg);
+  border-color: var(--bw-badge-danger-border);
+  color: var(--bw-danger);
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btnPay {
   height: 26px;
   padding: 0 11px;
+  background: var(--bw-signal-green);
   border: none;
-  border-radius: var(--bw-radius-hamburger);
-  font-family: inherit;
+  border-radius: var(--bw-radius);
+  /* No hay token de blanco puro para texto sobre color; --bw-cold-white es el más cercano. */
+  color: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
   font-size: 11px;
   font-weight: 500;
-  color: var(--bw-warm-cream);
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.12s;
 }
 
-.actionPrimary {
-  background: var(--bw-signal-green);
+.btnPay:hover {
+  opacity: 0.87;
 }
 
-.actionSecondary {
-  background: var(--bw-calibration-blue);
-}
-
-.actionPrimary:hover,
-.actionSecondary:hover {
-  opacity: 0.85;
-}
-
-.actionPrimary:focus-visible,
-.actionSecondary:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-halo);
-}
-
-.actionDanger {
+.btnReactivate {
   height: 26px;
   padding: 0 11px;
-  border: 1px solid var(--bw-badge-danger-border);
-  border-radius: var(--bw-radius-hamburger);
-  background: none;
-  font-family: inherit;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  color: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
   font-size: 11px;
   font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btnReactivate:hover {
+  opacity: 0.87;
+}
+
+.btnDelete {
+  height: 26px;
+  padding: 0 11px;
+  background: none;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
   color: var(--bw-danger);
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  font-weight: 500;
   cursor: not-allowed;
-  opacity: 0.55;
   white-space: nowrap;
 }
 
 .emptyCell {
   padding: 18px 14px;
   font-size: 13px;
+  color: var(--bw-text-secondary);
   text-align: center;
-  color: var(--bw-steel-mist);
+  white-space: normal;
 }

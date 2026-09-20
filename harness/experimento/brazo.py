@@ -199,10 +199,18 @@ def sonda() -> int:
         # 56 067 tokens de salida en un intento).
         peor = 56067 / vel
         print(f"· a esa velocidad, 56 067 tokens de salida (el peor intento "
-              f"medido del proyecto) tardarian {peor / 60:.1f} min, y el timeout "
-              f"por operacion de socket son {llm.TIMEOUT / 60:.1f} min"
-              + ("  ⚠ NO CABE: subelo antes de correr" if peor > llm.TIMEOUT * 0.8
-                 else "  → cabe"))
+              f"medido del proyecto) tardarian {peor / 60:.1f} min")
+        if llm.STREAM:
+            # Con trozos, el timeout acota cada LECTURA y no la llamada entera:
+            # una respuesta larga no lo agota mientras sigan llegando bytes. Quien
+            # tiene que caber es el plazo de pared del paso (`--plazo`).
+            print(f"  → con stream eso no agota el timeout de socket ({llm.TIMEOUT / 60:.0f} min "
+                  f"por lectura); quien tiene que caber es el plazo de pared del paso")
+        elif peor > llm.TIMEOUT * 0.8:
+            print(f"  ⚠ NO CABE en el timeout de socket ({llm.TIMEOUT / 60:.1f} min): "
+                  f"subelo, o pide la respuesta por trozos")
+        else:
+            print(f"  → cabe en el timeout de socket ({llm.TIMEOUT / 60:.1f} min)")
     return 0
 
 

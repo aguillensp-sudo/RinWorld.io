@@ -1589,6 +1589,85 @@ def test_segundo_proveedor_no_toca_el_primero():
         else:
             os.environ["DEEPSEEK_API_KEY"] = previa
 
+    # -- El stream: la misma respuesta, reensamblada. Lo pidio un 502.
+    original_stream = llm.STREAM
+    try:
+        llm.STREAM = True
+        trozos = [
+            b'data: {"model":"Atria-Dawn-Preview","choices":[{"delta":{"reasoning_content":"pien"}}]}\n',
+            b'\n',
+            b'data: {"choices":[{"delta":{"content":"===FILE"}}]}\n',
+            b'data: {"choices":[{"delta":{"content":": a.tsx===\\n"},"finish_reason":null}]}\n',
+            b'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n',
+            b'data: {"choices":[],"usage":{"prompt_tokens":11,"completion_tokens":3,'
+            b'"prompt_tokens_details":{"cached_tokens":4}}}\n',
+            b'data: [DONE]\n',
+        ]
+        datos = llm._reensamblar(iter(trozos))
+        check("el stream se reensambla con la forma de una respuesta normal",
+              datos["choices"][0]["message"]["content"] == "===FILE: a.tsx===\n"
+              and datos["choices"][0]["finish_reason"] == "stop",
+              json.dumps(datos)[:200])
+        check("y trae el usage del ultimo trozo, que es de donde sale el coste",
+              datos["usage"]["prompt_tokens"] == 11)
+        acc = llm.accumulate(datos["usage"], llm.new_acc())
+        check("con su cache hit en la forma de OpenAI",
+              (acc["cache_hit"], acc["cache_miss"]) == (4, 7), str(acc))
+
+        # ⚠ Sin `usage` no hay coste, y un coste inventado es F-010.
+        try:
+            llm._reensamblar(iter([b'data: {"choices":[{"delta":{"content":"x"},'
+                                   b'"finish_reason":"stop"}]}\n', b'data: [DONE]\n']))
+            check("⚠ un stream sin usage tiene que FALLAR", False, "no fallo")
+        except llm.LLMError as e:
+            check("⚠ un stream sin usage FALLA en vez de registrar cero (F-010)",
+                  "usage" in str(e) and "F-010" in str(e), str(e)[:120])
+
+        # Un error a mitad del stream llega con el 200 ya enviado.
+        try:
+            llm._reensamblar(iter([b'data: {"error":{"message":"se cayo","code":"upstream"}}\n']))
+            check("⚠ un error dentro del stream tiene que FALLAR", False, "no fallo")
+        except llm.LLMError as e:
+            check("⚠ y un error a mitad del stream no pasa por respuesta buena",
+                  "se cayo" in str(e), str(e)[:120])
+
+        # La peticion lo pide, y pide el usage explicitamente.
+        peticiones = []
+        original_open2 = llm.urllib.request.urlopen
+
+        class _R:
+            def __enter__(self): return iter([
+                b'data: {"choices":[{"delta":{"content":"ok"},"finish_reason":"stop"}]}\n',
+                b'data: {"choices":[],"usage":{"prompt_tokens":1,"completion_tokens":1}}\n'])
+            def __exit__(self, *a): return False
+
+        llm.urllib.request.urlopen = lambda req, timeout=None: (peticiones.append(req), _R())[1]
+        os.environ.setdefault("DEEPSEEK_API_KEY", "de-mentira")
+        try:
+            llm.call([{"role": "user", "content": "x"}], 10)
+        finally:
+            llm.urllib.request.urlopen = original_open2
+        cuerpo = json.loads(peticiones[0].data)
+        check("la peticion con stream pide los trozos Y el usage",
+              cuerpo.get("stream") is True
+              and cuerpo.get("stream_options") == {"include_usage": True}, str(cuerpo)[:160])
+        check("y no cambia nada de lo que se pide: modelo, mensajes, tope y temperatura",
+              cuerpo["model"] == llm.MODEL and cuerpo["max_tokens"] == 10
+              and cuerpo["temperature"] == 0)
+
+        llm.STREAM = False
+        peticiones.clear()
+        llm.urllib.request.urlopen = lambda req, timeout=None: (peticiones.append(req),
+                                                                respuesta("stop"))[1]
+        try:
+            llm.call([{"role": "user", "content": "x"}], 10)
+        finally:
+            llm.urllib.request.urlopen = original_open2
+        check("⚠ y sin la variable, la peticion NO menciona el stream (DeepSeek intacto)",
+              "stream" not in json.loads(peticiones[0].data), str(json.loads(peticiones[0].data))[:160])
+    finally:
+        llm.STREAM = original_stream
+
     # Las dos formas del cache hit.
     ds = llm.accumulate({"prompt_tokens": 1000, "completion_tokens": 7,
                          "prompt_cache_hit_tokens": 900,

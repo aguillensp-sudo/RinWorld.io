@@ -33,7 +33,7 @@ VARIABLES = (
     # `HARNESS_E2E_LOCK` decide si los dos brazos comparten turno o no. Una de
     # ellas olvidada en la consola deja al brazo oficial corriendo con otra
     # configuracion sin que nada lo diga.
-    "HARNESS_CODER_TIMEOUT", "HARNESS_E2E_LOCK",
+    "HARNESS_CODER_TIMEOUT", "HARNESS_E2E_LOCK", "HARNESS_CODER_STREAM",
     "DS_PRICE_IN_HIT", "DS_PRICE_IN_MISS", "DS_PRICE_OUT",
     "HARNESS_PRICE_TABLE_DATE", "HARNESS_PRICE_NOTE",
 )
@@ -60,6 +60,13 @@ BRAZOS = {
         # 56 067 tokens de salida en un intento). El plazo de pared de `run.py`
         # (`--plazo`, abajo) sigue siendo quien corta un cuelgue de verdad.
         "HARNESS_CODER_TIMEOUT": "1500",
+        # ⚠ Y por trozos, que es lo que hizo falta de verdad. Las dos corridas
+        # del 20-sep murieron con HTTP 502 `upstream_unavailable` a los 5m17s y
+        # 5m40s -la sonda corta contestaba en 5 s-: su pasarela no aguanta una
+        # peticion sin streaming tanto rato, y quien corta es el otro extremo,
+        # asi que subir el timeout no arregla nada. Ver `llm.STREAM`: cambia como
+        # llegan los bytes, no lo que se pide.
+        "HARNESS_CODER_STREAM": "1",
         # Precio-SOMBRA, no tarifa. Atria no publica precio y el proyecto paga
         # contra una cuota de tokens: coste marginal cero hasta agotarla. Pero
         # F-010 prohibe registrar 0 —no se distingue de una llamada gratis—, asi
@@ -162,7 +169,8 @@ def sonda() -> int:
     """
     from ..core import llm
     print(f"· sonda: max_tokens={llm.DEFAULT_MAX_TOKENS if not llm.MAX_TOKENS_CAP else llm.MAX_TOKENS_CAP}"
-          f", timeout {llm.TIMEOUT}s por operacion de socket")
+          f", timeout {llm.TIMEOUT}s por operacion de socket"
+          f", stream={'si' if llm.STREAM else 'no'}")
     t0 = time.time()
     data, secs = llm.call(
         [{"role": "user", "content":

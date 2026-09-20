@@ -44,6 +44,28 @@ TRUNCATION_RETRIES = 3
 KEY_ENV = os.environ.get("HARNESS_CODER_KEY_ENV", "DEEPSEEK_API_KEY")
 MAX_TOKENS_CAP = int(os.environ.get("HARNESS_CODER_MAX_TOKENS_CAP", "0"))
 
+# -----------------------------------------------------------------------------
+# HARNESS_CODER_STREAM · pedir la respuesta por trozos (20-sep, y lo pidio una
+# corrida muerta, no una preferencia).
+#
+# Las dos corridas de Atria del 20-sep murieron con **HTTP 502
+# `upstream_unavailable`** a los 5m17s y 5m40s, mientras la sonda -una respuesta
+# corta- contestaba en 5 s. No es un fallo transitorio: es que su pasarela no
+# aguanta una peticion SIN streaming tanto rato. Subir el timeout no arregla
+# nada, porque quien corta es el otro extremo.
+#
+# Con `stream`, los bytes salen desde el primer token y la conexion nunca esta
+# en silencio. Lo que NO cambia: ni el prompt, ni `max_tokens`, ni la
+# temperatura, ni lo que el grafo recibe — esta funcion devuelve exactamente la
+# misma forma de respuesta, reensamblada. Es como llegan los bytes, no que se
+# pide.
+#
+# `stream_options.include_usage` es obligatorio para nosotros: sin `usage` no
+# hay tokens, y sin tokens no hay coste. Si el proveedor no lo manda, esto FALLA
+# en vez de registrar ceros (F-010).
+# -----------------------------------------------------------------------------
+STREAM = os.environ.get("HARNESS_CODER_STREAM", "") == "1"
+
 
 class LLMError(RuntimeError):
     pass
@@ -109,14 +131,67 @@ def _es_de_transporte(e: Exception) -> bool:
                               e, urllib.error.HTTPError)
 
 
+def _reensamblar(respuesta) -> dict:
+    """Los trozos de un `stream` SSE, con la forma de una respuesta normal.
+
+    Devuelve lo mismo que devolveria la llamada sin streaming, para que ni
+    `complete()` ni el grafo sepan por que via llegaron los bytes."""
+    contenido, razonamiento, finish, usage, modelo = [], [], None, None, MODEL
+    for cruda in respuesta:
+        linea = cruda.decode("utf-8", "replace").strip()
+        if not linea.startswith("data:"):
+            continue
+        dato = linea[5:].strip()
+        if dato == "[DONE]":
+            break
+        try:
+            trozo = json.loads(dato)
+        except json.JSONDecodeError as e:
+            raise LLMError(f"trozo de stream ilegible: {dato[:200]}") from e
+        if trozo.get("error"):
+            # Un error a mitad del stream llega con HTTP 200 ya enviado.
+            raise LLMError(f"error dentro del stream: {json.dumps(trozo['error'])[:300]}")
+        modelo = trozo.get("model") or modelo
+        if trozo.get("usage"):
+            usage = trozo["usage"]
+        for choice in trozo.get("choices") or []:
+            delta = choice.get("delta") or {}
+            if delta.get("content"):
+                contenido.append(delta["content"])
+            if delta.get("reasoning_content"):
+                razonamiento.append(delta["reasoning_content"])
+            if choice.get("finish_reason"):
+                finish = choice["finish_reason"]
+    if usage is None:
+        # F-010 · sin `usage` no hay tokens, y sin tokens el coste seria inventado.
+        raise LLMError(
+            "el stream termino sin `usage`: el proveedor ignora "
+            "`stream_options.include_usage`. Sin tokens no se puede registrar el "
+            "coste y registrar cero seria mentir (F-010). Corre este brazo sin "
+            "`HARNESS_CODER_STREAM`.")
+    return {
+        "model": modelo,
+        "choices": [{
+            "message": {"content": "".join(contenido),
+                        "reasoning_content": "".join(razonamiento)},
+            "finish_reason": finish,
+        }],
+        "usage": usage,
+    }
+
+
 def call(messages: list, max_tokens: int, aviso=None) -> tuple:
     key = os.environ.get(KEY_ENV, "").strip()
     if not key:
         raise LLMError(f"{KEY_ENV} no esta en el entorno.")
-    body = json.dumps({
+    peticion = {
         "model": MODEL, "messages": messages,
         "max_tokens": max_tokens, "temperature": 0,
-    }).encode()
+    }
+    if STREAM:
+        peticion["stream"] = True
+        peticion["stream_options"] = {"include_usage": True}
+    body = json.dumps(peticion).encode()
     req = urllib.request.Request(
         BASE + "/chat/completions", data=body, method="POST",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
@@ -125,7 +200,8 @@ def call(messages: list, max_tokens: int, aviso=None) -> tuple:
     for vuelta in range(TRANSPORT_RETRIES):
         try:
             with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-                return json.load(r), time.time() - t0
+                datos = _reensamblar(r) if STREAM else json.load(r)
+                return datos, time.time() - t0
         except urllib.error.HTTPError as e:
             raise LLMError(f"HTTP {e.code} {e.read().decode()[:500]}") from e
         except Exception as e:                                  # noqa: BLE001

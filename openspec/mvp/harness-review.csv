@@ -6,3 +6,4 @@ fecha,tarea,corrida,commit_artefacto,commit_revision,ficheros,lineas_artefacto,l
 2026-08-12,VND-01,bucle-roto,9682dd3,94e0579,4,652,39,4,2,2,escalado 3/3 · bucle F-064 sin arreglar
 2026-08-12,VND-01,bucle-arreglado,8e8beae,-,4,629,0,0,0,4,VERDE en 2 · mismo task y contrato que la de arriba
 2026-08-12,LOGIN-01,corrida-01,cf74fab,ab1844b,2,241,8,2,1,1,VERDE en 1
+2026-09-20,ADMIN-02,brazo-deepseek,993db73,-,8,1594,0,0,0,8,escalado 3/3 por el contrato de aceptacion (F-183) no por el artefacto: cero lineas tocadas y 15/15 de e2e tras corregir el test

@@ -383,7 +383,14 @@ def cruzar_con_el_contrato(task: dict) -> tuple:
     # cuatro falsos positivos de seis en SRCH-01 -'Seleccionar todos',
     # 'Reintentar'... estaban en la spec-, y un guardia que grita en falso mas de
     # lo que acierta se desactiva en una semana.
-    piezas = [json.dumps(task, ensure_ascii=False)]
+    # ⚠ `.replace` y no `json.dumps` a secas (F-181, 20-sep): el volcado ESCAPA
+    # las comillas, asi que un `role="dialog"` declarado en la tarea llega aqui
+    # como `role=\"dialog\"` y la comprobacion de abajo —que busca la cadena
+    # literal— no lo encuentra NUNCA. ADMIN-02 declara `role="dialog"` y
+    # `role="status"` en su `component_api` y el guardia aviso igualmente de que
+    # faltaban los dos. Un aviso que grita en falso ensena a ignorar los avisos,
+    # y el siguiente puede ser de verdad.
+    piezas = [json.dumps(task, ensure_ascii=False).replace('\\"', '"')]
     for clave, valor in (task.get("inputs") or {}).items():
         if clave.startswith("_") or clave == "design_system":
             continue

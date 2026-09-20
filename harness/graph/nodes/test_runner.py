@@ -33,12 +33,16 @@ Cuatro reglas que vienen de sangre derramada:
 Nada redactado por un humano ni por otro modelo: si se redacta, se inyecta la
 solucion y el intento 2 deja de medir al Coder.
 """
+import contextlib
 import json
 import os
 import pathlib
 import re
 import shutil
+import socket
 import subprocess
+import tempfile
+import time
 
 from ..checks import check_idiomatic, check_palette, read_tokens
 from ..state import MAX_ATTEMPTS, HarnessState
@@ -398,6 +402,151 @@ def _parte_de_excusas(excusados: list, muertas: list) -> str:
     return "\n".join(trozos)
 
 
+# -----------------------------------------------------------------------------
+# DOS ARBOLES, UN SOLO PUERTO Y UNA SOLA BASE (experimento de dos brazos, 19-sep)
+#
+# El cerrojo de `run.py` (F-121) es POR ARBOL: vive en `ROOT/harness/`, asi que
+# dos worktrees tienen dos cerrojos y los dos se dejan tomar. Para `app/src` es
+# lo correcto —cada arbol escribe en el suyo—, pero la suite e2e usa dos cosas
+# que no son de ningun arbol:
+#
+#   1. EL PUERTO 4173. `reuseExistingServer: !isCI` (app/playwright.config.ts):
+#      en local, si algo ya responde ahi, Playwright lo REUTILIZA. La segunda
+#      corrida probaria el build de la primera y firmaria su veredicto como
+#      propio. Es F-121 otra vez, y otra vez sin un solo error.
+#   2. LA BASE DE DEMO. `fixture.setup.ts` borra y repone los hilos al empezar y
+#      `restore` los repone al acabar: dos suites a la vez se borran los datos la
+#      una a la otra a media prueba, y el rojo cae sobre un Coder que no lo causo.
+#
+# Asi que la BATERIA DE CHECKS se serializa entre arboles, con un cerrojo en el
+# directorio comun de git —el unico sitio que comparten todos los worktrees del
+# repo—, y la espera se MIDE y se dice en el log: no es tiempo del Coder ni de
+# los checks. El turno cubre C1 y C2 enteros y no solo el e2e: en una maquina
+# con dos brazos midiendose, el `npm run build` de uno compite con el vitest del
+# otro, y un test que tarda de mas no se distingue de un test roto.
+# El cerrojo es del sistema operativo (`msvcrt.locking` / `flock`): si el
+# proceso muere, o el plazo de pared sale por `os._exit`, se suelta solo. Un
+# cerrojo que sobrevive a su dueño es F-124.
+#
+# Y una comprobacion que protege tambien a una corrida sola: con el turno ya
+# tomado, si algo responde en el 4173 NO es de este arbol, y la corrida PARA en
+# vez de probar un build ajeno. Parar y no puntuar: un rojo de infraestructura
+# devuelto al Coder se paga como un intento y no mide nada (F-033).
+# -----------------------------------------------------------------------------
+E2E_PUERTO = 4173          # `webServer.url` de app/playwright.config.ts
+E2E_GRACIA_PUERTO = 30     # s para que muera el `preview` del turno anterior
+
+
+class E2EInfraError(RuntimeError):
+    """El e2e no puede ejecutarse sin probar algo que no es este arbol."""
+
+
+def _ruta_cerrojo_e2e() -> pathlib.Path:
+    propia = os.environ.get("HARNESS_E2E_LOCK")
+    if propia:
+        return pathlib.Path(propia)
+    try:
+        comun = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=ROOT,
+                               capture_output=True, text=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        comun = ""
+    # `--git-common-dir` es relativo en el checkout principal (`.git`) y absoluto
+    # en un worktree; `ROOT / x` resuelve los dos. Sin git, el temporal del
+    # usuario, que tambien es comun a los arboles de esta maquina.
+    base = (ROOT / comun) if comun else pathlib.Path(tempfile.gettempdir())
+    return base.resolve() / "bearingworld-e2e.lock"
+
+
+def _bloquear(fh) -> None:
+    """Sin espera: `OSError` si otro proceso lo tiene."""
+    fh.seek(0)
+    if os.name == "nt":
+        import msvcrt
+        msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _desbloquear(fh) -> None:
+    fh.seek(0)
+    if os.name == "nt":
+        import msvcrt
+        msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+
+@contextlib.contextmanager
+def cerrojo_e2e(ruta: pathlib.Path = None, sondeo: float = 2.0, aviso=print):
+    """Turno exclusivo de la suite e2e entre todos los arboles del repo. Devuelve
+    los segundos que hubo que esperar. Sin tope propio a proposito: quien acota
+    un turno colgado es el plazo de pared de `run.py` (F-122), no esto."""
+    ruta = ruta or _ruta_cerrojo_e2e()
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    fh = open(ruta, "a+b")
+    t0 = time.time()
+    try:
+        avisado = False
+        while True:
+            try:
+                _bloquear(fh)
+                break
+            except OSError:
+                if not avisado:
+                    aviso(f"  e2e: otro arbol tiene la suite en marcha; espero turno "
+                          f"({ruta})")
+                    avisado = True
+                time.sleep(sondeo)
+        try:
+            yield time.time() - t0
+        finally:
+            with contextlib.suppress(OSError):
+                _desbloquear(fh)
+    finally:
+        fh.close()
+
+
+def puerto_ocupado(puerto: int = E2E_PUERTO) -> bool:
+    """Si algo acepta conexiones en `localhost:puerto` (IPv4 o IPv6)."""
+    try:
+        with socket.create_connection(("localhost", puerto), timeout=2):
+            return True
+    except OSError:
+        return False
+
+
+def _turno_de_checks(runner):
+    """El turno exclusivo de la bateria de checks entre arboles.
+
+    Un `runner` inyectado (el seco, las pruebas) no arranca procesos, no abre
+    puertos y no toca la base: no hay nada que proteger y no se toma turno."""
+    if runner is not run_cmd:
+        return contextlib.nullcontext(0.0)
+    return cerrojo_e2e()
+
+
+def _correr_e2e(runner) -> tuple:
+    """(codigo, salida) de la suite e2e entera.
+
+    El turno ya lo tiene el nodo (`_turno_de_checks`); aqui solo se comprueba que
+    el 4173 esta libre, que es lo ultimo que se puede mirar antes de arrancar."""
+    cmd = ["npx", "playwright", "test"]
+    if runner is not run_cmd:
+        return runner(cmd, APP)
+    limite = time.time() + E2E_GRACIA_PUERTO
+    while puerto_ocupado() and time.time() < limite:
+        time.sleep(1)
+    if puerto_ocupado():
+        raise E2EInfraError(
+            f"algo responde en localhost:{E2E_PUERTO} y no es de este arbol: "
+            f"Playwright lo reutilizaria (`reuseExistingServer`) y probaria un "
+            f"build ajeno. Para ese proceso y relanza. La corrida se detiene "
+            f"aqui para no puntuar al Coder por la infraestructura.")
+    return runner(cmd, APP)
+
+
 def _check_c2(task, runner) -> dict:
     """Los tests de aceptacion. F-015: si la tarea no declara ninguno, es ROJO —
     una pantalla sin contrato ejecutable no puede darse por buena."""
@@ -449,7 +598,7 @@ def _check_c2(task, runner) -> dict:
     #
     # El coste son minutos de CPU por intento. El del hueco fue una contrasena en
     # un artefacto descargable (F-038 + F-070).
-    code, out = runner(["npx", "playwright", "test"], APP)
+    code, out = _correr_e2e(runner)
     excusas = _excusas_de_la_tarea(task)
     imputables, excusados, muertas, se_pudo = _repartir_culpas(out, excusas) \
         if code != 0 else ([], [], [d["test"] for d in excusas], True)
@@ -509,12 +658,22 @@ def test_runner_node(state: HarnessState, runner=run_cmd) -> dict:
 
     tokens = read_tokens((APP / "src" / "styles" / "tokens.css").read_text(encoding="utf-8"))
 
-    checks = [
-        _check_c1(runner),
-        _check_c2(task, runner),
-        check_palette(files, tokens),
-        check_idiomatic(files, task["outputs"], _dependencies()),
-    ]
+    # El turno cubre la BATERIA ENTERA, no solo el e2e. Con dos brazos midiendose
+    # a la vez en la misma maquina (14 CPU logicos), el `npm run build` y el
+    # vitest de un arbol compiten con el e2e del otro, y un test lento no falla
+    # distinto de un test roto: seria un rojo del Coder que en realidad es de la
+    # maquina. Lo que se solapa entre brazos es la llamada al modelo —minutos—, y
+    # ahi es donde esta el paralelismo que interesa medir.
+    with _turno_de_checks(runner) as espera:
+        if espera >= 1:
+            print(f"  checks: turno tomado tras {espera:.0f}s de espera "
+                  f"(no es tiempo del Coder ni de los checks)")
+        checks = [
+            _check_c1(runner),
+            _check_c2(task, runner),
+            check_palette(files, tokens),
+            check_idiomatic(files, task["outputs"], _dependencies()),
+        ]
     return _finish(state, checks)
 
 

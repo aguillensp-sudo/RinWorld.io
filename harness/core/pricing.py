@@ -37,8 +37,15 @@ PRICE_OUT = float(os.environ.get("DS_PRICE_OUT", "1.32"))
 # Fecha en que se verifico esta tabla contra la tarifa publicada. No hay forma
 # de que el codigo sepa si deepseek la ha cambiado desde entonces — solo de
 # avisar cuando lleva mucho sin mirarse (ver F-010 arriba).
-PRICE_TABLE_DATE = "2026-08-25"
+PRICE_TABLE_DATE = os.environ.get("HARNESS_PRICE_TABLE_DATE", "2026-08-25")
 STALE_AFTER_DAYS = 90
+
+# De donde sale la tabla cuando NO es la tarifa publicada del modelo que corre
+# (experimento de dos brazos, 19-sep). Atria no publica tarifa y se paga contra
+# una cuota de tokens: su brazo corre con un precio-SOMBRA y la nota viaja en el
+# JSON de cada intento (`price_table.note`), para que nadie lo agregue como
+# coste facturado (F-011). Sin definir, `table()` queda como estaba.
+PRICE_NOTE = os.environ.get("HARNESS_PRICE_NOTE", "").strip()
 
 
 class PriceTableError(RuntimeError):
@@ -71,7 +78,8 @@ def check_prices() -> str | None:
         aviso = (
             f"AVISO (F-010): la tabla de precios es del {PRICE_TABLE_DATE}, hace "
             f"{dias} dias (> {STALE_AFTER_DAYS}). Verifica la tarifa vigente de "
-            f"deepseek-v4-flash antes de fiarte del coste que registre esta corrida."
+            f"{os.environ.get('HARNESS_CODER_MODEL', 'deepseek-v4-flash')} antes de "
+            f"fiarte del coste que registre esta corrida."
         )
         print(aviso, file=sys.stderr)
         return aviso
@@ -97,8 +105,11 @@ def cache_hit_pct(cache_hit: int, tokens_in: int) -> float:
 
 
 def table() -> dict:
-    return {"in_hit": PRICE_IN_HIT, "in_miss": PRICE_IN_MISS, "out": PRICE_OUT,
-            "date": PRICE_TABLE_DATE}
+    t = {"in_hit": PRICE_IN_HIT, "in_miss": PRICE_IN_MISS, "out": PRICE_OUT,
+         "date": PRICE_TABLE_DATE}
+    if PRICE_NOTE:
+        t["note"] = PRICE_NOTE
+    return t
 
 
 def check_prices_or_exit() -> None:

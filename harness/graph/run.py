@@ -63,7 +63,8 @@ from langgraph.graph import END, StateGraph
 
 from ..core import metrics, pricing
 from .nodes.coder import coder_node
-from .nodes.test_runner import check_toolchain_or_exit, test_runner_node
+from .nodes.test_runner import (E2EInfraError, check_toolchain_or_exit,
+                                test_runner_node)
 from .state import MAX_ATTEMPTS, HarnessState
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -303,6 +304,11 @@ PLAZO_POR_PASO = 1200
 #: distinguir "el Coder no lo consiguio" de "el arnes se colgo y lo cortamos".
 SALIDA_POR_PLAZO = 4
 
+#: Y cuando la bateria de checks no puede ejecutarse sin probar algo que no es
+#: de este arbol (el 4173 ocupado por otro). Tampoco es 0, 2, 3 ni 4: no lo
+#: cortamos por lento, lo cortamos por no poder mirar.
+SALIDA_POR_INFRA = 5
+
 
 def _corto(p: pathlib.Path) -> str:
     """La ruta relativa al repo si esta dentro, y la entera si no. Las pruebas
@@ -396,7 +402,18 @@ class Volcado:
             print(f"  · intento {rec['attempt']} ya en disco: "
                   f"{_corto(ruta)} (F-122)")
 
-    def cerrar_por_plazo(self, state: dict, paso: str, esperado: float) -> None:
+    def _cerrar_anormal(self, state: dict, marca: str, fichero: str,
+                        titulo: str, detalle: str) -> tuple:
+        """El cuerpo comun de las dos muertes anormales: plazo de pared (F-122) e
+        infraestructura (el 4173 de otro arbol).
+
+        Las dos tienen que dejar EXACTAMENTE lo mismo: el JSON y la fila de cada
+        intento completo —marcada, para que nadie la agregue como una medicion
+        terminada— y un aviso que diga cuantos se pagaron sin medir. Se factoriza
+        porque la segunda nacio sin esto: `E2EInfraError` subia hasta arriba y
+        `record_metrics` no llegaba a correr, asi que una corrida con dos
+        intentos pagados terminaba sin una sola fila. Una muerte anormal nueva no
+        puede volver a perder lo ya medido solo por ser nueva."""
         completos = self.completos(state)
         self.al_vuelo(state)
 
@@ -407,25 +424,22 @@ class Volcado:
             # La marca va en la columna de texto libre y no en una columna nueva:
             # nadie que agregue el CSV puede confundir estas filas con una
             # medicion terminada, y las historicas no se tocan.
-            fila = metrics.append_csv(
-                self.csv_path, rec,
-                resultado + " · CORRIDA CORTADA POR PLAZO DE PARED (F-122)")
+            fila = metrics.append_csv(self.csv_path, rec, resultado + " · " + marca)
             print("  CSV: " + fila)
 
         # ⚠ El intento en vuelo NO lleva fila. Se pago y no se midio, y sus
         # columnas de tokens y coste no se pueden rellenar sin inventarlas — que
         # es literalmente F-010, el hallazgo donde el fichero de maquina mintio
         # con un `cost_usd: 0.0`. Se deja dicho aparte, con su motivo.
-        aviso = self.metrics_dir / "ABORTADA-POR-PLAZO.txt"
+        aviso = self.metrics_dir / fichero
         en_vuelo = len(state.get("metrics") or []) - len(completos)
         try:
             self.metrics_dir.mkdir(parents=True, exist_ok=True)
             aviso.write_text(
-                f"Corrida cortada por el plazo de pared (F-122).\n\n"
+                f"{titulo}\n\n"
                 f"  tarea         {self.task['task_id']}\n"
                 f"  cuando        {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-                f"  paso colgado  {paso}\n"
-                f"  llevaba       {esperado / 60:.1f} min\n"
+                f"{detalle}"
                 f"  intentos completos volcados   {len(completos)}\n"
                 f"  intentos pagados SIN MEDIR    {en_vuelo}\n\n"
                 f"Los completos tienen su JSON y su fila de CSV, marcada.\n"
@@ -435,8 +449,32 @@ class Volcado:
             print(f"  · motivo escrito en {_corto(aviso)}")
         except OSError as e:
             print(f"  ⚠ no se pudo escribir {aviso}: {e!r}", file=sys.stderr)
+        return completos, en_vuelo
 
+    def cerrar_por_plazo(self, state: dict, paso: str, esperado: float) -> None:
+        completos, en_vuelo = self._cerrar_anormal(
+            state,
+            "CORRIDA CORTADA POR PLAZO DE PARED (F-122)",
+            "ABORTADA-POR-PLAZO.txt",
+            "Corrida cortada por el plazo de pared (F-122).",
+            f"  paso colgado  {paso}\n  llevaba       {esperado / 60:.1f} min\n")
         print(f"\nCORRIDA CORTADA POR PLAZO: {len(completos)} intento(s) "
+              f"salvados, {en_vuelo} pagado(s) sin medir.", file=sys.stderr)
+
+    def cerrar_por_infra(self, state: dict, motivo: str) -> None:
+        """La bateria de checks no pudo ejecutarse sin probar algo ajeno.
+
+        No es un rojo del Coder y no se le devuelve como feedback: si volviera
+        como check rojo, el grafo mandaria otro intento contra la misma
+        infraestructura rota y quemaria hasta tres llamadas pagadas seguidas."""
+        completos, en_vuelo = self._cerrar_anormal(
+            state,
+            "CORRIDA CORTADA POR INFRAESTRUCTURA (puerto 4173 ajeno)",
+            "ABORTADA-POR-INFRA.txt",
+            "Corrida cortada por infraestructura: la bateria de checks no podia "
+            "ejecutarse sin probar un build que no era de este arbol.",
+            f"  motivo        {motivo}\n")
+        print(f"\nCORRIDA CORTADA POR INFRAESTRUCTURA: {len(completos)} intento(s) "
               f"salvados, {en_vuelo} pagado(s) sin medir.", file=sys.stderr)
 
 
@@ -602,6 +640,10 @@ def main(argv=None) -> int:
     try:
         app = build_graph()
         reloj.arrancar(_proximo_paso(final))
+        # `E2EInfraError` sube desde el Test-runner y se recoge AQUI, no en el
+        # nodo: devolverla como check rojo mandaria otro intento pagado contra la
+        # misma infraestructura rota. Se vuelca lo medido por el mismo camino que
+        # el plazo de pared y se sale con codigo propio.
         # `stream` y no `invoke` **por una sola razon**: `invoke` no devuelve nada
         # hasta el final, asi que no hay ningun momento en el que volcar un
         # intento terminado ni en el que rearmar el reloj. Con `values` el grafo
@@ -612,6 +654,11 @@ def main(argv=None) -> int:
             final = estado
             volcado.al_vuelo(final)
             reloj.arrancar(_proximo_paso(final))
+    except E2EInfraError as e:
+        reloj.parar()
+        soltar_cerrojo()
+        volcado.cerrar_por_infra(final, str(e))
+        return SALIDA_POR_INFRA
     finally:
         reloj.parar()
         # En `finally` a proposito: si la corrida revienta —y F-119 es justo eso,

@@ -1394,6 +1394,363 @@ def test_el_csv_de_orquestacion_no_pierde_historia():
               f"filas={len(otra)}")
 
 
+def test_la_muerte_por_infraestructura_no_tira_lo_pagado():
+    """Dos brazos (19-sep) · el guardia del 4173 no puede costar lo ya medido.
+
+    El guardia nacio parando la corrida con una excepcion propia, y la revision
+    adversarial de este cambio encontro lo que eso significaba de verdad:
+    `E2EInfraError` no la capturaba nadie, asi que subia por `app.stream` hasta
+    arriba y `record_metrics()` —que corre DESPUES del `try`— no llegaba a
+    ejecutarse nunca. Una corrida con dos intentos pagados terminaba **sin una
+    sola fila de CSV**, con una traza de Python por todo veredicto. Es
+    exactamente el fallo que F-122 arreglo para el plazo de pared, reabierto por
+    una puerta nueva.
+
+    Se comprueba lo mismo que alli, porque es el mismo contrato: lo completo
+    conserva su fila —marcada, para que nadie la agregue como medicion buena—,
+    lo que estaba en vuelo no se inventa, y queda dicho por escrito.
+
+    ⚠ Y la ultima comprobacion es la que evita el arreglo ingenuo: devolver el
+    fallo como check ROJO habria mandado al grafo a por otro intento contra la
+    misma infraestructura rota, hasta tres llamadas pagadas seguidas."""
+    print("\nDos brazos · una muerte por infraestructura no tira lo pagado")
+
+    import tempfile
+
+    from ..graph import run as runner
+    from ..graph.nodes import test_runner as tr
+
+    def registro(n, con_checks):
+        r = metrics.build_record(
+            task_id="T-02", screen="T-02", model="m", attempt=n,
+            acc={"tokens_in": 100, "tokens_out": 50, "cache_hit": 0,
+                 "cache_miss": 100, "calls": 1},
+            seconds=60.0, finish_reason="stop", truncated_at=[], files=["a.tsx"])
+        if con_checks:
+            r["checks"] = [{"id": "C1", "ok": True, "detail": ""}]
+        return r
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        csv_tmp = tmp / "m.csv"
+        csv_tmp.write_text(",".join(metrics.COLUMNS) + "\n", encoding="utf-8")
+        volcado = runner.Volcado(tmp / "T-02", {"task_id": "T-02"}, csv_tmp)
+
+        # El intento 1 termino; el 2 esta pagado y en vuelo cuando salta el guardia.
+        estado = {"metrics": [registro(1, True), registro(2, con_checks=False)]}
+        volcado.cerrar_por_infra(estado, "algo responde en localhost:4173")
+        filas = csv_tmp.read_text(encoding="utf-8").splitlines()[1:]
+        check("⚠ el intento completo conserva su fila cuando corta el guardia",
+              len(filas) == 1, f"{len(filas)} filas")
+        check("y la fila dice por que se corto",
+              filas and "CORTADA POR INFRAESTRUCTURA" in filas[0])
+        check("⚠ el intento en vuelo no lleva fila: se pago y no se supo cuanto",
+              all("2" != f.split(",")[metrics.COLUMNS.index("intentos")]
+                  for f in filas))
+        aviso = tmp / "T-02" / "ABORTADA-POR-INFRA.txt"
+        check("y queda escrito aparte, con el motivo", aviso.exists())
+        texto = aviso.read_text(encoding="utf-8") if aviso.exists() else ""
+        check("diciendo cuantos se pagaron sin medir",
+              "intentos pagados SIN MEDIR    1" in texto, texto[-200:])
+
+    check("la corrida sale con un codigo propio, ni verde ni escalado ni plazo",
+          runner.SALIDA_POR_INFRA not in (0, 2, 3, runner.SALIDA_POR_PLAZO),
+          str(runner.SALIDA_POR_INFRA))
+    # ⚠ Lo que NO tiene que pasar: que alguien lo "arregle" capturandolo en el
+    # Test-runner y devolviendolo como check. Seria otro intento pagado contra la
+    # misma infraestructura rota, y hasta tres seguidos. Se mira en el codigo
+    # porque es una propiedad del codigo: quien captura esa excepcion, y donde.
+    import inspect
+    fuente_nodo = inspect.getsource(tr)
+    fuente_run = inspect.getsource(runner)
+    check("⚠ el Test-runner NO captura su propia excepcion de infraestructura",
+          "except E2EInfraError" not in fuente_nodo)
+    check("y quien la captura es la corrida, que ahi si puede volcar y salir",
+          "except E2EInfraError" in fuente_run)
+
+
+def test_segundo_proveedor_no_toca_el_primero():
+    """Experimento de dos brazos (19-sep) · Atria entra por entorno, y DeepSeek
+    no se entera.
+
+    ADMIN-02 es la corrida de la remedición obligatoria (`UMBRAL-FABRICA-V1.md`
+    §4), y el brazo de DeepSeek es el que cuenta para ella. Si abrir la puerta a
+    un segundo proveedor cambiara una coma de la petición de DeepSeek, la
+    remedición mediría el arreglo y no la fábrica. Por eso lo primero que se
+    comprueba es que, **sin las variables nuevas, el cuerpo, la cabecera, la URL
+    y el doblado de F-005 son los de siempre** — con los valores escritos a mano,
+    no leídos del propio módulo.
+
+    Después, lo que Atria necesita y DeepSeek no: un techo de `max_tokens`
+    (Atria rechaza por encima de 65536 y F-005 dobla), y el cache hit en la
+    forma estándar de OpenAI (`prompt_tokens_details.cached_tokens`)."""
+    print("\nDos brazos · el segundo proveedor no toca el primero")
+
+    check("sin entorno, la clave es la de siempre",
+          llm.KEY_ENV == "DEEPSEEK_API_KEY", llm.KEY_ENV)
+    check("sin entorno, no hay techo de max_tokens", llm.MAX_TOKENS_CAP == 0,
+          str(llm.MAX_TOKENS_CAP))
+
+    peticiones = []
+
+    def respuesta(finish, usage=None):
+        cuerpo = json.dumps({
+            "choices": [{"message": {"content": "x"}, "finish_reason": finish}],
+            "usage": usage or {"prompt_tokens": 10, "completion_tokens": 5,
+                               "prompt_cache_hit_tokens": 0,
+                               "prompt_cache_miss_tokens": 10}}).encode()
+
+        class _Resp:
+            def __enter__(self): return io.BytesIO(cuerpo)
+            def __exit__(self, *a): return False
+        return _Resp()
+
+    def urlopen_trunca(req, timeout=None):
+        peticiones.append(req)
+        return respuesta("length")
+
+    original_open = llm.urllib.request.urlopen
+    original_cap, original_key = llm.MAX_TOKENS_CAP, llm.KEY_ENV
+    previa = os.environ.get("DEEPSEEK_API_KEY")
+    os.environ["DEEPSEEK_API_KEY"] = "clave-de-mentira"
+    llm.urllib.request.urlopen = urlopen_trunca
+    try:
+        dobles = []
+        out = llm.complete([{"role": "user", "content": "x"}],
+                           on_truncation=dobles.append)
+        cuerpos = [json.loads(r.data) for r in peticiones]
+        check("⚠ DeepSeek: el cuerpo lleva las MISMAS cuatro claves de siempre",
+              all(sorted(c) == ["max_tokens", "messages", "model", "temperature"]
+                  for c in cuerpos), str([sorted(c) for c in cuerpos]))
+        check("DeepSeek: modelo, temperatura y URL de siempre",
+              all(c["model"] == "deepseek-v4-flash" and c["temperature"] == 0
+                  for c in cuerpos)
+              and all(r.full_url == "https://api.deepseek.com/chat/completions"
+                      for r in peticiones), peticiones[0].full_url)
+        check("DeepSeek: la clave sale de DEEPSEEK_API_KEY",
+              peticiones[0].get_header("Authorization") == "Bearer clave-de-mentira")
+        check("⚠ DeepSeek: F-005 dobla igual que antes (65536 → 131072 → 262144)",
+              [c["max_tokens"] for c in cuerpos] == [65536, 131072, 262144],
+              str([c["max_tokens"] for c in cuerpos]))
+        check("y registra y avisa exactamente lo mismo que antes",
+              out["truncated_at"] == [65536, 131072, 262144]
+              and dobles == [131072, 262144, 524288],
+              f"{out['truncated_at']} / {dobles}")
+
+        # Atria: techo en 65536. Truncar en el techo no se reintenta.
+        peticiones.clear()
+        llm.MAX_TOKENS_CAP = 65536
+        dobles, avisos = [], []
+        out = llm.complete([{"role": "user", "content": "x"}],
+                           on_truncation=dobles.append, aviso=avisos.append)
+        check("con techo, truncar EN el techo no repite la llamada",
+              len(peticiones) == 1 and out["truncated_at"] == [65536],
+              f"{len(peticiones)} llamadas, {out['truncated_at']}")
+        check("y no anuncia un reintento que no va a hacer",
+              dobles == [] and any("techo" in a for a in avisos), f"{dobles} {avisos}")
+        check("el intento dice que quedo truncado", out["finish_reason"] == "length")
+
+        # Techo por encima del presupuesto inicial: dobla hasta el techo y para.
+        peticiones.clear()
+        llm.MAX_TOKENS_CAP = 100000
+        out = llm.complete([{"role": "user", "content": "x"}])
+        check("con techo intermedio, dobla HASTA el techo y ahi para",
+              [json.loads(r.data)["max_tokens"] for r in peticiones] == [65536, 100000],
+              str([json.loads(r.data)["max_tokens"] for r in peticiones]))
+
+        # Un presupuesto pedido por encima del techo se recorta desde la primera.
+        peticiones.clear()
+        llm.MAX_TOKENS_CAP = 65536
+        llm.complete([{"role": "user", "content": "x"}], max_tokens=200000)
+        check("un max_tokens por encima del techo se recorta desde la primera llamada",
+              json.loads(peticiones[0].data)["max_tokens"] == 65536)
+
+        # La clave: se nombra la variable, nunca se lee otra.
+        llm.KEY_ENV = "ATRIA_KEY_DE_PRUEBA_NO_EXISTE"
+        os.environ.pop("ATRIA_KEY_DE_PRUEBA_NO_EXISTE", None)
+        try:
+            llm.call([{"role": "user", "content": "x"}], 10)
+            check("sin la clave del proveedor elegido, no llama", False)
+        except llm.LLMError as e:
+            check("sin la clave del proveedor elegido, no llama y NOMBRA la variable",
+                  "ATRIA_KEY_DE_PRUEBA_NO_EXISTE" in str(e)
+                  and "clave-de-mentira" not in str(e), str(e))
+        os.environ["ATRIA_KEY_DE_PRUEBA_NO_EXISTE"] = "otra-clave"
+        peticiones.clear()
+        llm.call([{"role": "user", "content": "x"}], 10)
+        check("⚠ y con ella, usa ESA y no la de DeepSeek",
+              peticiones[0].get_header("Authorization") == "Bearer otra-clave")
+    finally:
+        llm.urllib.request.urlopen = original_open
+        llm.MAX_TOKENS_CAP, llm.KEY_ENV = original_cap, original_key
+        os.environ.pop("ATRIA_KEY_DE_PRUEBA_NO_EXISTE", None)
+        if previa is None:
+            os.environ.pop("DEEPSEEK_API_KEY", None)
+        else:
+            os.environ["DEEPSEEK_API_KEY"] = previa
+
+    # Las dos formas del cache hit.
+    ds = llm.accumulate({"prompt_tokens": 1000, "completion_tokens": 7,
+                         "prompt_cache_hit_tokens": 900,
+                         "prompt_cache_miss_tokens": 100}, llm.new_acc())
+    check("DeepSeek: el hit sale de la raiz, como siempre",
+          (ds["cache_hit"], ds["cache_miss"]) == (900, 100), str(ds))
+    oa = llm.accumulate({"prompt_tokens": 1000, "completion_tokens": 7,
+                         "prompt_tokens_details": {"cached_tokens": 600}}, llm.new_acc())
+    check("⚠ forma OpenAI: el hit sale de prompt_tokens_details, no se pierde",
+          (oa["cache_hit"], oa["cache_miss"]) == (600, 400), str(oa))
+    nada = llm.accumulate({"prompt_tokens": 1000, "completion_tokens": 7}, llm.new_acc())
+    check("sin ningun dato de cache, todo es miss (la cifra conservadora)",
+          (nada["cache_hit"], nada["cache_miss"]) == (0, 1000), str(nada))
+
+    # La nota del precio-sombra viaja en el JSON; sin ella, la tabla de siempre.
+    original_nota = pricing.PRICE_NOTE
+    try:
+        pricing.PRICE_NOTE = ""
+        check("sin nota, la tabla tiene las cuatro claves de siempre",
+              sorted(pricing.table()) == ["date", "in_hit", "in_miss", "out"],
+              str(sorted(pricing.table())))
+        pricing.PRICE_NOTE = "precio-sombra"
+        check("con nota, la tabla la lleva",
+              pricing.table().get("note") == "precio-sombra")
+
+        # ⚠ Y la marca tiene que llegar A LA FILA. La nota dentro del JSON no la
+        # ve quien agrega el CSV, y un `coste_usd` calculado con un precio que
+        # nadie publica se lee igual que uno facturado (F-011).
+        rec = metrics.build_record(
+            task_id="T-03", screen="T-03", model="Atria-Dawn-Preview", attempt=1,
+            acc={"tokens_in": 100, "tokens_out": 50, "cache_hit": 0,
+                 "cache_miss": 100, "calls": 1},
+            seconds=60.0, finish_reason="stop", truncated_at=[], files=["a.tsx"])
+        fila = metrics.csv_row(rec, "PASA 4/4")
+        check("⚠ y la FILA avisa de que ese coste no es una factura",
+              "PRECIO-SOMBRA" in fila[-1], fila[-1])
+        check("y sin coma, que es la convencion del fichero (CLAUDE.md §6)",
+              "," not in fila[-1], fila[-1])
+    finally:
+        pricing.PRICE_NOTE = original_nota
+
+
+def test_el_e2e_no_se_cruza_entre_arboles():
+    """Experimento de dos brazos (19-sep) · dos worktrees, un 4173 y una base.
+
+    El cerrojo de F-121 es por árbol, así que no evita que dos worktrees corran
+    la suite e2e a la vez. Y la suite comparte dos cosas que no son de nadie: el
+    puerto —`reuseExistingServer` haría que el segundo árbol probara el build del
+    primero y firmara el veredicto como propio— y la base de demo, que
+    `fixture.setup.ts` borra y repone.
+
+    Lo que se prueba es lo que haría falso el experimento si fallara: que el
+    turno EXCLUYE entre procesos, que se suelta solo si su dueño muere sin
+    soltarlo (F-124), que la espera se mide, y que un 4173 ajeno PARA la corrida
+    antes de ejecutar nada."""
+    print("\nDos brazos · el e2e no se cruza entre arboles")
+    import subprocess as sp
+    import socket
+    from ..graph.nodes import test_runner as tr
+
+    base = pathlib.Path(tempfile.mkdtemp(prefix="cerrojo-e2e-"))
+    ruta = base / "bearingworld-e2e.lock"
+    sonda = ("import sys, pathlib; sys.path.insert(0, sys.argv[1]);"
+             "from harness.graph.nodes.test_runner import _bloquear;"
+             "fh = open(sys.argv[2], 'a+b')\n"
+             "try:\n    _bloquear(fh); print('libre')\n"
+             "except OSError:\n    print('ocupado')")
+
+    def desde_fuera_de(r) -> str:
+        """Si OTRO proceso puede tomar ese cerrojo ahora mismo."""
+        return sp.run([sys.executable, "-c", sonda, str(ROOT), str(r)],
+                      capture_output=True, text=True, timeout=60).stdout.strip()
+
+    def desde_fuera() -> str:
+        return desde_fuera_de(ruta)
+
+    with tr.cerrojo_e2e(ruta=ruta) as espera:
+        check("sin nadie delante, el turno no espera", espera < 1, f"{espera:.2f}s")
+        check("⚠ con el turno tomado, OTRO PROCESO no puede tomarlo",
+              desde_fuera() == "ocupado")
+    check("al soltarlo, otro proceso ya puede", desde_fuera() == "libre")
+
+    # F-124: el dueño muere sin soltar. El sistema lo suelta por el.
+    muere = ("import sys, os, time; sys.path.insert(0, sys.argv[1]);"
+             "from harness.graph.nodes.test_runner import _bloquear;"
+             "fh = open(sys.argv[2], 'a+b'); _bloquear(fh); print('tomado', flush=True);"
+             "time.sleep(float(sys.argv[3])); os._exit(3)")
+    sp.run([sys.executable, "-c", muere, str(ROOT), str(ruta), "0"],
+           capture_output=True, text=True, timeout=60)
+    check("⚠ si el dueño muere por os._exit sin soltar, el turno queda libre",
+          desde_fuera() == "libre")
+
+    # La espera se mide: alguien lo tiene 3 s y luego muere.
+    p = sp.Popen([sys.executable, "-c", muere, str(ROOT), str(ruta), "3"],
+                 stdout=sp.PIPE, text=True)
+    p.stdout.readline()                       # espera a que lo haya tomado
+    avisos = []
+    with tr.cerrojo_e2e(ruta=ruta, sondeo=0.2, aviso=avisos.append) as espera:
+        pass
+    p.wait(timeout=60)
+    check("la espera se MIDE (el otro lo tuvo ~3 s)", 1.5 <= espera <= 30,
+          f"{espera:.1f}s")
+    check("y se dice en el log una sola vez", len(avisos) == 1, str(avisos))
+
+    # El puerto: un servidor escuchando se ve; cerrado, no.
+    srv = socket.socket()
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(1)
+    puerto = srv.getsockname()[1]
+    check("un puerto con alguien escuchando se ve ocupado", tr.puerto_ocupado(puerto))
+    srv.close()
+    check("y cerrado, libre", not tr.puerto_ocupado(puerto))
+
+    # Un runner inyectado no toma el turno ni mira el puerto.
+    otra = base / "no-debe-existir.lock"
+    previa = os.environ.get("HARNESS_E2E_LOCK")
+    os.environ["HARNESS_E2E_LOCK"] = str(otra)
+    try:
+        with tr._turno_de_checks(lambda cmd, cwd: (0, "1 passed")) as espera:
+            pass
+        code, _ = tr._correr_e2e(lambda cmd, cwd: (0, "1 passed"))
+        check("el seco y las pruebas no toman turno ni crean cerrojo",
+              code == 0 and espera == 0.0 and not otra.exists())
+        # El turno de verdad cubre la bateria entera (C1 incluido), no solo el e2e.
+        with tr._turno_de_checks(tr.run_cmd) as espera:
+            check("⚠ con el runner de verdad, la bateria ENTERA corre con turno",
+                  otra.exists() and desde_fuera_de(otra) == "ocupado")
+        check("y al acabar la bateria se suelta", desde_fuera_de(otra) == "libre")
+
+        # ⚠ Un 4173 ajeno PARA antes de ejecutar nada. `subprocess.run` se
+        # intercepta: si la guarda fallara, esta prueba NO debe lanzar Playwright.
+        lanzados = []
+        original_run, original_ocupado = tr.subprocess.run, tr.puerto_ocupado
+        original_gracia = tr.E2E_GRACIA_PUERTO
+        tr.subprocess.run = lambda *a, **k: lanzados.append(a) or sp.CompletedProcess(a, 0, "", "")
+        tr.puerto_ocupado = lambda *a: True
+        tr.E2E_GRACIA_PUERTO = 0
+        try:
+            tr._correr_e2e(tr.run_cmd)
+            check("⚠ un 4173 ajeno para la corrida", False, "no lanzo E2EInfraError")
+        except tr.E2EInfraError as e:
+            check("⚠ un 4173 ajeno PARA la corrida, sin puntuar al Coder",
+                  "4173" in str(e) and not lanzados, f"lanzados={lanzados}")
+        finally:
+            tr.subprocess.run, tr.puerto_ocupado = original_run, original_ocupado
+            tr.E2E_GRACIA_PUERTO = original_gracia
+    finally:
+        if previa is None:
+            os.environ.pop("HARNESS_E2E_LOCK", None)
+        else:
+            os.environ["HARNESS_E2E_LOCK"] = previa
+
+    # Sin variable, el cerrojo vive en el directorio COMUN de git: el mismo para
+    # todos los worktrees del repo, que es el alcance del recurso.
+    comun = sp.run(["git", "rev-parse", "--git-common-dir"], cwd=ROOT,
+                   capture_output=True, text=True).stdout.strip()
+    esperado = ((ROOT / comun).resolve() / "bearingworld-e2e.lock") if comun else None
+    check("sin variable, el cerrojo vive en el directorio comun de git",
+          esperado is not None and tr._ruta_cerrojo_e2e() == esperado,
+          f"{tr._ruta_cerrojo_e2e()} vs {esperado}")
+
+
 def main() -> int:
     # ⚠ SIN ESTO, LA SUITE MUERE AL REDIRIGIR SU SALIDA EN WINDOWS, y muere en
     # mitad de una prueba: Python usa la codificacion de la consola —cp1252 aqui—
@@ -1434,6 +1791,9 @@ def main() -> int:
     test_c2_reparte_las_culpas_del_e2e()
     test_la_corrida_escribe_su_propio_log()
     test_el_csv_de_orquestacion_no_pierde_historia()
+    test_segundo_proveedor_no_toca_el_primero()
+    test_el_e2e_no_se_cruza_entre_arboles()
+    test_la_muerte_por_infraestructura_no_tira_lo_pagado()
     print()
     if fallos:
         print(f"FALLAN {len(fallos)}: {', '.join(fallos)}")

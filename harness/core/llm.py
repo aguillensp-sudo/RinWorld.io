@@ -25,6 +25,25 @@ BASE = os.environ.get("HARNESS_CODER_BASE", "https://api.deepseek.com")
 DEFAULT_MAX_TOKENS = int(os.environ.get("DS_MAX_TOKENS", "65536"))
 TRUNCATION_RETRIES = 3
 
+# -----------------------------------------------------------------------------
+# Un segundo proveedor sin tocar el primero (experimento de dos brazos, 19-sep).
+#
+# `MODEL` y `BASE` ya se podian cambiar por entorno; la clave y el techo de salida
+# no. Estas dos variables son las que faltaban, y **sin definirlas el arnes hace
+# exactamente lo mismo que antes**: misma clave, mismo cuerpo de peticion, mismo
+# doblado de F-005. Lo prueba `test_segundo_proveedor_no_toca_el_primero`.
+#
+#   HARNESS_CODER_KEY_ENV · el NOMBRE de la variable que guarda la clave, nunca la
+#       clave (CLAUDE.md §1.1). Por defecto `DEEPSEEK_API_KEY`.
+#   HARNESS_CODER_MAX_TOKENS_CAP · el techo de `max_tokens` que acepta el
+#       proveedor; 0 = sin techo. Atria rechaza por encima de 65536
+#       (api.atria-asi.ai/docs) y F-005 dobla el presupuesto en cada truncado: sin
+#       techo, el reintento del truncado seria un HTTP 400 y el intento se perderia
+#       por un error del arnes, no del modelo.
+# -----------------------------------------------------------------------------
+KEY_ENV = os.environ.get("HARNESS_CODER_KEY_ENV", "DEEPSEEK_API_KEY")
+MAX_TOKENS_CAP = int(os.environ.get("HARNESS_CODER_MAX_TOKENS_CAP", "0"))
+
 
 class LLMError(RuntimeError):
     pass
@@ -38,7 +57,14 @@ def accumulate(usage: dict, acc: dict) -> dict:
     """Suma el usage de varias llamadas. Ver F-005: si hubo reintento por truncado,
     el coste del intento es el de TODAS las llamadas."""
     prompt = usage.get("prompt_tokens", 0)
-    hit = usage.get("prompt_cache_hit_tokens") or 0
+    if "prompt_cache_hit_tokens" in usage:
+        hit = usage.get("prompt_cache_hit_tokens") or 0
+    else:
+        # El cache hit tiene dos formas. DeepSeek lo da en la raiz (arriba); la
+        # forma estandar de OpenAI, en `prompt_tokens_details.cached_tokens`. Sin
+        # esta rama, un proveedor con cache la veria entera como miss: coste
+        # inflado y un `cache_hit_pct` de 0 que no es un dato, es una ceguera.
+        hit = (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
     acc["tokens_in"] += prompt
     acc["tokens_out"] += usage.get("completion_tokens", 0)
     acc["cache_hit"] += hit
@@ -84,9 +110,9 @@ def _es_de_transporte(e: Exception) -> bool:
 
 
 def call(messages: list, max_tokens: int, aviso=None) -> tuple:
-    key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+    key = os.environ.get(KEY_ENV, "").strip()
     if not key:
-        raise LLMError("DEEPSEEK_API_KEY no esta en el entorno.")
+        raise LLMError(f"{KEY_ENV} no esta en el entorno.")
     body = json.dumps({
         "model": MODEL, "messages": messages,
         "max_tokens": max_tokens, "temperature": 0,
@@ -124,6 +150,8 @@ def complete(messages: list, max_tokens: int = None, on_truncation=None,
     presupuestos se trunco.
     """
     maxtok = max_tokens or DEFAULT_MAX_TOKENS
+    if MAX_TOKENS_CAP:
+        maxtok = min(maxtok, MAX_TOKENS_CAP)
     acc = new_acc()
     secs_total = 0.0
     truncations = []
@@ -133,6 +161,13 @@ def complete(messages: list, max_tokens: int = None, on_truncation=None,
     for _ in range(TRUNCATION_RETRIES):
         data, secs = call(messages, maxtok, aviso=aviso)
         secs_total += secs
+        # Un 200 con una forma que no es la esperada moria aqui con un `KeyError:
+        # choices` y una traza sin el cuerpo: el veredicto sobrevivia y la razon
+        # no, otra vez. Con dos proveedores la forma deja de ser una certeza, asi
+        # que se dice QUE llego. El camino de DeepSeek no lo pisa nunca.
+        if not (data.get("choices") or []):
+            raise LLMError(
+                f"respuesta sin `choices` de {MODEL}: {json.dumps(data)[:500]}")
         choice = data["choices"][0]
         content = choice["message"]["content"] or ""
         reasoning = choice["message"].get("reasoning_content") or ""
@@ -142,7 +177,17 @@ def complete(messages: list, max_tokens: int = None, on_truncation=None,
         if finish != "length":
             break
         truncations.append(maxtok)
-        maxtok *= 2
+        siguiente = min(maxtok * 2, MAX_TOKENS_CAP) if MAX_TOKENS_CAP else maxtok * 2
+        if siguiente == maxtok:
+            # Ya en el techo del proveedor. La misma peticion, a temperatura 0 y
+            # con el mismo presupuesto, se trunca en el mismo sitio: repetirla es
+            # pagar dos veces el mismo truncado. Se entrega lo que hay y el
+            # registro lo dice (`truncated_at`, `finish_reason`).
+            if aviso:
+                aviso(f"  TRUNCADO en el techo del proveedor (max_tokens={maxtok}): "
+                      f"no se reintenta, pedir lo mismo no cambia nada (F-005)")
+            break
+        maxtok = siguiente
         if on_truncation:
             on_truncation(maxtok)
 

@@ -130,6 +130,13 @@ def write_record(metrics_dir: pathlib.Path, rec: dict) -> pathlib.Path:
 
 def csv_row(rec: dict, resultado: str, fecha: str = None) -> list:
     """La fila, derivada del JSON. Ningun numero se vuelve a teclear."""
+    # Un `coste_usd` calculado con un precio-SOMBRA se lee igual que uno
+    # facturado, y esa confusion es F-011 con otro traje: el brazo de Atria paga
+    # contra una cuota y su tarifa no esta publicada. La marca viaja en la
+    # columna de texto libre —sin coma, convencion del fichero— porque la nota
+    # entera vive en el JSON (`price_table.note`) y ahi no se pierde.
+    if (rec.get("price_table") or {}).get("note"):
+        resultado += " · COSTE A PRECIO-SOMBRA: no es una factura (F-011)"
     return [
         fecha or time.strftime("%Y-%m-%d"),
         rec["task"],

@@ -540,8 +540,7 @@ que decidir antes una cosa que no es de cálculo sino de criterio:
 **Las otras cinco:** el H1 (`DIR-01`, `ADMIN-01`, `FORO-01`) cerrado el Día 16 con C5 del
 PO y sin correcciones; `FORO-02` y `FORO-03` con C5 dado el 21-sep (reparos en `F-186`, arreglados).
 
-**C5 pendientes: NINGUNA.** El PO dio el 21-sep-2026, en `npm run dev` contra la base de producción y sin pulsar ninguna acción de escritura: `ADMIN-02` («aprobada total»), `FORO-02` y `FORO-03` (aprobadas; los dos reparos que puso salieron en `F-186` y están arreglados — falta solo que confirme el espacio inferior). Es lo único que impide
-dar las tres por cerradas, y no lo da una máquina.
+**C5 pendientes: NINGUNA.** El PO dio el 21-sep-2026, en `npm run dev` contra la base de producción y sin pulsar ninguna acción de escritura: `ADMIN-02` («aprobada total»), `FORO-02` y `FORO-03` (aprobadas; los dos reparos que puso salieron en `F-186` y están arreglados — falta solo que confirme el espacio inferior).
 
 ### Corriente C · Verificación — NO ABIERTA
 

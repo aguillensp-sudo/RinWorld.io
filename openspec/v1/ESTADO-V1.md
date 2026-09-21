@@ -541,7 +541,7 @@ que decidir antes una cosa que no es de cálculo sino de criterio:
 PO y sin correcciones; `FORO-02` con C5 pendiente de la confirmación final tras la
 corrección del buscador; `FORO-03` sin C5 todavía.
 
-**C5 pendientes: tres** — `FORO-02`, `FORO-03` y ahora `ADMIN-02`. Es lo único que impide
+**C5 pendientes: dos** — `FORO-02` y `FORO-03`. **`ADMIN-02`: C5 DADO POR EL PO el 21-sep-2026 («aprobada total»), en `npm run dev` contra la base de producción, sin pulsar ninguna acción de escritura.** Es lo único que impide
 dar las tres por cerradas, y no lo da una máquina.
 
 ### Corriente C · Verificación — NO ABIERTA
@@ -553,11 +553,7 @@ Sin cambios.
 ## 3 · Qué toca mañana, en este orden
 
 1. ✅ **`F-184` CERRADO el 21-sep** (`test_runner._entorno_sin_color`, commit de la sesión del Día 21). Playwright pone `FORCE_COLOR=1` a sus workers y heredaban el `NO_COLOR=1` del arnés: Node avisaba en cada uno y Playwright reinicia el worker tras cada test fallido. Reproducido y comprobado por el `run_cmd` real: 8 líneas de ruido → 0. **Lo que NO arregla:** las corridas anteriores siguen medidas con el feedback degradado (cifra 3) y quedan 4 líneas fijas de arranque (`[WebServer]`, `npm notice`).
-2. 🟠 **Tres C5 del PO, y una es de hoy.** `ADMIN-02` está desplegada y se puede revisar en
-   la URL real (Operador → `Cobros`); `FORO-02` con la corrección del buscador ya aplicada;
-   `FORO-03` entera. **Sin pulsar `Aprobar`/`Rechazar` en `ADMIN-01`** (`F-169`) ni
-   `Marcar pago recibido` en `ADMIN-02`: un pago confirmado NO se puede borrar desde el
-   cliente y la única limpieza es resembrar (`demo_billing.sql`, corre como `postgres`).
+2. 🟠 **Dos C5 del PO pendientes: `FORO-02` y `FORO-03`.** `ADMIN-02` **cerrada el 21-sep** (aprobada total por el PO). `FORO-02` con la corrección del buscador ya aplicada; `FORO-03` entera. **Sin pulsar `Aprobar`/`Rechazar` en `ADMIN-01`** (`F-169`) ni `Marcar pago recibido` en `ADMIN-02`, y **sin `Publicar respuesta` en `FORO-03`** (permanente y gasta el cupo de `RNG-FORO-06`): un pago confirmado NO se puede borrar desde el cliente y la única limpieza es resembrar (`demo_billing.sql`, corre como `postgres`).
 3. **La remedición de las ocho cifras, con el párrafo de la cifra 3 del §2 delante.** Van 6
    de 6, así que toca. Estado de las otras dos que se sabían sucias: la 7 (coste de
    orquestación) sigue sucia y hoy más —esta sesión hizo el cambio del arnés, su revisión
@@ -688,7 +684,7 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
   probado con sesión viva es la LECTURA (8 filas por tres vías distintas) y la RLS del
   miembro. **La primera vez que alguien pulse «Confirmar pago recibido» en producción deja
   un pago permanente.**
-- **Si el PO mantendría estas dos pantallas (C5).** Tres C5 pendientes, y de `ADMIN-02` no
+- **Si el PO mantendría estas dos pantallas (C5).** Dos C5 pendientes (`ADMIN-02` ya dada el 21-sep). Antes, con tres, de `ADMIN-02` no
   la ha visto nadie salvo la CI. Que pase 89 e2e no dice que se parezca a lo que el PO
   quiere: C3/C4 miran tokens e idiomatismo, no diseño.
 - **Si el artefacto de Atria es igual de bueno que el de DeepSeek.** Los dos pasan los

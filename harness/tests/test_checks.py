@@ -270,6 +270,34 @@ def test_toolchain():
     check("la salida en UTF-8 sobrevive", code == 0 and "Nordwälz" in out, repr(out))
 
 
+def test_playwright_no_hereda_no_color():
+    """F-184. Playwright pone `FORCE_COLOR=1` a sus workers; si el arnes les deja
+    `NO_COLOR=1` heredado, Node avisa en cada uno (y reinicia uno por test
+    fallido). Eran 36 de las 49 lineas del feedback del reintento en ADMIN-02."""
+    print("\nEl e2e no hereda NO_COLOR (F-184)")
+    from ..graph.nodes import test_runner as tr
+
+    pw = tr._entorno_sin_color(["npx", "playwright", "test"])
+    check("⚠ el comando de Playwright NO lleva NO_COLOR", "NO_COLOR" not in pw, repr(pw.get("NO_COLOR")))
+    check("y sigue con el color apagado por FORCE_COLOR", pw.get("FORCE_COLOR") == "0")
+    for cmd in (["npx", "vitest", "run"], ["npm", "run", "typecheck"]):
+        env = tr._entorno_sin_color(cmd)
+        check(f"{' '.join(cmd[:2])}: conserva las dos, que si las necesita",
+              env.get("NO_COLOR") == "1" and env.get("FORCE_COLOR") == "0")
+
+    # Aunque el shell del que lance el arnes ya traiga NO_COLOR: no se hereda.
+    previa = os.environ.get("NO_COLOR")
+    os.environ["NO_COLOR"] = "1"
+    try:
+        check("⚠ ni aunque el entorno del que lanza ya lo traiga",
+              "NO_COLOR" not in tr._entorno_sin_color(["npx", "playwright", "test"]))
+    finally:
+        if previa is None:
+            os.environ.pop("NO_COLOR", None)
+        else:
+            os.environ["NO_COLOR"] = previa
+
+
 def test_c2_paths():
     """Las rutas que C2 le pasa a vitest y a Playwright existen desde `app/`.
 
@@ -1868,6 +1896,7 @@ def main() -> int:
     test_pricing_date_guard()
     test_parse()
     test_toolchain()
+    test_playwright_no_hereda_no_color()
     test_c2_paths()
     test_c2_no_cuenta_un_e2e_saltado()
     test_prompt_inputs()

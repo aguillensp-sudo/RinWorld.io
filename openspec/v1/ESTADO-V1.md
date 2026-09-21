@@ -552,12 +552,7 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. 🟠 **Arreglar `F-184` antes de correr ninguna pantalla más.** 36 de cada 49 líneas del
-   feedback que vuelve al Coder son avisos de Node (`NO_COLOR` y `FORCE_COLOR` juntos), así
-   que **ningún reintento por la vía del e2e lleva la razón del fallo**. Se dejó sin
-   arreglar hoy a propósito, para no darle ventaja al segundo brazo del experimento. Es
-   barato: no poner las dos variables a la vez, o filtrar esas líneas antes del recorte.
-   Afecta a la cifra 3 de todas las corridas, pasadas y futuras.
+1. ✅ **`F-184` CERRADO el 21-sep** (`test_runner._entorno_sin_color`, commit de la sesión del Día 21). Playwright pone `FORCE_COLOR=1` a sus workers y heredaban el `NO_COLOR=1` del arnés: Node avisaba en cada uno y Playwright reinicia el worker tras cada test fallido. Reproducido y comprobado por el `run_cmd` real: 8 líneas de ruido → 0. **Lo que NO arregla:** las corridas anteriores siguen medidas con el feedback degradado (cifra 3) y quedan 4 líneas fijas de arranque (`[WebServer]`, `npm notice`).
 2. 🟠 **Tres C5 del PO, y una es de hoy.** `ADMIN-02` está desplegada y se puede revisar en
    la URL real (Operador → `Cobros`); `FORO-02` con la corrección del buscador ya aplicada;
    `FORO-03` entera. **Sin pulsar `Aprobar`/`Rechazar` en `ADMIN-01`** (`F-169`) ni
@@ -639,7 +634,7 @@ En paralelo, sin acción propia desde este lado:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-184` · el feedback del reintento va lleno de ruido: 36 de cada 49 líneas son avisos de Node.** El Coder sabe QUÉ tests fallaron pero no POR QUÉ, y viene de corridas de agosto, no del experimento. **Es lo primero del §3 y afecta a la cifra 3 de todas las corridas** | Arreglarlo antes de la séptima pantalla: no poner `NO_COLOR` y `FORCE_COLOR` a la vez, o filtrar esas líneas antes del recorte |
+| ✅ | **`F-184` · CERRADO el 21-sep.** El feedback del reintento iba lleno de avisos de Node (36 de 49 líneas): `NO_COLOR` heredado por los workers de Playwright. Ya no se pone en ese comando. | Quedan 4 líneas fijas de arranque sin tocar; las corridas anteriores no se reescriben |
 | 🟡 | **La clave de Atria no vive donde dice `CLAUDE.md` §1.1.** Está en el `.env` de otro proyecto (`C:/Users/admin/proyectos/04_01_Ticket_reader_Ninox/.env`), que es un tercer sitio: no la encuentra ni el `grep` del repo (respeta `.gitignore`) ni la lectura del registro de Windows. Costó media hora de búsqueda a ciegas | Álvaro, si se vuelve a usar ese brazo: `setx ATRIA_API_KEY` la deja donde ya está `DEEPSEEK_API_KEY` |
 | 🟡 | **El turno de checks entre árboles está probado pero no ejercitado en producción**: los dos brazos no llegaron a solaparse (Atria arrancó cuando DeepSeek ya había acabado). La primera vez que dos corridas coincidan de verdad será la primera prueba real del cerrojo | Quien lance dos a la vez: mirar el log, que dice la espera |
 | ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |

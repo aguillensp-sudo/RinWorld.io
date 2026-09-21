@@ -107,6 +107,29 @@ def check_toolchain_or_exit() -> None:
             "haber probado nada. Se para antes de llamar al Coder.")
 
 
+# -----------------------------------------------------------------------------
+# F-184 · el feedback del reintento del e2e iba lleno de avisos de Node.
+#
+# Playwright pone `FORCE_COLOR=1` a CADA worker y al webServer por su cuenta
+# (`runner/index.js`, `DEFAULT_ENVIRONMENT_VARIABLES` y `WorkerHost`), pisando el
+# `FORCE_COLOR=0` de aqui. Con `NO_COLOR=1` heredado, cada uno de esos procesos
+# arranca con las DOS variables y Node avisa: «The 'NO_COLOR' env is ignored due
+# to the 'FORCE_COLOR' env being set», mas la linea de `--trace-warnings`. Y
+# Playwright reinicia el worker tras cada test fallido: **dos lineas de ruido por
+# fallo**. En ADMIN-02 fueron 36 de las 49 lineas del feedback, y el recorte de
+# `_tail` se quedaba con el ruido y tiraba la razon del fallo. Sale igual en las
+# corridas de agosto: no es del experimento.
+#
+# En Playwright `NO_COLOR` no apaga nada —los workers reciben `FORCE_COLOR=1`
+# igualmente— y solo produce los avisos, asi que ahi no se pone. El resto de
+# herramientas (vitest, tsc) sigue con las dos: son las que la necesitan.
+def _entorno_sin_color(cmd: list) -> dict:
+    env = {**os.environ, "NO_COLOR": "1", "FORCE_COLOR": "0"}
+    if "playwright" in cmd:
+        env.pop("NO_COLOR")
+    return env
+
+
 def run_cmd(cmd: list, cwd: pathlib.Path) -> tuple:
     """(codigo, salida). Se inyecta en `test_runner_node` para poder correr el
     grafo en seco sin arrancar npm."""
@@ -124,7 +147,7 @@ def run_cmd(cmd: list, cwd: pathlib.Path) -> tuple:
         # que respeten todos: `NO_COLOR` es la convencion (no-color.org) y vitest
         # y tsc miran `FORCE_COLOR`. `strip_ansi` de abajo se queda igualmente
         # como red: `npx` no propaga el entorno a todo lo que arranca.
-        env = {**os.environ, "NO_COLOR": "1", "FORCE_COLOR": "0"}
+        env = _entorno_sin_color(cmd)
         p = subprocess.run([resolve(cmd[0]), *cmd[1:]], cwd=cwd,
                            capture_output=True, text=True,
                            encoding="utf-8", errors="replace",

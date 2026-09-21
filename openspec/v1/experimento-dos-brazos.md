@@ -246,3 +246,4 @@ endpoint estable, la conversación se reabre — y el arnés ya sabe hablar con 
 | 20-sep-2026 | Corrida `brazo-deepseek`: escalada 3/4 por los mismos ocho e2e. Diagnóstico: el contrato, no el artefacto (`F-183`). Artefacto comiteado tal cual, contrato corregido, CI entera verde y pantalla desplegada. |
 | 20-sep-2026 | Tres corridas de Atria muertas (502, 502, stream cortado). `HARNESS_CODER_STREAM` y el corte tratado como transporte. Corrida `brazo-atria`: **verde 4/4 en 2 intentos**. |
 | 20-sep-2026 | Replay del intento 1 de DeepSeek contra el contrato corregido: **verde entero**. La comparación justa queda 1 intento contra 2. |
+| 21-sep-2026 | Cerrado. Worktree `exp-admin-02-atria` borrado a petición del PO; **las dos ramas se conservan** (`exp/admin-02-atria`, también en el remoto, y `claude/dual-agent-deepseek-experiment-93d0f4`). El artefacto de Atria sigue sin fusionar y este informe cita sus commits, así que se sostiene sin el árbol. |

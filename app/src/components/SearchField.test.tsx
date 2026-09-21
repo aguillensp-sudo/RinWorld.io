@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { SearchField } from './SearchField';
+import css from './SearchField.module.css?raw';
 
 function Controlled({ onSubmit }: { onSubmit: () => void }) {
   const [value, setValue] = useState('');
@@ -52,5 +53,11 @@ describe('SearchField', () => {
 
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
     expect(onSubmit).toHaveBeenCalledTimes(2);
+  });
+
+  // jsdom no pinta controles nativos: el PO vio DOS "x" en Chrome/Edge (C5 de FORO-02, 21-sep)
+  // porque `type="search"` trae la suya. Solo se puede vigilar en el CSS.
+  it('oculta la "x" nativa de type="search": la unica es la nuestra', () => {
+    expect(css).toMatch(/::-webkit-search-cancel-button[^{]*\{[^}]*display:\s*none/);
   });
 });

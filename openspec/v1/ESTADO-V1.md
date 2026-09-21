@@ -538,10 +538,9 @@ que decidir antes una cosa que no es de cálculo sino de criterio:
 > vale es evaluar el umbral sin haber visto este párrafo.
 
 **Las otras cinco:** el H1 (`DIR-01`, `ADMIN-01`, `FORO-01`) cerrado el Día 16 con C5 del
-PO y sin correcciones; `FORO-02` con C5 pendiente de la confirmación final tras la
-corrección del buscador; `FORO-03` sin C5 todavía.
+PO y sin correcciones; `FORO-02` y `FORO-03` con C5 dado el 21-sep (reparos en `F-186`, arreglados).
 
-**C5 pendientes: dos** — `FORO-02` y `FORO-03`. **`ADMIN-02`: C5 DADO POR EL PO el 21-sep-2026 («aprobada total»), en `npm run dev` contra la base de producción, sin pulsar ninguna acción de escritura.** Es lo único que impide
+**C5 pendientes: NINGUNA.** El PO dio el 21-sep-2026, en `npm run dev` contra la base de producción y sin pulsar ninguna acción de escritura: `ADMIN-02` («aprobada total»), `FORO-02` y `FORO-03` (aprobadas; los dos reparos que puso salieron en `F-186` y están arreglados — falta solo que confirme el espacio inferior). Es lo único que impide
 dar las tres por cerradas, y no lo da una máquina.
 
 ### Corriente C · Verificación — NO ABIERTA
@@ -553,7 +552,7 @@ Sin cambios.
 ## 3 · Qué toca mañana, en este orden
 
 1. ✅ **`F-184` CERRADO el 21-sep** (`test_runner._entorno_sin_color`, commit de la sesión del Día 21). Playwright pone `FORCE_COLOR=1` a sus workers y heredaban el `NO_COLOR=1` del arnés: Node avisaba en cada uno y Playwright reinicia el worker tras cada test fallido. Reproducido y comprobado por el `run_cmd` real: 8 líneas de ruido → 0. **Lo que NO arregla:** las corridas anteriores siguen medidas con el feedback degradado (cifra 3) y quedan 4 líneas fijas de arranque (`[WebServer]`, `npm notice`).
-2. 🟠 **Dos C5 del PO pendientes: `FORO-02` y `FORO-03`.** `ADMIN-02` **cerrada el 21-sep** (aprobada total por el PO). `FORO-02` con la corrección del buscador ya aplicada; `FORO-03` entera. **Sin pulsar `Aprobar`/`Rechazar` en `ADMIN-01`** (`F-169`) ni `Marcar pago recibido` en `ADMIN-02`, y **sin `Publicar respuesta` en `FORO-03`** (permanente y gasta el cupo de `RNG-FORO-06`): un pago confirmado NO se puede borrar desde el cliente y la única limpieza es resembrar (`demo_billing.sql`, corre como `postgres`).
+2. ✅ **Las tres C5 del PO, dadas el 21-sep** (`ADMIN-02`, `FORO-02`, `FORO-03`). Queda una confirmación pequeña: que el PO vea en su localhost el arreglo del espacio inferior y la «x» única (`F-186`). **Sin pulsar `Aprobar`/`Rechazar` en `ADMIN-01`** (`F-169`) ni `Marcar pago recibido` en `ADMIN-02`, y **sin `Publicar respuesta` en `FORO-03`**: son permanentes.
 3. **La remedición de las ocho cifras, con el párrafo de la cifra 3 del §2 delante.** Van 6
    de 6, así que toca. Estado de las otras dos que se sabían sucias: la 7 (coste de
    orquestación) sigue sucia y hoy más —esta sesión hizo el cambio del arnés, su revisión
@@ -637,7 +636,7 @@ En paralelo, sin acción propia desde este lado:
 | ⚪ | ~~**`F-168` · la app de producción no arranca desde el 8-sep.**~~ **Resuelto 17-sep: variables puestas por el PO, verificado por contenido (`index-CHmJc7cl.js`, 480.802 bytes) y en navegador (login pintado, cero errores de consola), y con un paso nuevo en `deploy-app` que lo comprueba en cada despliegue.** Lo que decía: El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
 | ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | ⚪ | ~~`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local~~ | **Resuelto 17-sep: en `app/.env` (no como variable de usuario, como decía esta fila), login comprobado, e2e local 4/4** |
-| 🟠 | **El C5 de `FORO-02` sigue sin cerrarse del todo (18-sep).** El PO revisó en `npm run dev` y señaló dos síntomas (`F-172`): "Crear hilo" sin acción y el buscador inconsistente con DIR-01. El primero era intencional (documentado, `disabled` con motivo). El segundo era real pero distinto de lo que parecía: ninguna pantalla tenía la "x" que el PO recordaba en DIR-01. El PO decidió el estándar y ya está aplicado en las dos pantallas (`F-172`) — **falta la confirmación final del PO sobre el resultado** | Álvaro: revisar de nuevo y confirmar C5 |
+| ✅ | **El C5 de `FORO-02` se cerró el 21-sep.** El PO lo aprobó, con dos reparos (`F-186`: doble «x», espacio inferior) ya arreglados. | Confirmar en localhost el espacio inferior |
 | 🟡 | **La cifra 7 está sucia en tres de las cinco pantallas medidas** (`ADMIN-01`, `FORO-02` y ahora `FORO-03`, 18-sep: 7,82 $ de delta en una sesión que ya traía encima el buscador y tres migraciones): son techos, no medidas limpias. Solo queda una pantalla (la sexta, de la remedición) para intentar una cifra 7 real | Quien corra la sexta: sesión nueva, solo para esa pantalla |
 | ⚪ | ~~**El límite de 10 publicaciones por hora (RNG-FORO-06) no existe en la base.**~~ **Resuelto 18-sep-2026: `0031`/`0032`, aplicadas y comprobadas contra el catálogo de las dos bases.** La primera versión del disparador tenía un bug real (`F-173`: `security definer` hacía que el bypass de siembra se activara siempre) cazado en Postgres desechable antes de tocar nada real | Corriente A |
 | 🟡 | **`F-172`: el estándar de buscador (input+lupa integrada+"x" al escribir) solo está aplicado en DIR-01 y FORO-02.** `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen con su implementación propia, sin la "x" y (en INV-01) con la lupa a la izquierda | Quien toque esas pantallas: migrar a `components/SearchField.tsx` |

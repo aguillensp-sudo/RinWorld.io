@@ -5,6 +5,11 @@
    de tarjeta que el sistema de diseño define. */
 
 .page {
+  /* Scroll propio: `.bwcnt` es `overflow: hidden`, y sin esto un listado mas alto
+     que la ventana se recorta sin barra (F-088, F-093, y ahora F-186). */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 24px 28px 40px;
   background: var(--bw-cold-white);
   box-sizing: border-box;

@@ -22,6 +22,18 @@
   color: var(--bw-input-placeholder);
 }
 
+/* `type="search"` hace que Chrome y Edge pinten SU propia "x" al escribir, ademas
+   de la nuestra: el PO vio dos, con el mismo comportamiento (C5 de FORO-02,
+   21-sep). La nuestra es la que manda el estandar (F-172): borra el campo sin
+   consultar, y esta se quita. jsdom no pinta controles nativos, asi que ningun
+   test de comportamiento podia verlo. */
+.input::-webkit-search-cancel-button,
+.input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
 .input:focus {
   outline: none;
   border-color: var(--bw-calibration-blue);

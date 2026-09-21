@@ -440,8 +440,8 @@ sin comprometer el estándar. **Las dos cosas que hay que llevarse de hoy:**
    habría sido el primer verde al primer intento de la fábrica.
 
 > **La consecuencia para la remedición, sin maquillarla:** la cifra 3 cuenta esta pantalla
-> como escalada, porque `F-161`/`F-162` fijaron que una escalada cuenta sea cual sea la
-> causa. Pero es el **tercer caso** —con `F-166` y `F-174`— en que el instrumento puntúa al
+> como escalada, **[errata 21-sep, `F-187`: falso para la cifra 2 —`F-161`/`F-162` NO cuentan las escaladas por el
+> instrumento y repiten la corrida; solo la cifra 3 las cuenta—]**. Pero es el **tercer caso** —con `F-166` y `F-174`— en que el instrumento puntúa al
 > Coder por un defecto propio, y van tres de seis pantallas. **El patrón ya no es
 > anecdótico: la cifra 3 mide el contrato de aceptación tanto como al modelo.** Quien
 > evalúe el umbral tiene que decidir qué hacer con eso; este fichero no lo decide.
@@ -525,17 +525,9 @@ desplegada. **Veredicto del arnés: ESCALADO 3/4** — y ese número no dice lo 
 porque los ocho e2e que fallaron eran del contrato (`F-183`) y el intento 1, pasado por la
 batería corregida, sale verde entero. Ver el bloque del Día 20.
 
-**La remedición obligatoria ya se puede hacer: van 6 de 6.** No se ha hecho hoy, a
-propósito —el día ya llevaba dos corridas, un experimento y cinco hallazgos—, y además hay
-que decidir antes una cosa que no es de cálculo sino de criterio:
+**La remedición a seis, HECHA el 21-sep: «Funciona con supervisión» — escenario base, 21 semanas, corriente B con dos agentes** (el mismo veredicto del H1). Fallan la cifra 3 (1 de 6) y la 5 (`FORO-02`, 0 de 2 ficheros sin tocar); las cifras 1, 2, 4 y 6 cumplen; **las 7 y 8 no tienen veredicto** (no hay medida limpia ni reloj). Detalle, fuentes y errata en `openspec/v1/remedicion-seis-pantallas.md`.
 
-> **La cifra 3 (verdes al primer intento) queda en 1 de 6 contando como siempre**
-> (`FORO-02` la única limpia). Pero de las cinco que fallan, **tres fallan por el
-> instrumento y no por el Coder**: `FORO-03` (`F-174`, test propio roto), `ADMIN-01`
-> (`F-166`, e2e declarado que se saltaba) y ahora `ADMIN-02` (`F-183`). Si se contara
-> «verde al primer intento con un contrato correcto», `ADMIN-02` sería verde y la cifra
-> sería 2 de 6. **Las dos lecturas son defendibles y este fichero no elige**: lo que no
-> vale es evaluar el umbral sin haber visto este párrafo.
+> **Depende de tres decisiones del PO del 21-sep, y la primera es la que manda:** las escaladas de `FORO-03` (`F-174`) y `ADMIN-02` (`F-183`) **no cuentan** para la cifra 2. Contadas como las cuenta el arnés serían dos, y la regla de `UMBRAL` §4 diría «No rinde». Las otras dos: la cifra 3 queda en 1 de 6 (no importa la lectura, falla en ambas) y `F-172` cuenta como corrección de C5 en `FORO-02`.
 
 **Las otras cinco:** el H1 (`DIR-01`, `ADMIN-01`, `FORO-01`) cerrado el Día 16 con C5 del
 PO y sin correcciones; `FORO-02` y `FORO-03` con C5 dado el 21-sep (reparos en `F-186`, arreglados).
@@ -552,15 +544,8 @@ Sin cambios.
 
 1. ✅ **`F-184` CERRADO el 21-sep** (`test_runner._entorno_sin_color`, commit de la sesión del Día 21). Playwright pone `FORCE_COLOR=1` a sus workers y heredaban el `NO_COLOR=1` del arnés: Node avisaba en cada uno y Playwright reinicia el worker tras cada test fallido. Reproducido y comprobado por el `run_cmd` real: 8 líneas de ruido → 0. **Lo que NO arregla:** las corridas anteriores siguen medidas con el feedback degradado (cifra 3) y quedan 4 líneas fijas de arranque (`[WebServer]`, `npm notice`).
 2. ✅ **Las tres C5 del PO, dadas el 21-sep** (`ADMIN-02`, `FORO-02`, `FORO-03`). Queda una confirmación pequeña: que el PO vea en su localhost el arreglo del espacio inferior y la «x» única (`F-186`). **Sin pulsar `Aprobar`/`Rechazar` en `ADMIN-01`** (`F-169`) ni `Marcar pago recibido` en `ADMIN-02`, y **sin `Publicar respuesta` en `FORO-03`**: son permanentes.
-3. **La remedición de las ocho cifras, con el párrafo de la cifra 3 del §2 delante.** Van 6
-   de 6, así que toca. Estado de las otras dos que se sabían sucias: la 7 (coste de
-   orquestación) sigue sucia y hoy más —esta sesión hizo el cambio del arnés, su revisión
-   adversarial y dos corridas—, así que `ADMIN-02` tampoco sirve para esa cifra; van cuatro
-   de seis pantallas sucias en la 7.
-4. **Decidir qué se hace con la rama `exp/admin-02-atria`.** Tiene un artefacto verde de
-   `Atria-Dawn-Preview` que nadie ha fusionado y que no se va a fusionar sin decisión del
-   PO. Si no se quiere, se borra la rama y queda el informe; si se quiere comparar a ojo
-   con el de DeepSeek, están los dos commits.
+3. ✅ **La remedición de las ocho cifras, HECHA el 21-sep** (`remedicion-seis-pantallas.md`). **Queda de ella:** las cifras 7 y 8 no tienen veredicto. Desde la séptima pantalla, **una sesión nueva por pantalla** (para poder medir la 7) y **un cronómetro con las esperas del PO descontadas** (la 8 no existe). Y decidir cuál es la séptima.
+4. ✅ **`exp/admin-02-atria`: resuelto el 20-sep, decisión del PO.** Worktree borrado; las dos ramas (`exp/admin-02-atria` y `claude/dual-agent-deepseek-experiment-93d0f4`) se conservan, la primera también en el remoto.
 5. **La deuda que dejó `F-170`** (contradicciones ENTRE specs y entre spec y esquema) y
    **la de `F-172`** (el estándar de buscador solo en `DIR-01` y `FORO-02`) y **la de
    `F-178`** (el foro sin teardown ni `resetDemo`). Sin cambios desde el Día 19.
@@ -575,6 +560,9 @@ En paralelo, sin acción propia desde este lado:
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **Las escaladas por defecto del instrumento (`F-174`, `F-183`) NO cuentan para la cifra 2 de la remedición a seis** | 21-sep-2026, PO, sin repetir las corridas. Sin ello la regla de `UMBRAL` §4 diría «No rinde». Lo que `F-166` decidió para `ADMIN-01` era lo contrario | `remedicion-seis-pantallas.md` |
+| **Cifra 3 de la remedición: 1 de 6, «contando como siempre»** | 21-sep-2026, PO. No importa cuál de las dos lecturas: falla en ambas con el umbral proporcional | ídem |
+| **`F-172` cuenta como corrección de C5 en `FORO-02`** | 21-sep-2026, PO. Es lo que hace fallar la cifra 5 | ídem |
 | **Estándar de buscador: input con lupa integrada + "x" al escribir, server-side** | 18-sep-2026, PO (`F-172`), en la C5 de `FORO-02`. Manda sobre lo que diga la spec de cada pantalla, incluidas las ya aprobadas. La búsqueda sigue siendo server-side (Enter/lupa), no live search — decisión explícita, distinta de la "x" | `app/src/components/SearchField.tsx`, `design-system.md` |
 | **`RNG-FORO-06` cuenta por HORA NATURAL, no por ventana móvil** | 18-sep-2026, resuelta al escribir `0031`: la spec se contradice entre su `Requirement` ("hora natural") y su `Scenario` ("en la última hora"). Gana la regla, mismo criterio que `F-158`/`F-170`. La ventana es siempre `[HH:00:00, HH:59:59]` del reloj | `0031`, `supabase/specs/community-forum/spec.md` |
 | **Un guardia que se salta a sí mismo comparando `current_user` NO puede ser `security definer`** | 18-sep-2026, `F-173`. Dentro de una función definer, `current_user` es el DUEÑO de la función, no quien llama: el bypass de siembra se vuelve permanente y el guardia deja de guardar. Regla general, no solo del foro | `F-173`, `app.guard_forum_rate_limit` (0031) |

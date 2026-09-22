@@ -227,4 +227,53 @@ Ninguna de las cuatro es opcional, y ninguna depende de nadie de fuera.
 
 ---
 
+## 8 · La séptima pantalla
+
+> **Adenda del 22-sep-2026.** La remedición a seis del Día 21
+> (`remedicion-seis-pantallas.md`) dejó las cifras 7 y 8 sin veredicto porque
+> ninguna de las seis se midió en una sesión propia con cronómetro. El relevo
+> del Día 21 puso como primer punto del día siguiente decidir cuál es la
+> séptima, delegado por el PO a esta sesión el 22-sep («elige la que
+> estimes oportuno»).
+
+**Elegida: `SRCH-03` · Gestión de Watchers — Módulo 03, Búsqueda Conversacional.**
+Spec en `openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_SRCH-03.md`
+y HTML aprobado en la misma carpeta.
+
+**Por qué esta y no otra**, con el mismo criterio de mezcla que fijó las tres
+primeras (§1):
+
+- **Módulo sin tocar por la corriente B.** Las seis ya construidas cubren los
+  módulos 01 (`ADMIN-01`), 04 (`DIR-01`) y 08 (`FORO-01/02/03`), más 07
+  (`ADMIN-02`). El 03 sigue sin una sola pantalla de V1 — solo `SRCH-01`, que
+  es del MVP.
+- **Forma conocida, coste medio.** Lista con chips de filtro y tarjetas de
+  estado, el mismo patrón de tabla-con-filtros que `SRCH-01`/`DIR-01`/`INV-01`
+  — comparable a algo ya medido, como se valoró para `DIR-01` — pero con una
+  tabla nueva (`watchers`, comprobado que no existe en las migraciones:
+  `grep -rl watcher supabase/migrations` no devuelve nada) y estados propios
+  (`ACTIVE`/`PAUSED`/`TRIGGERED`/`PENDIENTE RENOVACIÓN`/`EXPIRED`), así que no
+  es tan barata como `DIR-01` ni tan cara como `FORO-01`. La spec funcional ya
+  describe el comportamiento de los watchers con detalle
+  (`openspec/specs/conversational-search/spec.md`), así que la capa de datos
+  no parte de cero.
+- **Se descartó `INV-07`** (Configuración de Visibilidad del Inventario,
+  Módulo 02, también con spec y HTML aprobados): dos mecanismos de exclusión
+  a la vez —por organización y por geografía, cada uno con su propia lista—
+  y ninguno de los dos tiene nada parecido ya construido (`members.
+  visibility_scope` de `ADR-002` D-4 es un concepto distinto: ámbito de
+  visibilidad de un miembro sobre los hilos, no quién puede ver el stock de
+  una organización). Es una candidata razonable para una octava pantalla,
+  pero se pareció demasiado al motivo por el que `INV-02` se descartó de las
+  tres primeras: mediría el techo, no la media.
+
+**Lo que NO se ha hecho hoy, a propósito:** construirla. El propio relevo del
+Día 21 pide **una sesión nueva por pantalla y un cronómetro** para que las
+cifras 7 y 8 tengan veredicto, y esta sesión ya se abrió para otra cosa
+(`F-189`). Construir `SRCH-03` aquí habría repetido el mismo defecto de
+medición que dejó esas dos cifras sin dato.
+
+---
+
 *Escrito el 11-sep-2026, Día 14 de V1, antes de medir · Dirección Técnica, Nortex Systems*
+*§8 añadido el 22-sep-2026, antes de construir nada de `SRCH-03`.*

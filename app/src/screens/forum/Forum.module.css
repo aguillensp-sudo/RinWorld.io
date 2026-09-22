@@ -16,9 +16,13 @@
    ========================================================================== */
 
 .body {
+  /* Scroll propio: `.bwcnt` es `overflow: hidden`, y sin esto un listado mas alto
+     que la ventana se recorta sin barra (F-088, F-093, F-186 y ahora F-189). */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 24px 28px 40px;
   background: var(--bw-cold-white);
-  min-height: 100%;
 }
 
 .eyebrow {

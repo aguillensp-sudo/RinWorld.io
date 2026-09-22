@@ -14,6 +14,12 @@
 .page {
   display: flex;
   flex-direction: column;
+  /* Scroll propio: `.bwcnt` es `overflow: hidden`, y sin esto una tabla mas alta
+     que la ventana se recorta sin barra (F-088, F-093, F-186, F-189 y ahora
+     F-190 -- confirmado por el PO con la ventana baja, no solo sospechado). */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* ── Cabecera de la pantalla ─────────────────────────────────────────────── */

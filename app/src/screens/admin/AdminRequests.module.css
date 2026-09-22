@@ -3,6 +3,12 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Scroll propio: `.bwcnt` es `overflow: hidden`, y sin esto una cola de
+     solicitudes mas alta que la ventana se recorta sin barra (F-088, F-093,
+     F-186, F-189 y ahora F-190 -- confirmado por el PO con la ventana baja). */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .eyebrow {

@@ -350,9 +350,10 @@ vivas— vive en `git show 3921781:openspec/v1/ESTADO-V1.md`, no se repite aquí
 
 ---
 
-**Día 22 de V1 · 22-sep-2026 · Estado: CERRADO.** Fecha de máquina al cerrar: `2026-09-22`, 07:07 UTC (`date -u`).
+**Día 22 de V1 · 22-sep-2026 · Estado: CERRADO — reabierto una vez por la regla 4, y con
+motivo.** Fecha de máquina al cerrar por segunda y última vez: `2026-09-22`, 07:28 UTC (`date -u`).
 
-> **EL DÍA EN CUATRO LÍNEAS.**
+> **EL DÍA EN SEIS LÍNEAS.**
 >
 > 1. **`F-188` decidido por el PO: se deja como está.** Las C5 se siguen haciendo contra
 >    producción, sin pulsar nada que escriba; el `.env` local no se apunta al staging.
@@ -362,18 +363,22 @@ vivas— vive en `git show 3921781:openspec/v1/ESTADO-V1.md`, no se repite aquí
 >    Día 21 pide una sesión nueva por pantalla y cronómetro, y esta sesión ya estaba
 >    abierta para el punto 3.
 > 3. **La sospecha de `F-186` sobre `Forum.module.css`/`AdminBilling.module.css`,
->    comprobada y cerrada: `F-189`.** Confirmado en un navegador real (no jsdom, que no
->    calcula layout) que las dos páginas se recortaban sin barra de scroll, mismo patrón
->    que `F-088`/`F-093`/`F-186`. Mismo arreglo puesto, dos pruebas nuevas que leen el CSS
->    (comprobado que fallan contra el CSS de antes del arreglo, no solo que pasan con él
->    puesto), desplegado y **verificado por contenido en producción** — no verificado a
->    ojo por el PO todavía, porque esta sesión no inició sesión en la app a propósito
->    (evitar entrar una contraseña).
-> 4. **Método:** para reproducir el fallo de scroll sin tocar el login de la app (`F-188`
->    sigue con `npm run dev` contra producción), se copiaron las tres reglas CSS
->    implicadas en una página aislada fuera del repo, servida por un `http.server` propio
->    y medida con JavaScript en un navegador real. Queda documentado por si hace falta
->    reproducir otro fallo de layout sin pasar por el login.
+>    comprobada, arreglada y desplegada: `F-189`.** Confirmado primero en un navegador
+>    real (no jsdom) fuera del login de la app, y **confirmado después por el PO en su
+>    localhost, con `FORO-01` y `ADMIN-02` ya desplegados: funcionan.**
+> 4. **Y el PO encontró una cuarta y una quinta, con el mismo método, sin que nadie se lo
+>    pidiera: `F-190`.** `DIR-01` y `ADMIN-01` tampoco tenían scroll propio con la ventana
+>    baja — de partida ninguna de las dos tenía siquiera `min-height: 100%`. Mismo
+>    arreglo, mismas pruebas, desplegado y **verificado por contenido en producción**
+>    (`._page_3xbnz_14`, `._screen_186li_1`, las dos con `overflow-y:auto` puesto).
+>    **Con esto, las SEIS pantallas que ha construido la corriente B han tenido este
+>    fallo en algún momento** — deja de ser un patrón aislado.
+> 5. **Método, documentado para la próxima vez:** para reproducir un fallo de layout sin
+>    tocar el login de la app (`F-188` sigue con `npm run dev` contra producción), se
+>    copian las reglas CSS implicadas en una página aislada fuera del repo, servida por
+>    un `http.server` propio y medida con JavaScript en un navegador real.
+> 6. **Pendiente, dicho en voz alta:** meter el scroll propio en la plantilla de tarea del
+>    Coder. Seis de seis pantallas con el mismo hueco ya no es una corrección puntual.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -412,7 +417,13 @@ vivas— vive en `git show 3921781:openspec/v1/ESTADO-V1.md`, no se repite aquí
 | Que el arnés sigue entero | `python -m harness.tests.test_checks` | «Todas en verde» |
 | La CI | `gh run watch 35697446434` sobre `730c330` | Los **seis jobs** en verde, incluidos los dos despliegues |
 | Que producción sirve el arreglo | Descarga de `/assets/index-CK6WL1nR.css` y extracción de las reglas `.screen`/`.body` por selector minificado | `._screen_jkne8_9{…gap:20px;min-height:0;…overflow-y:auto}` y `._body_1j5i6_18{…flex:1;min-height:0;…overflow-y:auto}` — por contenido, no por `HTTP 200` |
-| **Que el resultado visual de `F-189` es el bueno en la app real** | **No verificado.** Esta sesión no inició sesión en `npm run dev` a propósito, para no entrar una contraseña (regla de esta sesión, no del repo) | Falta la misma C5 a ojo que el PO dio para `F-186` |
+| **Que el resultado visual de `F-189` es el bueno en la app real** | El PO, en su localhost, con `FORO-01` y `ADMIN-02` ya desplegados | «Probados FORO-01 y 02, ADMIN-02, FUNCIONAN.» — confirmado |
+| Que `DIR-01` y `ADMIN-01` tenían el MISMO fallo (`F-190`) | El PO, en su localhost, con la ventana baja — el mismo método que se le pidió para `F-189` | «Ni DIR-01 ni ADMIN-01 tienen el scroll cuando la ventana es baja.» Confirmado leyendo el código: los dos son hijos directos de `.bwcnt` (`Directory.tsx:184`, `AdminRequests.tsx:223`), sin ni `min-height: 100%` de partida |
+| Que las dos pruebas nuevas de `F-190` vigilan algo | Mismo script de extracción, contra el CSS de `HEAD` antes del arreglo | Ninguno de los dos bloques (`.page`, `.screen`) contenía `overflow-y: auto` |
+| Que la app sigue entera tras `F-190` | `npx vitest run` y `npm run typecheck` | **958 pasan** (956+2), 23 saltados; typecheck limpio |
+| Que el arnés sigue entero tras `F-190` | `python -m harness.tests.test_checks` | «Todas en verde» |
+| La CI de `F-190` | `gh run watch 35699368803` sobre `ab98e79` | Los **seis jobs** en verde, incluidos los dos despliegues |
+| Que producción sirve el arreglo de `F-190` | Descarga de `/assets/index-DMJjyngJ.css`, extracción de `.page`/`.screen` por selector minificado | `._page_3xbnz_14{…flex:1;min-height:0;…overflow-y:auto}` y `._screen_186li_1{…flex:1;min-width:0;min-height:0;…overflow-y:auto}` — por contenido |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -459,6 +470,15 @@ hoy, a propósito:** el relevo del Día 21 pide una sesión nueva por pantalla y
 para que las cifras 7 y 8 tengan veredicto, y construirla en esta sesión habría repetido el
 mismo defecto de medición.
 
+**22-sep-2026, segunda parte del día: `F-189` confirmado por el PO en su localhost, y
+`F-190` — el PO encontró el MISMO fallo de scroll en `DIR-01` y `ADMIN-01`.** Con eso, **las
+seis pantallas que ha construido la corriente B hasta hoy han tenido, en algún momento, el
+mismo fallo de scroll dentro de `.bwcnt`** (`DIR-01`/`F-190`, `ADMIN-01`/`F-190`,
+`FORO-01`/`F-189`, `FORO-02`/`F-186`, `FORO-03`/`F-186`, `ADMIN-02`/`F-189`), todas
+arregladas hoy y desplegadas. Deja de ser una sospecha puntual: **es un hueco sistemático
+de la tarea que recibe el Coder**, y §3.3 lo deja como pendiente explícito para la próxima
+tarea que se escriba.
+
 **`ADMIN-02` corrió, y es la sexta.** Artefacto del Coder en `993db73`, sin una sola
 corrección a mano; contrato de aceptación corregido en `ab27b0f`; CI entera verde y
 desplegada. **Veredicto del arnés: ESCALADO 3/4** — y ese número no dice lo que parece,
@@ -488,21 +508,28 @@ Sin cambios.
    ninguna migración; spec funcional ya la describe en
    `openspec/specs/conversational-search/spec.md`), primero validada en Postgres
    desechable, como todas las anteriores.
-2. 🟢 **Pedir al PO la C5 a ojo de `F-189`** (el arreglo de scroll de `FORO-01`/`ADMIN-02`),
-   ya en producción — la misma confirmación visual que dio para `F-186` el 21-sep. Esta
-   sesión solo verificó tests, el CSS por contenido y CI; nadie ha visto el resultado en
-   pantalla.
-3. 🟡 **Valorar meter el scroll propio en la plantilla de tarea del Coder.** Van **cuatro**
-   pantallas seguidas que lo omiten (`FORO-02`, `FORO-03`, `FORO-01`, `ADMIN-02`) — ya no
-   es un patrón aislado, es un hueco sistemático en la tarea que el generador recibe.
-4. **La deuda que dejó `F-170`** (contradicciones ENTRE specs y entre spec y esquema), **la de `F-172`** (el estándar de buscador solo en `DIR-01` y `FORO-02`; `INV-01`/`MSG-01`/`SentOffers` sin migrar) **y la de `F-178`** (el foro sin teardown ni `resetDemo`). Sin cambios.
+2. ✅ **C5 de `F-189` recibida.** El PO probó `FORO-01` y `ADMIN-02` en su localhost tras el
+   despliegue: «FUNCIONAN». Cerrado del todo.
+3. 🟢 **`F-190`: pedir al PO que reconfirme `DIR-01`/`ADMIN-01` una vez desplegado.** El PO
+   encontró el fallo ANTES del arreglo (con el código todavía roto); falta la vuelta —
+   confirmar que el arreglo, ya en producción, se ve bien.
+4. 🟠 **Meter el scroll propio en la plantilla de tarea del Coder — ya no es «valorarlo».**
+   **Seis de seis** pantallas de la corriente B han tenido este fallo (`DIR-01`, `ADMIN-01`,
+   `FORO-01`, `FORO-02`, `FORO-03`, `ADMIN-02`, ver §2). Es un hueco sistemático de lo que
+   la tarea del generador pide, y la séptima pantalla (`SRCH-03`) es la prueba: si sale con
+   el mismo fallo, confirma que el generador no lo va a añadir por su cuenta.
+5. **La deuda que dejó `F-170`** (contradicciones ENTRE specs y entre spec y esquema), **la de `F-172`** (el estándar de buscador solo en `DIR-01` y `FORO-02`; `INV-01`/`MSG-01`/`SentOffers` sin migrar) **y la de `F-178`** (el foro sin teardown ni `resetDemo`). Sin cambios.
 
 En paralelo, sin acción propia desde este lado:
 
 - **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin recomprobar hoy. **No tocar `vera/index.ts`.**
 - Fuera de sesión: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de Vercel.
 
-**Hecho hoy que ya no está aquí:** `F-184`, las tres C5, la remedición a seis y qué hacer con `exp/admin-02-atria` (worktree borrado, ramas conservadas). **Y una fecha límite:** Cuscinetti Padana vence el **30-sep** y entonces la siembra de cobros cambia de estado; quien vuelva a revisar `ADMIN-02` después tiene que resembrar (`demo_billing.sql`) antes.
+**Hecho hoy que ya no está aquí:** `F-188` decidido, `SRCH-03` elegida, `F-189` cerrado y
+confirmado a ojo, `F-190` encontrado por el PO y cerrado el mismo día. **Y una fecha
+límite:** Cuscinetti Padana vence el **30-sep** y entonces la siembra de cobros cambia de
+estado; quien vuelva a revisar `ADMIN-02` después tiene que resembrar (`demo_billing.sql`)
+antes.
 
 
 ## 4 · Decisiones vivas
@@ -561,6 +588,7 @@ En paralelo, sin acción propia desde este lado:
 | **`F-188` se deja como está: las C5 siguen contra producción** | 22-sep-2026, PO. No se apunta el `.env` local al staging; el riesgo (una acción de escritura sería permanente) queda documentado, no eliminado | `findings-register.md`, §5 |
 | **`SRCH-03` es la séptima pantalla de la fábrica** | 22-sep-2026, delegada por el PO a esta sesión («elige la que estimes oportuno»). Módulo 03 sin tocar por la corriente B, forma conocida (tabla con filtros y estado), coste medio — se descartó `INV-07` por parecerse al motivo por el que `INV-02` quedó fuera de las tres primeras (mediría el techo) | `UMBRAL-FABRICA-V1.md` §8 |
 | **Un fallo de layout se reproduce fuera del login cuando entrar en la app tocaría entrar una contraseña** | 22-sep-2026, `F-189`. Página aislada con las reglas CSS implicadas, servida por un `http.server` propio y medida con `getComputedStyle`/`scrollHeight` en un navegador real — sirve para cualquier sospecha de recorte o de layout sin necesidad de autenticarse | Esta sesión |
+| **El scroll propio de `.bwcnt` va a la plantilla de tarea del Coder, no se sigue corrigiendo pantalla a pantalla** | 22-sep-2026, tras `F-190`: seis de seis pantallas de la corriente B tuvieron el fallo. Pendiente de ejecutar (§3.4), no una decisión cerrada todavía | Quien escriba la tarea de `SRCH-03` |
 
 ---
 
@@ -570,7 +598,8 @@ En paralelo, sin acción propia desde este lado:
 |---|---|---|
 | ✅ | **`F-184` · CERRADO el 21-sep.** El feedback del reintento iba lleno de avisos de Node (36 de 49 líneas): `NO_COLOR` heredado por los workers de Playwright. Ya no se pone en ese comando. | Quedan 4 líneas fijas de arranque sin tocar; las corridas anteriores no se reescriben |
 | ⚪ | **`F-188` · el desarrollo local apunta a producción**, no al staging que decía `entornos.md`. **Decidido el 22-sep-2026 por el PO: se deja como está.** Las C5 se siguen haciendo contra producción, sin pulsar nada que escriba | Nadie — es la decisión, no queda acción |
-| ✅ | **`F-186` sospecha confirmada y cerrada: `F-189` (22-sep).** `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) tenían el mismo fallo, reproducido en navegador real. Mismo arreglo que `F-186` | Falta la C5 del PO a ojo, como con `F-186` |
+| ✅ | **`F-186` sospecha confirmada, arreglada y confirmada a ojo: `F-189` (22-sep).** `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) tenían el mismo fallo. El PO probó `FORO-01`/`ADMIN-02` ya desplegados: «FUNCIONAN» | Cerrado del todo |
+| ✅ | **`F-190` (22-sep): el PO encontró el MISMO fallo en `DIR-01` y `ADMIN-01`**, sin que nadie se lo pidiera — mismo método que `F-189`. Arreglado, desplegado y verificado por contenido en producción el mismo día | Falta que el PO reconfirme a ojo, ya desplegado (§3.3) |
 | 🟡 | **La clave de Atria no vive donde dice `CLAUDE.md` §1.1.** Está en el `.env` de otro proyecto (`C:/Users/admin/proyectos/04_01_Ticket_reader_Ninox/.env`), que es un tercer sitio: no la encuentra ni el `grep` del repo (respeta `.gitignore`) ni la lectura del registro de Windows. Costó media hora de búsqueda a ciegas | Álvaro, si se vuelve a usar ese brazo: `setx ATRIA_API_KEY` la deja donde ya está `DEEPSEEK_API_KEY` |
 | 🟡 | **El turno de checks entre árboles está probado pero no ejercitado en producción**: los dos brazos no llegaron a solaparse (Atria arrancó cuando DeepSeek ya había acabado). La primera vez que dos corridas coincidan de verdad será la primera prueba real del cerrojo | Quien lance dos a la vez: mirar el log, que dice la espera |
 | ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |
@@ -647,8 +676,8 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Cuánto tiempo de reloj cuesta una pantalla.** No hay cronómetro. Por calendario, `ADMIN-02` ocupó parte de tres jornadas (18-20 sep), y buena parte del 20 fue el experimento.
 - **Qué vio el PO en pantalla en `F-186`.** Lo confirmó él («perfecto, arreglado»); yo solo verifiqué tests y que el CSS llega a producción. Nadie ha probado el foro con una ventana más baja que la suya.
 - **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien tras `F-172`.** `F-172` reescribió 110 líneas de `DIR-01` después de su C5 y nadie las ha vuelto a mirar en pantalla.
-- **Qué ve el PO en pantalla en `F-189` (22-sep).** Verificado por tests, por CSS de producción y por CI; **no verificado a ojo por nadie**, porque esta sesión no inició sesión en la app a propósito. El repro aislado demuestra que la regla CSS funciona en un navegador real, pero no que el resto de la pantalla (datos reales, otras reglas, el propio `AppShell`) se comporte igual con contenido de verdad.
-- **Si hay una cuarta pantalla con el mismo fallo de scroll sin comprobar.** Solo se miraron `Forum.module.css` y `AdminBilling.module.css`, porque eran las dos que `F-186` dejó como sospecha explícita. Ningún barrido sistemático de las demás pantallas construidas (`DIR-01`, `ADMIN-01`, `SentOffers`, `Messages`…) contra el mismo patrón (`min-height: 100%` sin `overflow-y` dentro de `.bwcnt`).
+- **Qué ve el PO en pantalla en `F-190` (`DIR-01`/`ADMIN-01`), ya desplegado.** Los encontró rotos ANTES del arreglo; falta que confirme que el arreglo, ya en producción, se ve bien — la misma vuelta que cerró `F-189`.
+- **Si `Messages`/`Thread` (`MSG-01`/`MSG-02`) o `SentOffers` (`VND-01`) tienen el mismo fallo.** Son del MVP, no de la corriente B, así que ni `F-186` ni `F-189`/`F-190` los tocaron — y nadie ha mirado su CSS ni los ha probado con ventana baja. Con seis de seis pantallas de la corriente B afectadas, dejar de mirar las del MVP por darlas por hechas sería exactamente el error que `F-132`/`F-146` ya describieron: comprobar el continente («ya se construyeron, ya se probaron») no es comprobar el contenido.
 - **Cuánto costará `SRCH-03` de verdad, en dinero y en reloj.** Es precisamente lo que la sesión nueva con cronómetro tiene que producir; hoy solo hay spec, HTML aprobado y el razonamiento de por qué se eligió.
 
 ## 7 · Ritual de cierre — cómo se sobrescribe este fichero
@@ -750,7 +779,7 @@ Orden de lectura, y el orden importa:
     `resetDemo`, así que el mismo residuo puede repetirse). Del 19-sep: `F-179` (cerrado —
     el mock de `ADMIN-02` sombreaba por posición la fila que no era, más la cita a *Acme* y el
     contador del chip; corregido en el HTML y en la spec por decisión del PO) y `F-180`
-    (cerrado — `Cobros` como sexto ítem del nav del Operador, según el HTML aprobado). Del 21-sep: `F-184` (cerrado — el ruido de Node en el feedback del e2e), `F-186` (cerrado — doble «x» y scroll en el foro, tercera vez tras `F-088`/`F-093`), `F-187` (cerrado — una errata del relevo sobre `F-161`/`F-162`) y `F-188` (**abierto** — el desarrollo local apunta a producción). Del 22-sep: `F-189` (cerrado en el código — el mismo fallo de scroll de `F-186`, confirmado en `FORO-01` y `ADMIN-02` en un navegador real y arreglado; falta la C5 a ojo del PO) y `F-188` decidido (**cerrado como decisión** — se deja como está, sin acción pendiente).
+    (cerrado — `Cobros` como sexto ítem del nav del Operador, según el HTML aprobado). Del 21-sep: `F-184` (cerrado — el ruido de Node en el feedback del e2e), `F-186` (cerrado — doble «x» y scroll en el foro, tercera vez tras `F-088`/`F-093`), `F-187` (cerrado — una errata del relevo sobre `F-161`/`F-162`) y `F-188` (**abierto** — el desarrollo local apunta a producción). Del 22-sep: `F-188` decidido (**cerrado como decisión** — se deja como está, sin acción pendiente), `F-189` (cerrado — el mismo fallo de scroll de `F-186`, confirmado en `FORO-01` y `ADMIN-02`, arreglado, desplegado y **confirmado a ojo por el PO**) y `F-190` (cerrado — el PO encontró el mismo fallo en `DIR-01` y `ADMIN-01`, sin que nadie se lo pidiera; arreglado y desplegado el mismo día, falta la vuelta del PO ya con el arreglo puesto).
 
 ---
 

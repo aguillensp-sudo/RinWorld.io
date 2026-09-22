@@ -336,17 +336,44 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 
 ---
 
-**Día 21 de V1 · 21-sep-2026 · Estado: CERRADO.** Fecha de máquina al cerrar: `2026-09-21`, 09:36 UTC (`date -u`).
+**Día 21 de V1 · 21-sep-2026 · Estado: CERRADO.** `F-184` cerrado (ruido de Node heredado por
+los workers de Playwright). Tres C5 dadas por el PO en producción sin pulsar nada que
+escriba (`ADMIN-02`, `FORO-02`, `FORO-03`), con dos reparos de foro arreglados y
+confirmados a ojo por el PO (`F-186`: doble «x» en el buscador, último comentario de un
+hilo cortado por falta de scroll propio — tercera vez tras `F-088`/`F-093`, con una
+sospecha sin comprobar sobre `Forum.module.css`/`AdminBilling.module.css`). Remedición a
+seis pantallas hecha: «Funciona con supervisión», cifras 7 y 8 sin veredicto. Cuatro
+fallos propios de la sesión, dichos y corregidos; `F-187` (errata del relevo del Día 20).
+`F-188` abierto: el desarrollo local apunta a producción, no al staging que decía
+`entornos.md`. El detalle completo —las siete líneas, las fuentes de §1 y las decisiones
+vivas— vive en `git show 3921781:openspec/v1/ESTADO-V1.md`, no se repite aquí.
 
-> **EL DÍA EN SIETE LÍNEAS.**
+---
+
+**Día 22 de V1 · 22-sep-2026 · Estado: CERRADO.** Fecha de máquina al cerrar: `2026-09-22`, 07:07 UTC (`date -u`).
+
+> **EL DÍA EN CUATRO LÍNEAS.**
 >
-> 1. **`F-184` cerrado** (`ce2150d`). Playwright pone `FORCE_COLOR=1` a sus workers y heredaban el `NO_COLOR=1` del arnés: Node avisaba en cada uno, y Playwright reinicia el worker tras cada test fallido. Reproducido con un Playwright mínimo (4 avisos con 3 tests fallando; 0 sin `NO_COLOR`) y comprobado por el `run_cmd` real: 8 líneas de ruido a 0.
-> 2. **Las tres C5 dadas por el PO** —`ADMIN-02` («aprobada total»), `FORO-02` y `FORO-03`— en `npm run dev` contra la base de producción, sin pulsar nada que escriba. Dos reparos en el foro, `F-186`: **dos «x»** al escribir (la nativa de `type="search"` más la nuestra) y **el último comentario de un hilo cortado** (`.bwcnt` es `overflow: hidden` y las dos páginas no tenían scroll propio: tercera vez tras `F-088` y `F-093`). Arreglado (`9850b89`), con dos pruebas que leen el CSS, desplegado y **confirmado por el PO** en su localhost.
-> 3. **La remedición a seis, hecha: «Funciona con supervisión»** —escenario base, 21 semanas, corriente B con dos agentes—. Fallan la cifra 3 (1 de 6) y la 5 (`FORO-02`, 0 de 2); las 7 y 8 quedan **sin veredicto**. **Depende de la decisión 1 del PO: las escaladas de `FORO-03` y `ADMIN-02` no cuentan.** Contadas como las cuenta el arnés, la regla de `UMBRAL` §4 diría «No rinde». Detalle en `openspec/v1/remedicion-seis-pantallas.md`.
-> 4. **Cuatro fallos míos, dichos y corregidos en la sesión.** Di al PO la lista de hilos de `FORO-02` en orden inverso al real; la cifra de `FORO-02` salió a 18,1 % porque contaba un commit de cableado, y son 14,5 %; dejé media frase colgada en este fichero al cerrar las C5; y el relevo del Día 20 llevaba una errata sobre `F-161`/`F-162` que nadie había contrastado con sus filas (`F-187`).
-> 5. **Hallazgos: cuatro.** `F-184`, `F-186` y `F-187` cerrados. **`F-188` abierto:** `entornos.md` dice que el desarrollo local usa el staging y, con el `app/.env` actual, `npm run dev` apunta a PRODUCCIÓN.
-> 6. **Método:** la herramienta de edición se negó a escribir en el checkout de la raíz desde un worktree; ver el aviso del 21-sep al principio de este fichero.
-> 7. **Lo que NO se ha hecho:** la séptima pantalla; arreglar cómo se miden las cifras 7 y 8; la deuda de `F-170`, `F-172` y `F-178`; y comprobar si `Forum.module.css` y `AdminBilling.module.css` tienen el mismo fallo de scroll que `F-186` (sospecha, sin verlos fallar).
+> 1. **`F-188` decidido por el PO: se deja como está.** Las C5 se siguen haciendo contra
+>    producción, sin pulsar nada que escriba; el `.env` local no se apunta al staging.
+> 2. **La séptima pantalla, elegida y NO construida:** `SRCH-03` · Gestión de Watchers
+>    (Módulo 03, sin tocar por la corriente B). Razonamiento completo en
+>    `UMBRAL-FABRICA-V1.md` §8. No se construye hoy a propósito: el propio relevo del
+>    Día 21 pide una sesión nueva por pantalla y cronómetro, y esta sesión ya estaba
+>    abierta para el punto 3.
+> 3. **La sospecha de `F-186` sobre `Forum.module.css`/`AdminBilling.module.css`,
+>    comprobada y cerrada: `F-189`.** Confirmado en un navegador real (no jsdom, que no
+>    calcula layout) que las dos páginas se recortaban sin barra de scroll, mismo patrón
+>    que `F-088`/`F-093`/`F-186`. Mismo arreglo puesto, dos pruebas nuevas que leen el CSS
+>    (comprobado que fallan contra el CSS de antes del arreglo, no solo que pasan con él
+>    puesto), desplegado y **verificado por contenido en producción** — no verificado a
+>    ojo por el PO todavía, porque esta sesión no inició sesión en la app a propósito
+>    (evitar entrar una contraseña).
+> 4. **Método:** para reproducir el fallo de scroll sin tocar el login de la app (`F-188`
+>    sigue con `npm run dev` contra producción), se copiaron las tres reglas CSS
+>    implicadas en una página aislada fuera del repo, servida por un `http.server` propio
+>    y medida con JavaScript en un navegador real. Queda documentado por si hace falta
+>    reproducir otro fallo de layout sin pasar por el login.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -370,6 +397,22 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 | Que `F-161`/`F-162` NO cuentan las escaladas por el instrumento para la cifra 2 | Las filas del registro y las notas del CSV | Lo dicen las dos. **El relevo del Día 20 decía lo contrario** (`F-187`) |
 | **Que el resultado visual de `F-186` es el bueno** | **No lo he verificado yo**: solo tests, y que el CSS llega a producción | Lo confirmó el PO a ojo en su localhost |
 
+**Tabla del 22-sep-2026, Día 22 — lo comprobado HOY:**
+
+| Afirmación | Verificado contra | Resultado |
+|---|---|---|
+| Fecha de máquina | `date -u` | `2026-09-22`, entre 06:48 y 07:07 UTC según el paso |
+| Worktree adelantado a la raíz | `git merge --ff-only origin/mvp/bootstrap` desde `43bb222` | Fast-forward a `3921781`, igual que la raíz y `origin/mvp/bootstrap` |
+| Copia de `ESTADO-V1.md` en la raíz | `ls` en la raíz del repo | No ha reaparecido |
+| Que `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) son hijos directos de `.bwcnt` | Lectura de `AppShell.tsx:160` (`<main className={styles.bwcnt}>{children}</main>`), `OperatorShell.tsx:155` (mismo patrón, reutiliza `AppShell.module.css`), `Forum.tsx` y `AdminBilling.tsx` | Confirmado en los dos: sin ningún `<div>` intermedio entre `.bwcnt` y `.body`/`.screen` |
+| Que el fallo de scroll de `F-186` se reproduce en los dos, ANTES del arreglo | Página aislada (fuera del login) que copia `.bwshell`/`.bwcnt`/`.body`-`.screen` literales, con 40 filas de contenido, medida con `getComputedStyle`/`scrollHeight`/`clientHeight` en un navegador real | `.bwcnt` de 814 px de alto, contenido de 1862–1989 px, `overflowY: hidden`: recortado sin barra en los dos casos |
+| Que el arreglo (`flex: 1; min-height: 0; overflow-y: auto`) lo corrige | Misma página, con la regla puesta | El propio bloque pasa a `overflowY: auto` con `clientHeight` acotado a 814 px y `scrollHeight` de 1910/1989 px: todo el contenido alcanzable por scroll |
+| Que las dos pruebas nuevas vigilan algo, no solo pasan | Script aparte (`node`) que aplica la misma regex de extracción al CSS de `HEAD` (antes del arreglo) | El bloque extraído no contiene `overflow-y: auto` en ninguno de los dos ficheros: la prueba habría fallado antes del arreglo |
+| Que la app sigue entera | `npx vitest run` y `npm run typecheck` | **956 pasan** (954 + 2 nuevas), 23 saltados; typecheck limpio |
+| Que el arnés sigue entero | `python -m harness.tests.test_checks` | «Todas en verde» |
+| La CI | `gh run watch 35697446434` sobre `730c330` | Los **seis jobs** en verde, incluidos los dos despliegues |
+| Que producción sirve el arreglo | Descarga de `/assets/index-CK6WL1nR.css` y extracción de las reglas `.screen`/`.body` por selector minificado | `._screen_jkne8_9{…gap:20px;min-height:0;…overflow-y:auto}` y `._body_1j5i6_18{…flex:1;min-height:0;…overflow-y:auto}` — por contenido, no por `HTTP 200` |
+| **Que el resultado visual de `F-189` es el bueno en la app real** | **No verificado.** Esta sesión no inició sesión en `npm run dev` a propósito, para no entrar una contraseña (regla de esta sesión, no del repo) | Falta la misma C5 a ojo que el PO dio para `F-186` |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -407,7 +450,14 @@ adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aqu
 | **`F-177` · el GRANT de tabla de sobra en casi todo `public` no es un agujero** | ✅ **18-sep**, comprobado empíricamente en Postgres desechable (no solo leído): RLS bloquea la escritura sin política pase lo que pase con el `GRANT`. Deuda de higiene, no de seguridad |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24, remedidas (Día 21)**
+### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24, remedidas (Día 21); séptima ELEGIDA, sin construir (Día 22)**
+
+**22-sep-2026: `SRCH-03` · Gestión de Watchers elegida como séptima pantalla**, delegado
+por el PO a esta sesión. Razonamiento completo (módulo sin tocar por la corriente B, forma
+conocida y coste medio, por qué no `INV-07`) en `UMBRAL-FABRICA-V1.md` §8. **No construida
+hoy, a propósito:** el relevo del Día 21 pide una sesión nueva por pantalla y cronómetro
+para que las cifras 7 y 8 tengan veredicto, y construirla en esta sesión habría repetido el
+mismo defecto de medición.
 
 **`ADMIN-02` corrió, y es la sexta.** Artefacto del Coder en `993db73`, sin una sola
 corrección a mano; contrato de aceptación corregido en `ab27b0f`; CI entera verde y
@@ -432,9 +482,19 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. 🟠 **Decidir cuál es la séptima pantalla, con dos cambios de método** que salen de la remedición: **una sesión nueva por pantalla** (sin ella la cifra 7 no se puede medir; cuatro de seis salieron sucias) y **un cronómetro con las esperas del PO descontadas** (la cifra 8 no existe). Sin esto, las dos cifras que hablan de coste y de tiempo seguirán sin veredicto y la extrapolación del plan seguirá coja.
-2. 🟠 **`F-188`: decidir contra qué se hacen las C5.** Hoy `npm run dev` apunta a producción y `entornos.md` decía staging. O se apunta el `.env` local al staging (y se siembra), o se deja escrito que la C5 se hace contra producción, con la lista de lo que no se pulsa.
-3. 🟡 **Mirar `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`):** usan `min-height: 100%` sin scroll propio, justo la forma que `F-093` describió como causa, y `F-186` fue la tercera vez. **No se han visto fallar.** Y valorar meter el scroll propio en la plantilla de tarea del Coder: tres pantallas seguidas lo han omitido.
+1. 🟠 **Construir `SRCH-03` (Gestión de Watchers), en una sesión propia y con cronómetro
+   con las esperas del PO descontadas.** Es la razón de ser de la sesión nueva: sin ella
+   las cifras 7 y 8 siguen sin veredicto. Capa de datos nueva (`watchers`, no existe en
+   ninguna migración; spec funcional ya la describe en
+   `openspec/specs/conversational-search/spec.md`), primero validada en Postgres
+   desechable, como todas las anteriores.
+2. 🟢 **Pedir al PO la C5 a ojo de `F-189`** (el arreglo de scroll de `FORO-01`/`ADMIN-02`),
+   ya en producción — la misma confirmación visual que dio para `F-186` el 21-sep. Esta
+   sesión solo verificó tests, el CSS por contenido y CI; nadie ha visto el resultado en
+   pantalla.
+3. 🟡 **Valorar meter el scroll propio en la plantilla de tarea del Coder.** Van **cuatro**
+   pantallas seguidas que lo omiten (`FORO-02`, `FORO-03`, `FORO-01`, `ADMIN-02`) — ya no
+   es un patrón aislado, es un hueco sistemático en la tarea que el generador recibe.
 4. **La deuda que dejó `F-170`** (contradicciones ENTRE specs y entre spec y esquema), **la de `F-172`** (el estándar de buscador solo en `DIR-01` y `FORO-02`; `INV-01`/`MSG-01`/`SentOffers` sin migrar) **y la de `F-178`** (el foro sin teardown ni `resetDemo`). Sin cambios.
 
 En paralelo, sin acción propia desde este lado:
@@ -498,6 +558,9 @@ En paralelo, sin acción propia desde este lado:
 | **El Operador de Plataforma tiene su propio componente de shell, `OperatorShell.tsx`, no una rama dentro de `AppShell`** | 11-sep-2026 (Día 15). Nav de cinco ítems propios y acento brass (spec `ADMIN-01` §2) contra un `AppShell` tipado a `MemberProfile` que usa `orgName`/`role` en tres sitios — reusarlo habría tocado un componente compartido con 147 líneas de tests por una pantalla sin organización. Reutiliza `AppShell.module.css` para el layout común; `AppShell.tsx` queda intacto | `OperatorShell.tsx`, `App.tsx` |
 | **`ADMIN-01` no afirma que se envía ningún email** | 11-sep-2026 (Día 15). El HTML aprobado y la spec prometen EML-07/EML-08; ningún envío de correo existe en el proyecto. Los textos de confirmación se corrigen a "Aprobación registrada."/"Solicitud rechazada.", sin mencionar ningún email — mismo principio que `F-100` | `harness/tasks/ADMIN-01.json` |
 | **Un commit con el contrato de aceptación en rojo contra un marcador lleva `[skip ci]`, con el motivo en el cuerpo** | Ya estaba en `CLAUDE.md` §1; aplicado con un descuido el 11-sep (el commit de la tarea `DIR-01` salió sin él) y corregido desde `ADMIN-01` en adelante | `CLAUDE.md` §1, Día 15 |
+| **`F-188` se deja como está: las C5 siguen contra producción** | 22-sep-2026, PO. No se apunta el `.env` local al staging; el riesgo (una acción de escritura sería permanente) queda documentado, no eliminado | `findings-register.md`, §5 |
+| **`SRCH-03` es la séptima pantalla de la fábrica** | 22-sep-2026, delegada por el PO a esta sesión («elige la que estimes oportuno»). Módulo 03 sin tocar por la corriente B, forma conocida (tabla con filtros y estado), coste medio — se descartó `INV-07` por parecerse al motivo por el que `INV-02` quedó fuera de las tres primeras (mediría el techo) | `UMBRAL-FABRICA-V1.md` §8 |
+| **Un fallo de layout se reproduce fuera del login cuando entrar en la app tocaría entrar una contraseña** | 22-sep-2026, `F-189`. Página aislada con las reglas CSS implicadas, servida por un `http.server` propio y medida con `getComputedStyle`/`scrollHeight` en un navegador real — sirve para cualquier sospecha de recorte o de layout sin necesidad de autenticarse | Esta sesión |
 
 ---
 
@@ -506,8 +569,8 @@ En paralelo, sin acción propia desde este lado:
 | | Qué | Quién lo quita |
 |---|---|---|
 | ✅ | **`F-184` · CERRADO el 21-sep.** El feedback del reintento iba lleno de avisos de Node (36 de 49 líneas): `NO_COLOR` heredado por los workers de Playwright. Ya no se pone en ese comando. | Quedan 4 líneas fijas de arranque sin tocar; las corridas anteriores no se reescriben |
-| 🟠 | **`F-188` · el desarrollo local apunta a producción**, no al staging que decía `entornos.md`. Las C5 se hacen así, y una acción de escritura en `ADMIN-02` (un pago) o en `FORO-03` (una respuesta) es permanente | El PO decide (§3.2) |
-| 🟡 | **`F-186` tiene una sospecha sin comprobar:** `Forum.module.css` y `AdminBilling.module.css` con `min-height: 100%` sin scroll propio | Mirarlas con una ventana baja (§3.3) |
+| ⚪ | **`F-188` · el desarrollo local apunta a producción**, no al staging que decía `entornos.md`. **Decidido el 22-sep-2026 por el PO: se deja como está.** Las C5 se siguen haciendo contra producción, sin pulsar nada que escriba | Nadie — es la decisión, no queda acción |
+| ✅ | **`F-186` sospecha confirmada y cerrada: `F-189` (22-sep).** `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) tenían el mismo fallo, reproducido en navegador real. Mismo arreglo que `F-186` | Falta la C5 del PO a ojo, como con `F-186` |
 | 🟡 | **La clave de Atria no vive donde dice `CLAUDE.md` §1.1.** Está en el `.env` de otro proyecto (`C:/Users/admin/proyectos/04_01_Ticket_reader_Ninox/.env`), que es un tercer sitio: no la encuentra ni el `grep` del repo (respeta `.gitignore`) ni la lectura del registro de Windows. Costó media hora de búsqueda a ciegas | Álvaro, si se vuelve a usar ese brazo: `setx ATRIA_API_KEY` la deja donde ya está `DEEPSEEK_API_KEY` |
 | 🟡 | **El turno de checks entre árboles está probado pero no ejercitado en producción**: los dos brazos no llegaron a solaparse (Atria arrancó cuando DeepSeek ya había acabado). La primera vez que dos corridas coincidan de verdad será la primera prueba real del cerrojo | Quien lance dos a la vez: mirar el log, que dice la espera |
 | ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |
@@ -515,7 +578,7 @@ En paralelo, sin acción propia desde este lado:
 | ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
 | ⚪ | ~~`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local~~ | **Resuelto 17-sep: en `app/.env` (no como variable de usuario, como decía esta fila), login comprobado, e2e local 4/4** |
 | ✅ | **El C5 de `FORO-02` se cerró el 21-sep.** El PO lo aprobó, con dos reparos (`F-186`: doble «x», espacio inferior) ya arreglados. | Confirmado por el PO en su localhost el 21-sep |
-| 🟠 | **Las cifras 7 y 8 de la remedición no tienen veredicto.** La 7 son deltas de sesión, no de pantalla, y cuatro de seis salieron sucias; `ADMIN-02` tiene un techo de 190,50 $ que incluye el experimento. **La 8 no está instrumentada.** | Séptima pantalla: sesión nueva y cronómetro (§3.1) |
+| 🟠 | **Las cifras 7 y 8 de la remedición no tienen veredicto.** La 7 son deltas de sesión, no de pantalla, y cuatro de seis salieron sucias; `ADMIN-02` tiene un techo de 190,50 $ que incluye el experimento. **La 8 no está instrumentada. Séptima pantalla ELEGIDA el 22-sep: `SRCH-03`** (`UMBRAL-FABRICA-V1.md` §8), sin construir | Sesión nueva y cronómetro sobre `SRCH-03` (§3.1) |
 | ⚪ | ~~**El límite de 10 publicaciones por hora (RNG-FORO-06) no existe en la base.**~~ **Resuelto 18-sep-2026: `0031`/`0032`, aplicadas y comprobadas contra el catálogo de las dos bases.** La primera versión del disparador tenía un bug real (`F-173`: `security definer` hacía que el bypass de siembra se activara siempre) cazado en Postgres desechable antes de tocar nada real | Corriente A |
 | 🟡 | **`F-172`: el estándar de buscador (input+lupa integrada+"x" al escribir) solo está aplicado en DIR-01 y FORO-02.** `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen con su implementación propia, sin la "x" y (en INV-01) con la lupa a la izquierda | Quien toque esas pantallas: migrar a `components/SearchField.tsx` |
 | 🟡 | **`F-178`: el foro no tiene reset/teardown, así que un e2e que reaccione y desreaccione en la misma corrida puede dejar un residuo si esa corrida se cancela a medias** — ya pasó una vez (reacción huérfana de `alpha@bearingworld.test` en `ogdhyzgjjbbikjbkhxmu`, borrada a mano el 18-sep). Dos vías sin aplicar: sumar el foro a `resetDemo`, o probar reacciones solo con mocks | Quien toque el e2e del foro de nuevo |
@@ -584,6 +647,9 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Cuánto tiempo de reloj cuesta una pantalla.** No hay cronómetro. Por calendario, `ADMIN-02` ocupó parte de tres jornadas (18-20 sep), y buena parte del 20 fue el experimento.
 - **Qué vio el PO en pantalla en `F-186`.** Lo confirmó él («perfecto, arreglado»); yo solo verifiqué tests y que el CSS llega a producción. Nadie ha probado el foro con una ventana más baja que la suya.
 - **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien tras `F-172`.** `F-172` reescribió 110 líneas de `DIR-01` después de su C5 y nadie las ha vuelto a mirar en pantalla.
+- **Qué ve el PO en pantalla en `F-189` (22-sep).** Verificado por tests, por CSS de producción y por CI; **no verificado a ojo por nadie**, porque esta sesión no inició sesión en la app a propósito. El repro aislado demuestra que la regla CSS funciona en un navegador real, pero no que el resto de la pantalla (datos reales, otras reglas, el propio `AppShell`) se comporte igual con contenido de verdad.
+- **Si hay una cuarta pantalla con el mismo fallo de scroll sin comprobar.** Solo se miraron `Forum.module.css` y `AdminBilling.module.css`, porque eran las dos que `F-186` dejó como sospecha explícita. Ningún barrido sistemático de las demás pantallas construidas (`DIR-01`, `ADMIN-01`, `SentOffers`, `Messages`…) contra el mismo patrón (`min-height: 100%` sin `overflow-y` dentro de `.bwcnt`).
+- **Cuánto costará `SRCH-03` de verdad, en dinero y en reloj.** Es precisamente lo que la sesión nueva con cronómetro tiene que producir; hoy solo hay spec, HTML aprobado y el razonamiento de por qué se eligió.
 
 ## 7 · Ritual de cierre — cómo se sobrescribe este fichero
 
@@ -684,7 +750,7 @@ Orden de lectura, y el orden importa:
     `resetDemo`, así que el mismo residuo puede repetirse). Del 19-sep: `F-179` (cerrado —
     el mock de `ADMIN-02` sombreaba por posición la fila que no era, más la cita a *Acme* y el
     contador del chip; corregido en el HTML y en la spec por decisión del PO) y `F-180`
-    (cerrado — `Cobros` como sexto ítem del nav del Operador, según el HTML aprobado). Del 21-sep: `F-184` (cerrado — el ruido de Node en el feedback del e2e), `F-186` (cerrado — doble «x» y scroll en el foro, tercera vez tras `F-088`/`F-093`), `F-187` (cerrado — una errata del relevo sobre `F-161`/`F-162`) y `F-188` (**abierto** — el desarrollo local apunta a producción).
+    (cerrado — `Cobros` como sexto ítem del nav del Operador, según el HTML aprobado). Del 21-sep: `F-184` (cerrado — el ruido de Node en el feedback del e2e), `F-186` (cerrado — doble «x» y scroll en el foro, tercera vez tras `F-088`/`F-093`), `F-187` (cerrado — una errata del relevo sobre `F-161`/`F-162`) y `F-188` (**abierto** — el desarrollo local apunta a producción). Del 22-sep: `F-189` (cerrado en el código — el mismo fallo de scroll de `F-186`, confirmado en `FORO-01` y `ADMIN-02` en un navegador real y arreglado; falta la C5 a ojo del PO) y `F-188` decidido (**cerrado como decisión** — se deja como está, sin acción pendiente).
 
 ---
 

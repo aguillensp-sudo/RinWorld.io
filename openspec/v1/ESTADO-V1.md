@@ -483,7 +483,7 @@ la séptima pantalla, con cronómetro (arrancado a las 05:54:35 UTC).
 | Cifra 7 | `python -m harness.core.orchestration_metrics` con `c11dd857….jsonl` copiado al directorio del worktree (`F-197`) | **23,53 $** de coste-sombra, `claude-sonnet-5`, hasta la corrida 03 |
 | Que `npm run dev`/e2e apuntan a producción | `app/.env`, solo el ref | `troxminloxkjwihwfevs` (`F-188`, decidido): **los e2e de hoy escribieron en producción** (solo pausar/reactivar, con `finally`) |
 | **Que el resultado visual de `SRCH-03` es bueno** | **No lo he verificado yo**: solo tests y e2e | **C5 del PO PENDIENTE** |
-| La CI y el despliegue | Se mira tras el push del cierre | Ver el pie de este fichero |
+| La CI y el despliegue | `gh run view 35968038084` job a job; descarga de `/assets/index-DE2H8RwC.js` y `index-DVsylPPU.css` y `grep` | Los **seis jobs** en verde (incluido `Esquema` con `run.sh` en Postgres 16, que cierra lo que `F-191` dejó sin verificar para `0035`); el bundle lleva `Mis watchers`, `watcher_list` y el `.screen` con `overflow-y:auto` |
 
 **Las ocho cifras de la séptima pantalla:**
 
@@ -761,7 +761,6 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Si `SRCH-03` se ve bien.** Nadie la ha mirado en un navegador: solo tests, e2e y el contrato de CSS. **Ni siquiera con la ventana baja.**
 - **Si el Coder habría añadido el scroll sin que se lo pidieran.** No se sabe y ya no se puede saber con esta pantalla: la instrucción iba escrita (`F-198`). El punto 3 de §3 del cierre del 22-sep («la séptima es la prueba») **se cambió por decisión mía al escribir la tarea**, y esa decisión es de las que el PO puede querer revisar.
 - **Si `watcher_set_paused`/`watcher_renew`/`watcher_let_expire`/`watcher_update` se comportan bien con un cliente en pantalla.** El e2e solo prueba pausar y reactivar (reversibles); renovar, expirar, editar y eliminar solo con mocks y con el banco de esquema en PGlite.
-- **Si `0035` pasa el banco oficial.** No se ha corrido `run.sh` (`F-191`). Lo verifica la CI al empujar, y es la primera vez que un Postgres 16 ve la migración.
 - **Cuántas tablas más tienen privilegios de sobra.** Se contaron 17 con `UPDATE` para `authenticated` y 8 con acceso de `anon`; **no se ha mirado columna a columna ni qué depende de cada concesión**, y no se ha tocado ninguna salvo `watchers`.
 - **Si el plazo de renovación de 3 días es el que quiere el producto.** Es un supuesto mío (`F-196`).
 - **Qué hace `app.watchers_evaluate_expirations()` en producción.** Nadie la ha llamado y no está enganchada a ningún job; la vista ya muestra el estado efectivo sin ella.
@@ -997,4 +996,4 @@ el cierre del Día 17 · quedan DOS C5 sin cerrar (`FORO-02` con su corrección 
 `FORO-03` entera) y `ADMIN-02` sin tarea del arnés ni wiring de precondición —ninguno de los
 tres cuenta como hecho · Dirección Técnica, Nortex Systems*
 
-*Cierre del Día 23 · 24-sep-2026 · `2026-09-24` 07:1x UTC (`date -u`) · `SRCH-03` construida y VERDE (corrida 03, 2 intentos, 0 líneas tocadas de 1 279), `0035` en las dos bases y releída del catálogo, **C5 del PO PENDIENTE** — sin ella ni la cifra 1 ni la 8 se cierran · tres hallazgos abiertos para el PO (`F-192` privilegios anchos en producción, `F-196` tres decisiones de spec, `F-178` foro sin teardown) y uno de máquina (`F-191`, Docker: reiniciar el PC) · la CI y el despliegue del commit de cierre se miran tras el push y se anotan en un commit posterior · Dirección Técnica, Nortex Systems*
+*Cierre del Día 23 · 24-sep-2026 · `2026-09-24` 07:1x UTC (`date -u`) · `SRCH-03` construida y VERDE (corrida 03, 2 intentos, 0 líneas tocadas de 1 279), `0035` en las dos bases y releída del catálogo, **C5 del PO PENDIENTE** — sin ella ni la cifra 1 ni la 8 se cierran · tres hallazgos abiertos para el PO (`F-192` privilegios anchos en producción, `F-196` tres decisiones de spec, `F-178` foro sin teardown) y uno de máquina (`F-191`, Docker: reiniciar el PC) · **CI del commit de cierre (`gh run` `35968038084` sobre `86083bd`): los seis jobs en verde**, incluido `Esquema` —el `run.sh` real en Postgres 16, que es la primera vez que ve `0035` (`F-191`)— y los dos despliegues; **producción sirve `SRCH-03` por contenido, no por `HTTP 200`** (`Mis watchers` y `watcher_list` en `/assets/index-DE2H8RwC.js`, y `._screen_4d4hn_10{…flex:1;min-height:0;…overflow-y:auto}` en `/assets/index-DVsylPPU.css`) · Dirección Técnica, Nortex Systems*

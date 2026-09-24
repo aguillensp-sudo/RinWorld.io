@@ -37,6 +37,13 @@ interface Props {
    * y no al revés — `search.ts:154`, escrito el día 6 previendo justo esto.
    */
   veraCriteria?: SearchCriteria | null;
+  /**
+   * Abre SRCH-03 (`Mis watchers`). **Opcional a propósito**, por lo mismo que
+   * `veraCriteria`: `<SearchResults profile now />` a secas sigue siendo válido y
+   * sin este prop no se pinta ningún botón. SRCH-03 comparte ítem de nav con
+   * esta pantalla (`Comprando`, spec §2) y no tiene otra puerta de entrada.
+   */
+  onOpenWatchers?: () => void;
 }
 
 /**
@@ -47,7 +54,7 @@ interface Props {
  * un favorito se vuelve a consultar la base (`toggleFavorite` + `fetchResults`).
  * La tabla y los chips son presentacionales y no guardan estado de datos.
  */
-export function SearchResults({ profile, now, veraCriteria }: Props) {
+export function SearchResults({ profile, now, veraCriteria, onOpenWatchers }: Props) {
   const [criteria, setCriteria] = useState<SearchCriteria>(EMPTY_CRITERIA);
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -246,6 +253,12 @@ export function SearchResults({ profile, now, veraCriteria }: Props) {
               <i className="ti ti-bell-plus" aria-hidden="true" />
               Crear watcher con estos criterios
             </button>
+            {onOpenWatchers && (
+              <button type="button" className={styles.watcher} onClick={onOpenWatchers}>
+                <i className="ti ti-bell" aria-hidden="true" />
+                Mis watchers
+              </button>
+            )}
           </div>
 
           {consultBanner && (

@@ -19,6 +19,7 @@ import { Inventory } from './screens/inventory/Inventory';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
 import { SearchResults } from './screens/search/SearchResults';
+import { Watchers } from './screens/search/Watchers';
 import { SentOffers } from './screens/selling/SentOffers';
 
 /**
@@ -137,6 +138,15 @@ export function App() {
   const [veraCriteria, setVeraCriteria] = useState<SearchCriteria | null>(null);
 
   /**
+   * SRCH-03 (`Mis watchers`) abierta. Comparte ítem de nav con SRCH-01 --las dos
+   * son `Comprando` (SRCH-03 §2)--, así que el shell necesita este segundo dato
+   * para saber cuál de las dos pintar, igual que `openThreadId` con MSG-01/02. Se
+   * limpia al cambiar de ítem de nav, por la misma razón: volver a `Comprando`
+   * lleva a la búsqueda, no a la lista que estaba abierta hace media hora.
+   */
+  const [watchersOpen, setWatchersOpen] = useState(false);
+
+  /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
    * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
    * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
@@ -150,6 +160,7 @@ export function App() {
     setOpenThreadId(null);
     setForumCategorySlug(null);
     setForumThreadId(null);
+    setWatchersOpen(false);
   };
 
   if (state.status === 'loading') {
@@ -315,7 +326,27 @@ export function App() {
          * es tan sensible al reloj como el timestamp relativo de MSG-01 — con un
          * `now` congelado al montar, una sesión larga acabaría pintando en naranja
          * lo que ya debería estar en rojo. */
-        <SearchResults profile={state.profile} now={new Date()} veraCriteria={veraCriteria} />
+        watchersOpen ? (
+          /* SRCH-03. `now` explícito y construido en el render (`Hace 3 días`
+           * es relativo al reloj). «Ver resultados» hace lo mismo que cuando
+           * VERA escribe criterios: los deja en `veraCriteria` y vuelve a la
+           * búsqueda, que es la dueña de los criterios. */
+          <Watchers
+            profile={state.profile}
+            now={new Date()}
+            onViewResults={(criteria) => {
+              setVeraCriteria(criteria);
+              setWatchersOpen(false);
+            }}
+          />
+        ) : (
+          <SearchResults
+            profile={state.profile}
+            now={new Date()}
+            veraCriteria={veraCriteria}
+            onOpenWatchers={() => setWatchersOpen(true)}
+          />
+        )
       ) : onSelling ? (
         /*
          * VND-01. Sin `now`: es la única de las cuatro que no tiene ni un

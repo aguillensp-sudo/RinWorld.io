@@ -275,5 +275,26 @@ medición que dejó esas dos cifras sin dato.
 
 ---
 
+**Adenda del 24-sep-2026 — octava y novena pantallas (`INV-07` y `SRCH-02`).**
+El PO dejó la elección a la sesión («puedes elegir libremente las dos pantallas»).
+Criterio: **las dos que NO necesitan esquema nuevo** y cuya capa de datos es
+razonablemente barata, para producir dos puntos más en el menor tiempo:
+
+- **`INV-07` · Visibilidad del Inventario** (Módulo 02). El esquema existe desde `0002`
+  (`organizations.inventory_visibility_mode` y `inventory_exclusions`, con RLS de escritura
+  solo para el ADMIN). Era la candidata que el §8 descartó del `SRCH-03` por «mediría el
+  techo, no la media»; ahora se construye la primera vez con la capa de datos ya
+  entregada. Sin migración.
+- **`SRCH-02` · Búsqueda por Lotes** (Módulo 03). Reutiliza `fetchResults` y `ResultsTable`
+  de `SRCH-01`: ninguna consulta nueva, ninguna migración. Mide otra cosa que las
+  anteriores: una pantalla que **compone** piezas ya construidas en vez de pintar una
+  lista nueva.
+
+**Lo que NO son: puntos limpios de las cifras 7 y 8.** Comparten sesión entre sí y con el
+cierre de `SRCH-03` (`F-205`), así que solo cuentan para las cifras 1 a 6. Se descartaron
+`INV-02`/`INV-03` (importación: dependen de un flujo de subida que no existe), `INV-04`
+(canal de email de ingestión: promete un proveedor de correo que el proyecto no tiene) y
+`MSG-03` (componente dentro de `MSG-02`, sin shell propio).
+
 *Escrito el 11-sep-2026, Día 14 de V1, antes de medir · Dirección Técnica, Nortex Systems*
 *§8 añadido el 22-sep-2026, antes de construir nada de `SRCH-03`.*

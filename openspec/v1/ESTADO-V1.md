@@ -420,6 +420,33 @@ la séptima pantalla, con cronómetro (arrancado a las 05:54:35 UTC).
 >    contador `4 / 50` del ejemplo (es `1 / 50`), `País: Europa` frente a un `País` ISO, y un
 >    plazo de renovación de 3 días que la spec no da.
 
+**Día 23 de V1, segunda parte · 24-sep-2026 · Estado: CERRADO — dos pantallas más en producción, TRES C5 del PO PENDIENTES.**
+Fecha de máquina al escribir: `2026-09-24`, ~10:55 UTC (`date -u`). El PO pidió seguir en la
+misma sesión, elegir libremente dos pantallas y **dejar para la siguiente sesión la revisión de
+`SRCH-03` y de todo lo demás** («no he podido mirar SRCH-03 ni revisar nada»). Docker, resuelto por él.
+
+> **LA SEGUNDA PARTE EN SEIS LÍNEAS.**
+>
+> 1. **`INV-07` · Visibilidad del Inventario, construida y desplegada: VERDE en 2 intentos**
+>    (`corrida-04`), 943 líneas, **0 tocadas**, 4 ficheros sin tocar de 4. **Sin migración**:
+>    el esquema existe desde `0002`. Artefacto en `3415b2f`.
+> 2. **`SRCH-02` · Búsqueda por Lotes, construida y desplegada: VERDE AL PRIMER INTENTO**
+>    (`corrida-01`), 732 líneas, **0 tocadas**, 4 ficheros de 4. Sin migración ni consulta
+>    nueva (reutiliza `fetchResults` y `ResultsTable`). Artefacto en `d29d791`.
+> 3. **`INV-07` costó cuatro corridas y NINGUNA de las tres escaladas fue mérito del Coder
+>    perdido**: una regex de scroll rota por el shell (`F-199`), una ambigüedad de mi
+>    contrato y un e2e frágil (`F-200`), y un error de tipos real en un intento. Las tres
+>    quedan como evidencia y **no cuentan para la cifra 2**.
+> 4. **`F-199`, nuevo y de proceso: el shell de la herramienta de comandos se come una capa
+>    de barras invertidas dentro de un heredoc, incluso entrecomillado.** Todo fichero con
+>    regex o escapes se crea con el editor de ficheros. Está en §8.
+> 5. **Las cifras 7 y 8 de estas dos pantallas NO son limpias** (`F-205`): comparten sesión
+>    con el cierre de `SRCH-03`. Coste-sombra de la sesión entera: **60,86 $** (23,53 $ al
+>    cerrar `SRCH-03`, +37,33 $ desde entonces). Solo `SRCH-03` es un punto válido.
+> 6. **Pendiente, dicho en voz alta: la C5 de `SRCH-03`, `INV-07` y `SRCH-02`, más `F-192`
+>    y `F-196`.** El PO no ha mirado nada de esta sesión. Nada de lo de abajo cuenta como
+>    aceptado hasta que lo haga.
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -498,6 +525,36 @@ la séptima pantalla, con cronómetro (arrancado a las 05:54:35 UTC).
 | 7 | Coste de orquestación | **23,53 $** | Incluye ~35 minutos de Docker (`F-191`) y la sesión entera hasta la corrida; **primera cifra 7 medida en sesión propia** |
 | 8 | Tiempo de reloj | **1 h 10 min hasta «lista para C5»** (05:54→07:04 UTC), ~35 min de ellos en `F-191` | **Sin cerrar: falta la C5**; el reloj se para mientras espera al PO |
 
+**Tabla del 24-sep-2026, segunda parte — lo comprobado HOY:**
+
+| Afirmación | Verificado contra | Resultado |
+|---|---|---|
+| Fecha de máquina | `date -u` | `2026-09-24`, 10:47 UTC cuando `SRCH-02` quedó lista; ~10:55 al escribir |
+| Que Docker ya funciona | `docker version` | Servidor `29.6.1` (el PO lo resolvió; `F-191` cerrado por él) |
+| Que `INV-07` no necesita migración | `supabase/migrations/0002_inventory.sql` (columna `inventory_visibility_mode`, tabla `inventory_exclusions`, políticas `exclusions_select_own`/`exclusions_write_admin`) | Existe todo lo que la pantalla lee y escribe; **la tarea no toca el esquema** |
+| Que `SRCH-02` no necesita consulta nueva | Lectura de `fetchResults` y `ResultsTable` | Se reutilizan tal cual; `batch.ts` solo orquesta con concurrencia 5 |
+| La capa de datos de las dos | `npx vitest run` | `visibility.ts` 10 pruebas, `batch.ts` 23 |
+| Que el arnés valida las dos tareas | `python -m harness.graph.run … --seco` | `INV-07`: primero 2 problemas (`approved_html` con nombre equivocado y un nombre accesible sin declarar, `F-125`); `SRCH-02`: verde a la primera |
+| Las corridas | `harness/metrics/INV-07/corrida-01..04/`, `harness/metrics/SRCH-02/corrida-01/`, `git show --numstat` | `INV-07`: 01, 02 y 03 ESCALADAS por causas que no son el artefacto (`F-199`, `F-200`), **04 VERDE en 2**, 943 líneas; `SRCH-02`: **VERDE en 1**, 732 líneas |
+| Que el artefacto de `INV-07` era bueno ya en la 01 | Restaurado desde `attempt_3.json` y corrido contra el contrato corregido; y el del intento 1 de la 03 contra `visibility.spec.ts` aislado | 40 de 40 pruebas de unidad; 6 de 6 e2e |
+| Que la app sigue entera | `npx vitest run` y `npx tsc --noEmit` en cada cambio | **1 083** pasan tras `INV-07`, **1 143** tras `SRCH-02`, 23 saltados; typecheck limpio |
+| Que la base no se movió con los e2e | SQL por el MCP, al cerrar | 0 exclusiones, 0 organizaciones en modo restringido, 3 pagos, 5 reacciones, 7 watchers (los cinco estados de ALPHA); **la siembra** |
+| La CI y el despliegue | `gh run view` job a job sobre `0539cd7` (`35988617659`) y `9979a86` (`35989285281`); descarga de los dos bundles y `grep` | Los **seis jobs** en verde en los dos, incluidos los despliegues; producción sirve `Visibilidad del inventario`, `inventory_exclusions`, `Exclusión por geografía`, `Búsqueda por lotes`, `Resultados por referencia` y `resumen-busqueda-por-lotes`, y **cinco** bloques `._screen_…{…overflow-y:auto}` en el CSS |
+| **Que las tres pantallas se ven bien** | **No lo he verificado yo**: solo tests y e2e | **C5 del PO PENDIENTE para `SRCH-03`, `INV-07` y `SRCH-02`** |
+
+**Las cifras de las dos pantallas nuevas** (las 7 y 8 NO son limpias, `F-205`):
+
+| # | Cifra | `INV-07` | `SRCH-02` |
+|---|---|---|---|
+| 1 | Aceptada | **pendiente de C5** | **pendiente de C5** |
+| 2 | Corrida sin escalada | **Sí** (la 04; 01–03 no cuentan) | **Sí** |
+| 3 | Verde al primer intento | **No** (intento 1 rojo en C2) | **Sí** |
+| 4 | Corrección humana | **0 %** (0 de 943) | **0 %** (0 de 732) |
+| 5 | Ficheros sin tocar | **4 de 4** | **4 de 4** |
+| 6 | Coste del generador | **0,076 $** (0,622 $ con las tres inválidas) | **0,043 $** |
+| 7 | Orquestación | sin medida limpia (sesión compartida) | sin medida limpia |
+| 8 | Reloj | ~50 min hasta «lista» (09:51→10:40, con cuatro corridas) | ~7 min más (10:47) |
+
 ## 2 · Dónde estamos, por corriente
 
 ### Corriente A · Núcleo — EN CURSO
@@ -534,7 +591,9 @@ la séptima pantalla, con cronómetro (arrancado a las 05:54:35 UTC).
 | **`F-177` · el GRANT de tabla de sobra en casi todo `public` no es un agujero** | ✅ **18-sep**, comprobado empíricamente en Postgres desechable (no solo leído): RLS bloquea la escritura sin política pase lo que pase con el `GRANT`. Deuda de higiene, no de seguridad |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24 remedidas (Día 21); séptima CONSTRUIDA, VERDE, a la espera de la C5 del PO (Día 23)**
+### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24 remedidas (Día 21); séptima, octava y novena CONSTRUIDAS y VERDES, las tres a la espera de la C5 del PO (Día 23)**
+
+**24-sep-2026, segunda parte: `INV-07` y `SRCH-02` construidas y desplegadas.** Las dos sin migración. `INV-07` se abre desde INV-01 (botón `Visibilidad`) y `SRCH-02` desde SRCH-01 (botón `Búsqueda por lotes`); ambas con su estado en `App.tsx` (`visibilityOpen`, `batchOpen`), que se limpia al cambiar de ítem de nav. **`INV-07`:** el modo se guarda con `Guardar configuración`, las exclusiones se escriben al momento, solo el ADMIN escribe (un EDITOR ve un aviso y controles deshabilitados). **`SRCH-02`:** hasta 50 referencias, tarjetas colapsables con la tabla de `SRCH-01`, exportación a **CSV** (no PDF); **`Crear watchers` (en lote e inline) queda deshabilitado** hasta que VERA confirme (`F-204`).
 
 **24-sep-2026: `SRCH-03` construida.** Precondiciones a mano (`0035`, siembra, `watchers.ts`, wiring, contrato), corrida 03 VERDE en 2 intentos, 1 279 líneas sin una tocada, y las ocho cifras arriba (§1). **Es la primera pantalla con el scroll propio escrito en la tarea, y el Coder lo cumplió** (`F-198`). Entrada: botón `Mis watchers` en SRCH-01 (`App.tsx` mantiene `watchersOpen`, que se limpia al cambiar de ítem de nav). **Sin crear watchers desde la pantalla** (spec §6: se crean desde SRCH-01/02 o por VERA, que no existen), **sin evaluación contra `stock.updated`, sin email, sin badge en el nav**: `0035` lo dice en su cabecera.
 
@@ -577,13 +636,16 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. 🟠 **La C5 del PO sobre `SRCH-03`.** Está construida, verde y desplegada por la CI
-   del cierre; **no cuenta como aceptada hasta que el PO la pruebe** (cifras 1 y 8). Con
-   `npm run dev` contra producción, en `Comprando` → `Mis watchers`, con la cuenta ALPHA
-   (`Rodamientos Ibéricos`): los cinco estados están sembrados. **Sin pulsar `Eliminar`:
-   borra de verdad** (los otros botones son reversibles). Y, en el mismo paso, **decidir las
-   tres contradicciones de `F-196`** (contador `1 / 50`, `País` ISO frente a `Europa`, plazo
-   de renovación de 3 días).
+1. 🟠 **Las TRES C5 del PO: `SRCH-03`, `INV-07` y `SRCH-02`.** Las tres están construidas,
+   verdes y desplegadas, **y el PO no ha visto ninguna**: sin su C5 no cuentan como
+   aceptadas (cifras 1 y 8). Con `npm run dev` contra producción, cuenta ALPHA
+   (`Rodamientos Ibéricos`, administradora): `Comprando` → `Mis watchers` (`SRCH-03`: **sin
+   pulsar `Eliminar`**, borra de verdad) y `Comprando` → `Búsqueda por lotes` (`SRCH-02`,
+   con la lista `6205-2RS` más una inventada); `Inventario` → `Visibilidad` (`INV-07`:
+   **NO pulses `Guardar configuración` con el modo restringido y la lista vacía**: le
+   quitaría el stock a todos los compradores y descuadraría los e2e; volver al modo abierto
+   lo deshace). **Y decidir lo que quedó de su lado:** las tres contradicciones de `F-196`,
+   la interpretación de las tandas de `F-204` y la de las excepciones de `F-202`.
 2. ✅ **C5 de `F-189` y `F-190` recibidas, las dos.** El PO probó `FORO-01`/`ADMIN-02`
    (23-sep) y `DIR-01`/`ADMIN-01` (23-sep) ya desplegados: «está todo aprobado y
    contrastado». Cerradas del todo, sin C5 pendiente de esta serie.
@@ -597,6 +659,8 @@ En paralelo, sin acción propia desde este lado:
 
 - **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin recomprobar hoy. **No tocar `vera/index.ts`.**
 - Fuera de sesión: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de Vercel.
+
+**Añadido en la segunda parte del 24-sep:** `F-201` (dos avisos rancios en pantallas del MVP), `F-202` y `F-204` (spec frente a modelo de datos), y `F-205` (cifras 7 y 8 sin medida limpia).
 
 **Nuevo del 24-sep, sin dueño todavía:** **`F-192`** (privilegios por defecto anchos en producción — del PO, decidir si se abre una migración de revocación revisada tabla a tabla) y **`F-191`** (reiniciar el PC para que Docker Desktop vuelva; hasta entonces el banco de esquema local no corre). **Y el reloj de la cifra 8 sigue parado esperando al PO.**
 
@@ -671,8 +735,12 @@ antes.
 
 | | Qué | Quién lo quita |
 |---|---|---|
+| 🟠 | **`F-202`, `F-204` y `F-201` · decisiones de producto de `INV-07`/`SRCH-02`**: «excluir Asia menos Japón» no se puede expresar con el modelo actual; `Dividir en tandas` es interpretación mía; los avisos de `Inventory.tsx` y de `SearchResults.tsx` siguen diciendo «fuera del alcance» | El PO |
+| ⚪ | **`F-205` · las cifras 7 y 8 de `INV-07` y `SRCH-02` no son medibles** (sesión compartida). La serie solo tiene un punto válido, `SRCH-03` | Una sesión propia por pantalla, como pide `UMBRAL` §8 |
+| ⚪ | **Seis fallos ajenos en el intento 2 de la corrida 03 de `INV-07`** (`SRCH-01`/`MSG`: filas que no llegaron en 5 s). No se explicó y la base quedó limpia | Nadie; si reaparece, mirar la latencia de la base compartida |
 | 🔴 | **`F-192` · privilegios por defecto anchos en producción.** `authenticated` con `UPDATE` en 17 de 19 tablas, `anon` con ALL en 8 tablas antiguas; las 19 con RLS. El banco de esquema no lo ve (`00_auth_stub.sql` no copia las DEFAULT PRIVILEGES de tablas y copiarlas rompe los asertos de `0028`). **Solo `0035` está corregida.** | **El PO decide** si se abre una migración de revocación revisada tabla a tabla |
-| 🟠 | **`F-191` · Docker Desktop no arranca** (sockets huérfanos en `%LOCALAPPDATA%\Docker\run` tras mi cierre forzado). `supabase/tests/run.sh` no corre en local | Reiniciar el PC, o borrar los tres ficheros como administrador |
+| ✅ | **`F-191` · CERRADO por el PO el 24-sep** («el tema de Docker está resuelto»): `docker version` responde `29.6.1`. Queda por hacer correr `supabase/tests/run.sh` a mano, que la CI ya corrió en verde sobre `0035` | — |
+| ⚪ | ~~**`F-191` · Docker Desktop no arranca**~~ (histórico) (sockets huérfanos en `%LOCALAPPDATA%\Docker\run` tras mi cierre forzado). `supabase/tests/run.sh` no corre en local | Reiniciar el PC, o borrar los tres ficheros como administrador |
 | 🟠 | **`F-196` · tres contradicciones de la spec de `SRCH-03` resueltas por mí** (contador, `País`, plazo de renovación de 3 días) | El PO |
 | 🟠 | **`F-178` · el foro sin teardown ni `resetDemo`**: hoy volvió a costar una corrida (`F-195`, reacción desplazada en producción) | Sin decidir: sumar el foro a `resetDemo`, o probar reacciones solo con mocks |
 | ⚪ | **`F-197` · una sesión lanzada fuera de este repo no la mide el medidor de coste.** Esta se midió copiando su `.jsonl` al directorio del worktree | Lanzar desde el repo, o que el medidor acepte una ruta |
@@ -758,6 +826,11 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien tras `F-172`.** `F-172` reescribió 110 líneas de `DIR-01` después de su C5 y nadie las ha vuelto a mirar en pantalla.
 - **Si `Messages`/`Thread` (`MSG-01`/`MSG-02`) o `SentOffers` (`VND-01`) tienen el mismo fallo.** Son del MVP, no de la corriente B, así que ni `F-186` ni `F-189`/`F-190` los tocaron — y nadie ha mirado su CSS ni los ha probado con ventana baja. Con seis de seis pantallas de la corriente B afectadas, dejar de mirar las del MVP por darlas por hechas sería exactamente el error que `F-132`/`F-146` ya describieron: comprobar el continente («ya se construyeron, ya se probaron») no es comprobar el contenido.
 - **Cuánto costó `SRCH-03` de verdad, en reloj.** El dinero está medido (0,085 $ del generador, 23,53 $ de orquestación) y el reloj hasta «lista para C5» también (1 h 10 min); **la cifra 8 no se cierra hasta que el PO dé la C5**, y la sesión de hoy mezcla el trabajo con ~35 minutos de Docker que no son de la fábrica.
+- **Si `INV-07` y `SRCH-02` se ven bien.** Igual que `SRCH-03`: nadie las ha mirado en un navegador, solo tests y e2e. **Ni con la ventana baja.** `SRCH-02` apila hasta 50 tarjetas: es la que más depende de que el scroll propio funcione de verdad.
+- **Si `INV-07` oculta el stock de verdad cuando el modo es restringido.** Lo hace `app.can_view_inventory_of` (`0002`) y el banco de esquema lo prueba; **la pantalla nunca se ha probado con el modo restringido guardado**, a propósito (un e2e así descuadraría los de `SRCH-01`, `DIR-01` y los hilos).
+- **Si `Guardar configuración` funciona de verdad.** Solo con mocks: el único e2e que escribe añade y quita UNA exclusión con el modo abierto.
+- **Por qué el intento 2 de la corrida 03 de `INV-07` rompió seis e2e ajenos.** Ver §5.
+- **Cuánto cuesta de verdad una pantalla en sesión propia con cronómetro**: solo `SRCH-03` lo dice (23,53 $, 1 h 10 min con ~35 min de Docker). Las otras dos, no (`F-205`).
 - **Si `SRCH-03` se ve bien.** Nadie la ha mirado en un navegador: solo tests, e2e y el contrato de CSS. **Ni siquiera con la ventana baja.**
 - **Si el Coder habría añadido el scroll sin que se lo pidieran.** No se sabe y ya no se puede saber con esta pantalla: la instrucción iba escrita (`F-198`). El punto 3 de §3 del cierre del 22-sep («la séptima es la prueba») **se cambió por decisión mía al escribir la tarea**, y esa decisión es de las que el PO puede querer revisar.
 - **Si `watcher_set_paused`/`watcher_renew`/`watcher_let_expire`/`watcher_update` se comportan bien con un cliente en pantalla.** El e2e solo prueba pausar y reactivar (reversibles); renovar, expirar, editar y eliminar solo con mocks y con el banco de esquema en PGlite.
@@ -811,6 +884,8 @@ Orden de lectura, y el orden importa:
    **Worktree nuevo: necesita `app/.env` (copiarlo de la raíz, sigue ignorado por git) y el
    junction de `node_modules` (`mklink /J`, se quita con `rmdir`, nunca `rm -rf`).** Sin el
    primero el e2e no llega al login y la corrida sale inválida (`F-193`).
+   **Y todo fichero con regex o barras invertidas se crea con el editor de ficheros, NUNCA con
+   un heredoc del shell: se come una capa de barras y el test sale roto sin avisar (`F-199`).**
 2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Sin
    esa decisión no se escribe SQL de reparto de CEK.
 3. **`openspec/v1/UMBRAL-FABRICA-V1.md`** ANTES de tocar nada de la fábrica de pantallas o
@@ -997,3 +1072,5 @@ el cierre del Día 17 · quedan DOS C5 sin cerrar (`FORO-02` con su corrección 
 tres cuenta como hecho · Dirección Técnica, Nortex Systems*
 
 *Cierre del Día 23 · 24-sep-2026 · `2026-09-24` 07:1x UTC (`date -u`) · `SRCH-03` construida y VERDE (corrida 03, 2 intentos, 0 líneas tocadas de 1 279), `0035` en las dos bases y releída del catálogo, **C5 del PO PENDIENTE** — sin ella ni la cifra 1 ni la 8 se cierran · tres hallazgos abiertos para el PO (`F-192` privilegios anchos en producción, `F-196` tres decisiones de spec, `F-178` foro sin teardown) y uno de máquina (`F-191`, Docker: reiniciar el PC) · **CI del commit de cierre (`gh run` `35968038084` sobre `86083bd`): los seis jobs en verde**, incluido `Esquema` —el `run.sh` real en Postgres 16, que es la primera vez que ve `0035` (`F-191`)— y los dos despliegues; **producción sirve `SRCH-03` por contenido, no por `HTTP 200`** (`Mis watchers` y `watcher_list` en `/assets/index-DE2H8RwC.js`, y `._screen_4d4hn_10{…flex:1;min-height:0;…overflow-y:auto}` en `/assets/index-DVsylPPU.css`) · Dirección Técnica, Nortex Systems*
+
+*Cierre del Día 23, segunda parte · 24-sep-2026 · `2026-09-24` ~10:55 UTC (`date -u`) · `INV-07` (VERDE en 2, 943 líneas) y `SRCH-02` (VERDE en 1, 732 líneas) construidas y desplegadas, **0 líneas tocadas a mano en las dos**, sin migraciones · **CI de `0539cd7` y `9979a86`: los seis jobs en verde en las dos**, producción sirve las dos por contenido · **TRES C5 del PO PENDIENTES** (`SRCH-03`, `INV-07`, `SRCH-02`) y todo lo demás que no ha podido revisar · `F-199` a `F-205` nuevos; abiertos para el PO `F-192`, `F-196`, `F-201`, `F-202`, `F-204` y `F-178` · servidores parados, junctions quitados, la base en su siembra · Dirección Técnica, Nortex Systems*

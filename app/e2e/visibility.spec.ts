@@ -83,7 +83,10 @@ test.describe('INV-07 · visibilidad real (ALPHA, administrador)', () => {
     const paises = page.getByLabel('Refinar por país').locator('option');
     await expect(paises.first()).toHaveText('Todos los países del continente');
     // Los países llegan de la base DESPUÉS de elegir el continente: se espera, no se cuenta ya (F-183).
-    await expect.poll(() => paises.count()).toBeGreaterThan(1);
+    // Con la suite entera contra la base compartida la consulta tarda mas de los 5 s por defecto
+    // (aislado, el artefacto pasa): plazo generoso y la red en reposo antes de contar.
+    await page.waitForLoadState('networkidle');
+    await expect.poll(() => paises.count(), { timeout: 20_000 }).toBeGreaterThan(1);
   });
 
   test('añadir una exclusión de organización persiste tras recargar, y se quita (se deja como estaba)', async ({ page }) => {

@@ -93,9 +93,15 @@ interface Props {
   profile: MemberProfile;
   /** Inyectable para que los tests no dependan del reloj. */
   now?: Date;
+  /**
+   * Abre INV-07 (`Visibilidad`). **Opcional a propósito**: `<Inventory profile now />`
+   * a secas sigue siendo válido --así lo monta el contrato de aceptación de INV-01--
+   * y sin este prop no se pinta ningún botón.
+   */
+  onOpenVisibility?: () => void;
 }
 
-export function Inventory({ profile, now }: Props) {
+export function Inventory({ profile, now, onOpenVisibility }: Props) {
   const [filter, setFilter] = useState<Filter>('todos');
   const [page, setPage] = useState(1);
   /** Lo que hay escrito en la caja. */
@@ -316,6 +322,12 @@ export function Inventory({ profile, now }: Props) {
                 }}
               />
             </div>
+            {onOpenVisibility && (
+              <button type="button" className={styles.btnVisibility} onClick={onOpenVisibility}>
+                <i className="ti ti-eye" aria-hidden="true" />
+                Visibilidad
+              </button>
+            )}
             {/* Deshabilitado, no ausente. Decisión del PO el 7-ago: es un botón
                 primario de un diseño aprobado y quitarlo dejaba la barra a medias,
                 pero INV-02 está en el Plan §9 "Fuera" y no puede llevar a ningún

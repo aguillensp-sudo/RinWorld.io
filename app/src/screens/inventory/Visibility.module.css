@@ -1,1 +1,207 @@
-/* INV-07 · MARCADOR: la tarea del arnes sustituye este fichero entero. */
+/*
+ * INV-07 · Configuración de Visibilidad del Inventario.
+ * Único origen de color: las variables de los tokens del sistema de diseño (§1).
+ * Aquí no hay un solo hex ni un rgb().
+ */
+
+/*
+ * La raíz es hija DIRECTA de `.bwcnt` (overflow: hidden): sin `flex: 1` +
+ * `min-height: 0` + `overflow-y: auto` el contenido se recorta sin barra cuando
+ * la ventana es baja (F-186/F-189/F-190/F-198). Mismo patrón que Watchers.
+ */
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 600px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-body);
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Avisos de la pantalla ─────────────────────────────────────────────── */
+
+.readOnly {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-ink-steel-soft);
+}
+
+.alert {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+}
+
+.status {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-success-dark);
+}
+
+/* ── Selector de modo ──────────────────────────────────────────────────── */
+
+.modeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: var(--bw-pad-checkbox);
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.legend {
+  padding: 0 4px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-label);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-label);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--bw-pad-radio);
+  background: var(--bw-warm-cream);
+  border: 1.5px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  cursor: pointer;
+}
+
+/* Va DESPUÉS de `.option` a propósito: es el que gana cuando ambos aplican. */
+.optionSelected {
+  background: var(--bw-chip-active-bg);
+  border-color: var(--bw-calibration-blue);
+}
+
+.radio {
+  flex-shrink: 0;
+  margin: 2px 0 0;
+  accent-color: var(--bw-calibration-blue);
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.optionLabel {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 600;
+  color: var(--bw-deep-steel);
+}
+
+.optionDesc {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Aviso brass: la lista se conserva en modo abierto ─────────────────── */
+
+.brassNotice {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-brass-border-soft);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-brass);
+}
+
+/* ── Bloque informativo brass: siempre ─────────────────────────────────── */
+
+.brassBlock {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-brass-border);
+  border-radius: var(--bw-radius);
+}
+
+.brassText {
+  margin: 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-ink-steel);
+}
+
+/* ── Acción primaria ───────────────────────────────────────────────────── */
+
+.save {
+  align-self: flex-start;
+  height: 40px;
+  padding: 0 22px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-body);
+  font-weight: 500;
+  color: var(--bw-warm-cream);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.save:hover:not(:disabled) {
+  background: var(--bw-primary-dark);
+}
+
+.save:disabled {
+  background: var(--bw-line-steel-strong);
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}

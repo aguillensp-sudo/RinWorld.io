@@ -173,7 +173,8 @@ describe('ExclusionPanel · geografía', () => {
   it('las exclusiones geográficas (continentes y países) salen como tags eliminables', async () => {
     const h = montar();
     const sec = screen.getByRole('region', { name: 'Exclusión por geografía' });
-    expect(within(sec).getByText('Asia')).toBeInTheDocument();
+    // `Asia` también es una <option> del select de continentes: se busca la etiqueta por su botón.
+    expect(within(sec).getByRole('button', { name: 'Quitar Asia' })).toBeInTheDocument();
     expect(within(sec).getByText('Rusia')).toBeInTheDocument();
     await userEvent.click(within(sec).getByRole('button', { name: 'Quitar Rusia' }));
     expect(h.onRemove).toHaveBeenCalledWith(GEO[1]);

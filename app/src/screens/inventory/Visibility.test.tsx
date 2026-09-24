@@ -126,8 +126,9 @@ describe('Visibility · el panel de exclusión según el modo', () => {
     expect(within(orgs).getByText('Nordic Bearings AB')).toBeInTheDocument();
     expect(within(orgs).getByText('Rodamientos Express SL')).toBeInTheDocument();
     const geo = screen.getByRole('region', { name: 'Exclusión por geografía' });
-    expect(within(geo).getByText('Asia')).toBeInTheDocument();
-    expect(within(geo).getByText('Rusia')).toBeInTheDocument();
+    // `Asia` también es una <option> del select de continentes: se busca la etiqueta por su botón.
+    expect(within(geo).getByRole('button', { name: 'Quitar Asia' })).toBeInTheDocument();
+    expect(within(geo).getByRole('button', { name: 'Quitar Rusia' })).toBeInTheDocument();
   });
 
   it('cambiar a «Visible para todos» desactiva el panel (se conserva la lista) y avisa', async () => {

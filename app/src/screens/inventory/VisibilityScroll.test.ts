@@ -9,7 +9,7 @@ import screen from './Visibility.module.css?raw';
  */
 function bloqueDe(selector: string, css: string): string {
   const limpio = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const regex = new RegExp(`(?:^|\})\s*\.${selector}\s*\{([^}]*)\}`);
+  const regex = new RegExp(`(?:^|\\})\\s*\\.${selector}\\s*\\{([^}]*)\\}`);
   return regex.exec(limpio)?.[1] ?? '';
 }
 

@@ -1,0 +1,124 @@
+/* SRCH-03 · Formulario inline `Editar watcher`. Ningún color literal. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--bw-surface-mist);
+  border-top: 1px solid var(--bw-line-steel);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--bw-ls-divider);
+  text-transform: uppercase;
+  color: var(--bw-ink-steel);
+  margin-bottom: 4px;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--bw-line-steel-strong);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+/* Field hint: debajo del campo, verbatim de la spec §4. */
+.hint {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  letter-spacing: var(--bw-ls-divider);
+  text-transform: uppercase;
+  color: var(--bw-input-placeholder);
+  margin-top: 3px;
+}
+
+.checkField {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+}
+
+.error {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+  margin: 0;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 5px;
+  border: none;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--bw-on-dark-hover);
+  background: var(--bw-calibration-blue);
+}
+
+.save:hover:not(:disabled) {
+  background: var(--bw-primary-dark);
+}
+
+.save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancel {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+}
+
+.cancel:hover {
+  color: var(--bw-deep-steel);
+}

@@ -1,0 +1,244 @@
+/* SRCH-03 · Tarjeta de watcher. Ningún color literal: solo tokens `--bw-*`. */
+
+.card {
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-left: 3px solid var(--bw-line-steel-strong);
+}
+
+/* Borde izquierdo por estado (spec §3). */
+.card[data-state='ACTIVE'] {
+  border-left-color: var(--bw-signal-green);
+}
+
+.card[data-state='PAUSED'] {
+  border-left-color: var(--bw-input-placeholder);
+}
+
+.card[data-state='TRIGGERED'] {
+  border-left-color: var(--bw-calibration-blue);
+}
+
+/* Spec §3: «borde izquierdo naranja». */
+.card[data-state='PENDIENTE RENOVACIÓN'] {
+  border-left-color: var(--bw-warning);
+}
+
+.card[data-state='EXPIRED'] {
+  border-left-color: var(--bw-sensitive-text);
+  opacity: 0.6;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* Referencia: mono, 13px (spec §3). */
+.ref {
+  flex: 1;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.badge {
+  flex-shrink: 0;
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--bw-radius);
+  border: 1px solid var(--bw-line-steel);
+}
+
+.stateActive {
+  color: var(--bw-signal-green);
+  background: var(--bw-badge-success-bg);
+  border-color: var(--bw-badge-success-border);
+}
+
+.statePaused {
+  color: var(--bw-steel-mist);
+  background: var(--bw-badge-neutral-bg);
+  border-color: var(--bw-badge-neutral-border);
+}
+
+.stateTriggered {
+  color: var(--bw-calibration-blue);
+  background: var(--bw-icon-tint-blue);
+  border-color: var(--bw-chip-active-border);
+}
+
+.stateRenewal {
+  color: var(--bw-warning);
+  background: var(--bw-badge-warning-bg);
+  border-color: var(--bw-badge-warning-border);
+}
+
+.stateExpired {
+  color: var(--bw-sensitive-text);
+  background: var(--bw-sensitive-bg);
+  border-color: var(--bw-badge-danger-border);
+}
+
+.conditions {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  line-height: 1.5;
+  color: var(--bw-steel-mist);
+  margin: 0 0 8px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* Fecha de creación: Steel Mist · 12px (spec §3). */
+.created {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+/* Días restantes / expira en. */
+.days {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+/* Spec §3: en naranja si quedan menos de 5 días. */
+.days[data-tone='warn'] {
+  color: var(--bw-warning);
+  font-weight: 500;
+}
+
+.channels {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+/* TRIGGERED: resumen del disparo. */
+.triggeredInfo {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-deep-steel);
+  background: var(--bw-icon-tint-blue);
+  border: 1px solid var(--bw-chip-active-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 0 10px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--bw-radius-hamburger);
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--bw-ink-steel);
+  background: none;
+  border: 1px solid var(--bw-line-steel-strong);
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.actionBtn:hover:not(:disabled) {
+  border-color: var(--bw-hover-border);
+}
+
+.dangerBtn:hover:not(:disabled) {
+  border-color: var(--bw-badge-danger-border);
+  color: var(--bw-sensitive-text);
+}
+
+.primaryBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--bw-radius-hamburger);
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--bw-on-dark-hover);
+  background: var(--bw-calibration-blue);
+  border: none;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: var(--bw-primary-dark);
+}
+
+.renewBtn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--bw-on-dark-hover);
+  background: var(--bw-warning);
+  border: none;
+}
+
+.renewBtn:hover:not(:disabled) {
+  background: var(--bw-warning-dark);
+}
+
+.plainBtn {
+  padding: 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--bw-steel-mist);
+  background: none;
+  border: none;
+}
+
+.plainBtn:hover:not(:disabled) {
+  color: var(--bw-sensitive-text);
+}
+
+.actionBtn:disabled,
+.primaryBtn:disabled,
+.renewBtn:disabled,
+.plainBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

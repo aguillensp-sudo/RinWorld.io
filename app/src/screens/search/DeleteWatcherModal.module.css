@@ -1,0 +1,80 @@
+/* SRCH-03 · Modal de confirmación de borrado. Ningún color literal. */
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bw-sidebar-overlay);
+}
+
+.panel {
+  width: 420px;
+  max-width: 90vw;
+  padding: 28px;
+  border-radius: 8px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-brass-border);
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-body);
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--bw-deep-steel);
+  margin: 0 0 14px;
+}
+
+.error {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+  margin: 0 0 14px;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel {
+  padding: 8px 18px;
+  border-radius: var(--bw-radius-hamburger);
+  border: 1px solid var(--bw-line-steel-strong);
+  background: var(--bw-surface-mist);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+}
+
+.cancel:hover {
+  border-color: var(--bw-hover-border);
+}
+
+.confirm {
+  padding: 8px 18px;
+  border-radius: var(--bw-radius-hamburger);
+  border: none;
+  background: var(--bw-sensitive-text);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-on-dark-hover);
+  cursor: pointer;
+}
+
+.confirm:hover:not(:disabled) {
+  background: var(--bw-danger);
+}
+
+.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

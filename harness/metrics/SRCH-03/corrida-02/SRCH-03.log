@@ -1,0 +1,92 @@
+
+==============================================================================
+· corrida arrancada 2026-09-24 08:49:05 · harness/tasks/SRCH-03.json --corrida corrida-02
+==============================================================================
+Log de esta corrida: harness\metrics\SRCH-03\corrida-02\SRCH-03.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 29570/34418   cache: 99.55% hit
+  coste real: $0.045903   en frio: $0.058443
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\SRCH-03\corrida-02\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 41326/12088   cache: 71.24% hit
+  coste real: $0.021598   en frio: $0.034140
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\SRCH-03\corrida-02\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 41273/21113   cache: 78.77% hit
+  coste real: $0.032179   en frio: $0.046029
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\SRCH-03\corrida-02\attempt_3.json (F-122)
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,29570,34418,0.045903,1,1.9,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,99.55,no,-,corrida-02,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,41326,12088,0.021598,2,0.5,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,71.24,no,-,corrida-02,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,41273,21113,0.032179,3,1.1,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,78.77,si,-,corrida-02,-,ESCALADO 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\SRCH-03\corrida-02\attempt_1.json
+  harness\metrics\SRCH-03\corrida-02\attempt_2.json
+  harness\metrics\SRCH-03\corrida-02\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C2 ROJO
+suite e2e COMPLETA (exit 1) · 5 fallo(s) SI son de este artefacto:
+  · e2e\forum-category.spec.ts:55:3 › FORO-02 · lista de hilos real › los contadores salen de la base: respuestas sin la inicial y reacciones de todo el hilo
+  · e2e\forum-thread.spec.ts:67:3 › FORO-03 · vista de un hilo real › las publicaciones salen en orden cronológico, con organización, país y reacciones de la base
+  · e2e\forum-thread.spec.ts:95:3 › FORO-03 · vista de un hilo real › reaccionar y quitar la reacción se refleja de inmediato y no deja residuo
+  · e2e\search.spec.ts:196:3 › SRCH-01 · resultados reales › el watcher no promete nada: deshabilitado y sin toast
+  · e2e\watchers.spec.ts:71:3 › SRCH-03 · watchers reales (ALPHA) › la siembra está anclada: ACTIVE, PAUSED y TRIGGERED
+    Error: falta el estado ACTIVE. Resiembra con supabase/seed/demo_watchers.sql (las fechas de la siembra son relativas a hoy y envejecen).
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      72 |     const estados = new Set((await tarjetas(page)).map((t) => t.estado));
+      73 |     for (const e of ['ACTIVE', 'PAUSED', 'TRIGGERED']) {
+    > 74 |       expect(estados.has(e), `falta el estado ${e}. ${SIEMBRA_HINT}`).toBe(true);
+         |                                                                       ^
+      75 |     }
+      76 |   });
+      77 |
+        at C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\srch-03-watchers\app\e2e\watchers.spec.ts:74:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\watchers-SRCH-03-·-watcher-26bff-a-ACTIVE-PAUSED-y-TRIGGERED-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\watchers-SRCH-03-·-watcher-26bff-a-ACTIVE-PAUSED-y-TRIGGERED-chromium\error-context.md
+
+  5 failed
+    [chromium] › e2e\forum-category.spec.ts:55:3 › FORO-02 · lista de hilos real › los contadores salen de la base: respuestas sin la inicial y reacciones de todo el hilo 
+    [chromium] › e2e\forum-thread.spec.ts:67:3 › FORO-03 · vista de un hilo real › las publicaciones salen en orden cronológico, con organización, país y reacciones de la base 
+    [chromium] › e2e\forum-thread.spec.ts:95:3 › FORO-03 · vista de un hilo real › reaccionar y quitar la reacción se refleja de inmediato y no deja residuo 
+    [chromium] › e2e\search.spec.ts:196:3 › SRCH-01 · resultados reales › el watcher no promete nada: deshabilitado y sin toast 
+    [chromium] › e2e\watchers.spec.ts:71:3 › SRCH-03 · watchers reales (ALPHA) › la siembra está anclada: ACTIVE, PAUSED y TRIGGERED 
+  92 passed (47.0s)
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] npm notice run bearingworld-app@0.1.0 preview
+[WebServer] npm notice run vite preview

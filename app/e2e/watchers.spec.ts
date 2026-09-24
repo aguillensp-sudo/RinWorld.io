@@ -62,6 +62,10 @@ async function abrirWatchers(page: Page) {
 
 test.describe('SRCH-03 · watchers reales (ALPHA)', () => {
   test.skip(!haveCreds, 'sin credenciales E2E_ALPHA_*/E2E_BETA_*');
+  // EN SERIE: el test de Pausar cambia el unico ACTIVE de la siembra y, en paralelo,
+  // el de anclaje y el del contador lo leerian pausado (F-183: defecto del contrato,
+  // no del artefacto).
+  test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

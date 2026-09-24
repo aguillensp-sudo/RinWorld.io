@@ -194,7 +194,7 @@ test.describe('SRCH-01 · resultados reales', () => {
   });
 
   test('el watcher no promete nada: deshabilitado y sin toast', async ({ page }) => {
-    const boton = page.getByRole('button', { name: /watcher/i });
+    const boton = page.getByRole('button', { name: /Crear watcher/i });
     await expect(boton).toBeDisabled();
     await expect(page.getByText(/te avisaremos/i)).toHaveCount(0);
   });

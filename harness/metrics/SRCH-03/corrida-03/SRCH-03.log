@@ -1,0 +1,34 @@
+
+==============================================================================
+· corrida arrancada 2026-09-24 08:58:07 · harness/tasks/SRCH-03.json --corrida corrida-03
+==============================================================================
+Log de esta corrida: harness\metrics\SRCH-03\corrida-03\SRCH-03.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 29570/48606   cache: 99.55% hit
+  coste real: $0.064631   en frio: $0.077171
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\SRCH-03\corrida-03\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 40550/11478   cache: 72.29% hit
+  coste real: $0.020506   en frio: $0.032993
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\SRCH-03\corrida-03\attempt_2.json (F-122)
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,29570,48606,0.064631,1,2.8,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,99.55,no,-,corrida-03,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,40550,11478,0.020506,2,0.5,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,72.29,no,-,corrida-03,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\SRCH-03\corrida-03\attempt_1.json
+  harness\metrics\SRCH-03\corrida-03\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

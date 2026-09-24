@@ -37,6 +37,9 @@ async function abrirVisibilidad(page: Page) {
 }
 
 async function quitarSiExiste(page: Page) {
+  // Las exclusiones llegan de la base tras montar: contar antes de que lleguen daria 0 y dejaria la
+  // exclusion puesta (F-183).
+  await page.waitForLoadState('networkidle');
   const quitar = page.getByRole('button', { name: `Quitar ${CANDIDATA}` });
   if (await quitar.count()) {
     await page.getByRole('radio', { name: /Visibilidad restringida/ }).check();
@@ -79,7 +82,8 @@ test.describe('INV-07 · visibilidad real (ALPHA, administrador)', () => {
     // Solo países con alguna organización: el directorio tiene España y Alemania en Europa.
     const paises = page.getByLabel('Refinar por país').locator('option');
     await expect(paises.first()).toHaveText('Todos los países del continente');
-    expect(await paises.count()).toBeGreaterThan(1);
+    // Los países llegan de la base DESPUÉS de elegir el continente: se espera, no se cuenta ya (F-183).
+    await expect.poll(() => paises.count()).toBeGreaterThan(1);
   });
 
   test('añadir una exclusión de organización persiste tras recargar, y se quita (se deja como estaba)', async ({ page }) => {

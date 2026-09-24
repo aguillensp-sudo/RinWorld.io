@@ -1,0 +1,88 @@
+
+==============================================================================
+· corrida arrancada 2026-09-24 12:12:01 · harness/tasks/INV-07.json --corrida corrida-02
+==============================================================================
+Log de esta corrida: harness\metrics\INV-07\corrida-02\INV-07.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/inventory/ExclusionPanel.module.css', 'app/src/screens/inventory/ExclusionPanel.tsx', 'app/src/screens/inventory/Visibility.module.css', 'app/src/screens/inventory/Visibility.tsx']
+  tokens in/out: 26698/25401   cache: 99.24% hit
+  coste real: $0.033989   en frio: $0.045276
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\INV-07\corrida-02\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/inventory/ExclusionPanel.module.css', 'app/src/screens/inventory/ExclusionPanel.tsx', 'app/src/screens/inventory/Visibility.module.css', 'app/src/screens/inventory/Visibility.tsx']
+  tokens in/out: 35023/24562   cache: 76.02% hit
+  coste real: $0.036490   en frio: $0.047832
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\INV-07\corrida-02\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/inventory/ExclusionPanel.module.css', 'app/src/screens/inventory/ExclusionPanel.tsx', 'app/src/screens/inventory/Visibility.module.css', 'app/src/screens/inventory/Visibility.tsx']
+  tokens in/out: 35058/7740   cache: 75.94% hit
+  coste real: $0.014300   en frio: $0.025642
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\INV-07\corrida-02\attempt_3.json (F-122)
+  CSV: 2026-09-24,INV-07,INV-07,deepseek-v4-flash,26698,25401,0.033989,1,1.4,app/src/screens/inventory/ExclusionPanel.module.css;app/src/screens/inventory/ExclusionPanel.tsx;app/src/screens/inventory/Visibility.module.css;app/src/screens/inventory/Visibility.tsx,99.24,no,-,corrida-02,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-24,INV-07,INV-07,deepseek-v4-flash,35023,24562,0.036490,2,1.5,app/src/screens/inventory/ExclusionPanel.module.css;app/src/screens/inventory/ExclusionPanel.tsx;app/src/screens/inventory/Visibility.module.css;app/src/screens/inventory/Visibility.tsx,76.02,no,-,corrida-02,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-24,INV-07,INV-07,deepseek-v4-flash,35058,7740,0.014300,3,0.3,app/src/screens/inventory/ExclusionPanel.module.css;app/src/screens/inventory/ExclusionPanel.tsx;app/src/screens/inventory/Visibility.module.css;app/src/screens/inventory/Visibility.tsx,75.94,si,-,corrida-02,-,ESCALADO 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\INV-07\corrida-02\attempt_1.json
+  harness\metrics\INV-07\corrida-02\attempt_2.json
+  harness\metrics\INV-07\corrida-02\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C2 ROJO
+suite e2e COMPLETA (exit 1) · 1 fallo(s) SI son de este artefacto:
+  · e2e\visibility.spec.ts:65:3 › INV-07 · visibilidad real (ALPHA, administrador) › el selector de continentes ofrece los seis de la spec y el de país solo aparece tras elegir uno
+  ok 100 [restore] › e2e\restore.teardown.ts:41:1 › devolver la siembra de demo a su estado congelado (898ms)
+
+
+  1) [chromium] › e2e\visibility.spec.ts:65:3 › INV-07 · visibilidad real (ALPHA, administrador) › el selector de continentes ofrece los seis de la spec y el de país solo aparece tras elegir uno 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 1
+    Received:   1
+
+      80 |     const paises = page.getByLabel('Refinar por país').locator('option');
+      81 |     await expect(paises.first()).toHaveText('Todos los países del continente');
+    > 82 |     expect(await paises.count()).toBeGreaterThan(1);
+         |                                  ^
+      83 |   });
+      84 |
+      85 |   test('añadir una exclusión de organización persiste tras recargar, y se quita (se deja como estaba)', async ({ page }) => {
+        at C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\inv-07-visibility\app\e2e\visibility.spec.ts:82:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\visibility-INV-07-·-visibi-45ba0-olo-aparece-tras-elegir-uno-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\visibility-INV-07-·-visibi-45ba0-olo-aparece-tras-elegir-uno-chromium\error-context.md
+
+  1 failed
+    [chromium] › e2e\visibility.spec.ts:65:3 › INV-07 · visibilidad real (ALPHA, administrador) › el selector de continentes ofrece los seis de la spec y el de país solo aparece tras elegir uno 
+  1 did not run
+  98 passed (43.9s)
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] npm notice run bearingworld-app@0.1.0 preview
+[WebServer] npm notice run vite preview

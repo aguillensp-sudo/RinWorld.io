@@ -131,9 +131,21 @@ export function groupExclusions(list: Exclusion[]): { orgs: Exclusion[]; geo: Ex
   };
 }
 
-/** Sin tildes ni mayúsculas, para que `nordwalz` encuentre `Nordwälz Lager`. */
+/**
+ * Letras que NO se descomponen en «letra + tilde» con NFD y que hay que traducir a mano:
+ * `Łożyska` (polaco) se buscaba como `lozyska` y no aparecía, porque la `Ł` no pierde nada
+ * al normalizar (PO, 24-sep: «no encuentra organizaciones»).
+ */
+const APARTE: Record<string, string> = { ł: 'l', ø: 'o', đ: 'd', ð: 'd', þ: 'th', ß: 'ss', æ: 'ae', œ: 'oe', ı: 'i' };
+
+/** Sin tildes ni mayúsculas, para que `nordwalz` encuentre `Nordwälz Lager` y `lozyska`, `Łożyska`. */
 function plain(s: string): string {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  return s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[łøđðþßæœı]/g, (c) => APARTE[c] ?? c)
+    .trim();
 }
 
 export interface OrgCandidate {

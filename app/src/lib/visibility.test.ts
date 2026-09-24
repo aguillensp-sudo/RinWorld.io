@@ -104,6 +104,13 @@ describe('filterOrgCandidates', () => {
     expect(filterOrgCandidates(TODAS, 'NORDWALZ', [], 'me').map((o) => o.id)).toEqual(['o-nordwalz']);
   });
 
+  it('encuentra `Łożyska Wschód` escribiendo `lozyska` (la Ł no se descompone con NFD)', () => {
+    const polaca = [...TODAS, { id: 'o-lozyska', name: 'Łożyska Wschód', country: 'PL' }];
+    expect(filterOrgCandidates(polaca, 'lozyska', [], 'me').map((o) => o.id)).toEqual(['o-lozyska']);
+    expect(filterOrgCandidates(polaca, 'ŁOŻYSKA', [], 'me').map((o) => o.id)).toEqual(['o-lozyska']);
+    expect(filterOrgCandidates(polaca, 'wschod', [], 'me').map((o) => o.id)).toEqual(['o-lozyska']);
+  });
+
   it('no ofrece la propia organización ni las ya excluidas', () => {
     expect(filterOrgCandidates(TODAS, 'rodamientos', EJEMPLO, 'me').map((o) => o.id)).toEqual([]);
     expect(filterOrgCandidates(TODAS, 'nord', EJEMPLO, 'me').map((o) => o.id)).toEqual(['o-nordwalz']);

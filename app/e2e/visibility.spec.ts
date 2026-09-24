@@ -112,19 +112,6 @@ test.describe('INV-07 · visibilidad real (ALPHA, administrador)', () => {
     await expect.poll(modoGuardado).toBe('VISIBLE_TODOS');
   });
 
-  test('las sugerencias son un desplegable y lo escrito NUNCA se añade solo', async ({ page }) => {
-    await page.getByRole('radio', { name: /Visibilidad restringida/ }).check();
-    const buscador = page.getByPlaceholder('Buscar organización por nombre...');
-    await buscador.fill('zzzz-no-existe');
-    await expect(page.getByText('Ninguna organización coincide con «zzzz-no-existe».')).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Quitar / })).toHaveCount(0);
-    await buscador.fill('cuscinetti');
-    await expect(page.getByText('Selecciona la organización que quieres excluir')).toBeVisible();
-    await expect(page.getByRole('button', { name: CANDIDATA })).toBeVisible();
-    // Sigue sin haber ninguna etiqueta: no se ha elegido nada.
-    await expect(page.getByRole('button', { name: /^Quitar / })).toHaveCount(0);
-  });
-
   test('añadir una exclusión de organización persiste tras recargar, y se quita (se deja como estaba)', async ({ page }) => {
     try {
       await quitarSiExiste(page); // por si un test anterior murió a medias

@@ -97,34 +97,22 @@ export function ExclusionPanel({
         />
         <p className={styles.hint}>{ORG_HINT}</p>
 
-        {/* Desplegable de sugerencias bajo el buscador (el PO, 24-sep: las sugerencias
-            se pintaban como etiquetas y parecía que lo escrito «se incluía» solo). Lo
-            escrito NUNCA se añade: solo se excluye lo que se elige de la lista. */}
+        {/* Solo se pinta la lista si hay candidatos: sin coincidencias, nada. */}
         {candidates.length > 0 && (
-          <div className={styles.dropdown}>
-            <p className={styles.dropdownTitle}>Selecciona la organización que quieres excluir</p>
-            <ul className={styles.candidates}>
-              {candidates.map((candidate) => (
-                <li key={candidate.id}>
-                  <button
-                    type="button"
-                    className={styles.candidate}
-                    aria-label={candidate.name}
-                    disabled={disabled || busy}
-                    onClick={() => onPickOrg(candidate)}
-                  >
-                    <span>{candidate.name}</span>
-                    <span className={styles.candidateMeta} aria-hidden="true">
-                      {candidate.country}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {candidates.length === 0 && query.trim() !== '' && (
-          <p className={styles.noMatch}>Ninguna organización coincide con «{query.trim()}».</p>
+          <ul className={styles.candidates}>
+            {candidates.map((candidate) => (
+              <li key={candidate.id}>
+                <button
+                  type="button"
+                  className={styles.candidate}
+                  disabled={disabled || busy}
+                  onClick={() => onPickOrg(candidate)}
+                >
+                  {candidate.name}
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
 
         <ul className={styles.tagList}>

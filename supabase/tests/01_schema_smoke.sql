@@ -3040,6 +3040,310 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0035 · watchers (SRCH-03)
+-- -----------------------------------------------------------------------------
+-- a1/a2 son de Alpha (orgA), b1 de Beta (orgB). Los tres estan ACTIVE a estas
+-- alturas del fichero. Se comprueba el ciclo de vida entero con la sesion de un
+-- miembro -- no con postgres --, porque lo que esta migracion protege es lo que
+-- un cliente NO puede hacer.
+
+do $$
+begin
+  assert (select count(*) from public.members
+           where id in ('0a000001-0000-0000-0000-000000000001',
+                        '0a000002-0000-0000-0000-000000000002',
+                        '0b000001-0000-0000-0000-000000000001')
+             and state = 'ACTIVE') = 3,
+    '0035: el banco necesita a a1, a2 y b1 ACTIVE';
+end
+$$;
+
+-- 1 · Alta por un miembro: el cliente pide EXPIRED y un expires_at de 2030 y la
+-- base lo ignora (init_watcher). Cinco pruebas de validacion de paso.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  insert into public.watchers (id, org_id, created_by, part_number, min_quantity, status, expires_at)
+  values ('aa350000-0000-4000-8000-000000000001', '11111111-1111-1111-1111-111111111111',
+          '0a000001-0000-0000-0000-000000000001', '  6308-ZZ ', 100, 'EXPIRED', '2030-01-01');
+  select public.expect_fail(
+    $$insert into public.watchers (org_id, created_by, part_number, min_quantity)
+      values ('11111111-1111-1111-1111-111111111111', '0a000001-0000-0000-0000-000000000001', 'X', 5)$$,
+    '0035: la referencia necesita al menos 2 caracteres');
+  select public.expect_fail(
+    $$insert into public.watchers (org_id, created_by, part_number, min_quantity)
+      values ('11111111-1111-1111-1111-111111111111', '0a000001-0000-0000-0000-000000000001', '6308-ZZ', 0)$$,
+    '0035: la cantidad minima es un entero positivo');
+  select public.expect_fail(
+    $$insert into public.watchers (org_id, created_by, part_number, min_quantity, country)
+      values ('11111111-1111-1111-1111-111111111111', '0a000001-0000-0000-0000-000000000001', '6308-ZZ', 5, 'esp')$$,
+    '0035: el pais es un codigo ISO de dos letras en mayusculas');
+  -- Los dos de abajo los corta la RLS (SQLSTATE 42501), que `expect_fail` trata
+  -- como test roto: se capturan a mano.
+  do $chk$
+  begin
+    begin
+      insert into public.watchers (org_id, created_by, part_number, min_quantity)
+      values ('22222222-2222-2222-2222-222222222222', '0a000001-0000-0000-0000-000000000001', '6308-ZZ', 5);
+      raise exception 'TEST FALLIDO: 0035 dejo crear un watcher a nombre de otra organizacion';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+      insert into public.watchers (org_id, created_by, part_number, min_quantity)
+      values ('11111111-1111-1111-1111-111111111111', '0a000002-0000-0000-0000-000000000002', '6308-ZZ', 5);
+      raise exception 'TEST FALLIDO: 0035 dejo crear un watcher a nombre de otro miembro';
+    exception when insufficient_privilege then null;
+    end;
+  end
+  $chk$;
+commit;
+
+do $$
+declare
+  w public.watchers;
+begin
+  select * into w from public.watchers where id = 'aa350000-0000-4000-8000-000000000001';
+  assert w.status = 'ACTIVE', '0035: nace ACTIVE aunque el cliente pidiera EXPIRED';
+  assert w.part_number = '6308-ZZ', '0035: la referencia se guarda sin espacios sobrantes';
+  assert w.expires_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 hour',
+    '0035: expira a los 30 dias aunque el cliente pidiera 2030';
+  raise notice 'OK · 0035: el alta ignora el estado y la fecha de expiracion que pida el cliente';
+end
+$$;
+
+-- 2 · Aislamiento por organizacion: b1 no ve ni toca el watcher de Alpha.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.watchers) = 0,
+      '0035: Beta no ve ningun watcher de Alpha (tabla)';
+    assert (select count(*) from public.watcher_list) = 0,
+      '0035: ni por la vista';
+    delete from public.watchers where id = 'aa350000-0000-4000-8000-000000000001';
+  end
+  $$;
+  select public.expect_fail(
+    $$select public.watcher_set_paused('aa350000-0000-4000-8000-000000000001', true)$$,
+    '0035: Beta no pausa un watcher de Alpha -- mismo error que un id que no existe');
+  select public.expect_fail(
+    $$select public.watcher_renew('aa350000-0000-4000-8000-000000000001')$$,
+    '0035: ni lo renueva');
+commit;
+do $$
+begin
+  assert (select count(*) from public.watchers where id = 'aa350000-0000-4000-8000-000000000001') = 1,
+    '0035: el DELETE de Beta no borro el watcher de Alpha (RLS lo filtra en silencio)';
+  raise notice 'OK · 0035: un watcher solo lo ve y lo toca su organizacion';
+end
+$$;
+
+-- 3 · Ciclo de vida con a2 (otro miembro de la MISMA organizacion: el watcher
+-- es de la organizacion, no de quien lo creo).
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.watcher_set_paused('aa350000-0000-4000-8000-000000000001', true);
+commit;
+do $$
+begin
+  assert (select status from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 'PAUSED',
+    '0035: pausar deja PAUSED (y lo hizo otro miembro de la organizacion)';
+  assert (select days_remaining from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 30,
+    '0035: recien creado, 30 dias restantes';
+  raise notice 'OK · 0035: pausar, y cualquier miembro de la organizacion puede';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.watcher_set_paused('aa350000-0000-4000-8000-000000000001', true)$$,
+    '0035: no se pausa dos veces');
+  select public.watcher_update('aa350000-0000-4000-8000-000000000001', ' 6308-2RS ', 250, '  SKF ', 'de', true);
+  select public.expect_fail(
+    $$select public.watcher_update('aa350000-0000-4000-8000-000000000001', '6308', 0, null, null, false)$$,
+    '0035: editar exige cantidad positiva');
+  select public.expect_fail(
+    $$select public.watcher_update('aa350000-0000-4000-8000-000000000001', 'A', 5, null, null, false)$$,
+    '0035: y referencia de 2 caracteres');
+  select public.watcher_set_paused('aa350000-0000-4000-8000-000000000001', false);
+commit;
+do $$
+declare
+  w public.watcher_list;
+begin
+  select * into w from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001';
+  assert w.status = 'ACTIVE', '0035: reactivar deja ACTIVE';
+  assert w.part_number = '6308-2RS' and w.min_quantity = 250 and w.brand = 'SKF'
+         and w.country = 'DE' and w.email_channel,
+    '0035: editar guarda los cinco campos, con la marca recortada y el pais en mayusculas';
+  raise notice 'OK · 0035: editar y reactivar';
+end
+$$;
+
+-- 4 · Vencimiento SIN cron: se envejece el watcher a mano y la VISTA ya lo ve
+-- PENDIENTE RENOVACION aunque la columna diga ACTIVE.
+update public.watchers set created_at = now() - interval '31 days', expires_at = now() - interval '1 day'
+ where id = 'aa350000-0000-4000-8000-000000000001';
+do $$
+begin
+  assert (select status from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 'PENDIENTE RENOVACION',
+    '0035: vencido, la vista lo muestra PENDIENTE RENOVACION sin que nadie escriba la columna';
+  assert (select stored_status from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 'ACTIVE',
+    '0035: y stored_status sigue diciendo lo que dice la tabla';
+  assert (select days_remaining from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') is null,
+    '0035: sin dias restantes fuera de ACTIVE/PAUSED vigentes';
+  raise notice 'OK · 0035: el vencimiento se ve sin cron';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.watcher_set_paused('aa350000-0000-4000-8000-000000000001', true)$$,
+    '0035: un watcher vencido no se pausa -- se renueva');
+  select public.expect_fail(
+    $$select public.watcher_update('aa350000-0000-4000-8000-000000000001', '6308', 5, null, null, false)$$,
+    '0035: ni se edita');
+  select public.watcher_renew('aa350000-0000-4000-8000-000000000001');
+commit;
+do $$
+begin
+  assert (select status from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 'ACTIVE',
+    '0035: renovar vuelve a ACTIVE';
+  assert (select days_remaining from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 30,
+    '0035: con el contador reiniciado a 30 dias';
+  raise notice 'OK · 0035: renovar reinicia el contador';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.watcher_renew('aa350000-0000-4000-8000-000000000001')$$,
+    '0035: no se renueva un watcher que sigue vigente');
+  select public.expect_fail(
+    $$select public.watcher_let_expire('aa350000-0000-4000-8000-000000000001')$$,
+    '0035: ni se deja expirar');
+commit;
+
+-- 5 · Dejar expirar, y el evaluador de la columna.
+update public.watchers set expires_at = now() - interval '1 second'
+ where id = 'aa350000-0000-4000-8000-000000000001';
+do $$
+begin
+  assert app.watchers_evaluate_expirations() >= 1,
+    '0035: el evaluador mueve a la columna lo que la vista ya mostraba';
+  assert (select stored_status from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 'PENDIENTE RENOVACION',
+    '0035: y ahora tambien lo dice la tabla';
+end
+$$;
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.watcher_let_expire('aa350000-0000-4000-8000-000000000001');
+  select public.expect_fail(
+    $$select public.watcher_renew('aa350000-0000-4000-8000-000000000001')$$,
+    '0035: un watcher EXPIRED no se renueva');
+commit;
+do $$
+begin
+  assert (select status from public.watcher_list where id = 'aa350000-0000-4000-8000-000000000001') = 'EXPIRED',
+    '0035: dejar que expire deja EXPIRED';
+  raise notice 'OK · 0035: dejar que expire, y solo desde PENDIENTE RENOVACION';
+end
+$$;
+
+-- 6 · El limite de 50 ACTIVE por organizacion. Se siembran 49 + 1 pausado como
+-- postgres (auth.uid() nulo: init_watcher respeta lo escrito); el 50 entra por
+-- sesion y el 51 falla, igual que reactivar el pausado.
+insert into public.watchers (org_id, part_number, min_quantity)
+select '22222222-2222-2222-2222-222222222222', 'LIM-' || g, 10 from generate_series(1, 49) g;
+insert into public.watchers (id, org_id, part_number, min_quantity, status)
+values ('bb350000-0000-4000-8000-000000000001', '22222222-2222-2222-2222-222222222222', 'LIM-PAUSADO', 10, 'PAUSED');
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  insert into public.watchers (org_id, created_by, part_number, min_quantity)
+  values ('22222222-2222-2222-2222-222222222222', '0b000001-0000-0000-0000-000000000001', 'LIM-50', 10);
+  select public.expect_fail(
+    $$insert into public.watchers (org_id, created_by, part_number, min_quantity)
+      values ('22222222-2222-2222-2222-222222222222', '0b000001-0000-0000-0000-000000000001', 'LIM-51', 10)$$,
+    '0035: el watcher 51 ACTIVE de una organizacion no entra');
+  select public.expect_fail(
+    $$select public.watcher_set_paused('bb350000-0000-4000-8000-000000000001', false)$$,
+    '0035: ni reactivando uno pausado');
+commit;
+do $$
+begin
+  assert (select count(*) from public.watchers
+           where org_id = '22222222-2222-2222-2222-222222222222' and status = 'ACTIVE') = 50,
+    '0035: 50 ACTIVE y ni uno mas';
+  raise notice 'OK · 0035: el limite de 50 ACTIVE, por organizacion, tambien al reactivar';
+end
+$$;
+-- Un PAUSED no cuenta para el limite: se pausa uno y entra otro.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.watcher_set_paused((select id from public.watchers
+                                     where org_id = '22222222-2222-2222-2222-222222222222' and part_number = 'LIM-1'), true);
+  insert into public.watchers (org_id, created_by, part_number, min_quantity)
+  values ('22222222-2222-2222-2222-222222222222', '0b000001-0000-0000-0000-000000000001', 'LIM-51', 10);
+commit;
+
+-- 7 · TRIGGERED lleva su rastro o no es TRIGGERED (CHECK), y no se puede
+-- falsificar desde un cliente.
+select public.expect_fail(
+  $$insert into public.watchers (org_id, part_number, min_quantity, status)
+    values ('11111111-1111-1111-1111-111111111111', 'TRG-1', 10, 'TRIGGERED')$$,
+  '0035: TRIGGERED sin triggered_at no existe');
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  insert into public.watchers (id, org_id, created_by, part_number, min_quantity, status, triggered_at, triggered_distributor)
+  values ('aa350000-0000-4000-8000-000000000002', '11111111-1111-1111-1111-111111111111',
+          '0a000001-0000-0000-0000-000000000001', 'NU2210-E', 50, 'TRIGGERED', now(), 'Falso SL');
+commit;
+do $$
+begin
+  assert (select status from public.watchers where id = 'aa350000-0000-4000-8000-000000000002') = 'ACTIVE'
+     and (select triggered_distributor from public.watchers where id = 'aa350000-0000-4000-8000-000000000002') is null,
+    '0035: un cliente no puede fabricar un disparo';
+  raise notice 'OK · 0035: TRIGGERED solo lo escribe quien no es un cliente';
+end
+$$;
+
+-- 8 · Privilegios (F-146: contra el catalogo, no contra el .sql).
+do $$
+begin
+  assert not has_table_privilege('anon', 'public.watchers', 'select')
+     and not has_table_privilege('anon', 'public.watcher_list', 'select'),
+    '0035: anon no lee watchers';
+  assert has_table_privilege('authenticated', 'public.watchers', 'select')
+     and has_table_privilege('authenticated', 'public.watchers', 'insert')
+     and has_table_privilege('authenticated', 'public.watchers', 'delete'),
+    '0035: authenticated selecciona, inserta y borra';
+  assert not has_table_privilege('authenticated', 'public.watchers', 'update'),
+    '0035: pero NO actualiza -- todo cambio de estado pasa por las funciones';
+  assert not has_function_privilege('anon', 'public.watcher_renew(uuid)', 'execute')
+     and not has_function_privilege('anon', 'public.watcher_let_expire(uuid)', 'execute')
+     and not has_function_privilege('anon', 'public.watcher_set_paused(uuid, boolean)', 'execute')
+     and not has_function_privilege('anon', 'public.watcher_update(uuid, text, integer, text, text, boolean)', 'execute'),
+    '0035: anon no ejecuta ninguna accion de watchers';
+  assert not has_function_privilege('authenticated', 'app.watchers_evaluate_expirations()', 'execute')
+     and not has_function_privilege('authenticated', 'app.watcher_lock_own(uuid)', 'execute'),
+    '0035: y authenticated no ejecuta el evaluador ni el ayudante';
+  raise notice 'OK · 0035: anon nada, authenticated select/insert/delete y las cuatro funciones';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-146 (0022) · ninguna funcion de `public` la puede ejecutar `anon`
 -- -----------------------------------------------------------------------------
 -- El aserto que no existia el 4-sep-2026, y por eso el agujero vivio desde

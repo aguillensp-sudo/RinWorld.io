@@ -21,6 +21,7 @@ import {
   watcherDateLabel,
   watcherFilterCount,
   watcherToCriteria,
+  WATCHER_COUNTRY_OPTIONS,
   WATCHER_FILTERS,
   WATCHER_LIMIT,
   type WatcherRow,
@@ -252,5 +253,21 @@ describe('sortWatchers', () => {
     const b = row('A', 'ACTIVE', { createdAt: '2026-09-01T00:00:00Z' });
     const c = row('C', 'ACTIVE', { createdAt: '2026-09-10T00:00:00Z' });
     expect(sortWatchers([a, b, c]).map((r) => r.partNumber)).toEqual(['C', 'A', 'B']);
+  });
+});
+
+describe('WATCHER_COUNTRY_OPTIONS', () => {
+  it('son los 249 códigos ISO, sin duplicados, y todos tienen nombre en español (no el código)', () => {
+    expect(WATCHER_COUNTRY_OPTIONS).toHaveLength(249);
+    expect(new Set(WATCHER_COUNTRY_OPTIONS.map((o) => o.code)).size).toBe(249);
+    const sinNombre = WATCHER_COUNTRY_OPTIONS.filter((o) => o.label === o.code).map((o) => o.code);
+    expect(sinNombre).toEqual([]);
+  });
+
+  it('España y Alemania con su nombre, y ordenados por nombre', () => {
+    expect(WATCHER_COUNTRY_OPTIONS.find((o) => o.code === 'ES')?.label).toBe('España');
+    expect(WATCHER_COUNTRY_OPTIONS.find((o) => o.code === 'DE')?.label).toBe('Alemania');
+    const nombres = WATCHER_COUNTRY_OPTIONS.map((o) => o.label);
+    expect(nombres).toEqual([...nombres].sort((a, b) => a.localeCompare(b, 'es')));
   });
 });

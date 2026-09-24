@@ -44,6 +44,8 @@ interface Props {
    * esta pantalla (`Comprando`, spec §2) y no tiene otra puerta de entrada.
    */
   onOpenWatchers?: () => void;
+  /** Abre SRCH-02 (`Búsqueda por lotes`). Opcional por la misma razón que `onOpenWatchers`. */
+  onOpenBatch?: () => void;
 }
 
 /**
@@ -54,7 +56,7 @@ interface Props {
  * un favorito se vuelve a consultar la base (`toggleFavorite` + `fetchResults`).
  * La tabla y los chips son presentacionales y no guardan estado de datos.
  */
-export function SearchResults({ profile, now, veraCriteria, onOpenWatchers }: Props) {
+export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOpenBatch }: Props) {
   const [criteria, setCriteria] = useState<SearchCriteria>(EMPTY_CRITERIA);
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -253,6 +255,12 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers }: Pr
               <i className="ti ti-bell-plus" aria-hidden="true" />
               Crear watcher con estos criterios
             </button>
+            {onOpenBatch && (
+              <button type="button" className={styles.watcher} onClick={onOpenBatch}>
+                <i className="ti ti-list-search" aria-hidden="true" />
+                Búsqueda por lotes
+              </button>
+            )}
             {onOpenWatchers && (
               <button type="button" className={styles.watcher} onClick={onOpenWatchers}>
                 <i className="ti ti-bell" aria-hidden="true" />

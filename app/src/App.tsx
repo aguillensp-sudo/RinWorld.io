@@ -20,6 +20,7 @@ import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
 import { SearchResults } from './screens/search/SearchResults';
 import { Watchers } from './screens/search/Watchers';
+import { BatchSearch } from './screens/search/BatchSearch';
 import { SentOffers } from './screens/selling/SentOffers';
 
 /**
@@ -147,6 +148,13 @@ export function App() {
   const [watchersOpen, setWatchersOpen] = useState(false);
 
   /**
+   * SRCH-02 (`Búsqueda por lotes`) abierta. Comparte ítem de nav con SRCH-01 y
+   * SRCH-03 (`Comprando`, SRCH-02 §2), con el mismo criterio que `watchersOpen`.
+   * Se limpia al cambiar de ítem de nav.
+   */
+  const [batchOpen, setBatchOpen] = useState(false);
+
+  /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
    * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
    * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
@@ -161,6 +169,7 @@ export function App() {
     setForumCategorySlug(null);
     setForumThreadId(null);
     setWatchersOpen(false);
+    setBatchOpen(false);
   };
 
   if (state.status === 'loading') {
@@ -339,12 +348,17 @@ export function App() {
               setWatchersOpen(false);
             }}
           />
+        ) : batchOpen ? (
+          /* SRCH-02. `now` explícito y construido en el render, mismo criterio
+           * que SRCH-01: la columna Antigüedad de sus tablas es relativa al reloj. */
+          <BatchSearch profile={state.profile} now={new Date()} />
         ) : (
           <SearchResults
             profile={state.profile}
             now={new Date()}
             veraCriteria={veraCriteria}
             onOpenWatchers={() => setWatchersOpen(true)}
+            onOpenBatch={() => setBatchOpen(true)}
           />
         )
       ) : onSelling ? (

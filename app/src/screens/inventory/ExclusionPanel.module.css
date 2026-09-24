@@ -1,0 +1,220 @@
+/*
+ * INV-07 · Panel de lista de exclusión.
+ * Todo el color sale de las variables de los tokens: ningún hex, ningún rgb().
+ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+/*
+ * Modo abierto o miembro sin permiso: las etiquetas SIGUEN visibles, en gris, y
+ * los controles van `disabled` de verdad (no se resuelve con `pointer-events`).
+ */
+.panel[data-active='false'] {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+}
+
+.alert {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  font-weight: 600;
+  letter-spacing: var(--bw-ls-label);
+  text-transform: uppercase;
+  color: var(--bw-ink-steel);
+}
+
+/* ── Controles ─────────────────────────────────────────────────────────── */
+
+.search,
+.select {
+  width: 100%;
+  padding: var(--bw-pad-input);
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  outline: none;
+}
+
+.search::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.search:focus,
+.select:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.select {
+  cursor: pointer;
+}
+
+.search:disabled,
+.select:disabled {
+  background: var(--bw-divider-mist);
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  letter-spacing: var(--bw-ls-hint);
+  text-transform: uppercase;
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Autocompletado ────────────────────────────────────────────────────── */
+
+.candidates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.candidate {
+  padding: 6px 12px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  cursor: pointer;
+}
+
+.candidate:hover:not(:disabled) {
+  background: var(--bw-hover-surface);
+  border-color: var(--bw-hover-border);
+}
+
+.candidate:disabled {
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}
+
+/* ── Botón de geografía ────────────────────────────────────────────────── */
+
+.geoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.addGeo {
+  height: 36px;
+  padding: 0 14px;
+  background: var(--bw-deep-steel);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-warm-cream);
+  cursor: pointer;
+}
+
+.addGeo:hover:not(:disabled) {
+  background: var(--bw-deep-steel-darkest);
+}
+
+.addGeo:disabled {
+  background: var(--bw-line-steel-strong);
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}
+
+/* ── Etiquetas eliminables ─────────────────────────────────────────────── */
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--bw-chip-active-bg);
+  border: 1px solid var(--bw-chip-active-border);
+  border-radius: 20px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.tagGeo {
+  background: var(--bw-tag-bg);
+  border-color: var(--bw-tag-border);
+  color: var(--bw-brass);
+}
+
+.tagLabel {
+  white-space: nowrap;
+}
+
+.tagRemove {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+}
+
+.tagRemove:hover:not(:disabled) {
+  color: var(--bw-danger);
+}
+
+.tagRemove:disabled {
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}

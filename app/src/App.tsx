@@ -16,6 +16,7 @@ import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
 import { ForumThread } from './screens/forum/ForumThread';
 import { Inventory } from './screens/inventory/Inventory';
+import { Visibility } from './screens/inventory/Visibility';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
 import { SearchResults } from './screens/search/SearchResults';
@@ -155,6 +156,13 @@ export function App() {
   const [batchOpen, setBatchOpen] = useState(false);
 
   /**
+   * INV-07 (`Visibilidad`) abierta. Comparte ítem de nav con INV-01 (`Inventario`,
+   * INV-07 §2), así que necesita este segundo dato, igual que `watchersOpen` con
+   * SRCH-01/03. Se limpia al cambiar de ítem de nav.
+   */
+  const [visibilityOpen, setVisibilityOpen] = useState(false);
+
+  /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
    * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
    * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
@@ -170,6 +178,7 @@ export function App() {
     setForumThreadId(null);
     setWatchersOpen(false);
     setBatchOpen(false);
+    setVisibilityOpen(false);
   };
 
   if (state.status === 'loading') {
@@ -382,7 +391,12 @@ export function App() {
           }}
         />
       ) : onInventory ? (
-        <Inventory profile={state.profile} />
+        visibilityOpen ? (
+          /* INV-07. Sin `now`: nada de su pantalla es relativo al reloj. */
+          <Visibility profile={state.profile} />
+        ) : (
+          <Inventory profile={state.profile} onOpenVisibility={() => setVisibilityOpen(true)} />
+        )
       ) : onEmpresas ? (
         /*
          * DIR-01. Sin `now`: ninguna de sus cinco columnas es relativa al reloj

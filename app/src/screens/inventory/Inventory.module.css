@@ -549,3 +549,23 @@
   color: var(--bw-input-placeholder);
   padding: 0 4px;
 }
+
+/* INV-07: el acceso a `Visibilidad`, secundario al lado del primario. */
+.btnVisibility {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  color: var(--bw-calibration-blue);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnVisibility:hover {
+  background: var(--bw-surface-mist);
+}

@@ -1,0 +1,90 @@
+
+==============================================================================
+· corrida arrancada 2026-09-24 08:38:40 · harness/tasks/SRCH-03.json
+==============================================================================
+Log de esta corrida: harness\metrics\SRCH-03\SRCH-03.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 29570/33183   cache: 0.0% hit
+  coste real: $0.056812   en frio: $0.056812
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\SRCH-03\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 40323/24173   cache: 72.69% hit
+  coste real: $0.037164   en frio: $0.049650
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\SRCH-03\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/search/DeleteWatcherModal.module.css', 'app/src/screens/search/DeleteWatcherModal.tsx', 'app/src/screens/search/WatcherCard.module.css', 'app/src/screens/search/WatcherCard.tsx', 'app/src/screens/search/WatcherEditForm.module.css', 'app/src/screens/search/WatcherEditForm.tsx', 'app/src/screens/search/Watchers.module.css', 'app/src/screens/search/Watchers.tsx']
+  tokens in/out: 40522/25547   cache: 74.55% hit
+  coste real: $0.038683   en frio: $0.051552
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\SRCH-03\attempt_3.json (F-122)
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,29570,33183,0.056812,1,1.8,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,0.00,no,-,-,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,40323,24173,0.037164,2,1.6,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,72.69,no,-,-,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-24,SRCH-03,SRCH-03,deepseek-v4-flash,40522,25547,0.038683,3,1.6,app/src/screens/search/DeleteWatcherModal.module.css;app/src/screens/search/DeleteWatcherModal.tsx;app/src/screens/search/WatcherCard.module.css;app/src/screens/search/WatcherCard.tsx;app/src/screens/search/WatcherEditForm.module.css;app/src/screens/search/WatcherEditForm.tsx;app/src/screens/search/Watchers.module.css;app/src/screens/search/Watchers.tsx,74.55,si,-,-,-,ESCALADO 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\SRCH-03\attempt_1.json
+  harness\metrics\SRCH-03\attempt_2.json
+  harness\metrics\SRCH-03\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C2 ROJO
+suite e2e COMPLETA (exit 1) · 1 fallo(s) SI son de este artefacto:
+  · e2e\auth.setup.ts:16:1 › autenticar como alpha ───────────────────────────────────────
+  -   3 [restore] › e2e\restore.teardown.ts:41:1 › devolver la siembra de demo a su estado congelado
+
+
+  1) [setup] › e2e\auth.setup.ts:16:1 › autenticar como alpha ──────────────────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Correo electrónico')
+
+
+       at fixtures.ts:83
+
+      81 | export async function signIn(page: Page, who: { email: string; password: string }) {
+      82 |   await page.goto('/');
+    > 83 |   await page.getByLabel('Correo electrónico').fill(who.email);
+         |                                               ^
+      84 |   await page.getByLabel('Contraseña').fill(who.password);
+      85 |   await page.getByRole('button', { name: 'Entrar' }).click();
+      86 |
+        at signIn (C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\srch-03-watchers\app\e2e\fixtures.ts:83:47)
+        at C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\srch-03-watchers\app\e2e\auth.setup.ts:17:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\auth.setup.ts-autenticar-como-alpha-setup\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\auth.setup.ts-autenticar-como-alpha-setup\error-context.md
+
+  1 failed
+    [setup] › e2e\auth.setup.ts:16:1 › autenticar como alpha ───────────────────────────────────────
+  2 skipped
+  94 did not run
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build
+[WebServer] npm notice run bearingworld-app@0.1.0 preview
+[WebServer] npm notice run vite preview

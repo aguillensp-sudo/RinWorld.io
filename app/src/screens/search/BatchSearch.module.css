@@ -1,1 +1,252 @@
-/* SRCH-02 · MARCADOR: la tarea del arnes sustituye este fichero entero. */
+/*
+ * SRCH-02 · Panel Consolidado de Búsqueda por Lotes.
+ *
+ * Nota de superficie: el sistema de diseño no tiene token de blanco puro, así
+ * que la zona de entrada usa la superficie clara más próxima del vocabulario
+ * (--bw-warm-cream) en lugar de un `#fff` literal. Ningún color de este módulo
+ * sale de fuera de las variables `--bw-*`.
+ */
+
+/* La raíz es hija DIRECTA de `.bwcnt` (overflow: hidden): sin scroll propio,
+   50 tarjetas apiladas se recortarían sin barra (F-186/F-189/F-190/F-198). */
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-text-secondary);
+  margin: 0 0 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+  margin: 0 0 3px;
+}
+
+.subtitle {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-text-secondary);
+  margin: 0 0 20px;
+  max-width: 580px;
+}
+
+/* ── Área de entrada ─────────────────────────────────────────────────── */
+
+.inputCard {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-text-secondary);
+  margin-bottom: 8px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: var(--bw-pad-input);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 6px;
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-input);
+  line-height: 1.6;
+  color: var(--bw-input-text);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.textarea:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.textarea::placeholder {
+  color: var(--bw-input-placeholder);
+  font-family: var(--bw-font-body);
+}
+
+.hint {
+  font-size: var(--bw-size-hint);
+  letter-spacing: var(--bw-ls-hint);
+  color: var(--bw-text-secondary);
+  margin: 6px 0 0;
+}
+
+.inputFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.counter {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-text-secondary);
+}
+
+/* ── Botones ─────────────────────────────────────────────────────────── */
+
+.primary {
+  height: 34px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 5px;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.12s;
+}
+
+.primary:not(:disabled):hover {
+  opacity: 0.87;
+}
+
+.primary:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
+}
+
+.primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.plain {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--bw-calibration-blue);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.plain:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Aviso de más de 50 referencias ──────────────────────────────────── */
+
+.brassBlock {
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.brassText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bw-text-secondary);
+  margin: 0;
+}
+
+.brassActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* ── Resultados ──────────────────────────────────────────────────────── */
+
+.resultsArea {
+  display: flex;
+  flex-direction: column;
+}
+
+.status {
+  font-size: 13px;
+  color: var(--bw-text-secondary);
+  margin: 0 0 12px;
+}
+
+.alert {
+  font-size: 13px;
+  color: var(--bw-error-text);
+  margin: 0 0 12px;
+}
+
+.metaBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.metaLabel {
+  flex: 1;
+  min-width: 200px;
+  font-size: 13px;
+  color: var(--bw-text-secondary);
+}
+
+.pendingBlock {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-brass-border-soft);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.pendingText {
+  flex: 1;
+  min-width: 180px;
+  font-size: 13px;
+  color: var(--bw-text-secondary);
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.listItem {
+  margin: 0;
+}

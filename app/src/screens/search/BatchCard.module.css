@@ -1,0 +1,97 @@
+/*
+ * SRCH-02 · Tarjeta de referencia. Presentacional, sin estado.
+ *
+ * Nota de superficie: no hay token de blanco puro en el sistema, así que la
+ * tarjeta usa --bw-warm-cream como superficie clara. Ningún color sale del
+ * vocabulario `--bw-*`.
+ */
+
+.card {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.reference {
+  font-family: var(--bw-font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  white-space: nowrap;
+}
+
+.summary {
+  flex: 1;
+  min-width: 180px;
+  font-size: 12px;
+  color: var(--bw-text-secondary);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: none;
+  color: var(--bw-text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.toggle:hover {
+  color: var(--bw-deep-steel);
+  background: var(--bw-hover-surface);
+}
+
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
+}
+
+.watcher {
+  margin-left: auto;
+  height: 26px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--bw-brass-border-strong);
+  border-radius: var(--bw-radius);
+  background: none;
+  color: var(--bw-brass);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.watcher:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.alert {
+  margin: 0;
+  padding: 0 16px 14px;
+  font-size: 13px;
+  color: var(--bw-error-text);
+}
+
+.body {
+  border-top: 1px solid var(--bw-divider-mist);
+  overflow-x: auto;
+}

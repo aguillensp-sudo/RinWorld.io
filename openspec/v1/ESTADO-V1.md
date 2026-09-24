@@ -387,6 +387,39 @@ motivo.** Fecha de máquina al cerrar por segunda y última vez: `2026-09-22`, 0
 > incluida — y no queda ninguna C5 pendiente de esta serie de hallazgos. Sin código nuevo
 > hoy: solo esta confirmación, el registro y el cierre de sesión (servidor de desarrollo
 > parado, ver §5 y el pie de este fichero).
+
+**Día 23 de V1 · 24-sep-2026 · Estado: CERRADO A MEDIAS — código en `mvp/bootstrap`, C5 del PO PENDIENTE.**
+Fecha de máquina al escribir: `2026-09-24`, 07:07 UTC (`date -u`). Sesión de un solo objetivo:
+la séptima pantalla, con cronómetro (arrancado a las 05:54:35 UTC).
+
+> **EL DÍA EN SIETE LÍNEAS.**
+>
+> 1. **`SRCH-03` · Gestión de Watchers, construida: VERDE en 2 intentos** (corrida 03,
+>    `corrida-03`), **0 líneas tocadas a mano de 1 279**, 8 ficheros sin tocar de 8. Artefacto
+>    del Coder en `ccbf187`. **Falta la C5 del PO** — sin ella no cuenta como aceptada.
+> 2. **Precondiciones, escritas a mano antes de la tarea:** `0035` (tabla `watchers`, vista
+>    `watcher_list` con el estado EFECTIVO, límite de 50, RLS, cuatro acciones), su siembra
+>    (`demo_watchers.sql`), la capa de datos `watchers.ts` (23 pruebas), el wiring (`Mis
+>    watchers` desde `Comprando`) y el contrato (52 pruebas de unidad + 7 e2e). **`0035`
+>    aplicada en las dos bases y releída del catálogo.**
+> 3. **Tres corridas, una válida.** La 01 salió inválida por MI entorno (worktree sin
+>    `app/.env`, `F-193`) y la 02 escaló por dos defectos de MI contrato (`F-194`) y un
+>    residuo del foro (`F-195`). Las dos se conservan como evidencia y **no cuentan para la
+>    cifra 2**. Coste total del generador con las tres: 0,318 $; de la válida, 0,085 $.
+> 4. **Hallazgo de seguridad, dicho en voz alta: `F-192`.** En producción `authenticated`
+>    tiene `UPDATE` en 17 de las 19 tablas y `anon` tiene ALL en 8 tablas antiguas. Las 19
+>    tienen RLS, así que hoy protege solo la RLS; y los asertos de privilegios del banco de
+>    esquema pasan porque el banco es más estricto que la plataforma. **Es del PO.**
+> 5. **Docker Desktop no arranca (`F-191`)** y lo dejé peor de lo que estaba al relanzarlo a
+>    la fuerza. `0035` se validó en PGlite (Postgres 18 en WASM) con tres mutaciones
+>    deliberadas detectadas. **Hace falta reiniciar el PC.**
+> 6. **La restricción de scroll propio, escrita por primera vez en la tarea, la cumplió el
+>    Coder sin intervención (`F-198`).** n = 1, con la instrucción puesta: prueba que lo hace
+>    si se le pide, no que lo haga solo.
+> 7. **Tres contradicciones de la spec resueltas por mí y pendientes del PO (`F-196`):** el
+>    contador `4 / 50` del ejemplo (es `1 / 50`), `País: Europa` frente a un `País` ISO, y un
+>    plazo de renovación de 3 días que la spec no da.
+
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -433,6 +466,38 @@ motivo.** Fecha de máquina al cerrar por segunda y última vez: `2026-09-22`, 0
 | La CI de `F-190` | `gh run watch 35699368803` sobre `ab98e79` | Los **seis jobs** en verde, incluidos los dos despliegues |
 | Que producción sirve el arreglo de `F-190` | Descarga de `/assets/index-DMJjyngJ.css`, extracción de `.page`/`.screen` por selector minificado | `._page_3xbnz_14{…flex:1;min-height:0;…overflow-y:auto}` y `._screen_186li_1{…flex:1;min-width:0;min-height:0;…overflow-y:auto}` — por contenido |
 
+**Tabla del 24-sep-2026, Día 23 — lo comprobado HOY:**
+
+| Afirmación | Verificado contra | Resultado |
+|---|---|---|
+| Fecha de máquina | `date -u` | `2026-09-24`, 07:07 UTC al escribir; cronómetro desde 05:54:35 |
+| Que `0035` está en las dos bases | `list_migrations` antes, y `execute_sql` después contra `pg_proc`/`has_table_privilege`/`has_function_privilege` (F-146: catálogo, no `.sql`) | En `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`: `anon` nada; `authenticated` solo `select, insert, delete` en `watchers`, solo `select` en `watcher_list`, `execute` en las cuatro acciones y en `watcher_effective_status`, nada en `init_watcher`/`check_watcher_limit`/`watcher_lock_own`/`watchers_evaluate_expirations`. **Salió `UPDATE` de `authenticated` por defecto y se revocó** (`F-192`) |
+| Que el esquema aguanta | `supabase/tests/run.sh` **NO se pudo correr** (`F-191`). PGlite (Postgres 18 WASM) con 35 migraciones y `01_schema_smoke.sql`, más tres mutaciones de `0035` | Smoke verde; **las tres mutaciones (límite 51, vencimiento apagado, `select` sin filtro de organización) hacen fallar el banco**. **No es el Postgres de CI (16) ni el de las bases (17)**: la CI corre el `run.sh` real al empujar |
+| Que la siembra reproduce los ejemplos de la spec | Vista `watcher_list` en las dos bases tras `demo_watchers.sql` | `6308-ZZ` 27 días, `7210-BECBP` 12 días pausado, `22316-E` PENDIENTE con «expira en 2», `NU2210-E-TVP2` TRIGGERED, `6205-2RS` EXPIRED; BETA con 2 ACTIVE |
+| Que la app sigue entera | `npx vitest run` y `npx tsc --noEmit` | **1 033 pasan**, 23 saltados; typecheck limpio |
+| Que el arnés valida la tarea | `python -m harness.graph.run harness/tasks/SRCH-03.json --seco` | Primero **10 problemas** (nombres accesibles que el contrato busca y la tarea no declaraba, `F-125`); corregidos, «todo verde, cero coste» |
+| La corrida 03 | `harness/metrics/SRCH-03/corrida-03/`, `git show --numstat ccbf187` | VERDE en 2 intentos; intento 1 con C1 y C2 rojos; **1 279 líneas, 8 ficheros, 0 tocados**; 0,0851 $ |
+| Que las corridas 01 y 02 no miden al Coder | Feedback crudo de C2 en su log | 01: `locator.fill: waiting for getByLabel('Correo electrónico')` en `auth.setup.ts` (sin `.env`). 02: tres fallos del foro, uno de anclaje en paralelo y uno de localizador ambiguo |
+| El estado del foro en producción | SQL: reacciones por post de `c001`/`c003`/`c004` | Una reacción de `c003` post 2 estaba en `c004` post 2; repuesta con la sentencia de `demo_forum.sql`: **5 reacciones**, distribución de la siembra |
+| Que producción tiene RLS en todo | SQL sobre `pg_class.relrowsecurity` | 19 tablas, **19 con RLS**, ninguna sin ella |
+| Cifra 7 | `python -m harness.core.orchestration_metrics` con `c11dd857….jsonl` copiado al directorio del worktree (`F-197`) | **23,53 $** de coste-sombra, `claude-sonnet-5`, hasta la corrida 03 |
+| Que `npm run dev`/e2e apuntan a producción | `app/.env`, solo el ref | `troxminloxkjwihwfevs` (`F-188`, decidido): **los e2e de hoy escribieron en producción** (solo pausar/reactivar, con `finally`) |
+| **Que el resultado visual de `SRCH-03` es bueno** | **No lo he verificado yo**: solo tests y e2e | **C5 del PO PENDIENTE** |
+| La CI y el despliegue | Se mira tras el push del cierre | Ver el pie de este fichero |
+
+**Las ocho cifras de la séptima pantalla:**
+
+| # | Cifra | `SRCH-03` | Nota |
+|---|---|---|---|
+| 1 | Pantallas aceptadas | **pendiente de C5** | Construida y verde |
+| 2 | Corridas sin escalada | **Sí** (la 03) | Las 01 y 02 escalaron por entorno y contrato: no cuentan (`UMBRAL` §5.3) |
+| 3 | Verde al primer intento | **No** | Intento 1 rojo en C1 y C2 |
+| 4 | Corrección humana | **0 %** (0 de 1 279) | |
+| 5 | Ficheros sin tocar | **8 de 8** | |
+| 6 | Coste del generador | **0,085 $** (0,318 $ con las dos inválidas) | Dentro del tope de 0,25 $ solo la válida: **con las repeticiones lo supera** |
+| 7 | Coste de orquestación | **23,53 $** | Incluye ~35 minutos de Docker (`F-191`) y la sesión entera hasta la corrida; **primera cifra 7 medida en sesión propia** |
+| 8 | Tiempo de reloj | **1 h 10 min hasta «lista para C5»** (05:54→07:04 UTC), ~35 min de ellos en `F-191` | **Sin cerrar: falta la C5**; el reloj se para mientras espera al PO |
+
 ## 2 · Dónde estamos, por corriente
 
 ### Corriente A · Núcleo — EN CURSO
@@ -469,7 +534,9 @@ motivo.** Fecha de máquina al cerrar por segunda y última vez: `2026-09-22`, 0
 | **`F-177` · el GRANT de tabla de sobra en casi todo `public` no es un agujero** | ✅ **18-sep**, comprobado empíricamente en Postgres desechable (no solo leído): RLS bloquea la escritura sin política pase lo que pase con el `GRANT`. Deuda de higiene, no de seguridad |
 | Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
 
-### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24, remedidas (Día 21); séptima ELEGIDA, sin construir (Día 22)**
+### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24 remedidas (Día 21); séptima CONSTRUIDA, VERDE, a la espera de la C5 del PO (Día 23)**
+
+**24-sep-2026: `SRCH-03` construida.** Precondiciones a mano (`0035`, siembra, `watchers.ts`, wiring, contrato), corrida 03 VERDE en 2 intentos, 1 279 líneas sin una tocada, y las ocho cifras arriba (§1). **Es la primera pantalla con el scroll propio escrito en la tarea, y el Coder lo cumplió** (`F-198`). Entrada: botón `Mis watchers` en SRCH-01 (`App.tsx` mantiene `watchersOpen`, que se limpia al cambiar de ítem de nav). **Sin crear watchers desde la pantalla** (spec §6: se crean desde SRCH-01/02 o por VERA, que no existen), **sin evaluación contra `stock.updated`, sin email, sin badge en el nav**: `0035` lo dice en su cabecera.
 
 **22-sep-2026: `SRCH-03` · Gestión de Watchers elegida como séptima pantalla**, delegado
 por el PO a esta sesión. Razonamiento completo (módulo sin tocar por la corriente B, forma
@@ -510,20 +577,20 @@ Sin cambios.
 
 ## 3 · Qué toca mañana, en este orden
 
-1. 🟠 **Construir `SRCH-03` (Gestión de Watchers), en una sesión propia y con cronómetro
-   con las esperas del PO descontadas.** Es la razón de ser de la sesión nueva: sin ella
-   las cifras 7 y 8 siguen sin veredicto. Capa de datos nueva (`watchers`, no existe en
-   ninguna migración; spec funcional ya la describe en
-   `openspec/specs/conversational-search/spec.md`), primero validada en Postgres
-   desechable, como todas las anteriores.
+1. 🟠 **La C5 del PO sobre `SRCH-03`.** Está construida, verde y desplegada por la CI
+   del cierre; **no cuenta como aceptada hasta que el PO la pruebe** (cifras 1 y 8). Con
+   `npm run dev` contra producción, en `Comprando` → `Mis watchers`, con la cuenta ALPHA
+   (`Rodamientos Ibéricos`): los cinco estados están sembrados. **Sin pulsar `Eliminar`:
+   borra de verdad** (los otros botones son reversibles). Y, en el mismo paso, **decidir las
+   tres contradicciones de `F-196`** (contador `1 / 50`, `País` ISO frente a `Europa`, plazo
+   de renovación de 3 días).
 2. ✅ **C5 de `F-189` y `F-190` recibidas, las dos.** El PO probó `FORO-01`/`ADMIN-02`
    (23-sep) y `DIR-01`/`ADMIN-01` (23-sep) ya desplegados: «está todo aprobado y
    contrastado». Cerradas del todo, sin C5 pendiente de esta serie.
-3. 🟠 **Meter el scroll propio en la plantilla de tarea del Coder — ya no es «valorarlo».**
-   **Seis de seis** pantallas de la corriente B han tenido este fallo (`DIR-01`, `ADMIN-01`,
-   `FORO-01`, `FORO-02`, `FORO-03`, `ADMIN-02`, ver §2). Es un hueco sistemático de lo que
-   la tarea del generador pide, y la séptima pantalla (`SRCH-03`) es la prueba: si sale con
-   el mismo fallo, confirma que el generador no lo va a añadir por su cuenta.
+3. ✅ **El scroll propio ya está en la plantilla de tarea del Coder** (`F-198`): restricción
+   en `constraints` y test que lee el CSS, anotado en `Dia-04_decisiones_arnes.md` §5. En
+   `SRCH-03` el Coder lo cumplió. **Queda hacerlo en las tareas antiguas solo si se vuelven a
+   correr** (no se van a volver a correr).
 4. **La deuda que dejó `F-170`** (contradicciones ENTRE specs y entre spec y esquema), **la de `F-172`** (el estándar de buscador solo en `DIR-01` y `FORO-02`; `INV-01`/`MSG-01`/`SentOffers` sin migrar) **y la de `F-178`** (el foro sin teardown ni `resetDemo`). Sin cambios.
 
 En paralelo, sin acción propia desde este lado:
@@ -531,7 +598,9 @@ En paralelo, sin acción propia desde este lado:
 - **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin recomprobar hoy. **No tocar `vera/index.ts`.**
 - Fuera de sesión: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de Vercel.
 
-**Hecho hoy que ya no está aquí:** `F-188` decidido, `SRCH-03` elegida, `F-189` cerrado y
+**Nuevo del 24-sep, sin dueño todavía:** **`F-192`** (privilegios por defecto anchos en producción — del PO, decidir si se abre una migración de revocación revisada tabla a tabla) y **`F-191`** (reiniciar el PC para que Docker Desktop vuelva; hasta entonces el banco de esquema local no corre). **Y el reloj de la cifra 8 sigue parado esperando al PO.**
+
+**Hecho el 22-sep que ya no está aquí:** `F-188` decidido, `SRCH-03` elegida, `F-189` cerrado y
 confirmado a ojo, `F-190` encontrado por el PO y cerrado el mismo día. **Y una fecha
 límite:** Cuscinetti Padana vence el **30-sep** y entonces la siembra de cobros cambia de
 estado; quien vuelva a revisar `ADMIN-02` después tiene que resembrar (`demo_billing.sql`)
@@ -602,6 +671,11 @@ antes.
 
 | | Qué | Quién lo quita |
 |---|---|---|
+| 🔴 | **`F-192` · privilegios por defecto anchos en producción.** `authenticated` con `UPDATE` en 17 de 19 tablas, `anon` con ALL en 8 tablas antiguas; las 19 con RLS. El banco de esquema no lo ve (`00_auth_stub.sql` no copia las DEFAULT PRIVILEGES de tablas y copiarlas rompe los asertos de `0028`). **Solo `0035` está corregida.** | **El PO decide** si se abre una migración de revocación revisada tabla a tabla |
+| 🟠 | **`F-191` · Docker Desktop no arranca** (sockets huérfanos en `%LOCALAPPDATA%\Docker\run` tras mi cierre forzado). `supabase/tests/run.sh` no corre en local | Reiniciar el PC, o borrar los tres ficheros como administrador |
+| 🟠 | **`F-196` · tres contradicciones de la spec de `SRCH-03` resueltas por mí** (contador, `País`, plazo de renovación de 3 días) | El PO |
+| 🟠 | **`F-178` · el foro sin teardown ni `resetDemo`**: hoy volvió a costar una corrida (`F-195`, reacción desplazada en producción) | Sin decidir: sumar el foro a `resetDemo`, o probar reacciones solo con mocks |
+| ⚪ | **`F-197` · una sesión lanzada fuera de este repo no la mide el medidor de coste.** Esta se midió copiando su `.jsonl` al directorio del worktree | Lanzar desde el repo, o que el medidor acepte una ruta |
 | ✅ | **`F-184` · CERRADO el 21-sep.** El feedback del reintento iba lleno de avisos de Node (36 de 49 líneas): `NO_COLOR` heredado por los workers de Playwright. Ya no se pone en ese comando. | Quedan 4 líneas fijas de arranque sin tocar; las corridas anteriores no se reescriben |
 | ⚪ | **`F-188` · el desarrollo local apunta a producción**, no al staging que decía `entornos.md`. **Decidido el 22-sep-2026 por el PO: se deja como está.** Las C5 se siguen haciendo contra producción, sin pulsar nada que escriba | Nadie — es la decisión, no queda acción |
 | ✅ | **`F-186` sospecha confirmada, arreglada y confirmada a ojo: `F-189` (22-sep).** `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) tenían el mismo fallo. El PO probó `FORO-01`/`ADMIN-02` ya desplegados: «FUNCIONAN» | Cerrado del todo |
@@ -683,7 +757,14 @@ Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
 - **Qué vio el PO en pantalla en `F-186`.** Lo confirmó él («perfecto, arreglado»); yo solo verifiqué tests y que el CSS llega a producción. Nadie ha probado el foro con una ventana más baja que la suya.
 - **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien tras `F-172`.** `F-172` reescribió 110 líneas de `DIR-01` después de su C5 y nadie las ha vuelto a mirar en pantalla.
 - **Si `Messages`/`Thread` (`MSG-01`/`MSG-02`) o `SentOffers` (`VND-01`) tienen el mismo fallo.** Son del MVP, no de la corriente B, así que ni `F-186` ni `F-189`/`F-190` los tocaron — y nadie ha mirado su CSS ni los ha probado con ventana baja. Con seis de seis pantallas de la corriente B afectadas, dejar de mirar las del MVP por darlas por hechas sería exactamente el error que `F-132`/`F-146` ya describieron: comprobar el continente («ya se construyeron, ya se probaron») no es comprobar el contenido.
-- **Cuánto costará `SRCH-03` de verdad, en dinero y en reloj.** Es precisamente lo que la sesión nueva con cronómetro tiene que producir; hoy solo hay spec, HTML aprobado y el razonamiento de por qué se eligió.
+- **Cuánto costó `SRCH-03` de verdad, en reloj.** El dinero está medido (0,085 $ del generador, 23,53 $ de orquestación) y el reloj hasta «lista para C5» también (1 h 10 min); **la cifra 8 no se cierra hasta que el PO dé la C5**, y la sesión de hoy mezcla el trabajo con ~35 minutos de Docker que no son de la fábrica.
+- **Si `SRCH-03` se ve bien.** Nadie la ha mirado en un navegador: solo tests, e2e y el contrato de CSS. **Ni siquiera con la ventana baja.**
+- **Si el Coder habría añadido el scroll sin que se lo pidieran.** No se sabe y ya no se puede saber con esta pantalla: la instrucción iba escrita (`F-198`). El punto 3 de §3 del cierre del 22-sep («la séptima es la prueba») **se cambió por decisión mía al escribir la tarea**, y esa decisión es de las que el PO puede querer revisar.
+- **Si `watcher_set_paused`/`watcher_renew`/`watcher_let_expire`/`watcher_update` se comportan bien con un cliente en pantalla.** El e2e solo prueba pausar y reactivar (reversibles); renovar, expirar, editar y eliminar solo con mocks y con el banco de esquema en PGlite.
+- **Si `0035` pasa el banco oficial.** No se ha corrido `run.sh` (`F-191`). Lo verifica la CI al empujar, y es la primera vez que un Postgres 16 ve la migración.
+- **Cuántas tablas más tienen privilegios de sobra.** Se contaron 17 con `UPDATE` para `authenticated` y 8 con acceso de `anon`; **no se ha mirado columna a columna ni qué depende de cada concesión**, y no se ha tocado ninguna salvo `watchers`.
+- **Si el plazo de renovación de 3 días es el que quiere el producto.** Es un supuesto mío (`F-196`).
+- **Qué hace `app.watchers_evaluate_expirations()` en producción.** Nadie la ha llamado y no está enganchada a ningún job; la vista ya muestra el estado efectivo sin ella.
 
 ## 7 · Ritual de cierre — cómo se sobrescribe este fichero
 
@@ -728,6 +809,9 @@ escribir, no solo antes.
 Orden de lectura, y el orden importa:
 
 1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
+   **Worktree nuevo: necesita `app/.env` (copiarlo de la raíz, sigue ignorado por git) y el
+   junction de `node_modules` (`mklink /J`, se quita con `rmdir`, nunca `rm -rf`).** Sin el
+   primero el e2e no llega al login y la corrida sale inválida (`F-193`).
 2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Sin
    esa decisión no se escribe SQL de reparto de CEK.
 3. **`openspec/v1/UMBRAL-FABRICA-V1.md`** ANTES de tocar nada de la fábrica de pantallas o
@@ -912,3 +996,5 @@ decididas · fecha releída de nuevo: `2026-09-18`, 18:45 UTC, sigue el mismo d�
 el cierre del Día 17 · quedan DOS C5 sin cerrar (`FORO-02` con su corrección ya aplicada, y
 `FORO-03` entera) y `ADMIN-02` sin tarea del arnés ni wiring de precondición —ninguno de los
 tres cuenta como hecho · Dirección Técnica, Nortex Systems*
+
+*Cierre del Día 23 · 24-sep-2026 · `2026-09-24` 07:1x UTC (`date -u`) · `SRCH-03` construida y VERDE (corrida 03, 2 intentos, 0 líneas tocadas de 1 279), `0035` en las dos bases y releída del catálogo, **C5 del PO PENDIENTE** — sin ella ni la cifra 1 ni la 8 se cierran · tres hallazgos abiertos para el PO (`F-192` privilegios anchos en producción, `F-196` tres decisiones de spec, `F-178` foro sin teardown) y uno de máquina (`F-191`, Docker: reiniciar el PC) · la CI y el despliegue del commit de cierre se miran tras el push y se anotan en un commit posterior · Dirección Técnica, Nortex Systems*

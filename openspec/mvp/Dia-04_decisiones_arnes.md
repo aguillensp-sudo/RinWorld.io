@@ -276,6 +276,15 @@ verificable (`CLAUDE.md` §7).
 
 ---
 
+> **Adenda del 24-sep-2026 (`F-198`) — el scroll propio es parte del formato de la tarea.**
+> Seis de seis pantallas de la corriente B (`DIR-01`, `ADMIN-01`, `FORO-01/02/03`,
+> `ADMIN-02`) salieron sin scroll propio y hubo que arreglarlas a mano (`F-186`, `F-189`,
+> `F-190`): `.bwcnt` es `overflow: hidden` y una pantalla más alta que la ventana se recorta
+> sin barra. Desde `SRCH-03`, toda tarea de pantalla lleva en `constraints` la regla
+> `flex: 1; min-height: 0; overflow-y: auto` sobre la clase raíz, y un test que lee el CSS
+> (`*Scroll.test.ts`, patrón de `AdminBillingScroll.test.ts`). En `SRCH-03` el Coder la
+> cumplió sin intervención; n = 1, con la instrucción escrita.
+
 ## 6 · Decisión · Métricas y trazas
 
 - **Una fila de CSV por intento**, generada desde el JSON (`CLAUDE.md` §6, F-010). Ningún

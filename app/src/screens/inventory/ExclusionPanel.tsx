@@ -135,6 +135,7 @@ export function ExclusionPanel({
 
       {/* ── Exclusión por geografía ── */}
       <section className={styles.section} aria-label="Exclusión por geografía">
+        <div className={styles.geoRow}>
         <div className={styles.field}>
           <label className={styles.fieldLabel} htmlFor={CONTINENT_SELECT_ID}>
             {CONTINENT_LABEL}
@@ -178,7 +179,6 @@ export function ExclusionPanel({
           </div>
         )}
 
-        <div className={styles.geoRow}>
           <button
             type="button"
             className={styles.addGeo}
@@ -188,6 +188,7 @@ export function ExclusionPanel({
             {ADD_GEO_LABEL}
           </button>
         </div>
+
         <p className={styles.hint}>{GEO_HINT}</p>
 
         <ul className={styles.tagList}>

@@ -136,8 +136,14 @@
 
 .geoRow {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
+}
+
+/* Diseño aprobado (INV-07 · VIS): continente, país y `Añadir` en una sola fila. */
+.geoRow .field {
+  flex: 1;
+  min-width: 0;
 }
 
 .addGeo {

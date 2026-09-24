@@ -12,7 +12,9 @@ import { haveCreds, topNav } from './fixtures';
  * `inventory_exclusions` no dejase escribir al ADMIN, aunque el `insert` mandase la
  * columna equivocada, o aunque una exclusión no llegase a persistir.
  *
- * ⚠ **EL MODO GUARDADO SOLO CAMBIA CON LA LISTA VACÍA, Y SE REVIERTE EN UN `finally`.**
+ * ⚠ **EL MODO GUARDADO SE CAMBIA SOLO UN INSTANTE, Y SE REVIERTE EN UN `finally`.** La siembra deja
+ * `Asia` y `Rusia` excluidas (`demo_exclusions.sql`): con el modo restringido solo dejarian de ver el
+ * stock las organizaciones con sede ahi (`Anadolu Rulman`, sin cuenta).
  * `RESTRINGIDA` con la lista vacía sigue mostrando el stock a todos
  * (`app.can_view_inventory_of`: solo excluye a quien esté en la lista), así que no
  * descuadra los e2e de SRCH-01, DIR-01 y de los hilos. **Nunca se guarda `RESTRINGIDA`
@@ -92,7 +94,7 @@ test.describe('INV-07 · visibilidad real (ALPHA, administrador)', () => {
     // Regresion del PO (24-sep): «aunque guardes configuración, no se guardan los cambios».
     const modoGuardado = () => page.locator('[data-saved-mode]').getAttribute('data-saved-mode');
     try {
-      await quitarSiExiste(page); // la lista TIENE que estar vacia para poder guardar restringida
+      await quitarSiExiste(page); // ojo: la siembra deja Asia y Rusia puestas (demo_exclusions.sql); solo afectan a Anadolu (TR, AS), sin cuenta
       await page.getByRole('radio', { name: /Visibilidad restringida/ }).check();
       await page.getByRole('button', { name: 'Guardar configuración' }).click();
       await expect(page.getByRole('status')).toHaveText('Configuración guardada. Los cambios tienen efecto inmediato.');

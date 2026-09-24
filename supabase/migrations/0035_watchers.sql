@@ -468,3 +468,13 @@ grant select                 on public.watcher_list to authenticated, service_ro
 
 revoke all on public.watchers     from anon;
 revoke all on public.watcher_list from anon;
+
+-- ⚠ Supabase concede por defecto UPDATE (y en la vista, escritura) a `authenticated`
+-- sobre cada tabla nueva de `public`, igual que regala EXECUTE en las funciones
+-- (F-146). Sin UPDATE policy la RLS ya lo cortaba, pero un privilegio que solo
+-- protege una politica es una segunda cerradura menos. Se quita a mano: el
+-- Postgres desechable no lo enseña porque `00_auth_stub.sql` solo copia las
+-- DEFAULT PRIVILEGES de funciones.
+revoke update on public.watchers from authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.watcher_list from authenticated;
+revoke truncate, references, trigger on public.watchers from authenticated;

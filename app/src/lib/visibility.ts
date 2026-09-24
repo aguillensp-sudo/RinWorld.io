@@ -240,12 +240,22 @@ export async function addExclusion(ownerOrgId: string, target: ExclusionTarget):
 }
 
 export async function removeExclusion(id: string): Promise<void> {
-  const { error } = await supabase.from('inventory_exclusions').delete().eq('id', id);
+  const { data, error } = await supabase.from('inventory_exclusions').delete().eq('id', id).select('id');
   if (error) throw error;
+  if (!data || data.length === 0) throw new Error('No se pudo quitar la exclusión: ya no existe o tu cuenta no tiene permiso.');
 }
 
 /** `Guardar configuración`: solo el modo. La lista ya se escribió al añadir o quitar. */
 export async function saveVisibilityMode(orgId: string, mode: VisibilityMode): Promise<void> {
-  const { error } = await supabase.from('organizations').update({ inventory_visibility_mode: mode }).eq('id', orgId);
+  // `.select()` devuelve las filas realmente cambiadas: una RLS que filtra el UPDATE responde 204
+  // SIN error y SIN filas, y sin esta comprobacion la pantalla diria «guardado» sin haber guardado.
+  const { data, error } = await supabase
+    .from('organizations')
+    .update({ inventory_visibility_mode: mode })
+    .eq('id', orgId)
+    .select('inventory_visibility_mode');
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error('No se pudo guardar la configuración: tu cuenta no tiene permiso para cambiar la visibilidad.');
+  }
 }

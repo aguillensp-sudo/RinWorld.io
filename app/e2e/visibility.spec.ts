@@ -12,13 +12,12 @@ import { haveCreds, topNav } from './fixtures';
  * `inventory_exclusions` no dejase escribir al ADMIN, aunque el `insert` mandase la
  * columna equivocada, o aunque una exclusión no llegase a persistir.
  *
- * ⚠ **NADA DE ESTE FICHERO CAMBIA EL MODO GUARDADO, Y ES A PROPÓSITO.** Poner
- * `RESTRINGIDA` a `Rodamientos Ibéricos` con la lista vacía le quitaría el stock a
- * todos los compradores y descuadraría los e2e de SRCH-01, DIR-01 y de los hilos.
- * `Guardar configuración` se prueba solo con mocks. Lo que SÍ escribe es una
- * exclusión de organización, y es inocua mientras el modo guardado sea el abierto
- * (`app.can_view_inventory_of` solo mira la lista en `RESTRINGIDA`) y reversible:
- * se quita en un `finally`.
+ * ⚠ **EL MODO GUARDADO SOLO CAMBIA CON LA LISTA VACÍA, Y SE REVIERTE EN UN `finally`.**
+ * `RESTRINGIDA` con la lista vacía sigue mostrando el stock a todos
+ * (`app.can_view_inventory_of`: solo excluye a quien esté en la lista), así que no
+ * descuadra los e2e de SRCH-01, DIR-01 y de los hilos. **Nunca se guarda `RESTRINGIDA`
+ * con una exclusión puesta.** Las exclusiones se añaden y se quitan con el modo
+ * guardado en el abierto, donde son inocuas.
  */
 if (process.env.CI && !haveCreds) {
   throw new Error(
@@ -87,6 +86,43 @@ test.describe('INV-07 · visibilidad real (ALPHA, administrador)', () => {
     // (aislado, el artefacto pasa): plazo generoso y la red en reposo antes de contar.
     await page.waitForLoadState('networkidle');
     await expect.poll(() => paises.count(), { timeout: 20_000 }).toBeGreaterThan(1);
+  });
+
+  test('Guardar configuración persiste el modo tras recargar (y se revierte)', async ({ page }) => {
+    // Regresion del PO (24-sep): «aunque guardes configuración, no se guardan los cambios».
+    const modoGuardado = () => page.locator('[data-saved-mode]').getAttribute('data-saved-mode');
+    try {
+      await quitarSiExiste(page); // la lista TIENE que estar vacia para poder guardar restringida
+      await page.getByRole('radio', { name: /Visibilidad restringida/ }).check();
+      await page.getByRole('button', { name: 'Guardar configuración' }).click();
+      await expect(page.getByRole('status')).toHaveText('Configuración guardada. Los cambios tienen efecto inmediato.');
+      await page.reload();
+      await abrirVisibilidad(page);
+      // Se espera al radio ANTES de leer el atributo: hasta que llega la consulta el modo es el del defecto.
+      await expect(page.getByRole('radio', { name: /Visibilidad restringida/ })).toBeChecked();
+      await expect.poll(modoGuardado).toBe('RESTRINGIDA');
+    } finally {
+      await page.getByRole('radio', { name: /Visible para todos/ }).check();
+      await page.getByRole('button', { name: 'Guardar configuración' }).click();
+      await expect(page.getByRole('status')).toBeVisible();
+    }
+    await page.reload();
+    await abrirVisibilidad(page);
+    await expect(page.getByRole('radio', { name: /Visible para todos/ })).toBeChecked();
+    await expect.poll(modoGuardado).toBe('VISIBLE_TODOS');
+  });
+
+  test('las sugerencias son un desplegable y lo escrito NUNCA se añade solo', async ({ page }) => {
+    await page.getByRole('radio', { name: /Visibilidad restringida/ }).check();
+    const buscador = page.getByPlaceholder('Buscar organización por nombre...');
+    await buscador.fill('zzzz-no-existe');
+    await expect(page.getByText('Ninguna organización coincide con «zzzz-no-existe».')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Quitar / })).toHaveCount(0);
+    await buscador.fill('cuscinetti');
+    await expect(page.getByText('Selecciona la organización que quieres excluir')).toBeVisible();
+    await expect(page.getByRole('button', { name: CANDIDATA })).toBeVisible();
+    // Sigue sin haber ninguna etiqueta: no se ha elegido nada.
+    await expect(page.getByRole('button', { name: /^Quitar / })).toHaveCount(0);
   });
 
   test('añadir una exclusión de organización persiste tras recargar, y se quita (se deja como estaba)', async ({ page }) => {

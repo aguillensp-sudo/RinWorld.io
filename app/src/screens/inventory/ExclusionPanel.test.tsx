@@ -85,6 +85,22 @@ describe('ExclusionPanel · organizaciones', () => {
     expect(h.onPickOrg).toHaveBeenCalledWith(CANDIDATOS[0]);
   });
 
+  it('las sugerencias son un desplegable con su título, distinto de las etiquetas ya excluidas (24-sep)', () => {
+    montar({ candidates: CANDIDATOS, query: 'n' });
+    expect(screen.getByText('Selecciona la organización que quieres excluir')).toBeInTheDocument();
+  });
+
+  it('escribir algo que no coincide con ninguna organización lo dice, y NO ofrece añadir lo escrito', () => {
+    montar({ candidates: [], query: 'zzzz' });
+    expect(screen.getByText('Ninguna organización coincide con «zzzz».')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'zzzz' })).not.toBeInTheDocument();
+  });
+
+  it('sin texto escrito no hay mensaje de «sin coincidencias»', () => {
+    montar({ candidates: [], query: '' });
+    expect(screen.queryByText(/Ninguna organización coincide/)).not.toBeInTheDocument();
+  });
+
   it('sin candidatos no pinta ninguna lista de sugerencias', () => {
     montar({ candidates: [] });
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();

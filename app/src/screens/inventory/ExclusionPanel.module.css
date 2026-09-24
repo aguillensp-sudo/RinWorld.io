@@ -102,34 +102,72 @@
 
 /* ── Autocompletado ────────────────────────────────────────────────────── */
 
-.candidates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.candidate {
-  padding: 6px 12px;
+.dropdown {
   background: var(--bw-surface-mist);
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: var(--bw-radius);
+  box-shadow: var(--bw-focus-halo);
+  overflow: hidden;
+}
+
+.dropdownTitle {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--bw-cold-white);
+  border-bottom: 1px solid var(--bw-line-steel-strong);
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  letter-spacing: var(--bw-ls-hint);
+  text-transform: uppercase;
+  color: var(--bw-input-placeholder);
+}
+
+.candidates {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--bw-divider-mist);
   font-family: var(--bw-font-body);
   font-size: var(--bw-size-input);
+  text-align: left;
   color: var(--bw-input-text);
   cursor: pointer;
 }
 
+.candidateMeta {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-input-placeholder);
+}
+
 .candidate:hover:not(:disabled) {
   background: var(--bw-hover-surface);
-  border-color: var(--bw-hover-border);
 }
 
 .candidate:disabled {
   color: var(--bw-hint-steel);
   cursor: not-allowed;
+}
+
+.noMatch {
+  margin: 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-placeholder);
 }
 
 /* ── Botón de geografía ────────────────────────────────────────────────── */

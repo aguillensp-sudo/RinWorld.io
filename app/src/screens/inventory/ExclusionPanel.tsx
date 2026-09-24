@@ -87,6 +87,7 @@ export function ExclusionPanel({
 
       {/* ── Exclusión por organización ── */}
       <section className={styles.section} aria-label="Exclusión por organización">
+        <p className={styles.subTitle}>Exclusión por organización</p>
         <input
           type="text"
           className={styles.search}
@@ -135,6 +136,7 @@ export function ExclusionPanel({
 
       {/* ── Exclusión por geografía ── */}
       <section className={styles.section} aria-label="Exclusión por geografía">
+        <p className={styles.subTitle}>Exclusión por geografía</p>
         <div className={styles.geoRow}>
         <div className={styles.field}>
           <label className={styles.fieldLabel} htmlFor={CONTINENT_SELECT_ID}>

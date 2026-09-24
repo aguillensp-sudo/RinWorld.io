@@ -18,6 +18,11 @@
   gap: 16px;
 }
 
+/* Sin esto los hijos se ENCOGEN en vez de desplazarse (el boton pasaba de 40 a 20 px al guardar). */
+.screen > * {
+  flex-shrink: 0;
+}
+
 .eyebrow {
   margin: 0;
   font-family: var(--bw-font-title);
@@ -88,27 +93,40 @@
   flex-direction: column;
   gap: 12px;
   margin: 0;
-  padding: var(--bw-pad-checkbox);
+  padding: 24px;
   background: var(--bw-surface-mist);
   border: 1px solid var(--bw-line-steel);
   border-radius: var(--bw-radius);
 }
 
-.legend {
-  padding: 0 4px;
+.legend,
+.cardTitle {
+  margin: 0 0 4px;
+  padding: 0;
   font-family: var(--bw-font-title);
-  font-size: var(--bw-size-label);
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: var(--bw-ls-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--bw-steel-mist);
+}
+
+/* Tarjeta de la lista de exclusion: la misma caja que el selector de modo (diseno aprobado). */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
 }
 
 .option {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: var(--bw-pad-radio);
+  padding: 14px 16px;
   background: var(--bw-warm-cream);
   border: 1.5px solid var(--bw-line-steel);
   border-radius: var(--bw-radius);
@@ -135,7 +153,7 @@
 
 .optionLabel {
   font-family: var(--bw-font-body);
-  font-size: var(--bw-size-input);
+  font-size: 14px;
   font-weight: 600;
   color: var(--bw-deep-steel);
 }
@@ -189,7 +207,7 @@
   border: none;
   border-radius: var(--bw-radius);
   font-family: var(--bw-font-body);
-  font-size: var(--bw-size-body);
+  font-size: 14px;
   font-weight: 500;
   color: var(--bw-warm-cream);
   cursor: pointer;

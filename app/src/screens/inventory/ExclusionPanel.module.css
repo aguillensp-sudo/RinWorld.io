@@ -7,10 +7,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 20px;
-  background: var(--bw-warm-cream);
-  border: 1px solid var(--bw-line-steel);
-  border-radius: var(--bw-radius);
   transition: opacity 0.2s, filter 0.2s;
 }
 
@@ -60,7 +56,7 @@
 .search,
 .select {
   width: 100%;
-  padding: var(--bw-pad-input);
+  padding: 9px 12px; /* diseno aprobado: 9px 12px */
   background: var(--bw-surface-mist);
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: var(--bw-radius);
@@ -95,7 +91,7 @@
   margin: 0;
   font-family: var(--bw-font-mono);
   font-size: var(--bw-size-hint);
-  letter-spacing: var(--bw-ls-hint);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--bw-input-placeholder);
 }
@@ -136,8 +132,18 @@
 
 .geoRow {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
+}
+
+/* En el diseno aprobado los selectores no llevan etiqueta visible: siguen ahi para lectores de pantalla. */
+.geoRow .fieldLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* Diseño aprobado (INV-07 · VIS): continente, país y `Añadir` en una sola fila. */
@@ -223,4 +229,15 @@
 .tagRemove:disabled {
   color: var(--bw-hint-steel);
   cursor: not-allowed;
+}
+
+/* Subtitulo de cada bloque del panel (`.excl-sub-title` del diseno aprobado). */
+.subTitle {
+  margin: 0;
+  font-family: var(--bw-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bw-ink-steel);
 }

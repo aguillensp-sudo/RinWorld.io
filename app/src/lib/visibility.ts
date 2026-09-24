@@ -226,11 +226,27 @@ export interface CountryOption {
   label: string;
 }
 
-/** Los países de un continente que tienen alguna organización (los únicos que tiene sentido excluir). */
+/**
+ * TODOS los países de cada continente, tal como los lista el diseño aprobado
+ * (`INV-07 · VIS v1.0.html`, `updateCountries`). El PO (24-sep): «los desplegables tenían todos
+ * los países de cada continente y ahora prácticamente no aparecen» — la versión anterior solo
+ * ofrecía los países con alguna organización. Excluir un país sin organizaciones es inocuo hoy y
+ * deja la lista lista para cuando las haya. Códigos ISO alfa-2 (más `XK`, Kosovo, que el CHECK de
+ * `inventory_exclusions` admite). Un país puede salir en dos continentes (`KZ`, `TR`, `TL`), como
+ * en el diseño.
+ */
+const CONTINENT_COUNTRY_CODES: Record<string, string[]> = {
+  EU: 'AD AL AM AT AZ BA BE BG BY CH CY CZ DE DK EE ES FI FR GB GE GR HR HU IE IS IT KZ LI LT LU LV MC MD ME MK MT NL NO PL PT RO RS RU SE SI SK SM TR UA VA XK'.split(' '),
+  AS: 'AE AF BD BH BN BT CN ID IL IN IQ IR JO JP KG KH KP KR KW KZ LA LB LK MM MN MV MY NP OM PH PK QA SA SG SY TH TJ TL TM TW UZ VN YE'.split(' '),
+  NA: 'AG BB BS BZ CA CR CU DM DO GD GT HN HT JM KN LC MX NI PA SV TT US VC'.split(' '),
+  SA: 'AR BO BR CL CO EC GY PE PY SR UY VE'.split(' '),
+  AF: 'AO BF BI BJ BW CD CF CG CI CM CV DJ DZ EG ER ET GA GH GM GN GQ GW KE KM LR LS LY MA MG ML MR MU MW MZ NA NE NG RW SC SD SL SN SO SS ST SZ TD TG TN TZ UG ZA ZM ZW'.split(' '),
+  OC: 'AU FJ FM KI MH NR NZ PG PW SB TL TO TV VU WS'.split(' '),
+};
+
+/** Todos los países del continente elegido (los del diseño aprobado), ordenados por nombre. */
 export async function fetchContinentCountries(continent: Zone): Promise<CountryOption[]> {
-  const { data, error } = await supabase.from('organizations').select('country').eq('continent', continent);
-  if (error) throw error;
-  const codes = Array.from(new Set((data ?? []).map((r) => (r as { country: string }).country.toUpperCase())));
+  const codes = CONTINENT_COUNTRY_CODES[continent] ?? [];
   return codes.map((code) => ({ code, label: countryName(code) })).sort((a, b) => a.label.localeCompare(b.label, 'es'));
 }
 

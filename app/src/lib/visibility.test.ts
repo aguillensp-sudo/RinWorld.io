@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canManageVisibility,
+  fetchContinentCountries,
   CONTINENT_OPTIONS,
   filterOrgCandidates,
   groupExclusions,
@@ -130,5 +131,31 @@ describe('isAlreadyExcluded', () => {
     expect(isAlreadyExcluded(EJEMPLO, { country: 'RU' })).toBe(true);
     expect(isAlreadyExcluded(EJEMPLO, { continent: 'EU' })).toBe(false);
     expect(isAlreadyExcluded(EJEMPLO, { country: 'JP' })).toBe(false);
+  });
+});
+
+describe('fetchContinentCountries · todos los países del diseño aprobado', () => {
+  it('cada continente ofrece la lista completa, no solo los países con organizaciones (F-210)', async () => {
+    const tam = async (c: 'EU' | 'AS' | 'NA' | 'SA' | 'AF' | 'OC') => (await fetchContinentCountries(c)).length;
+    expect(await tam('EU')).toBeGreaterThanOrEqual(45);
+    expect(await tam('AS')).toBeGreaterThanOrEqual(40);
+    expect(await tam('AF')).toBeGreaterThanOrEqual(50);
+    expect(await tam('NA')).toBeGreaterThanOrEqual(20);
+    expect(await tam('SA')).toBe(12);
+    expect(await tam('OC')).toBeGreaterThanOrEqual(14);
+  });
+
+  it('Asia lleva Japón y China, Europa lleva España y Rusia, y todos con nombre en español (no el código)', async () => {
+    const asia = await fetchContinentCountries('AS');
+    expect(asia.map((p) => p.code)).toEqual(expect.arrayContaining(['JP', 'CN', 'IN']));
+    const europa = await fetchContinentCountries('EU');
+    expect(europa.find((p) => p.code === 'RU')?.label).toBe('Rusia');
+    expect(europa.find((p) => p.code === 'ES')?.label).toBe('España');
+    for (const p of [...asia, ...europa]) expect(p.label, p.code).not.toBe(p.code);
+  });
+
+  it('salen ordenados por nombre', async () => {
+    const asia = (await fetchContinentCountries('AS')).map((p) => p.label);
+    expect(asia).toEqual([...asia].sort((a, b) => a.localeCompare(b, 'es')));
   });
 });

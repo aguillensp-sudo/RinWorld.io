@@ -250,19 +250,6 @@ export function Visibility({ profile }: Props) {
         </p>
       )}
 
-      {/* UN solo `role="status"` a la vez: el del guardado. */}
-      {saved && (
-        <p className={styles.status} role="status">
-          {SAVED_MESSAGE}
-        </p>
-      )}
-
-      {saveError !== null && (
-        <p className={styles.alert} role="alert">
-          {saveError}
-        </p>
-      )}
-
       {/* ── Modo de visibilidad: el borrador NO toca la red. ── */}
       <fieldset className={styles.modeGroup} role="radiogroup" aria-label={MODE_LEGEND}>
         <legend className={styles.legend}>{MODE_LEGEND}</legend>
@@ -294,6 +281,8 @@ export function Visibility({ profile }: Props) {
       {showKeptNotice && <p className={styles.brassNotice}>{KEPT_LIST_NOTICE}</p>}
 
       {showPanel && (
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Lista de exclusión</h2>
         <ExclusionPanel
           orgs={orgs}
           geo={geo}
@@ -312,6 +301,7 @@ export function Visibility({ profile }: Props) {
           onAddGeo={handleAddGeo}
           onRemove={handleRemove}
         />
+        </div>
       )}
 
       {/* ── Bloque informativo brass: siempre (spec §3). ── */}
@@ -327,6 +317,20 @@ export function Visibility({ profile }: Props) {
       >
         {SAVE_LABEL}
       </button>
+
+      {/* Debajo del boton, como en el diseno aprobado (`.save-banner`): arriba empujaba
+          todo el contenido y el boton cambiaba de tamano al guardar. UN solo `role="status"`. */}
+      {saved && (
+        <p className={styles.status} role="status">
+          {SAVED_MESSAGE}
+        </p>
+      )}
+
+      {saveError !== null && (
+        <p className={styles.alert} role="alert">
+          {saveError}
+        </p>
+      )}
     </div>
   );
 }

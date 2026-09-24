@@ -250,7 +250,9 @@ describe('BatchSearch · acciones globales', () => {
   it('Exportar resumen descarga el CSV del resumen con la fecha en el nombre', async () => {
     const urls: Blob[] = [];
     const crear = vi.fn((b: Blob) => (urls.push(b), 'blob:resumen'));
-    vi.stubGlobal('URL', { ...URL, createObjectURL: crear, revokeObjectURL: vi.fn() });
+    // jsdom no trae createObjectURL/revokeObjectURL: se asignan sin sustituir la clase URL entera.
+    Object.defineProperty(URL, 'createObjectURL', { value: crear, configurable: true, writable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true, writable: true });
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
       expect(this.download).toBe('resumen-busqueda-por-lotes-2026-09-24.csv');
       expect(this.href).toContain('blob:resumen');
@@ -259,8 +261,16 @@ describe('BatchSearch · acciones globales', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Exportar resumen' }));
     expect(crear).toHaveBeenCalledTimes(1);
     expect(click).toHaveBeenCalledTimes(1);
-    expect(await urls[0]!.text()).toBe(buildSummaryCsv(ejemplo()));
-    vi.unstubAllGlobals();
+    // jsdom tampoco trae Blob.text(): se lee con FileReader.
+    const contenido = await new Promise<string>((ok) => {
+      const lector = new FileReader();
+      lector.onload = () => ok(String(lector.result));
+      lector.readAsText(urls[0]!);
+    });
+    expect(urls[0]!.type).toBe('text/csv');
+    expect(contenido).toBe(buildSummaryCsv(ejemplo()));
+    delete (URL as unknown as Record<string, unknown>).createObjectURL;
+    delete (URL as unknown as Record<string, unknown>).revokeObjectURL;
   });
 
   it('Crear watchers para referencias sin stock está DESHABILITADO y dice por qué', async () => {

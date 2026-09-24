@@ -642,9 +642,11 @@ Sin cambios.
    (`Rodamientos Ibéricos`, administradora): `Comprando` → `Mis watchers` (`SRCH-03`: **sin
    pulsar `Eliminar`**, borra de verdad) y `Comprando` → `Búsqueda por lotes` (`SRCH-02`,
    con la lista `6205-2RS` más una inventada); `Inventario` → `Visibilidad` (`INV-07`:
-   **NO pulses `Guardar configuración` con el modo restringido y la lista vacía**: le
-   quitaría el stock a todos los compradores y descuadraría los e2e; volver al modo abierto
-   lo deshace). **Y decidir lo que quedó de su lado:** las tres contradicciones de `F-196`,
+   `Guardar configuración` es seguro con la lista vacía —**corregido el 24-sep: este relevo
+   decía lo contrario y era falso**: sin exclusiones el modo restringido sigue mostrando el
+   stock a todos—; **pero con una organización excluida y el modo restringido guardado, esa
+   organización deja de ver el stock de ALPHA**; volver al modo abierto lo deshace).
+   **Y decidir lo que quedó de su lado:** las tres contradicciones de `F-196`,
    la interpretación de las tandas de `F-204` y la de las excepciones de `F-202`.
 2. ✅ **C5 de `F-189` y `F-190` recibidas, las dos.** El PO probó `FORO-01`/`ADMIN-02`
    (23-sep) y `DIR-01`/`ADMIN-01` (23-sep) ya desplegados: «está todo aprobado y
@@ -1072,5 +1074,7 @@ el cierre del Día 17 · quedan DOS C5 sin cerrar (`FORO-02` con su corrección 
 tres cuenta como hecho · Dirección Técnica, Nortex Systems*
 
 *Cierre del Día 23 · 24-sep-2026 · `2026-09-24` 07:1x UTC (`date -u`) · `SRCH-03` construida y VERDE (corrida 03, 2 intentos, 0 líneas tocadas de 1 279), `0035` en las dos bases y releída del catálogo, **C5 del PO PENDIENTE** — sin ella ni la cifra 1 ni la 8 se cierran · tres hallazgos abiertos para el PO (`F-192` privilegios anchos en producción, `F-196` tres decisiones de spec, `F-178` foro sin teardown) y uno de máquina (`F-191`, Docker: reiniciar el PC) · **CI del commit de cierre (`gh run` `35968038084` sobre `86083bd`): los seis jobs en verde**, incluido `Esquema` —el `run.sh` real en Postgres 16, que es la primera vez que ve `0035` (`F-191`)— y los dos despliegues; **producción sirve `SRCH-03` por contenido, no por `HTTP 200`** (`Mis watchers` y `watcher_list` en `/assets/index-DE2H8RwC.js`, y `._screen_4d4hn_10{…flex:1;min-height:0;…overflow-y:auto}` en `/assets/index-DVsylPPU.css`) · Dirección Técnica, Nortex Systems*
+
+> **Adenda del 24-sep-2026, tras la revisión del PO en pantalla (`F-206`, `F-207`).** Revisó `SRCH-03`, `INV-07` y `SRCH-02`: **«las dos primeras perfectas en todo»** (`SRCH-03` y `INV-07`, según el orden en que se le dieron; `SRCH-02` no está confirmada) y dos comentarios sobre `INV-07`. (1) Las sugerencias del autocompletado parecían etiquetas ya incluidas: **rehechas como desplegable** (`d02f3fb`, a mano: +72/−22 líneas, la cifra 4 de `INV-07` pasa a 7,6 %). (2) «Guardar no guarda»: **no se reproduce** con un e2e completo contra la base; se endurecen `saveVisibilityMode` y `removeExclusion` para no dar por guardada una escritura filtrada por la RLS. **Y se corrige aquí una frase falsa de este relevo** (`F-207`): con la lista vacía el modo restringido NO oculta el stock.
 
 *Cierre del Día 23, segunda parte · 24-sep-2026 · `2026-09-24` ~10:55 UTC (`date -u`) · `INV-07` (VERDE en 2, 943 líneas) y `SRCH-02` (VERDE en 1, 732 líneas) construidas y desplegadas, **0 líneas tocadas a mano en las dos**, sin migraciones · **CI de `0539cd7`, `9979a86` y del propio commit de cierre `80792d9` (`35990089287`): los seis jobs en verde en las tres**, producción sirve las dos por contenido · **TRES C5 del PO PENDIENTES** (`SRCH-03`, `INV-07`, `SRCH-02`) y todo lo demás que no ha podido revisar · `F-199` a `F-205` nuevos; abiertos para el PO `F-192`, `F-196`, `F-201`, `F-202`, `F-204` y `F-178` · servidores parados, junctions quitados, la base en su siembra · Dirección Técnica, Nortex Systems*

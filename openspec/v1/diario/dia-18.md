@@ -1,0 +1,3 @@
+# Día 18 de V1
+
+**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO, con dos reaperturas por la regla 4.** `FORO-02` con su C5 abierta y el estándar de buscador decidido por el PO (`F-172`, `SearchField`); `FORO-03` corrida y escalada por un test roto, no por el artefacto (`F-174`); `RNG-FORO-06` (`0031`/`0032`, con el bug de `security definer` cazado antes de tocar las bases, `F-173`) y `0033`; el esquema de `ADMIN-02` (`0034`); `F-175` a `F-178` (la última, una reacción huérfana que hizo escalar la CI cuatro veces y dejó la deuda de que el foro no tiene teardown). El detalle completo vive en `git show c26ad66:openspec/v1/ESTADO-V1.md`.

@@ -2,1083 +2,119 @@
 
 **Aviso** El trabajo vive en `C:/Users/admin/proyectos/Bearing.io/BearingWorld.io` en
 `mvp/bootstrap`; si te lanzan en un worktree `claude/…`, **opera sobre esa ruta con paths
-absolutos.**
+absolutos.** Desde el 25-sep `mvp/bootstrap` es la rama por defecto de GitHub, así que los
+worktrees nuevos deberían nacer al día. Si uno nace en `43bb222`, es una sesión vieja
+reabierta: la receta está en `CLAUDE.md` §11.
 
-> ⚠ **Esa línea se gana su sitio: NO la reescribas al sobrescribir este fichero, ni siquiera
-> para «mejorarla».** Ha pasado **cuatro veces** (`F-108` las tres primeras). La cuarta fue el
-> 25-ago y la causó este documento: alguien cambió la instrucción —*«opera sobre esa ruta»*—
-> por una comprobación —*«comprueba que tiene harness/»*—, y el agente detectó el problema y
-> se quedó parado sin saber qué hacer. **Una instrucción resuelve; una comprobación solo
-> avisa.**
->
-> **Y la otra mitad, que nunca se arregló:** el 25-ago `git worktree list` mostraba **tres
-> worktrees prunables** anclados a `43bb222`, viviendo en `openspec/mvp/.claude/worktrees/`.
-> Que `.gitignore` los ignore desde el día 15 no impide que se creen. Dos cosas:
-> **`git worktree prune`** limpia los registros muertos, y **lanzar Code desde la raíz del
-> repo y no desde `openspec/mvp/`** parece cortar la causa — hipótesis por confirmar, porque
-> es ahí donde aparecen.
->
-> **30-ago, comprobado: `git worktree prune` NO los quita.** Los tres siguen ahí y sus
-> directorios existen, así que no hay ningún registro muerto que limpiar — `prune --dry-run`
-> no dice nada. Haría falta `git worktree remove`, y uno de los tres es la sesión desde la
-> que se escribe esto. La primera mitad de la receta era falsa; la segunda sigue sin probar.
->
-> **1-sep, 3-sep y 4-sep, comprobado tres veces más, mismo resultado:** los mismos cuatro
-> prunables de siempre (`bearing-io-mvp-estado-f2911a`, `bearing-mvp-bootstrap-3bc0fc`,
-> `dia-14-correcciones-mvp-8160b9`, `dia-4-f131-pending-003608`), todos anclados a `43bb222`
-> —anterior a todo el trabajo de V1—, más la raíz al día (hoy en `71b803b`). Cuatro jornadas
-> seguidas sin que cambie ni uno. **La hipótesis de lanzar desde la raíz sigue sin probarse.**
->
-> **Y la SEGUNDA copia de este fichero en la raíz del repo, hallada el 3-sep: resuelta el
-> 4-sep-2026.** Se comparó con la trackeada antes de tocarla: era la versión de ayer **menos**
-> los párrafos que hablaban de sí misma, o sea que no tenía ni una línea propia. **Borrada**,
-> con copia de seguridad fuera del repo. **Y NO se ha metido en `.gitignore`, a propósito:**
-> ignorarla la haría invisible en `git status`, y fue justamente aparecer como `??` lo que
-> hizo que alguien la descubriera. Si alguna herramienta la recrea, se quiere ver.
->
-> **18-sep: uno de los cuatro cambió de sitio, sin resolver el misterio.** Esta sesión se
-> lanzó sobre `dia-14-correcciones-mvp-8160b9`, todavía en `43bb222`, y siguió la
-> instrucción de arriba: reseteó su rama a `origin/mvp/bootstrap` y trabajó ahí de verdad
-> —es de donde salen los commits de hoy—. `git worktree list` ahora lo muestra en `e9366bd`,
-> no en `43bb222`: no es que el ghost se resolviera, es que esta sesión lo USÓ. Los otros
-> tres (`dia-4-f131-pending-003608`, `seccion-3-relevo-8cef0a`, `sweet-mayer-f17466`) siguen
-> anclados a `43bb222`, sin tocar. **La hipótesis de lanzar desde la raíz sigue sin
-> probarse ni refutarse por esto.**
->
-> **21-sep: el paso de «opera sobre esa ruta» ya no se puede seguir al pie de la letra, y lo que funciona está probado.** Esta sesión se lanzó en `sweet-mayer-f17466` (anclado a `43bb222`, sin `harness/`) y **la herramienta de edición se negó a escribir en el checkout de la raíz** desde un worktree —lo trata como copia principal que no se toca—. Lo que funcionó, y es el precedente del 18-sep: `git merge --ff-only origin/mvp/bootstrap` en la rama del worktree, trabajar ahí, `git push origin HEAD:mvp/bootstrap` y adelantar la raíz con `git -C <raíz> merge --ff-only origin/mvp/bootstrap`. `node_modules` no existe en el worktree: se enlazó con una *junction* al de la raíz (`mklink /J`) y se quitó con `rmdir`, **nunca con `rm -rf`, que seguiría el enlace**. El `.env` vive solo en el `app/` de la raíz; el servidor de desarrollo se lanzó desde allí con `npm --prefix`.
+**Qué es este fichero:** el relevo. Solo estado, **máximo 150 líneas** (un hook de git lo
+impide). Se sobrescribe al cierre de cada día con el ritual de `CLAUDE.md` §11. Lo que no es
+estado vive en otro sitio: la historia en `diario/`, las decisiones en `DECISIONES-V1.md`,
+los hallazgos en `../mvp/findings/` y las reglas en `CLAUDE.md`. La versión larga anterior
+(1 084 líneas) sigue en `git show d2df8d4:openspec/v1/ESTADO-V1.md`.
 
-> 🔑 **¿Vas a tocar Supabase? Lee `CLAUDE.md` §10 ANTES de la primera consulta.**
-
-> **Qué es este fichero.** El relevo diario de V1. Se sobrescribe al cierre de cada día
-> operativo. Lo primero que lee cualquier sesión nueva, humana o agente.
->
-> **Lo permanente NO vive aquí:** el plan está en `openspec/v1/`, las decisiones de
-> arquitectura en `docs/ADR-*.md`, el acta del MVP en `openspec/mvp/CIERRE-MVP.md`, y el
-> histórico en git y en `findings-register.md`.
+Empieza por §6 y luego §3.
 
 ---
 
-## ⚠ Las cinco reglas de este fichero
-
-Salen de errores cometidos, no de teoría. Cada una tiene su cadáver detrás.
-
-**1 · Cita, no parafrasees.** Los valores de estado y las asignaciones de modelo se copian
-del documento cerrado **con el puntero al lado** (`F-012`).
-
-**2 · Un estado que este fichero afirme se comprueba EL DÍA que se escribe, contra el
-código o contra la base — no contra otro documento.** El 25-ago se descubrió que tres
-documentos llevaban **diez días** diciendo que `B-008`, `B-009` y `B-010` estaban
-pendientes cuando se habían cerrado el 12-ago. **Y el 30-ago mordió dos veces más:** la §4
-afirmaba como decisión cerrada que las filas inválidas de `F-121` «se marcan, no se
-borran», y **no se habían marcado** (`F-129`); y la §2 daba la Fundación V1 por «no
-empezada» **comprobándolo contra un `ls`**, cuando uno de sus seis entregables está entero
-desde la primera migración (`F-132`). **Comprobar el continente no es comprobar el
-contenido. Ningún documento es fuente de verdad sobre el código. Este tampoco.**
-
-> **Y el 4-sep la regla se ganó una hermana, `F-146`:** comprobar el CÓDIGO tampoco basta
-> cuando la plataforma añade cosas por su cuenta. Las migraciones decían `revoke execute …
-> from public` desde `0001` y lo que la base tenía puesto era otra cosa. **Lo que se afirme
-> sobre privilegios, RLS o permisos se comprueba contra `pg_proc` / `pg_policies` / `pg_
-> default_acl`, no contra el `.sql` que se escribió.**
-
-**3 · La fecha se lee de la máquina, nunca de memoria.** El día 14 del MVP se fechó a sí
-mismo un día por delante y esa hora de diferencia es exactamente lo que ocultó `F-109`
-durante dos jornadas. El 25-ago volvió a pasar por el otro lado: tres documentos se
-fecharon tres días atrás. **`date -u` antes de escribir la cabecera.**
-
-**4 · Este fichero se cierra CUANDO SE ACABA, no cuando parece que se acaba.** El día 3 se
-cerró a las 12:33 y el trabajo siguió hasta las 13:45. **Y el día 4 lo repitió, con la
-regla ya escrita delante:** se cerró a las 11:22 y siguió hasta las 12:31, con nueve
-commits más y seis hallazgos nuevos. Escribir la regla no la cumple.
-
-**5 · Una evidencia que solo existe si alguien se acuerda de producirla no es evidencia:
-es suerte.** El 30-ago se abrió un hueco en `.gitignore` para versionar los logs de
-corrida, con el argumento de que eran la evidencia de la primera medida con `n>1` del
-proyecto. **Las tres corridas de esa medida no dejaron ni un log**, porque `run.py` no lo
-escribía: lo escribía quien lanzaba, redirigiendo, y quien lanzó puso un `| tail -45`
-delante (`F-136`). La regla protegía un fichero que nadie garantizaba que existiera.
-**Antes de confiar en una evidencia, mira quién la produce y qué pasa si ese alguien se
-distrae.**
-
----
-
-**Día 9 de V1 · 6/7-sep-2026 · sin cierre formal.** Se quedó con el `Estado: EN CURSO`
-de cuando se escribió: la sesión no corrió el ritual del §7, saltó directa a `F-151` y
-ahí se queda hasta hoy. Fundación V1 avanzó en los entregables 1, 2, 3 y 6 — el 1 (tres
-entornos como código) y el 3 (aislamiento demo/e2e, `bearingworld-e2e` creado, sembrado
-y probado 53/53 antes de conectar CI) quedaron hechos; el 6 (residencia UE) con el
-runbook listo, código sin aplicar; el 2 (despliegue continuo) quedó a medias — *job*
-`deploy` escrito, VERA (Supabase) verificado en CI real, Vercel bloqueado por `F-151`
-(acceso de cuenta, no configuración). El detalle completo vive en
-`git show 9d29222:openspec/v1/ESTADO-V1.md`, no se repite aquí.
-
----
-
-**Día 10 de V1 · 8-sep-2026 · Estado: CERRADO.** Sesión de un solo punto: `F-151`
-cerrado con cuenta y proyecto de Vercel nuevos (`alvaro-7494` / `rin-world-io`),
-verificados en CI real (`gh run` `34219861643`, los cinco *jobs* en verde incluido
-`deploy`) y con `curl` (`HTTP 200`). Entregable 2 de Fundación V1 (despliegue continuo)
-quedó cerrado del todo. El detalle completo vive en
-`git show 522b94a:openspec/v1/ESTADO-V1.md`, no se repite aquí.
-
----
-
-**Día 11 de V1 · 8/10-sep-2026 · Estado: CERRADO.** Cuatro puntos: uno bloqueado en una
-revisión externa (entregable 6, GCP listo, Anthropic/Model Garden sin aprobar, `429
-RESOURCE_EXHAUSTED`) y tres cerrados del todo — serie 18 de `MSG-01` (5/5 en veredicto,
-pero `18a` solo verde al intento 3 tras repetir el mismo error de sintaxis dos veces,
-`F-152`, cerrado el Día 12), catálogo de `bearingworld-e2e` sin *gap* con producción
-(221 filas / 6 organizaciones en las dos bases), y Vercel Preview deployments
-recuperadas con tres causas encadenadas resueltas (`Root Directory`, el *job* `deploy`
-de CI, y `git.deploymentEnabled` en vez de `ignoreCommand`, `F-153`). El detalle
-completo vive en `git show c395432:openspec/v1/ESTADO-V1.md`, no se repite aquí.
-
----
-
-**Día 12 de V1 · 10-sep-2026 · Estado: CERRADO.** Dos puntos del backlog de `0023` §4 cerrados a petición del PO — `0024` (`F-154`, reparto exacto hacia la CONTRAPARTE) y `0025` (`F-155`, `app.thread_counterpart` `security definer`) — más `F-152` (columna `primer_intento_limpio` en el CSV del arnés). El entregable 6 se recomprobó y sigue bloqueado en Anthropic Model Garden (`429 RESOURCE_EXHAUSTED`), sin movimiento posible desde el repo. El detalle completo vive en `git show 29520f3:openspec/v1/ESTADO-V1.md`, no se repite aquí.
-
----
-
-**Día 13 de V1 · 10-sep-2026 · Estado: CERRADO.** Sesión de un solo punto: la pregunta
-que `F-155` dejó abierta el Día 12 —*"¿hay OTROS `SELECT` bajo RLS con el mismo patrón en
-el resto de `app/src/lib/`?"*— auditada contra las cinco llamadas RPC que tocan claves o
-hilos. Sí había un tercero: el guardia *"ya has consultado"* de `create_inquiry`, que se
-saltaba en silencio para cualquier EDITOR sin clave en el ítem de la consulta previa —
-cerrado en `0026` (`F-156`), verificado contra un Postgres desechable ANTES de escribir la
-migración y aplicado a las dos bases. El entregable 6 no se recomprobó ese día, a
-propósito. El detalle completo vive en `git show 1c4e1ac:openspec/v1/ESTADO-V1.md`, no se
-repite aquí.
-
----
-
-**Día 14 de V1 · 11-sep-2026 · Estado: CERRADO.** Cerrada la familia `F-148`/`F-155`/`F-156`
-por el lado que faltaba —disparadores, políticas y función Edge—, sin hallazgo y anclada con
-cuatro asertos y una canaria. A petición del PO: plan releído contra el repo (semana 3, la
-del H1), escrito `UMBRAL-FABRICA-V1.md` —el umbral que la tabla de riesgos exige "de
-antemano" y no existía—, y confirmadas las tres pantallas del H1 (`DIR-01`, `ADMIN-01`,
-`FORO-01`) antes de que existiera una línea de código de ninguna. Las tres capas de datos
-escritas a mano, verificadas y sembradas (`0027`, `0028`, `0029`): paso 2 del hito cerrado.
-Tres hallazgos: `F-157` (el medidor de coste borraba su propia historia, cerrado), `F-158`
-(la spec de `ADMIN-01` se contradice a sí misma —**abierto, es del PO**) y `F-159` (un e2e
-que falla por carrera, cerrado). El Operador de Plataforma existe de verdad en las dos
-bases: cuenta, alta, rama de sesión, alcance comprobado desde su propia sesión. El detalle
-completo —las seis adendas del día— vive en `git show f5e1d7e:openspec/v1/ESTADO-V1.md`, no
-se repite aquí.
-
----
-
-**Día 15 de V1 · trabajo 11-sep-2026, cierre redactado 13-sep-2026 · Estado: CERRADO**
-
-> **EL DÍA EN OCHO LÍNEAS.**
->
-> 1. **Sesión nueva, arrancando exactamente donde dejó el Día 14:** el paso 3 de
->    `UMBRAL-FABRICA-V1.md` §7, las tres tareas en formato fijo.
-> 2. **`F-160`, cazado antes de gastar un token.** `--seco` escalaba en FALSO en las SEIS
->    tareas del corpus —`DIR-01` incluida, y confirmado también contra `SRCH-01`, de hace
->    semanas— desde que `F-152` sumó `primer_intento_limpio` al CSV sin que `dry_run.py` lo
->    supiera. Cerrado el mismo día.
-> 3. **`DIR-01` escrita, con sus tests, `--seco` limpia.** Precondición descubierta y resuelta
->    primero: "Empresas" no tenía ninguna ruta real en `App.tsx` a la que el e2e pudiera
->    llegar.
-> 4. **`ADMIN-01`, y con ella un hallazgo de arquitectura, no solo de esquema.** El Operador
->    no encaja en `AppShell` —nav de cinco ítems propios y acento brass (spec §2), un
->    `OperatorProfile` sin organización—. Nuevo `OperatorShell.tsx`, sin tocar `AppShell.tsx`
->    ni sus 147 líneas de tests.
-> 5. **Segundo hallazgo de `ADMIN-01`: el mock promete un email que nadie envía.** Aprobar y
->    Rechazar no disparan ningún correo —no hay proveedor configurado en todo el proyecto—, y
->    el texto de confirmación se corrigió para no afirmarlo (mismo principio que `F-100`).
-> 6. **`FORO-01` escrita**, la más simple de las tres —un solo fichero, misma forma que
->    `PANEL-01`—. Con esto, el paso 3 del §7 queda completo: nueve tareas en el corpus, las
->    tres del H1 listas para correr.
-> 7. **La corrida real sigue sin poder pasar en esta sesión.** `DEEPSEEK_API_KEY` vive en el
->    entorno local del PO (`C:\Users\admin\...`), nunca en esta sesión remota —comprobado con
->    `uname`/`mount` contra el propio contenedor, no supuesto ni discutido de oídas—. El paso
->    5 del §7 (las tres corridas, C5 y el veredicto) queda para una sesión con esa clave a
->    mano.
-> 8. **Este fichero se cierra dos días después de escribirse el trabajo**, por una
->    interrupción de la conversación, no porque el día se alargara —regla 4 de este fichero,
->    y va anotado porque es justo el tipo de desfase que la regla 3 pide no maquillar.
->
-> **Lo que toca a continuación no es trabajo de esta sesión:** las tres corridas, cada una en
-> el entorno local del PO y en su propia sesión limpia. Ver §3.
-
-**`F-160`, en detalle.** `harness/tests/dry_run.py` comprueba desde el día 4 que ninguna fila
-del CSV quede marcada como escalada con `[f for f in filas if ",si," in f]` —un substring de
-la LÍNEA ENTERA—. El 10-sep (`F-152`) `primer_intento_limpio` se sumó a `metrics.COLUMNS`
-justo detrás de `corrida` y delante de `resultado`, y una corrida limpia al primer intento
-escribe esa columna en `si` aunque `escalado_a_humano` sea `no`: la fila sale
-`...,no,-,-,si,PASA...` y el substring la encuentra igual. Reproducido primero contra
-`SRCH-01.json` para confirmar que no era nada de `DIR-01`: el propio arnés llevaba un mes
-roto en cuanto `metrics.COLUMNS` creció. Arreglado con `_columna()`, que lee el CSV con el
-módulo `csv` de la librería estándar y busca por NOMBRE, no por substring. Verificado con
-`python -m harness.tests.dry_run` (los tres escenarios A/B/C en verde) y con `--seco` sobre
-`DIR-01`/`ADMIN-01`/`FORO-01` y de nuevo sobre `SRCH-01`. Misma familia que `F-033`/`F-129`:
-un cambio en el contrato de columnas de un fichero compartido rompió una comprobación en
-otro que nadie reconectó.
-
-**`DIR-01`, escrita cruzando la tarea con lo que el repo YA tenía, no solo con la spec.**
-`harness/tasks/DIR-01.json`: `style_reference` es `ResultsTable.tsx` —mismo patrón de
-cabecera ordenable con un `<button>` dentro del `<th>`—, `data_layer` es `directory.ts`
-—entregada el Día 14—, y `component_api` fija cada literal verbatim, con cuidado explícito de
-no confundir el `...` ASCII del placeholder del buscador con el `…` unicode de "Cargando
-directorio…". La precondición que hizo falta antes de poder escribir el e2e: `App.tsx` no
-tenía ninguna rama para "Empresas" —C2 corre SIEMPRE la suite de Playwright entera (D-09-03
-a), así que sin esto el e2e de hoy habría tumbado cualquier corrida futura de `ADMIN-01` o
-`FORO-01` por un fichero que no es el suyo—. Resuelto con un `Directory.tsx` de marcador
-(mismo patrón que la rama del Operador del Día 14). Validada `--seco`: cero problemas, cero
-avisos.
-
-**`ADMIN-01`: el hallazgo de arquitectura, completo.** ADMIN-01 §2 dice que el Operador
-"tiene su propia vista de navegación", y el HTML aprobado lo confirma con cinco ítems propios
-(`Panel`/`Solicitudes`/`Organizaciones`/`Log de auditoría`/`Sistema`) y acento BRASS, no los
-ocho ítems azules del shell de un miembro. Y un `OperatorProfile` (`session.ts`) no tiene
-`orgName` ni `role`: `AppShell` está tipado a `MemberProfile` y los usa en tres sitios
-(nav-right, sidebar, avatar). Reusarlo habría significado tocar un componente compartido con
-su propia suite de pruebas por una pantalla que ni siquiera pertenece a una organización.
-`OperatorShell.tsx` es NUEVO —`AppShell.tsx` queda intacto, con sus tests intactos—: importa
-`AppShell.module.css` para todo lo que el sistema base ya fija igual entre las dos vistas
-(brand bar, nav, sidebar overlay, `bwcnt`) y suma un módulo propio de quince líneas solo para
-las dos reglas de acento que de verdad cambian, más la píldora "Operador" del mock. `VeraPanel`
-se reutiliza sin `agent` —el cableado VERA↔herramientas del Operador no existe todavía, y
-`VeraPanel` ya sabe decir que no está conectada cuando se monta así—. Doce pruebas nuevas en
-verde. `App.tsx`: el bloque `operator` deja de ser un `<div>` de marcador inline y pasa a
-`<OperatorShell><AdminRequests .../></OperatorShell>`; el `data-testid="operator-home"` —ancla
-del e2e desde el Día 14— se muda a `OperatorShell`.
-
-**Y el segundo hallazgo, sobre el propio contenido.** El HTML aprobado y la spec §3/§6 dicen
-que Aprobar/Rechazar "envían" los correos EML-07/EML-08, y el mock lo confirma en el panel
-tras aprobar: *"Aprobación registrada. Email EML-07 enviado al solicitante."* **Ningún envío
-de correo existe en el proyecto** —ni en `admin-requests.ts`, ni en ninguna Edge Function, ni
-ningún proveedor configurado en `CLAUDE.md`—. Pintar que se envió un email que nadie envía es
-la pantalla afirmando algo falso, la misma clase de riesgo que `CLAUDE.md` §7 describe para
-VERA. `harness/tasks/ADMIN-01.json` corrige los dos textos a "Aprobación registrada." y
-"Solicitud rechazada.", sin mencionar ningún email —mismo principio que `F-100` en `SRCH-01`,
-escrito antes de que exista una línea de código—.
-
-Dos ampliaciones a `admin-requests.ts` (ya entregada el Día 14, ahora con 22 pruebas en vez de
-18): `requestDateLabel` —"DD Mmm YYYY · HH:MM", reusando el mismo `Intl.DateTimeFormat` de
-`sentAtLabel`/`dateLabel`, no un tercer formato— y `websiteHref` —antepone `https://` a un
-dominio del FSR sin esquema, para que el enlace de la tabla sea externo y no relativo a la
-propia pantalla—. `harness/tasks/ADMIN-01.json` validada `--seco`: cero problemas, cero
-avisos. El e2e (`admin-requests.spec.ts`) es DE SOLO LECTURA a propósito: aprobar, rechazar o
-devolver a revisión de verdad dejaría `demo_registration_requests.sql` descuadrada, porque no
-hay ningún `teardown` que la reponga entre corridas de Playwright —al contrario que la
-siembra de mensajería—; el camino de escritura ya está cubierto con mocks en
-`AdminRequests.test.tsx`.
-
-**`FORO-01`, la más simple de las tres.** Sin filtros, sin orden, sin acciones: un único
-fichero (`Forum.tsx` + su CSS Module), misma forma que `PANEL-01`. `component_api` fija el
-aviso de confidencialidad como PERMANENTE (spec §7, "no es opcional ni ocultable"), los dos
-formatos de tiempo relativo que `forum.ts` ya distingue (`relativeShort` para la lista de
-recientes, `relativeLong` para la tarjeta —no son intercambiables—), y que ninguna tarjeta
-necesita un estado vacío especial para "foro recién lanzado": con cero hilos,
-`fetchCategories()` sigue devolviendo las cuatro filas a cero —ya resuelto por la vista
-`forum_category_stats`—, así que inventar una rama nueva habría sido inventar un requisito
-que la capa de datos ya cubre. El e2e comprueba, contra la siembra real de `demo_forum.sql`,
-que el hilo más reciente de la actividad real NO lleva la organización autora que el HTML
-aprobado le atribuye —el mock dice "Rodamientos del Sur SL"; la siembra real es "Rodamientos
-Ibéricos"—. Validada `--seco`: cero problemas, cero avisos. Requirió su propia precondición
-de wiring ("Foros" → `Forum` de marcador), mismo patrón que `DIR-01`.
-
-**El límite del entorno, aclarado sin ambigüedad.** El PO dio por hecho que esta sesión veía
-`C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app\.env`, de donde sale
-`DEEPSEEK_API_KEY`. Comprobado contra la propia máquina —`uname -a` (Linux, contenedor
-`vm`), `mount` (raíz en `/dev/vda`, un disco propio; ningún volumen de red ni de Windows)—,
-no contra lo que "los agentes" hicieran en otras sesiones: esta corre en un contenedor remoto
-en la nube, clonado desde GitHub al arrancar, sin ningún canal hacia el portátil del PO. Las
-sesiones que sí ven esa ruta son Claude Code local, instalado y lanzado directamente en esa
-máquina Windows —es su propio disco, no un permiso—. Sin la clave aquí, el paso 5 del §7 no
-puede correr en esta sesión bajo ninguna circunstancia; lo que sí puede es lo que se hizo:
-escribir y validar en seco las tres tareas.
-
-**Coste-sombra al cierre:** `python -m harness.core.orchestration_metrics` corrido dos veces
-—a mitad de sesión (tras `DIR-01`) y al cerrar—. Cierre: **1.055,62 $** acumulados; el
-11-sep entero (Día 14 + Día 15, misma fecha de calendario) pasa de 148,75 $ a **206,60 $**,
-así que esta sesión sola son **57,85 $** —sin ninguna corrida real, solo escribir y validar
-tres tareas—. Las 21 filas anteriores al Día 14 siguen intactas (`F-157`).
-
----
-
-**Día 16 de V1 · corridas 13/14-sep-2026, C5 y cierre 17-sep-2026 · Estado: CERRADO — el H1 se
-cierra.** Las tres pantallas del H1 (`DIR-01`, `ADMIN-01`, `FORO-01`) con corrida real limpia y C5
-del PO sin ninguna corrección; las ocho cifras evaluadas contra su fuente y **veredicto «Funciona
-con supervisión» — escenario base, 21 semanas, la corriente B con dos agentes**, con la cifra 3
-como única que falla (0 de 3 verdes al primer intento). `F-161`, `F-162` y `F-163` cerrados,
-ninguno defecto del Coder. El detalle completo vive en `git show fc9f34e:openspec/v1/ESTADO-V1.md`,
-no se repite aquí. **Su adenda del 17-sep —«`push` no dispara CI; sospecha: el token de git»— era
-falsa, y lo que había detrás llenó el Día 17.**
-
----
-
-**Día 17 de V1 · 17-sep-2026 · Estado: CERRADO.** Cadena de cinco hallazgos que empezó
-comprobando por qué el cierre del Día 16 no había disparado CI (`F-164`, el marcador de
-salto en el cuerpo del mensaje) y siguió una CI rota desde el 11-sep (`F-165`, sin
-credenciales del Operador), un e2e declarado que nunca se había ejecutado y que el arnés
-contaba como verde (`F-166`), un token de Supabase caducado (`F-167`) y la app de
-producción sin arrancar desde el 8-sep, verificado y cerrado por CONTENIDO, no por HTTP
-200 (`F-168`). Barrido de once contradicciones más de la familia `F-158` (`F-170`),
-trece filas del registro puestas al día y la carpeta `Ingles/` archivada por decisión del
-PO. La corriente B se abrió de verdad: `0030` a mano y `FORO-02` **PASA 4/4 al primer
-intento**, la primera del proyecto. El detalle completo —las diez líneas y las cuatro
-adendas— vive en `git show 9e546d1:openspec/v1/ESTADO-V1.md`, no se repite aquí.
-
----
-
-**Día 18 de V1 · 18-sep-2026 · Estado: CERRADO, con dos reaperturas por la regla 4.** `FORO-02` con su C5 abierta y el estándar de buscador decidido por el PO (`F-172`, `SearchField`); `FORO-03` corrida y escalada por un test roto, no por el artefacto (`F-174`); `RNG-FORO-06` (`0031`/`0032`, con el bug de `security definer` cazado antes de tocar las bases, `F-173`) y `0033`; el esquema de `ADMIN-02` (`0034`); `F-175` a `F-178` (la última, una reacción huérfana que hizo escalar la CI cuatro veces y dejó la deuda de que el foro no tiene teardown). El detalle completo vive en `git show c26ad66:openspec/v1/ESTADO-V1.md`.
-
----
-
-**Día 19 de V1 · 19-sep-2026 · Estado: se cerró la SESIÓN, no la tarea.** `ADMIN-02` quedó con esquema, siembra, cableado, capa de datos, contrato de aceptación y tarea validada en seco, y sin correr. `F-179` y `F-180`. Ninguna de las ocho cifras se movió. El detalle vive en `git show c26ad66:openspec/v1/ESTADO-V1.md`.
-
----
-
-**Día 20 de V1 · 20-sep-2026 · Estado: CERRADO.** `ADMIN-02` corrió, la sexta: **artefacto del Coder sin una línea a mano (1 594)**, verde y desplegado, y el arnés lo registró ESCALADO 3/4 porque los ocho e2e que fallaron eran defectos del contrato de aceptación (`F-183`). Experimento de dos brazos, DeepSeek contra `Atria-Dawn-Preview` (VERDE 4/4 en 2 intentos, sin fusionar): **`CLAUDE.md` §3 no cambia**, `F-185`. `F-181` a `F-185`. El detalle vive en `openspec/v1/experimento-dos-brazos.md` y en `git show c26ad66:openspec/v1/ESTADO-V1.md`.
-
----
-
-**Día 21 de V1 · 21-sep-2026 · Estado: CERRADO.** `F-184` cerrado (ruido de Node heredado por
-los workers de Playwright). Tres C5 dadas por el PO en producción sin pulsar nada que
-escriba (`ADMIN-02`, `FORO-02`, `FORO-03`), con dos reparos de foro arreglados y
-confirmados a ojo por el PO (`F-186`: doble «x» en el buscador, último comentario de un
-hilo cortado por falta de scroll propio — tercera vez tras `F-088`/`F-093`, con una
-sospecha sin comprobar sobre `Forum.module.css`/`AdminBilling.module.css`). Remedición a
-seis pantallas hecha: «Funciona con supervisión», cifras 7 y 8 sin veredicto. Cuatro
-fallos propios de la sesión, dichos y corregidos; `F-187` (errata del relevo del Día 20).
-`F-188` abierto: el desarrollo local apunta a producción, no al staging que decía
-`entornos.md`. El detalle completo —las siete líneas, las fuentes de §1 y las decisiones
-vivas— vive en `git show 3921781:openspec/v1/ESTADO-V1.md`, no se repite aquí.
-
----
-
-**Día 22 de V1 · 22-sep-2026 · Estado: CERRADO — reabierto una vez por la regla 4, y con
-motivo.** Fecha de máquina al cerrar por segunda y última vez: `2026-09-22`, 07:28 UTC (`date -u`).
-
-> **EL DÍA EN SEIS LÍNEAS.**
->
-> 1. **`F-188` decidido por el PO: se deja como está.** Las C5 se siguen haciendo contra
->    producción, sin pulsar nada que escriba; el `.env` local no se apunta al staging.
-> 2. **La séptima pantalla, elegida y NO construida:** `SRCH-03` · Gestión de Watchers
->    (Módulo 03, sin tocar por la corriente B). Razonamiento completo en
->    `UMBRAL-FABRICA-V1.md` §8. No se construye hoy a propósito: el propio relevo del
->    Día 21 pide una sesión nueva por pantalla y cronómetro, y esta sesión ya estaba
->    abierta para el punto 3.
-> 3. **La sospecha de `F-186` sobre `Forum.module.css`/`AdminBilling.module.css`,
->    comprobada, arreglada y desplegada: `F-189`.** Confirmado primero en un navegador
->    real (no jsdom) fuera del login de la app, y **confirmado después por el PO en su
->    localhost, con `FORO-01` y `ADMIN-02` ya desplegados: funcionan.**
-> 4. **Y el PO encontró una cuarta y una quinta, con el mismo método, sin que nadie se lo
->    pidiera: `F-190`.** `DIR-01` y `ADMIN-01` tampoco tenían scroll propio con la ventana
->    baja — de partida ninguna de las dos tenía siquiera `min-height: 100%`. Mismo
->    arreglo, mismas pruebas, desplegado y **verificado por contenido en producción**
->    (`._page_3xbnz_14`, `._screen_186li_1`, las dos con `overflow-y:auto` puesto).
->    **Con esto, las SEIS pantallas que ha construido la corriente B han tenido este
->    fallo en algún momento** — deja de ser un patrón aislado.
-> 5. **Método, documentado para la próxima vez:** para reproducir un fallo de layout sin
->    tocar el login de la app (`F-188` sigue con `npm run dev` contra producción), se
->    copian las reglas CSS implicadas en una página aislada fuera del repo, servida por
->    un `http.server` propio y medida con JavaScript en un navegador real.
-> 6. **Pendiente, dicho en voz alta:** meter el scroll propio en la plantilla de tarea del
->    Coder. Seis de seis pantallas con el mismo hueco ya no es una corrección puntual.
-
-> **Adenda del 23-sep-2026, `2026-09-23` 10:27 UTC (`date -u`).** El único pendiente que
-> dejó el cierre del 22-sep era la vuelta del PO sobre `DIR-01`/`ADMIN-01` ya desplegados
-> (§3.3 de aquel cierre). **Recibida: «está todo aprobado y contrastado».** Con esto,
-> `F-190` queda cerrado del todo — mismo criterio que `F-186`/`F-189`, confirmación visual
-> incluida — y no queda ninguna C5 pendiente de esta serie de hallazgos. Sin código nuevo
-> hoy: solo esta confirmación, el registro y el cierre de sesión (servidor de desarrollo
-> parado, ver §5 y el pie de este fichero).
-
-**Día 23 de V1 · 24-sep-2026 · Estado: CERRADO A MEDIAS — código en `mvp/bootstrap`, C5 del PO PENDIENTE.**
-Fecha de máquina al escribir: `2026-09-24`, 07:07 UTC (`date -u`). Sesión de un solo objetivo:
-la séptima pantalla, con cronómetro (arrancado a las 05:54:35 UTC).
-
-> **EL DÍA EN SIETE LÍNEAS.**
->
-> 1. **`SRCH-03` · Gestión de Watchers, construida: VERDE en 2 intentos** (corrida 03,
->    `corrida-03`), **0 líneas tocadas a mano de 1 279**, 8 ficheros sin tocar de 8. Artefacto
->    del Coder en `ccbf187`. **Falta la C5 del PO** — sin ella no cuenta como aceptada.
-> 2. **Precondiciones, escritas a mano antes de la tarea:** `0035` (tabla `watchers`, vista
->    `watcher_list` con el estado EFECTIVO, límite de 50, RLS, cuatro acciones), su siembra
->    (`demo_watchers.sql`), la capa de datos `watchers.ts` (23 pruebas), el wiring (`Mis
->    watchers` desde `Comprando`) y el contrato (52 pruebas de unidad + 7 e2e). **`0035`
->    aplicada en las dos bases y releída del catálogo.**
-> 3. **Tres corridas, una válida.** La 01 salió inválida por MI entorno (worktree sin
->    `app/.env`, `F-193`) y la 02 escaló por dos defectos de MI contrato (`F-194`) y un
->    residuo del foro (`F-195`). Las dos se conservan como evidencia y **no cuentan para la
->    cifra 2**. Coste total del generador con las tres: 0,318 $; de la válida, 0,085 $.
-> 4. **Hallazgo de seguridad, dicho en voz alta: `F-192`.** En producción `authenticated`
->    tiene `UPDATE` en 17 de las 19 tablas y `anon` tiene ALL en 8 tablas antiguas. Las 19
->    tienen RLS, así que hoy protege solo la RLS; y los asertos de privilegios del banco de
->    esquema pasan porque el banco es más estricto que la plataforma. **Es del PO.**
-> 5. **Docker Desktop no arranca (`F-191`)** y lo dejé peor de lo que estaba al relanzarlo a
->    la fuerza. `0035` se validó en PGlite (Postgres 18 en WASM) con tres mutaciones
->    deliberadas detectadas. **Hace falta reiniciar el PC.**
-> 6. **La restricción de scroll propio, escrita por primera vez en la tarea, la cumplió el
->    Coder sin intervención (`F-198`).** n = 1, con la instrucción puesta: prueba que lo hace
->    si se le pide, no que lo haga solo.
-> 7. **Tres contradicciones de la spec resueltas por mí y pendientes del PO (`F-196`):** el
->    contador `4 / 50` del ejemplo (es `1 / 50`), `País: Europa` frente a un `País` ISO, y un
->    plazo de renovación de 3 días que la spec no da.
-
-**Día 23 de V1, segunda parte · 24-sep-2026 · Estado: CERRADO — dos pantallas más en producción, TRES C5 del PO PENDIENTES.**
-Fecha de máquina al escribir: `2026-09-24`, ~10:55 UTC (`date -u`). El PO pidió seguir en la
-misma sesión, elegir libremente dos pantallas y **dejar para la siguiente sesión la revisión de
-`SRCH-03` y de todo lo demás** («no he podido mirar SRCH-03 ni revisar nada»). Docker, resuelto por él.
-
-> **LA SEGUNDA PARTE EN SEIS LÍNEAS.**
->
-> 1. **`INV-07` · Visibilidad del Inventario, construida y desplegada: VERDE en 2 intentos**
->    (`corrida-04`), 943 líneas, **0 tocadas**, 4 ficheros sin tocar de 4. **Sin migración**:
->    el esquema existe desde `0002`. Artefacto en `3415b2f`.
-> 2. **`SRCH-02` · Búsqueda por Lotes, construida y desplegada: VERDE AL PRIMER INTENTO**
->    (`corrida-01`), 732 líneas, **0 tocadas**, 4 ficheros de 4. Sin migración ni consulta
->    nueva (reutiliza `fetchResults` y `ResultsTable`). Artefacto en `d29d791`.
-> 3. **`INV-07` costó cuatro corridas y NINGUNA de las tres escaladas fue mérito del Coder
->    perdido**: una regex de scroll rota por el shell (`F-199`), una ambigüedad de mi
->    contrato y un e2e frágil (`F-200`), y un error de tipos real en un intento. Las tres
->    quedan como evidencia y **no cuentan para la cifra 2**.
-> 4. **`F-199`, nuevo y de proceso: el shell de la herramienta de comandos se come una capa
->    de barras invertidas dentro de un heredoc, incluso entrecomillado.** Todo fichero con
->    regex o escapes se crea con el editor de ficheros. Está en §8.
-> 5. **Las cifras 7 y 8 de estas dos pantallas NO son limpias** (`F-205`): comparten sesión
->    con el cierre de `SRCH-03`. Coste-sombra de la sesión entera: **60,86 $** (23,53 $ al
->    cerrar `SRCH-03`, +37,33 $ desde entonces). Solo `SRCH-03` es un punto válido.
-> 6. **Pendiente, dicho en voz alta: la C5 de `SRCH-03`, `INV-07` y `SRCH-02`, más `F-192`
->    y `F-196`.** El PO no ha mirado nada de esta sesión. Nada de lo de abajo cuenta como
->    aceptado hasta que lo haga.
-
----
+**Día 23 de V1 · 25-sep-2026 · Estado: CERRADO.** Las tres C5 recibidas («todo perfecto»):
+`SRCH-03`, `INV-07` y `SRCH-02` aceptadas. Reorganizado el espacio de trabajo: este fichero,
+el registro de hallazgos, `CLAUDE.md` y la rama por defecto. Detalle en `diario/dia-23.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-21`, 09:36 UTC al cerrar |
-| Que `F-184` viene de `NO_COLOR` heredado por los workers de Playwright | Playwright mínimo en el scratchpad con tres entornos, y lectura de `runner/index.js` (`FORCE_COLOR: "1"` fijo en `WorkerHost` y en el `webServer`) | Con `NO_COLOR`: 4 avisos con 3 tests fallando, con y sin `FORCE_COLOR=0`. Sin `NO_COLOR`: 0 |
-| Que el arreglo quita el ruido en el flujo real | `harness.graph.nodes.test_runner.run_cmd`, antes (entorno viejo inyectado) y después | 8 líneas de ruido a **0** (84 a 68 líneas totales) |
-| Que el arnés sigue entero | `python -m harness.tests.test_checks` | exit 0, «Todas en verde» — tres veces: tras el arreglo, tras las filas de C5 y al cerrar la remedición |
-| Que la app sigue entera tras `F-186` | `npx vitest run` y `npm run typecheck` | **954 pasan**, 23 saltados; typecheck limpio |
-| **Que las dos pruebas de CSS nuevas vigilan algo** | El mismo regex contra el CSS de `HEAD` anterior | El bloque `.page` de `FORO-02`/`FORO-03` no traía `overflow-y`, y `SearchField` no traía la regla. **La primera versión del regex fallaba también CON el arreglo** (un comentario precede a `.page` en los dos ficheros) **y mi comprobación «contra el anterior» daba fallo por el motivo equivocado**; se corrigió el regex y se repitió |
-| Que producción sirve el arreglo | Descarga del CSS desplegado y `grep` de `webkit-search-cancel-button` | 1 coincidencia en `/assets/index-M_JsV-S-.css` — por contenido, no por `HTTP 200` (`F-168`) |
-| La CI | `gh run view` job a job sobre `9850b89` y `c26ad66` | Los **seis jobs** en verde en los dos, incluidos los dos despliegues. La del commit de cierre se mira tras el push |
-| Que la base no se movió durante las C5 | SQL por el MCP, al cerrar | 3 pagos, 2 eventos de estado, 3 solicitudes (todas `PENDING_REVIEW`), 8 hilos, 20 publicaciones, 5 reacciones, 8 organizaciones: **la siembra** |
-| El estado de la siembra de cobros antes de la C5 | SQL sobre `billing_org_status` | Los cuatro estados; **Cuscinetti a 9 días: vence el 30-sep** y entonces cambia de estado |
-| Que el Operador podía entrar | SQL sobre `auth.users` y `platform_operators` | Confirmado, sin bloqueo ni borrado, en `platform_operators`, último acceso 20-sep 18:21 UTC. Lo que el PO veía era `Solicitudes` (3 pendientes) y no `Cobros` |
-| Que `npm run dev` apunta a producción | `app/.env`, solo el ref y no la clave | `troxminloxkjwihwfevs` (`F-188`) |
-| **Las tres C5** | El PO, en el chat | `ADMIN-02` «aprobada total»; `FORO-02` y `FORO-03` aprobadas; el arreglo de `F-186`, «perfecto, arreglado» |
-| **Las ocho cifras a seis pantallas** | `harness-metrics.csv`; `git` (líneas tocadas desde el commit del Coder); `orchestration-metrics.csv` refrescado con el medidor | `FORO-02` 14,5 % (+16/−77 de 641), `FORO-03` 0,8 % (+6/−0 de 752), `ADMIN-02` 0 % (de 1 594). Cifra 7: techo de `ADMIN-02` 190,50 $ en tres sesiones, sin mediana válida |
-| Que `F-161`/`F-162` NO cuentan las escaladas por el instrumento para la cifra 2 | Las filas del registro y las notas del CSV | Lo dicen las dos. **El relevo del Día 20 decía lo contrario** (`F-187`) |
-| **Que el resultado visual de `F-186` es el bueno** | **No lo he verificado yo**: solo tests, y que el CSS llega a producción | Lo confirmó el PO a ojo en su localhost |
-
-**Tabla del 22-sep-2026, Día 22 — lo comprobado HOY:**
-
-| Afirmación | Verificado contra | Resultado |
-|---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-22`, entre 06:48 y 07:07 UTC según el paso |
-| Worktree adelantado a la raíz | `git merge --ff-only origin/mvp/bootstrap` desde `43bb222` | Fast-forward a `3921781`, igual que la raíz y `origin/mvp/bootstrap` |
-| Copia de `ESTADO-V1.md` en la raíz | `ls` en la raíz del repo | No ha reaparecido |
-| Que `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) son hijos directos de `.bwcnt` | Lectura de `AppShell.tsx:160` (`<main className={styles.bwcnt}>{children}</main>`), `OperatorShell.tsx:155` (mismo patrón, reutiliza `AppShell.module.css`), `Forum.tsx` y `AdminBilling.tsx` | Confirmado en los dos: sin ningún `<div>` intermedio entre `.bwcnt` y `.body`/`.screen` |
-| Que el fallo de scroll de `F-186` se reproduce en los dos, ANTES del arreglo | Página aislada (fuera del login) que copia `.bwshell`/`.bwcnt`/`.body`-`.screen` literales, con 40 filas de contenido, medida con `getComputedStyle`/`scrollHeight`/`clientHeight` en un navegador real | `.bwcnt` de 814 px de alto, contenido de 1862–1989 px, `overflowY: hidden`: recortado sin barra en los dos casos |
-| Que el arreglo (`flex: 1; min-height: 0; overflow-y: auto`) lo corrige | Misma página, con la regla puesta | El propio bloque pasa a `overflowY: auto` con `clientHeight` acotado a 814 px y `scrollHeight` de 1910/1989 px: todo el contenido alcanzable por scroll |
-| Que las dos pruebas nuevas vigilan algo, no solo pasan | Script aparte (`node`) que aplica la misma regex de extracción al CSS de `HEAD` (antes del arreglo) | El bloque extraído no contiene `overflow-y: auto` en ninguno de los dos ficheros: la prueba habría fallado antes del arreglo |
-| Que la app sigue entera | `npx vitest run` y `npm run typecheck` | **956 pasan** (954 + 2 nuevas), 23 saltados; typecheck limpio |
-| Que el arnés sigue entero | `python -m harness.tests.test_checks` | «Todas en verde» |
-| La CI | `gh run watch 35697446434` sobre `730c330` | Los **seis jobs** en verde, incluidos los dos despliegues |
-| Que producción sirve el arreglo | Descarga de `/assets/index-CK6WL1nR.css` y extracción de las reglas `.screen`/`.body` por selector minificado | `._screen_jkne8_9{…gap:20px;min-height:0;…overflow-y:auto}` y `._body_1j5i6_18{…flex:1;min-height:0;…overflow-y:auto}` — por contenido, no por `HTTP 200` |
-| **Que el resultado visual de `F-189` es el bueno en la app real** | El PO, en su localhost, con `FORO-01` y `ADMIN-02` ya desplegados | «Probados FORO-01 y 02, ADMIN-02, FUNCIONAN.» — confirmado |
-| Que `DIR-01` y `ADMIN-01` tenían el MISMO fallo (`F-190`) | El PO, en su localhost, con la ventana baja — el mismo método que se le pidió para `F-189` | «Ni DIR-01 ni ADMIN-01 tienen el scroll cuando la ventana es baja.» Confirmado leyendo el código: los dos son hijos directos de `.bwcnt` (`Directory.tsx:184`, `AdminRequests.tsx:223`), sin ni `min-height: 100%` de partida |
-| Que las dos pruebas nuevas de `F-190` vigilan algo | Mismo script de extracción, contra el CSS de `HEAD` antes del arreglo | Ninguno de los dos bloques (`.page`, `.screen`) contenía `overflow-y: auto` |
-| Que la app sigue entera tras `F-190` | `npx vitest run` y `npm run typecheck` | **958 pasan** (956+2), 23 saltados; typecheck limpio |
-| Que el arnés sigue entero tras `F-190` | `python -m harness.tests.test_checks` | «Todas en verde» |
-| La CI de `F-190` | `gh run watch 35699368803` sobre `ab98e79` | Los **seis jobs** en verde, incluidos los dos despliegues |
-| Que producción sirve el arreglo de `F-190` | Descarga de `/assets/index-DMJjyngJ.css`, extracción de `.page`/`.screen` por selector minificado | `._page_3xbnz_14{…flex:1;min-height:0;…overflow-y:auto}` y `._screen_186li_1{…flex:1;min-width:0;min-height:0;…overflow-y:auto}` — por contenido |
-
-**Tabla del 24-sep-2026, Día 23 — lo comprobado HOY:**
-
-| Afirmación | Verificado contra | Resultado |
-|---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-24`, 07:07 UTC al escribir; cronómetro desde 05:54:35 |
-| Que `0035` está en las dos bases | `list_migrations` antes, y `execute_sql` después contra `pg_proc`/`has_table_privilege`/`has_function_privilege` (F-146: catálogo, no `.sql`) | En `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`: `anon` nada; `authenticated` solo `select, insert, delete` en `watchers`, solo `select` en `watcher_list`, `execute` en las cuatro acciones y en `watcher_effective_status`, nada en `init_watcher`/`check_watcher_limit`/`watcher_lock_own`/`watchers_evaluate_expirations`. **Salió `UPDATE` de `authenticated` por defecto y se revocó** (`F-192`) |
-| Que el esquema aguanta | `supabase/tests/run.sh` **NO se pudo correr** (`F-191`). PGlite (Postgres 18 WASM) con 35 migraciones y `01_schema_smoke.sql`, más tres mutaciones de `0035` | Smoke verde; **las tres mutaciones (límite 51, vencimiento apagado, `select` sin filtro de organización) hacen fallar el banco**. **No es el Postgres de CI (16) ni el de las bases (17)**: la CI corre el `run.sh` real al empujar |
-| Que la siembra reproduce los ejemplos de la spec | Vista `watcher_list` en las dos bases tras `demo_watchers.sql` | `6308-ZZ` 27 días, `7210-BECBP` 12 días pausado, `22316-E` PENDIENTE con «expira en 2», `NU2210-E-TVP2` TRIGGERED, `6205-2RS` EXPIRED; BETA con 2 ACTIVE |
-| Que la app sigue entera | `npx vitest run` y `npx tsc --noEmit` | **1 033 pasan**, 23 saltados; typecheck limpio |
-| Que el arnés valida la tarea | `python -m harness.graph.run harness/tasks/SRCH-03.json --seco` | Primero **10 problemas** (nombres accesibles que el contrato busca y la tarea no declaraba, `F-125`); corregidos, «todo verde, cero coste» |
-| La corrida 03 | `harness/metrics/SRCH-03/corrida-03/`, `git show --numstat ccbf187` | VERDE en 2 intentos; intento 1 con C1 y C2 rojos; **1 279 líneas, 8 ficheros, 0 tocados**; 0,0851 $ |
-| Que las corridas 01 y 02 no miden al Coder | Feedback crudo de C2 en su log | 01: `locator.fill: waiting for getByLabel('Correo electrónico')` en `auth.setup.ts` (sin `.env`). 02: tres fallos del foro, uno de anclaje en paralelo y uno de localizador ambiguo |
-| El estado del foro en producción | SQL: reacciones por post de `c001`/`c003`/`c004` | Una reacción de `c003` post 2 estaba en `c004` post 2; repuesta con la sentencia de `demo_forum.sql`: **5 reacciones**, distribución de la siembra |
-| Que producción tiene RLS en todo | SQL sobre `pg_class.relrowsecurity` | 19 tablas, **19 con RLS**, ninguna sin ella |
-| Cifra 7 | `python -m harness.core.orchestration_metrics` con `c11dd857….jsonl` copiado al directorio del worktree (`F-197`) | **23,53 $** de coste-sombra, `claude-sonnet-5`, hasta la corrida 03 |
-| Que `npm run dev`/e2e apuntan a producción | `app/.env`, solo el ref | `troxminloxkjwihwfevs` (`F-188`, decidido): **los e2e de hoy escribieron en producción** (solo pausar/reactivar, con `finally`) |
-| **Que el resultado visual de `SRCH-03` es bueno** | **No lo he verificado yo**: solo tests y e2e | **C5 del PO PENDIENTE** |
-| La CI y el despliegue | `gh run view 35968038084` job a job; descarga de `/assets/index-DE2H8RwC.js` y `index-DVsylPPU.css` y `grep` | Los **seis jobs** en verde (incluido `Esquema` con `run.sh` en Postgres 16, que cierra lo que `F-191` dejó sin verificar para `0035`); el bundle lleva `Mis watchers`, `watcher_list` y el `.screen` con `overflow-y:auto` |
-
-**Las ocho cifras de la séptima pantalla:**
-
-| # | Cifra | `SRCH-03` | Nota |
-|---|---|---|---|
-| 1 | Pantallas aceptadas | **pendiente de C5** | Construida y verde |
-| 2 | Corridas sin escalada | **Sí** (la 03) | Las 01 y 02 escalaron por entorno y contrato: no cuentan (`UMBRAL` §5.3) |
-| 3 | Verde al primer intento | **No** | Intento 1 rojo en C1 y C2 |
-| 4 | Corrección humana | **0 %** (0 de 1 279) | |
-| 5 | Ficheros sin tocar | **8 de 8** | |
-| 6 | Coste del generador | **0,085 $** (0,318 $ con las dos inválidas) | Dentro del tope de 0,25 $ solo la válida: **con las repeticiones lo supera** |
-| 7 | Coste de orquestación | **23,53 $** | Incluye ~35 minutos de Docker (`F-191`) y la sesión entera hasta la corrida; **primera cifra 7 medida en sesión propia** |
-| 8 | Tiempo de reloj | **1 h 10 min hasta «lista para C5»** (05:54→07:04 UTC), ~35 min de ellos en `F-191` | **Sin cerrar: falta la C5**; el reloj se para mientras espera al PO |
-
-**Tabla del 24-sep-2026, segunda parte — lo comprobado HOY:**
-
-| Afirmación | Verificado contra | Resultado |
-|---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-24`, 10:47 UTC cuando `SRCH-02` quedó lista; ~10:55 al escribir |
-| Que Docker ya funciona | `docker version` | Servidor `29.6.1` (el PO lo resolvió; `F-191` cerrado por él) |
-| Que `INV-07` no necesita migración | `supabase/migrations/0002_inventory.sql` (columna `inventory_visibility_mode`, tabla `inventory_exclusions`, políticas `exclusions_select_own`/`exclusions_write_admin`) | Existe todo lo que la pantalla lee y escribe; **la tarea no toca el esquema** |
-| Que `SRCH-02` no necesita consulta nueva | Lectura de `fetchResults` y `ResultsTable` | Se reutilizan tal cual; `batch.ts` solo orquesta con concurrencia 5 |
-| La capa de datos de las dos | `npx vitest run` | `visibility.ts` 10 pruebas, `batch.ts` 23 |
-| Que el arnés valida las dos tareas | `python -m harness.graph.run … --seco` | `INV-07`: primero 2 problemas (`approved_html` con nombre equivocado y un nombre accesible sin declarar, `F-125`); `SRCH-02`: verde a la primera |
-| Las corridas | `harness/metrics/INV-07/corrida-01..04/`, `harness/metrics/SRCH-02/corrida-01/`, `git show --numstat` | `INV-07`: 01, 02 y 03 ESCALADAS por causas que no son el artefacto (`F-199`, `F-200`), **04 VERDE en 2**, 943 líneas; `SRCH-02`: **VERDE en 1**, 732 líneas |
-| Que el artefacto de `INV-07` era bueno ya en la 01 | Restaurado desde `attempt_3.json` y corrido contra el contrato corregido; y el del intento 1 de la 03 contra `visibility.spec.ts` aislado | 40 de 40 pruebas de unidad; 6 de 6 e2e |
-| Que la app sigue entera | `npx vitest run` y `npx tsc --noEmit` en cada cambio | **1 083** pasan tras `INV-07`, **1 143** tras `SRCH-02`, 23 saltados; typecheck limpio |
-| Que la base no se movió con los e2e | SQL por el MCP, al cerrar | 0 exclusiones, 0 organizaciones en modo restringido, 3 pagos, 5 reacciones, 7 watchers (los cinco estados de ALPHA); **la siembra** |
-| La CI y el despliegue | `gh run view` job a job sobre `0539cd7` (`35988617659`) y `9979a86` (`35989285281`); descarga de los dos bundles y `grep` | Los **seis jobs** en verde en los dos, incluidos los despliegues; producción sirve `Visibilidad del inventario`, `inventory_exclusions`, `Exclusión por geografía`, `Búsqueda por lotes`, `Resultados por referencia` y `resumen-busqueda-por-lotes`, y **cinco** bloques `._screen_…{…overflow-y:auto}` en el CSS |
-| **Que las tres pantallas se ven bien** | **No lo he verificado yo**: solo tests y e2e | **C5 del PO PENDIENTE para `SRCH-03`, `INV-07` y `SRCH-02`** |
-
-**Las cifras de las dos pantallas nuevas** (las 7 y 8 NO son limpias, `F-205`):
-
-| # | Cifra | `INV-07` | `SRCH-02` |
-|---|---|---|---|
-| 1 | Aceptada | **pendiente de C5** | **pendiente de C5** |
-| 2 | Corrida sin escalada | **Sí** (la 04; 01–03 no cuentan) | **Sí** |
-| 3 | Verde al primer intento | **No** (intento 1 rojo en C2) | **Sí** |
-| 4 | Corrección humana | **0 %** (0 de 943) | **0 %** (0 de 732) |
-| 5 | Ficheros sin tocar | **4 de 4** | **4 de 4** |
-| 6 | Coste del generador | **0,076 $** (0,622 $ con las tres inválidas) | **0,043 $** |
-| 7 | Orquestación | sin medida limpia (sesión compartida) | sin medida limpia |
-| 8 | Reloj | ~50 min hasta «lista» (09:51→10:40, con cuatro corridas) | ~7 min más (10:47) |
+| Fecha de máquina | `date -u` | `2026-09-25` |
+| Rama por defecto | `gh repo view --json defaultBranchRef` y `git symbolic-ref refs/remotes/origin/HEAD` | `mvp/bootstrap` en los dos; Pages sigue sirviendo desde `main` (`gh api …/pages`) |
+| Las tres C5 | El PO, en el chat (adenda del 25-sep, ahora en `diario/dia-23.md`) | «todo perfecto»: `SRCH-03`, `INV-07`, `SRCH-02` aceptadas |
+| Que el diario conserva el texto | Script: cada línea no vacía de los bloques de los días 9 a 23, en orden | 290 de 290, idénticas |
+| Que el registro de hallazgos conserva el texto | Reconstrucción fila a fila desde `findings/F-*.md` contra el original | Ver el commit que lo parte |
 
 ## 2 · Dónde estamos, por corriente
 
-### Corriente A · Núcleo — EN CURSO
+- **Corriente A · Núcleo — EN CURSO.** Sin piezas abiertas propias; lo que queda está en §5.
+- **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
+  el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
+  en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar
+  `vera/index.ts`. Detalle en `FUNDACION-V1.md` §1 (sus fechas son del 6-sep).
+- **Corriente B · Fábrica — EN MARCHA.** **9 pantallas construidas y aceptadas**: las 6
+  remedidas (`DIR-01`, `ADMIN-01`, `FORO-01`, `FORO-02`, `FORO-03`, `ADMIN-02`; veredicto
+  «Funciona con supervisión», `remedicion-seis-pantallas.md`) más `SRCH-03`, `INV-07` y
+  `SRCH-02` (C5 del 25-sep). Faltan 15 de 24. Las cifras 7 y 8 solo tienen un punto limpio,
+  `SRCH-03` (`F-205`).
+- **Corriente C · Verificación — NO ABIERTA.**
 
-| Pieza | Estado |
-|---|---|
-| `F-114`, `F-131`–`F-144` | ✅ ver cierres anteriores en `git show 7abbc33` |
-| **`F-145` los botones de página se buscan por su número y un `aria-label` lo sustituye** | ✅ **4-sep · `71b803b`** |
-| **`F-146` `revoke … from public` no le quita nada a `anon`** | ✅ **4-sep · `bf2f285`**, `0022`, aplicada y verificada en la base real |
-| **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** |
-| **`F-148` con el ámbito encendido no se podía escribir nada** | ✅ **4-sep · `0023`**, aplicada y verificada contra el esquema; **5-sep, verificada contra el CLIENTE REAL** (D-7 en `Nordwälz Lager`, las tres vías de escritura) |
-| `MSG-01` a 4/4 sin reintentos | 🟢 **13 de 16 sobre el mismo corpus, contando solo el primer intento (así mide esta fila)** — serie 15 (n=3): 3/3; serie 16, réplica (n=3): 1/3; serie 17 (n=5): 5/5, las cinco al primer intento; serie 18, réplica de la 17 (n=5): **4 de 5 limpias al primer intento** — `18a` roja en `C1`/`C2` en los intentos 1 y 2, verde recién en el 3 (`F-152`); no cuenta como limpia para esta fila aunque el veredicto final de la corrida sea verde |
-| Medición del corpus de `MSG-01` con `F-145` ya puesto | ✅ **4-sep · series 15 y 16**, seis corridas. La 15 no encontró nada; **la 16 encontró `F-147`** |
-| **`F-147` la frase del estado vacío tiene que ir en UN solo nodo** | ✅ **4-sep · `1c43957`** — **remedido 5-sep, serie 17 (n=5): sin recurrencia en las cinco** |
-| **`RNG-FORO-06` · límite de 10 publicaciones por hora natural** | ✅ **18-sep · `0031`/`0032`**, `F-173` (bug de `security definer` cazado antes de aplicar). Disparador + estado consultable, aplicados y comprobados contra el catálogo de las dos bases |
+## 3 · Qué toca, en este orden
 
-### Fundación V1
+1. **Cerrar la cifra 8 de `SRCH-03`**: el reloj esperaba la C5, que llegó el 25-sep.
+2. **Elegir la décima pantalla y construirla en sesión propia con cronómetro**
+   (`UMBRAL-FABRICA-V1.md` §8), para que las cifras 7 y 8 tengan un segundo punto limpio.
+3. **Proponer una comprobación tipográfica contra el HTML aprobado** en el contrato de cada
+   pantalla: el arnés no mide tamaños y `INV-07` pasó 40 pruebas con un botón roto (`F-209`).
+4. **Decisiones que esperan al PO** (§5): `F-192`, `F-196`, `F-202`, `F-204`, `F-201`, `F-178`.
+5. Deuda sin fecha: `F-170` (contradicciones entre specs), `F-172` (buscador sin migrar en
+   `INV-01`/`MSG-01`/`SentOffers`), `F-178` (foro sin teardown).
 
-| Pieza | Estado |
-|---|---|
-| Índice de la derivación de la lista (entregable 5 + `ADR-002` §5) | ✅ **1-sep · `087962b`** |
-| `visibility_scope` (D-4) · `organizations.visibility_scope_enabled` (D-7) · Lista de hilos · `thread_items_select_participant` | ✅ **1-sep y 3-sep · `f5ea8fc`, `804dfe9`** |
-| `D-3` (`thread_items.quantity`) | ✅ **COMPLETO** — `CONSULTA` el 3-sep (`0020`), **`OFERTA` el 4-sep (`0021`, `ce78a72`→`098ba19`)** |
-| **`thread_public_keys(t_id)`** (reparto de destinatarios) | ✅ **4-sep · `0023`**, aplicada y verificada |
-| **`create_inquiry`** (reparto de destinatarios de la CEK) | ✅ **4-sep · `0023`**, con guardia en la base (`app.guard_cek_recipients`) |
-| **`F-148` · escribir con el ámbito encendido era imposible desde `0019`** | ✅ **4-sep · `0023`** — tres piezas, sin relajar ninguna política de lectura |
-| Entregable 2 · despliegue continuo | ✅ **HECHO — 8-sep** — VERA y Vercel, los dos verdes en CI real (`gh run` `34219861643`). `F-151` cerrado: cuenta y proyecto de Vercel nuevos, ver §4/§5 |
-| Entregable 1 · tres entornos como código | ✅ **HECHO — 7-sep, Preview deployments recuperadas el 10-sep sin duplicar producción** (`F-153`) — `entornos.md`, los tres entornos con `environment:` de GitHub donde aplica |
-| Entregable 3 · aislamiento de demo/e2e | ✅ **HECHO — 7-sep** — el PO borró `motioniq-rag`; `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) antes de conectar CI. Cierra `F-149` de raíz, no solo la regla de proceso |
-| **`0030` · reacciones del foro y la vista de la lista de hilos** | ✅ **17-sep** — `forum_reactions` y `forum_thread_list`, capa de datos de `FORO-02`. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
-| **`0031`/`0032` · límite de publicaciones por hora (RNG-FORO-06)** | ✅ **18-sep** — disparador + estado público, precondición de `FORO-03`. Validadas en Postgres desechable, aplicadas y comprobadas contra el catálogo de las dos bases |
-| **`0033` · `forum_post_detail`, capa de datos de `FORO-03`** | ✅ **18-sep** — reacciones y `reacted_by_me` POR PUBLICACIÓN. Validada en Postgres desechable, aplicada y comprobada contra el catálogo de las dos bases |
-| **`0034` · esquema de billing y suscripción anual (ADMIN-02)** | ✅ **18-sep** — `billing_accounts`/`billing_payments`/`billing_status_events`, vista `billing_org_status`, `billing_confirm_payment`/`billing_suspend_organization`/`app.billing_evaluate_expirations`. Validado en Postgres desechable y comprobado contra el catálogo Y contra los datos reales de las dos bases (las seis organizaciones calculan EN PRUEBA con los días exactos). **Iniciar borrado, el email de aviso y el enganche a `pg_cron` quedan fuera, documentados en la cabecera de `0034`** |
-| **`F-177` · el GRANT de tabla de sobra en casi todo `public` no es un agujero** | ✅ **18-sep**, comprobado empíricamente en Postgres desechable (no solo leído): RLS bloquea la escritura sin política pase lo que pase con el `GRANT`. Deuda de higiene, no de seguridad |
-| Entregable 6 · residencia europea (VERA) | 🟠 **11-sep, recomprobado con llamada real: mismo `429`. Infraestructura GCP creada y verificada el 10-sep** (proyecto, facturación, API, cuenta de servicio — §1) — bloqueada en la aprobación de Anthropic (Model Garden), `429 RESOURCE_EXHAUSTED` en cada comprobación, sin fecha. Código (`vera/index.ts`) sin tocar, a propósito |
+**Fecha límite:** Cuscinetti Padana vence el **30-sep** y la siembra de cobros cambia de
+estado; antes de revisar `ADMIN-02` después de esa fecha, resembrar (`demo_billing.sql`).
 
-### Corriente B · Fábrica — ABIERTA y EN MARCHA · **6 pantallas de 24 remedidas (Día 21); séptima, octava y novena CONSTRUIDAS y VERDES, las tres a la espera de la C5 del PO (Día 23)**
-
-**24-sep-2026, segunda parte: `INV-07` y `SRCH-02` construidas y desplegadas.** Las dos sin migración. `INV-07` se abre desde INV-01 (botón `Visibilidad`) y `SRCH-02` desde SRCH-01 (botón `Búsqueda por lotes`); ambas con su estado en `App.tsx` (`visibilityOpen`, `batchOpen`), que se limpia al cambiar de ítem de nav. **`INV-07`:** el modo se guarda con `Guardar configuración`, las exclusiones se escriben al momento, solo el ADMIN escribe (un EDITOR ve un aviso y controles deshabilitados). **`SRCH-02`:** hasta 50 referencias, tarjetas colapsables con la tabla de `SRCH-01`, exportación a **CSV** (no PDF); **`Crear watchers` (en lote e inline) queda deshabilitado** hasta que VERA confirme (`F-204`).
-
-**24-sep-2026: `SRCH-03` construida.** Precondiciones a mano (`0035`, siembra, `watchers.ts`, wiring, contrato), corrida 03 VERDE en 2 intentos, 1 279 líneas sin una tocada, y las ocho cifras arriba (§1). **Es la primera pantalla con el scroll propio escrito en la tarea, y el Coder lo cumplió** (`F-198`). Entrada: botón `Mis watchers` en SRCH-01 (`App.tsx` mantiene `watchersOpen`, que se limpia al cambiar de ítem de nav). **Sin crear watchers desde la pantalla** (spec §6: se crean desde SRCH-01/02 o por VERA, que no existen), **sin evaluación contra `stock.updated`, sin email, sin badge en el nav**: `0035` lo dice en su cabecera.
-
-**22-sep-2026: `SRCH-03` · Gestión de Watchers elegida como séptima pantalla**, delegado
-por el PO a esta sesión. Razonamiento completo (módulo sin tocar por la corriente B, forma
-conocida y coste medio, por qué no `INV-07`) en `UMBRAL-FABRICA-V1.md` §8. **No construida
-hoy, a propósito:** el relevo del Día 21 pide una sesión nueva por pantalla y cronómetro
-para que las cifras 7 y 8 tengan veredicto, y construirla en esta sesión habría repetido el
-mismo defecto de medición.
-
-**22-sep-2026, segunda parte del día: `F-189` confirmado por el PO en su localhost, y
-`F-190` — el PO encontró el MISMO fallo de scroll en `DIR-01` y `ADMIN-01`.** Con eso, **las
-seis pantallas que ha construido la corriente B hasta hoy han tenido, en algún momento, el
-mismo fallo de scroll dentro de `.bwcnt`** (`DIR-01`/`F-190`, `ADMIN-01`/`F-190`,
-`FORO-01`/`F-189`, `FORO-02`/`F-186`, `FORO-03`/`F-186`, `ADMIN-02`/`F-189`), todas
-arregladas hoy y desplegadas. Deja de ser una sospecha puntual: **es un hueco sistemático
-de la tarea que recibe el Coder**, y §3.3 lo deja como pendiente explícito para la próxima
-tarea que se escriba.
-
-**`ADMIN-02` corrió, y es la sexta.** Artefacto del Coder en `993db73`, sin una sola
-corrección a mano; contrato de aceptación corregido en `ab27b0f`; CI entera verde y
-desplegada. **Veredicto del arnés: ESCALADO 3/4** — y ese número no dice lo que parece,
-porque los ocho e2e que fallaron eran del contrato (`F-183`) y el intento 1, pasado por la
-batería corregida, sale verde entero. Ver el bloque del Día 20.
-
-**La remedición a seis, HECHA el 21-sep: «Funciona con supervisión» — escenario base, 21 semanas, corriente B con dos agentes** (el mismo veredicto del H1). Fallan la cifra 3 (1 de 6) y la 5 (`FORO-02`, 0 de 2 ficheros sin tocar); las cifras 1, 2, 4 y 6 cumplen; **las 7 y 8 no tienen veredicto** (no hay medida limpia ni reloj). Detalle, fuentes y errata en `openspec/v1/remedicion-seis-pantallas.md`.
-
-> **Depende de tres decisiones del PO del 21-sep, y la primera es la que manda:** las escaladas de `FORO-03` (`F-174`) y `ADMIN-02` (`F-183`) **no cuentan** para la cifra 2. Contadas como las cuenta el arnés serían dos, y la regla de `UMBRAL` §4 diría «No rinde». Las otras dos: la cifra 3 queda en 1 de 6 (no importa la lectura, falla en ambas) y `F-172` cuenta como corrección de C5 en `FORO-02`.
-
-**Las otras cinco:** el H1 (`DIR-01`, `ADMIN-01`, `FORO-01`) cerrado el Día 16 con C5 del
-PO y sin correcciones; `FORO-02` y `FORO-03` con C5 dado el 21-sep (reparos en `F-186`, arreglados).
-
-**C5 pendientes: NINGUNA.** El PO dio el 21-sep-2026, en `npm run dev` contra la base de producción y sin pulsar ninguna acción de escritura: `ADMIN-02` («aprobada total»), `FORO-02` y `FORO-03` (aprobadas; los dos reparos que puso salieron en `F-186` y están arreglados, y el PO confirmó el arreglo en su localhost el mismo 21-sep).
-
-### Corriente C · Verificación — NO ABIERTA
-
-Sin cambios.
-
----
-
-## 3 · Qué toca mañana, en este orden
-
-1. ✅ **Las TRES C5 del PO, recibidas el 25-sep («todo perfecto»): `SRCH-03`, `INV-07` y `SRCH-02` ACEPTADAS.** (El texto de abajo, sobre qué probar y qué botones evitar, es el de antes de la revisión y queda como referencia.) Las tres están construidas,
-   verdes y desplegadas, **y el PO no ha visto ninguna**: sin su C5 no cuentan como
-   aceptadas (cifras 1 y 8). Con `npm run dev` contra producción, cuenta ALPHA
-   (`Rodamientos Ibéricos`, administradora): `Comprando` → `Mis watchers` (`SRCH-03`: **sin
-   pulsar `Eliminar`**, borra de verdad) y `Comprando` → `Búsqueda por lotes` (`SRCH-02`,
-   con la lista `6205-2RS` más una inventada); `Inventario` → `Visibilidad` (`INV-07`:
-   `Guardar configuración` es seguro con la lista vacía —**corregido el 24-sep: este relevo
-   decía lo contrario y era falso**: sin exclusiones el modo restringido sigue mostrando el
-   stock a todos—; **pero con una organización excluida y el modo restringido guardado, esa
-   organización deja de ver el stock de ALPHA**; volver al modo abierto lo deshace).
-   **Y decidir lo que quedó de su lado:** las tres contradicciones de `F-196`,
-   la interpretación de las tandas de `F-204` y la de las excepciones de `F-202`.
-2. ✅ **C5 de `F-189` y `F-190` recibidas, las dos.** El PO probó `FORO-01`/`ADMIN-02`
-   (23-sep) y `DIR-01`/`ADMIN-01` (23-sep) ya desplegados: «está todo aprobado y
-   contrastado». Cerradas del todo, sin C5 pendiente de esta serie.
-3. ✅ **El scroll propio ya está en la plantilla de tarea del Coder** (`F-198`): restricción
-   en `constraints` y test que lee el CSS, anotado en `Dia-04_decisiones_arnes.md` §5. En
-   `SRCH-03` el Coder lo cumplió. **Queda hacerlo en las tareas antiguas solo si se vuelven a
-   correr** (no se van a volver a correr).
-4. **La deuda que dejó `F-170`** (contradicciones ENTRE specs y entre spec y esquema), **la de `F-172`** (el estándar de buscador solo en `DIR-01` y `FORO-02`; `INV-01`/`MSG-01`/`SentOffers` sin migrar) **y la de `F-178`** (el foro sin teardown ni `resetDemo`). Sin cambios.
-
-En paralelo, sin acción propia desde este lado:
-
-- **Entregable 6: esperar la aprobación de Anthropic (Model Garden), sin ETA.** Sin recomprobar hoy. **No tocar `vera/index.ts`.**
-- Fuera de sesión: `F-073` (re-loguear la CLI de Supabase) y el plan de pago de Vercel.
-
-**Añadido en la segunda parte del 24-sep:** `F-201` (dos avisos rancios en pantallas del MVP), `F-202` y `F-204` (spec frente a modelo de datos), y `F-205` (cifras 7 y 8 sin medida limpia).
-
-**Nuevo del 24-sep, sin dueño todavía:** **`F-192`** (privilegios por defecto anchos en producción — del PO, decidir si se abre una migración de revocación revisada tabla a tabla) y **`F-191`** (reiniciar el PC para que Docker Desktop vuelva; hasta entonces el banco de esquema local no corre). **Y el reloj de la cifra 8 sigue parado esperando al PO.**
-
-**Hecho el 22-sep que ya no está aquí:** `F-188` decidido, `SRCH-03` elegida, `F-189` cerrado y
-confirmado a ojo, `F-190` encontrado por el PO y cerrado el mismo día. **Y una fecha
-límite:** Cuscinetti Padana vence el **30-sep** y entonces la siembra de cobros cambia de
-estado; quien vuelva a revisar `ADMIN-02` después tiene que resembrar (`demo_billing.sql`)
-antes.
-
+En paralelo, sin acción de este lado: la aprobación de Model Garden; `F-073` (re-loguear la
+CLI de Supabase) y el plan de pago de Vercel, fuera de sesión.
 
 ## 4 · Decisiones vivas
 
-| # | Decisión | Dónde |
-|---|---|---|
-| **Las escaladas por defecto del instrumento (`F-174`, `F-183`) NO cuentan para la cifra 2 de la remedición a seis** | 21-sep-2026, PO, sin repetir las corridas. Sin ello la regla de `UMBRAL` §4 diría «No rinde». Lo que `F-166` decidió para `ADMIN-01` era lo contrario | `remedicion-seis-pantallas.md` |
-| **Cifra 3 de la remedición: 1 de 6, «contando como siempre»** | 21-sep-2026, PO. No importa cuál de las dos lecturas: falla en ambas con el umbral proporcional | ídem |
-| **`F-172` cuenta como corrección de C5 en `FORO-02`** | 21-sep-2026, PO. Es lo que hace fallar la cifra 5 | ídem |
-| **Estándar de buscador: input con lupa integrada + "x" al escribir, server-side** | 18-sep-2026, PO (`F-172`), en la C5 de `FORO-02`. Manda sobre lo que diga la spec de cada pantalla, incluidas las ya aprobadas. La búsqueda sigue siendo server-side (Enter/lupa), no live search — decisión explícita, distinta de la "x" | `app/src/components/SearchField.tsx`, `design-system.md` |
-| **`RNG-FORO-06` cuenta por HORA NATURAL, no por ventana móvil** | 18-sep-2026, resuelta al escribir `0031`: la spec se contradice entre su `Requirement` ("hora natural") y su `Scenario` ("en la última hora"). Gana la regla, mismo criterio que `F-158`/`F-170`. La ventana es siempre `[HH:00:00, HH:59:59]` del reloj | `0031`, `supabase/specs/community-forum/spec.md` |
-| **Un guardia que se salta a sí mismo comparando `current_user` NO puede ser `security definer`** | 18-sep-2026, `F-173`. Dentro de una función definer, `current_user` es el DUEÑO de la función, no quien llama: el bypass de siembra se vuelve permanente y el guardia deja de guardar. Regla general, no solo del foro | `F-173`, `app.guard_forum_rate_limit` (0031) |
-| **`openspec/design-gui/Ingles/` se olvida para siempre** | 17-sep-2026, PO. Copia puntual de las specs para traducir; se deja como está, no se versiona, no se revisa ni se sincroniza, y **no se menciona en ningún relevo ni cierre**. Llevaba días apareciendo como `??` en `git status` y colándose en cada resumen | `.gitignore`, `Ingles/_CARPETA-ARCHIVADA-NO-TOCAR.md` |
-| **Las invitaciones pendientes ocupan plaza en el tope de 5 usuarios** | 17-sep-2026, PO (`F-170`, `INVT-01`). Si no la ocuparan, se podrían enviar más invitaciones que plazas y acabar con más de 5 usuarios. `Reenviar` una expirada respeta el mismo límite | Spec `INVT-01` §3, `barrido-specs-F158.md` |
-| **Al llegar al límite de usuarios, el mensaje se muestra** | 17-sep-2026, PO (`F-170`, `REG-09`): «hay que mostrarlo al usuario sin dudarlo». La spec decía «sin mensaje» | Spec `REG-09` §6 |
-| **En una spec, la regla manda sobre el ejemplo** | 17-sep-2026, PO, al cerrar `F-158`: la de `ADMIN-01` decía *naranja si > 24h* y pintaba en naranja 18 horas. Se corrige el ejemplo (a 30 h), no la regla | `F-158`, spec y HTML de `ADMIN-01` |
-| **La cifra 2 de `ADMIN-01` cuenta, aunque su C2 no ejecutara el e2e en la corrida del arnés** | 17-sep-2026, PO. El contrato se cumple en CI real (66/66) y en local (4/4) contra el artefacto tal cual salió del Coder; el hueco era de la medición, no de la pantalla. Desde `6e25a9a` ese hueco no puede repetirse: un e2e declarado que se salta deja C2 `INEJECUTABLE` | `F-166` |
-| **Se siembra antes de cada corrida, y no a mano** | 17-sep-2026, PO. `resetDemo` devuelve las tres solicitudes de `ADMIN-01` a la cola en cada arranque de la suite y en `npm run demo:reset`: una revisión a mano que pulse Aprobar/Rechazar ya no puede cobrarse al Coder en la corrida siguiente | `F-169`, `app/scripts/demo-reset.mjs` |
-| **Las series de medición pasan de `n=3` a `n=5`** | 5-sep-2026, PO. La serie 16 (réplica exacta de la 15) dio 1 de 3 donde la 15 dio 3 de 3 sobre el MISMO corpus: con tres tiradas el marcador mide tanto el corpus como la suerte. A partir de la serie 17, cinco tiradas por serie. **Primer resultado: la 17 dio 5/5** — ni prueba ni refuta la apuesta por sí solo, pero es el mejor marcador visto hasta hoy | `remedicion-17{a..e}-msg-n5`, $0,336154 |
-| **ADR-002** | Ámbito de visibilidad por usuario. Diez decisiones, seis invariantes, ocho objetos de esquema — **seis hechos, dos bloqueados por Q-1** | `docs/ADR-002_*.md`, `FUNDACION-V1.md` §2 |
-| **Q-1 · CERRADA: buzón abierto + el ADMIN recibe copia de todo** | 4-sep-2026, PO. El elemento entrante llega a **todos** los miembros de la receptora; asume quien responde, sin acción de reparto; y el ADMIN de las dos organizaciones es destinatario criptográfico permanente | `ADR-002` §10 Q-1, D-2 (adenda) |
-| **V-2 queda INVERTIDO y V-1/V-6 precisados** | 4-sep-2026, consecuencia directa de Q-1. El ADMIN pasa de «nunca recibe copia por ser ADMIN» a «recibe copia de todo». La promesa interna deja de ser «el compañero no puede verlo» y pasa a «solo tu ADMIN puede» | `ADR-002` §4, §1 (matiz) |
-| **`quantity` NO se hereda de la oferta anterior** | 4-sep-2026. Copiar la cantidad vieja escribiría en claro una cifra que el ciphertext puede desmentir. `NULL` dice «no se sabe» | `0021` §2 |
-| **D-7 se implementa con interruptor, no se difiere** | 3-sep-2026, PO. `organizations.visibility_scope_enabled`, apagado por defecto | `0019`, adenda en `ADR-002` D-7 |
-| **Lo que se afirme sobre privilegios se comprueba contra el catálogo, no contra el `.sql`** | 4-sep-2026, `F-146`. La plataforma añade concesiones que ninguna migración escribió | `0022`, regla 2 de este fichero |
-| **El banco de pruebas tiene que ser tan permisivo como producción, no más estricto** | 4-sep-2026, `F-146`. Un local más estricto esconde agujeros reales en vez de cazarlos | `00_auth_stub.sql` |
-| **El hilo no es concepto visible** | El usuario ve «mi conversación con tal empresa» | ADR-002 §6 |
-| **VERA en producción** | **Sonnet 5** vía Vertex AI europeo. Confirmado viable el 6-sep (Vertex ofrece *endpoint* multi-región UE para Claude, GA mayo-2026). Runbook listo (`vera-vertex-eu-migracion.md`), código sin aplicar — falta el proyecto GCP, sin fecha | Plan §4.2, `FUNDACION-V1.md` §1 |
-| **Generador de código** | DeepSeek V4 Flash **vía Microsoft Foundry, zona UE**. Nunca toca criptografía, reglas de acceso, claves ni datos de cliente | Plan §4.3 |
-| **Revisión multiagente** | Sobre esquema, criptografía y capa de datos. **Nunca sobre cada pantalla** | Plan §5.4 |
-| **Cláusula de parada** | Todo encargo lleva la instrucción de detenerse si el diagnóstico no cuadra con el código. **Hoy se usó dos veces** (Q-1 y `F-146`) | Plan, Anexo B |
-| **El CSV histórico no se recalcula** | Cada corrida conserva la tabla con la que se midió | 25-ago · `F-129` |
-| **El guardia AVISA, no bloquea** | Vale para roles, literales y roles estructurales. Es una **medida**, no una preferencia | `F-127`, `F-130`, `F-131` |
-| **`C2` corre SIEMPRE la suite e2e ENTERA** | `D-09-03 (a)`, 12-ago | `test_runner.py` |
-| **Un verde con excusas se MARCA en el CSV** | 30-ago | `F-134` |
-| **Los logs de corrida se versionan, y los escribe la corrida** | 30-ago | `F-115`, `F-136` |
-| **El corpus NO se toca a mitad de serie** | 4-sep-2026. `F-145` se declaró después de `14c`: cambiarlo antes habría hecho que las tres corridas midieran corpus distintos | serie 14 |
-| **Un artefacto crudo del Coder no se commitea sobre una pantalla ya revisada** | Aplicado tres veces más hoy | `CLAUDE.md` §1.6 |
-| **Lo que el contrato exige, la tarea lo dice** | **Quince veces en ocho días.** La vía ha sido siempre la misma: declararlo en `component_api`, sin tocar ni un aserto | `F-116`…`F-145` |
-| **El 57 a 1 se acepta, sin acción** | 1-sep-2026, PO | `F-113` |
-| **El guardia NO aprende a mirar nombres accesibles (`F-145`)** | 5-sep-2026. Medido antes de escribir: el arreglo obvio (borde de palabra para nombres cortos) da CERO avisos nuevos en las seis tareas, porque el propio `component_api` de `MSG-01` cita HTML de ejemplo que reintroduce el mismo falso negativo. El problema no es el guardia, es distinguir una declaración de un ejemplo en la misma prosa | §1, §3 |
-| **La CD dispara sobre `mvp/bootstrap`, no `main`** | 6-sep-2026, PO. `main` lleva desde el 4-ago sin moverse; fusionarla es un cambio de flujo aparte, no de CI | `ci.yml`, `entornos.md` |
-| **El aislamiento de demo/e2e va por proyecto Supabase separado** | 6-sep-2026, PO — dirección confirmada dos veces (antes y después de ver el coste real, $0/mes). Bloqueado en la ejecución por un límite de cuenta ajeno al repo, no por la decisión en sí | `FUNDACION-V1.md` entregable 3 |
-| **Ante una acción irreversible, se prueba primero la reversible** | 6-sep-2026, aplicado sin que hiciera falta pedirlo: se intentó `pause_project` sobre `motioniq-rag` antes de considerar borrarlo, aunque el PO ya había autorizado el borrado directo | Esta sesión |
-| **`F-151` se cierra con cuenta y proyecto de Vercel nuevos, no recuperando el acceso viejo** | 8-sep-2026, PO — la tercera vía que el propio hallazgo dejaba escrita, sin intentar antes las otras dos (re-login con `aguillensp-sudo`, o invitación de quien administra el equipo viejo). Coste asumido: se pierden `bearingworld.vercel.app` y las variables de entorno del proyecto viejo | `F-151`, `entornos.md` |
-| **Los tokens no se pegan en el chat, el PO los pone él mismo por su terminal** | Ya regía para `SUPABASE_TOKEN` (7-sep); aplicado también hoy a `VERCEL_NEWACCOUNT_TOKEN`. Los IDs de proyecto/organización (`orgId`, `projectId`) NO son secretos y sí se pasan en claro — son identificadores, no credenciales | Esta sesión, `ci.yml` |
-| **La cuenta de facturación de GCP pasa de prueba gratuita a pagada** | 10-sep-2026, PO. Necesario para poder solicitar acceso a modelos de terceros (Claude Sonnet 5) en Model Garden — Google no deja comprar esos productos contra crédito de prueba | `vera-vertex-eu-migracion.md` |
-| **`git.deploymentEnabled` sustituye a `ignoreCommand` para excluir `mvp/bootstrap` del disparador de Git de Vercel** | 10-sep-2026. `ignoreCommand` no generaba ni "Ready" ni "Ignored" para esa rama tras corregir `Root Directory`; la documentación oficial de Vercel señala `git.deploymentEnabled` como la propiedad pensada para esto, sin gastar cupo de *build* | `F-153`, `entornos.md`, `app/vercel.json` |
-| **El guardia de la CEK recalcula el conjunto exacto en vez de solo comprobar "no falta nadie"** | 10-sep-2026, PO — decisión ejecutada el mismo día que se tomó (Día 12). Reutiliza `thread_public_keys` como fuente de verdad en vez de reimplementar la lógica de destinatarios una segunda vez; con hilo existente, `p_keys` tiene que ser subconjunto exacto de lo que esa función devuelve | `0024`, `F-154`, `findings-register.md` |
-| **Un `SELECT` bajo RLS que depende de `thread_item_keys` no sirve dentro de una función `security invoker` que un participante SIN clave todavía tiene que poder llamar** | 10-sep-2026, `F-155`. Mismo principio que `F-148` (0023 §4bis): la lectura derivada de si ya tienes clave no puede ser condición para la escritura que te la daría. La solución es siempre un helper `security definer` (`can_access_thread`, `resolve_thread`, y ahora `thread_counterpart`), nunca relajar la política de lectura | `0025`, `F-155` |
-| **El CSV histórico del arnés no se recalcula, ni cuando el dato ya estaba** (repetido) | 10-sep-2026, aplicado a `primer_intento_limpio` (F-152) igual que a `corrida` (F-129) — aunque `intentos` ya bastaba para derivarlo en las 143 filas viejas, se escribe `-` y no se reconstruye | `harness/core/metrics.py`, F-129, F-152 |
-| **Un guardia que decide con un `SELECT`/`EXISTS` bajo RLS puede saltarse en silencio, no solo bloquear a quien escribe** | 10-sep-2026 (Día 13), `F-156`. Misma causa que `F-148`/`F-155` (política de SELECT derivada de `thread_item_keys` dentro de una función `security invoker`), pero con un efecto nuevo: en vez de romper la escritura de quien llama, deja pasar algo que el guardia debía impedir. Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos contra este criterio; ninguna otra tenía el hueco | `0026`, `F-156`, `findings-register.md` |
-| **El Operador de Plataforma tiene su propio componente de shell, `OperatorShell.tsx`, no una rama dentro de `AppShell`** | 11-sep-2026 (Día 15). Nav de cinco ítems propios y acento brass (spec `ADMIN-01` §2) contra un `AppShell` tipado a `MemberProfile` que usa `orgName`/`role` en tres sitios — reusarlo habría tocado un componente compartido con 147 líneas de tests por una pantalla sin organización. Reutiliza `AppShell.module.css` para el layout común; `AppShell.tsx` queda intacto | `OperatorShell.tsx`, `App.tsx` |
-| **`ADMIN-01` no afirma que se envía ningún email** | 11-sep-2026 (Día 15). El HTML aprobado y la spec prometen EML-07/EML-08; ningún envío de correo existe en el proyecto. Los textos de confirmación se corrigen a "Aprobación registrada."/"Solicitud rechazada.", sin mencionar ningún email — mismo principio que `F-100` | `harness/tasks/ADMIN-01.json` |
-| **Un commit con el contrato de aceptación en rojo contra un marcador lleva `[skip ci]`, con el motivo en el cuerpo** | Ya estaba en `CLAUDE.md` §1; aplicado con un descuido el 11-sep (el commit de la tarea `DIR-01` salió sin él) y corregido desde `ADMIN-01` en adelante | `CLAUDE.md` §1, Día 15 |
-| **`F-188` se deja como está: las C5 siguen contra producción** | 22-sep-2026, PO. No se apunta el `.env` local al staging; el riesgo (una acción de escritura sería permanente) queda documentado, no eliminado | `findings-register.md`, §5 |
-| **`SRCH-03` es la séptima pantalla de la fábrica** | 22-sep-2026, delegada por el PO a esta sesión («elige la que estimes oportuno»). Módulo 03 sin tocar por la corriente B, forma conocida (tabla con filtros y estado), coste medio — se descartó `INV-07` por parecerse al motivo por el que `INV-02` quedó fuera de las tres primeras (mediría el techo) | `UMBRAL-FABRICA-V1.md` §8 |
-| **Un fallo de layout se reproduce fuera del login cuando entrar en la app tocaría entrar una contraseña** | 22-sep-2026, `F-189`. Página aislada con las reglas CSS implicadas, servida por un `http.server` propio y medida con `getComputedStyle`/`scrollHeight` en un navegador real — sirve para cualquier sospecha de recorte o de layout sin necesidad de autenticarse | Esta sesión |
-| **El scroll propio de `.bwcnt` va a la plantilla de tarea del Coder, no se sigue corrigiendo pantalla a pantalla** | 22-sep-2026, tras `F-190`: seis de seis pantallas de la corriente B tuvieron el fallo. Pendiente de ejecutar (§3.4), no una decisión cerrada todavía | Quien escriba la tarea de `SRCH-03` |
+Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
----
+- Las C5 se hacen contra **producción**, sin pulsar nada que escriba (`F-188`).
+- **Se siembra antes de cada corrida**, con `resetDemo`, no a mano (`F-169`).
+- Series de medición con **n=5**; el corpus **no se toca a mitad de serie**.
+- El scroll propio de `.bwcnt` va **en la plantilla de tarea del Coder** (`F-198`).
+- Lo que se afirme sobre privilegios o RLS se comprueba **contra el catálogo**, no contra el `.sql` (`F-146`).
+- La CD despliega desde `mvp/bootstrap`; `main` solo sirve GitHub Pages.
 
-## 5 · Bloqueos y deuda conocida
+## 5 · Bloqueos y deuda abierta
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-202`, `F-204` y `F-201` · decisiones de producto de `INV-07`/`SRCH-02`**: «excluir Asia menos Japón» no se puede expresar con el modelo actual; `Dividir en tandas` es interpretación mía; los avisos de `Inventory.tsx` y de `SearchResults.tsx` siguen diciendo «fuera del alcance» | El PO |
-| ⚪ | **`F-205` · las cifras 7 y 8 de `INV-07` y `SRCH-02` no son medibles** (sesión compartida). La serie solo tiene un punto válido, `SRCH-03` | Una sesión propia por pantalla, como pide `UMBRAL` §8 |
-| ⚪ | **Seis fallos ajenos en el intento 2 de la corrida 03 de `INV-07`** (`SRCH-01`/`MSG`: filas que no llegaron en 5 s). No se explicó y la base quedó limpia | Nadie; si reaparece, mirar la latencia de la base compartida |
-| 🔴 | **`F-192` · privilegios por defecto anchos en producción.** `authenticated` con `UPDATE` en 17 de 19 tablas, `anon` con ALL en 8 tablas antiguas; las 19 con RLS. El banco de esquema no lo ve (`00_auth_stub.sql` no copia las DEFAULT PRIVILEGES de tablas y copiarlas rompe los asertos de `0028`). **Solo `0035` está corregida.** | **El PO decide** si se abre una migración de revocación revisada tabla a tabla |
-| ✅ | **`F-191` · CERRADO por el PO el 24-sep** («el tema de Docker está resuelto»): `docker version` responde `29.6.1`. Queda por hacer correr `supabase/tests/run.sh` a mano, que la CI ya corrió en verde sobre `0035` | — |
-| ⚪ | ~~**`F-191` · Docker Desktop no arranca**~~ (histórico) (sockets huérfanos en `%LOCALAPPDATA%\Docker\run` tras mi cierre forzado). `supabase/tests/run.sh` no corre en local | Reiniciar el PC, o borrar los tres ficheros como administrador |
-| 🟠 | **`F-196` · tres contradicciones de la spec de `SRCH-03` resueltas por mí** (contador, `País`, plazo de renovación de 3 días) | El PO |
-| 🟠 | **`F-178` · el foro sin teardown ni `resetDemo`**: hoy volvió a costar una corrida (`F-195`, reacción desplazada en producción) | Sin decidir: sumar el foro a `resetDemo`, o probar reacciones solo con mocks |
-| ⚪ | **`F-197` · una sesión lanzada fuera de este repo no la mide el medidor de coste.** Esta se midió copiando su `.jsonl` al directorio del worktree | Lanzar desde el repo, o que el medidor acepte una ruta |
-| ✅ | **`F-184` · CERRADO el 21-sep.** El feedback del reintento iba lleno de avisos de Node (36 de 49 líneas): `NO_COLOR` heredado por los workers de Playwright. Ya no se pone en ese comando. | Quedan 4 líneas fijas de arranque sin tocar; las corridas anteriores no se reescriben |
-| ⚪ | **`F-188` · el desarrollo local apunta a producción**, no al staging que decía `entornos.md`. **Decidido el 22-sep-2026 por el PO: se deja como está.** Las C5 se siguen haciendo contra producción, sin pulsar nada que escriba | Nadie — es la decisión, no queda acción |
-| ✅ | **`F-186` sospecha confirmada, arreglada y confirmada a ojo: `F-189` (22-sep).** `Forum.module.css` (`.body`) y `AdminBilling.module.css` (`.screen`) tenían el mismo fallo. El PO probó `FORO-01`/`ADMIN-02` ya desplegados: «FUNCIONAN» | Cerrado del todo |
-| ✅ | **`F-190` (22-sep): el PO encontró el MISMO fallo en `DIR-01` y `ADMIN-01`**, sin que nadie se lo pidiera — mismo método que `F-189`. Arreglado, desplegado, verificado por contenido en producción y **reconfirmado a ojo por el PO el 23-sep** («está todo aprobado y contrastado») | Cerrado del todo |
-| 🟡 | **La clave de Atria no vive donde dice `CLAUDE.md` §1.1.** Está en el `.env` de otro proyecto (`C:/Users/admin/proyectos/04_01_Ticket_reader_Ninox/.env`), que es un tercer sitio: no la encuentra ni el `grep` del repo (respeta `.gitignore`) ni la lectura del registro de Windows. Costó media hora de búsqueda a ciegas | Álvaro, si se vuelve a usar ese brazo: `setx ATRIA_API_KEY` la deja donde ya está `DEEPSEEK_API_KEY` |
-| 🟡 | **El turno de checks entre árboles está probado pero no ejercitado en producción**: los dos brazos no llegaron a solaparse (Atria arrancó cuando DeepSeek ya había acabado). La primera vez que dos corridas coincidan de verdad será la primera prueba real del cerrojo | Quien lance dos a la vez: mirar el log, que dice la espera |
-| ⚪ | ~~`push` a `mvp/bootstrap` no dispara CI; sospecha: el token de git~~ | **Resuelto 17-sep-2026, y no era el token: `F-164`** (el cuerpo del mensaje de `7eeb6d8` nombraba el marcador de salto). `5cfbf2f`, con las mismas credenciales, creó su run al momento. Detrás apareció `F-165` (`ci.yml` sin credenciales del Operador), cerrado |
-| ⚪ | ~~**`F-168` · la app de producción no arranca desde el 8-sep.**~~ **Resuelto 17-sep: variables puestas por el PO, verificado por contenido (`index-CHmJc7cl.js`, 480.802 bytes) y en navegador (login pintado, cero errores de consola), y con un paso nuevo en `deploy-app` que lo comprueba en cada despliegue.** Lo que decía: El proyecto `rin-world-io` de Vercel no tiene `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`; el bundle es un `throw`. Pasó nueve días sin verse porque `F-151` se verificó con `HTTP 200` | Álvaro: variables en Vercel (Production + Preview) y la decisión sobre `VITE_DEMO_KEY_SEED` (§3) |
-| ⚪ | **Resuelto 17-sep: token nuevo, VERA desplegada en verde (run `35238997261`, intento 2).** ~~`F-167` · `SUPABASE_TOKEN` de CI devuelve `401`.~~ VERA no se despliega. Desde `05d2f1b` ya no arrastra a la app | Álvaro: token nuevo y `gh secret set SUPABASE_TOKEN` |
-| ⚪ | ~~`F-166` · falta `E2E_OPERATOR_PASSWORD` en la máquina local~~ | **Resuelto 17-sep: en `app/.env` (no como variable de usuario, como decía esta fila), login comprobado, e2e local 4/4** |
-| ✅ | **El C5 de `FORO-02` se cerró el 21-sep.** El PO lo aprobó, con dos reparos (`F-186`: doble «x», espacio inferior) ya arreglados. | Confirmado por el PO en su localhost el 21-sep |
-| 🟠 | **Las cifras 7 y 8 de la remedición no tienen veredicto.** La 7 son deltas de sesión, no de pantalla, y cuatro de seis salieron sucias; `ADMIN-02` tiene un techo de 190,50 $ que incluye el experimento. **La 8 no está instrumentada. Séptima pantalla ELEGIDA el 22-sep: `SRCH-03`** (`UMBRAL-FABRICA-V1.md` §8), sin construir | Sesión nueva y cronómetro sobre `SRCH-03` (§3.1) |
-| ⚪ | ~~**El límite de 10 publicaciones por hora (RNG-FORO-06) no existe en la base.**~~ **Resuelto 18-sep-2026: `0031`/`0032`, aplicadas y comprobadas contra el catálogo de las dos bases.** La primera versión del disparador tenía un bug real (`F-173`: `security definer` hacía que el bypass de siembra se activara siempre) cazado en Postgres desechable antes de tocar nada real | Corriente A |
-| 🟡 | **`F-172`: el estándar de buscador (input+lupa integrada+"x" al escribir) solo está aplicado en DIR-01 y FORO-02.** `INV-01`, `Messages.tsx` (MSG-01) y `SentOffers.tsx` siguen con su implementación propia, sin la "x" y (en INV-01) con la lupa a la izquierda | Quien toque esas pantallas: migrar a `components/SearchField.tsx` |
-| 🟡 | **`F-178`: el foro no tiene reset/teardown, así que un e2e que reaccione y desreaccione en la misma corrida puede dejar un residuo si esa corrida se cancela a medias** — ya pasó una vez (reacción huérfana de `alpha@bearingworld.test` en `ogdhyzgjjbbikjbkhxmu`, borrada a mano el 18-sep). Dos vías sin aplicar: sumar el foro a `resetDemo`, o probar reacciones solo con mocks | Quien toque el e2e del foro de nuevo |
-| ⚪ | **Resuelto 17-sep: decisión del PO (sembrar antes de cada corrida), automatizada en `resetDemo` y probada reproduciendo el fallo.** ~~`F-169` · una prueba a mano de `ADMIN-01` sobre la base de producción descuadra la siembra~~ (pasó en la C5 del 17-sep: una aprobada, una rechazada y devuelta). Repuesta el mismo día; la causa sigue: la próxima corrida del arnés le cobraría al Coder un fallo de datos | PO: resembrar antes de cada corrida de `ADMIN-*`, o C5 sin pulsar acciones |
-| 🟠 | **El riesgo de la salida abrupta ya no se pierde, se CONCENTRA en el ADMIN.** Con Q-1 cerrada, la consecuencia 7.1 desaparece porque el ADMIN conserva copia de todo — y por eso el día que el ADMIN se vaya de golpe o pierda su frase, la organización pierde lo único que quedaba. La recomendación (más de un ADMIN) **tiene que llegar a la interfaz**, no quedarse en el ADR | Producto, cuando se diseñe el alta de miembros |
-| 🟠 | **La residencia sigue siendo el entregable con reloj — la infraestructura GCP ya está, el bloqueo es una revisión externa.** `supabase/functions/vera/index.ts` sigue llamando a `api.anthropic.com`; el proyecto GCP, la facturación, la API y la cuenta de servicio están creados y verificados (§1), pero el cupo de Vertex AI para Claude Sonnet 5 exige aprobación de Anthropic vía Model Garden — `429 RESOURCE_EXHAUSTED` en cada comprobación de hoy, sin fecha | Anthropic: aprobar la solicitud de Model Garden (fuera del control de este repo) |
-| 🟡 | **`F-073`** · la CLI de Supabase ve la organización equivocada. Sin cambios; el MCP sigue llegando. **Nota 6-sep:** el *job* `deploy` nuevo usa un `SUPABASE_ACCESS_TOKEN` de CI aparte, así que no hereda este bloqueo | Álvaro: re-loguear y `link` |
-| 🟡 | **Vercel sigue en plan gratuito** (ahora en la cuenta nueva, `alvaro-7494`), que prohíbe uso comercial | Álvaro: 20 $/mes |
-| 🟡 | **Los worktrees: siete** (raíz + seis), contados el 20-sep con `git worktree list`. Subió de cinco: esta sesión creó dos —`admin-02-code-generation-9a0220` para el brazo de DeepSeek y `exp-admin-02-atria` para el de Atria— y el segundo se borró al cerrar, a petición del PO, dejando las dos ramas. Los cuatro fantasma de siempre siguen en `43bb222`, tres de ellos ya en `detached HEAD`. **Séptima comprobación seguida sin que la hipótesis de lanzar desde la raíz se pruebe ni se refute** | Fuera de sesión |
-| 🟡 | **El guardia no ve los nombres accesibles** (`F-145`). Cazó catorce huecos de la familia y este se le escapó entero. **Decidido 5-sep-2026: se queda así** — el arreglo obvio no funciona (§1, §4) | Aceptado, no se escribe |
-| 🟡 | **No se edita nada de `app/` mientras una corrida está viva.** Sin incidentes hoy | Se cumple mirando el cerrojo antes de tocar `app/` |
-| ⚪ | ~~`quantity` en `OFERTA`~~ | **Resuelto 4-sep-2026: `0021`, aplicada y verificada** |
-| ⚪ | ~~Copia sin trackear de este fichero en la raíz~~ | **Resuelto 4-sep-2026: borrada, y NO ignorada a propósito** |
-| ⚪ | ~~`anon` podía ejecutar cinco funciones de `public`~~ | **Resuelto 4-sep-2026: `0022`, con ancla negativa** |
-| ⚪ | ~~`0023` no lo ha probado ningún cliente~~ | **Resuelto 5-sep-2026: probado con el cliente real, D-7 encendido en `Nordwälz Lager`, las tres vías de escritura — como ADMIN y como EDITOR real** |
-| ⚪ | ~~Vercel no redesplegó, DOS cambios de cliente pendientes~~ | **Resuelto 5-sep-2026: `vercel --prod`, bundle en producción confirmado con `p_quantity`** |
-| ⚪ | ~~Entregable 3 bloqueado: cupo de proyectos Free de Supabase agotado por `motioniq-rag`, ajeno a este repo~~ | **Resuelto 7-sep-2026: el PO lo borró desde el dashboard** (`pause_project` había fallado antes, ya hibernando). `bearingworld-e2e` creado, sembrado y probado (53/53 Playwright) — ver §1, §2 |
-| ⚪ | ~~D-8 (un EDITOR no ve nada de sus compañeros) sin probar con el cliente real~~ | **Resuelto 5-sep-2026: EDITOR real, «0 hilos» con la organización ya en conversación activa** |
-| ⚪ | ~~`F-151`: el paso de Vercel del *job* `deploy` bloqueado por acceso de cuenta~~ | **Resuelto 8-sep-2026: cuenta y proyecto de Vercel nuevos, verificados en CI real (`34219861643`) y con `curl` (`HTTP 200`)** — ver §1, §2, §4 |
-| ⚪ | ~~Preview deployments de Vercel no ocurrían, proyecto nuevo sin Git conectado~~ | **Resuelto 10-sep-2026: `git.deploymentEnabled` en `app/vercel.json`, confirmado con push real y PR de prueba — `F-153`** |
-| ⚪ | ~~Un cliente manipulado puede envolver de más hacia la CONTRAPARTE (backlog de `0023` §4)~~ | **Resuelto 10-sep-2026: `0024`, el guardia recalcula el conjunto exacto vía `thread_public_keys`. De paso salió `F-154` (tercera organización) y `F-155` (helper `security definer` para `otra`, en `0025`)** |
-| ⚪ | ~~`F-152`: el CSV no distinguía «verde al primer intento» de «verde tras reintentos»~~ | **Resuelto 10-sep-2026: columna `primer_intento_limpio` en `harness-metrics.csv`, 143 filas históricas con `-`** |
-| ⚪ | ~~`F-155` deja una pregunta sin cerrar: ¿hay OTROS `SELECT` bajo RLS en funciones `security invoker` que asuman en silencio que quien llama ya tiene una clave envuelta?~~ | **Resuelto 10-sep-2026 (Día 13): sí, un tercero — el guardia "ya has consultado" de `create_inquiry`, cerrado en `0026` (`F-156`). Auditadas las cinco llamadas RPC de `app/src/lib/` que tocan claves o hilos; ninguna otra tenía el hueco** |
-| ⚪ | **Resuelto 17-sep: el PO decidió que manda la regla; ejemplo corregido de 18 a 30 h en la spec (dos copias) y en el HTML aprobado.** ~~`F-158`, y es del PO: la spec aprobada de `ADMIN-01` se contradice a sí misma.~~ Su tabla de columnas dice *"en naranja si > 24h, en rojo si > 48h"* y su bloque de ejemplo pinta en naranja una solicitud de *"Hace 18 horas"*. Cada lectura lleva a una pantalla distinta. El código sigue la REGLA y lo deja escrito en los tres sitios donde alguien podría arreglarlo al revés, así que **no bloquea la construcción**; lo que no puede arreglar el código es el documento | Producto: corregir la spec |
-| ⚪ | **Barrido hecho 17-sep: once contradicciones más, `F-170`, en `openspec/v1/barrido-specs-F158.md` — cerradas las once el mismo día.** ~~Nadie ha mirado si las otras 30 specs aprobadas tienen la misma clase de contradicción que `F-158`.~~ Salió por casualidad, porque la siembra de demo se verifica a sí misma y exigía una fila de cada color. Un barrido cuesta poco y no se ha hecho | Cualquier sesión, antes de que la fábrica construya sobre ellas |
-| ⚪ | ~~ADMIN-01 no se puede probar de extremo a extremo: no hay cuenta de Operador~~ | **Resuelto 11-sep-2026: cuenta creada por el PO en las dos bases, dada de alta por el MCP, alcance comprobado desde su propia sesión y `E2E_OPERATOR_PASSWORD` en los secretos de CI.** La rama de sesión del shell, que era la otra mitad y no se sabía, también |
-| ⚪ | ~~Y la otra mitad, que el Día 13 dejó fuera de alcance a propósito: los disparadores, las expresiones de política y la función Edge — todo lo que corre sin que ningún RPC del cliente lo invoque~~ | **Resuelto 11-sep-2026 (Día 14): ninguno tiene la forma.** Los siete disparadores de `app` no leen ninguna tabla; las dos políticas con `EXISTS` anidado imponen ya la misma condición que la RLS anidada aplicaría; `vera/index.ts` no toca Postgres. Anclado con cuatro asertos y una canaria en `01_schema_smoke.sql`, sin migración |
-| ⚪ | ~~`F-160`: `--seco` escalaba en falso en las seis tareas del corpus~~ | **Resuelto 11-sep-2026 (Día 15): `_columna()` en `dry_run.py`, lee el CSV por nombre de columna, no por substring de la línea.** Verificado con `python -m harness.tests.dry_run` y `--seco` sobre las tres tareas nuevas y `SRCH-01` |
-| ⚪ | ~~Las tres corridas del paso 5 de `UMBRAL-FABRICA-V1.md` §7 no pueden correr en una sesión remota~~ | **Resuelto 13/14-sep-2026 (Día 16): corridas en Claude Code local, en la máquina del PO, donde `DEEPSEEK_API_KEY` sí está** —confirmado como variable de usuario de Windows, no en `app/.env` como se daba por hecho. Las tres pantallas corrieron y llegaron a `PASA` |
-| 🟡 | **La siembra de cobros envejece y ningún reseteo la re-ancla.** `demo_billing.sql` es relativa a hoy y solo se re-ancla corriéndola a mano por psql o por el MCP; `demo-reset.mjs` NO la incluye, porque `billing_payments` solo admite `INSERT` para `service_role` (0034) y desde JS no se puede reponer un pago | Decidir si `resetDemo` la incorpora vía un verbo `security definer` o si se acepta resembrar a mano antes de cada corrida. El e2e falla en voz alta si falta un estado, así que no hay verde falso |
-| 🟡 | **`Suspender manualmente` no pide confirmación** (la spec no la pide) y suspender oculta el inventario de esa organización en búsqueda y directorio | Decisión de producto del PO, sin tomar; hoy se implementa literal |
-| 🟠 | **`F-163`, cerrado pero con una secuela abierta: la sesión que corre las tareas no fue una sesión limpia por pantalla.** La misma sesión Haiku corrió `ADMIN-01` (original), `FORO-01` y la repetición de `ADMIN-01`; la cifra 7 de cada una se reconstruyó por diferencia de sesión, no midiéndose limpia desde el principio (§1). No cambia el veredicto —todas las cifras observadas están muy por debajo del techo—, pero la próxima tanda de corridas debería abrir una sesión de Code nueva por pantalla de verdad, no reutilizar la del terminal | Quien lance la próxima corrida: sesión nueva de Code, no una terminal reutilizada dentro de la misma |
-
----
+| 🔴 | **`F-192`** · privilegios por defecto anchos en producción (`UPDATE` de `authenticated` en 17 de 19 tablas, `anon` con ALL en 8; las 19 con RLS). Solo `0035` corregida | PO: ¿migración de revocación tabla a tabla? |
+| 🟠 | **`F-202`, `F-204`, `F-201`** · decisiones de producto de `INV-07`/`SRCH-02` («Asia menos Japón» no cabe en el modelo; `Dividir en tandas` es interpretación; avisos rancios en pantallas del MVP) | PO |
+| 🟠 | **`F-196`** · tres contradicciones de la spec de `SRCH-03` resueltas por el agente (contador, `País`, renovación a 3 días) | PO |
+| 🟠 | **`F-178`** · el foro sin teardown ni `resetDemo`; ya costó una corrida (`F-195`) | Sin decidir: foro en `resetDemo` o reacciones solo con mocks |
+| 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; GCP listo, cupo de Vertex pendiente de Anthropic | Anthropic |
+| 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de tener más de un ADMIN tiene que llegar a la interfaz | Producto, al diseñar el alta de miembros |
+| 🟠 | **Cifras 7 y 8** · solo `SRCH-03` tiene medida limpia (`F-205`) | Una sesión propia por pantalla |
+| 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |
+| 🟡 | **La siembra de cobros envejece** y `resetDemo` no la re-ancla (`billing_payments` solo admite `INSERT` de `service_role`) | Decidir: verbo `security definer` o resembrar a mano |
+| 🟡 | **`Suspender manualmente` no pide confirmación** (la spec no la pide) | PO |
+| 🟡 | **`F-073`** CLI de Supabase en la organización equivocada (el MCP sí llega) · **Vercel en plan gratuito** (prohíbe uso comercial) | Álvaro |
+| 🟡 | **La clave de Atria** vive en `C:/Users/admin/proyectos/04_01_Ticket_reader_Ninox/.env` | Álvaro: `setx ATRIA_API_KEY` si se vuelve a usar |
+| 🟡 | **`F-197`** · una sesión lanzada fuera de este repo no la mide el medidor de coste | Lanzar desde la raíz del repo |
+| ⚪ | Seis fallos ajenos sin explicar en el intento 2 de la corrida 03 de `INV-07` | Si reaparece: latencia de la base compartida |
+| ⚪ | **No se edita nada de `app/` mientras una corrida está viva** | Mirar el cerrojo antes |
 
 ## 6 · Lo que este fichero NO sabe
 
-Sección obligatoria. Si está vacía, no se ha pensado lo suficiente.
-
-- **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan de verdad desde
-  la pantalla.** Sigue exactamente igual que ayer, y el e2e no puede cerrarlo: no escribe a
-  propósito, porque un pago confirmado no se borra desde el cliente. Lo que hoy SÍ se ha
-  probado con sesión viva es la LECTURA (8 filas por tres vías distintas) y la RLS del
-  miembro. **La primera vez que alguien pulse «Confirmar pago recibido» en producción deja
-  un pago permanente.**
-- **Si `billing_confirm_payment` se comporta bien con un cliente en pantalla.** Idéntico a ayer y a propósito: la C5 de `ADMIN-02` se dio sin pulsar nada que escriba.
-- **Si el artefacto de Atria es igual de bueno que el de DeepSeek.** Los dos pasan los
-  cuatro checks y las 15 pruebas de aceptación sin corrección a mano; **nadie ha comparado
-  el CÓDIGO de los dos a ojo**, y la revisión que se hizo no es ciega: la hizo el mismo
-  agente que montó el experimento sabiendo cuál era cuál.
-- **Cuánta cuota de Atria se gastó de verdad.** Las tres corridas muertas generaron tokens
-  que ningún `usage` devolvió —un stream cortado no manda contabilidad—, así que están
-  pagados y no registrados. Lo que hay en el CSV es solo la corrida buena.
-- **Por qué el stream de Atria se cortó a los 605 s.** Se midió que 435 s completan y que
-  605 s no, pero no se ha probado dónde está el límite exacto ni si depende de la hora. La
-  hipótesis —un tope de su pasarela— encaja con los dos `502` previos, pero es hipótesis.
-- **Si el veredicto de la remedición aguantaría sin la decisión 1.** No: contadas `FORO-03` y `ADMIN-02` como escaladas, la regla de `UMBRAL` §4 diría «No rinde». Está escrito arriba del documento de la remedición, pero **es la decisión de un PO sin datos repetidos**: las dos corridas no se repitieron con el contrato corregido, que era lo que decía `UMBRAL` §5.3.
-- **Si el arreglo de `F-184` cambia algo medible.** Suena a que sí —el Coder vería por fin
-  la razón de los fallos del e2e— pero nadie lo ha medido, y las cinco pantallas anteriores
-  no se van a volver a correr para averiguarlo.
-- **Lo que quedó sin verificar de la revisión adversarial del arnés:** 32 hallazgos, 7
-  verificados antes de que el límite de uso cortara la sesión. Los arreglados están en el
-  registro; los otros 25 **no están refutados, solo sin comprobar**, y viven en la
-  transcripción del *workflow*, no en un documento.
-- **Cuánto cuesta de verdad orquestar una pantalla.** Las sesiones de Claude Code que rodean a `ADMIN-02` suman 190,50 $ y las del 17-sep, con `FORO-02`, 192 $, pero **mezclan pantalla, arnés, esquema y hallazgos**: nadie puede separar cuánto fue la pantalla. Es la cifra 7 sin medir.
-- **Cuánto tiempo de reloj cuesta una pantalla.** No hay cronómetro. Por calendario, `ADMIN-02` ocupó parte de tres jornadas (18-20 sep), y buena parte del 20 fue el experimento.
-- **Qué vio el PO en pantalla en `F-186`.** Lo confirmó él («perfecto, arreglado»); yo solo verifiqué tests y que el CSS llega a producción. Nadie ha probado el foro con una ventana más baja que la suya.
-- **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien tras `F-172`.** `F-172` reescribió 110 líneas de `DIR-01` después de su C5 y nadie las ha vuelto a mirar en pantalla.
-- **Si `Messages`/`Thread` (`MSG-01`/`MSG-02`) o `SentOffers` (`VND-01`) tienen el mismo fallo.** Son del MVP, no de la corriente B, así que ni `F-186` ni `F-189`/`F-190` los tocaron — y nadie ha mirado su CSS ni los ha probado con ventana baja. Con seis de seis pantallas de la corriente B afectadas, dejar de mirar las del MVP por darlas por hechas sería exactamente el error que `F-132`/`F-146` ya describieron: comprobar el continente («ya se construyeron, ya se probaron») no es comprobar el contenido.
-- **Cuánto costó `SRCH-03` de verdad, en reloj.** El dinero está medido (0,085 $ del generador, 23,53 $ de orquestación) y el reloj hasta «lista para C5» también (1 h 10 min); **la cifra 8 no se cierra hasta que el PO dé la C5**, y la sesión de hoy mezcla el trabajo con ~35 minutos de Docker que no son de la fábrica.
-- **Si `INV-07` y `SRCH-02` se ven bien.** Igual que `SRCH-03`: nadie las ha mirado en un navegador, solo tests y e2e. **Ni con la ventana baja.** `SRCH-02` apila hasta 50 tarjetas: es la que más depende de que el scroll propio funcione de verdad.
-- **Si `INV-07` oculta el stock de verdad cuando el modo es restringido.** Lo hace `app.can_view_inventory_of` (`0002`) y el banco de esquema lo prueba; **la pantalla nunca se ha probado con el modo restringido guardado**, a propósito (un e2e así descuadraría los de `SRCH-01`, `DIR-01` y los hilos).
-- **Si `Guardar configuración` funciona de verdad.** Solo con mocks: el único e2e que escribe añade y quita UNA exclusión con el modo abierto.
-- **Por qué el intento 2 de la corrida 03 de `INV-07` rompió seis e2e ajenos.** Ver §5.
-- **Cuánto cuesta de verdad una pantalla en sesión propia con cronómetro**: solo `SRCH-03` lo dice (23,53 $, 1 h 10 min con ~35 min de Docker). Las otras dos, no (`F-205`).
-- **Si `SRCH-03` se ve bien.** Nadie la ha mirado en un navegador: solo tests, e2e y el contrato de CSS. **Ni siquiera con la ventana baja.**
-- **Si el Coder habría añadido el scroll sin que se lo pidieran.** No se sabe y ya no se puede saber con esta pantalla: la instrucción iba escrita (`F-198`). El punto 3 de §3 del cierre del 22-sep («la séptima es la prueba») **se cambió por decisión mía al escribir la tarea**, y esa decisión es de las que el PO puede querer revisar.
-- **Si `watcher_set_paused`/`watcher_renew`/`watcher_let_expire`/`watcher_update` se comportan bien con un cliente en pantalla.** El e2e solo prueba pausar y reactivar (reversibles); renovar, expirar, editar y eliminar solo con mocks y con el banco de esquema en PGlite.
-- **Cuántas tablas más tienen privilegios de sobra.** Se contaron 17 con `UPDATE` para `authenticated` y 8 con acceso de `anon`; **no se ha mirado columna a columna ni qué depende de cada concesión**, y no se ha tocado ninguna salvo `watchers`.
-- **Si el plazo de renovación de 3 días es el que quiere el producto.** Es un supuesto mío (`F-196`).
-- **Qué hace `app.watchers_evaluate_expirations()` en producción.** Nadie la ha llamado y no está enganchada a ningún job; la vista ya muestra el estado efectivo sin ella.
-
-## 7 · Ritual de cierre — cómo se sobrescribe este fichero
-
-Cinco pasos. Se ejecutan **todos** o el relevo no vale.
-
-1. **`date -u`.** La cabecera lleva la fecha de la máquina, nunca la recordada.
-2. **Rellenar §1 comprobando, no recordando.** Cada fila necesita su columna «verificado
-   contra». Si no puedes escribir contra qué lo comprobaste, no lo escribas. **Y comprueba
-   el contenido, no el continente** (`F-132`). **Si la afirmación es sobre permisos o
-   privilegios, la fuente es el catálogo de la base, no el `.sql`** (`F-146`).
-3. **Revisar §2 contra el código**, no contra el §2 de ayer.
-4. **Rellenar §6.** Si está vacía, no se ha pensado lo suficiente.
-5. **Hallazgos a `findings-register.md`, métricas a `harness-metrics.csv`, commit y push.**
-   Si se tocó código, desplegar **y comprobarlo en su URL**.
-
-⚠ **Y el paso cero, que es la regla 4: no cierres hasta que se acabe.** El día 3 se cerró a
-las 12:33 y siguió hasta las 13:45. El día 4 se cerró a las 11:22 y siguió hasta las 12:31.
-El día 6 lo cumplió dos veces corriendo `test_checks.py` antes de commitear. **El día 7 lo
-cumplió tres veces: `test_checks` antes de commitear `F-145`, el ancla negativa de `0022`
-antes de darlo por bueno, y la CI job a job antes de escribir esto. Y luego el día siguió
-igualmente: la serie 15 entera se corrió DESPUÉS de este cierre y este fichero se reescribió
-para meterla. Cerrar no es terminar.**
-
-**El día 8 lo cumplió por el otro lado: no cerró nada hasta que de verdad se acabó.**
-Este fichero se marcó explícitamente «EN CURSO, no es el cierre del día» durante horas
-mientras quedaban puntos abiertos —la serie 17 corriendo en segundo plano, el EDITOR de
-prueba pendiente de permiso—, y solo se corrió el ritual de cierre cuando el PO lo pidió
-y no quedaba nada suelto. Comprobado antes de escribir el pie: `git status --short`
-limpio, CI job a job en verde sobre el commit final, y el estado de la base
-(`visibility_scope_enabled`, el EDITOR y su clave) releído por si algo se había movido
-entre medias — no se había movido nada.
-
-⚠ **Y este fichero se escribe en `openspec/v1/ESTADO-V1.md`, no en la raíz del repo.** La
-copia de la raíz se borró el 4-sep y **no** está en `.gitignore`: si reaparece, saldrá como
-`??` en `git status`, que es como se descubrió. Comprobar `git status --short` después de
-escribir, no solo antes.
+- **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan desde la
+  pantalla.** Nadie las ha pulsado a propósito: un pago confirmado no se borra.
+- **Si `watcher_renew`, `watcher_let_expire`, `watcher_update` y eliminar funcionan con un
+  cliente real.** El e2e solo pausa y reactiva; el resto, con mocks y PGlite.
+- **Si `INV-07` oculta el stock de verdad con el modo restringido guardado** en pantalla, y
+  si `Guardar configuración` funciona fuera de los mocks.
+- **Cuántas tablas más tienen privilegios de sobra**, columna a columna (`F-192`).
+- **Si el plazo de renovación de 3 días es el que quiere el producto** (`F-196`).
+- **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
+- **Si `MSG-01`, `MSG-02` y `VND-01` (del MVP) tienen el fallo de scroll** de `F-186`/`F-189`/`F-190`.
+- **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien** tras las 110 líneas de `F-172`.
+- **Si el Coder habría puesto el scroll sin pedírselo** (`F-198` se lo pidió; decisión del
+  agente que el PO puede revisar).
+- **Si el veredicto de la remedición aguanta sin la decisión 1 del PO** del 21-sep: no; las
+  dos corridas escaladas no se repitieron con el contrato corregido.
+- **Si el arreglo de `F-184` cambia algo medible**: nadie lo ha medido.
+- **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados);
+  viven en la transcripción del workflow, no en un documento.
+- **Atria frente a DeepSeek:** nadie ha comparado el código a ojo, ni cuánta cuota se gastó
+  en las corridas cortadas, ni dónde está el límite de 605 s.
 
 ---
 
-## 8 · Cómo arrancar la sesión siguiente
-
-Orden de lectura, y el orden importa:
-
-1. **Este fichero.** Empieza por §6 —lo que no se sabe— y luego §3 —lo que toca.
-   **Worktree nuevo: necesita `app/.env` (copiarlo de la raíz, sigue ignorado por git) y el
-   junction de `node_modules` (`mklink /J`, se quita con `rmdir`, nunca `rm -rf`).** Sin el
-   primero el e2e no llega al login y la corrida sale inválida (`F-193`).
-   **Y todo fichero con regex o barras invertidas se crea con el editor de ficheros, NUNCA con
-   un heredoc del shell: se come una capa de barras y el test sale roto sin avisar (`F-199`).**
-2. **`docs/ADR-002` §10 (Q-1) ENTERA**, si vas a tocar mensajería o reparto de claves. Sin
-   esa decisión no se escribe SQL de reparto de CEK.
-3. **`openspec/v1/UMBRAL-FABRICA-V1.md`** ANTES de tocar nada de la fábrica de pantallas o
-   del H1. Es el umbral escrito antes de medir, y **no se reescribe después de ver un
-   resultado**: si hay que cambiar las tres pantallas, se cambian ahí y antes de correr.
-4. **`openspec/v1/FUNDACION-V1.md`** si vas a tocar el hito. Actualizado el 6-sep: entregables
-   1, 2 y 6 con movimiento; el 3 bloqueado — lee su adenda del 6-sep antes de reintentar
-   `create_project`.
-5. **`openspec/v1/entornos.md`** (nuevo, 6-sep) si vas a tocar CI/CD o el mapa de entornos.
-6. **`openspec/v1/vera-vertex-eu-migracion.md`** (nuevo, 6-sep) antes de tocar `vera/index.ts`
-   por el entregable 6 — no reinventar el runbook.
-7. **`openspec/mvp/CIERRE-MVP.md`**, y **lee primero su bloque de corrección**.
-8. **`docs/ADR-001`** si vas a tocar criptografía.
-9. **El plan de V1** en `openspec/v1/` para el porqué y el calendario.
-10. **`CLAUDE.md`** — §1.6 autoría, §4 claves, §6 métricas, §10 Supabase.
-11. **`findings-register.md`** nunca de corrido: por identificador. Del Día 9: `F-150`.
-    Del Día 10: `F-151` (cerrado). Del Día 11: `F-152` (cerrado el Día 12), `F-153`
-    (cerrado). Del Día 12: `F-154` (cerrado, `0024`), `F-155` (cerrado, `0025`). Del
-    Día 13: `F-156` (cerrado, `0026`). Del Día 14, tres: `F-157` (cerrado — el medidor de
-    coste borraba su propia historia), `F-158` (**ABIERTO, es del PO** — la spec de
-    `ADMIN-01` se contradice a sí misma en el umbral de color de la antigüedad en cola) y
-    `F-159` (cerrado — un e2e que fallaba por carrera, arreglado justo antes de que la
-    fábrica empiece a medirse con esa suite). Del Día 15: `F-160` (cerrado — `--seco`
-    escalaba en falso por una columna del CSV que el detector no sabía leer). Del Día 16:
-    `F-161` (cerrado — escalada de `DIR-01` no dependiente del artefacto, contagio de
-    `ADMIN-01`), `F-162` (cerrado — escalada de `ADMIN-01`, tres bugs de test más
-    contagio de `FORO-01` más un `TZ` sin fijar) y `F-163` (cerrado — tarifa de Haiku 4.5
-    incorrecta, tumbaba el medidor de coste para cualquier pantalla). Del 17-sep, tras el cierre:
-    `F-164` (cerrado — el push no disparó CI por el marcador de salto escrito en el cuerpo
-    del mensaje, NO por el token de git), `F-165` (cerrado — `ci.yml` no pasaba las
-    credenciales del Operador al job `e2e`, y con eso bloqueaba el despliegue), `F-166`
-    (cerrado — C2 contaba como verde un e2e declarado que se había saltado; el de `ADMIN-01`
-    no se había ejecutado nunca), `F-167` (cerrado — token renovado por el PO; VERA y la app se despliegan en jobs separados) y `F-168`
-    (cerrado — la app de producción no arrancaba desde el 8-sep; ahora `deploy-app` lo
-    comprueba por contenido) y `F-169` (cerrado — la C5 de `ADMIN-01` descuadró la siembra de
-    producción; ahora `resetDemo` la repone antes de cada suite, decisión del PO). Y trece filas
-    viejas que decían «Abierto» con el trabajo hecho, cerradas contra el código. Y `F-158`,
-    cerrado el mismo 17-sep por decisión del PO: el ejemplo de la spec de `ADMIN-01` pasa a 30 h.
-    Del 18-sep: `F-172` (cerrado en `DIR-01`/`FORO-02`, abierto en `INV-01`/`MSG-01`/`SentOffers`
-    — estándar de buscador nuevo, decisión del PO en la C5 de `FORO-02`), `F-173` (cerrado —
-    `security definer` rompía el propio guardia de `RNG-FORO-06`, cazado antes de tocar las
-    bases reales), `F-174` (cerrado — la escalada de `FORO-03` era un test roto, no el
-    artefacto), `F-175` (cerrado, sin acción — un commit intermedio heredó un rojo ya
-    esperado sin saltar CI él mismo), `F-176` (cerrado, sin acción posible — un commit de
-    documentación citó el marcador de salto ENTRE COMILLAS para explicar `F-175`, y eso
-    bastó para que no disparara CI: mismo mecanismo que `F-164`, otra vez) y `F-177`
-    (cerrado como comprobación, no como parche — el `GRANT` de tabla de sobra que la
-    plataforma concede en casi todo `public` a `authenticated`/`anon` no es un agujero,
-    comprobado empíricamente en Postgres desechable: RLS bloquea la escritura sin
-    política pase lo que pase con el `GRANT`) y `F-178` (cerrado el mismo día, con deuda
-    real pendiente — el job `e2e` de CI corre contra el proyecto aislado, no producción,
-    y una reacción huérfana de un e2e cancelado a medias hizo escalar el CI de `0034`
-    cuatro veces; borrada a mano, CI verde, pero el foro sigue sin teardown ni entra en
-    `resetDemo`, así que el mismo residuo puede repetirse). Del 19-sep: `F-179` (cerrado —
-    el mock de `ADMIN-02` sombreaba por posición la fila que no era, más la cita a *Acme* y el
-    contador del chip; corregido en el HTML y en la spec por decisión del PO) y `F-180`
-    (cerrado — `Cobros` como sexto ítem del nav del Operador, según el HTML aprobado). Del 21-sep: `F-184` (cerrado — el ruido de Node en el feedback del e2e), `F-186` (cerrado — doble «x» y scroll en el foro, tercera vez tras `F-088`/`F-093`), `F-187` (cerrado — una errata del relevo sobre `F-161`/`F-162`) y `F-188` (**abierto** — el desarrollo local apunta a producción). Del 22-sep: `F-188` decidido (**cerrado como decisión** — se deja como está, sin acción pendiente), `F-189` (cerrado — el mismo fallo de scroll de `F-186`, confirmado en `FORO-01` y `ADMIN-02`, arreglado, desplegado y **confirmado a ojo por el PO**) y `F-190` (cerrado — el PO encontró el mismo fallo en `DIR-01` y `ADMIN-01`, sin que nadie se lo pidiera; arreglado y desplegado el mismo día). Del 23-sep: `F-189` y `F-190` reconfirmados a ojo por el PO, ya desplegados — «está todo aprobado y contrastado»; sin hallazgos nuevos.
-
----
-
-*Día 14 de V1 · 11-sep-2026 · el detalle completo de su cierre vive en
-`git show f5e1d7e:openspec/v1/ESTADO-V1.md` (no se repite en este pie: este es el cierre del
-Día 15, que empieza donde el 14 terminó).*
-
-*Día 15 de V1 · trabajo hecho el 11-sep-2026 (15:48–19:44 UTC, los siete commits) · fecha
-leída de la máquina (`date -u`) al escribir este cierre: `2026-09-13`, 07:38 UTC — **dos días
-después del trabajo, por una interrupción de la conversación, no porque el día se alargara
-(regla 4, y se dice en voz alta por la regla 3)** · empezó donde el Día 14 lo dejó: el paso 3
-de `UMBRAL-FABRICA-V1.md` §7 · `F-160` cazado y cerrado antes de gastar un token en ninguna
-tarea —`--seco` escalaba en falso en las seis del corpus por una columna del CSV
-(`primer_intento_limpio`, `F-152`) que el detector de escalado no sabía leer, reproducido
-también contra `SRCH-01` para confirmar que no era cosa de hoy— · **las tres tareas del H1
-escritas, con sus tests de aceptación, y validadas `--seco`: cero problemas, cero avisos en
-las tres** · `OperatorShell.tsx` nuevo, porque el Operador no encaja en `AppShell`
-(`AppShell.tsx` y sus 147 líneas de tests, intactos) · segundo hallazgo en `ADMIN-01`: ningún
-envío de correo existe en el proyecto, y el texto de confirmación se corrigió para no
-afirmarlo · `admin-requests.ts` ampliada a 22 pruebas (`requestDateLabel`, `websiteHref`) ·
-**el límite del entorno, aclarado sin ambigüedad y comprobado contra la propia máquina**
-(`uname`, `mount`): esta sesión es un contenedor remoto sin ningún canal hacia
-`C:\Users\admin\...`, así que el paso 5 del §7 —las tres corridas— no puede correr aquí bajo
-ninguna circunstancia · typecheck limpio y **712 pruebas existentes en verde** tras las tres
-tareas, con las 36 nuevas de `DIR-01`/`ADMIN-01`/`FORO-01` en rojo contra sus marcadores,
-como corresponde antes de que exista la pantalla de verdad · siete commits en
-`mvp/bootstrap`, con un `[skip ci]` olvidado en el primero (`DIR-01`) y corregido desde
-`ADMIN-01` en adelante — por eso el primer push sí corrió CI (rojo esperado, `App ·
-typecheck`) y los tres siguientes no corrieron ninguno, verificado con
-`mcp__github__actions_list` y no con el mensaje del commit · coste-sombra de orquestación al
-cierre: **1.055,62 $** acumulados; el 11-sep entero (Día 14 + Día 15) pasa de 148,75 $ a
-**206,60 $**, así que esta sesión sola son **57,85 $**, sin ninguna corrida real ·
-`F-158` sigue abierto, es del PO · `git status --short` releído antes de escribir este pie:
-limpio salvo los dos ficheros de este mismo cierre (`ESTADO-V1.md`,
-`orchestration-metrics.csv`) · Dirección Técnica, Nortex Systems*
-
-*Día 16 de V1 · corridas hechas el 13/14-sep-2026, C5 y cierre el 17-sep-2026 · fecha
-leída de la máquina (`date -u`) al escribir este cierre: `2026-09-17`, 07:46 UTC · arrancó
-donde dejó el Día 15: paso 5 de `UMBRAL-FABRICA-V1.md` §7, las tres corridas reales ·
-`DIR-01` y `ADMIN-01` escalaron primero (13-sep) por un instrumento roto, no por el
-artefacto —`F-161`: contagio de `ADMIN-01` sobre `C1`; `F-162`: tres bugs en
-`RequestDetailPanel.test.tsx` más contagio de `FORO-01` más un `TZ` sin fijar, ya
-compensado por el propio Coder con su `utcClock()`—, los dos corregidos el mismo día sin
-tocar el artefacto · `FORO-01` corrió limpia a la primera, `PASA` 4/4, y confirmó contra el
-repo entero (`typecheck` + `test:arnes`, 770 pruebas) que no quedaba nada más pendiente ·
-`F-163`: la tarifa de `claude-haiku-4-5-20251001` faltaba —y la que había puesta,
-revertida dos veces sin comprobarla, era la de Haiku 3.5, retirado—, y sin ella el medidor
-de coste no podía correr para NINGUNA pantalla; corregida contra la fuente oficial · con
-las cuatro causas resueltas, `DIR-01` y `ADMIN-01` se repitieron enteras en sesión limpia:
-las dos `PASA` 4/4 al segundo intento · **el PO dio C5 a las tres pantallas, sin ninguna
-corrección**, resolviendo dos dudas contra el código en vivo (`RequestsTable.tsx`,
-`Forum.tsx`) antes de responder · **el H1 se cierra: ocho cifras contra su fuente (§1),
-falla solo la cifra 3 (0 de 3 al primer intento), veredicto Funciona con supervisión —
-escenario base, 21 semanas, corriente B con dos agentes** · coste-sombra de orquestación al
-cierre: **1.111,05 $** acumulados · nueve commits en `mvp/bootstrap`; los ocho primeros con
-`[skip ci]` heredado de cuando el corpus estaba incompleto, el noveno —este cierre— sin él,
-porque esa razón dejó de existir en cuanto las tres pantallas quedaron en verde: el paso 5
-del ritual (desplegar y comprobarlo en su URL) se cumple con el CI de este push, no se
-salta · `git status --short` releyéndose antes de empujar: limpio salvo los dos ficheros de
-este mismo cierre (`ESTADO-V1.md`, `orchestration-metrics.csv`) · Dirección Técnica, Nortex
-Systems*
-
-*Día 17 de V1 · 17-sep-2026 · fecha leída de la máquina (`date -u`) al escribir este cierre:
-`2026-09-17`, 20:11 UTC, el mismo día del trabajo · empezó contestando «¿listo?» con el relevo del
-Día 16 delante y encontró que su adenda se equivocaba: `F-164` (el marcador de salto escrito en el
-cuerpo del mensaje, no el token de git) · detrás, en cadena, `F-165` (CI sin credenciales del
-Operador, y con ella nueve días sin desplegar), `F-166` (un e2e declarado que no se ejecutaba nunca
-y que C2 contaba como verde), `F-167` (token de Supabase caducado, VERA y app desacopladas) y
-`F-168` (**producción sin arrancar desde el 8-sep**, cerrada en su día con `curl` → 200) · `F-169`
-(la C5 descuadró la siembra; repuesta y automatizada) · `F-158` cerrado y `F-170` cerrado el mismo
-día: once contradicciones más en las specs aprobadas, cada una recomprobada a mano, dos decididas
-por el PO y nueve aplicadas · trece filas del registro puestas al día contra el código · la carpeta
-`Ingles/` archivada por decisión del PO · y la corriente B en marcha: `0030` a mano y **`FORO-02`
-PASA 4/4 al primer intento**, la primera del proyecto, 0,037318 $ y 1,2 minutos · coste-sombra de
-orquestación al cierre: **1.303,32 $** acumulados, **179,02 $** esta sesión, de los que **21,96 $**
-son la corrida de `FORO-02` · 22 commits en `mvp/bootstrap` · queda el C5 de `FORO-02`, del PO ·
-Dirección Técnica, Nortex Systems*
-
-*Día 18 de V1 · 18-sep-2026 · fecha leída de la máquina (`date -u`) al escribir este cierre:
-`2026-09-18`, 16:23 UTC, el mismo día del trabajo · sesión lanzada sobre uno de los cuatro
-worktrees fantasma (`dia-14-correcciones-mvp-8160b9`, en `43bb222`), reseteado a
-`origin/mvp/bootstrap` para trabajar de verdad · el C5 de `FORO-02` no salió limpio: el PO señaló
-"Crear hilo" (intencional, no defecto) y un buscador inconsistente con `DIR-01` — que tampoco
-tenía la "x" que se recordaba —, y decidió ahí mismo el estándar transversal (`F-172`): nuevo
-`app/src/components/SearchField.tsx`, aplicado en `DIR-01`/`FORO-02`, deuda en `INV-01`/`MSG-01`/
-`SentOffers` · `RNG-FORO-06` escrito a mano (`0031`/`0032`/`0033`) con un bug real cazado en
-Postgres desechable antes de tocar las bases (`F-173`: `security definer` volvía permanente el
-bypass de siembra del guardia) · `FORO-03` construida entera: capa de datos, wiring, contrato de
-aceptación (23 pruebas + e2e real) y tarea, validada `--seco` sin avisos · la corrida real escaló
-2/4 en los tres intentos, y no era el Coder (`F-174`: un test propio con datos mockeados que nunca
-cambiaban) — corregido sin tocar el artefacto, 23/23 de unidad y **10/10 del e2e real** contra
-`troxminloxkjwihwfevs`, incluida la reacción que se autolimpia · un commit intermedio salió rojo
-por heredar ese mismo test roto sin saltar CI él mismo (`F-175`, sin acción), y uno de
-documentación no disparó ningún run al citar el marcador de salto entre comillas para explicar
-eso mismo -- mecanismo de `F-164`, otra vez (`F-176`, sin acción posible sobre lo ya hecho) · CI
-final en seis jobs de seis verdes y producción sirviendo `FORO-03` verificado por contenido
-(`index-DkCZ8HQ8.js`, 495.540 bytes) · coste-sombra de orquestación al cierre: **1.371,48 $**
-acumulados, **54,45 $** esta sesión — sigue sin poder medirse limpia por pantalla (§1, §5), el
-Coder: **0,143118 $** en los tres intentos de `FORO-03` · **van 5 de las 24 pantallas de la
-fábrica, cifra 3 en 1 de 5, queda UNA para la remedición obligatoria** · el día siguió después de
-ese primer cierre (regla 4): esquema de `ADMIN-02` escrito y aplicado (`0034`) —
-`billing_accounts`/`billing_payments`/`billing_status_events`, la vista `billing_org_status`, los
-verbos de confirmar pago y suspender, "ACTIVE"/"EN PRUEBA" como la misma fila
-`organizations.status='APPROVED'` calculada y no guardada— validado en Postgres desechable y
-comprobado contra el catálogo Y los datos reales de las dos bases; `Iniciar borrado` queda fuera a
-propósito, documentado en la cabecera de `0034` · de paso, comprobado empíricamente que el `GRANT`
-de tabla de sobra que la plataforma concede en casi todo `public` no es una puerta abierta —RLS
-bloquea la escritura sin política pase lo que pase con el `GRANT`— deuda de higiene, no de
-seguridad (`F-177`) · fecha releída al escribir ese pie: `2026-09-18`, 18:12 UTC, sigue el mismo
-día · **el día siguió otra vez, regla 4:** empujar `0034` hizo escalar el CI 2/4 en cuatro
-intentos seguidos, tres de ellos aislados sin ninguna otra corrida a la vez, mientras el mismo
-e2e pasaba 14/14 en local — `F-178`: el job `e2e` corre contra el proyecto AISLADO
-`bearingworld-e2e`, no contra `troxminloxkjwihwfevs` donde se había probado todo a mano, olvido
-de esta misma sesión; ese proyecto tenía una reacción huérfana en el post de `c003` (2 en vez de
-1), dejada por el propio test "reaccionar y quitar la reacción" cuando una corrida se canceló a
-medias por un push posterior, lo mismo que ya había pasado dos veces hoy (`F-171`) · borrada la
-fila exacta por SQL contra el catálogo de `ogdhyzgjjbbikjbkhxmu`, `forum_thread_list` verificado
-de vuelta a sus cifras correctas, CI reintentado (`gh run rerun 35378570024 --failed`) y
-**verde en los seis jobs**, `e2e` incluido · deuda real, sin resolver: el foro no tiene teardown
-ni entra en `resetDemo`, así que el mismo residuo puede repetirse con cualquier test futuro que
-reaccione y desreaccione dentro de la misma corrida — dos vías sin aplicar (sumar el foro a
-`resetDemo`, o probar reacciones solo con mocks) quedan escritas en `F-178` y en §3/§5/§6, no
-decididas · fecha releída de nuevo: `2026-09-18`, 18:45 UTC, sigue el mismo día · `git status
---short` limpio salvo este mismo cierre (`ESTADO-V1.md`) · 15 commits en `mvp/bootstrap` desde
-el cierre del Día 17 · quedan DOS C5 sin cerrar (`FORO-02` con su corrección ya aplicada, y
-`FORO-03` entera) y `ADMIN-02` sin tarea del arnés ni wiring de precondición —ninguno de los
-tres cuenta como hecho · Dirección Técnica, Nortex Systems*
-
-*Cierre del Día 23 · 24-sep-2026 · `2026-09-24` 07:1x UTC (`date -u`) · `SRCH-03` construida y VERDE (corrida 03, 2 intentos, 0 líneas tocadas de 1 279), `0035` en las dos bases y releída del catálogo, **C5 del PO PENDIENTE** — sin ella ni la cifra 1 ni la 8 se cierran · tres hallazgos abiertos para el PO (`F-192` privilegios anchos en producción, `F-196` tres decisiones de spec, `F-178` foro sin teardown) y uno de máquina (`F-191`, Docker: reiniciar el PC) · **CI del commit de cierre (`gh run` `35968038084` sobre `86083bd`): los seis jobs en verde**, incluido `Esquema` —el `run.sh` real en Postgres 16, que es la primera vez que ve `0035` (`F-191`)— y los dos despliegues; **producción sirve `SRCH-03` por contenido, no por `HTTP 200`** (`Mis watchers` y `watcher_list` en `/assets/index-DE2H8RwC.js`, y `._screen_4d4hn_10{…flex:1;min-height:0;…overflow-y:auto}` en `/assets/index-DVsylPPU.css`) · Dirección Técnica, Nortex Systems*
-
-> **Adenda del 24-sep-2026, tras la revisión del PO en pantalla (`F-206`, `F-207`).** Revisó `SRCH-03`, `INV-07` y `SRCH-02`: **«las dos primeras perfectas en todo»** (`SRCH-03` y `SRCH-02`: **C5 dadas**, en el orden en que se le dieron las tres) y dos comentarios sobre la última, `INV-07`, **que sigue con la C5 pendiente hasta que vuelva a mirarla**. (1) Las sugerencias del autocompletado parecían etiquetas ya incluidas: **rehechas como desplegable** (`d02f3fb`) — **y el PO pidió revertirlo por ser un cambio estético que no había pedido: revertido, el frontend de `INV-07` vuelve a ser el del Coder tal cual, 0 líneas tocadas** (`F-206`). Después dijo que «no encuentra organizaciones»: **`F-208`**, causa real una `Ł` sin normalizar (arreglada en la capa de datos) y el resto son datos (organizaciones de la spec inexistentes en la demo, suspendidas ocultas por la RLS, la propia excluida). (2) «Guardar no guarda»: **no se reproduce** con un e2e completo contra la base; se endurecen `saveVisibilityMode` y `removeExclusion` para no dar por guardada una escritura filtrada por la RLS. **Y se corrige aquí una frase falsa de este relevo** (`F-207`): con la lista vacía el modo restringido NO oculta el stock.
-
-> **Segunda adenda del 24-sep-2026 (`F-209`, `F-210`): la comparación de `INV-07` contra el diseño aprobado, medida.** El PO señaló que la pantalla no coincidía con lo que recordaba: filtros `Asia`/`Rusia`, continente y país en una fila, tamaños de letra distintos, un botón que cambiaba de tamaño al guardar y desplegables de países «muy restringidos». **Era el diseño aprobado, y tenía razón en casi todo:** medido en el navegador contra `INV-07 · VIS v1.0.html`, el botón se encogía a 20 px al guardar (fallo real del artefacto), la letra del botón era de 16 px (diseño: 14), los desplegables solo ofrecían países con organizaciones y faltaban los títulos de las tarjetas. **Arreglado a mano (+76/−28 líneas, 8 %) y verificado con las mismas medidas.** Lo que NO se ha tocado: la cabecera, que sigue los tokens de la app como `FORO-01` y `SRCH-03`. **Lección de proceso:** el arnés no mide tamaño (`C3` solo mira color) y las 40 pruebas pasaban con un botón roto; una comprobación tipográfica contra el HTML aprobado debería entrar en el contrato de cada pantalla.
-
-> **Adenda del 25-sep-2026, `2026-09-25` ~09:40 UTC (`date -u`): las TRES C5 recibidas.** El PO probó en su localhost, con ALPHA, `SRCH-03`, `INV-07` y `SRCH-02` ya desplegadas y con las correcciones de `F-209`/`F-210`: **«todo perfecto»**. **`SRCH-03`, `INV-07` y `SRCH-02` quedan ACEPTADAS** (cifra 1: 9 de 24 construidas y aceptadas por la corriente B, más las 6 remedidas). Cierran `F-206` a `F-210`. **Y una limpieza al cerrar:** la revisión dejó en producción a ALPHA en **modo restringido con cuatro exclusiones** (Asia, Turquía, una organización y Venezuela), que ocultaba su stock a esa organización; **restaurada la siembra** (modo abierto, solo `Asia` y `Rusia`, `demo_exclusions.sql`). Lo que queda para la próxima sesión está en §3: nada de esta sesión espera ya al PO salvo las decisiones de producto.
-
-*Cierre del Día 23, segunda parte · 24-sep-2026 · `2026-09-24` ~10:55 UTC (`date -u`) · `INV-07` (VERDE en 2, 943 líneas) y `SRCH-02` (VERDE en 1, 732 líneas) construidas y desplegadas, **0 líneas tocadas a mano en las dos**, sin migraciones · **CI de `0539cd7`, `9979a86` y del propio commit de cierre `80792d9` (`35990089287`): los seis jobs en verde en las tres**, producción sirve las dos por contenido · **TRES C5 del PO PENDIENTES** (`SRCH-03`, `INV-07`, `SRCH-02`) y todo lo demás que no ha podido revisar · `F-199` a `F-205` nuevos; abiertos para el PO `F-192`, `F-196`, `F-201`, `F-202`, `F-204` y `F-178` · servidores parados, junctions quitados, la base en su siembra · Dirección Técnica, Nortex Systems*
+*Cierre del Día 23 · 25-sep-2026 · Dirección Técnica, Nortex Systems*

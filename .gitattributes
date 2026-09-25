@@ -9,3 +9,6 @@
 *.jpg   binary
 *.ico   binary
 *.woff2 binary
+
+# Hooks de git: siempre LF, o el shebang se rompe en Windows
+.githooks/* text eol=lf

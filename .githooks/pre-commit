@@ -1,0 +1,20 @@
+#!/bin/sh
+# pre-commit hook para verificar que ESTADO-V1.md no supere 150 líneas
+
+ESTADO_FILE="openspec/v1/ESTADO-V1.md"
+
+# Solo actuar si ESTADO-V1.md está en el commit
+if ! git diff --cached --name-only | grep -q "^${ESTADO_FILE}$"; then
+    exit 0
+fi
+
+# Contar las líneas de la versión preparada (staged)
+line_count=$(git show ":${ESTADO_FILE}" | wc -l)
+
+# Verificar el límite
+if [ "$line_count" -gt 150 ]; then
+    echo "ESTADO-V1.md tiene $line_count líneas; el máximo es 150. Lo que es historia va a openspec/v1/diario/, las reglas a CLAUDE.md, los hallazgos a findings/. Ver CLAUDE.md, ritual de cierre." >&2
+    exit 1
+fi
+
+exit 0

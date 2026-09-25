@@ -1,0 +1,31 @@
+
+==============================================================================
+· corrida arrancada 2026-09-25 19:52:49 · harness/tasks/INVT-01.json --corrida corrida-03
+==============================================================================
+Log de esta corrida: harness\metrics\INVT-01\corrida-03\INVT-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: NINGUNO
+  tokens in/out: 28047/36597   cache: 99.49% hit
+  coste real: $0.048762   en frio: $0.060649
+  C0: INEJECUTABLE
+  · intento 1 ya en disco: harness\metrics\INVT-01\corrida-03\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/InvitationTables.module.css', 'app/src/screens/onboarding/InvitationTables.tsx', 'app/src/screens/onboarding/Invitations.module.css', 'app/src/screens/onboarding/Invitations.tsx', 'app/src/screens/onboarding/RemoveMemberDialog.module.css', 'app/src/screens/onboarding/RemoveMemberDialog.tsx']
+  tokens in/out: 28151/30432   cache: 99.12% hit
+  coste real: $0.040670   en frio: $0.052557
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\INVT-01\corrida-03\attempt_2.json (F-122)
+  CSV: 2026-09-25,INVT-01,INVT-01,deepseek-v4-flash,28047,36597,0.048762,1,2.0,-,99.49,no,C0,corrida-03,-,FALLA 0/1 (verde: - / rojo: - / INEJECUTABLE: C0). C5 lo da el PO
+  CSV: 2026-09-25,INVT-01,INVT-01,deepseek-v4-flash,28151,30432,0.040670,2,1.6,app/src/screens/onboarding/InvitationTables.module.css;app/src/screens/onboarding/InvitationTables.tsx;app/src/screens/onboarding/Invitations.module.css;app/src/screens/onboarding/Invitations.tsx;app/src/screens/onboarding/RemoveMemberDialog.module.css;app/src/screens/onboarding/RemoveMemberDialog.tsx,99.12,no,-,corrida-03,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\INVT-01\corrida-03\attempt_1.json
+  harness\metrics\INVT-01\corrida-03\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

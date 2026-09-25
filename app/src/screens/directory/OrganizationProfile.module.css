@@ -1,4 +1,304 @@
-/* DIR-02 · Ficha Pública de Organización — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
+/* =============================================================================
+   DIR-02 · Ficha Pública de Organización
+   =============================================================================
+   Todos los colores salen de `tokens.css` como `var(--bw-…)`: aquí no hay ni un
+   hex ni un rgb().
+
+   Nota de token ausente: el diseño pide tarjetas de superficie blanca sobre el
+   fondo frío de contenido, y `tokens.css` no tiene un token de blanco puro. Se
+   usa el más cercano, `--bw-warm-cream` (superficie clara de panel aprobada),
+   en lugar de inventar un valor.
+   ========================================================================== */
+
+.screen {
+  /* Hija directa de `.bwcnt`, que es `overflow: hidden`: el scroll es de la
+     pantalla, no del contenedor del shell (F-186/F-189/F-190/F-198). */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 28px 40px;
+  background: var(--bw-cold-white);
+}
+
+/* Un contenedor de scroll en columna aplasta a sus hijos si no se lo impide:
+   lo que sobra tiene que desbordar y desplazarse, no encogerse. */
+.screen > * {
+  flex-shrink: 0;
+}
+
+/* ── Cabecera de la pantalla ─────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bw-steel-mist);
+  margin-bottom: 6px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+  margin-bottom: 18px;
+}
+
+.breadcrumbLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.breadcrumbLink:hover {
+  color: var(--bw-brass);
+}
+
+.breadcrumbCurrent {
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Cabecera de la ficha: avatar, nombre, metadatos y acción ────────────── */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: var(--bw-deep-steel);
+  color: var(--bw-brass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--bw-font-title);
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.headings {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--bw-font-title);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+  margin: 0 0 4px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--bw-radius);
+  background: var(--bw-cold-white);
+  color: var(--bw-steel-mist);
+  border: 1px solid var(--bw-line-steel);
+}
+
+.favorites {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-brass);
+}
+
+.status {
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--bw-badge-success-bg);
+  color: var(--bw-signal-green);
+  border: 1px solid var(--bw-badge-success-border);
+}
+
+.contactButton {
+  margin-left: auto;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s, background 0.12s;
+}
+
+.contactButton i {
+  font-size: 16px;
+}
+
+.contactButton:hover:not(:disabled) {
+  opacity: 0.87;
+}
+
+.contactButton:focus-visible {
+  box-shadow: var(--bw-focus-halo);
+  outline: none;
+}
+
+/* Deshabilitado es el estado honesto de «no hay hilo»: no hace nada y lo dice.
+   No se pinta como primario para no prometer una acción que no existe. */
+.contactButton:disabled {
+  background: var(--bw-surface-mist);
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+}
+
+/* ── Tarjetas ────────────────────────────────────────────────────────────── */
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 720px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.cardTitle {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bw-input-placeholder);
+  margin: 0 0 14px;
+}
+
+.list {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bw-input-placeholder);
+}
+
+.value {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bw-ink-steel);
+}
+
+.value a {
+  color: var(--bw-calibration-blue);
+  text-decoration: none;
+}
+
+.value a:hover {
+  text-decoration: underline;
+}
+
+/* Cada línea de la dirección es su propio bloque: nunca un `<br>` ni una
+   cadena con salto de línea dentro. */
+.addressLine {
   display: block;
+}
+
+.note {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--bw-divider-mist);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Estados ─────────────────────────────────────────────────────────────── */
+
+.loading {
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+}
+
+.alert {
+  font-size: 14px;
+  color: var(--bw-error-text);
+  margin-bottom: 14px;
+}
+
+.backButton {
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-warm-cream);
+  color: var(--bw-ink-steel);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.backButton:hover {
+  background: var(--bw-hover-surface);
+  border-color: var(--bw-hover-border);
 }

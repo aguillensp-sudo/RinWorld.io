@@ -111,6 +111,50 @@ async function reponerSolicitudes(db, log) {
 }
 
 /**
+ * INVT-01 · las invitaciones de Nordwälz Lager (la organización de BETA).
+ *
+ * Tiene un ADMIN y un Editor, o sea que con las tres invitaciones de abajo la
+ * pantalla enseña justo el ejemplo del HTML aprobado: `2/5 · 1 invitación pendiente
+ * · 2 plazas libres`, una Pendiente, una Aceptada y una Expirada con su `Reenviar`.
+ * **Las fechas son relativas a AHORA** porque la pendiente caduca y la expirada no
+ * puede caducar de nuevo: una siembra con fechas fijas envejece igual que el
+ * catálogo (F-094). Repone también al Editor a ACTIVO, por si alguien lo revocó en
+ * un ensayo (`remove_member` lo deja CANCELLED y no se puede deshacer desde la app).
+ */
+const ORG_NORDWALZ = 'b2000000-0000-4000-8000-000000000002';
+const EMAIL_EDITOR_NORDWALZ = 'editor@bearingworld.test';
+
+async function reponerInvitaciones(db, log) {
+  const ahora = Date.now();
+  const dia = 86_400_000;
+  const iso = (dias) => new Date(ahora + dias * dia).toISOString();
+
+  orLanza(
+    'borrando las invitaciones de demo',
+    await db.from('member_invitations').delete().eq('org_id', ORG_NORDWALZ),
+  );
+  orLanza(
+    'reponiendo al Editor de Nordwälz a ACTIVE',
+    await db.from('members').update({ state: 'ACTIVE' }).eq('email', EMAIL_EDITOR_NORDWALZ),
+  );
+  orLanza(
+    'sembrando las invitaciones de demo',
+    await db.from('member_invitations').insert([
+      { org_id: ORG_NORDWALZ, email: 'carlos.m@aceroindustrial.com', sent_at: iso(-2), expires_at: iso(5) },
+      {
+        org_id: ORG_NORDWALZ,
+        email: EMAIL_EDITOR_NORDWALZ,
+        sent_at: iso(-6),
+        expires_at: iso(1),
+        accepted_at: iso(-5),
+      },
+      { org_id: ORG_NORDWALZ, email: 'm.sanchez@aceroindustrial.com', sent_at: iso(-24), expires_at: iso(-17) },
+    ]),
+  );
+  log('· tres invitaciones de INVT-01 en Nordwälz · Pendiente 5 días, Aceptada y Expirada');
+}
+
+/**
  * Repone la siembra congelada y devuelve el estado **consultado**, no el supuesto.
  *
  * @param {object}   o
@@ -208,6 +252,7 @@ export async function resetDemo({ url, serviceKey, seed, reanchor = true, log = 
   log('· cinco hilos repuestos · Anadolu devuelto a CERRADO SIN ACUERDO');
 
   await reponerSolicitudes(db, log);
+  await reponerInvitaciones(db, log);
 
   if (reanchor) {
     const { data, error } = await db.rpc('demo_reanchor_freshness');

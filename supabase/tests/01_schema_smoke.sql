@@ -2055,6 +2055,294 @@ select public.expect_fail(
   '0036: organizations_postal_code_chk rechaza una cadena vacia');
 
 -- -----------------------------------------------------------------------------
+-- 0037 · invitaciones de usuario y revocacion de acceso (INVT-01)
+-- -----------------------------------------------------------------------------
+-- Todo el que escribe lo hace por funcion `security definer` que comprueba DENTRO
+-- que quien llama es ADMIN activo de SU organizacion. Este bloque mide las dos
+-- mitades de cada regla -- que el ADMIN puede, y que un Editor, otro ADMIN y `anon`
+-- no -- mas el limite de 5 con las invitaciones pendientes contando, y que revocar
+-- deja al usuario sin acceso sin tocarle la clave (`user-revocation`).
+--
+-- Se crea una organizacion PROPIA (Delta Test, con su ADMIN d1 y su Editor d2) y se
+-- borra al final: Alpha ya tiene varios miembros y revocarlos aqui romperia los
+-- bloques que vienen despues, y el limite de 5 no se puede medir en una organizacion
+-- cuyo tamano no controla este bloque.
+insert into public.organizations (id, name, country, continent, status)
+values ('44444444-4444-4444-4444-444444444444', 'Delta Test', 'FR', 'EU', 'APPROVED');
+
+insert into auth.users (id, email) values
+  ('0d000001-0000-0000-0000-000000000001', 'd1@delta.test'),
+  ('0d000002-0000-0000-0000-000000000002', 'd2@delta.test'),
+  ('0d0000aa-0000-0000-0000-0000000000aa', 'solo-auth@delta.test');
+
+-- El primero de la organizacion sale ADMIN, el segundo EDITOR (role-auto-assignment).
+insert into public.members (id, org_id, email, state)
+values ('0d000001-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'd1@delta.test', 'ACTIVE');
+insert into public.members (id, org_id, email, state, public_key)
+values ('0d000002-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'd2@delta.test', 'ACTIVE',
+        decode('0909090909090909090909090909090909090909090909090909090909090909', 'hex'));
+
+do $$
+begin
+  assert (select role || '/' || state from public.members where id = '0d000001-0000-0000-0000-000000000001') = 'ADMIN/ACTIVE',
+    '0037: el ancla -- d1 es ADMIN activo de Delta';
+  assert (select role || '/' || state from public.members where id = '0d000002-0000-0000-0000-000000000002') = 'EDITOR/ACTIVE',
+    '0037: el ancla -- d2 es EDITOR activo de Delta';
+  assert (select role || '/' || state from public.members where id = '0a000001-0000-0000-0000-000000000001') = 'ADMIN/ACTIVE',
+    '0037: el ancla -- a1 es ADMIN activo de Alpha (el ADMIN ajeno de los puntos 6 y 8)';
+  assert app.org_seats_used('44444444-4444-4444-4444-444444444444') = 2, '0037: Delta empieza con 2 plazas ocupadas';
+  raise notice 'OK · 0037: anclas -- Delta tiene un ADMIN y un Editor, y a1 es un ADMIN ajeno';
+end
+$$;
+
+-- 1 · Un EDITOR no invita, no comprueba emails, no ve invitaciones y no revoca.
+begin;
+  select set_config('request.jwt.claim.sub', '0d000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+
+  select public.expect_fail($q$select public.invite_member('nuevo@empresa.test')$q$,
+    '0037: un EDITOR no puede invitar');
+  select public.expect_fail($q$select public.email_has_account('nuevo@empresa.test')$q$,
+    '0037: un EDITOR no puede comprobar que emails tienen cuenta');
+  select public.expect_fail($q$select public.remove_member('0d000002-0000-0000-0000-000000000002')$q$,
+    '0037: un EDITOR no puede revocar a nadie');
+commit;
+
+-- 2 · `anon` no ejecuta nada de esto ni lee la tabla. Se mide en el CATALOGO, no
+--     intentando la llamada: un permiso denegado es SQLSTATE 42501, y `expect_fail`
+--     rechaza los 42xxx como test roto (F-146: los privilegios se leen del catalogo).
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.invite_member(text)', 'execute'),
+    '0037: anon no ejecuta invite_member';
+  assert not has_function_privilege('anon', 'public.resend_invitation(uuid)', 'execute'),
+    '0037: anon no ejecuta resend_invitation';
+  assert not has_function_privilege('anon', 'public.remove_member(uuid)', 'execute'),
+    '0037: anon no ejecuta remove_member';
+  assert not has_function_privilege('anon', 'public.email_has_account(text)', 'execute'),
+    '0037: anon no ejecuta email_has_account';
+  assert not has_function_privilege('authenticated', 'app.org_seats_used(uuid)', 'execute'),
+    '0037: el contador de plazas es interno, ni authenticated lo ejecuta';
+  assert not has_table_privilege('anon', 'public.member_invitations', 'select'),
+    '0037: anon no lee member_invitations';
+  assert not has_table_privilege('anon', 'public.member_invitation_list', 'select'),
+    '0037: anon no lee la vista';
+  assert has_function_privilege('authenticated', 'public.invite_member(text)', 'execute'),
+    '0037: el ancla positiva -- authenticated SI ejecuta invite_member';
+  raise notice 'OK · 0037: anon no ejecuta ni lee nada de esto';
+end
+$$;
+
+-- 3 · El ADMIN invita: la invitacion sale Pendiente y con 7 dias.
+begin;
+  select set_config('request.jwt.claim.sub', '0d000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  select public.invite_member('  Nuevo@Empresa.TEST ') as inv_id \gset
+
+  do $$
+  declare v record;
+  begin
+    select * into v from public.member_invitation_list where email = 'nuevo@empresa.test';
+    assert v.status = 'Pendiente', '0037: la invitacion recien creada esta Pendiente';
+    assert v.days_left = 7, '0037: y le quedan 7 dias, no ' || coalesce(v.days_left::text, 'NULL');
+    assert v.org_id = '44444444-4444-4444-4444-444444444444', '0037: es de la organizacion de quien invita';
+    raise notice 'OK · 0037: invitar crea una Pendiente de 7 dias, con el email normalizado';
+  end
+  $$;
+
+  select public.expect_fail($q$select public.invite_member('nuevo@empresa.test')$q$,
+    '0037: invitar dos veces al mismo email falla (ya hay una pendiente)');
+  select public.expect_fail($q$select public.invite_member('d2@delta.test')$q$,
+    '0037: un email que ya es miembro de la organizacion no se invita');
+  select public.expect_fail($q$select public.invite_member('b1@beta.test')$q$,
+    '0037: ni el de un miembro de OTRA organizacion (RN-INV: bajo cualquier organizacion)');
+  select public.expect_fail($q$select public.invite_member('solo-auth@delta.test')$q$,
+    '0037: ni el que solo existe en auth.users');
+  select public.expect_fail($q$select public.invite_member('esto no es un email')$q$,
+    '0037: un email sin forma de email se rechaza');
+
+  do $$
+  begin
+    assert public.email_has_account('D2@delta.test'), '0037: email_has_account ve a un miembro, sin importar las mayusculas';
+    assert public.email_has_account('solo-auth@delta.test'), '0037: y a quien solo esta en auth.users';
+    assert not public.email_has_account('libre@empresa.test'), '0037: y dice que no a uno libre';
+    raise notice 'OK · 0037: email_has_account responde al ADMIN';
+  end
+  $$;
+commit;
+
+-- 4 · El limite de 5 cuenta miembros MAS invitaciones pendientes. Se rellena por el
+--     operador hasta dejar UNA plaza libre, y luego se usa esa.
+do $$
+declare v_n int; v_i int := 0;
+begin
+  v_n := 5 - app.org_seats_used('44444444-4444-4444-4444-444444444444');
+  while v_i < v_n - 1 loop
+    v_i := v_i + 1;
+    insert into public.member_invitations (org_id, email)
+    values ('44444444-4444-4444-4444-444444444444', 'relleno' || v_i || '@empresa.test');
+  end loop;
+  assert app.org_seats_used('44444444-4444-4444-4444-444444444444') = 4,
+    '0037: con una plaza libre, la organizacion tiene 4 ocupadas';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0d000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.invite_member('quinto@empresa.test');   -- la ultima plaza: pasa
+  select public.expect_fail($q$select public.invite_member('sexto@empresa.test')$q$,
+    '0037: con 5 plazas ocupadas (miembros + pendientes) no se puede invitar a nadie mas');
+commit;
+
+do $$
+begin
+  assert app.org_seats_used('44444444-4444-4444-4444-444444444444') = 5, '0037: exactamente 5, nunca 6';
+  raise notice 'OK · 0037: el limite de 5 cuenta las pendientes';
+end
+$$;
+
+-- 5 · Reenviar: solo una EXPIRADA, y respeta el limite (una caducada no ocupaba plaza).
+update public.member_invitations
+   set sent_at = now() - interval '8 days', expires_at = now() - interval '1 day'
+ where email = 'quinto@empresa.test';
+
+select id as inv_caducada from public.member_invitations where email = 'quinto@empresa.test' \gset
+
+do $$
+begin
+  assert (select status from public.member_invitation_list where email = 'quinto@empresa.test') = 'Expirada',
+    '0037: pasado el plazo la invitacion sale Expirada sin que nadie la toque';
+  assert (select days_left from public.member_invitation_list where email = 'quinto@empresa.test') is null,
+    '0037: y una expirada no tiene dias restantes';
+  assert app.org_seats_used('44444444-4444-4444-4444-444444444444') = 4,
+    '0037: una expirada libera su plaza';
+  raise notice 'OK · 0037: la expiracion es un hecho del reloj y libera la plaza';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0d000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(format('select public.resend_invitation(%L)', :'inv_id'),
+    '0037: no se reenvia una invitacion vigente');
+  select public.resend_invitation(:'inv_caducada'::uuid);
+commit;
+
+do $$
+begin
+  assert (select status from public.member_invitation_list where email = 'quinto@empresa.test') = 'Pendiente',
+    '0037: reenviar la deja Pendiente';
+  assert (select days_left from public.member_invitation_list where email = 'quinto@empresa.test') = 7,
+    '0037: con 7 dias otra vez';
+  assert app.org_seats_used('44444444-4444-4444-4444-444444444444') = 5, '0037: y vuelve a ocupar plaza';
+  raise notice 'OK · 0037: reenviar renueva la MISMA fila';
+end
+$$;
+
+-- Reenviar respeta el limite: se caduca otra vez, se ocupa su plaza con otra
+-- invitacion y ya no cabe.
+update public.member_invitations
+   set sent_at = now() - interval '8 days', expires_at = now() - interval '1 day'
+ where email = 'quinto@empresa.test';
+insert into public.member_invitations (org_id, email)
+values ('44444444-4444-4444-4444-444444444444', 'ocupa@empresa.test');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0d000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(format('select public.resend_invitation(%L)', :'inv_caducada'),
+    '0037: reenviar una caducada con la organizacion llena falla (INVT-01 §3)');
+commit;
+
+-- 6 · Otro ADMIN no ve ni toca las de Alpha.
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  do $$
+  begin
+    assert (select count(*) from public.member_invitation_list) = 0,
+      '0037: el ADMIN de otra organizacion no ve ninguna invitacion de Delta';
+    assert (select count(*) from public.member_invitations) = 0,
+      '0037: ni por la tabla';
+    raise notice 'OK · 0037: las invitaciones de una organizacion no se ven desde otra';
+  end
+  $$;
+
+  select public.expect_fail(format('select public.resend_invitation(%L)', :'inv_caducada'),
+    '0037: otro ADMIN no reenvia una invitacion ajena');
+  select public.expect_fail($q$select public.remove_member('0d000002-0000-0000-0000-000000000002')$q$,
+    '0037: ni revoca a un miembro ajeno');
+commit;
+
+-- 7 · Un ADMIN no puede escribir la tabla directamente (solo por las funciones).
+--     Catalogo, por lo mismo que en el punto 2.
+do $$
+begin
+  assert has_table_privilege('authenticated', 'public.member_invitations', 'select'),
+    '0037: el ancla positiva -- authenticated SI lee member_invitations (la RLS acota a su ADMIN)';
+  assert not has_table_privilege('authenticated', 'public.member_invitations', 'insert'),
+    '0037: el cliente no inserta invitaciones a mano';
+  assert not has_table_privilege('authenticated', 'public.member_invitations', 'update'),
+    '0037: ni alarga su caducidad';
+  assert not has_table_privilege('authenticated', 'public.member_invitations', 'delete'),
+    '0037: ni las borra';
+  raise notice 'OK · 0037: el cliente solo lee; escribe el servidor';
+end
+$$;
+
+-- 8 · Revocar: solo un Editor de la propia organizacion, nunca uno mismo, y sin
+--     tocar la clave.
+begin;
+  select set_config('request.jwt.claim.sub', '0d000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  select public.expect_fail($q$select public.remove_member('0d000001-0000-0000-0000-000000000001')$q$,
+    '0037: el ADMIN no se elimina a si mismo');
+  select public.expect_fail($q$select public.remove_member('0b000001-0000-0000-0000-000000000001')$q$,
+    '0037: ni a un miembro de otra organizacion');
+  select public.expect_fail($q$select public.remove_member('00000000-0000-0000-0000-00000000dead')$q$,
+    '0037: ni a alguien que no existe');
+
+  select public.remove_member('0d000002-0000-0000-0000-000000000002');
+  select public.expect_fail($q$select public.remove_member('0d000002-0000-0000-0000-000000000002')$q$,
+    '0037: revocar dos veces falla: ya no tiene acceso');
+commit;
+
+do $$
+begin
+  assert (select state from public.members where id = '0d000002-0000-0000-0000-000000000002') = 'CANCELLED',
+    '0037: revocar deja al miembro CANCELLED';
+  assert (select public_key from public.members where id = '0d000002-0000-0000-0000-000000000002')
+       = decode('0909090909090909090909090909090909090909090909090909090909090909', 'hex'),
+    '0037: y su clave publica intacta (user-revocation)';
+  raise notice 'OK · 0037: revocar cancela el acceso y no toca la clave';
+end
+$$;
+
+-- El miembro revocado deja de poder leer lo suyo en el acto: `is_active_member()`
+-- exige `state = ACTIVE`, y toda la RLS pasa por ahi.
+begin;
+  select set_config('request.jwt.claim.sub', '0d000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert not app.is_active_member(), '0037: un miembro revocado deja de ser miembro activo en el acto';
+    raise notice 'OK · 0037: el revocado pierde el acceso en el acto';
+  end
+  $$;
+commit;
+
+-- Terreno devuelto: se borra lo que este bloque creo (Alpha y Beta no se han tocado).
+delete from public.members where org_id = '44444444-4444-4444-4444-444444444444';
+delete from public.organizations where id = '44444444-4444-4444-4444-444444444444';   -- arrastra las invitaciones (on delete cascade)
+delete from auth.users where id in ('0d000001-0000-0000-0000-000000000001', '0d000002-0000-0000-0000-000000000002', '0d0000aa-0000-0000-0000-0000000000aa');
+
+select 1 / (case when not exists (select 1 from public.member_invitations where org_id = '44444444-4444-4444-4444-444444444444') then 1 else 0 end) as terreno_como_estaba;
+
+-- -----------------------------------------------------------------------------
 -- 0028 · la cola de solicitudes solo la ve y la decide el Operador
 -- -----------------------------------------------------------------------------
 -- ADMIN-01 estrena un actor que el esquema no tenia: alguien sin organizacion

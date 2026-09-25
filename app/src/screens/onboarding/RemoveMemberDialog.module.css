@@ -1,4 +1,123 @@
-/* INVT-01 · RemoveMemberDialog — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
-  display: block;
+/* Confirmación de eliminación de INVT-01. Sin un color literal.
+
+   Nota de tokens que faltan (se usa el más cercano y se dice aquí, §6.1):
+   - No hay token de blanco puro: el fondo del diálogo y el texto sobre el botón
+     rojo usan `--bw-warm-cream`, el más claro de la paleta. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bw-sidebar-overlay);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  padding: 28px;
+  background: var(--bw-warm-cream);
+  border-radius: 6px;
+  box-shadow: 0 20px 60px var(--bw-sidebar-overlay);
+  font-family: var(--bw-font-body);
+  color: var(--bw-deep-steel);
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--bw-deep-steel);
+  margin-bottom: 10px;
+}
+
+.person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-deep-steel);
+}
+
+.email {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+.warning {
+  padding: 10px 12px;
+  margin-bottom: 20px;
+  background: var(--bw-sensitive-bg);
+  border-left: 3px solid var(--bw-danger);
+  border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+  font-size: var(--bw-size-label);
+  line-height: 1.5;
+  color: var(--bw-sensitive-text);
+}
+
+.error {
+  margin-bottom: 14px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancel {
+  flex: 1;
+  padding: 10px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cancel:hover:not(:disabled) {
+  background: var(--bw-cold-white);
+}
+
+.cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirm {
+  flex: 1;
+  padding: 10px;
+  background: var(--bw-danger);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-warm-cream);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.confirm:hover:not(:disabled) {
+  background: var(--bw-sensitive-text);
+}
+
+.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -1,4 +1,178 @@
-/* INVT-01 · InvitationTables — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
-  display: block;
+/* Las dos tablas de INVT-01. Sin un color literal: todo de tokens.
+
+   Tokens que faltaban (se usa el más cercano y se dice aquí, §6.1):
+   - El texto del badge `Admin` del HTML aprobado es un brass oscuro (#92702e)
+     que no está en la paleta; se usa `--bw-brass`.
+   - No hay token de blanco puro: el fondo del botón de acción usa
+     `--bw-warm-cream`, el más claro de la paleta. */
+
+.sectionTitle {
+  margin-top: 28px;
+  margin-bottom: 10px;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-label);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 5px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--bw-size-input);
+}
+
+.th {
+  padding: 9px 14px;
+  background: var(--bw-surface-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
+  text-align: left;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+}
+
+.td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  color: var(--bw-ink-steel);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child .td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover .td {
+  background: var(--bw-row-hover-tint);
+}
+
+.mono {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-label);
+}
+
+.expiresPending {
+  color: var(--bw-brass);
+}
+
+.emptyCell {
+  padding: 14px;
+  text-align: center;
+  color: var(--bw-steel-mist);
+  font-size: var(--bw-size-input);
+}
+
+/* ── Insignias ──────────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  white-space: nowrap;
+}
+
+.badgePending {
+  background: var(--bw-chip-active-bg);
+  border: 1px solid var(--bw-chip-active-border);
+  color: var(--bw-primary-dark);
+}
+
+.badgeAccepted {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+.badgeExpired {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border);
+  color: var(--bw-ink-steel-soft);
+}
+
+.badgeAdmin {
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  color: var(--bw-brass);
+}
+
+.badgeEditor {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border);
+  color: var(--bw-ink-steel-soft);
+}
+
+.badgeActive {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+.badgeSuspended {
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  color: var(--bw-sensitive-text);
+}
+
+.badgeNeutral {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border-soft);
+  color: var(--bw-ink-steel-soft);
+}
+
+/* ── Acciones ───────────────────────────────────────────────────────────── */
+
+.actionButton {
+  padding: 4px 10px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  border-color: var(--bw-brass);
+  color: var(--bw-brass);
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionDanger {
+  background: var(--bw-sensitive-bg);
+  border-color: var(--bw-badge-danger-border);
+  color: var(--bw-error-text);
+}
+
+.actionDanger:hover:not(:disabled) {
+  background: var(--bw-danger-hover-bg);
+  border-color: var(--bw-danger);
+  color: var(--bw-error-text);
+}
+
+.none {
+  font-size: var(--bw-size-label);
+  color: var(--bw-line-steel-strong);
 }

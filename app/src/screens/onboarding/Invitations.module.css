@@ -1,4 +1,231 @@
-/* INVT-01 · Invitations — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
-  display: block;
+/* INVT-01 · Panel de Gestión de Invitaciones.
+   Sin un solo color literal: todo sale de los tokens de `tokens.css`.
+
+   Nota de tokens que faltan (se usa el más cercano y se dice aquí, §6.1):
+   - No hay token de BLANCO puro. El fondo del input, el del botón de acción y
+     el texto sobre el primario usan `--bw-warm-cream` (#FAF8F4), el más claro
+     de la paleta. */
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px var(--bw-pad-panel) 56px;
+  font-family: var(--bw-font-body);
+  color: var(--bw-deep-steel);
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-label);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin-bottom: 8px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-title);
+  letter-spacing: var(--bw-ls-title);
+  line-height: 1.25;
+  color: var(--bw-deep-steel);
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bw-steel-mist);
+  margin-bottom: 28px;
+}
+
+/* ── Indicador de capacidad ─────────────────────────────────────────────── */
+
+.capacityRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 20px;
+}
+
+.dots {
+  display: flex;
+  gap: 5px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bw-line-steel);
+  transition: background 0.2s ease;
+}
+
+.dotUsed {
+  background: var(--bw-deep-steel);
+}
+
+.dotInv {
+  background: var(--bw-brass);
+}
+
+.dotFree {
+  background: var(--bw-line-steel);
+}
+
+.count {
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-label);
+  font-weight: 600;
+  color: var(--bw-deep-steel);
+}
+
+.detail {
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+/* ── Aviso de límite ────────────────────────────────────────────────────── */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  margin-bottom: 28px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-input);
+  line-height: 1.6;
+  color: var(--bw-warning-dark);
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--bw-brass);
+}
+
+/* ── Tarjeta de invitación ──────────────────────────────────────────────── */
+
+.card {
+  padding: 20px 22px;
+  margin-bottom: 28px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+}
+
+.cardTitle {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-input);
+  color: var(--bw-deep-steel);
+  margin-bottom: 12px;
+}
+
+.inviteRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--bw-pad-input);
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-input-text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.input:disabled {
+  background: var(--bw-cold-white);
+  color: var(--bw-input-placeholder);
+  cursor: not-allowed;
+}
+
+.button {
+  padding: 10px 18px;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-warm-cream);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fieldError {
+  margin-top: 6px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.feedbackOk {
+  margin-top: 6px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-success-dark);
+}
+
+.feedbackError {
+  margin-top: 6px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+/* ── Estados de la pantalla ─────────────────────────────────────────────── */
+
+.status {
+  font-size: 14px;
+  color: var(--bw-steel-mist);
+}
+
+.alert {
+  font-size: 14px;
+  color: var(--bw-error-text);
 }

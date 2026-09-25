@@ -50,6 +50,13 @@ interface Props {
    * El shell no sabe nada del agente — solo lo deja pasar.
    */
   vera?: VeraAgent;
+  /**
+   * `Configuración` (pie del menú lateral). **Opcional**: sin esto es el texto de
+   * siempre, sin acción; con esto es un botón. El shell no sabe qué hay detrás
+   * (hoy `Gestión de invitaciones`, INVT-01, y solo para el ADMIN): quien lo monta
+   * decide si lo pasa.
+   */
+  onOpenSettings?: () => void;
   children: ReactNode;
 }
 
@@ -60,6 +67,7 @@ export function AppShell({
   onNavigate,
   veraSubtitle,
   vera,
+  onOpenSettings,
   children,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -143,10 +151,24 @@ export function AppShell({
             ))}
           </nav>
           <div className={styles.bwsbft}>
-            <div className={styles.bwsbset}>
-              <i className="ti ti-adjustments-horizontal" />
-              Configuración
-            </div>
+            {onOpenSettings ? (
+              <button
+                type="button"
+                className={`${styles.bwsbset} ${styles.bwsbsetBtn}`}
+                onClick={() => {
+                  setSidebarOpen(false);
+                  onOpenSettings();
+                }}
+              >
+                <i className="ti ti-adjustments-horizontal" aria-hidden="true" />
+                Configuración
+              </button>
+            ) : (
+              <div className={styles.bwsbset}>
+                <i className="ti ti-adjustments-horizontal" />
+                Configuración
+              </div>
+            )}
             <div className={styles.bwsbusr}>
               <div className={styles.bwav}>{initials(profile.fullName, profile.email)}</div>
               <div>

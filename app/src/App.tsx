@@ -13,6 +13,7 @@ import { AdminRequests } from './screens/admin/AdminRequests';
 import { AdminBilling } from './screens/admin/AdminBilling';
 import { Directory } from './screens/directory/Directory';
 import { OrganizationProfile } from './screens/directory/OrganizationProfile';
+import { Invitations } from './screens/onboarding/Invitations';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
 import { ForumThread } from './screens/forum/ForumThread';
@@ -171,6 +172,14 @@ export function App() {
   const [orgProfileId, setOrgProfileId] = useState<string | null>(null);
 
   /**
+   * INVT-01 (`Gestión de invitaciones`) abierta desde `Configuración` (pie del menú
+   * lateral). No es un ítem del nav sino una pantalla de ajustes, así que ocupa el
+   * panel entero en vez de compartir ítem con otra, y se limpia al pulsar cualquier
+   * ítem del nav. Solo la ven los ADMIN (INVT-01 §2).
+   */
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
    * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
    * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
@@ -188,6 +197,7 @@ export function App() {
     setBatchOpen(false);
     setVisibilityOpen(false);
     setOrgProfileId(null);
+    setSettingsOpen(false);
   };
 
   if (state.status === 'loading') {
@@ -316,9 +326,14 @@ export function App() {
       activeNav={nav}
       onNavigate={navigate}
       vera={vera}
+      {...(state.profile.role === 'ADMIN' ? { onOpenSettings: () => setSettingsOpen(true) } : {})}
       {...(veraSubtitle ? { veraSubtitle } : {})}
     >
-      {onMessages ? (
+      {settingsOpen && state.profile.role === 'ADMIN' ? (
+        /* INVT-01. Sin `now`: las fechas de sus tablas son absolutas y `Expira en`
+         * lo calcula la base. */
+        <Invitations profile={state.profile} />
+      ) : onMessages ? (
         /*
          * `now` va explícito, y no por omisión como en INV-01, a propósito. El
          * contrato de aceptación lo pasa siempre (`Messages.test.tsx` monta

@@ -144,4 +144,23 @@ describe('AppShell', () => {
     expect(navIndexOf('Inventario')).toBe(4);
     expect(navIndexOf('Pantalla que no existe')).toBe(0);
   });
+
+  it('«Configuración» es texto sin acción salvo que quien monta el shell le dé una: entonces es un botón que la dispara', async () => {
+    const user = userEvent.setup();
+    const onOpenSettings = vi.fn();
+    const { rerender } = render(
+      <AppShell profile={profile} onSignOut={vi.fn()} activeNav={0} onNavigate={vi.fn()}>
+        <div>contenido</div>
+      </AppShell>,
+    );
+    expect(screen.queryByRole('button', { name: 'Configuración' })).toBeNull();
+
+    rerender(
+      <AppShell profile={profile} onSignOut={vi.fn()} activeNav={0} onNavigate={vi.fn()} onOpenSettings={onOpenSettings}>
+        <div>contenido</div>
+      </AppShell>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Configuración' }));
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  });
 });

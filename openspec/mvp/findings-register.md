@@ -298,3 +298,9 @@ pantalla INV-01 completa — eso es del día 3 en adelante.
 scaffold React. Único hallazgo que cambia una decisión de spec: SP-2 inclina GAP-001 hacia
 WebCrypto nativo (F-008), pendiente de confirmar X25519 en Safari/Firefox antes de retirar el
 fallback P-256.
+| [F-211](findings/F-211.md) | 2026-09-25 | `SPEC` | `Contactar` sin hilo previo no se puede construir con el esquema actual | ABIERTO |
+| [F-212](findings/F-212.md) | 2026-09-25 | `SPEC` | La spec y el HTML aprobado prometen un correo que el proyecto no puede enviar | ABIERTO |
+| [F-213](findings/F-213.md) | 2026-09-25 | `DESIGN` | No existe `Ajustes` | ABIERTO, menor |
+| [F-214](findings/F-214.md) | 2026-09-25 | `SEGURIDAD` | Revocar un usuario no le impide iniciar sesión, solo le deja sin datos | ABIERTO |
+| [F-215](findings/F-215.md) | 2026-09-25 | `INFRA` | Dos trampas del banco de esquema que costaron una vuelta cada una | Cerrado, sin acción |
+| [F-216](findings/F-216.md) | 2026-09-25 | `HARNESS` | Mi tarea no decía lo que el contrato exige (`string \| undefined` de un módulo CSS, `F-143`) | Cerrado para `INVT-01` |

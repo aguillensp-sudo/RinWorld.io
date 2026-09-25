@@ -1,0 +1,88 @@
+
+==============================================================================
+· corrida arrancada 2026-09-25 19:45:58 · harness/tasks/INVT-01.json --corrida corrida-02
+==============================================================================
+Log de esta corrida: harness\metrics\INVT-01\corrida-02\INVT-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/InvitationTables.module.css', 'app/src/screens/onboarding/InvitationTables.tsx', 'app/src/screens/onboarding/Invitations.module.css', 'app/src/screens/onboarding/Invitations.tsx', 'app/src/screens/onboarding/RemoveMemberDialog.module.css', 'app/src/screens/onboarding/RemoveMemberDialog.tsx']
+  tokens in/out: 28047/35017   cache: 99.49% hit
+  coste real: $0.046676   en frio: $0.058563
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\INVT-01\corrida-02\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/InvitationTables.module.css', 'app/src/screens/onboarding/InvitationTables.tsx', 'app/src/screens/onboarding/Invitations.module.css', 'app/src/screens/onboarding/Invitations.tsx', 'app/src/screens/onboarding/RemoveMemberDialog.module.css', 'app/src/screens/onboarding/RemoveMemberDialog.tsx']
+  tokens in/out: 37869/11867   cache: 73.35% hit
+  coste real: $0.020494   en frio: $0.032327
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\INVT-01\corrida-02\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/InvitationTables.module.css', 'app/src/screens/onboarding/InvitationTables.tsx', 'app/src/screens/onboarding/Invitations.module.css', 'app/src/screens/onboarding/Invitations.tsx', 'app/src/screens/onboarding/RemoveMemberDialog.module.css', 'app/src/screens/onboarding/RemoveMemberDialog.tsx']
+  tokens in/out: 37733/10684   cache: 77.34% hit
+  coste real: $0.018273   en frio: $0.030705
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\INVT-01\corrida-02\attempt_3.json (F-122)
+  CSV: 2026-09-25,INVT-01,INVT-01,deepseek-v4-flash,28047,35017,0.046676,1,1.9,app/src/screens/onboarding/InvitationTables.module.css;app/src/screens/onboarding/InvitationTables.tsx;app/src/screens/onboarding/Invitations.module.css;app/src/screens/onboarding/Invitations.tsx;app/src/screens/onboarding/RemoveMemberDialog.module.css;app/src/screens/onboarding/RemoveMemberDialog.tsx,99.49,no,-,corrida-02,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-25,INVT-01,INVT-01,deepseek-v4-flash,37869,11867,0.020494,2,0.6,app/src/screens/onboarding/InvitationTables.module.css;app/src/screens/onboarding/InvitationTables.tsx;app/src/screens/onboarding/Invitations.module.css;app/src/screens/onboarding/Invitations.tsx;app/src/screens/onboarding/RemoveMemberDialog.module.css;app/src/screens/onboarding/RemoveMemberDialog.tsx,73.35,no,-,corrida-02,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-25,INVT-01,INVT-01,deepseek-v4-flash,37733,10684,0.018273,3,0.5,app/src/screens/onboarding/InvitationTables.module.css;app/src/screens/onboarding/InvitationTables.tsx;app/src/screens/onboarding/Invitations.module.css;app/src/screens/onboarding/Invitations.tsx;app/src/screens/onboarding/RemoveMemberDialog.module.css;app/src/screens/onboarding/RemoveMemberDialog.tsx,77.34,si,-,corrida-02,-,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\INVT-01\corrida-02\attempt_1.json
+  harness\metrics\INVT-01\corrida-02\attempt_2.json
+  harness\metrics\INVT-01\corrida-02\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run typecheck (exit 2)
+9 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/onboarding/Invitations.tsx(37,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/Invitations.tsx(38,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/Invitations.tsx(39,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/InvitationTables.tsx(26,30): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/InvitationTables.tsx(27,30): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/InvitationTables.tsx(28,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/InvitationTables.tsx(32,27): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/InvitationTables.tsx(33,30): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  - src/screens/onboarding/InvitationTables.tsx(34,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+
+--- ultimas lineas de la salida ---
+src/screens/onboarding/Invitations.tsx(37,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/Invitations.tsx(38,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/Invitations.tsx(39,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/InvitationTables.tsx(26,30): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/InvitationTables.tsx(27,30): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/InvitationTables.tsx(28,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/InvitationTables.tsx(32,27): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/InvitationTables.tsx(33,30): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/onboarding/InvitationTables.tsx(34,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+npm notice run bearingworld-app@0.1.0 typecheck
+npm notice run tsc --noEmit
+
+### C2 ROJO
+suite e2e COMPLETA (exit 1)
+Error: Process from config.webServer was not able to start. Exit code: 2
+
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build

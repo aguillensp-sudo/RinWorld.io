@@ -1,0 +1,133 @@
+
+==============================================================================
+· corrida arrancada 2026-09-25 18:35:22 · harness/tasks/INVT-01.json --corrida corrida-01
+==============================================================================
+Log de esta corrida: harness\metrics\INVT-01\corrida-01\INVT-01.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/InvitationTables.module.css', 'app/src/screens/onboarding/InvitationTables.tsx', 'app/src/screens/onboarding/Invitations.module.css', 'app/src/screens/onboarding/Invitations.tsx', 'app/src/screens/onboarding/RemoveMemberDialog.module.css', 'app/src/screens/onboarding/RemoveMemberDialog.tsx']
+  tokens in/out: 28047/33531   cache: 0.0% hit
+  coste real: $0.056602   en frio: $0.056602
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\INVT-01\corrida-01\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ⚠ URLError: <urlopen error [Errno 11001] getaddrinfo failed>. No es un intento del modelo (F-119): reintento en 5s
+  ⚠ URLError: <urlopen error [Errno 11001] getaddrinfo failed>. No es un intento del modelo (F-119): reintento en 20s
+Traceback (most recent call last):
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 1321, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1358, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1404, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1353, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1113, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1057, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1492, in connect
+    super().connect()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\http\client.py", line 1023, in connect
+    self.sock = self._create_connection(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        (self.host,self.port), self.timeout, self.source_address)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\socket.py", line 846, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estadov1-review-e96f39\harness\core\llm.py", line 235, in call
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 487, in open
+    response = self._open(req, data)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 504, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 464, in _call_chain
+    result = func(*args)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 1369, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\urllib\request.py", line 1324, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estadov1-review-e96f39\harness\graph\run.py", line 686, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estadov1-review-e96f39\harness\graph\run.py", line 651, in main
+    for estado in app.stream({"task": task, "attempt": 0, "metrics": []},
+                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             {"recursion_limit": MAX_ATTEMPTS * 4},
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             stream_mode="values"):
+                             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\main.py", line 2982, in stream
+    for _ in runner.tick(
+             ~~~~~~~~~~~^
+        [t for t in loop.tasks.values() if not t.writes],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        schedule_task=loop.accept_push,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_runner.py", line 207, in tick
+    run_with_retry(
+    ~~~~~~~~~~~~~~^
+        t,
+        ^^
+    ...<10 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_retry.py", line 617, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 684, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 426, in invoke
+    ret = self.func(*args, **kwargs)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estadov1-review-e96f39\harness\graph\nodes\coder.py", line 259, in coder_node
+    out = llm.complete(messages, on_truncation=on_truncation, aviso=print)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estadov1-review-e96f39\harness\core\llm.py", line 271, in complete
+    data, secs = call(messages, maxtok, aviso=aviso)
+                 ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estadov1-review-e96f39\harness\core\llm.py", line 242, in call
+    raise LLMError(
+        f"transporte: {type(e).__name__}: {e}. "
+        f"{vuelta + 1} intento(s) de conexion, ninguno llego") from e
+harness.core.llm.LLMError: transporte: URLError: <urlopen error [Errno 11001] getaddrinfo failed>. 3 intento(s) de conexion, ninguno llego
+During task with name 'coder' and id '82204537-463e-aa3c-a89d-931c4971c250'

@@ -84,8 +84,22 @@ update public.organizations set contact_phone = '+33 4 72 34 56 78', contact_ema
 update public.organizations set contact_phone = '+90 212 345 67 89', contact_email = 'iletisim@anadolurulman.com.tr' where id = 'f6000000-0000-4000-8000-000000000006';
 
 -- -----------------------------------------------------------------------------
--- 4 · Comprobación
+-- 4 · La dirección postal (0036, para DIR-02)
 -- -----------------------------------------------------------------------------
-select id, name, country, continent, status, contact_phone, contact_email
+-- `address`, `city` y `postal_code` los pinta la ficha pública. Datos de DEMO
+-- inventados, como el contacto de arriba. UPDATE por lo mismo: las seis filas ya
+-- existen. `created_at` NO se toca: `0034` lo usa como ancla de la facturación y
+-- la ficha lo pinta tal cual como "Miembro desde".
+update public.organizations set address = 'Calle Industria 14',                  city = 'Sevilla',   postal_code = '41013'  where id = 'a1000000-0000-4000-8000-000000000001';
+update public.organizations set address = 'Industriestraße 22',                  city = 'Heidenheim', postal_code = '89522'  where id = 'b2000000-0000-4000-8000-000000000002';
+update public.organizations set address = 'Via dell''Industria 8',               city = 'Módena',    postal_code = '41122'  where id = 'c3000000-0000-4000-8000-000000000003';
+update public.organizations set address = 'ul. Przemysłowa 5',                   city = 'Łódź',      postal_code = '90-001' where id = 'd4000000-0000-4000-8000-000000000004';
+update public.organizations set address = '12 rue des Forges',                   city = 'Lyon',      postal_code = '69003'  where id = 'e5000000-0000-4000-8000-000000000005';
+update public.organizations set address = 'Organize Sanayi Bölgesi 3. Cadde 7',  city = 'Ankara',    postal_code = '06378'  where id = 'f6000000-0000-4000-8000-000000000006';
+
+-- -----------------------------------------------------------------------------
+-- 5 · Comprobación
+-- -----------------------------------------------------------------------------
+select id, name, country, continent, status, contact_phone, contact_email, address, city, postal_code
   from public.organizations
  order by continent, country;

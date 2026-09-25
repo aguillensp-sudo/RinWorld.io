@@ -2017,6 +2017,44 @@ update public.organizations
  where id = :orgA;
 
 -- -----------------------------------------------------------------------------
+-- 0036 · la direccion postal tambien la escribe el operador, no el cliente
+-- -----------------------------------------------------------------------------
+-- Misma forma que el bloque de 0027: una columna nueva NO entra sola en
+-- `app.guard_organization_columns`, y sin este bloque la proxima nace editable
+-- por cualquier ADMIN sin que nada lo diga.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+
+  select public.expect_fail(
+    'update public.organizations set address = ''Otra calle 1'' where id = ''11111111-1111-1111-1111-111111111111''',
+    '0036: un ADMIN no puede cambiar la direccion de su propia organizacion');
+  select public.expect_fail(
+    'update public.organizations set city = ''Otra'' where id = ''11111111-1111-1111-1111-111111111111''',
+    '0036: ni la ciudad');
+  select public.expect_fail(
+    'update public.organizations set postal_code = ''00000'' where id = ''11111111-1111-1111-1111-111111111111''',
+    '0036: ni el codigo postal');
+commit;
+
+update public.organizations
+   set address = 'Calle Industria 14', city = 'Sevilla', postal_code = '41013'
+ where id = :orgA;
+
+do $$
+begin
+  assert (select postal_code from public.organizations
+           where id = '11111111-1111-1111-1111-111111111111') = '41013',
+    '0036: el operador (postgres/service_role) si escribe la direccion';
+  raise notice 'OK · 0036: la direccion postal la escribe el operador';
+end
+$$;
+
+select public.expect_fail(
+  'update public.organizations set postal_code = '''' where id = ''11111111-1111-1111-1111-111111111111''',
+  '0036: organizations_postal_code_chk rechaza una cadena vacia');
+
+-- -----------------------------------------------------------------------------
 -- 0028 · la cola de solicitudes solo la ve y la decide el Operador
 -- -----------------------------------------------------------------------------
 -- ADMIN-01 estrena un actor que el esquema no tenia: alguien sin organizacion

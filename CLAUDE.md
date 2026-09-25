@@ -1,11 +1,14 @@
-# Bearingworld.io — MVP · Reglas de proyecto
+# Bearingworld.io — Reglas de proyecto (V1)
 
 Plataforma B2B de distribución de rodamientos industriales. Búsqueda conversacional
 (**VERA**, Claude Sonnet 4.6) sobre arquitectura **zero-knowledge** E2EE para precio,
 cantidad y negociación entre organizaciones. Metodología: SDD con OpenSpec.
 
-Este fichero es el contrato de trabajo del MVP (plan de 15 días,
-`openspec/mvp/Plan_MVP_Bearingworld_v1.0.md`). Se lee en cada sesión.
+Este fichero es el contrato de trabajo del proyecto y se carga en cada sesión. El MVP se
+cerró el 18-ago-2026 (`openspec/mvp/CIERRE-MVP.md`); desde el 22-ago estamos en **V1**, que es
+**fábrica, no producto**: se construye y se mide el arnés (`harness/`) que genera pantallas
+con un Coder externo. **El estado del día está en `openspec/v1/ESTADO-V1.md`** (§11 dice
+cómo se lee y cómo se escribe).
 
 ---
 
@@ -31,9 +34,10 @@ Este fichero es el contrato de trabajo del MVP (plan de 15 días,
    - Specs de `openspec/specs/` (9 capabilities cerradas).
    Son referencia de reproducción fiel, no material de trabajo.
 
-4. **Commit + push tras cada bloque completado, sin pedir confirmación.** El PO solo
-   prueba vía la URL de GitHub Pages / entorno desplegado; un cambio sin pushear es
-   invisible para él.
+4. **Commit + push tras cada bloque completado, sin pedir confirmación.** El PO prueba en
+   el entorno desplegado (Vercel) o en su localhost; un cambio sin pushear es invisible
+   para él. **Se empuja a `mvp/bootstrap`** (rama por defecto y la única que despliega);
+   `main` está congelada en `43bb222` y solo sirve los prototipos de GitHub Pages.
 
 5. **Repo correcto.** Este repo (`BearingWorld.io`, remoto `github.com/aguillensp-sudo/RinWorld.io`)
    es propio e independiente. `C:\Users\admin` es otro repo git mal configurado que se
@@ -69,11 +73,13 @@ BearingWorld.io/
 ├── openspec/            ← specs = fuente de verdad (sin cambios)
 │   ├── specs/           ← 9 capabilities cerradas (read-only)
 │   ├── architecture/    ← ADR-001, design-system.md
-│   ├── mvp/             ← plan, métricas y registros del MVP
+│   ├── mvp/             ← plan y cierre del MVP, métricas, registro de hallazgos (findings/)
+│   ├── v1/              ← relevo (ESTADO-V1.md), decisiones, diario/ y planes de V1
 │   └── design-gui/      ← HTML aprobados + generador (read-only; sirve GitHub Pages)
-├── app/                 ← NUEVO: aplicación React (Vite + TS)
-├── harness/             ← NUEVO (día 4): grafo LangGraph
-└── index.html, docs/…   ← sin cambios
+├── app/                 ← aplicación React (Vite + TS)
+├── harness/             ← el arnés: grafo LangGraph, tareas del Coder, métricas de corrida
+├── supabase/            ← migraciones, siembras y tests de esquema
+└── index.html, docs/…   ← specs funcionales y ADR
 ```
 
 El MVP vive en este mismo repo (monorepo) para que el arnés lea specs y escriba código
@@ -136,7 +142,9 @@ la prueba deja de verificar.
   `coste_usd` del CSV y `cost_usd` del JSON de métricas **tienen que coincidir**; si no
   coinciden, gana el JSON recomputado, no la copia a mano (F-010).
 - Los hallazgos van a `openspec/mvp/findings-register.md`, clasificados como
-  `SPEC-GAP` · `HARNESS` · `MODEL` · `INFRA` · `DESIGN`.
+  `SPEC-GAP` · `HARNESS` · `MODEL` · `INFRA` · `DESIGN`. Ese fichero es un **índice de una
+  línea por hallazgo**; el detalle va en `openspec/mvp/findings/F-NNN.md`. Nunca se lee de
+  corrido: por identificador.
 
 ---
 
@@ -161,11 +169,18 @@ dice "no tengo ese dato" en cuanto sale de ahí.
 
 ## 9. Documentos de referencia
 
-- `openspec/mvp/Plan_MVP_Bearingworld_v1.0.md` — plan maestro de 15 días.
-- `openspec/mvp/Dia-01_Spikes_y_arranque.md` — plan del día.
-- `openspec/design-gui/specs y html aprobados/notas/Status_bearingworld.io a 1 de Julio de 2026.md` — handoff de la fase de prototipado.
-- `openspec/architecture/ADR-001_E2EE_Key_Backup_1.md` — decisión de cifrado (condiciona seguridad/mensajería).
-- `openspec/gaps-register.md` · `openspec/product-decisions.md` — debates cerrados y abiertos.
+Se leen **cuando la tarea toca el tema**, no al arrancar:
+
+- `openspec/v1/UMBRAL-FABRICA-V1.md` — **antes de tocar la fábrica o medir una pantalla.** Es
+  el umbral escrito antes de medir y no se reescribe después de ver un resultado.
+- `openspec/v1/DECISIONES-V1.md` — todas las decisiones de V1, con quién y cuándo.
+- `openspec/v1/FUNDACION-V1.md` — los seis entregables de infraestructura.
+- `docs/ADR-002` §10 (Q-1), **entero**, antes de tocar mensajería o reparto de claves.
+- `docs/ADR-001` / `openspec/architecture/ADR-001_E2EE_Key_Backup_1.md` — criptografía.
+- `openspec/v1/entornos.md` — CI/CD y mapa de entornos.
+- `openspec/v1/vera-vertex-eu-migracion.md` — antes de tocar `vera/index.ts`.
+- `openspec/mvp/CIERRE-MVP.md` — acta del MVP; **lee primero su bloque de corrección**.
+- `openspec/gaps-register.md` · `openspec/product-decisions.md` — debates de producto.
 
 ---
 
@@ -274,14 +289,51 @@ no equivocarse en la primera consulta, no un sustituto.
 
 ---
 
-## Ritual de cierre de día (obligatorio, sin pedir confirmación)
+## 11. El relevo, sus reglas y el ritual de cierre
 
-Al terminar la jornada, antes del último commit:
-1. Sobrescribir openspec/mvp/ESTADO.md: día, estado (verde/ámbar/rojo),
-   qué se cerró, qué toca mañana, decisiones vivas, bloqueos, riesgo
-   más cercano.
-2. Volcar hallazgos a findings-register.md y métricas a harness-metrics.csv.
-3. Si mañana es día 4, 8 o 9 — los de decisiones irreversibles — escribir
-   además openspec/mvp/Dia-NN_*.md con el detalle. El resto de días van
-   con la fila del plan maestro.
-4. Commit + push.
+### 11.1 Al arrancar
+
+1. `openspec/v1/ESTADO-V1.md`: primero su §6 (lo que no se sabe) y después su §3 (lo que toca).
+2. Lo de §9 que toque la tarea, y nada más. `findings-register.md` y `diario/`, solo por
+   identificador o por fecha.
+
+**Si la sesión arranca en un worktree en `43bb222`, sin `harness/` ni `app/`** (pasa al reabrir
+una sesión vieja): no te pares. En el worktree, `git merge --ff-only origin/mvp/bootstrap`,
+trabaja ahí, `git push origin HEAD:mvp/bootstrap` y adelanta la raíz con
+`git -C <raíz> merge --ff-only origin/mvp/bootstrap`. Al worktree le faltan `app/.env`
+(cópialo de la raíz) y `node_modules` (junction con `mklink /J`; se quita con `rmdir`,
+**nunca con `rm -rf`, que seguiría el enlace**). Un fichero con regex o barras invertidas
+se crea con el editor, nunca con un heredoc del shell (`F-199`).
+
+### 11.2 Las cinco reglas del relevo
+
+Salen de errores reales; el hallazgo de cada una cuenta la historia.
+
+1. **Cita, no parafrasees.** Estados y asignaciones de modelo se copian con su puntero al lado.
+2. **Lo que el relevo afirme se comprueba el día que se escribe, contra el código o la base**,
+   nunca contra otro documento (`F-129`, `F-132`). Privilegios, RLS y permisos, contra el
+   catálogo (`pg_proc`, `pg_policies`, `pg_default_acl`), no contra el `.sql` (`F-146`).
+3. **La fecha se lee de la máquina** (`date -u`), nunca de memoria (`F-109`).
+4. **Se cierra cuando se acaba, no cuando parece que se acaba.** Si el trabajo sigue después
+   del cierre, se reabre y se reescribe.
+5. **Una evidencia que depende de que alguien se acuerde de producirla no es evidencia**
+   (`F-136`). Mira quién la produce y qué pasa si se distrae.
+
+Y una sexta, de forma: **el relevo solo lleva estado.** Nada de historia, crónicas ni
+justificaciones: eso va al diario o al hallazgo. **El código, las migraciones y las tareas no
+citan el relevo** (se reescribe cada día y el puntero caduca): citan `F-NNN`, un ADR o
+`DECISIONES-V1.md`.
+
+### 11.3 Ritual de cierre (obligatorio, sin pedir confirmación)
+
+1. `date -u` para la cabecera.
+2. **Sobrescribir** `ESTADO-V1.md` entero, sin añadir debajo de lo de ayer: §1 lo comprobado
+   hoy, cada fila con su «verificado contra»; §2 revisado contra el código; §3 lo que toca;
+   §5 solo lo abierto (lo resuelto se borra, ya está en su hallazgo); §6 nunca vacía.
+   **Máximo 150 líneas**: el hook `.githooks/pre-commit` rechaza el commit si pasa.
+3. La historia del día, a `openspec/v1/diario/dia-NN.md`. Las decisiones nuevas, a
+   `DECISIONES-V1.md`. Los hallazgos, fila en `findings-register.md` + `findings/F-NNN.md`.
+   Las métricas, a `harness-metrics.csv`.
+4. Commit y push. Si se tocó código, desplegar **y comprobarlo en su URL por contenido**, no
+   por `HTTP 200` (`F-168`).
+5. `git status --short` limpio. El relevo vive en `openspec/v1/`, nunca en la raíz.

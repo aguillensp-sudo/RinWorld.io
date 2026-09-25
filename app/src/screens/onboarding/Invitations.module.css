@@ -24,7 +24,8 @@
 .eyebrow {
   font-family: var(--bw-font-title);
   font-weight: 600;
-  font-size: var(--bw-size-label);
+  /* 11px del HTML aprobado (.pg-eyebrow); el token --bw-size-label son 12px. */
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: var(--bw-ls-eyebrow);
   color: var(--bw-brass);
@@ -34,7 +35,8 @@
 .title {
   font-family: var(--bw-font-title);
   font-weight: 700;
-  font-size: var(--bw-size-title);
+  /* 22px del HTML aprobado (.pg-title); el token --bw-size-title son 28px. */
+  font-size: 22px;
   letter-spacing: var(--bw-ls-title);
   line-height: 1.25;
   color: var(--bw-deep-steel);

@@ -94,12 +94,11 @@
   font-weight: 500;
   color: var(--bw-calibration-blue);
   text-align: left;
-  cursor: default;
+  cursor: pointer;
 }
 
-.nameButton:disabled {
-  opacity: 1;
-  color: var(--bw-calibration-blue);
+.nameButton:hover {
+  text-decoration: underline;
 }
 
 .countryBadge {

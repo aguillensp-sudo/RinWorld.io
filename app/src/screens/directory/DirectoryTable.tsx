@@ -75,19 +75,11 @@ export function DirectoryTable({ rows, sort, onSort, onOpenOrganization }: Props
             rows.map((row) => (
               <tr key={row.id} className={styles.row}>
                 <td className={styles.td}>
-                  {/*
-                   * DIR-02 (la ficha pública) no está construida todavía, así
-                   * que el nombre es un control APAGADO con el motivo, no un
-                   * enlace que no lleva a ninguna parte. `onOpenOrganization`
-                   * se conserva aunque nunca vaya a dispararse: es el contrato
-                   * del componente para cuando exista DIR-02 (mismo patrón que
-                   * `Consultar`/`Contactar` en SRCH-01, F-100).
-                   */}
+                  {/* Abre la ficha pública (DIR-02). Estuvo apagado mientras DIR-02
+                      no existía; ahora es un botón de verdad. */}
                   <button
                     type="button"
                     className={styles.nameButton}
-                    disabled
-                    title="La ficha de organización (DIR-02) llega en una próxima versión."
                     onClick={() => onOpenOrganization(row.id)}
                   >
                     {row.name}

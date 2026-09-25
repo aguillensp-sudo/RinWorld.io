@@ -12,6 +12,7 @@ import { Panel } from './screens/panel/Panel';
 import { AdminRequests } from './screens/admin/AdminRequests';
 import { AdminBilling } from './screens/admin/AdminBilling';
 import { Directory } from './screens/directory/Directory';
+import { OrganizationProfile } from './screens/directory/OrganizationProfile';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
 import { ForumThread } from './screens/forum/ForumThread';
@@ -163,6 +164,13 @@ export function App() {
   const [visibilityOpen, setVisibilityOpen] = useState(false);
 
   /**
+   * DIR-02 (la ficha de una organización) abierta, con su id. Comparte ítem de nav
+   * con DIR-01 (`Empresas`, DIR-02 §2), igual que `visibilityOpen` con INV-01. Se
+   * limpia al cambiar de ítem de nav.
+   */
+  const [orgProfileId, setOrgProfileId] = useState<string | null>(null);
+
+  /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
    * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
    * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
@@ -179,6 +187,7 @@ export function App() {
     setWatchersOpen(false);
     setBatchOpen(false);
     setVisibilityOpen(false);
+    setOrgProfileId(null);
   };
 
   if (state.status === 'loading') {
@@ -403,7 +412,23 @@ export function App() {
          * (Nombre, País, Teléfono, Email, Favoritos) — al contrario que
          * INV-01/SRCH-01/MSG-01, aquí no hay nada que envejezca en pantalla.
          */
-        <Directory profile={state.profile} />
+        orgProfileId ? (
+          /* DIR-02. Sin `now`: nada de la ficha es relativo al reloj (`Miembro
+           * desde` es mes y año). `Contactar` con hilo previo abre MSG-02 y, como
+           * en VND-01, cambia también el ítem de nav: MSG-02 vive en `Hilos`. */
+          <OrganizationProfile
+            profile={state.profile}
+            organizationId={orgProfileId}
+            onBack={() => setOrgProfileId(null)}
+            onOpenThread={(threadId) => {
+              setOrgProfileId(null);
+              setNav(MESSAGES_NAV);
+              setOpenThreadId(threadId);
+            }}
+          />
+        ) : (
+          <Directory profile={state.profile} onOpenOrganization={setOrgProfileId} />
+        )
       ) : onForos ? (
         /* FORO-01. `now` explícito y construido EN EL RENDER, mismo criterio
          * que INV-01/SRCH-01/MSG-01: las tarjetas de categoría y la actividad

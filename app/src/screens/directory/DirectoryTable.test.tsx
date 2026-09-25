@@ -117,27 +117,22 @@ describe('DirectoryTable', () => {
     expect(within(fila).getByText('21')).toBeInTheDocument();
   });
 
-  it(
-    'el nombre es un control APAGADO -DIR-02 no existe todavía- y dice por qué; el callback se conserva sin dispararse',
-    async () => {
-      const user = userEvent.setup();
-      const onOpenOrganization = vi.fn();
-      render(
-        <DirectoryTable
-          rows={[row({ name: 'NSK Europe Ltd', id: 'x' })]}
-          sort={DEFAULT_SORT}
-          onSort={vi.fn()}
-          onOpenOrganization={onOpenOrganization}
-        />,
-      );
-      const control = screen.getByRole('button', { name: 'NSK Europe Ltd' });
-      expect(control).toBeDisabled();
-      expect(control).toHaveAttribute(
-        'title',
-        'La ficha de organización (DIR-02) llega en una próxima versión.',
-      );
-      await user.click(control);
-      expect(onOpenOrganization).not.toHaveBeenCalled();
-    },
-  );
+  it('el nombre abre la ficha (DIR-02): es un botón habilitado que llama a onOpenOrganization con el id de la fila', async () => {
+    const user = userEvent.setup();
+    const onOpenOrganization = vi.fn();
+    render(
+      <DirectoryTable
+        rows={[row({ name: 'NSK Europe Ltd', id: 'x' })]}
+        sort={DEFAULT_SORT}
+        onSort={vi.fn()}
+        onOpenOrganization={onOpenOrganization}
+      />,
+    );
+    const control = screen.getByRole('button', { name: 'NSK Europe Ltd' });
+    expect(control).toBeEnabled();
+    expect(control).not.toHaveAttribute('title');
+    await user.click(control);
+    expect(onOpenOrganization).toHaveBeenCalledTimes(1);
+    expect(onOpenOrganization).toHaveBeenCalledWith('x');
+  });
 });

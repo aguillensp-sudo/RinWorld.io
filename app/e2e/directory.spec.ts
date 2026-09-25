@@ -117,12 +117,9 @@ test.describe('DIR-01 · directorio real', () => {
       .toBe(true);
   });
 
-  test('el nombre no lleva a ninguna parte todavía -DIR-02 no existe- y lo dice', async ({ page }) => {
-    const primera = page.getByRole('row').nth(1).getByRole('button').first();
-    await expect(primera).toBeDisabled();
-    await expect(primera).toHaveAttribute('title', 'La ficha de organización (DIR-02) llega en una próxima versión.');
-    const urlAntes = page.url();
-    await primera.click({ force: true });
-    expect(page.url()).toBe(urlAntes);
+  test('el nombre abre la ficha pública (DIR-02): sale el breadcrumb y deja de estar la tabla', async ({ page }) => {
+    await page.getByRole('row').nth(1).getByRole('button').first().click();
+    await expect(page.getByRole('navigation', { name: 'Ruta' })).toBeVisible();
+    await expect(page.getByRole('row')).toHaveCount(0);
   });
 });

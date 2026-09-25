@@ -1,0 +1,63 @@
+{
+  "task_id": "DIR-02",
+  "screen": "DIR-02",
+  "goal": "Panel de contenido de DIR-02 (Ficha Publica de Organizacion, MSG-04 en la capability organization-directory, Modulo 04): breadcrumb `Empresas › <nombre>`, cabecera con avatar de iniciales, nombre, insignia de pais, contador de favoritos, insignia de estado y boton `Contactar`, y dos tarjetas de solo lectura -`Informacion general` (pais, direccion en dos lineas, codigo postal, miembro desde) y `Contacto publico` (telefono, email, nota de que el contacto es visible para todos)-. Se abre desde el nombre de una fila de DIR-01 y va DENTRO del shell estandar de un miembro (ya wireado: `App.tsx` la monta cuando `Empresas` esta activo y hay una organizacion abierta). Decima pantalla de la fabrica. Lleva UNA migracion escrita a mano (`0036`: direccion, ciudad y codigo postal); la pantalla en si no escribe nada en la base.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll propio en `constraints` (F-198).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §7: la capa de datos (`app/src/lib/organization.ts`, 15 pruebas) y la migracion `0036` son precondicion, ya escritas y entregadas por Claude Code -no las construye esta tarea-. Esta corrida es la DECIMA y NO va en sesion propia: comparte sesion con INVT-01 y con el ritual de cierre, asi que sus cifras 7 y 8 no son limpias (se dice en el relevo).",
+  "_nota_spec": "DIR-02 no tiene fichero de spec propio: es `MSG-04` de la capability `organization-directory` (`Rinworld_spec_DIR-01.md`, cabecera). La `spec` de `inputs` es esa capability, donde MSG-04 esta definida en los requisitos `organization-public-profile` y `open-public-contact-data`; el contrato visual es el HTML aprobado.",
+  "_nota_shell": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea: `App.tsx` monta `<OrganizationProfile profile organizationId onBack onOpenThread />` cuando `Empresas` esta activo y `orgProfileId` no es null, y `Directory` abre la ficha con `onOpenOrganization`. `OrganizationProfile.tsx` existe hoy como MARCADOR (un `<div data-testid>` con las props ya tipadas): esta tarea sustituye ese fichero ENTERO y `OrganizationProfile.module.css` (hoy un comentario). VERA la monta el shell, no esta pantalla.",
+  "inputs": {
+    "spec": "openspec/specs/organization-directory/spec.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/DIR-02 · DIR v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/directory/Directory.tsx",
+    "_nota_style_reference": "Para la cabecera de pantalla (eyebrow y estilo de titulo), el estado de carga y el patron de errores: `Directory.tsx`/`Directory.module.css` (DIR-01). Para el scroll propio ya resuelto: `Directory.module.css` (`.page`) y `Watchers.module.css` (`.screen`).",
+    "data_layer": "app/src/lib/organization.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `fetchOrganizationProfile`, `fetchThreadWithOrg`, `favoritesLabel`, `telHref` y el tipo `OrganizationProfile` (que se importa con ALIAS, `type OrganizationProfile as OrganizationData`, porque el componente se llama igual). NO se reimplementa: ni el texto de favoritos, ni el href del telefono, ni las iniciales, ni el mes de `Miembro desde`, ni la composicion de la direccion: todo eso ya viene calculado en el objeto que devuelve `fetchOrganizationProfile` (`initials`, `countryLabel`, `addressLines`, `memberSince`, `status`)."
+  },
+  "outputs": [
+    "app/src/screens/directory/OrganizationProfile.tsx",
+    "app/src/screens/directory/OrganizationProfile.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos, entre comillas simples. El guion largo '—' es U+2014 y los puntos suspensivos '…' son U+2026 (un solo caracter).",
+    "_nota_accesibilidad": "Todo lo accionable es `<button type=\"button\">` o `<a href>`, nunca un `<div onClick>`. El breadcrumb es un `<nav aria-label=\"Ruta\">`. Cada tarjeta es un `<section aria-label=...>` (region con nombre).",
+    "_nota_nombres_ejemplo": "Nombres accesibles, EJEMPLOS VERBATIM: navegacion 'Ruta'; botones 'Empresas' (dentro del breadcrumb), 'Contactar', 'Volver al directorio'; regiones 'Información general' y 'Contacto público'; etiquetas de fila 'País', 'Dirección', 'Código postal', 'Miembro desde', 'Teléfono', 'Email'; enlaces con el propio numero y el propio correo como nombre ('+49 211 5288 0', 'contact@nskeurope.de'); ids de prueba 'org-avatar' y 'org-country'; el titulo (h1) es el nombre de la organizacion, p. ej. 'NSK Europe Ltd', 'Rodamientos Ibéricos', 'Cuscinetti Padana' u 'Otra SL'.",
+    "_nota_estado_de_la_verdad": "El Coder NO formatea nada por su cuenta: `favoritesLabel(n)` da '★ 21 favoritos', `telHref(telefono)` da el href de tel:, y el objeto de la ficha ya trae `initials`, `countryLabel`, `addressLines`, `memberSince` y `status`. Se IMPORTAN y se pintan tal cual.",
+    "app/src/screens/directory/OrganizationProfile.tsx": "export function OrganizationProfile({ profile, organizationId, onBack, onOpenThread }: { profile: MemberProfile; organizationId: string; onBack: () => void; onOpenThread: (threadId: string) => void }). `MemberProfile` y `errorMessage` de '../../lib/session'. ES LA PANTALLA: posee TODO el estado y es el unico sitio que llama a la red: `fetchOrganizationProfile(organizationId)` y, si `organizationId !== profile.orgId`, `fetchThreadWithOrg(profile.orgId, organizationId)` de '../../lib/organization'. Las dos peticiones salen en el mismo efecto, EN PARALELO, y el efecto depende de `organizationId` y `profile.orgId`: si `organizationId` cambia, vuelve al estado de carga y pide la ficha nueva (con una bandera de cancelacion para ignorar la respuesta de una peticion vieja). Si `fetchThreadWithOrg` RECHAZA se trata como 'no hay hilo' (la ficha se ve igual); la ficha NO espera al hilo para pintarse. RAIZ: un elemento con la clase `screen` (ver constraints: scroll propio). ESTADOS: (1) CARGA: un `<p role=\"status\">` 'Cargando ficha…' y nada mas. (2) ERROR: si `fetchOrganizationProfile` RECHAZA, un `<p role=\"alert\">` con `errorMessage(err)` y un boton 'Volver al directorio' que llama a `onBack`; ningun `<h1>`. (3) NO EXISTE: si devuelve `null`, un `<p>` 'Esta organización no está disponible.' y el mismo boton 'Volver al directorio'; ni `<h1>` ni 'Contactar'. (4) FICHA. FICHA, de arriba abajo: eyebrow `<p>` 'Directorio de Organizaciones'; BREADCRUMB `<nav aria-label=\"Ruta\">` con un `<button type=\"button\">` 'Empresas' que llama a `onBack`, un separador '›' (`aria-hidden=\"true\"`) y un `<span>` con el nombre de la organizacion; CABECERA: un elemento `data-testid=\"org-avatar\"` con `ficha.initials`, el `<h1>` con `ficha.name`, una fila de metadatos con un `<span data-testid=\"org-country\">` con `ficha.countryLabel`, un `<span>` con `favoritesLabel(ficha.favoriteCount)` y un `<span>` con `ficha.status`, y el boton 'Contactar'. BOTON 'Contactar' (`type=\"button\"`, primario, con el icono `<i className=\"ti ti-message-circle\" aria-hidden=\"true\" />` delante): HABILITADO solo si hay un hilo (`threadId !== null`), y entonces al pulsarlo llama a `onOpenThread(threadId)` UNA vez. DESHABILITADO en los demas casos, con `title`: si `organizationId === profile.orgId` -> 'Es tu propia organización.'; si no (todavia buscando, sin hilo o busqueda fallida) -> 'Todavía no tienes un hilo con esta organización. Iniciar uno sin referencia llega con la mensajería.'. TARJETA 1: `<section aria-label=\"Información general\">` con un `<h2>` 'Información general' y un `<dl>` de pares `<dt>`/`<dd>` (cada `<dd>` es el hermano SIGUIENTE de su `<dt>`): 'País' -> `ficha.countryLabel`; 'Dirección' -> UN `<span>` POR CADA linea de `ficha.addressLines` (nunca un `<br>` ni una sola cadena con salto de linea; `display: block` en CSS), o '—' si esa lista esta vacia; 'Código postal' -> `ficha.postalCode` o '—' si esta vacio; 'Miembro desde' -> `ficha.memberSince` o '—' si esta vacio. TARJETA 2: `<section aria-label=\"Contacto público\">` con un `<h2>` 'Contacto público' y un `<dl>`: 'Teléfono' -> un `<a href={telHref(ficha.phone)}>` cuyo texto es `ficha.phone`, o '—' (sin enlace) si esta vacio; 'Email' -> un `<a href={'mailto:' + ficha.email}>` cuyo texto es `ficha.email`, o '—' (sin enlace) si esta vacio. Debajo del `<dl>`, un `<p>` con el texto EXACTO 'Los datos de contacto son visibles para todos los miembros de la plataforma, independientemente de la configuración de visibilidad de inventario.'. NUNCA se pinta 'undefined', 'null' ni 'NaN'.",
+    "app/src/screens/directory/OrganizationProfile.module.css": "Estilos de la ficha con TOKENS de `tokens.css` (nada de valores literales de color). Clases minimas: `screen` (ver constraints), `eyebrow`, `breadcrumb`, `header` (avatar + nombre + metadatos + boton), `avatar`, `meta`, `badge`, `contactButton`, `cards` (rejilla de dos columnas que colapsa a una en pantalla estrecha), `card`, `cardTitle`, `row`, `label`, `value`, `note`, `status`, `alert`. Fiel al HTML aprobado."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/directory/OrganizationProfile.test.tsx",
+      "app/src/screens/directory/OrganizationProfileScroll.test.ts"
+    ],
+    "e2e": [
+      "app/e2e/organization-profile.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e va contra el Supabase real con la cuenta ALPHA y SOLO LEE: abre la ficha de Cuscinetti Padana desde el directorio, comprueba la direccion sembrada y los enlaces tel:/mailto:, abre el hilo existente con `Contactar`, vuelve por el breadcrumb y comprueba que en la ficha de la propia organizacion `Contactar` esta deshabilitado."
+  },
+  "out_of_scope": [
+    "CREAR un hilo nuevo con `Contactar` sin hilo previo: la spec lo pide sin cantidad ni referencia, pero el unico camino que crea hilos (`create_inquiry`, 0014) exige una linea de inventario publicada. El boton se PINTA deshabilitado con el motivo. Hilo libre es capacidad de la mensajeria (F-211).",
+    "Editar los datos de la organizacion: son del operador (Ajustes -> Datos de la organizacion es de organization-onboarding).",
+    "Marcar o quitar favorito desde la ficha: la spec pide el RECUENTO, no el control.",
+    "El comportamiento de VERA del HTML aprobado (`No tienes hilos previos con esta organizacion...`): es conversacion de demostracion; el shell monta VERA y esta pantalla no la toca.",
+    "El wiring en `App.tsx`, `Directory.tsx` y `DirectoryTable.tsx` (el nombre de la fila ya abre la ficha): ya hecho a mano."
+  ],
+  "constraints": [
+    "SCROLL PROPIO (F-186/F-189/F-190/F-198): la raiz de la pantalla es hija DIRECTA de `.bwcnt`, que es `overflow: hidden`. La clase `.screen` de `OrganizationProfile.module.css` DEBE declarar `flex: 1; min-height: 0; overflow-y: auto;` (mas `display: flex; flex-direction: column`). Mira `Directory.module.css` (`.page`) para el patron ya resuelto.",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb().",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`.",
+    "No tocar `app/src/shell/**` ni `App.tsx` ni `Directory.tsx` ni `DirectoryTable.tsx`: tienen contrato y tests propios. Tampoco `app/src/lib/organization.ts`.",
+    "No reimplementar nada de `app/src/lib/organization.ts` (ver `_nota_data_layer`). En particular: NO calcular iniciales, NO formatear el mes de `Miembro desde`, NO montar la direccion a mano, NO construir el href de tel: con una regex propia.",
+    "El TITULO de la pantalla es el nombre de la organizacion en un `<h1>` de verdad."
+  ]
+}

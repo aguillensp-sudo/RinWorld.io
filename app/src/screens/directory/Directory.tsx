@@ -19,6 +19,8 @@ import styles from './Directory.module.css';
 
 interface Props {
   profile: MemberProfile;
+  /** Abre la ficha pública de una organización (DIR-02). */
+  onOpenOrganization?: (id: string) => void;
 }
 
 /**
@@ -38,7 +40,7 @@ interface Props {
  * - El **orden**, la **página** y la **respuesta** son del servidor: aquí solo
  *   se guardan los últimos valores que devolvió.
  */
-export function Directory({ profile }: Props) {
+export function Directory({ profile, onOpenOrganization }: Props) {
   const [filters, setFilters] = useState<DirectoryFilters>(EMPTY_FILTERS);
   const [draft, setDraft] = useState('');
   const [countries, setCountries] = useState<CountryOption[]>([]);
@@ -169,13 +171,9 @@ export function Directory({ profile }: Props) {
     setPage(1);
   }
 
-  /**
-   * El contrato del componente para cuando exista DIR-02. El nombre de la fila
-   * está apagado y este manejador no llega a dispararse nunca; se conserva
-   * igual que `Consultar`/`Contactar` en SRCH-01 (F-100).
-   */
-  function handleOpenOrganization(_id: string) {
-    // DIR-02 no está construida todavía: no hay destino al que navegar.
+  /** El nombre de la fila abre la ficha pública (DIR-02); el shell decide cómo. */
+  function handleOpenOrganization(id: string) {
+    onOpenOrganization?.(id);
   }
 
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1);

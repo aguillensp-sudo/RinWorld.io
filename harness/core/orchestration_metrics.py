@@ -2,7 +2,7 @@
 -- todos los worktrees vivos, via `git worktree list`, no un directorio supuesto
 -- y calcula el coste-sombra con la tarifa publicada (`orchestration_pricing.py`).
 
-Es la pieza que `F-113`/ESTADO-V1.md §3 pedia: un numero por sesion comparable al
+Es la pieza que `F-113` pedia: un numero por sesion comparable al
 que ya existe para el Coder en `harness-metrics.csv`, para poder decir "orquestar
 esta pieza costo tanto" en vez de "no se mide en ninguna parte".
 

@@ -20,7 +20,7 @@ interface Props {
  *
  * Toda pantalla NUEVA con buscador usa este componente. Las ya aprobadas se
  * migran una a una (DIR-01 y FORO-02 ya lo usan; INV-01/MSG-01/SentOffers
- * quedan como deuda en ESTADO-V1.md §5), independientemente de lo que diga su
+ * quedan como deuda, F-172), independientemente de lo que diga su
  * spec original sobre el buscador — el estándar manda sobre el ejemplo viejo.
  */
 export function SearchField({

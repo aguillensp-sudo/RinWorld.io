@@ -108,7 +108,7 @@ tienen valor por defecto de agosto de 2026 y **el arnés no arranca si alguna es
 
 ---
 
-## Coste de orquestación (28-ago, ESTADO-V1 §3)
+## Coste de orquestación (28-ago, F-113)
 
 `harness/core/orchestration_metrics.py` mide lo que este arnés no mide: el coste de las
 sesiones de Claude Code que diseñan el esquema, escriben el cifrado y revisan cada

@@ -3,7 +3,7 @@
 El experimento: la misma tarea, el mismo contrato, los mismos checks y el mismo
 prompt, con dos Coders distintos corriendo a la vez en dos worktrees. Lo unico
 que cambia entre brazos es el modelo, y lo que cambia vive AQUI, versionado —
-no en la linea de comandos de quien lanza, que no deja rastro (ESTADO-V1, regla 5).
+no en la linea de comandos de quien lanza, que no deja rastro (F-136; CLAUDE.md 11.2, regla 5).
 
     python -m harness.experimento.brazo deepseek harness/tasks/ADMIN-02.json
     python -m harness.experimento.brazo atria    harness/tasks/ADMIN-02.json

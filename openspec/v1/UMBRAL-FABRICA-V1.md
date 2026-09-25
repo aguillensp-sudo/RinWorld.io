@@ -298,3 +298,17 @@ cierre de `SRCH-03` (`F-205`), así que solo cuentan para las cifras 1 a 6. Se d
 
 *Escrito el 11-sep-2026, Día 14 de V1, antes de medir · Dirección Técnica, Nortex Systems*
 *§8 añadido el 22-sep-2026, antes de construir nada de `SRCH-03`.*
+
+---
+
+**Adenda del 25-sep-2026 (tarde) — décima y undécima pantallas (`DIR-02` e `INVT-01`).**
+El PO dejó la elección a la sesión («elige 2 pantallas más según tu propio criterio»).
+Criterio: módulos sin tocar por la corriente B (04 y 01) y esquema pequeño y conocido
+(`DIR-02`: tres columnas; `INVT-01`: una tabla, una vista y cuatro funciones). Descartadas,
+con su motivo, en `diario/dia-23.md` (tercera parte).
+
+**Lo que NO son: puntos limpios de las cifras 7 y 8.** Comparten sesión entre sí y con la
+revisión de pendientes del PO. Solo cuentan para las cifras 1 a 6, y solo cuando el PO dé
+la C5. `INVT-01` costó tres corridas y dos no midieron al Coder (`F-216`).
+
+*§8 ampliado el 25-sep-2026, antes de construir nada de `DIR-02` ni de `INVT-01`.*

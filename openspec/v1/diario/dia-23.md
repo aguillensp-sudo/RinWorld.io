@@ -182,3 +182,25 @@ PO y sin correcciones; `FORO-02` y `FORO-03` con C5 dado el 21-sep (reparos en `
 > **Adenda del 25-sep-2026, `2026-09-25` ~09:40 UTC (`date -u`): las TRES C5 recibidas.** El PO probó en su localhost, con ALPHA, `SRCH-03`, `INV-07` y `SRCH-02` ya desplegadas y con las correcciones de `F-209`/`F-210`: **«todo perfecto»**. **`SRCH-03`, `INV-07` y `SRCH-02` quedan ACEPTADAS** (cifra 1: 9 de 24 construidas y aceptadas por la corriente B, más las 6 remedidas). Cierran `F-206` a `F-210`. **Y una limpieza al cerrar:** la revisión dejó en producción a ALPHA en **modo restringido con cuatro exclusiones** (Asia, Turquía, una organización y Venezuela), que ocultaba su stock a esa organización; **restaurada la siembra** (modo abierto, solo `Asia` y `Rusia`, `demo_exclusions.sql`). Lo que queda para la próxima sesión está en §3: nada de esta sesión espera ya al PO salvo las decisiones de producto.
 
 > **Adenda del 25-sep-2026 (tarde), decisiones del PO sobre los pendientes.** `F-192`: riesgo aceptado, sin migración por ahora, se reabre antes de datos reales de clientes o de abrir el registro a terceros. `F-196`: aceptado. `F-201`, `F-202`, `F-204`: se dejan como están y se cierra la feature. `F-178`: sigue pendiente. Hallazgos y registro actualizados.
+
+---
+
+## Tercera parte del Día 23 · 25-sep-2026, tarde · `DIR-02` e `INVT-01`
+
+Encargo del PO: *«elige 2 pantallas más según tu propio criterio, ponlas en fábrica, no pares hasta concluirlas, los pendientes como están»*. Cronómetro de la sesión desde las 16:09 UTC (`date -u`); comparte sesión con la revisión de pendientes de la mañana, así que **no es un punto limpio para las cifras 7 y 8**.
+
+**Criterio de elección** (mismo que el del 24-sep, ampliado): módulos que la corriente B no ha tocado y esquema pequeño y conocido. `DIR-02` (Módulo 04, ficha pública: la tabla de la que sale ya existe, faltaban tres columnas) e `INVT-01` (Módulo 01, panel del ADMIN: una tabla, una vista y cuatro funciones). Se descartaron `REG-00`/`REG-00-WAIT`/`FRU` (formularios sin sesión que exigen un camino de escritura para `anon` que no existe), `REC-01`/`SET-SEC-01`/`REG-06`/`REG-07` (criptografía, decisión del plan), `MSG-03` (componente E2EE dentro de `MSG-02`) e `INV-02`/`03`/`04` (subida de ficheros y canal de correo que no existen).
+
+**`DIR-02` · Ficha Pública de Organización.** Precondiciones a mano: `0036` (dirección, ciudad y código postal, con el guardia ampliado; aplicada en las dos bases, banco de esquema verde), siembra de las seis direcciones, `organization.ts` (15 pruebas), el nombre de la fila de `DIR-01` deja de estar apagado (cambio a mano en `DirectoryTable`/`Directory` y en su contrato), y el contrato (17 pruebas de unidad, 5 e2e). **Corrida 01: VERDE AL PRIMER INTENTO**, 556 líneas, **0 tocadas**, 2 ficheros de 2, 0,0315 $, 0,9 min de generación. CI verde y servida en producción (comprobado por contenido en el bundle: `Esta organización no está disponible.`). Fidelidad tipográfica medida contra el HTML aprobado: coincide, sin cambios.
+
+**`INVT-01` · Gestión de Invitaciones.** Precondiciones a mano: `0037` (`member_invitations` con RLS solo para el ADMIN de la organización, vista con el estado efectivo, `invite_member`, `resend_invitation`, `remove_member`, `email_has_account`; **11 asertos en el banco de esquema**, aplicada en las dos bases con los privilegios releídos del catálogo), `invitations.ts` (15 pruebas), `AppShell` con `onOpenSettings` (`Configuración` pasa a botón, solo para el ADMIN), siembra en `demo-reset.mjs` (la de Nordwälz reproduce el ejemplo aprobado: `2/5`, una pendiente, una aceptada, una expirada), y el contrato (44 pruebas de unidad, 6 e2e de solo lectura).
+
+**Tres corridas, una válida** (regla 4 del umbral):
+- **01**: intento 1 rojo (`C1`: nueve `TS2322`, `string | undefined`) y el intento 2 murió por red (`getaddrinfo failed`).
+- **02**: ESCALADO en 3 intentos. Los mismos `TS2322` en el 1 y el 3; el 2, `C1` verde y `C2` rojo por UN e2e de `SRCH-02` (118 pasaron).
+- **Causa: mi tarea no llevaba la regla de `F-143`** (las clases de un módulo CSS son `string | undefined`), que `MSG-01` lleva desde el 3-sep. Se paró, se arregló la tarea (`F-216`) y se corrió otra vez desde el principio.
+- **03**: **VERDE en 2 intentos** (el 1, sin fichero parseable). 1 138 líneas, 6 ficheros. Corrección a mano: **+4/−2 en 1 fichero** (eyebrow 11 px y título 22 px, medidos contra las reglas del HTML aprobado; el token del título son 28 px). 5 ficheros de 6 sin tocar. Coste de la corrida válida: 0,0894 $; con las dos inválidas, 0,2315 $ (por debajo del tope de 0,25 $ de la cifra 6).
+
+**Hallazgos:** `F-211` (`Contactar` sin hilo previo no existe en el esquema), `F-212` (no hay correo ni token canjeable), `F-213` (no existe `Ajustes`), `F-214` (revocar no impide el login, solo deja sin datos), `F-215` (dos trampas del banco de esquema), `F-216` (mi tarea sin la regla de `F-143`).
+
+**Sin C5.** Ninguna de las dos cuenta como aceptada hasta que el PO las mire.

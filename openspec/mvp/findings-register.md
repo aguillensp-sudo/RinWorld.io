@@ -198,19 +198,19 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-189](findings/F-189.md) | 2026-09-22 | `DESIGN` | Confirmado, en un navegador real (no jsdom, que no calcula layout). | Cerrado el 22-sep-2026, confirmado por e |
 | [F-190](findings/F-190.md) | 2026-09-22 | `DESIGN` | Confirmado por el PO: ninguna de las dos tiene scroll propio. | Cerrado el 22-sep-2026, confirmación del |
 | [F-191](findings/F-191.md) | 2026-09-24 | `ENTORNO` | Consecuencia: el banco de esquema oficial no se pudo correr hoy | Cerrado el 24-sep-2026 por el PO |
-| [F-192](findings/F-192.md) | 2026-09-24 | `SEGURIDAD` | Supabase concede ALL sobre cada tabla nueva de `public` a `anon`, `authenticated` y `service_role` por DEFAULT PRIVILEGES, y `00_auth_stub.... | ABIERTO |
+| [F-192](findings/F-192.md) | 2026-09-24 | `SEGURIDAD` | Supabase concede ALL sobre cada tabla nueva de `public` a `anon`, `authenticated` y `service_role` por DEFAULT PRIVILEGES, y `00_auth_stub.... | CERRADO, riesgo aceptado (se reabre antes de datos reales) |
 | [F-193](findings/F-193.md) | 2026-09-24 | `HARNESS` | Fallo del entorno, no del artefacto. | Cerrado |
 | [F-194](findings/F-194.md) | 2026-09-24 | `CONTRATO` | defectos de mi contrato | Cerrado el 24-sep-2026 |
 | [F-195](findings/F-195.md) | 2026-09-24 | `DATOS` | Producción tenía una reacción DESPLAZADA respecto a la siembra: la de `c003` post 2 estaba en `c004` post 2 (5 reacciones en total, la últi... | Residuo cerrado; `F-178` |
-| [F-196](findings/F-196.md) | 2026-09-24 | `SPEC` | Tres contradicciones de la spec resueltas por mí, para que el PO las confirme o cambie | ABIERTO |
+| [F-196](findings/F-196.md) | 2026-09-24 | `SPEC` | Tres contradicciones de la spec resueltas por mí, para que el PO las confirme o cambie | CERRADO, aceptado por el PO |
 | [F-197](findings/F-197.md) | 2026-09-24 | `MEDIDA` | `orchestration_metrics` solo escanea los worktrees de este repo y no la habría visto | Cerrado para esta cifra, abierto como hu |
 | [F-198](findings/F-198.md) | 2026-09-24 | `HARNESS` | El Coder la cumplió sin intervención | Cerrado |
 | [F-199](findings/F-199.md) | 2026-09-24 | `HARNESS` | El shell de la herramienta de comandos se come una capa de barras invertidas dentro de un heredoc, incluso entrecomillado (`<<'EOF'`). | Cerrado el 24-sep-2026 |
 | [F-200](findings/F-200.md) | 2026-09-24 | `CONTRATO` | Ninguna de las tres escaladas fue del Coder salvo un tramo: | Cerrado |
-| [F-201](findings/F-201.md) | 2026-09-24 | `UI` | no se han tocado | ABIERTO, menor |
-| [F-202](findings/F-202.md) | 2026-09-24 | `SPEC` | La spec de INV-07 promete lo que el modelo de datos no expresa: | ABIERTO |
+| [F-201](findings/F-201.md) | 2026-09-24 | `UI` | no se han tocado | CERRADO sin acción |
+| [F-202](findings/F-202.md) | 2026-09-24 | `SPEC` | La spec de INV-07 promete lo que el modelo de datos no expresa: | CERRADO sin acción |
 | [F-203](findings/F-203.md) | 2026-09-24 | `SPEC` | no agrupa cuatro cifras | Cerrado como decisión, reversible |
-| [F-204](findings/F-204.md) | 2026-09-24 | `SPEC` | `Crear watchers para referencias sin stock` | ABIERTO |
+| [F-204](findings/F-204.md) | 2026-09-24 | `SPEC` | `Crear watchers para referencias sin stock` | CERRADO sin acción |
 | [F-205](findings/F-205.md) | 2026-09-24 | `MEDIDA` | Las cifras 7 y 8 de las dos pantallas NO son limpias y no se van a poder limpiar | Cerrado como límite conocido: la serie d |
 | [F-206](findings/F-206.md) | 2026-09-24 | `UI` | (1) Real, de diseño: |  |
 | [F-207](findings/F-207.md) | 2026-09-24 | `DOC` | El relevo decía algo falso sobre `INV-07`: | Cerrado |

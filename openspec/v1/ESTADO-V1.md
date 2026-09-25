@@ -16,8 +16,8 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 23 de V1 · 25-sep-2026 · Estado: CERRADO.** Las tres C5 recibidas («todo perfecto»):
-`SRCH-03`, `INV-07` y `SRCH-02` aceptadas. Reorganizado el espacio de trabajo: este fichero,
+**Día 23 de V1 · 25-sep-2026 · Estado: CERRADO (reabierto y reescrito a las 16:06 UTC con las decisiones del PO).** Las tres C5 recibidas («todo perfecto»):
+`SRCH-03`, `INV-07` y `SRCH-02` aceptadas. Decisiones del PO sobre los pendientes: `F-192` riesgo aceptado, `F-196` aceptado, `F-201`/`F-202`/`F-204` cerrados sin acción. Reorganizado el espacio de trabajo: este fichero,
 el registro de hallazgos, `CLAUDE.md` y la rama por defecto. Detalle en `diario/dia-23.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -28,6 +28,7 @@ el registro de hallazgos, `CLAUDE.md` y la rama por defecto. Detalle en `diario/
 | Rama por defecto | `gh repo view --json defaultBranchRef` y `git symbolic-ref refs/remotes/origin/HEAD` | `mvp/bootstrap` en los dos; Pages sigue sirviendo desde `main` (`gh api …/pages`) |
 | Las tres C5 | El PO, en el chat (adenda del 25-sep, ahora en `diario/dia-23.md`) | «todo perfecto»: `SRCH-03`, `INV-07`, `SRCH-02` aceptadas |
 | Que el diario conserva el texto | Script: cada línea no vacía de los bloques de los días 9 a 23, en orden | 290 de 290, idénticas |
+| Decisiones del PO sobre `F-192`, `F-196`, `F-201`, `F-202`, `F-204` | El PO, en el chat, 25-sep tarde (ahora en `diario/dia-23.md` y `DECISIONES-V1.md`) | Cerrados en su fichero y en el registro |
 | Que el registro de hallazgos conserva el texto | Reconstrucción fila a fila desde `findings/F-*.md` contra el original | Ver el commit que lo parte |
 
 ## 2 · Dónde estamos, por corriente
@@ -51,7 +52,7 @@ el registro de hallazgos, `CLAUDE.md` y la rama por defecto. Detalle en `diario/
    (`UMBRAL-FABRICA-V1.md` §8), para que las cifras 7 y 8 tengan un segundo punto limpio.
 3. **Proponer una comprobación tipográfica contra el HTML aprobado** en el contrato de cada
    pantalla: el arnés no mide tamaños y `INV-07` pasó 40 pruebas con un botón roto (`F-209`).
-4. **Decisiones que esperan al PO** (§5): `F-192`, `F-196`, `F-202`, `F-204`, `F-201`, `F-178`.
+4. **Decisión que espera al PO** (§5): `F-178`.
 5. Deuda sin fecha: `F-170` (contradicciones entre specs), `F-172` (buscador sin migrar en
    `INV-01`/`MSG-01`/`SentOffers`), `F-178` (foro sin teardown).
 
@@ -76,9 +77,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🔴 | **`F-192`** · privilegios por defecto anchos en producción (`UPDATE` de `authenticated` en 17 de 19 tablas, `anon` con ALL en 8; las 19 con RLS). Solo `0035` corregida | PO: ¿migración de revocación tabla a tabla? |
-| 🟠 | **`F-202`, `F-204`, `F-201`** · decisiones de producto de `INV-07`/`SRCH-02` («Asia menos Japón» no cabe en el modelo; `Dividir en tandas` es interpretación; avisos rancios en pantallas del MVP) | PO |
-| 🟠 | **`F-196`** · tres contradicciones de la spec de `SRCH-03` resueltas por el agente (contador, `País`, renovación a 3 días) | PO |
+| 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos en producción (RLS en las 19 tablas). **Se reabre antes de datos reales de clientes o de abrir el registro a terceros** | PO (25-sep) |
 | 🟠 | **`F-178`** · el foro sin teardown ni `resetDemo`; ya costó una corrida (`F-195`) | Sin decidir: foro en `resetDemo` o reacciones solo con mocks |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; GCP listo, cupo de Vertex pendiente de Anthropic | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de tener más de un ADMIN tiene que llegar a la interfaz | Producto, al diseñar el alta de miembros |
@@ -100,8 +99,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
   cliente real.** El e2e solo pausa y reactiva; el resto, con mocks y PGlite.
 - **Si `INV-07` oculta el stock de verdad con el modo restringido guardado** en pantalla, y
   si `Guardar configuración` funciona fuera de los mocks.
-- **Cuántas tablas más tienen privilegios de sobra**, columna a columna (`F-192`).
-- **Si el plazo de renovación de 3 días es el que quiere el producto** (`F-196`).
+- **Cuántas tablas más tienen privilegios de sobra**, columna a columna (`F-192`, aceptado).
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
 - **Si `MSG-01`, `MSG-02` y `VND-01` (del MVP) tienen el fallo de scroll** de `F-186`/`F-189`/`F-190`.
 - **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien** tras las 110 líneas de `F-172`.

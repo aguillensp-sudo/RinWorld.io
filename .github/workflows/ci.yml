@@ -229,6 +229,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
+      - name: Desplegar la función register-additional-member (FRU)
+        run: npx supabase functions deploy register-additional-member --project-ref troxminloxkjwihwfevs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+
   deploy-app:
     name: Despliegue continuo · app (Vercel)
     runs-on: ubuntu-latest

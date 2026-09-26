@@ -2343,6 +2343,129 @@ delete from auth.users where id in ('0d000001-0000-0000-0000-000000000001', '0d0
 select 1 / (case when not exists (select 1 from public.member_invitations where org_id = '44444444-4444-4444-4444-444444444444') then 1 else 0 end) as terreno_como_estaba;
 
 -- -----------------------------------------------------------------------------
+-- 0038 · bienvenida del ADMIN y alta de usuarios adicionales (REG-09, FRU)
+-- -----------------------------------------------------------------------------
+-- Organizacion PROPIA (Echo Test): su ADMIN e1 esta en KEY_ACTIVE, que es donde REG-09
+-- lo encuentra. Se mide que ESE estado puede consultar sus plazas, comprobar emails y
+-- activarse, que un Editor y `anon` no, y que el alta respeta el limite de 5.
+insert into public.organizations (id, name, country, continent, status)
+values ('77777777-7777-7777-7777-777777777777', 'Echo Test', 'PT', 'EU', 'APPROVED');
+
+insert into auth.users (id, email) values
+  ('1e000001-0000-0000-0000-000000000001', 'e1@echo.test'),
+  ('1e000002-0000-0000-0000-000000000002', 'e2@echo.test'),
+  ('1e000003-0000-0000-0000-000000000003', 'e3@echo.test'),
+  ('1e000004-0000-0000-0000-000000000004', 'e4@echo.test'),
+  ('1e000005-0000-0000-0000-000000000005', 'e5@echo.test'),
+  ('1e000006-0000-0000-0000-000000000006', 'e6@echo.test');
+
+insert into public.members (id, org_id, email, state)
+values ('1e000001-0000-0000-0000-000000000001', '77777777-7777-7777-7777-777777777777', 'e1@echo.test', 'KEY_ACTIVE');
+
+do $$
+begin
+  assert (select role || '/' || state from public.members where id = '1e000001-0000-0000-0000-000000000001') = 'ADMIN/KEY_ACTIVE',
+    '0038: el ancla -- e1 es ADMIN en KEY_ACTIVE';
+  raise notice 'OK · 0038: ancla -- Echo tiene un ADMIN en KEY_ACTIVE';
+end
+$$;
+
+-- 1 · El ADMIN KEY_ACTIVE consulta sus plazas y comprueba emails (no es ACTIVE).
+begin;
+  select set_config('request.jwt.claim.sub', '1e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert public.onboarding_seats_used() = 1, '0038: un ADMIN recien llegado ocupa 1 plaza';
+    assert not app.is_active_member(), '0038: y sigue sin ser miembro activo (es lo que hace necesaria la funcion)';
+    assert public.email_has_account('E1@echo.test'), '0038: email_has_account funciona desde KEY_ACTIVE';
+    assert not public.email_has_account('libre@echo.test'), '0038: y dice que no a uno libre';
+    raise notice 'OK · 0038: un ADMIN KEY_ACTIVE ve sus plazas y comprueba emails';
+  end
+  $$;
+commit;
+
+-- 2 · El alta: solo service_role, con el limite de 5, y entra como EDITOR REGISTERED.
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.add_registered_member(uuid,uuid,text,text)', 'execute'),
+    '0038: anon no da de alta a nadie';
+  assert not has_function_privilege('authenticated', 'public.add_registered_member(uuid,uuid,text,text)', 'execute'),
+    '0038: ni un miembro autenticado: solo la Edge Function (service_role)';
+  assert has_function_privilege('service_role', 'public.add_registered_member(uuid,uuid,text,text)', 'execute'),
+    '0038: el ancla positiva -- service_role SI la ejecuta';
+  assert not has_function_privilege('anon', 'public.onboarding_seats_used()', 'execute'), '0038: anon no ve plazas';
+  assert not has_function_privilege('anon', 'public.activate_own_membership()', 'execute'), '0038: anon no activa';
+  assert not has_function_privilege('authenticated', 'app.is_onboarding_admin()', 'execute'),
+    '0038: la puerta es interna';
+  assert has_function_privilege('authenticated', 'public.onboarding_seats_used()', 'execute'),
+    '0038: el ancla positiva -- authenticated SI ve sus plazas';
+  raise notice 'OK · 0038: privilegios leidos del catalogo';
+end
+$$;
+
+select public.add_registered_member('1e000002-0000-0000-0000-000000000002', '77777777-7777-7777-7777-777777777777', '  E2@Echo.TEST ', '  Eva Dos ');
+
+do $$
+declare v record;
+begin
+  select * into v from public.members where id = '1e000002-0000-0000-0000-000000000002';
+  assert v.role = 'EDITOR' and v.state = 'REGISTERED', '0038: el alta es EDITOR/REGISTERED, no ' || v.role || '/' || v.state;
+  assert v.email = 'e2@echo.test' and v.full_name = 'Eva Dos', '0038: con email y nombre normalizados';
+  assert v.visibility_scope = 'OWN', '0038: y con el alcance mas estrecho';
+  assert app.org_seats_used('77777777-7777-7777-7777-777777777777') = 2, '0038: ocupa plaza';
+  raise notice 'OK · 0038: add_registered_member crea un EDITOR REGISTERED';
+end
+$$;
+
+select public.add_registered_member('1e000003-0000-0000-0000-000000000003', '77777777-7777-7777-7777-777777777777', 'e3@echo.test', 'Eva Tres');
+select public.add_registered_member('1e000004-0000-0000-0000-000000000004', '77777777-7777-7777-7777-777777777777', 'e4@echo.test', 'Eva Cuatro');
+select public.add_registered_member('1e000005-0000-0000-0000-000000000005', '77777777-7777-7777-7777-777777777777', 'e5@echo.test', 'Eva Cinco');
+
+select public.expect_fail(
+  $q$select public.add_registered_member('1e000006-0000-0000-0000-000000000006', '77777777-7777-7777-7777-777777777777', 'e6@echo.test', 'Eva Seis')$q$,
+  '0038: con 5 plazas ocupadas no se da de alta a nadie mas');
+select public.expect_fail(
+  $q$select public.add_registered_member('1e000002-0000-0000-0000-000000000002', '77777777-7777-7777-7777-777777777777', 'e2@echo.test', 'Otra vez')$q$,
+  '0038: y el mismo usuario no se da de alta dos veces');
+
+-- 3 · Un Editor REGISTERED no consulta plazas, ni comprueba emails, ni se activa.
+begin;
+  select set_config('request.jwt.claim.sub', '1e000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail($q$select public.onboarding_seats_used()$q$, '0038: un Editor no consulta las plazas');
+  select public.expect_fail($q$select public.email_has_account('x@echo.test')$q$, '0038: ni comprueba emails');
+  select public.expect_fail($q$select public.activate_own_membership()$q$, '0038: ni se activa a si mismo');
+commit;
+
+-- 4 · Activarse: el ADMIN KEY_ACTIVE pasa a ACTIVE, una sola vez, y sin tocar nada mas.
+begin;
+  select set_config('request.jwt.claim.sub', '1e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.activate_own_membership();
+  select public.expect_fail($q$select public.activate_own_membership()$q$,
+    '0038: activarse dos veces falla: ya no esta pendiente');
+commit;
+
+do $$
+begin
+  assert (select state from public.members where id = '1e000001-0000-0000-0000-000000000001') = 'ACTIVE',
+    '0038: la activacion deja al ADMIN ACTIVE';
+  assert (select state from public.members where id = '1e000002-0000-0000-0000-000000000002') = 'REGISTERED',
+    '0038: y a los demas como estaban';
+  raise notice 'OK · 0038: activate_own_membership pasa KEY_ACTIVE a ACTIVE una vez';
+end
+$$;
+
+-- El cliente sigue sin poder mover su estado a mano (member-state-machine).
+begin;
+  select set_config('request.jwt.claim.sub', '1e000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail($q$update public.members set state = 'ACTIVE' where id = '1e000002-0000-0000-0000-000000000002'$q$,
+    '0038: un Editor REGISTERED no se activa por UPDATE directo');
+commit;
+
+-- -----------------------------------------------------------------------------
 -- 0028 · la cola de solicitudes solo la ve y la decide el Operador
 -- -----------------------------------------------------------------------------
 -- ADMIN-01 estrena un actor que el esquema no tenia: alguien sin organizacion

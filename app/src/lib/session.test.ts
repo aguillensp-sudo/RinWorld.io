@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errorMessage, initials, isRevoked } from './session';
+import { errorMessage, initials, isRevoked, REVOKED_MESSAGE, signInErrorMessage } from './session';
 
 describe('initials', () => {
   it('toma la primera y la última de un nombre compuesto', () => {
@@ -77,4 +77,14 @@ describe('isRevoked', () => {
       expect(isRevoked(st)).toBe(false);
     },
   );
+});
+
+describe('signInErrorMessage', () => {
+  it('traduce el ban de Auth a acceso revocado', () => {
+    expect(signInErrorMessage('User is banned')).toBe(REVOKED_MESSAGE);
+  });
+
+  it('deja intacto cualquier otro error de login', () => {
+    expect(signInErrorMessage('Invalid login credentials')).toBe('Invalid login credentials');
+  });
 });

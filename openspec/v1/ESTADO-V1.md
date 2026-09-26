@@ -111,7 +111,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
   funciones están medidas en el banco de esquema (11 asertos) y la pantalla en unidad y en
   un e2e de solo lectura; nadie ha pulsado `Enviar invitación` contra una base real.
 - **Qué pasa al reinvitar el correo de una cuenta baneada** (`F-214`): el ban de Auth sigue
-  puesto y no hay operación inversa. El login del baneado dice `User is banned`, en inglés.
+  puesto y no hay operación inversa. El login del baneado dice ya «Tu acceso… ha sido revocado» (`signInErrorMessage`).
 - **Si `Contactar` de `DIR-02` abre el hilo correcto** con un clic real: el e2e lo abre y ve
   su cuerpo, pero no compara el hilo con el de la fila.
 - **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan desde la

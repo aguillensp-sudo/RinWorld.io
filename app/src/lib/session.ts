@@ -85,6 +85,15 @@ export function isRevoked(state: string): boolean {
 export const REVOKED_MESSAGE =
   'Tu acceso a Bearingworld.io ha sido revocado. Si crees que es un error, habla con el administrador de tu organización.';
 
+/**
+ * El mensaje de un fallo de `signInWithPassword`. Una cuenta con `banned_until`
+ * (Edge Function `ban-revoked-member`, F-214) responde `User is banned`: se dice
+ * en español y como lo que es, un acceso revocado, no un error de contraseña.
+ */
+export function signInErrorMessage(message: string): string {
+  return /banned/i.test(message) ? REVOKED_MESSAGE : message;
+}
+
 type State =
   | { status: 'loading' }
   | { status: 'anonymous' }
@@ -256,7 +265,7 @@ export function useSession() {
     setError(null);
     const { error: e } = await supabase.auth.signInWithPassword({ email, password });
     if (e) {
-      setError(e.message);
+      setError(signInErrorMessage(e.message));
       return false;
     }
     return true;

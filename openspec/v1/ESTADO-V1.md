@@ -16,28 +16,27 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 24 de V1 · 26-sep-2026 · Estado: EN CURSO.** El PO aprobó `DIR-02` e `INVT-01` (C5) y decidió `F-214` (hecho, sin probar el ban) y `F-178` (hecho) y `F-212`/`F-211` (se dejan). Abajo, el cierre del Día 23 sin reescribir.
-
-**Día 23 de V1 · 25-sep-2026 · Estado: CERRADO.** Decisiones del PO sobre los pendientes
-(`F-192` riesgo aceptado; `F-196` aceptado; `F-201`/`F-202`/`F-204` cerrados sin acción) y dos
-pantallas más por el arnés: **`DIR-02` (VERDE al primer intento, 0 líneas tocadas) e `INVT-01`
-(VERDE en 2 intentos en su tercera corrida; +4/−2 a mano)**. **Las dos esperan la C5 del PO.**
-Detalle en `diario/dia-23.md` (tercera parte).
+**Día 24 de V1 · 26-sep-2026 · Estado: CERRADO.** El PO aprobó `DIR-02` e `INVT-01`; `F-214`
+(cerrado y probado con un ban real) y `F-178` (cerrado); y dos pantallas más por el arnés:
+**`REG-09` (VERDE en 2 intentos, 0 líneas tocadas) y `FRU` (VERDE en 2 intentos, +2/−2 a mano).
+Las dos esperan la C5 del PO.** Detalle en `diario/dia-24.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-25`; la sesión de la tarde, de las 16:09 a las 18:05 UTC |
-| `0036` y `0037` en las dos bases | `apply_migration` y después `execute_sql` sobre `has_function_privilege`/`has_table_privilege`/`relrowsecurity` (F-146: catálogo, no `.sql`) | En `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`: `anon` nada; `authenticated` solo `select` en `member_invitations` y su vista y `execute` en las cuatro funciones; RLS activa; `org_seats_used` sin `execute` para nadie |
-| Que el esquema aguanta | `supabase/tests/run.sh` (Docker, Postgres 16), 3 vueltas hasta `EXIT 0` | Fase 1, catálogo y frescura verdes; 5 asertos de `0036` y 11 de `0037` |
-| Que la app sigue entera | `npx tsc --noEmit` y `npx vitest run` | **1 245 pasan**, 23 saltados; typecheck limpio |
-| `DIR-02` | `harness/metrics/DIR-02/corrida-01/`, `git show --numstat 085a946` | VERDE en 1 intento; 556 líneas, 2 ficheros, **0 tocadas**; 0,0315 $; CI `8e1a731` en verde |
-| `DIR-02` en producción | `curl` del bundle de `rin-world-io.vercel.app` (F-168: por contenido) | Trae `Esta organización no está disponible.` y `Cargando ficha…` |
-| `INVT-01` | `harness/metrics/INVT-01/corrida-03/`, `git show --numstat 7402efe` y `4ae9457` | VERDE en 2 intentos (el 1, sin fichero parseable); 1 138 líneas, 6 ficheros; **+4/−2 a mano en 1 fichero**; 0,0894 $ la válida, 0,2315 $ con las inválidas; CI `4ae9457` verde en los seis jobs y desplegada |
-| Fidelidad tipográfica de las dos | Reglas CSS del HTML aprobado contra las del artefacto | `DIR-02` coincide; `INVT-01`: eyebrow 11 px y título 22 px corregidos a mano, el resto coincide |
-| Demo repuesta | `npm run demo:reset` | Cinco hilos, tres solicitudes y **tres invitaciones en Nordwälz** (`2/5`, 1 pendiente, 1 aceptada, 1 expirada) |
-| Decisiones del PO | El PO, en el chat, 25-sep | `diario/dia-23.md` y `DECISIONES-V1.md` |
+| Fecha de máquina | `date -u` | `2026-09-26`; la sesión, de las 07:31 a las 08:16 UTC |
+| `F-214` de extremo a extremo | Cuenta desechable creada por el PO; `execute_sql` sobre `auth.users` y `members`; el PO intentó entrar | `Eliminar` en `INVT-01` → `CANCELLED` y `banned_until = 2126-09-02` en el mismo instante; Auth respondió `User is banned`; la cuenta se borró (0 filas) |
+| `F-178` | `forum_thread_list` por `execute_sql` tras `npm run demo:reset` | `c003` 3 reacciones, `c004` 1, `c001` 1 |
+| `0038` en las dos bases | `apply_migration` y después `has_function_privilege` (F-146: catálogo, no `.sql`) | `troxminloxkjwihwfevs` y `ogdhyzgjjbbikjbkhxmu`: `anon` nada; `authenticated` solo `onboarding_seats_used`, `activate_own_membership` y `email_has_account`; `add_registered_member` solo `service_role`; `app.is_onboarding_admin` interna |
+| Que el esquema aguanta | `supabase/tests/run.sh` (Docker), hasta `EXIT 0` | 269 `OK`, los de `0038` incluidos (KEY_ACTIVE consulta y se activa, el Editor no, el límite de 5 en el alta) |
+| Que la app sigue entera | `npx tsc --noEmit` y `npx vitest run` | **1 326 pasan**, 23 saltados; typecheck limpio |
+| `REG-09` | `harness/metrics/REG-09/corrida-02/`, `git show --numstat 7efaa3a` | VERDE en 2 intentos; 434 líneas, 2 ficheros, **0 tocadas**; 0,0297 $ la válida, 0,0928 $ con la inválida |
+| `FRU` | `harness/metrics/FRU/corrida-02/`, `git show --numstat e4fe910` y `b6d2323` | VERDE en 2 intentos; 597 líneas, 2 ficheros, **+2/−2 a mano en 1 fichero**; 0,0389 $ la válida, 0,1045 $ con la inválida |
+| Fidelidad tipográfica | Reglas CSS del HTML aprobado contra las del artefacto | `REG-09` coincide; `FRU`: eyebrow 11 px y título 22 px corregidos a mano, el resto coincide |
+| CI y producción | `gh run view` en `b6d2323` y `curl` del bundle de `rin-world-io.vercel.app` (F-168) | Seis jobs verdes; el bundle trae las cuatro frases de `REG-09`/`FRU` y no las variables rotas |
+| `register-additional-member` | `curl` sin sesión, con la clave anónima y con cuerpos inválidos | 401, 401, 400, 400. **No se creó ninguna cuenta con ella** |
+| Decisiones del PO | El PO, en el chat, 26-sep | `F-214`/`F-178` con mi recomendación; `F-212`/`F-211` como están; `diario/dia-24.md` y `DECISIONES-V1.md` |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -46,24 +45,31 @@ Detalle en `diario/dia-23.md` (tercera parte).
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar
   `vera/index.ts`. Detalle en `FUNDACION-V1.md` §1 (sus fechas son del 6-sep).
-- **Corriente B · Fábrica — EN MARCHA.** **11 pantallas construidas y aceptadas** (las 6
-  remedidas, `SRCH-03`, `INV-07`, `SRCH-02`, `DIR-02` e `INVT-01`, estas dos el 26-sep).
-  Faltan 13 de 24. Las cifras 7 y 8 solo tienen un punto limpio, `SRCH-03` (`F-205`); las
-  dos de hoy comparten sesión y tampoco lo son.
+- **Corriente B · Fábrica — EN MARCHA.** **13 pantallas construidas, 11 aceptadas** (las 6
+  remedidas, `SRCH-03`, `INV-07`, `SRCH-02`, `DIR-02` e `INVT-01`) **y 2 verdes sin C5**:
+  `REG-09` y `FRU`. Faltan 11 de 24. Las cifras 7 y 8 solo tienen un punto limpio,
+  `SRCH-03` (`F-205`); las cuatro de estos dos días comparten sesión y tampoco lo son.
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-1. ~~C5 de `DIR-02` e `INVT-01`~~ **aprobadas por el PO el 26-sep.** Lo que escribe en `INVT-01` sigue sin pulsarse: ver §6.
-2. **Elegir la duodécima pantalla y construirla en sesión propia con cronómetro**
+1. **C5 del PO sobre `REG-09` y `FRU`.** Hoy no se pueden ver con un miembro `KEY_ACTIVE`
+   real (`F-218`): para mirarlas, `npm run dev` con un ADMIN cuyo `state` de `members` se ponga
+   a `KEY_ACTIVE` a mano por SQL (y se devuelva a `ACTIVE`). Sin pulsar `Registrar usuario`
+   (crea una cuenta de Auth de verdad) ni `Ir al panel` (activa la cuenta): ver §6.
+2. **Elegir la decimocuarta pantalla y construirla en sesión propia con cronómetro**
    (`UMBRAL-FABRICA-V1.md` §8), para que las cifras 7 y 8 tengan un segundo punto limpio.
-3. **Comprobación tipográfica contra el HTML aprobado en el contrato de cada pantalla**
-   (`F-209`): hoy se hizo a mano y encontró dos diferencias en `INVT-01`. El arnés no mide tamaños.
-4. **Copiar a cada tarea nueva las `_nota_*` que ya pagaron un error** (`F-216`): el tipo
-   `string | undefined` de un módulo CSS (`F-143`) costó dos corridas.
-5. Decisiones del PO tomadas; `F-214` cerrado y probado con un ban real.
+3. **Antes de cada corrida, `tsc --noEmit` y `vitest` sobre el árbol con los marcadores**, y
+   comprobar que solo fallan los ficheros de esa tarea (`F-219`, `F-220`): `--seco` no lo mide.
+   Un contrato en rojo solo puede estar en el árbol si su corrida es la siguiente.
+4. **Comprobación tipográfica contra el HTML aprobado en el contrato de cada pantalla**
+   (`F-209`): hoy se hizo a mano, y por tercera vez el Coder puso el eyebrow y el título con
+   los tokens (14 y 28 px) en vez de los del HTML (11 y 22). El arnés no mide tamaños.
+5. **Decisiones que esperan al PO** (§5): `F-217` (el alta de `FRU` crea cuentas que nadie
+   puede completar).
 6. Deuda sin fecha: `F-170` (contradicciones entre specs), `F-172` (buscador sin migrar en
-   `INV-01`/`MSG-01`/`SentOffers`), `F-178` (foro sin teardown), `F-213` (no existe `Ajustes`).
+   `INV-01`/`MSG-01`/`SentOffers`), `F-213` (no existe `Ajustes`), `F-218` (nada lleva a
+   `KEY_ACTIVE`).
 
 **Fecha límite:** Cuscinetti Padana vence el **30-sep** y la siembra de cobros cambia de
 estado; antes de revisar `ADMIN-02` después de esa fecha, resembrar (`demo_billing.sql`). Las
@@ -77,24 +83,32 @@ CLI de Supabase) y el plan de pago de Vercel, fuera de sesión.
 Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 - Las C5 se hacen contra **producción**, sin pulsar nada que escriba (`F-188`).
-- **Se siembra antes de cada corrida**, con `resetDemo`, no a mano (`F-169`).
+- **Se siembra antes de cada corrida**, con `resetDemo`, no a mano (`F-169`); desde hoy repone
+  también las reacciones del foro (`F-178`).
 - Series de medición con **n=5**; el corpus **no se toca a mitad de serie**.
-- El scroll propio de `.bwcnt` va **en la plantilla de tarea del Coder** (`F-198`).
+- El scroll propio de `.bwcnt` va **en la plantilla de tarea del Coder** (`F-198`), y la regla de
+  las clases `string | undefined` de un módulo CSS también (`F-216`).
 - Lo que se afirme sobre privilegios o RLS se comprueba **contra el catálogo**, no contra el `.sql` (`F-146`).
-- La CD despliega desde `mvp/bootstrap`; `main` solo sirve GitHub Pages.
+- La CD despliega desde `mvp/bootstrap`; `main` solo sirve GitHub Pages. Desde hoy despliega
+  también `ban-revoked-member` y `register-additional-member`.
 - **Una tarea con un defecto para la corrida y se repite entera** (regla 4 del umbral): las
-  corridas 01 y 02 de `INVT-01` quedan como evidencia y no cuentan para la cifra 2.
+  corridas 01 de `REG-09` y de `FRU` quedan como evidencia y no cuentan para la cifra 2.
+- **`REG-09` y `FRU` van en el `AppShell` estándar** (no hay shell de onboarding) y el HTML
+  aprobado manda sobre la spec en sus textos.
 
 ## 5 · Bloqueos y deuda abierta
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token: no lleva a nadie a ningún sitio hasta que exista el flujo de registro por invitación | PO / producto |
-| 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede: no existe hilo libre en el esquema | PO: ¿hilo libre en mensajería? |
+| 🟠 | **`F-217`** · el alta de `FRU` crea una cuenta de Auth con contraseña del ADMIN, sin correo, que queda `REGISTERED` y sin flujo para activarse | PO: ¿flujo E2EE del nuevo usuario primero, o invitación con enlace (`F-212`)? |
+| 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token | PO / producto (se deja como está, 26-sep) |
+| 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Se decide con ADR-002 Q-1 delante (26-sep) |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; GCP listo, cupo de Vertex pendiente de Anthropic | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de tener más de un ADMIN tiene que llegar a la interfaz | Producto, al diseñar el alta de miembros |
 | 🟠 | **Cifras 7 y 8** · solo `SRCH-03` tiene medida limpia (`F-205`) | Una sesión propia por pantalla |
-| 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos en producción (RLS en las 19 tablas; `0037` ya nace recortada). **Se reabre antes de datos reales de clientes o de abrir el registro a terceros** | PO (25-sep) |
+| 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos en producción (RLS en las 19 tablas; `0037` y `0038` ya nacen recortadas). **Se reabre antes de datos reales de clientes o de abrir el registro a terceros** | PO (25-sep) |
+| 🟡 | **`F-218`** · nada lleva a un ADMIN a `KEY_ACTIVE` (REG-05 a REG-07 no existen) | Al construir el flujo E2EE |
+| 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo: no hay operación inversa de `ban-revoked-member` | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |
 | 🟡 | **La siembra de cobros envejece** y `resetDemo` no la re-ancla (`billing_payments` solo admite `INSERT` de `service_role`) | Decidir: verbo `security definer` o resembrar a mano |
 | 🟡 | **`Suspender manualmente` no pide confirmación** (la spec no la pide) | PO |
@@ -102,38 +116,35 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-073`** CLI de Supabase en la organización equivocada (el MCP sí llega) · **Vercel en plan gratuito** (prohíbe uso comercial) | Álvaro |
 | 🟡 | **La clave de Atria** vive en `C:/Users/admin/proyectos/04_01_Ticket_reader_Ninox/.env` | Álvaro: `setx ATRIA_API_KEY` si se vuelve a usar |
 | 🟡 | **`F-197`** · una sesión lanzada fuera de este repo no la mide el medidor de coste | Lanzar desde la raíz del repo |
-| ⚪ | Un e2e de `SRCH-02` falló una vez (1 de 119) con la demo recién repuesta, en la corrida 02 de `INVT-01` | Si reaparece: latencia de la base compartida o flaky propio |
+| ⚪ | Un e2e de `SRCH-02` falló una vez (1 de 119) con la demo recién repuesta | Si reaparece: latencia de la base compartida o flaky propio |
 | ⚪ | **No se edita nada de `app/` mientras una corrida está viva** | Mirar el cerrojo antes |
 
 ## 6 · Lo que este fichero NO sabe
 
-- **Si invitar, reenviar y eliminar funcionan desde la pantalla de `INVT-01`.** Las tres
-  funciones están medidas en el banco de esquema (11 asertos) y la pantalla en unidad y en
-  un e2e de solo lectura; nadie ha pulsado `Enviar invitación` contra una base real.
-- **Qué pasa al reinvitar el correo de una cuenta baneada** (`F-214`): el ban de Auth sigue
-  puesto y no hay operación inversa. El login del baneado dice ya «Tu acceso… ha sido revocado» (`signInErrorMessage`).
-- **Si `Contactar` de `DIR-02` abre el hilo correcto** con un clic real: el e2e lo abre y ve
-  su cuerpo, pero no compara el hilo con el de la fila.
-- **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan desde la
-  pantalla.** Nadie las ha pulsado a propósito: un pago confirmado no se borra.
-- **Si `watcher_renew`, `watcher_let_expire`, `watcher_update` y eliminar funcionan con un
-  cliente real.** El e2e solo pausa y reactiva; el resto, con mocks y PGlite.
-- **Si `INV-07` oculta el stock de verdad con el modo restringido guardado** en pantalla, y
-  si `Guardar configuración` funciona fuera de los mocks.
-- **Cuántas tablas más tienen privilegios de sobra**, columna a columna (`F-192`, aceptado).
+- **Cómo se ven `REG-09` y `FRU` con un miembro `KEY_ACTIVE` real.** El e2e reescribe en el navegador
+  solo el `state` del perfil (la cuenta sigue `ACTIVE`); la unidad y el banco de esquema cubren el resto.
+- **Si `Registrar usuario` crea de verdad la cuenta.** La Edge Function solo se ha rechazado
+  (401/400); su camino feliz (crear la cuenta de Auth, escribir `members`, borrarla si falla) no se ha
+  ejecutado. Crear una cuenta en producción a propósito es una acción que el PO tiene que decidir.
+- **Si `Ir al panel` activa la cuenta desde la pantalla.** `activate_own_membership` está medida en el
+  banco de esquema; nadie ha pulsado el botón.
+- **Si invitar y reenviar funcionan desde la pantalla de `INVT-01`.** Las funciones están medidas en el
+  banco de esquema (11 asertos); `Eliminar` sí se probó hoy con una cuenta real (`F-214`).
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
-- **Si `MSG-01`, `MSG-02` y `VND-01` (del MVP) tienen el fallo de scroll** de `F-186`/`F-189`/`F-190`.
-- **Si `DIR-01`, `ADMIN-01` y `FORO-01` siguen bien** tras las 110 líneas de `F-172`.
-- **Si el Coder habría puesto el scroll sin pedírselo** (`F-198` se lo pidió; decisión del
-  agente que el PO puede revisar).
-- **Si el veredicto de la remedición aguanta sin la decisión 1 del PO** del 21-sep: no; las
-  dos corridas escaladas no se repitieron con el contrato corregido.
-- **Si el arreglo de `F-184` cambia algo medible**: nadie lo ha medido.
-- **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados);
-  viven en la transcripción del workflow, no en un documento.
-- **Atria frente a DeepSeek:** nadie ha comparado el código a ojo, ni cuánta cuota se gastó
-  en las corridas cortadas, ni dónde está el límite de 605 s.
+- **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan desde la pantalla.** Nadie las
+  ha pulsado a propósito: un pago confirmado no se borra.
+- **Si `watcher_renew`, `watcher_let_expire`, `watcher_update` y eliminar funcionan con un cliente real.**
+  El e2e solo pausa y reactiva; el resto, con mocks y PGlite.
+- **Si `INV-07` oculta el stock de verdad con el modo restringido guardado** en pantalla, y si
+  `Guardar configuración` funciona fuera de los mocks.
+- **Si `Contactar` de `DIR-02` abre el hilo correcto** con un clic real: el e2e lo abre y ve su cuerpo,
+  pero no compara el hilo con el de la fila.
+- **Cuántas tablas más tienen privilegios de sobra**, columna a columna (`F-192`, aceptado).
+- **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados); viven en la
+  transcripción del workflow, no en un documento.
+- **Atria frente a DeepSeek:** nadie ha comparado el código a ojo, ni cuánta cuota se gastó en las
+  corridas cortadas, ni dónde está el límite de 605 s.
 
 ---
 
-*Cierre del Día 23, tercera parte · 25-sep-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 24 · 26-sep-2026 · Dirección Técnica, Nortex Systems*

@@ -312,3 +312,20 @@ revisión de pendientes del PO. Solo cuentan para las cifras 1 a 6, y solo cuand
 la C5. `INVT-01` costó tres corridas y dos no midieron al Coder (`F-216`).
 
 *§8 ampliado el 25-sep-2026, antes de construir nada de `DIR-02` ni de `INVT-01`.*
+
+---
+
+**Adenda del 26-sep-2026 — duodécima y decimotercera pantallas (`REG-09` y `FRU`).**
+El PO dejó la elección a la sesión («eligiendo 2 pantallas que estimes oportuno»). Criterio:
+forman un flujo (Bienvenida → Registro de usuario → vuelta) y reutilizan la capa de datos y
+el límite de 5 de `INVT-01`; el esquema nuevo es pequeño (`0038`: cuatro funciones y ninguna
+tabla). Descartadas, con su motivo, en `DECISIONES-V1.md`.
+
+**Lo que NO son: puntos limpios de las cifras 7 y 8.** Comparten sesión entre sí y con el
+cierre de `F-214` y `F-178`.
+
+**Regla 4 aplicada dos veces, por defectos míos de contrato** (`F-219`, `F-220`): las corridas
+01 de las dos pantallas quedan como evidencia y no cuentan para la cifra 2. **Añadido a la
+lista previa a una corrida:** `tsc --noEmit` y `vitest` sobre el árbol con los marcadores, y
+comprobar que solo fallan los ficheros de esa tarea. `--seco` valida que los ficheros existan,
+no que el resto del repo esté en verde.

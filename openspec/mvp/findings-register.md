@@ -307,3 +307,5 @@ fallback P-256.
 | [F-217](findings/F-217.md) | 2026-09-26 | `SPEC-GAP` | El alta de `FRU` crea cuentas de Auth con contraseña del ADMIN que nadie puede completar (sin flujo E2EE del nuevo usuario ni correo) | ABIERTO, del PO |
 | [F-218](findings/F-218.md) | 2026-09-26 | `SPEC-GAP` | `REG-09` solo se ve con un ADMIN en `KEY_ACTIVE`, que ningún flujo ni cuenta de prueba produce | ABIERTO, menor |
 | [F-219](findings/F-219.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` en el árbol tumbaba `C1` y `C2` de `REG-09`: verde imposible en los tres intentos | Cerrado para `REG-09` |
+| [F-220](findings/F-220.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` no compilaba (`TS6133`, constante sin usar): `C1` rojo en los tres intentos; validé en seco y no ejecuté `tsc` | Cerrado para `FRU` |
+| [F-221](findings/F-221.md) | 2026-09-26 | `INFRA` | La comprobación por contenido del despliegue dio 404 unos segundos tras desplegar (carrera de propagación de Vercel) | Cerrado: reintentos |

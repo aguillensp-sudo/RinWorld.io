@@ -295,11 +295,11 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           url=https://rin-world-io.vercel.app
-          js=$(curl -fsS "$url" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+          js=$(curl -fsS --retry 6 --retry-delay 5 --retry-all-errors "$url" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
           if [ -z "$js" ]; then
             echo "::error::F-168 · el index.html de producción no enlaza ningún bundle"; exit 1
           fi
-          curl -fsS --compressed "$url/$js" -o bundle-produccion.js
+          curl -fsS --retry 6 --retry-delay 5 --retry-all-errors --compressed "$url/$js" -o bundle-produccion.js
           if grep -q 'Faltan VITE_SUPABASE_URL' bundle-produccion.js || ! grep -q 'Correo electr' bundle-produccion.js; then
             echo "::error::F-168 · $js no contiene la app: revisa las variables VITE_* del proyecto de Vercel (despliegue.md §2)"
             exit 1

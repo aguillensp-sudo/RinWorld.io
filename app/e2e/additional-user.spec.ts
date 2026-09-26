@@ -32,11 +32,6 @@ if (process.env.CI && !haveCreds) {
   );
 }
 
-const EDITOR = {
-  email: process.env.E2E_EDITOR_EMAIL ?? 'editor@bearingworld.test',
-  password: process.env.E2E_EDITOR_PASSWORD ?? '',
-};
-
 /** Reescribe SOLO el estado del perfil. Se registra ANTES de iniciar sesión. */
 async function comoKeyActive(page: Page) {
   await page.route(/\/rest\/v1\/members\?.*organizations/, async (route) => {

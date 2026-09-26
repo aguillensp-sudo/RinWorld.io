@@ -304,3 +304,6 @@ fallback P-256.
 | [F-214](findings/F-214.md) | 2026-09-25 | `SEGURIDAD` | Revocar un usuario no le impide iniciar sesión, solo le deja sin datos | CERRADO 26-sep: `session.ts` + Edge Function `ban-revoked-member`; ban real probado (`User is banned`) |
 | [F-215](findings/F-215.md) | 2026-09-25 | `INFRA` | Dos trampas del banco de esquema que costaron una vuelta cada una | Cerrado, sin acción |
 | [F-216](findings/F-216.md) | 2026-09-25 | `HARNESS` | Mi tarea no decía lo que el contrato exige (`string \| undefined` de un módulo CSS, `F-143`) | Cerrado para `INVT-01` |
+| [F-217](findings/F-217.md) | 2026-09-26 | `SPEC-GAP` | El alta de `FRU` crea cuentas de Auth con contraseña del ADMIN que nadie puede completar (sin flujo E2EE del nuevo usuario ni correo) | ABIERTO, del PO |
+| [F-218](findings/F-218.md) | 2026-09-26 | `SPEC-GAP` | `REG-09` solo se ve con un ADMIN en `KEY_ACTIVE`, que ningún flujo ni cuenta de prueba produce | ABIERTO, menor |
+| [F-219](findings/F-219.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` en el árbol tumbaba `C1` y `C2` de `REG-09`: verde imposible en los tres intentos | Cerrado para `REG-09` |

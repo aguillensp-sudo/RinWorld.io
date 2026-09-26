@@ -1,0 +1,160 @@
+
+==============================================================================
+· corrida arrancada 2026-09-26 09:44:15 · harness/tasks/REG-09.json
+==============================================================================
+Log de esta corrida: harness\metrics\REG-09\REG-09.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/Welcome.module.css', 'app/src/screens/onboarding/Welcome.tsx']
+  tokens in/out: 21137/24038   cache: 0.0% hit
+  coste real: $0.041030   en frio: $0.041030
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\REG-09\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/Welcome.module.css', 'app/src/screens/onboarding/Welcome.tsx']
+  tokens in/out: 27766/7569   cache: 75.14% hit
+  coste real: $0.013320   en frio: $0.022208
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\REG-09\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/Welcome.module.css', 'app/src/screens/onboarding/Welcome.tsx']
+  tokens in/out: 27766/6250   cache: 98.65% hit
+  coste real: $0.008798   en frio: $0.020467
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\REG-09\attempt_3.json (F-122)
+  CSV: 2026-09-26,REG-09,REG-09,deepseek-v4-flash,21137,24038,0.041030,1,1.5,app/src/screens/onboarding/Welcome.module.css;app/src/screens/onboarding/Welcome.tsx,0.00,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-26,REG-09,REG-09,deepseek-v4-flash,27766,7569,0.013320,2,0.5,app/src/screens/onboarding/Welcome.module.css;app/src/screens/onboarding/Welcome.tsx,75.14,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-26,REG-09,REG-09,deepseek-v4-flash,27766,6250,0.008798,3,0.4,app/src/screens/onboarding/Welcome.module.css;app/src/screens/onboarding/Welcome.tsx,98.65,si,-,-,-,ESCALADO 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\REG-09\attempt_1.json
+  harness\metrics\REG-09\attempt_2.json
+  harness\metrics\REG-09\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C1 ROJO
+npm run test:arnes (exit 1)
+22 fallo(s) en total, no solo el ultimo. Lista completa:
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · lo que se ve al entrar > eyebrow, título y subtítulo con la organización destacada
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · lo que se ve al entrar > avisa de que el rol es Editor y no se elige (no hay selector de rol)
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · lo que se ve al entrar > los cinco campos y el botón: deshabilitado hasta que todo sea válido
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · lo que se ve al entrar > la ayuda de la contraseña está siempre a la vista
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · lo que se ve al entrar > los enlaces de Términos y Condiciones no navegan a ninguna parte (no hay página)
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · validación en línea > un nombre de un solo carácter enseña «Introduce al menos 2 caracteres.»; con dos, desaparece
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · validación en línea > un email mal formado enseña «Introduce un email válido.» y NO consulta a la base
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · validación en línea > una contraseña floja enseña «La contraseña no cumple los requisitos mínimos.»
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · validación en línea > «Las contraseñas no coinciden.» solo mientras difieren
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · comprobación del email en tiempo real > un email válido se consulta, dice «Verificando disponibilidad…» mientras espera y «Email disponible.» al volver
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · comprobación del email en tiempo real > un email que ya tiene cuenta dice «Este email ya está registrado en la plataforma.» y bloquea el envío
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · comprobación del email en tiempo real > una respuesta TARDÍA de un texto que ya no es el del campo se descarta
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · comprobación del email en tiempo real > si la comprobación falla no se dice nada de «ya registrado» y el envío sigue disponible (decide el servidor)
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · habilitar el envío > con todo válido y T&C marcado se habilita
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · habilitar el envío > sin T&C se queda deshabilitado
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · habilitar el envío > con las contraseñas distintas se queda deshabilitado
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · registrar > manda nombre, email y contraseña a la función y muestra el éxito con sus dos botones
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · registrar > mientras se registra el botón está deshabilitado (no se crea dos veces la cuenta)
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · registrar > si la función rechaza se dice el MOTIVO en una alerta y el formulario NO se vacía
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · registrar > «Añadir otro usuario» vuelve al formulario VACÍO, con el botón deshabilitado
+  - src/screens/onboarding/AdditionalUser.test.tsx > FRU · AdditionalUser · registrar > «Ir al panel» llama a onGoToPanel; si rechaza, lo dice en una alerta
+  - src/screens/onboarding/AdditionalUserScroll.test.ts > FRU · AdditionalUser > la página tiene scroll propio dentro de .bwcnt
+
+--- ultimas lineas de la salida ---
+      class="_placeholder_3bccc3"
+      data-org="org-1"
+      data-testid="fru-placeholder"
+    />
+  </div>
+</body>
+ ❯ Object.getElementError ../../../../app/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../app/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../app/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../app/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ nombre src/screens/onboarding/AdditionalUser.test.tsx:57:29
+     55| const PASS = 'Abcdefghi1!';
+     56|
+     57| const nombre = () => screen.getByRole('textbox', { name: 'Nombre compl…
+       |                             ^
+     58| const email = () => screen.getByRole('textbox', { name: 'Email' });
+     59| const pass = () => screen.getByLabelText('Contraseña', { exact: true }…
+ ❯ rellenar src/screens/onboarding/AdditionalUser.test.tsx:69:24
+ ❯ src/screens/onboarding/AdditionalUser.test.tsx:288:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/22]⎯
+
+ FAIL  src/screens/onboarding/AdditionalUserScroll.test.ts > FRU · AdditionalUser > la página tiene scroll propio dentro de .bwcnt
+AssertionError: expected '' to match /overflow-y:\s*auto/
+
+- Expected:
+/overflow-y:\s*auto/
+
++ Received:
+""
+
+ ❯ src/screens/onboarding/AdditionalUserScroll.test.ts:20:20
+     18|   it('la página tiene scroll propio dentro de .bwcnt', () => {
+     19|     const bloque = bloqueDe('screen', screen);
+     20|     expect(bloque).toMatch(/overflow-y:\s*auto/);
+       |                    ^
+     21|     expect(bloque).toMatch(/min-height:\s*0/);
+     22|     expect(bloque).toMatch(/flex:\s*1/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/22]⎯
+
+### C2 ROJO
+suite e2e COMPLETA (exit 1) · 3 fallo(s) SI son de este artefacto:
+  · e2e\onboarding.spec.ts:93:3 › FRU · registro de usuario adicional · ADMIN en KEY_ACTIVE › llega desde REG-09, con el aviso del rol Editor y el botón deshabilitado
+  · e2e\onboarding.spec.ts:98:3 › FRU · registro de usuario adicional · ADMIN en KEY_ACTIVE › la comprobación «ya registrado» consulta de verdad la base
+  · e2e\onboarding.spec.ts:107:3 › FRU · registro de usuario adicional · ADMIN en KEY_ACTIVE › con todo válido y un email libre el botón se habilita (y NO se pulsa)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Registro de usuario adicional', level: 1 })
+
+
+      88 |     await signIn(page, ALPHA);
+      89 |     await page.getByRole('button', { name: 'Sí, añadir un usuario ahora' }).click();
+    > 90 |     await expect(page.getByRole('heading', { level: 1, name: 'Registro de usuario adicional' })).toBeVisible();
+         |                                                                                                  ^
+      91 |   });
+      92 |
+      93 |   test('llega desde REG-09, con el aviso del rol Editor y el botón deshabilitado', async ({ page }) => {
+        at C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\.claude\worktrees\estado-v1-login-b3ca8d\app\e2e\onboarding.spec.ts:90:98
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\onboarding-FRU-·-registro--912d2--se-habilita-y-NO-se-pulsa--chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\onboarding-FRU-·-registro--912d2--se-habilita-y-NO-se-pulsa--chromium\error-context.md
+
+  3 failed
+    [chromium] › e2e\onboarding.spec.ts:93:3 › FRU · registro de usuario adicional · ADMIN en KEY_ACTIVE › llega desde REG-09, con el aviso del rol Editor y el botón deshabilitado 
+    [chromium] › e2e\onboarding.spec.ts:98:3 › FRU · registro de usuario adicional · ADMIN en KEY_ACTIVE › la comprobación «ya registrado» consulta de verdad la base 
+    [chromium] › e2e\onboarding.spec.ts:107:3 › FRU · registro de usuario adicional · ADMIN en KEY_ACTIVE › con todo válido y un email libre el botón se habilita (y NO se pulsa) 
+  124 passed (54.7s)
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] npm notice run bearingworld-app@0.1.0 preview
+[WebServer] npm notice run vite preview

@@ -1,4 +1,208 @@
-/* REG-09 · Welcome — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
-  display: block;
+/* REG-09 · Bienvenida, Usuarios Adicionales y Acceso al Dashboard.
+   La raíz `.screen` es hija directa de `.bwcnt`, que es `overflow: hidden`:
+   por eso hace su propio scroll (F-186/F-189/F-190/F-198), igual que el
+   `.page` de Directory. Ningún color literal: todo sale de tokens.css. */
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px var(--bw-pad-panel) 56px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-body);
+  color: var(--bw-deep-steel);
+}
+
+/* Una sola columna centrada de 520px: el ancho del panel del HTML aprobado. */
+.screen > * {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* ── Pasos del registro ─────────────────────────────────────────────── */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin: 0 0 36px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  white-space: nowrap;
+}
+
+/* Los cuatro pasos están completados: el mismo estilo, en verde. */
+.stepDone {
+  color: var(--bw-signal-green);
+}
+
+/* ── Banner de bienvenida ───────────────────────────────────────────── */
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 22px;
+  margin-bottom: 28px;
+  border: 1px solid var(--bw-badge-success-border);
+  border-radius: 6px;
+  background: linear-gradient(
+    135deg,
+    var(--bw-badge-success-bg) 0%,
+    var(--bw-icon-tint-brass) 100%
+  );
+}
+
+.checkRing {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bw-badge-success-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--bw-signal-green);
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+  color: var(--bw-deep-steel);
+  margin: 0 0 5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-text-secondary);
+  margin: 0;
+}
+
+/* ── Contador de plazas ─────────────────────────────────────────────── */
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 20px;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 4px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-label);
+  letter-spacing: 0.03em;
+  color: var(--bw-text-secondary);
+}
+
+/* El icono de personas es más tenue que el texto del contador. */
+.counter svg {
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Pregunta y botones ─────────────────────────────────────────────── */
+
+.question {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--bw-deep-steel);
+  margin: 0 0 14px;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.primary,
+.secondary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+/* No hay token de blanco puro en la paleta: el más claro es `--bw-warm-cream`. */
+.primary {
+  background: var(--bw-calibration-blue);
+  color: var(--bw-warm-cream);
+}
+
+.primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.secondary {
+  background: var(--bw-cold-white);
+  color: var(--bw-ink-steel);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--bw-line-steel);
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Nota informativa ───────────────────────────────────────────────── */
+
+.note {
+  font-size: var(--bw-size-label);
+  line-height: 1.6;
+  color: var(--bw-input-placeholder);
+  margin: 0;
+}
+
+/* ── Carga y errores ────────────────────────────────────────────────── */
+
+.status {
+  font-size: 14px;
+  color: var(--bw-text-secondary);
+  margin: 0;
+}
+
+.alert {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bw-error-text);
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  padding: 10px 12px;
+  margin: 0 0 16px;
 }

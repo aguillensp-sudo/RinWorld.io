@@ -1,0 +1,34 @@
+
+==============================================================================
+· corrida arrancada 2026-09-26 10:04:35 · harness/tasks/FRU.json --corrida corrida-02
+==============================================================================
+Log de esta corrida: harness\metrics\FRU\corrida-02\FRU.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/AdditionalUser.module.css', 'app/src/screens/onboarding/AdditionalUser.tsx']
+  tokens in/out: 24539/21431   cache: 99.11% hit
+  coste real: $0.028726   en frio: $0.039086
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\FRU\corrida-02\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/AdditionalUser.module.css', 'app/src/screens/onboarding/AdditionalUser.tsx']
+  tokens in/out: 30224/5545   cache: 80.89% hit
+  coste real: $0.010203   en frio: $0.020618
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\FRU\corrida-02\attempt_2.json (F-122)
+  CSV: 2026-09-26,FRU,FRU,deepseek-v4-flash,24539,21431,0.028726,1,1.2,app/src/screens/onboarding/AdditionalUser.module.css;app/src/screens/onboarding/AdditionalUser.tsx,99.11,no,-,corrida-02,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-26,FRU,FRU,deepseek-v4-flash,30224,5545,0.010203,2,0.3,app/src/screens/onboarding/AdditionalUser.module.css;app/src/screens/onboarding/AdditionalUser.tsx,80.89,no,-,corrida-02,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\FRU\corrida-02\attempt_1.json
+  harness\metrics\FRU\corrida-02\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

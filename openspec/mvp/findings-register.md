@@ -301,6 +301,6 @@ fallback P-256.
 | [F-211](findings/F-211.md) | 2026-09-25 | `SPEC` | `Contactar` sin hilo previo no se puede construir con el esquema actual | ABIERTO |
 | [F-212](findings/F-212.md) | 2026-09-25 | `SPEC` | La spec y el HTML aprobado prometen un correo que el proyecto no puede enviar | ABIERTO |
 | [F-213](findings/F-213.md) | 2026-09-25 | `DESIGN` | No existe `Ajustes` | ABIERTO, menor |
-| [F-214](findings/F-214.md) | 2026-09-25 | `SEGURIDAD` | Revocar un usuario no le impide iniciar sesión, solo le deja sin datos | PARCIAL 26-sep: `session.ts` cierra la sesión del revocado; falta `banned_until` en Auth |
+| [F-214](findings/F-214.md) | 2026-09-25 | `SEGURIDAD` | Revocar un usuario no le impide iniciar sesión, solo le deja sin datos | Cerrado en código 26-sep: `session.ts` + Edge Function `ban-revoked-member` (`banned_until`); falta probar un ban real |
 | [F-215](findings/F-215.md) | 2026-09-25 | `INFRA` | Dos trampas del banco de esquema que costaron una vuelta cada una | Cerrado, sin acción |
 | [F-216](findings/F-216.md) | 2026-09-25 | `HARNESS` | Mi tarea no decía lo que el contrato exige (`string \| undefined` de un módulo CSS, `F-143`) | Cerrado para `INVT-01` |

@@ -16,7 +16,7 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 24 de V1 · 26-sep-2026 · Estado: EN CURSO.** El PO aprobó `DIR-02` e `INVT-01` (C5) y decidió `F-214`/`F-178` (hechos) y `F-212`/`F-211` (se dejan). Abajo, el cierre del Día 23 sin reescribir.
+**Día 24 de V1 · 26-sep-2026 · Estado: EN CURSO.** El PO aprobó `DIR-02` e `INVT-01` (C5) y decidió `F-214` (hecho, sin probar el ban) y `F-178` (hecho) y `F-212`/`F-211` (se dejan). Abajo, el cierre del Día 23 sin reescribir.
 
 **Día 23 de V1 · 25-sep-2026 · Estado: CERRADO.** Decisiones del PO sobre los pendientes
 (`F-192` riesgo aceptado; `F-196` aceptado; `F-201`/`F-202`/`F-204` cerrados sin acción) y dos
@@ -61,7 +61,7 @@ Detalle en `diario/dia-23.md` (tercera parte).
    (`F-209`): hoy se hizo a mano y encontró dos diferencias en `INVT-01`. El arnés no mide tamaños.
 4. **Copiar a cada tarea nueva las `_nota_*` que ya pagaron un error** (`F-216`): el tipo
    `string | undefined` de un módulo CSS (`F-143`) costó dos corridas.
-5. **`F-214`: falta `banned_until`** (Edge Function con la service key). Las demás decisiones están tomadas.
+5. **Probar `F-214` con un ban real** (§6). Las demás decisiones están tomadas.
 6. Deuda sin fecha: `F-170` (contradicciones entre specs), `F-172` (buscador sin migrar en
    `INV-01`/`MSG-01`/`SentOffers`), `F-178` (foro sin teardown), `F-213` (no existe `Ajustes`).
 
@@ -89,7 +89,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-214`** · la app cierra la sesión del revocado (26-sep); **falta bloquear el login en Auth (`banned_until`)** | Edge Function con la service key |
 | 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token: no lleva a nadie a ningún sitio hasta que exista el flujo de registro por invitación | PO / producto |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede: no existe hilo libre en el esquema | PO: ¿hilo libre en mensajería? |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; GCP listo, cupo de Vertex pendiente de Anthropic | Anthropic |
@@ -111,8 +110,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si invitar, reenviar y eliminar funcionan desde la pantalla de `INVT-01`.** Las tres
   funciones están medidas en el banco de esquema (11 asertos) y la pantalla en unidad y en
   un e2e de solo lectura; nadie ha pulsado `Enviar invitación` contra una base real.
-- **Qué ve un miembro revocado al entrar** (`F-214`): la RLS le deja sin datos, pero no se ha
-  visto la pantalla que le sale.
+- **Si el ban de `F-214` funciona de verdad.** La Edge Function `ban-revoked-member` está
+  desplegada y rechaza bien (401/400), pero nadie ha revocado una cuenta real desde `INVT-01`
+  ni visto qué le sale al revocado. Una cuenta baneada tampoco se puede reinvitar sin quitarle el ban.
 - **Si `Contactar` de `DIR-02` abre el hilo correcto** con un clic real: el e2e lo abre y ve
   su cuerpo, pero no compara el hilo con el de la fila.
 - **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan desde la

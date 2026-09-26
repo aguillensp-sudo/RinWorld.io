@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { errorMessage } from './session';
 
 /**
  * Capa de datos de INVT-01 · Panel de Gestión de Invitaciones.
@@ -264,4 +265,17 @@ export async function resendInvitation(id: string): Promise<void> {
 export async function removeMember(id: string): Promise<void> {
   const { error } = await supabase.rpc('remove_member', { p_member_id: id });
   if (error) throw error;
+
+  // F-214: la revocación ya es efectiva (RLS + `session.ts`); esto además le
+  // cierra el login en Auth. Si falla NO se deshace lo anterior, pero tampoco se
+  // calla: el ADMIN tiene que saber que la cuenta aún puede autenticarse.
+  const { error: banError } = await supabase.functions.invoke('ban-revoked-member', {
+    body: { member_id: id },
+  });
+  if (banError) {
+    throw new Error(
+      'El usuario ya no tiene acceso a los datos, pero no se pudo bloquear su inicio de sesión: ' +
+        errorMessage(banError),
+    );
+  }
 }

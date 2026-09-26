@@ -224,6 +224,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
+      - name: Desplegar la función ban-revoked-member (F-214)
+        run: npx supabase functions deploy ban-revoked-member --project-ref troxminloxkjwihwfevs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+
   deploy-app:
     name: Despliegue continuo · app (Vercel)
     runs-on: ubuntu-latest

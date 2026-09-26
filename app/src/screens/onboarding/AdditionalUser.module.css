@@ -1,4 +1,282 @@
-/* FRU · AdditionalUser — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
+/* =============================================================================
+   FRU · Registro de usuario adicional — estilos de la pantalla
+
+   Todo color sale de tokens.css (`var(--bw-*)`); no hay un solo hex ni un rgb()
+   escrito a mano. Dos notas sobre tokens que NO existen y se han resuelto con el
+   más cercano, sin inventar valores:
+
+   - Blanco puro: no hay token. El texto del botón primario usa
+     `--bw-cold-white` (el neutro claro del sistema) y el fondo de la pantalla se
+     deja sin declarar para heredar el blanco del panel de contenido del shell.
+   - El punto del aviso de rol usa `--bw-input-placeholder`, que es el gris tenue
+     del HTML aprobado para ese punto.
+
+   `screen` es hija directa de `.bwcnt` (que es `overflow: hidden`): sin
+   `flex: 1; min-height: 0; overflow-y: auto` la pantalla no tendría scroll
+   propio (F-186/F-189/F-190/F-198).
+   ========================================================================== */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 52px 48px 56px;
+}
+
+.column {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Cabecera ─────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+}
+
+.title {
+  margin: 0 0 6px;
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-title);
+  letter-spacing: var(--bw-ls-title);
+  line-height: 1.25;
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin: 0 0 20px;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Aviso de rol (no seleccionable) ──────────────────────────────────── */
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 28px;
+  padding: 4px 10px 4px 8px;
+  background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 20px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+.roleDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bw-input-placeholder);
+}
+
+/* ── Formulario ───────────────────────────────────────────────────────── */
+
+.form {
   display: block;
+  margin: 0;
+}
+
+.row {
+  margin-bottom: 18px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 5px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-ink-steel);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--bw-pad-input);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-input-text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--bw-input-placeholder);
+}
+
+.fieldError {
+  margin: 4px 0 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  line-height: 1.5;
+  color: var(--bw-error-text);
+}
+
+.emailOk {
+  margin: 4px 0 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  line-height: 1.5;
+  color: var(--bw-success-dark);
+}
+
+.status {
+  margin: 4px 0 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  line-height: 1.5;
+  color: var(--bw-input-placeholder);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+}
+
+.check input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+
+/* El enlace de T&C no lleva a ninguna parte (no hay página de Términos): es un
+   ancla muerta, tal como la dibuja el HTML aprobado. */
+.termsLink {
+  color: var(--bw-calibration-blue);
+  text-decoration: none;
+}
+
+.termsLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Botones ──────────────────────────────────────────────────────────── */
+
+.button {
+  display: block;
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-cold-white); /* no hay token de blanco puro: neutro claro más próximo */
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.button:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+.successButton {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 13px 20px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-cold-white);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.successButton:hover {
+  opacity: 0.9;
+}
+
+.secondaryButton {
+  display: block;
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--bw-cold-white);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.secondaryButton:hover {
+  opacity: 0.9;
+}
+
+/* ── Estado de éxito y avisos ─────────────────────────────────────────── */
+
+.success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: var(--bw-badge-success-bg);
+  border-left: 3px solid var(--bw-signal-green);
+  border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bw-success-dark);
+}
+
+.alert {
+  margin: 12px 0 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  line-height: 1.5;
+  color: var(--bw-error-text);
 }

@@ -188,6 +188,8 @@ export async function loadProfile(userId: string, email: string): Promise<State>
 export function useSession() {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [error, setError] = useState<string | null>(null);
+  /** Subir esto vuelve a leer el perfil: REG-09 lo usa al activar la cuenta (`KEY_ACTIVE` → `ACTIVE`). */
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -259,7 +261,9 @@ export function useSession() {
       alive = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [reloadKey]);
+
+  const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
@@ -280,5 +284,5 @@ export function useSession() {
     await supabase.auth.signOut();
   }, []);
 
-  return { state, error, signIn, signOut };
+  return { state, error, signIn, signOut, refresh };
 }

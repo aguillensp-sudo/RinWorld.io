@@ -1,0 +1,64 @@
+{
+  "task_id": "REG-09",
+  "screen": "REG-09",
+  "goal": "Panel de contenido de REG-09 (Bienvenida, Usuarios Adicionales y Acceso al Dashboard, Modulo 01 Onboarding): indicador de los cuatro pasos del registro (todos completados), banner de bienvenida con el nombre del ADMIN y su organizacion, contador de plazas (`2 de 5 usuarios registrados`, solo cuando ya hay alguien mas), la pregunta y los dos botones (`Sí, añadir un usuario ahora` e `Ir al panel`), la nota sobre `Configuración → Gestión de usuarios` y los estados de uno o varios usuarios ya añadidos y de limite alcanzado (`¡Equipo al completo!`). Solo la ve un ADMIN en estado KEY_ACTIVE; va DENTRO del shell estandar. Duodecima pantalla de la fabrica. Lleva UNA migracion escrita a mano (`0038`, compartida con FRU: `onboarding_seats_used`, `activate_own_membership`, `email_has_account` ampliada, `add_registered_member`).",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll propio en `constraints` (F-198).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §7: la capa de datos (`app/src/lib/onboarding.ts`, 31 pruebas) y la migracion `0038` (asertos en el banco de esquema) son precondicion, ya escritas y entregadas por Claude Code -no las construye esta tarea-. Esta corrida es la DUODECIMA y NO va en sesion propia: comparte sesion con FRU y con el ritual de cierre, asi que sus cifras 7 y 8 no son limpias (se dice en el relevo).",
+  "_nota_spec": "La spec es `Rinworld_spec_REG-09.md`. Donde el HTML aprobado y la spec discrepan MANDA EL HTML (F-170): el boton es `Ir al panel` y no `No, ir al panel`; el contador cuenta al ADMIN (con un usuario anadido dice `2 de 5`); el titulo con usuarios anadidos es `¿Quieres añadir otro usuario?` y la pregunta bajo el, `¿Deseas añadir otro usuario?`; en el limite el aviso `Has alcanzado el límite de 5 usuarios por organización.` ocupa el sitio de la pregunta. TODO ESO YA ESTA RESUELTO en `welcomeView` de `lib/onboarding.ts`: el Coder no lo decide, lo pinta.",
+  "_nota_shell": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea: `App.tsx` monta `<Welcome profile onAddUser onGoToPanel />` dentro del `AppShell` cuando el miembro es ADMIN y su estado es `KEY_ACTIVE` (hasta `Ir al panel` no ve otra cosa), y `<AdditionalUser />` cuando `onAddUser` ha abierto FRU. `Welcome.tsx` existe hoy como MARCADOR (un `<div data-testid>` con las props ya tipadas): esta tarea sustituye ese fichero ENTERO y su `.module.css`. El HTML aprobado dibuja esta pantalla SIN sidebar y con VERA; no existe un shell de onboarding y se monta en el estandar (decision en `DECISIONES-V1.md`): VERA la monta el shell, no esta pantalla.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_REG-09.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/REG-09 · ACT v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/directory/Directory.tsx",
+    "_nota_style_reference": "Para la cabecera de pantalla, el estado de carga y el patron de errores: `Directory.tsx`/`Directory.module.css` (DIR-01). Para el scroll propio ya resuelto: `Directory.module.css` (`.page`) y `Watchers.module.css` (`.screen`).",
+    "data_layer": "app/src/lib/onboarding.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `fetchSeatsUsed`, `welcomeView`, `firstName` y el tipo `WelcomeView`. NO se reimplementa: ni el titulo, ni la pregunta, ni el contador, ni el limite de 5, ni cuando desaparece el boton de anadir, ni el primer nombre del saludo."
+  },
+  "outputs": [
+    "app/src/screens/onboarding/Welcome.tsx",
+    "app/src/screens/onboarding/Welcome.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos, entre comillas simples. El punto medio ' · ' es U+00B7 con un espacio a cada lado; el guion largo '—' es U+2014, la flecha '→' es U+2192 y los puntos suspensivos '…' son U+2026 (un solo caracter).",
+    "_nota_accesibilidad": "Todo lo accionable es `<button type=\"button\">`, nunca un `<div onClick>`. La lista de pasos es una `<ol aria-label=\"Pasos del registro\">` con cuatro `<li>` de verdad: NO se les pone `role=` encima (un `role` explicito sustituye al implicito, F-131).",
+    "_nota_css_modules": "LAS CLASES DE UN MODULO CSS SON `string | undefined`, NUNCA `string` A SECAS (F-143): con `noUncheckedIndexedAccess` activo, cualquier propiedad de `styles` puede no existir en el `.module.css`, asi que TypeScript la tipa `string | undefined`. Una funcion que devuelve `styles.x` y esta declarada `: string`, o un `Record<Tipo, string>` con valores `styles.x`, NO COMPILA (`TS2322`). El tipo de retorno es `string | undefined` y el diccionario `Record<Tipo, string | undefined>`, y el `?? ''` que resuelve el hueco va en el UNICO sitio donde se consume (`className={X[k] ?? ''}`), para que una clase que falte no escriba la palabra `undefined` en el atributo.",
+    "_nota_nombres_ejemplo": "Nombres accesibles, EJEMPLOS VERBATIM: botones 'Sí, añadir un usuario ahora' e 'Ir al panel'; lista 'Pasos del registro' con 'Solicitud', 'Organización', 'Seguridad' y 'Activación'; id de prueba 'user-counter'. El nombre 'Juan Martínez' y la organizacion 'Rodamientos del Sur SL' son DATOS, no literales de la pantalla.",
+    "app/src/screens/onboarding/Welcome.tsx": "export function Welcome({ profile, onAddUser, onGoToPanel }: { profile: MemberProfile; onAddUser: () => void; onGoToPanel: () => Promise<void> }). `MemberProfile` y `errorMessage` de '../../lib/session'; `fetchSeatsUsed`, `firstName` y `welcomeView` de '../../lib/onboarding'. ES LA PANTALLA: posee todo el estado y es el unico sitio que llama a la red, con `fetchSeatsUsed()` UNA vez al montar. RAIZ: un elemento con la clase `screen` (ver constraints: scroll propio). CARGA: mientras llega `fetchSeatsUsed`, un `<p role=\"status\">` 'Cargando…' y nada mas (ni `<h1>`, ni botones). ERROR DE CARGA: si RECHAZA, un `<p role=\"alert\">` con `errorMessage(err)` y ningun boton. PANTALLA CARGADA: sea `view = welcomeView(firstName(profile.fullName, profile.email), seats)`. De arriba abajo: (1) LOS PASOS: una `<ol aria-label=\"Pasos del registro\">` con cuatro `<li>`, en este orden y con estos textos: 'Solicitud', 'Organización', 'Seguridad', 'Activación'; cada uno con un icono de verificacion (svg, `aria-hidden`) y el texto; TODOS completados (mismo estilo, en verde), porque el ADMIN ya paso los cuatro. (2) EL BANNER: un icono de verificacion en verde (svg, `aria-hidden`), el `<h1>` con `view.title` y un `<p>` con 'Tu organización ' seguido de un `<strong>` con `profile.orgName` y de ' ya está activa. Antes de ir al panel, ¿quieres registrar más usuarios de tu equipo?'. (3) EL CONTADOR: SOLO si `view.counter` no es null, un elemento `data-testid=\"user-counter\"` con un icono de personas (svg, `aria-hidden`) y `view.counter` como su unico texto. (4) LA PREGUNTA: un `<p>` con `view.question`. (5) LOS BOTONES, en columna: SOLO si `view.canAdd`, un `<button type=\"button\">` 'Sí, añadir un usuario ahora' (primario, con icono) que llama a `onAddUser()`; y siempre un `<button type=\"button\">` 'Ir al panel' (secundario). (6) LA NOTA: un `<p>` (o `<div>`) con 'Podrás invitar más usuarios desde ' seguido de un `<strong>` con 'Configuración → Gestión de usuarios' y de ' en cualquier momento.'. IR AL PANEL: al pulsar llama a `onGoToPanel()` UNA vez; mientras esta en vuelo, los DOS botones estan `disabled`; si RECHAZA, un `<p role=\"alert\">` con `errorMessage(err)` y los botones vuelven a estar habilitados (se puede reintentar); si resuelve, se rehabilitan igualmente (el wiring se encarga de sustituir la pantalla). `onAddUser` no es asincrono: se llama y ya. Ninguna otra llamada a la red.",
+    "app/src/screens/onboarding/Welcome.module.css": "Estilos de la pantalla con TOKENS de `tokens.css` (nada de valores literales de color). Clases minimas: `screen` (ver constraints), `steps`, `step`, `stepDone`, `banner`, `checkRing`, `title`, `subtitle`, `counter`, `question`, `buttons`, `primary`, `secondary`, `note`, `status`, `alert`. Fiel al HTML aprobado: pantalla centrada, tarjeta blanca, tono celebratorio pero contenido."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/onboarding/Welcome.test.tsx",
+      "app/src/screens/onboarding/WelcomeScroll.test.ts"
+    ],
+    "e2e": [
+      "app/e2e/onboarding.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e (compartido con FRU) va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a KEY_ACTIVE, comprueba la bienvenida de un ADMIN solo, el `3 de 5` de Nordwalz (plazas de la base), que un Editor y un ADMIN normal NO la ven, y no pulsa `Ir al panel` (activaria la cuenta en produccion). Lo que escribe lo mide el banco de esquema (`0038`)."
+  },
+  "out_of_scope": [
+    "El flujo E2EE que lleva a un ADMIN a KEY_ACTIVE (REG-05, REG-06, REG-07): no existe; hoy REG-09 solo se ve si alguien pone la cuenta en ese estado.",
+    "FRU (el formulario de usuario adicional): otra pantalla, con su propia tarea. Aqui `Sí, añadir un usuario ahora` solo llama a `onAddUser()`.",
+    "Activar la cuenta: la hace el wiring (`activateOwnMembership`, migracion `0038`) y el cliente recibe la promesa en `onGoToPanel`. Esta pantalla NO importa `activateOwnMembership`.",
+    "Los botones de demo del HTML aprobado (`0 usuarios añadidos`, `1 usuario añadido`, `Límite alcanzado (5/5)`): son andamiaje del prototipo.",
+    "El comportamiento de VERA de la spec §5 (`¡Ya está todo listo, Juan!...`): es conversacion de demostracion; el shell monta VERA y esta pantalla no la toca.",
+    "El wiring en `App.tsx`: ya hecho a mano."
+  ],
+  "constraints": [
+    "SCROLL PROPIO (F-186/F-189/F-190/F-198): la raiz de la pantalla es hija DIRECTA de `.bwcnt`, que es `overflow: hidden`. La clase `.screen` de `Welcome.module.css` DEBE declarar `flex: 1; min-height: 0; overflow-y: auto;` (mas `display: flex; flex-direction: column`). Mira `Directory.module.css` (`.page`) para el patron ya resuelto.",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb().",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`.",
+    "No tocar `app/src/shell/**` ni `App.tsx`: tienen contrato y tests propios. Tampoco `app/src/lib/onboarding.ts` ni `app/src/lib/invitations.ts`.",
+    "No reimplementar nada de `app/src/lib/onboarding.ts` (ver `_nota_data_layer`). En particular: NO contar plazas, NO escribir el titulo, la pregunta ni el contador (salen de `welcomeView`), NO calcular el primer nombre (`firstName`).",
+    "El TITULO de la pantalla lo pinta `view.title` en un `<h1>` de verdad, y es el UNICO `<h1>`."
+  ]
+}

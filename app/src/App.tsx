@@ -14,6 +14,9 @@ import { AdminBilling } from './screens/admin/AdminBilling';
 import { Directory } from './screens/directory/Directory';
 import { OrganizationProfile } from './screens/directory/OrganizationProfile';
 import { Invitations } from './screens/onboarding/Invitations';
+import { Welcome } from './screens/onboarding/Welcome';
+import { AdditionalUser } from './screens/onboarding/AdditionalUser';
+import { activateOwnMembership } from './lib/onboarding';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
 import { ForumThread } from './screens/forum/ForumThread';
@@ -101,11 +104,14 @@ const ADMIN_VERA_SUBTITLE = 'Asistente del operador';
 /** ADMIN-02 §2: se abre desde el nav propio del Operador; ítem `Cobros` (HTML aprobado). */
 const COBROS_NAV = operatorNavIndexOf('Cobros');
 
+/** REG-09 y FRU §5: "**Subtítulo del panel:** `Asistente de registro`" (HTML aprobado). */
+const ONBOARDING_VERA_SUBTITLE = 'Asistente de registro';
+
 /** FORO-01 §5: "**Subtítulo del panel:** `Agente del foro`". */
 const FORUM_VERA_SUBTITLE = 'Agente del foro';
 
 export function App() {
-  const { state, error, signIn, signOut } = useSession();
+  const { state, error, signIn, signOut, refresh } = useSession();
   const [nav, setNav] = useState(HOME_NAV);
 
   /**
@@ -178,6 +184,13 @@ export function App() {
    * ítem del nav. Solo la ven los ADMIN (INVT-01 §2).
    */
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  /**
+   * FRU abierta desde REG-09 (el formulario de usuario adicional). Solo existe
+   * dentro del onboarding del ADMIN en `KEY_ACTIVE`, así que no se mezcla con el
+   * `nav`: mientras dura, el panel es REG-09 o FRU y nada más.
+   */
+  const [addingUser, setAddingUser] = useState(false);
 
   /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
@@ -318,6 +331,37 @@ export function App() {
       },
     ),
   };
+
+  /*
+   * ONBOARDING del ADMIN (REG-09 → FRU). Un miembro `KEY_ACTIVE` aún no es ACTIVE:
+   * la RLS no le deja leer nada, así que el resto del shell estaría vacío. Hasta
+   * `Ir al panel` (`activate_own_membership`, 0038) el panel es REG-09 o FRU.
+   * Ninguna de las dos se ve hoy sin que alguien ponga la cuenta en `KEY_ACTIVE`:
+   * el flujo que lleva hasta ahí (REG-05 a REG-07) no existe todavía.
+   */
+  if (state.profile.role === 'ADMIN' && state.profile.state === 'KEY_ACTIVE') {
+    const goToPanel = async () => {
+      await activateOwnMembership();
+      setAddingUser(false);
+      refresh();
+    };
+    return (
+      <AppShell
+        profile={state.profile}
+        onSignOut={signOut}
+        activeNav={nav}
+        onNavigate={navigate}
+        vera={vera}
+        veraSubtitle={ONBOARDING_VERA_SUBTITLE}
+      >
+        {addingUser ? (
+          <AdditionalUser profile={state.profile} onGoToPanel={goToPanel} />
+        ) : (
+          <Welcome profile={state.profile} onAddUser={() => setAddingUser(true)} onGoToPanel={goToPanel} />
+        )}
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell

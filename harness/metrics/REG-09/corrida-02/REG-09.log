@@ -1,0 +1,34 @@
+
+==============================================================================
+· corrida arrancada 2026-09-26 09:53:32 · harness/tasks/REG-09.json --corrida corrida-02
+==============================================================================
+Log de esta corrida: harness\metrics\REG-09\corrida-02\REG-09.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/Welcome.tsx']
+  tokens in/out: 21137/15438   cache: 99.31% hit
+  coste real: $0.020736   en frio: $0.029678
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\REG-09\corrida-02\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/Welcome.module.css', 'app/src/screens/onboarding/Welcome.tsx']
+  tokens in/out: 27286/4483   cache: 76.93% hit
+  coste real: $0.008981   en frio: $0.017923
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\REG-09\corrida-02\attempt_2.json (F-122)
+  CSV: 2026-09-26,REG-09,REG-09,deepseek-v4-flash,21137,15438,0.020736,1,0.9,app/src/screens/onboarding/Welcome.tsx,99.31,no,-,corrida-02,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-26,REG-09,REG-09,deepseek-v4-flash,27286,4483,0.008981,2,0.2,app/src/screens/onboarding/Welcome.module.css;app/src/screens/onboarding/Welcome.tsx,76.93,no,-,corrida-02,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\REG-09\corrida-02\attempt_1.json
+  harness\metrics\REG-09\corrida-02\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

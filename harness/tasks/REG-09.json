@@ -41,7 +41,7 @@
     "e2e": [
       "app/e2e/onboarding.spec.ts"
     ],
-    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e (compartido con FRU) va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a KEY_ACTIVE, comprueba la bienvenida de un ADMIN solo, el `3 de 5` de Nordwalz (plazas de la base), que un Editor y un ADMIN normal NO la ven, y no pulsa `Ir al panel` (activaria la cuenta en produccion). Lo que escribe lo mide el banco de esquema (`0038`)."
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a KEY_ACTIVE, comprueba la bienvenida de un ADMIN solo, el `3 de 5` de Nordwalz (plazas de la base), VERA `Asistente de registro`, que un Editor y un ADMIN normal NO la ven, y no pulsa `Ir al panel` (activaria la cuenta en produccion). Lo que escribe lo mide el banco de esquema (`0038`)."
   },
   "out_of_scope": [
     "El flujo E2EE que lleva a un ADMIN a KEY_ACTIVE (REG-05, REG-06, REG-07): no existe; hoy REG-09 solo se ve si alguien pone la cuenta en ese estado.",

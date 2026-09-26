@@ -39,9 +39,9 @@
       "app/src/screens/onboarding/AdditionalUserScroll.test.ts"
     ],
     "e2e": [
-      "app/e2e/onboarding.spec.ts"
+      "app/e2e/additional-user.spec.ts"
     ],
-    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e (compartido con REG-09) va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a KEY_ACTIVE, abre FRU desde REG-09, comprueba que `Este email ya está registrado` consulta de verdad la base y que un email libre habilita el boton, y NO lo pulsa (crearia una cuenta real). Lo que escribe lo miden la Edge Function `register-additional-member` y el banco de esquema (`0038`)."
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. El e2e (`additional-user.spec.ts`, separado del de REG-09 por F-219) va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a KEY_ACTIVE, abre FRU desde REG-09, comprueba que `Este email ya está registrado` consulta de verdad la base y que un email libre habilita el boton, y NO lo pulsa (crearia una cuenta real). Lo que escribe lo miden la Edge Function `register-additional-member` y el banco de esquema (`0038`)."
   },
   "out_of_scope": [
     "El punto de entrada `desde enlace de invitacion` (titulo `Completa tu registro en Bearingworld.io`, subtitulo `Has sido invitado a unirte a ...`): no hay token canjeable ni flujo de registro por invitacion (F-212).",

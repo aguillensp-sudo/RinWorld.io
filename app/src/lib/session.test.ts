@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errorMessage, initials } from './session';
+import { errorMessage, initials, isRevoked } from './session';
 
 describe('initials', () => {
   it('toma la primera y la última de un nombre compuesto', () => {
@@ -63,4 +63,18 @@ describe('errorMessage', () => {
     expect(errorMessage(null)).toBe('null');
     expect(errorMessage({})).toBe('[object Object]');
   });
+});
+
+/** F-214: revocar tiene que cerrar el acceso, no solo dejar sin datos. */
+describe('isRevoked', () => {
+  it.each(['SUSPENDED', 'REJECTED', 'CANCELLED'])('%s es acceso revocado', (st) => {
+    expect(isRevoked(st)).toBe(true);
+  });
+
+  it.each(['ACTIVE', 'KEY_ACTIVE', 'REGISTERED', 'INVITED_APPROVED', 'PENDING_REVIEW'])(
+    '%s no lo es',
+    (st) => {
+      expect(isRevoked(st)).toBe(false);
+    },
+  );
 });

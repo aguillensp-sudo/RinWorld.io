@@ -69,6 +69,22 @@ export function errorMessage(e: unknown): string {
   return String(e);
 }
 
+/**
+ * Estados de `members` en los que la cuenta ya no tiene acceso (F-214). La RLS
+ * ya le deja sin datos (`app.is_active_member()`), pero `user-revocation` pide
+ * que pierda el acceso, no que vea un shell vacío. Los estados previos a la
+ * activación (`PENDING_REVIEW`, `INVITED_APPROVED`, `REGISTERED`, `KEY_ACTIVE`)
+ * no cuentan: son cuentas que aún no han llegado, no que se hayan ido.
+ */
+const REVOKED_STATES = new Set(['SUSPENDED', 'REJECTED', 'CANCELLED']);
+
+export function isRevoked(state: string): boolean {
+  return REVOKED_STATES.has(state);
+}
+
+export const REVOKED_MESSAGE =
+  'Tu acceso a Bearingworld.io ha sido revocado. Si crees que es un error, habla con el administrador de tu organización.';
+
 type State =
   | { status: 'loading' }
   | { status: 'anonymous' }
@@ -175,6 +191,19 @@ export function useSession() {
       }
       try {
         const next = await loadProfile(userId, email);
+
+        // F-214: un miembro revocado no entra. Se cierra la sesión de Auth (que
+        // sigue siendo válida) y se dice por qué, en vez de pintarle un shell vacío.
+        if (next.status === 'authenticated' && isRevoked(next.profile.state)) {
+          clearKeyring();
+          await supabase.auth.signOut();
+          if (alive) {
+            setError(REVOKED_MESSAGE);
+            setState({ status: 'anonymous' });
+          }
+          return;
+        }
+
         if (alive) setState(next);
 
         /**

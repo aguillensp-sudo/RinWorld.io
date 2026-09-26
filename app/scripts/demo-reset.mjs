@@ -62,6 +62,12 @@ function orLanza(paso, { error }) {
   if (error) throw new Error(`RESETEO FALLIDO en «${paso}» · ${error.message}`);
 }
 
+/** Como `orLanza`, pero devuelve las filas. */
+function orLanza0(paso, { data, error }) {
+  orLanza(paso, { error });
+  return data ?? [];
+}
+
 /**
  * ADMIN-01 · las tres solicitudes de `supabase/seed/demo_registration_requests.sql`,
  * de vuelta a `PENDING_REVIEW` y con el reloj re-anclado: una roja (>48 h), una
@@ -122,6 +128,55 @@ async function reponerSolicitudes(db, log) {
  * un ensayo (`remove_member` lo deja CANCELLED y no se puede deshacer desde la app).
  */
 const ORG_NORDWALZ = 'b2000000-0000-4000-8000-000000000002';
+/**
+ * F-178 · las reacciones del foro vuelven a su siembra.
+ *
+ * Un e2e que reacciona y desreacciona en la misma corrida deja la reacción puesta
+ * si la corrida se cancela a medias (F-171), y el foro no entraba en el reseteo.
+ * Solo se tocan las reacciones (las publicaciones no se escriben desde el cliente
+ * en los e2e) y solo las de los hilos de demo. Las cinco reproducen las de
+ * `supabase/seed/demo_forum.sql` §3: c003 → 👍 3, c004 → 👍 1, c001 → 👍 1.
+ */
+const HILOS_FORO = [
+  '44440000-0000-4000-8000-00000000c001',
+  '44440000-0000-4000-8000-00000000c003',
+  '44440000-0000-4000-8000-00000000c004',
+];
+const MIEMBRO_A = 'a1000000-0000-4000-8000-00000000000a';
+const MIEMBRO_B = 'b2000000-0000-4000-8000-00000000000b';
+/** [hilo, n-ésima publicación por orden de fecha, quién reacciona] */
+const REACCIONES_FORO = [
+  [HILOS_FORO[1], 1, MIEMBRO_A],
+  [HILOS_FORO[1], 1, MIEMBRO_B],
+  [HILOS_FORO[1], 2, MIEMBRO_B],
+  [HILOS_FORO[2], 1, MIEMBRO_B],
+  [HILOS_FORO[0], 1, MIEMBRO_B],
+];
+
+async function reponerReaccionesForo(db, log) {
+  const posts = orLanza0(
+    'leyendo las publicaciones del foro',
+    await db
+      .from('forum_posts')
+      .select('id, thread_id, created_at')
+      .in('thread_id', HILOS_FORO)
+      .order('created_at', { ascending: true }),
+  );
+  const ids = posts.map((p) => p.id);
+  if (!ids.length) {
+    log('· foro sin publicaciones sembradas: reacciones no repuestas');
+    return;
+  }
+  orLanza('borrando las reacciones del foro', await db.from('forum_reactions').delete().in('post_id', ids));
+
+  const filas = REACCIONES_FORO.flatMap(([hilo, n, member_id]) => {
+    const post = posts.filter((p) => p.thread_id === hilo)[n - 1];
+    return post ? [{ post_id: post.id, member_id }] : [];
+  });
+  orLanza('insertando las reacciones del foro', await db.from('forum_reactions').insert(filas));
+  log(`· foro: ${filas.length} reacciones repuestas`);
+}
+
 const EMAIL_EDITOR_NORDWALZ = 'editor@bearingworld.test';
 
 async function reponerInvitaciones(db, log) {
@@ -253,6 +308,7 @@ export async function resetDemo({ url, serviceKey, seed, reanchor = true, log = 
 
   await reponerSolicitudes(db, log);
   await reponerInvitaciones(db, log);
+  await reponerReaccionesForo(db, log);
 
   if (reanchor) {
     const { data, error } = await db.rpc('demo_reanchor_freshness');

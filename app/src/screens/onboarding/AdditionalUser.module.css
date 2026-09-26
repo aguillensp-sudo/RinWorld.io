@@ -37,7 +37,7 @@
   margin: 0 0 10px;
   font-family: var(--bw-font-title);
   font-weight: 600;
-  font-size: var(--bw-size-eyebrow);
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: var(--bw-ls-eyebrow);
   color: var(--bw-brass);
@@ -47,7 +47,7 @@
   margin: 0 0 6px;
   font-family: var(--bw-font-title);
   font-weight: 700;
-  font-size: var(--bw-size-title);
+  font-size: 22px;
   letter-spacing: var(--bw-ls-title);
   line-height: 1.25;
   color: var(--bw-deep-steel);

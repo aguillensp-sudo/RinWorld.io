@@ -66,3 +66,5 @@ Nueva decisión: una fila arriba del todo, con fecha y quién decidió. Una deci
 | **«Eliminar usuario» es revocar: `members.state = 'CANCELLED'`** | 25-sep-2026. `user-revocation`: sin borrar clave ni historial. Solo Editores y nunca uno mismo. El login no se bloquea (`F-214`, abierto) | `0037`, `F-214` |
 | **`Configuración` abre `INVT-01` directamente, y solo para el ADMIN** | 25-sep-2026. No existe `Ajustes` (`F-213`); `AppShell` gana un `onOpenSettings` opcional | `F-213` |
 | **`Contactar` en `DIR-02` abre el hilo existente; sin hilo previo está deshabilitado** | 25-sep-2026. El esquema no tiene hilo libre sin línea de inventario (`F-211`) | `F-211` |
+| **`F-214` y `F-178` se hacen con la recomendación de la sesión** | 26-sep-2026, PO. `F-214`: la app cierra la sesión del revocado (hecho); `banned_until` queda pendiente. `F-178`: el foro entra en `resetDemo` (hecho) | `F-214`, `F-178` |
+| **`F-212` y `F-211` se dejan como están** | 26-sep-2026, PO. `F-212`: el flujo de invitación entero es de producto, dependencia del alta de miembros. `F-211`: se decide con ADR-002 Q-1 delante; mientras, `Contactar` sin hilo sigue deshabilitado | `F-212`, `F-211` |

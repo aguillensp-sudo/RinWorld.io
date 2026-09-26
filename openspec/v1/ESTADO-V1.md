@@ -16,6 +16,8 @@ Empieza por §6 y luego §3.
 
 ---
 
+**Día 24 de V1 · 26-sep-2026 · Estado: EN CURSO.** El PO aprobó `DIR-02` e `INVT-01` (C5) y decidió `F-214`/`F-178` (hechos) y `F-212`/`F-211` (se dejan). Abajo, el cierre del Día 23 sin reescribir.
+
 **Día 23 de V1 · 25-sep-2026 · Estado: CERRADO.** Decisiones del PO sobre los pendientes
 (`F-192` riesgo aceptado; `F-196` aceptado; `F-201`/`F-202`/`F-204` cerrados sin acción) y dos
 pantallas más por el arnés: **`DIR-02` (VERDE al primer intento, 0 líneas tocadas) e `INVT-01`
@@ -44,24 +46,22 @@ Detalle en `diario/dia-23.md` (tercera parte).
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar
   `vera/index.ts`. Detalle en `FUNDACION-V1.md` §1 (sus fechas son del 6-sep).
-- **Corriente B · Fábrica — EN MARCHA.** **11 pantallas construidas, 9 aceptadas** (las 6
-  remedidas, `SRCH-03`, `INV-07` y `SRCH-02`) **y 2 verdes sin C5**: `DIR-02` e `INVT-01`.
+- **Corriente B · Fábrica — EN MARCHA.** **11 pantallas construidas y aceptadas** (las 6
+  remedidas, `SRCH-03`, `INV-07`, `SRCH-02`, `DIR-02` e `INVT-01`, estas dos el 26-sep).
   Faltan 13 de 24. Las cifras 7 y 8 solo tienen un punto limpio, `SRCH-03` (`F-205`); las
   dos de hoy comparten sesión y tampoco lo son.
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-1. **C5 del PO sobre `DIR-02` e `INVT-01`**, contra producción y sin pulsar nada que escriba
-   (`F-188`). En `INVT-01` lo que escribe (invitar, reenviar, eliminar) solo está medido en el
-   banco de esquema, no desde la pantalla: ver §6.
+1. ~~C5 de `DIR-02` e `INVT-01`~~ **aprobadas por el PO el 26-sep.** Lo que escribe en `INVT-01` sigue sin pulsarse: ver §6.
 2. **Elegir la duodécima pantalla y construirla en sesión propia con cronómetro**
    (`UMBRAL-FABRICA-V1.md` §8), para que las cifras 7 y 8 tengan un segundo punto limpio.
 3. **Comprobación tipográfica contra el HTML aprobado en el contrato de cada pantalla**
    (`F-209`): hoy se hizo a mano y encontró dos diferencias en `INVT-01`. El arnés no mide tamaños.
 4. **Copiar a cada tarea nueva las `_nota_*` que ya pagaron un error** (`F-216`): el tipo
    `string | undefined` de un módulo CSS (`F-143`) costó dos corridas.
-5. **Decisiones que esperan al PO** (§5): `F-178`, `F-211`, `F-212`, `F-214`.
+5. **`F-214`: falta `banned_until`** (Edge Function con la service key). Las demás decisiones están tomadas.
 6. Deuda sin fecha: `F-170` (contradicciones entre specs), `F-172` (buscador sin migrar en
    `INV-01`/`MSG-01`/`SentOffers`), `F-178` (foro sin teardown), `F-213` (no existe `Ajustes`).
 
@@ -89,8 +89,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-178`** · el foro sin teardown ni `resetDemo`; ya costó una corrida (`F-195`) | Sin decidir: foro en `resetDemo` o reacciones solo con mocks |
-| 🟠 | **`F-214`** · revocar un usuario no le impide iniciar sesión, solo le deja sin datos (RLS por `is_active_member`). Arreglos: `session.ts` trata `state ≠ ACTIVE` como acceso revocado y/o `banned_until` | PO: ¿se hace? Toca `session.ts`, `App` y Auth |
+| 🟠 | **`F-214`** · la app cierra la sesión del revocado (26-sep); **falta bloquear el login en Auth (`banned_until`)** | Edge Function con la service key |
 | 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token: no lleva a nadie a ningún sitio hasta que exista el flujo de registro por invitación | PO / producto |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede: no existe hilo libre en el esquema | PO: ¿hilo libre en mensajería? |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; GCP listo, cupo de Vertex pendiente de Anthropic | Anthropic |

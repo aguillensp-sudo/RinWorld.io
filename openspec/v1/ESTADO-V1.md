@@ -61,7 +61,7 @@ Detalle en `diario/dia-23.md` (tercera parte).
    (`F-209`): hoy se hizo a mano y encontró dos diferencias en `INVT-01`. El arnés no mide tamaños.
 4. **Copiar a cada tarea nueva las `_nota_*` que ya pagaron un error** (`F-216`): el tipo
    `string | undefined` de un módulo CSS (`F-143`) costó dos corridas.
-5. **Probar `F-214` con un ban real** (§6). Las demás decisiones están tomadas.
+5. Decisiones del PO tomadas; `F-214` cerrado y probado con un ban real.
 6. Deuda sin fecha: `F-170` (contradicciones entre specs), `F-172` (buscador sin migrar en
    `INV-01`/`MSG-01`/`SentOffers`), `F-178` (foro sin teardown), `F-213` (no existe `Ajustes`).
 
@@ -110,9 +110,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si invitar, reenviar y eliminar funcionan desde la pantalla de `INVT-01`.** Las tres
   funciones están medidas en el banco de esquema (11 asertos) y la pantalla en unidad y en
   un e2e de solo lectura; nadie ha pulsado `Enviar invitación` contra una base real.
-- **Si el ban de `F-214` funciona de verdad.** La Edge Function `ban-revoked-member` está
-  desplegada y rechaza bien (401/400), pero nadie ha revocado una cuenta real desde `INVT-01`
-  ni visto qué le sale al revocado. Una cuenta baneada tampoco se puede reinvitar sin quitarle el ban.
+- **Qué pasa al reinvitar el correo de una cuenta baneada** (`F-214`): el ban de Auth sigue
+  puesto y no hay operación inversa. El login del baneado dice `User is banned`, en inglés.
 - **Si `Contactar` de `DIR-02` abre el hilo correcto** con un clic real: el e2e lo abre y ve
   su cuerpo, pero no compara el hilo con el de la fila.
 - **Si `billing_confirm_payment` y `billing_suspend_organization` funcionan desde la

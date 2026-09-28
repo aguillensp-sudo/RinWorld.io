@@ -74,3 +74,22 @@ cuentas que hoy no se pueden completar.
 adicional`, `Usuario registrado correctamente.`, `Este email ya está registrado en la plataforma.` y
 `Equipo al completo` · `register-additional-member` responde 401 sin sesión y con la clave
 anónima, y 400 con contraseña floja o nombre corto. **No se ha creado ninguna cuenta con ella.**
+
+## Adenda del 28-sep-2026 · la C5 de `REG-09` y `FRU`, y `F-222`
+
+Puse a `alpha@bearingworld.test` en `KEY_ACTIVE` por SQL para que el PO pudiera ver las dos pantallas en
+producción. El PO las recorrió y **las aprobó**: `Registrar usuario` creó `alvaro@vistabahia.eu`
+(`auth.users` y `members`: EDITOR `REGISTERED`, confirmada, sin ban; **camino feliz de la Edge Function
+ejecutado de verdad**), `Ir al panel` devolvió a alpha a `ACTIVE` y `INVT-01` lista a los dos usuarios
+(`En alta`, con `Eliminar`). Un detalle de procedimiento: el PO miraba primero el proyecto de Supabase
+equivocado (`autonomos-ia-mvp`); el de Bearingworld es `MVP_RinWorld.io` (`troxminloxkjwihwfevs`).
+
+**Al entrar como la cuenta nueva, el PO vio `PANEL-01` con datos de Rodamientos Ibéricos.** Yo había
+escrito, en `0038`, `F-217` y el relevo, que un miembro que no es `ACTIVE` no lee nada; era falso. Medido
+suplantando su sesión en una transacción que se deshace: lee 15 líneas de inventario, 2 exclusiones, 2
+miembros, 5 hilos y 5 elementos de hilo. Siete políticas `SELECT` filtran por organización sin comprobar
+`ACTIVE` (`F-222`, del PO); las escrituras sí están protegidas y `thread_item_keys` devolvió 0, así que
+lo cifrado no se descifra. **El mismo agujero afecta a un `CANCELLED`** (conserva sus claves envueltas):
+`F-214` cerró el login, no la lectura durante la hora que puede seguir viva su sesión. Corregidas las
+afirmaciones falsas (`F-217`, comentario de `0038`). La corrección es la migración `0039`, pendiente de
+visto bueno porque toca la lectura de todas las pantallas.

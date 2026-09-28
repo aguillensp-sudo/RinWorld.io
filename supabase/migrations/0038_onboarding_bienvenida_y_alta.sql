@@ -18,7 +18,8 @@
 --   · No manda ningún correo (mismo criterio que INVT-01, F-212): no hay proveedor.
 --     La cuenta se crea confirmada y el ADMIN debe pasarle las credenciales.
 --   · No monta el flujo E2EE del nuevo usuario (REG-05, REG-06, REG-07 no existen):
---     queda `REGISTERED`, que no da acceso a ningún dato, hasta que ese flujo
+--     queda `REGISTERED`, que NO escribe nada pero SÍ lee datos de su organización
+--     (F-222: varias políticas SELECT no comprueban `ACTIVE`), hasta que ese flujo
 --     exista. Tampoco existe el camino que lleva a nadie a `KEY_ACTIVE`: REG-09 se
 --     ve hoy solo para un ADMIN que ya esté en ese estado.
 --

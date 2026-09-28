@@ -1,0 +1,96 @@
+
+==============================================================================
+· corrida arrancada 2026-09-28 08:53:55 · harness/tasks/REG-00-WAIT.json --corrida corrida-01
+==============================================================================
+Log de esta corrida: harness\metrics\REG-00-WAIT\corrida-01\REG-00-WAIT.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/AccessRequestWait.module.css', 'app/src/screens/onboarding/AccessRequestWait.tsx']
+  tokens in/out: 25565/15702   cache: 0.0% hit
+  coste real: $0.031975   en frio: $0.031975
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\REG-00-WAIT\corrida-01\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/AccessRequestWait.module.css', 'app/src/screens/onboarding/AccessRequestWait.tsx']
+  tokens in/out: 30520/5176   cache: 83.46% hit
+  coste real: $0.009410   en frio: $0.020261
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\REG-00-WAIT\corrida-01\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/AccessRequestWait.module.css', 'app/src/screens/onboarding/AccessRequestWait.tsx']
+  tokens in/out: 31649/9247   cache: 89.38% hit
+  coste real: $0.014081   en frio: $0.026132
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\REG-00-WAIT\corrida-01\attempt_3.json (F-122)
+  CSV: 2026-09-28,REG-00-WAIT,REG-00-WAIT,deepseek-v4-flash,25565,15702,0.031975,1,0.9,app/src/screens/onboarding/AccessRequestWait.module.css;app/src/screens/onboarding/AccessRequestWait.tsx,0.00,no,-,corrida-01,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-09-28,REG-00-WAIT,REG-00-WAIT,deepseek-v4-flash,30520,5176,0.009410,2,0.3,app/src/screens/onboarding/AccessRequestWait.module.css;app/src/screens/onboarding/AccessRequestWait.tsx,83.46,no,-,corrida-01,-,FALLA 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+  CSV: 2026-09-28,REG-00-WAIT,REG-00-WAIT,deepseek-v4-flash,31649,9247,0.014081,3,0.6,app/src/screens/onboarding/AccessRequestWait.module.css;app/src/screens/onboarding/AccessRequestWait.tsx,89.38,si,-,corrida-01,-,ESCALADO 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\REG-00-WAIT\corrida-01\attempt_1.json
+  harness\metrics\REG-00-WAIT\corrida-01\attempt_2.json
+  harness\metrics\REG-00-WAIT\corrida-01\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C2 ROJO
+suite e2e COMPLETA (exit 1) · 4 fallo(s) SI son de este artefacto:
+  · e2e\admin-billing.spec.ts:126:3 › ADMIN-02 · gestión de cobros real › las dos suspendidas de la siembra: Ruiz suspendida, Timken candidata a borrado
+  · e2e\admin-billing.spec.ts:132:3 › ADMIN-02 · gestión de cobros real › la sección "Candidatas a borrado" lista a Timken, con Iniciar borrado deshabilitado
+  · e2e\admin-billing.spec.ts:156:3 › ADMIN-02 · gestión de cobros real › el panel de una suspendida enseña la transición automática
+  · e2e\admin-billing.spec.ts:173:3 › ADMIN-02 · gestión de cobros real › el modal de pago se abre con la fecha de hoy y se cancela SIN escribir nada
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('heading', { name: /^¡Bienvenido a Bearingworld\.io, .+!$/, level: 1 })
+
+
+      53 |     await comoKeyActive(page);
+      54 |     await signIn(page, ALPHA);
+    > 55 |     await expect(page.getByRole('heading', { level: 1, name: /^¡Bienvenido a Bearingworld\.io, .+!$/ })).toBeVisible();
+         |                                                                                                          ^
+      56 |     await expect(page.getByText(/ya está activa\. Antes de ir al panel/)).toContainText('Rodamientos Ibéricos');
+      57 |     await expect(page.getByText('¿Deseas añadir usuarios ahora?')).toBeVisible();
+      58 |     await expect(page.getByRole('button', { name: 'Sí, añadir un usuario ahora' })).toBeEnabled();
+        at C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app\e2e\onboarding.spec.ts:55:106
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\onboarding-REG-09-·-bienve-b7555--dos-botones-y-SIN-contador-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\onboarding-REG-09-·-bienve-b7555--dos-botones-y-SIN-contador-chromium\error-context.md
+
+  6 failed
+    [chromium] › e2e\admin-billing.spec.ts:126:3 › ADMIN-02 · gestión de cobros real › las dos suspendidas de la siembra: Ruiz suspendida, Timken candidata a borrado 
+    [chromium] › e2e\admin-billing.spec.ts:132:3 › ADMIN-02 · gestión de cobros real › la sección "Candidatas a borrado" lista a Timken, con Iniciar borrado deshabilitado 
+    [chromium] › e2e\admin-billing.spec.ts:156:3 › ADMIN-02 · gestión de cobros real › el panel de una suspendida enseña la transición automática 
+    [chromium] › e2e\admin-billing.spec.ts:173:3 › ADMIN-02 · gestión de cobros real › el modal de pago se abre con la fecha de hoy y se cancela SIN escribir nada 
+    [chromium] › e2e\invitations.spec.ts:119:5 › INVT-01 · quién llega a la pantalla › el ADMIN de Rodamientos Ibéricos › ve la pantalla desde «Configuración», con su propia organización: 1/5 
+    [chromium] › e2e\onboarding.spec.ts:52:3 › REG-09 · bienvenida · ADMIN en KEY_ACTIVE › un ADMIN solo: título de bienvenida, su organización, los dos botones y SIN contador 
+  129 passed (1.6m)
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] npm notice run bearingworld-app@0.1.0 preview
+[WebServer] npm notice run vite preview
+2 fallo(s) de la suite e2e NO se le apuntan al Coder: la tarea los declara fuera de su contrato (F-134). La suite se corrio ENTERA y aqui estan, uno por uno:
+  · e2e\invitations.spec.ts:119:5 › INVT-01 · quién llega a la pantalla › el ADMIN de Rodamientos Ibéricos › ve la pantalla desde «Configuración», con su propia organización: 1/5
+      motivo: INVT-01 cuenta `1/5` plazas. F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito (ESTADO-V1 §3.1): ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita.
+  · e2e\onboarding.spec.ts:52:3 › REG-09 · bienvenida · ADMIN en KEY_ACTIVE › un ADMIN solo: título de bienvenida, su organización, los dos botones y SIN contador
+      motivo: REG-09 espera un ADMIN sin nadie mas (sin contador). F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito (ESTADO-V1 §3.1): ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita.

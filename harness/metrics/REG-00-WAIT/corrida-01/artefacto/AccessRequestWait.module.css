@@ -1,0 +1,307 @@
+/* =============================================================================
+   REG-00-WAIT — Espera de aprobación del Operador (Ruta 00.2)
+
+   Pantalla completa sin shell: su raíz es hija directa de `#root`, que es
+   `position: fixed; inset: 0` y NO declara overflow. Por eso `.page` lleva
+   `height: 100%` y `overflow-y: auto` propios: sin ellos, una tarjeta más alta
+   que la ventana se recortaría sin barra.
+
+   Ningún color literal: todo sale de `tokens.css` como `var(--bw-…)`. Faltan dos
+   tokens de blanco puro en el sistema (el `#ffffff` del HTML aprobado para la
+   tarjeta y para el texto del botón): se usan los neutros de superficie clara
+   más cercanos —`--bw-surface-mist` y `--bw-cold-white`— en vez de inventar un
+   valor; si algún día entra un `--bw-white`, se cambian aquí y en ningún sitio
+   más.
+
+   Tipografía del HTML aprobado, no de los tokens (F-209): el eyebrow a 11 px y
+   el título a 22 px (`.wc-eyebrow` y `.wc-title`), no los 14/28 px de
+   `--bw-size-eyebrow` y `--bw-size-title`.
+   ========================================================================== */
+
+.page {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bw-deep-steel);
+  font-family: var(--bw-font-body);
+  color: var(--bw-deep-steel);
+}
+
+/* ── Barra de marca ──────────────────────────────────────────────────────── */
+
+.brandBar {
+  height: var(--bw-h-brand);
+  flex-shrink: 0;
+  background: var(--bw-deep-steel-darkest);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bw-pad-brand);
+  font-size: var(--bw-size-brand);
+  letter-spacing: var(--bw-ls-brand);
+  text-transform: uppercase;
+  color: var(--bw-on-dark-brand);
+}
+
+/* ── Cabecera mínima: solo el logo ───────────────────────────────────────── */
+
+.header {
+  height: var(--bw-h-logo-height);
+  flex-shrink: 0;
+  background: var(--bw-deep-steel-darkest);
+  border-bottom: 0.5px solid var(--bw-on-dark-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  display: block;
+  height: var(--bw-h-logo-height);
+  width: auto;
+}
+
+/* ── Cuerpo: la tarjeta, centrada sobre Deep Steel ───────────────────────── */
+
+.body {
+  flex: 1 0 auto;
+  background: var(--bw-deep-steel);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px 48px;
+}
+
+.card {
+  background: var(--bw-surface-mist);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 560px;
+  padding: 40px 44px 36px;
+  /* El único token oscuro translúcido del sistema; el HTML aprobado usa un
+     rgba(0,0,0,0.28) y aquí no se escribe ningún literal. */
+  box-shadow: 0 4px 32px var(--bw-sidebar-overlay);
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px; /* F-209: .wc-eyebrow del HTML aprobado */
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin: 0 0 24px;
+}
+
+/* ── Rodamiento: el elemento signature de la espera ──────────────────────── */
+
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.bearing {
+  display: block;
+  color: var(--bw-brass); /* el SVG dibuja con `currentColor` */
+}
+
+.spinning {
+  animation-name: spin;
+  animation-duration: 10s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinnerLabel {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bw-brass);
+  margin: 0;
+}
+
+/* ── Título y subtítulo ──────────────────────────────────────────────────── */
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 22px; /* F-209: .wc-title del HTML aprobado */
+  letter-spacing: 0.3px;
+  color: var(--bw-deep-steel);
+  line-height: 1.25;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+
+/* ── Distintivo de estado ────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  margin-bottom: 24px;
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.badgeReview {
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  color: var(--bw-brass);
+}
+
+.badgeApproved {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-signal-green);
+}
+
+.badgeRejected {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning);
+}
+
+/* ── Aviso de aprobada / rechazada ───────────────────────────────────────── */
+
+.notice {
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.noticeApproved {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+.noticeRejected {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning-dark);
+}
+
+/* ── Datos enviados ──────────────────────────────────────────────────────── */
+
+.summary {
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.summaryHeader {
+  background: var(--bw-cold-white);
+  padding: 8px 14px;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--bw-steel-mist);
+  margin: 0;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  padding: 9px 14px;
+}
+
+/* Divisor interno entre filas, nunca antes de la primera. */
+.summaryRow + .summaryRow {
+  border-top: 1px solid var(--bw-divider-mist);
+}
+
+.summaryLabel {
+  width: 140px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-steel-mist);
+}
+
+.summaryValue {
+  font-size: 13px;
+  color: var(--bw-deep-steel);
+  word-break: break-word;
+}
+
+/* ── Aviso de pantalla de un solo uso ────────────────────────────────────── */
+
+.singleUse {
+  border-left: 3px solid var(--bw-brass);
+  background: var(--bw-tag-bg);
+  padding: 12px 14px;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.singleUse strong {
+  color: var(--bw-brass);
+  font-weight: 500;
+}
+
+/* ── Cierre voluntario ───────────────────────────────────────────────────── */
+
+.close {
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  /* Texto claro sobre el azul de calibración: el neutro más claro del sistema. */
+  color: var(--bw-surface-mist);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.close:hover {
+  background: var(--bw-primary-dark);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 2px;
+}

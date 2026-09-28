@@ -41,7 +41,18 @@
     "e2e": [
       "app/e2e/access-request.spec.ts"
     ],
-    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementacion de referencia desechable (no comiteada) antes de la corrida: el contrato se puede cumplir. El e2e va sin sesion contra el build y NO ENVIA (F-188): llega desde el login y desde `#solicitud-de-registro`, rellena y ve el boton habilitado, y vuelve al login por el enlace de invitacion."
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementacion de referencia desechable (no comiteada) antes de la corrida: el contrato se puede cumplir. El e2e va sin sesion contra el build y NO ENVIA (F-188): llega desde el login y desde `#solicitud-de-registro`, rellena y ve el boton habilitado, y vuelve al login por el enlace de invitacion.",
+    "_nota_e2e_fuera_de_contrato": "F-134. C2 corre la suite e2e ENTERA; solo cambia a quien se apunta el fallo. Se excusan DOS tests, uno por uno, por F-224 (descubierto en la corrida 01 de REG-00, que por eso no cuenta). Los `test` van en ASCII (se casan por subcadena).",
+    "e2e_fuera_de_contrato": [
+      {
+        "test": "ve la pantalla desde",
+        "motivo": "INVT-01 cuenta `1/5` plazas. F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito (ESTADO-V1 §3.1): ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "un ADMIN solo",
+        "motivo": "REG-09 espera un ADMIN sin nadie mas (sin contador). F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito (ESTADO-V1 §3.1): ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita."
+      }
+    ]
   },
   "out_of_scope": [
     "EL PANEL DE VERA del HTML aprobado (spec §5, `Asistente de acceso`): VERA solo responde con sesion (la funcion `vera` exige Authorization) y abrirla a quien no tiene cuenta es una decision de coste y de abuso que no toma esta tarea. La conversacion de la spec es de demostracion. NO se pinta ningun panel de VERA, ni estatico.",

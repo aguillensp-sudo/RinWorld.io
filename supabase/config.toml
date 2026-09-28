@@ -73,3 +73,11 @@ project_id = "troxminloxkjwihwfevs"
 # `postgres:16-alpine` de la suite de esquema, que es otra base y no tiene por
 # qué coincidir.
 major_version = 17
+
+[functions.access-request]
+# REG-00 / REG-00-WAIT (28-sep-2026): la única función que atiende a quien NO
+# tiene sesión. Sin esto la pasarela exige un JWT, y la clave publicable
+# (`sb_publishable_…`) no lo es: el FSR daría 401 antes de llegar al código. La
+# función no se fía del que llama (valida, frena el abuso y escribe con
+# `service_role`); el paso de CI la despliega además con `--no-verify-jwt`.
+verify_jwt = false

@@ -1,4 +1,307 @@
-/* REG-00-WAIT · AccessRequestWait — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
+/* =============================================================================
+   REG-00-WAIT — Espera de aprobación del Operador (Módulo 01, Ruta 00.2)
+   =============================================================================
+   Ningún color literal: todo sale de tokens.css. Dos ausencias de la paleta que
+   se resuelven con el token más cercano (ver comentarios en `.card` y `.close`)
+   en lugar de inventar un hex.
+
+   Tipografía: el eyebrow a 11 px y el título a 22 px son los del HTML aprobado
+   (`.wc-eyebrow` / `.wc-title`), NO `--bw-size-eyebrow` (14) ni `--bw-size-title`
+   (28). F-209.
+   ========================================================================== */
+
+/* Esta pantalla NO va dentro del shell: su raíz es hija directa de `#root`, que
+   es `position: fixed; inset: 0` y no declara overflow. Sin `height: 100%` y
+   `overflow-y: auto` propios, una tarjeta más alta que la ventana se recortaría
+   sin barra y no habría forma de llegar al botón. */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bw-deep-steel);
+}
+
+/* ── Barra de marca ──────────────────────────────────────────────────────── */
+
+.brandBar {
+  flex-shrink: 0;
+  height: var(--bw-h-brand);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bw-pad-brand);
+  background: var(--bw-deep-steel-darkest);
+  color: var(--bw-on-dark-brand);
+  font-size: var(--bw-size-brand);
+  font-weight: 400;
+  letter-spacing: var(--bw-ls-brand);
+  text-transform: uppercase;
+}
+
+/* ── Cabecera mínima: solo el logo ───────────────────────────────────────── */
+
+.header {
+  flex-shrink: 0;
+  height: var(--bw-w-logo-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bw-deep-steel-darkest);
+  border-bottom: 0.5px solid var(--bw-on-dark-hairline);
+}
+
+.logo {
   display: block;
+  height: var(--bw-w-logo-height);
+  width: auto;
+}
+
+/* ── Fondo y tarjeta ─────────────────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px 48px;
+  background: var(--bw-deep-steel);
+}
+
+/* El HTML aprobado pinta la tarjeta en #ffffff, que no está en la paleta: se usa
+   el blanco cálido de tokens.css, el token más cercano. */
+.card {
+  width: 100%;
+  max-width: 560px;
+  padding: 40px 44px 36px;
+  background: var(--bw-warm-cream);
+  border-radius: 6px;
+  box-shadow: 0 4px 32px var(--bw-sidebar-overlay);
+}
+
+.eyebrow {
+  margin-bottom: 24px;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+}
+
+/* ── Rodamiento ──────────────────────────────────────────────────────────── */
+
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+/* `currentColor` en el SVG: el brass sale de aquí, no de un atributo literal. */
+.bearing {
+  display: block;
+  color: var(--bw-brass);
+}
+
+.bearing.spinning {
+  animation: bwBearingSpin 10s linear infinite;
+}
+
+@keyframes bwBearingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinnerLabel {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bw-brass);
+}
+
+/* ── Título y subtítulo ──────────────────────────────────────────────────── */
+
+.title {
+  margin-bottom: 8px;
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: 0.3px;
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin-bottom: 28px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+}
+
+/* ── Distintivo de estado ────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 24px;
+  padding: 5px 12px;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.badgeReview {
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  color: var(--bw-brass);
+}
+
+.badgeApproved {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-signal-green);
+}
+
+.badgeRejected {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning);
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Aviso de resolución ─────────────────────────────────────────────────── */
+
+.notice {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.noticeApproved {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+/* El HTML aprobado tiñe el rechazo en ámbar (`#b45309`), no en rojo puro: es el
+   mismo tono de aviso del distintivo rechazado. */
+.noticeRejected {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning-dark);
+}
+
+/* ── Datos enviados ──────────────────────────────────────────────────────── */
+
+.summary {
+  margin-bottom: 20px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.summaryHeader {
+  padding: 8px 14px;
+  background: var(--bw-cold-white);
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--bw-steel-mist);
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-top: 1px solid var(--bw-divider-mist);
+}
+
+/* La primera fila no lleva divisor: el borde de arriba lo pone el encabezado. */
+.summaryHeader + .summaryRow {
+  border-top: none;
+}
+
+.summaryLabel {
+  width: 140px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-steel-mist);
+}
+
+.summaryValue {
+  font-size: 13px;
+  color: var(--bw-deep-steel);
+  word-break: break-word;
+  min-width: 0;
+}
+
+/* ── Pantalla de un solo uso ─────────────────────────────────────────────── */
+
+.singleUse {
+  margin-bottom: 24px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--bw-brass);
+  border-radius: 0 4px 4px 0;
+  background: var(--bw-tag-bg);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+}
+
+.singleUse p {
+  margin: 0;
+}
+
+.singleUse strong {
+  font-weight: 500;
+  color: var(--bw-brass);
+}
+
+/* ── Botón de cierre ─────────────────────────────────────────────────────── */
+
+.close {
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  /* El texto del botón es blanco en el HTML aprobado; no hay token de blanco
+     puro, así que se usa el más claro de la paleta. */
+  color: var(--bw-cold-white);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.close:hover {
+  background: var(--bw-primary-dark);
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
 }

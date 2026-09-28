@@ -31,6 +31,15 @@ vi.mock('../../lib/access-request', async (importOriginal) => ({
 
 const { AccessRequest } = await import('./AccessRequest');
 
+/**
+ * 28-sep, tras la corrida de REG-00: rellenar los seis campos tecla a tecla son
+ * ~90 pulsaciones, y con la suite entera en paralelo dos tests pasaban de los 5 s
+ * por defecto (medido: 5 037 a 5 092 ms) y fallaban a ratos. Se sube el límite,
+ * no se toca ningún aserto: un test que falla por reloj cargado se le cobraría
+ * al Coder de la tarea que corra a continuación.
+ */
+vi.setConfig({ testTimeout: 20_000 });
+
 const onSubmitted = vi.fn<(request: SubmittedAccessRequest) => void>();
 const onHaveInvitation = vi.fn<() => void>();
 

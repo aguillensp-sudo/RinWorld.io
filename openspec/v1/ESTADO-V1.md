@@ -20,7 +20,7 @@ Empieza por §6 y luego §3.
 `INVT-01`; `F-214` (cerrado, ban real probado) y `F-178` (cerrado); y dos pantallas por el arnés:
 **`REG-09` (VERDE en 2, 0 tocadas) y `FRU` (VERDE en 2, +2/−2), aprobadas por el PO el 28-sep tras
 probarlas en producción** (`Registrar usuario` y `Ir al panel` incluidos). **Al probarlas apareció
-`F-222`, de seguridad y del PO.** Detalle en `diario/dia-24.md`.
+`F-222` (un no `ACTIVE` leía datos de su organización), cerrado el 28-sep con `0039`.** Detalle en `diario/dia-24.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
@@ -37,6 +37,7 @@ probarlas en producción** (`Registrar usuario` y `Ir al panel` incluidos). **Al
 | Fidelidad tipográfica | Reglas CSS del HTML aprobado contra las del artefacto | `REG-09` coincide; `FRU`: eyebrow 11 px y título 22 px corregidos a mano, el resto coincide |
 | CI y producción | `gh run view` en `b6d2323` y `curl` del bundle de `rin-world-io.vercel.app` (F-168) | Seis jobs verdes; el bundle trae las cuatro frases de `REG-09`/`FRU` y no las variables rotas |
 | `register-additional-member` | `curl` sin sesión, con la clave anónima y con cuerpos inválidos | 401, 401, 400, 400. **No se creó ninguna cuenta con ella** |
+| `0039` en las dos bases (28-sep) | `apply_migration`, `pg_policies` (7 con `is_active_member`) y la lectura de `alvaro` (REGISTERED) suplantada en transacción que se deshace, antes y después | 15/2/2/5/5 filas → **1 (la suya) y 0**; alpha ACTIVE lee lo suyo. Banco de esquema: 272 `OK`, el bloque nuevo falla sin `0039` y pasa con ella |
 | C5 de `REG-09`/`FRU` (28-sep) | El PO en producción: `Registrar usuario` creó `alvaro@vistabahia.eu` (comprobado en `auth.users` y `members`: EDITOR `REGISTERED`, confirmada, sin ban); `Ir al panel` devolvió a alpha a `ACTIVE` (SQL); `INVT-01` lista a los dos con `En alta` y `Eliminar` | Aprobadas. El `REGISTERED` ve `PANEL-01` con datos de su organización → `F-222` |
 | Decisiones del PO | El PO, en el chat, 26-sep | `F-214`/`F-178` con mi recomendación; `F-212`/`F-211` como están; `diario/dia-24.md` y `DECISIONES-V1.md` |
 
@@ -54,8 +55,8 @@ probarlas en producción** (`Registrar usuario` y `Ir al panel` incluidos). **Al
 
 ## 3 · Qué toca, en este orden
 
-1. **`F-222` (PO): aplicar `0039`**, que añade `is_active_member()` a las 7 políticas `SELECT` que no lo
-   tienen. Un `REGISTERED` y un `CANCELLED` leen hoy inventario, miembros e hilos de su organización.
+1. **Comprobar en pantalla que el `REGISTERED` ve el shell vacío** (`alvaro@vistabahia.eu`, que se dejó
+   a propósito): tras `0039` no debería ver nada de Rodamientos Ibéricos en `PANEL-01`.
 2. **Elegir la decimocuarta pantalla y construirla en sesión propia con cronómetro**
    (`UMBRAL-FABRICA-V1.md` §8), para que las cifras 7 y 8 tengan un segundo punto limpio.
 3. **Antes de cada corrida, `tsc --noEmit` y `vitest` sobre el árbol con los marcadores**, y
@@ -99,7 +100,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-222`** · un miembro no `ACTIVE` (`REGISTERED`, `CANCELLED`) lee inventario, miembros e hilos de su organización; las escrituras sí están protegidas | PO: ¿aplico `0039`? (recomendado ya) |
 | 🟠 | **`F-217`** · el alta de `FRU` crea una cuenta de Auth con contraseña del ADMIN, sin correo, que queda `REGISTERED` y sin flujo para activarse | PO: ¿flujo E2EE del nuevo usuario primero, o invitación con enlace (`F-212`)? |
 | 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token | PO / producto (se deja como está, 26-sep) |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Se decide con ADR-002 Q-1 delante (26-sep) |
@@ -121,7 +121,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ## 6 · Lo que este fichero NO sabe
 
-- **Qué le pasa a `alvaro@vistabahia.eu` si el PO borra su fila**, y si conviene dejarla: la cuenta de
+- **Qué ve `alvaro@vistabahia.eu` en pantalla tras `0039`** (medido por SQL, no visto), y si conviene dejarla: la cuenta de
   prueba de `FRU` sigue en `auth.users` y `members` (`REGISTERED`), y ocupa una plaza de Rodamientos Ibéricos.
 - **Si invitar y reenviar funcionan desde la pantalla de `INVT-01`.** Las funciones están medidas en el
   banco de esquema (11 asertos); `Eliminar` sí se probó hoy con una cuenta real (`F-214`).

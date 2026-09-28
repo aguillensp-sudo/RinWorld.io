@@ -2466,6 +2466,140 @@ begin;
 commit;
 
 -- -----------------------------------------------------------------------------
+-- 0039 · la lectura exige ser miembro ACTIVE (F-222)
+-- -----------------------------------------------------------------------------
+-- El test de 0037 medio la FUNCION (`not app.is_active_member()`) y no la LECTURA, y por
+-- eso no vio que siete politicas SELECT no la llamaban. Este bloque mide la lectura, con
+-- datos propios en TODAS las tablas: una organizacion Foxtrot con un ADMIN ACTIVE (f1) y un
+-- Editor (f2) que primero esta REGISTERED y despues CANCELLED. Foxtrot tiene inventario,
+-- una exclusion, un hilo con Alpha, un elemento de hilo, una clave envuelta PARA f2 (lo que
+-- conserva un revocado) y un favorito de f2. f2 tiene que leer CERO de todo ello y solo su
+-- propia fila de `members`; f1 sigue leyendo lo de siempre.
+create function public.f222_lecturas() returns text
+language sql stable as $$
+  select concat_ws(',',
+    (select count(*) from public.inventory_lines),
+    (select count(*) from public.inventory_exclusions),
+    (select count(*) from public.threads),
+    (select count(*) from public.thread_items),
+    (select count(*) from public.thread_item_keys),
+    (select count(*) from public.favorite_distributors));
+$$;
+grant execute on function public.f222_lecturas() to authenticated;
+
+insert into public.organizations (id, name, country, continent, status)
+values ('66666666-6666-6666-6666-666666666666', 'Foxtrot Test', 'IT', 'EU', 'APPROVED');
+
+insert into auth.users (id, email) values
+  ('3f000001-0000-0000-0000-000000000001', 'f1@foxtrot.test'),
+  ('3f000002-0000-0000-0000-000000000002', 'f2@foxtrot.test');
+
+insert into public.members (id, org_id, email, state)
+values ('3f000001-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666', 'f1@foxtrot.test', 'ACTIVE');
+insert into public.members (id, org_id, email, state)
+values ('3f000002-0000-0000-0000-000000000002', '66666666-6666-6666-6666-666666666666', 'f2@foxtrot.test', 'REGISTERED');
+
+insert into public.inventory_lines
+  (id, org_id, part_number, brand, quantity, location_country, product_family, status)
+values ('3f100000-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666',
+        'F-6205', 'SKF', 10, 'IT', 'Rodamiento rigido de bolas', 'PUBLISHED');
+
+insert into public.inventory_exclusions (owner_org_id, excluded_continent)
+values ('66666666-6666-6666-6666-666666666666', 'NA');
+
+insert into public.threads (id, org_low_id, org_high_id, created_by_org_id)
+select '3f200000-0000-0000-0000-000000000001',
+       least(o.org_id, '66666666-6666-6666-6666-666666666666'::uuid),
+       greatest(o.org_id, '66666666-6666-6666-6666-666666666666'::uuid),
+       '66666666-6666-6666-6666-666666666666'::uuid   -- crea Foxtrot: el tope de 25 hilos/dia es por organizacion creadora
+  from (select org_id from public.members where id = '0a000001-0000-0000-0000-000000000001') o;
+
+insert into public.thread_items
+  (id, thread_id, sender_org_id, sender_member_id, item_type,
+   part_number, brand, inventory_line_id, estado_consulta, content_ciphertext, content_iv)
+select '3f300000-0000-0000-0000-000000000001', '3f200000-0000-0000-0000-000000000001',
+       m.org_id, m.id, 'CONSULTA', 'F-6205', 'SKF',
+       '3f100000-0000-0000-0000-000000000001', 'Pendiente',
+       decode(repeat('aa', 64), 'hex'), decode(repeat('04', 12), 'hex')
+  from public.members m where m.id = '0a000001-0000-0000-0000-000000000001';
+
+insert into public.thread_item_keys (item_id, recipient_member_id, wrapped_cek, wrap_iv, ephemeral_pubkey)
+values ('3f300000-0000-0000-0000-000000000001', '3f000002-0000-0000-0000-000000000002',
+        decode(repeat('11', 48), 'hex'), decode(repeat('07', 12), 'hex'), decode(repeat('22', 32), 'hex'));
+
+insert into public.favorite_distributors (member_id, distributor_org_id)
+values ('3f000002-0000-0000-0000-000000000002', (select org_id from public.members where id = '0a000001-0000-0000-0000-000000000001'));
+
+-- 1 · f1 (ADMIN ACTIVE) lee todo lo suyo.
+begin;
+  select set_config('request.jwt.claim.sub', '3f000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.inventory_lines where org_id = '66666666-6666-6666-6666-666666666666') = 1,
+      '0039: un ADMIN ACTIVE lee el inventario de su organizacion';
+    assert (select count(*) from public.inventory_exclusions where owner_org_id = '66666666-6666-6666-6666-666666666666') = 1,
+      '0039: sus exclusiones';
+    assert (select count(*) from public.threads where id = '3f200000-0000-0000-0000-000000000001') = 1, '0039: sus hilos';
+    assert (select count(*) from public.thread_items where id = '3f300000-0000-0000-0000-000000000001') = 1, '0039: sus elementos de hilo';
+    assert (select count(*) from public.members where org_id = '66666666-6666-6666-6666-666666666666') = 2,
+      '0039: y los dos miembros de su organizacion, tambien el aun REGISTERED';
+    raise notice 'OK · 0039: un miembro ACTIVE lee lo de siempre';
+  end
+  $$;
+commit;
+
+-- 2 · f2 REGISTERED: solo su propia fila, y cero en las seis tablas.
+begin;
+  select set_config('request.jwt.claim.sub', '3f000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert not app.is_active_member(), '0039: el ancla -- f2 no es miembro activo';
+    assert (select count(*) from public.members) = 1, '0039: un REGISTERED lee solo UNA fila de members';
+    assert (select count(*) from public.members where id = auth.uid()) = 1, '0039: la suya (session.ts la necesita)';
+    assert public.f222_lecturas() = '0,0,0,0,0,0',
+      '0039: un REGISTERED lee cero de inventario, exclusiones, hilos, elementos, claves y favoritos: ' || public.f222_lecturas();
+    raise notice 'OK · 0039: un REGISTERED no lee nada de su organizacion';
+  end
+  $$;
+commit;
+
+-- 3 · f2 CANCELLED (revocado): lo mismo, aunque conserve sesion Y su clave envuelta.
+update public.members set state = 'CANCELLED' where id = '3f000002-0000-0000-0000-000000000002';
+do $$
+begin
+  assert (select count(*) from public.thread_item_keys where recipient_member_id = '3f000002-0000-0000-0000-000000000002') = 1,
+    '0039: el ancla -- la clave envuelta de f2 existe (user-revocation no la toca)';
+end
+$$;
+begin;
+  select set_config('request.jwt.claim.sub', '3f000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.members) = 1,
+      '0039: un CANCELLED lee solo su propia fila de members (para que la app le diga que esta revocado)';
+    assert public.f222_lecturas() = '0,0,0,0,0,0',
+      '0039: un CANCELLED lee cero de las seis tablas, aunque conserve su clave: ' || public.f222_lecturas();
+    raise notice 'OK · 0039: un CANCELLED no lee nada de su organizacion ni descifra su historial';
+  end
+  $$;
+commit;
+
+-- Terreno devuelto.
+delete from public.thread_item_keys where item_id = '3f300000-0000-0000-0000-000000000001';
+delete from public.thread_items where id = '3f300000-0000-0000-0000-000000000001';
+delete from public.threads where id = '3f200000-0000-0000-0000-000000000001';
+delete from public.favorite_distributors where member_id = '3f000002-0000-0000-0000-000000000002';
+delete from public.inventory_exclusions where owner_org_id = '66666666-6666-6666-6666-666666666666';
+delete from public.inventory_lines where org_id = '66666666-6666-6666-6666-666666666666';
+delete from public.members where org_id = '66666666-6666-6666-6666-666666666666';
+delete from public.organizations where id = '66666666-6666-6666-6666-666666666666';
+delete from auth.users where id in ('3f000001-0000-0000-0000-000000000001', '3f000002-0000-0000-0000-000000000002');
+drop function public.f222_lecturas();
+
+-- -----------------------------------------------------------------------------
 -- 0028 · la cola de solicitudes solo la ve y la decide el Operador
 -- -----------------------------------------------------------------------------
 -- ADMIN-01 estrena un actor que el esquema no tenia: alguien sin organizacion

@@ -309,4 +309,4 @@ fallback P-256.
 | [F-219](findings/F-219.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` en el árbol tumbaba `C1` y `C2` de `REG-09`: verde imposible en los tres intentos | Cerrado para `REG-09` |
 | [F-220](findings/F-220.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` no compilaba (`TS6133`, constante sin usar): `C1` rojo en los tres intentos; validé en seco y no ejecuté `tsc` | Cerrado para `FRU` |
 | [F-221](findings/F-221.md) | 2026-09-26 | `INFRA` | La comprobación por contenido del despliegue dio 404 unos segundos tras desplegar (carrera de propagación de Vercel) | Cerrado: reintentos |
-| [F-222](findings/F-222.md) | 2026-09-28 | `SEGURIDAD` | Un miembro no `ACTIVE` (`REGISTERED`, y también `CANCELLED`) lee inventario, miembros e hilos de su organización: 7 políticas `SELECT` sin `is_active_member()`. Yo había afirmado lo contrario | ABIERTO, del PO |
+| [F-222](findings/F-222.md) | 2026-09-28 | `SEGURIDAD` | Un miembro no `ACTIVE` (`REGISTERED`, y también `CANCELLED`) lee inventario, miembros e hilos de su organización: 7 políticas `SELECT` sin `is_active_member()`. Yo había afirmado lo contrario | CERRADO 28-sep: `0039` en las dos bases |

@@ -93,3 +93,5 @@ lo cifrado no se descifra. **El mismo agujero afecta a un `CANCELLED`** (conserv
 `F-214` cerró el login, no la lectura durante la hora que puede seguir viva su sesión. Corregidas las
 afirmaciones falsas (`F-217`, comentario de `0038`). La corrección es la migración `0039`, pendiente de
 visto bueno porque toca la lectura de todas las pantallas.
+
+**Cierre de `F-222` (28-sep).** El PO dio el visto bueno y apliqué `0039` (`ALTER POLICY` sobre las siete). Antes de aplicarla escribí el test contra datos propios en las seis tablas y comprobé que **falla sin la migración y pasa con ella**; su ancla cazó que mi primera versión medía contra una organización sin inventario (habría pasado en vacío), y un segundo choque con el tope de 25 hilos diarios por organización creadora obligó a que Foxtrot cree su hilo. En producción, la lectura de `alvaro` pasó de 15/2/2/5/5 filas a 1 (la suya) y 0. Docker Desktop estaba parado y lo arranqué a mano. Se deja a `alvaro@vistabahia.eu`.

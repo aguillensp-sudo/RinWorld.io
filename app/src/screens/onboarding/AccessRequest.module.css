@@ -33,7 +33,7 @@
 
 .header {
   flex-shrink: 0;
-  height: var(--bw-h-logo-height);
+  height: var(--bw-w-logo-height);
   background: var(--bw-deep-steel-darkest);
   display: flex;
   align-items: center;
@@ -42,7 +42,7 @@
 }
 
 .logo {
-  height: var(--bw-h-logo-height);
+  height: var(--bw-w-logo-height);
   width: auto;
   display: block;
 }

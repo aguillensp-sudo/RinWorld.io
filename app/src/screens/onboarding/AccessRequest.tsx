@@ -111,6 +111,7 @@ export function AccessRequest({
               const meta = FIELD_META[field];
               const error = fieldErrors[field];
               const inputId = `access-request-${field}`;
+              const errorId = `${inputId}-error`;
               const invalid = error !== undefined;
               return (
                 <div key={field} className={styles.field}>
@@ -132,6 +133,7 @@ export function AccessRequest({
                       name={field}
                       value={form.country}
                       aria-invalid={invalid ? true : undefined}
+                      aria-describedby={invalid ? errorId : undefined}
                       onChange={(event) => setField(field, event.target.value)}
                       onBlur={() => handleBlur(field)}
                     >
@@ -154,11 +156,16 @@ export function AccessRequest({
                       maxLength={meta.maxLength}
                       value={form[field]}
                       aria-invalid={invalid ? true : undefined}
+                      aria-describedby={invalid ? errorId : undefined}
                       onChange={(event) => setField(field, event.target.value)}
                       onBlur={() => handleBlur(field)}
                     />
                   )}
-                  {invalid && <span className={styles.error}>{error}</span>}
+                  {invalid && (
+                    <span id={errorId} className={styles.error}>
+                      {error}
+                    </span>
+                  )}
                 </div>
               );
             })}

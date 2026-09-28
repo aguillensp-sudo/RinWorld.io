@@ -1,4 +1,235 @@
-/* REG-00 · AccessRequest — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
+/* REG-00 — FSR · Formulario de Solicitud de Registro (Ruta 00.2).
+   Sin shell: la raíz es hija directa de `#root`, que es `position: fixed` e
+   `inset: 0` SIN overflow declarado. Por eso `.page` lleva `height: 100%` y
+   `overflow-y: auto`: si no, un formulario más alto que la ventana se recorta
+   sin barra. Todos los colores salen de tokens.css; ningún valor literal. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bw-deep-steel);
+}
+
+/* ── Barra de marca ──────────────────────────────────────────────────────── */
+
+.brandBar {
+  flex-shrink: 0;
+  height: var(--bw-h-brand);
+  background: var(--bw-deep-steel-darkest);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bw-pad-brand);
+  font-size: var(--bw-size-brand);
+  font-weight: 400;
+  letter-spacing: var(--bw-ls-brand);
+  text-transform: uppercase;
+  color: var(--bw-on-dark-brand);
+}
+
+/* ── Cabecera mínima: solo el logo ───────────────────────────────────────── */
+
+.header {
+  flex-shrink: 0;
+  height: var(--bw-h-logo-height);
+  background: var(--bw-deep-steel-darkest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 0.5px solid var(--bw-on-dark-hairline);
+}
+
+.logo {
+  height: var(--bw-h-logo-height);
+  width: auto;
   display: block;
+}
+
+/* ── Cuerpo: la tarjeta centrada sobre Deep Steel ────────────────────────── */
+
+.body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px 48px;
+}
+
+.card {
+  /* El HTML aprobado pinta la tarjeta en blanco puro; el token más claro del
+     sistema es --bw-warm-cream, así que se usa ese (no se escribe un hex). */
+  background: var(--bw-warm-cream);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 560px;
+  padding: 40px 44px 36px;
+  box-shadow: 0 4px 32px var(--bw-sidebar-overlay);
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  /* 11px del HTML aprobado (`.regcard-eyebrow`), no var(--bw-size-eyebrow)=14px (F-209) */
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin-bottom: 10px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  /* 22px del HTML aprobado (`.regcard-title`), no var(--bw-size-title)=28px (F-209) */
+  font-size: 22px;
+  color: var(--bw-deep-steel);
+  letter-spacing: 0.3px;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+/* ── Formulario ──────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-deep-steel);
+}
+
+.required {
+  color: var(--bw-calibration-blue);
+  font-size: var(--bw-size-input);
+  line-height: 1;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: var(--bw-pad-input);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  background: var(--bw-warm-cream);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder,
+.selectEmpty {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.select {
+  cursor: pointer;
+  appearance: none;
+  padding-right: 32px;
+  background-color: var(--bw-warm-cream);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239BA4B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.inputError {
+  border-color: var(--bw-error-text);
+  box-shadow: 0 0 0 3px var(--bw-sensitive-bg);
+}
+
+.error {
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  color: var(--bw-error-text);
+  margin-top: 1px;
+}
+
+/* ── Envío ───────────────────────────────────────────────────────────────── */
+
+.submit {
+  margin-top: 6px;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, cursor 0.15s;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--bw-primary-dark);
+}
+
+/* Atenuado mientras no valen los seis campos o mientras está enviando. */
+.submit:disabled {
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.alert {
+  margin: 0;
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+}
+
+/* ── Enlace de invitación ────────────────────────────────────────────────── */
+
+.invitation {
+  margin-top: 18px;
+  text-align: center;
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+.invitation button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-brass);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.invitation button:hover {
+  color: var(--bw-warning-dark);
 }

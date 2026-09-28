@@ -25,9 +25,18 @@ import styles from './Login.module.css';
 export function Login({
   onSubmit,
   error,
+  onRequestAccess,
 }: {
   onSubmit: (email: string, password: string) => Promise<boolean>;
   error: string | null;
+  /**
+   * Ruta 00.2 (REG-00): quien no tiene cuenta ni invitación pide acceso. El
+   * texto del botón es el del funcional (Módulo 01 §3.2.3: *pulsa el botón
+   * "Solicitud de Registro"*): LOGIN-01 no tiene HTML aprobado que lo pinte, y
+   * sin esta entrada el FSR no tendría forma de alcanzarse. Opcional: la rama
+   * `orphan` de `App.tsx` reusa el login y ahí no tiene sentido.
+   */
+  onRequestAccess?: () => void;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -95,6 +104,13 @@ export function Login({
             {submitting ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
+        {onRequestAccess && (
+          <p className={styles.requestAccess}>
+            <button type="button" className={styles.requestAccessButton} onClick={onRequestAccess}>
+              Solicitud de Registro
+            </button>
+          </p>
+        )}
       </div>
     </main>
   );

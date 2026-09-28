@@ -16,6 +16,10 @@ import { OrganizationProfile } from './screens/directory/OrganizationProfile';
 import { Invitations } from './screens/onboarding/Invitations';
 import { Welcome } from './screens/onboarding/Welcome';
 import { AdditionalUser } from './screens/onboarding/AdditionalUser';
+import { AccessRequest } from './screens/onboarding/AccessRequest';
+import { AccessRequestWait } from './screens/onboarding/AccessRequestWait';
+import { clearWaitingRequest, loadWaitingRequest, saveWaitingRequest } from './lib/access-request';
+import type { SubmittedAccessRequest } from './lib/access-request';
 import { activateOwnMembership } from './lib/onboarding';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
@@ -201,6 +205,18 @@ export function App() {
    */
   const [operatorNav, setOperatorNav] = useState(() => operatorNavIndexOf('Solicitudes'));
 
+  /**
+   * Ruta 00.2 (REG-00 → REG-00-WAIT): quien no tiene sesión pide acceso. Se entra
+   * desde el botón `Solicitud de Registro` del login o con `#solicitud-de-registro`
+   * en la URL (el enlace que pondría la web pública). La solicitud en espera vive
+   * en `sessionStorage` (`lib/access-request.ts`): sobrevive a una recarga y muere
+   * con la pestaña, que es lo que promete la pantalla de un solo uso.
+   */
+  const [requestingAccess, setRequestingAccess] = useState(
+    () => typeof window !== 'undefined' && window.location.hash === '#solicitud-de-registro',
+  );
+  const [waitingRequest, setWaitingRequest] = useState<SubmittedAccessRequest | null>(loadWaitingRequest);
+
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
@@ -218,7 +234,30 @@ export function App() {
   }
 
   if (state.status === 'anonymous') {
-    return <Login onSubmit={signIn} error={error} />;
+    if (waitingRequest) {
+      return (
+        <AccessRequestWait
+          request={waitingRequest}
+          onClose={() => {
+            clearWaitingRequest();
+            setWaitingRequest(null);
+            setRequestingAccess(false);
+          }}
+        />
+      );
+    }
+    if (requestingAccess) {
+      return (
+        <AccessRequest
+          onSubmitted={(request) => {
+            saveWaitingRequest(request);
+            setWaitingRequest(request);
+          }}
+          onHaveInvitation={() => setRequestingAccess(false)}
+        />
+      );
+    }
+    return <Login onSubmit={signIn} error={error} onRequestAccess={() => setRequestingAccess(true)} />;
   }
 
   // Operador de Plataforma: entra, y desde hoy con SU PROPIO shell.

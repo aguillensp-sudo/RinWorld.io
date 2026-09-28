@@ -1,0 +1,64 @@
+{
+  "task_id": "REG-00",
+  "screen": "REG-00",
+  "goal": "Pagina completa de REG-00 (FSR, Formulario de Solicitud de Registro, Modulo 01 Onboarding, Ruta 00.2): quien NO tiene sesion ni invitacion pide acceso a Bearingworld.io. Barra de marca, cabecera minima con el logo y, sobre fondo Deep Steel, una tarjeta blanca centrada con eyebrow, titulo, subtitulo, el formulario de seis campos obligatorios con su validacion al salir de cada campo, el boton `Enviar solicitud` (deshabilitado hasta que todo vale) y el enlace `¿Tienes un enlace de invitación? Accede directamente →`. NO va dentro del shell: se ve sin sesion. Decimocuarta pantalla de la fabrica. Sin migracion: `registration_requests` (0028) ya tiene los seis campos; la escritura la hace la Edge Function `access-request`.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll propio en `constraints` (F-198).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §7: la capa de datos (`app/src/lib/access-request.ts`, 31 pruebas) y la Edge Function `access-request` (probada con curl sin sesion) son precondicion, ya escritas y entregadas por Claude Code -no las construye esta tarea-. Esta corrida es la DECIMOCUARTA y comparte sesion con REG-00-WAIT, asi que sus cifras 7 y 8 no son limpias (§8, adenda del 28-sep).",
+  "_nota_spec": "La spec es `Rinworld_spec_REG-00.md`. Donde el HTML aprobado y la spec discrepan MANDA EL HTML (F-170): los mensajes de error son los del HTML y el pais se elige de las 194 opciones del HTML, en ingles con su codigo (`Spain (ES)`). TODO ESO YA ESTA EN `lib/access-request.ts` (`FIELD_META`, `FIELD_ERRORS`, `COUNTRY_OPTIONS`, `blurError`, `canSubmitAccessRequest`): el Coder no lo decide, lo pinta.",
+  "_nota_shell": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea: `App.tsx` monta `<AccessRequest onSubmitted onHaveInvitation />` cuando NO hay sesion y el visitante pulso `Solicitud de Registro` en el login (o llego con `#solicitud-de-registro`); `onSubmitted` guarda la solicitud y abre REG-00-WAIT; `onHaveInvitation` vuelve al login. `AccessRequest.tsx` existe hoy como MARCADOR: esta tarea sustituye ese fichero ENTERO y su `.module.css`. El HTML aprobado dibuja un panel de VERA a la derecha: aqui NO va (ver out_of_scope).",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_REG-00.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/REG-00 · FSR v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§3"
+    ],
+    "style_reference": "app/src/screens/Login.tsx",
+    "_nota_style_reference": "`Login.tsx`/`Login.module.css` (LOGIN-01) es la otra pagina sin shell y sin sesion: tarjeta centrada sobre `--bw-deep-steel-darkest`, campos, labels y boton con tokens. Para el patron de campos con error: `app/src/screens/onboarding/AdditionalUser.tsx` (FRU).",
+    "data_layer": "app/src/lib/access-request.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `ACCESS_REQUEST_FIELDS`, `EMPTY_ACCESS_REQUEST`, `FIELD_META` (etiqueta, placeholder y maxLength de cada campo), `COUNTRY_OPTIONS`, `blurError`, `canSubmitAccessRequest`, `submitAccessRequest` y los tipos `AccessRequestField`, `AccessRequestForm` y `SubmittedAccessRequest`. NO se reimplementa: ni una expresion regular, ni un texto de error, ni la lista de paises."
+  },
+  "outputs": [
+    "app/src/screens/onboarding/AccessRequest.tsx",
+    "app/src/screens/onboarding/AccessRequest.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos, entre comillas simples. El punto medio ' · ' es U+00B7 con un espacio a cada lado; la flecha '→' es U+2192.",
+    "_nota_accesibilidad": "Todo lo accionable es `<button>` de verdad, nunca un `<div onClick>` ni un `<a href=\"#\">`. Cada campo tiene su `<label htmlFor>` con el `id` del control. El asterisco de obligatorio va en un `<span aria-hidden=\"true\">*</span>` DENTRO del label: asi el nombre accesible del campo es la etiqueta sin asterisco ('Email del solicitante', no 'Email del solicitante *'). Un campo con error lleva `aria-invalid=\"true\"` y `aria-describedby` apuntando al texto del error.",
+    "_nota_css_modules": "LAS CLASES DE UN MODULO CSS SON `string | undefined`, NUNCA `string` A SECAS (F-143): con `noUncheckedIndexedAccess` activo, cualquier propiedad de `styles` puede no existir en el `.module.css`, asi que TypeScript la tipa `string | undefined`. Una funcion que devuelve `styles.x` y esta declarada `: string`, o un `Record<Tipo, string>` con valores `styles.x`, NO COMPILA (`TS2322`). El tipo de retorno es `string | undefined` y el diccionario `Record<Tipo, string | undefined>`, y el `?? ''` que resuelve el hueco va en el UNICO sitio donde se consume (`className={X[k] ?? ''}`).",
+    "_nota_nombres_ejemplo": "Nombres accesibles, EJEMPLOS VERBATIM: campos 'Email del solicitante', 'Nombre y apellidos', 'Nombre de la organización', 'País de la organización' (un `<select>`), 'Teléfono de contacto', 'Sitio web'; botones 'Enviar solicitud' y '¿Tienes un enlace de invitación? Accede directamente →'; logo con `alt` 'Bearingworld.io'. 'John Reece' y 'Bearings' son DATOS de ejemplo, no literales de la pantalla.",
+    "app/src/screens/onboarding/AccessRequest.tsx": "export function AccessRequest({ onSubmitted, onHaveInvitation }: { onSubmitted: (request: SubmittedAccessRequest) => void; onHaveInvitation: () => void }). Todo lo de '../../lib/access-request' (ver `_nota_data_layer`). ES LA PAGINA ENTERA: posee todo el estado (los seis valores, que campos tienen error visible, si esta enviando y el error de envio) y es el unico sitio que llama a la red, con `submitAccessRequest(form)`. RAIZ: un elemento con la clase `page` (ver constraints: scroll propio). De arriba abajo: (1) LA BARRA DE MARCA del HTML aprobado: tres textos 'ZERO KNOWLEDGE ARCHITECTURE · CRYPTOGRAPHIC SECURITY', 'CONNECT · TRADE · SECURE' e 'INDUSTRIAL INTELLIGENCE NETWORK'. (2) LA CABECERA MINIMA: solo el logo, `<img src=\"/intentologo.png\" alt=\"Bearingworld.io\">` a 46 px de alto y ancho automatico (CLAUDE.md §8; el fichero esta en `app/public/`). Ni menu, ni navegacion, ni `<nav>`. (3) LA TARJETA, centrada: un `<p>` eyebrow 'Módulo 01 · Onboarding'; el `<h1>` 'Solicita acceso a Bearingworld.io' (UNICO h1); un `<p>` 'Nuestro equipo revisará tu solicitud y te contactará en un plazo máximo de 48 horas.'. (4) EL FORMULARIO: un `<form noValidate>` cuyo `onSubmit` hace `preventDefault` y envia SOLO si `canSubmitAccessRequest(form)` y no esta ya enviando (asi Intro en un campo tambien envia). Los seis campos en el orden de `ACCESS_REQUEST_FIELDS`, cada uno con `FIELD_META[campo].label` en su label (mas el asterisco oculto), `placeholder` y `maxLength` de `FIELD_META`. `email` es `<input type=\"email\">`, `website` es `<input type=\"url\">`, los demas `<input type=\"text\">`, salvo `country`, que es un `<select>` cuya PRIMERA opcion es `<option value=\"\" disabled>` con 'Selecciona un país' (seleccionada al principio: el valor inicial del campo es '') seguida de UNA `<option value={codigo}>` por cada `[codigo, texto]` de `COUNTRY_OPTIONS`, con `texto` como contenido. ERRORES: al salir de un campo (`onBlur`) se calcula `blurError(campo, valor)` y se guarda; si no es null se pinta bajo el campo en un `<span>` (o `<p>`) con ese texto y el campo lleva `aria-invalid=\"true\"`; si es null, no se pinta nada y el campo no lleva `aria-invalid`. Al abrir no hay ningun error visible. (5) EL BOTON: un `<button type=\"submit\">` 'Enviar solicitud', `disabled` mientras `!canSubmitAccessRequest(form)` O mientras esta enviando. ENVIO: llama a `submitAccessRequest(form)` UNA vez; si RESUELVE, llama a `onSubmitted(resultado)` con lo que devolvio; si RECHAZA, un `<p role=\"alert\">` con el `message` del error (si no es un `Error`, 'No se pudo enviar la solicitud.'), el boton vuelve a habilitarse y se puede reintentar; un reintento borra el alert anterior. (6) EL ENLACE: bajo la tarjeta del formulario, un `<button type=\"button\">` con aspecto de enlace (brass) y el texto '¿Tienes un enlace de invitación? Accede directamente →', que llama a `onHaveInvitation()`. Ninguna otra llamada a la red.",
+    "app/src/screens/onboarding/AccessRequest.module.css": "Estilos de la pagina con TOKENS de `tokens.css` (nada de valores literales de color). Clases minimas: `page` (ver constraints), `brandBar`, `header`, `logo`, `body`, `card`, `eyebrow`, `title`, `subtitle`, `form`, `field`, `label`, `required`, `input`, `select`, `error`, `inputError`, `submit`, `alert`, `invitation`. Fiel al HTML aprobado: fondo `--bw-deep-steel` en el cuerpo, tarjeta blanca de 560 px de ancho maximo con radio de 6 px, labels a 12 px, errores a 11 px en `--bw-error-text`, boton primario azul a lo ancho que se ve atenuado cuando esta deshabilitado."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/onboarding/AccessRequest.test.tsx",
+      "app/src/screens/onboarding/AccessRequestScroll.test.ts"
+    ],
+    "e2e": [
+      "app/e2e/access-request.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementacion de referencia desechable (no comiteada) antes de la corrida: el contrato se puede cumplir. El e2e va sin sesion contra el build y NO ENVIA (F-188): llega desde el login y desde `#solicitud-de-registro`, rellena y ve el boton habilitado, y vuelve al login por el enlace de invitacion."
+  },
+  "out_of_scope": [
+    "EL PANEL DE VERA del HTML aprobado (spec §5, `Asistente de acceso`): VERA solo responde con sesion (la funcion `vera` exige Authorization) y abrirla a quien no tiene cuenta es una decision de coste y de abuso que no toma esta tarea. La conversacion de la spec es de demostracion. NO se pinta ningun panel de VERA, ni estatico.",
+    "La Ruta 00.1 (validar un token de invitacion, REG-01): no existe. El enlace solo llama a `onHaveInvitation()`.",
+    "REG-00-WAIT (la espera): otra pantalla, con su propia tarea. Aqui el exito solo llama a `onSubmitted(resultado)`.",
+    "Guardar la solicitud en `sessionStorage`: lo hace el wiring. Esta pantalla NO importa `saveWaitingRequest`.",
+    "El wiring en `App.tsx` y el boton `Solicitud de Registro` del login: ya hechos a mano."
+  ],
+  "constraints": [
+    "SCROLL PROPIO: esta pagina NO va dentro del shell. Su raiz es hija directa de `#root`, que es `position: fixed; inset: 0` y NO declara overflow (`app/src/styles/global.css`): un formulario mas alto que la ventana se recortaria SIN barra. La clase `.page` de `AccessRequest.module.css` DEBE declarar `height: 100%;` y `overflow-y: auto;` (mas `display: flex; flex-direction: column`).",
+    "TIPOGRAFIA DEL HTML APROBADO, NO DE LOS TOKENS (F-209): el eyebrow (`.eyebrow`) va a `font-size: 11px` y el titulo (`.title`) a `font-size: 22px`, que son `.regcard-eyebrow` y `.regcard-title` del HTML. NO `var(--bw-size-eyebrow)` ni `var(--bw-size-title)` (14 y 28 px). El resto de tamanos, los del HTML aprobado.",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb().",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`.",
+    "No tocar `app/src/shell/**`, `App.tsx` ni `Login.tsx`: tienen contrato y tests propios. Tampoco `app/src/lib/access-request.ts`.",
+    "No reimplementar nada de `app/src/lib/access-request.ts` (ver `_nota_data_layer`). En particular: NO escribir expresiones regulares, NO escribir los textos de error, NO escribir la lista de paises.",
+    "El TITULO de la pantalla va en un `<h1>` de verdad, y es el UNICO `<h1>`."
+  ]
+}

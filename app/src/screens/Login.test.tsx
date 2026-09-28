@@ -235,3 +235,21 @@ describe('CA-LOG-06 · lo que esta pantalla NO tiene, y es deliberado', () => {
     expect(correo).toHaveValue('');
   });
 });
+
+/**
+ * Añadido el 28-sep-2026 a mano (wiring de REG-00, no es contrato del Coder): la
+ * entrada a la Ruta 00.2. Solo aparece si `App.tsx` pasa `onRequestAccess`.
+ */
+describe('LOGIN-01 · entrada a la Solicitud de Registro (REG-00)', () => {
+  it('sin onRequestAccess no hay botón', () => {
+    render(<Login onSubmit={vi.fn()} error={null} />);
+    expect(screen.queryByRole('button', { name: 'Solicitud de Registro' })).toBeNull();
+  });
+
+  it('con onRequestAccess, el botón lo llama', async () => {
+    const onRequestAccess = vi.fn();
+    render(<Login onSubmit={vi.fn()} error={null} onRequestAccess={onRequestAccess} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Solicitud de Registro' }));
+    expect(onRequestAccess).toHaveBeenCalledTimes(1);
+  });
+});

@@ -144,3 +144,28 @@
     padding: 24px;
   }
 }
+
+/* Entrada a la Ruta 00.2 (REG-00). Discreta: el login sigue siendo lo principal. */
+.requestAccess {
+  margin-top: 16px;
+  font-family: var(--bw-font-body);
+  font-size: 12px;
+  color: var(--bw-text-secondary);
+  text-align: center;
+}
+
+.requestAccessButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--bw-calibration-blue);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.requestAccessButton:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 2px;
+}

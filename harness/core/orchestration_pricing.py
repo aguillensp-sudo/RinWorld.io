@@ -53,6 +53,20 @@ PRICES = {
         "input": 10.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0,
         "cache_read": 0.50, "output": 50.0,
     },
+    # 28-sep-2026: la sesion de REG-00/REG-00-WAIT corre en Opus 5.5 y el medidor
+    # se paro al no encontrarlo. Publicado: $4 input / $20 output / $0.20 cache
+    # read; fast $8/$40 (tabla de modelos de la skill claude-api, cacheada el
+    # 2026-06-24). Las dos escrituras de cache NO vienen en esa tabla: son 1.25x
+    # y 2x sobre el input, los mismos multiplicadores que las filas de arriba.
+    # En fast se deja el cache a tarifa estandar, como en `claude-opus-5:fast`.
+    "claude-opus-5-5": {
+        "input": 4.0, "cache_write_5m": 5.0, "cache_write_1h": 8.0,
+        "cache_read": 0.20, "output": 20.0,
+    },
+    "claude-opus-5-5:fast": {
+        "input": 8.0, "cache_write_5m": 5.0, "cache_write_1h": 8.0,
+        "cache_read": 0.20, "output": 40.0,
+    },
 }
 
 # Mensajes sinteticos que aparecen en las transcripciones sin representar una

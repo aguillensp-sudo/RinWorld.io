@@ -329,3 +329,27 @@ cierre de `F-214` y `F-178`.
 lista previa a una corrida:** `tsc --noEmit` y `vitest` sobre el árbol con los marcadores, y
 comprobar que solo fallan los ficheros de esa tarea. `--seco` valida que los ficheros existan,
 no que el resto del repo esté en verde.
+
+---
+
+**Adenda del 28-sep-2026 — decimocuarta y decimoquinta pantallas (`REG-00` y `REG-00-WAIT`).**
+El PO dejó la elección a la sesión («procede a elegir las dos pantallas a producir»). Criterio:
+**forman el flujo de entrada de la Ruta 00.2** (FSR → espera) y **alimentan la cola de `ADMIN-01`**,
+ya construida: `registration_requests` (`0028`) tiene exactamente los seis campos del FSR, así que
+no hace falta ni una tabla ni una columna. Módulo 01.
+
+**Lo que las descartó el 26-sep, y por qué ahora no:** «sin sesión: exigen un camino de escritura
+para `anon` que no existe». Ese camino **es su capa de datos a mano**, del mismo tamaño que la de
+`FRU`: una Edge Function (`access-request`) con la service key, desplegada sin verificación de JWT,
+que valida en servidor, limita el abuso y escribe con `service_role`. **A `anon` no se le concede
+nada** en la base. No abre el registro a terceros en el sentido de `F-192`: una solicitud no crea
+cuenta ni organización; la activación sigue siendo un acto manual del Operador.
+
+Las demás pendientes siguen fuera por lo mismo que el 26-sep (`DECISIONES-V1.md`): `REG-01`
+(token de invitación y alta completa), `REG-05`/`06`/`07`, `REC-01` y `SET-SEC-01` (criptografía),
+`INV-02`/`03`/`04` (subida de ficheros y correo) y `MSG-03` (componente dentro de `MSG-02`).
+
+**Lo que NO son: puntos limpios de las cifras 7 y 8.** Comparten sesión entre sí. Medidor corrido
+antes de empezar: 5,06 $ el 28-sep hasta las 05:50 UTC.
+
+*§8 ampliado el 28-sep-2026, antes de construir nada de `REG-00` ni de `REG-00-WAIT`.*

@@ -4581,6 +4581,73 @@ begin
 end
 $$;
 
+-- 9 · 0043 · El email de contacto NO puede ser el de OTRA organizacion (C5 del PO, 29-sep).
+--     Propia organizacion y propia cuenta de solo-Auth: los bloques anteriores borran las suyas.
+insert into public.organizations (id, name, country, continent, status, contact_email)
+values ('43430000-0000-4000-8000-000000000001', 'Ocupada Test', 'FR', 'EU', 'APPROVED', 'contacto@ocupado.test');
+insert into auth.users (id, email) values ('43430000-0000-4000-8000-0000000000aa', 'solo-auth@ocupado.test');
+
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.contact_email_available(text, text)', 'execute')
+     and not has_function_privilege('authenticated', 'public.contact_email_available(text, text)', 'execute'),
+    '0043: contact_email_available no la ejecuta anon ni authenticated (es un oraculo de emails)';
+  assert has_function_privilege('service_role', 'public.contact_email_available(text, text)', 'execute'),
+    '0043: ANCLA POSITIVA -- service_role SI';
+  assert public.contact_email_available('libre@nadie.test', 'admin@nuevo.test'), '0043: un email libre vale';
+  assert public.contact_email_available('admin@nuevo.test', 'ADMIN@nuevo.test'),
+    '0043: el del propio administrador vale, sin mirar mayusculas';
+  assert not public.contact_email_available('a1@alpha.test', 'admin@nuevo.test'),
+    '0043: el email de acceso de un usuario de otra organizacion NO vale';
+  assert not public.contact_email_available(' A1@Alpha.TEST ', 'admin@nuevo.test'),
+    '0043: ni con espacios ni mayusculas';
+  assert not public.contact_email_available('solo-auth@ocupado.test', 'admin@nuevo.test'),
+    '0043: ni el de una cuenta que solo esta en auth.users';
+  raise notice 'OK · 0043: contact_email_available';
+end
+$$;
+
+-- El contacto publico de otra organizacion tampoco vale.
+do $$
+begin
+  assert not public.contact_email_available('contacto@ocupado.test', 'admin@nuevo.test'),
+    '0043: el contacto publico de otra organizacion NO vale';
+  assert not public.contact_email_available('CONTACTO@ocupado.test', 'admin@nuevo.test'), '0043: sin mirar mayusculas';
+  raise notice 'OK · 0043: tampoco el contacto publico de otra organizacion';
+end
+$$;
+
+-- Y la funcion de alta lo rechaza (sin gastar el token). Una tercera solicitud aprobada.
+insert into public.registration_requests
+  (id, org_name, country, applicant_full_name, applicant_email, state)
+values
+  ('41410000-0000-4000-8000-000000000043', 'Contacto Ajeno SL', 'ES', 'Cora Ajena', 'cora@ajena.test', 'INVITED_APPROVED');
+insert into auth.users (id, email) values ('41f00004-0000-0000-0000-000000000004', 'cora@ajena.test');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.rtok', (select token from public.issue_registration_link('41410000-0000-4000-8000-000000000043')), false);
+commit;
+
+select public.expect_fail(
+  $q$select pg_temp.reg('{"user":"41f00004-0000-0000-0000-000000000004","aemail":"cora@ajena.test","cemail":"a1@alpha.test","legal":"Contacto Ajeno SL"}')$q$,
+  '0043: un contacto que es el email de acceso de otra organizacion se rechaza');
+select public.expect_fail(
+  $q$select pg_temp.reg('{"user":"41f00004-0000-0000-0000-000000000004","aemail":"cora@ajena.test","cemail":"contacto@ocupado.test","legal":"Contacto Ajeno SL"}')$q$,
+  '0043: y el contacto publico de otra organizacion tambien');
+
+do $$
+begin
+  assert exists (select 1 from public.registration_link_validate(current_setting('bw.rtok'))),
+    '0043: los rechazos no gastaron el token';
+  perform pg_temp.reg('{"user":"41f00004-0000-0000-0000-000000000004","aemail":"cora@ajena.test","cemail":"cora@ajena.test","legal":"Contacto Ajeno SL"}');
+  assert exists (select 1 from public.organizations where legal_name = 'Contacto Ajeno SL' and contact_email = 'cora@ajena.test'),
+    '0043: y el del propio administrador SI se admite';
+  raise notice 'OK · 0043: el alta rechaza el contacto ajeno y admite el propio';
+end
+$$;
+
 -- -----------------------------------------------------------------------------
 -- F-155 · la premisa que hace inmune a `security definer`, comprobada
 -- -----------------------------------------------------------------------------

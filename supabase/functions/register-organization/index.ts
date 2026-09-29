@@ -25,6 +25,10 @@
  *     token válido**: sin él no hay oráculo de «este email tiene cuenta». Solo
  *     mira `members` (la comprobación definitiva es la del alta).
  *
+ *   `{ action: 'check_contact_email', token, email, admin_email }`
+ *     La misma comprobación para el email de contacto público (`0043`): `{ available }`. No puede ser
+ *     el de otra organización; sí el del administrador que se da de alta.
+ *
  *   `{ action: 'register', token, … }`
  *     1. Valida el token (404). 2. Repite lo esencial de la validación (los
  *     criterios completos están en la base, que es la que decide). 3. Crea la
@@ -119,6 +123,20 @@ Deno.serve(async (req: Request) => {
     return json(200, { available: !(taken && taken.length > 0) });
   }
 
+  if (body.action === 'check_contact_email') {
+    // El email de contacto público no puede ser el de otra organización (`0043`); sí el del propio
+    // administrador. Exige token válido, como `check_email`: sin él no hay oráculo.
+    const email = text(body.email).toLowerCase();
+    const adminEmail = text(body.admin_email).toLowerCase();
+    if (!EMAIL.test(email)) return json(400, { error: 'El email no es válido.' });
+    const { data: free, error: freeError } = await db.rpc('contact_email_available', {
+      p_email: email,
+      p_admin_email: adminEmail,
+    });
+    if (freeError) return json(500, { error: 'No se pudo comprobar el email.' });
+    return json(200, { available: free === true });
+  }
+
   if (body.action !== 'register') return json(400, { error: 'Acción no válida.' });
 
   const adminEmail = text(body.admin_email).toLowerCase();
@@ -166,6 +184,9 @@ Deno.serve(async (req: Request) => {
     // alta y el canje del token; falta la cuenta de Auth, que es de otro sistema.
     await db.auth.admin.deleteUser(created.user.id);
     const message = rowError.message ?? '';
+    if (/de contacto ya pertenece/i.test(message)) {
+      return json(409, { error: 'Este email de contacto ya pertenece a otra organización.' });
+    }
     if (/ya tiene cuenta/i.test(message)) {
       return json(409, { error: 'Este email ya tiene cuenta en Bearingworld.io.' });
     }

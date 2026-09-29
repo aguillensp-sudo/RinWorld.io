@@ -4349,6 +4349,211 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0041 · alta de organizacion desde el FRO (REG-01, F-226)
+-- -----------------------------------------------------------------------------
+-- `register_organization` solo la ejecuta `service_role` (la Edge Function); aqui se
+-- llama como postgres, que es lo mas cercano que tiene el banco. Mide: privilegios
+-- del catalogo (F-146), el camino feliz entero (organizacion, NIF, ADMIN `REGISTERED`
+-- y el token canjeado), que un fallo DESPUES de canjear deshace el canje, que cada
+-- validacion de la spec se rechaza, y que el NIF solo lo lee el ADMIN de SU
+-- organizacion. Un ayudante temporal rellena los quince argumentos con los valores
+-- buenos y deja sobreescribir uno.
+create function pg_temp.reg(p_over jsonb default '{}'::jsonb)
+returns uuid
+language plpgsql
+as $$
+declare
+  d jsonb := jsonb_build_object(
+    'token',   current_setting('bw.rtok', true),
+    'user',    '41f00001-0000-0000-0000-000000000001',
+    'aemail',  'admin@sur.test',
+    'aname',   'Juan Martinez Herrera',
+    'legal',   'Rodamientos del Sur SL',
+    'tax',     'B-12345678',
+    'address', 'Calle Industria 47 Nave 3',
+    'postal',  '41900',
+    'country', 'ES',
+    'cemail',  'info@sur.test',
+    'phone',   '+34 954 123 456',
+    'web',     'https://www.sur.test',
+    'ops',     '["ES","PT","ES"]'::jsonb,
+    'brands',  '["SKF","FAG","SKF"," NSK "]'::jsonb,
+    'vis',     'VISIBLE_TODOS') || p_over;
+begin
+  return public.register_organization(
+    d->>'token', (d->>'user')::uuid, d->>'aemail', d->>'aname', d->>'legal', d->>'tax',
+    d->>'address', d->>'postal', d->>'country', d->>'cemail', d->>'phone', d->>'web',
+    (select coalesce(array_agg(x), '{}') from jsonb_array_elements_text(d->'ops') x),
+    (select coalesce(array_agg(x), '{}') from jsonb_array_elements_text(d->'brands') x),
+    d->>'vis');
+end;
+$$;
+
+-- Una solicitud aprobada con su enlace (lo genera el Operador, como en la pantalla), y
+-- las cuentas de Auth que la Edge Function habria creado antes de llamar.
+insert into public.registration_requests
+  (id, org_name, country, applicant_full_name, applicant_email, state)
+values
+  ('41410000-0000-4000-8000-000000000001', 'Rodamientos del Sur SL', 'ES',
+   'Juan Martinez Herrera', 'admin@sur.test', 'INVITED_APPROVED');
+insert into auth.users (id, email) values
+  ('41f00001-0000-0000-0000-000000000001', 'admin@sur.test'),
+  ('41f00002-0000-0000-0000-000000000002', 'otro@sur.test');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.rtok', (select token from public.issue_registration_link('41410000-0000-4000-8000-000000000001')), false);
+commit;
+
+-- 1 · Catalogo.
+do $$
+declare f text := 'public.register_organization(text, uuid, text, text, text, text, text, text, text, text, text, text, text[], text[], text)';
+begin
+  assert not has_function_privilege('anon', f, 'execute'), '0041: anon no da de alta organizaciones';
+  assert not has_function_privilege('authenticated', f, 'execute'),
+    '0041: ni authenticated: la puerta es la Edge Function con service_role';
+  assert has_function_privilege('service_role', f, 'execute'), '0041: ANCLA POSITIVA -- service_role SI';
+  assert not has_function_privilege('anon', 'app.continent_of(text)', 'execute')
+     and not has_function_privilege('authenticated', 'app.continent_of(text)', 'execute'),
+    '0041: continent_of es interno';
+  assert not has_table_privilege('anon', 'public.organization_internal', 'select'),
+    '0041: anon no lee el NIF';
+  assert not has_table_privilege('authenticated', 'public.organization_internal', 'insert')
+     and not has_table_privilege('authenticated', 'public.organization_internal', 'update')
+     and not has_table_privilege('authenticated', 'public.organization_internal', 'delete'),
+    '0041: ningun cliente escribe el NIF';
+  assert has_table_privilege('authenticated', 'public.organization_internal', 'select'),
+    '0041: ANCLA POSITIVA -- authenticated SI selecciona (la politica lo acota)';
+  assert (select relrowsecurity from pg_class where oid = 'public.organization_internal'::regclass),
+    '0041: organization_internal tiene RLS';
+  raise notice 'OK · 0041: privilegios leidos del catalogo';
+end
+$$;
+
+-- 2 · Pais -> continente.
+do $$
+begin
+  assert app.continent_of('ES') = 'EU' and app.continent_of('US') = 'NA' and app.continent_of('BR') = 'SA'
+     and app.continent_of('EG') = 'AF' and app.continent_of('JP') = 'AS' and app.continent_of('NZ') = 'OC',
+    '0041: cada pais cae en su continente';
+  assert app.continent_of('KZ') = 'EU' and app.continent_of('TL') = 'AS',
+    '0041: un pais en dos continentes gana el primero (EU, AS, NA, SA, AF, OC)';
+  assert app.continent_of('ZZ') is null and app.continent_of(null) is null and app.continent_of('es') is null,
+    '0041: un codigo que no existe (o en minusculas) no tiene continente';
+  raise notice 'OK · 0041: continent_of';
+end
+$$;
+
+-- 3 · Cada validacion de la spec se rechaza (y ninguna gasta el token).
+select public.expect_fail($q$select pg_temp.reg('{"legal":"Sur"}')$q$, '0041: nombre legal de menos de 5');
+select public.expect_fail($q$select pg_temp.reg('{"tax":""}')$q$, '0041: NIF vacio');
+select public.expect_fail($q$select pg_temp.reg('{"tax":"123456789012345678901"}')$q$, '0041: NIF de mas de 20');
+select public.expect_fail($q$select pg_temp.reg(jsonb_build_object('address', repeat('a', 151)))$q$, '0041: direccion de mas de 150');
+select public.expect_fail($q$select pg_temp.reg('{"postal":"12345678901"}')$q$, '0041: CP de mas de 10');
+select public.expect_fail($q$select pg_temp.reg('{"country":"ZZ"}')$q$, '0041: pais de sede inexistente');
+select public.expect_fail($q$select pg_temp.reg('{"cemail":"sin-arroba"}')$q$, '0041: email de contacto sin forma');
+select public.expect_fail($q$select pg_temp.reg('{"cemail":"informacion.general@rodamientos-sur.test"}')$q$, '0041: email de contacto de mas de 30');
+select public.expect_fail($q$select pg_temp.reg('{"cemail":"admin@sur.test"}')$q$, '0041: contacto igual que el del administrador');
+select public.expect_fail($q$select pg_temp.reg('{"phone":"954123456"}')$q$, '0041: telefono sin prefijo');
+select public.expect_fail($q$select pg_temp.reg('{"web":"http://sur.test"}')$q$, '0041: web sin https');
+select public.expect_fail($q$select pg_temp.reg('{"aname":"Juan"}')$q$, '0041: nombre del administrador de menos de 6');
+select public.expect_fail($q$select pg_temp.reg('{"aemail":"no es email"}')$q$, '0041: email del administrador sin forma');
+select public.expect_fail($q$select pg_temp.reg('{"ops":[]}')$q$, '0041: sin paises de operacion');
+select public.expect_fail($q$select pg_temp.reg('{"ops":["ES","ZZ"]}')$q$, '0041: un pais de operacion inexistente');
+select public.expect_fail($q$select pg_temp.reg('{"vis":"TODO"}')$q$, '0041: visibilidad invalida');
+select public.expect_fail($q$select pg_temp.reg(jsonb_build_object('brands', (select jsonb_agg('m' || i) from generate_series(1, 21) i)))$q$, '0041: 21 marcas');
+select public.expect_fail($q$select pg_temp.reg(jsonb_build_object('brands', jsonb_build_array(repeat('m', 61))))$q$, '0041: una marca de 61');
+select public.expect_fail($q$select pg_temp.reg('{"user":"41f000ff-0000-0000-0000-0000000000ff"}')$q$, '0041: una cuenta de Auth que no existe');
+select public.expect_fail($q$select pg_temp.reg('{"aemail":"a1@alpha.test","cemail":"x@sur.test"}')$q$, '0041: un email que ya es de un miembro');
+select public.expect_fail($q$select pg_temp.reg('{"token":"no-es-un-token"}')$q$, '0041: un token que no existe');
+
+do $$
+begin
+  assert exists (select 1 from public.registration_link_validate(current_setting('bw.rtok'))),
+    '0041: tras tantos rechazos el token sigue valiendo (ninguno lo gasto)';
+  assert not exists (select 1 from public.organizations where legal_name = 'Rodamientos del Sur SL'),
+    '0041: y no se creo ninguna organizacion';
+  raise notice 'OK · 0041: las validaciones rechazan y no gastan el token';
+end
+$$;
+
+-- 4 · Un fallo DESPUES de canjear deshace el canje: el user ya es miembro (PK repetida
+--     al insertar en `members`, lo ultimo que hace la funcion).
+select public.expect_fail(
+  $q$select pg_temp.reg('{"user":"0a000001-0000-0000-0000-000000000001","aemail":"nuevo@sur.test"}')$q$,
+  '0041: si el alta falla al final, todo se deshace');
+
+do $$
+begin
+  assert exists (select 1 from public.registration_link_validate(current_setting('bw.rtok'))),
+    '0041: el canje se deshizo con el resto: el enlace sigue valiendo';
+  assert not exists (select 1 from public.organizations where legal_name = 'Rodamientos del Sur SL'),
+    '0041: y la organizacion a medio crear tampoco quedo';
+  raise notice 'OK · 0041: un fallo tardio no gasta el token ni deja organizaciones a medias';
+end
+$$;
+
+-- 5 · El camino feliz.
+select pg_temp.reg() as org_id \gset
+
+do $$
+declare o record; m record; i record;
+begin
+  select * into o from public.organizations where legal_name = 'Rodamientos del Sur SL';
+  assert o.id = (select org_id from public.organization_internal where tax_id = 'B-12345678'), '0041: el NIF cuelga de la organizacion';
+  assert o.name = 'Rodamientos del Sur SL' and o.country = 'ES' and o.continent = 'EU' and o.status = 'APPROVED',
+    '0041: nombre, pais, continente derivado y estado APPROVED';
+  assert o.address = 'Calle Industria 47 Nave 3' and o.postal_code = '41900' and o.contact_email = 'info@sur.test'
+     and o.contact_phone = '+34 954 123 456' and o.website = 'https://www.sur.test',
+    '0041: direccion, CP, contacto, telefono y web';
+  assert o.operating_countries = array['ES','PT'], '0041: paises de operacion sin repetidos y ordenados: ' || o.operating_countries::text;
+  assert o.brands = array['FAG','NSK','SKF'], '0041: marcas recortadas, sin repetidos: ' || o.brands::text;
+  assert o.inventory_visibility_mode = 'VISIBLE_TODOS', '0041: visibilidad';
+  select * into m from public.members where id = '41f00001-0000-0000-0000-000000000001';
+  assert m.org_id = o.id and m.role = 'ADMIN' and m.state = 'REGISTERED' and m.email = 'admin@sur.test'
+     and m.full_name = 'Juan Martinez Herrera' and m.visibility_scope = 'ORG_METADATA',
+    '0041: el usuario es ADMIN REGISTERED de la organizacion nueva';
+  assert not exists (select 1 from public.registration_link_validate(current_setting('bw.rtok'))),
+    '0041: el token se canjeo';
+  assert app.redeem_registration_token(current_setting('bw.rtok')) is null, '0041: y no se canjea dos veces';
+  raise notice 'OK · 0041: el alta crea organizacion, NIF y ADMIN REGISTERED, y gasta el token';
+end
+$$;
+
+-- 6 · Reusar el enlace ya canjeado no crea otra organizacion.
+select public.expect_fail(
+  $q$select pg_temp.reg('{"user":"41f00002-0000-0000-0000-000000000002","aemail":"otro@sur.test","legal":"Otra Organizacion SL","cemail":"otra@sur.test"}')$q$,
+  '0041: un enlace canjeado no da de alta una segunda organizacion');
+
+-- 7 · El NIF: solo el ADMIN (activo) de SU organizacion.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.organization_internal) = 0,
+      '0041: el ADMIN de otra organizacion no ve ningun NIF';
+  end
+  $$;
+commit;
+
+update public.members set state = 'ACTIVE' where id = '41f00001-0000-0000-0000-000000000001';
+
+begin;
+  select set_config('request.jwt.claim.sub', '41f00001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select count(*) from public.organization_internal) = 1
+       and (select tax_id from public.organization_internal) = 'B-12345678',
+      '0041: ANCLA POSITIVA -- el ADMIN activo de la organizacion lee su NIF, y solo el suyo';
+    raise notice 'OK · 0041: el NIF solo lo lee el ADMIN de su organizacion';
+  end
+  $$;
+commit;
+
+-- -----------------------------------------------------------------------------
 -- F-155 · la premisa que hace inmune a `security definer`, comprobada
 -- -----------------------------------------------------------------------------
 -- Que un ayudante `security definer` no vea RLS no es un axioma: depende de dos

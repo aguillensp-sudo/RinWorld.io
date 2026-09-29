@@ -4106,6 +4106,249 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0040 · tokens de acceso de un solo uso (F-223)
+-- -----------------------------------------------------------------------------
+-- Mide las dos mitades de cada regla: que el Operador genera y el servidor valida, y que
+-- un ADMIN de organizacion y `anon` no generan; que el token se guarda como hash y no en claro;
+-- que caduca, que generar otro revoca el anterior, y que canjear es de un solo uso.
+-- Los privilegios se leen del CATALOGO (F-146), no intentando la llamada. El token en
+-- claro viaja entre bloques en un GUC de sesion (`bw.tokN`): psql no interpola
+-- variables dentro de un `do $$`.
+insert into public.registration_requests
+  (id, org_name, country, applicant_full_name, applicant_email, applicant_phone, website, state)
+values
+  ('40400000-0000-4000-8000-000000000001', 'Rodamientos Token SL', 'ES',
+   'Ana Token', 'ana@rodamientostoken.test', '+34 600 000 001', 'https://rodamientostoken.test', 'INVITED_APPROVED'),
+  ('40400000-0000-4000-8000-000000000002', 'Pendiente Token SL', 'ES',
+   'Pepe Pendiente', 'pepe@pendientetoken.test', null, null, 'PENDING_REVIEW'),
+  ('40400000-0000-4000-8000-000000000003', 'Caduca Token SL', 'ES',
+   'Carla Caduca', 'carla@caducatoken.test', null, null, 'INVITED_APPROVED'),
+  ('40400000-0000-4000-8000-000000000004', 'Cancelada Token SL', 'ES',
+   'Cris Cancelada', 'cris@canceladatoken.test', null, null, 'INVITED_APPROVED');
+
+-- 1 · Catalogo: quien puede ejecutar que, y que la tabla es de nadie.
+do $$
+begin
+  assert not has_table_privilege('anon', 'public.access_tokens', 'select'),
+    '0040: anon no lee access_tokens';
+  assert not has_table_privilege('authenticated', 'public.access_tokens', 'select'),
+    '0040: ni authenticated (el hash tampoco se lee desde el cliente)';
+  assert not has_table_privilege('authenticated', 'public.access_tokens', 'insert'),
+    '0040: authenticated no escribe';
+  assert not has_table_privilege('anon', 'public.access_tokens', 'insert'),
+    '0040: anon tampoco escribe';
+  assert not has_function_privilege('anon', 'public.issue_registration_link(uuid)', 'execute'),
+    '0040: anon no genera enlaces';
+  assert not has_function_privilege('anon', 'public.registration_link_status(uuid)', 'execute'),
+    '0040: anon no ve el estado de un enlace';
+  assert not has_function_privilege('anon', 'public.registration_link_validate(text)', 'execute'),
+    '0040: anon no valida: REG-01 pasa por una Edge Function con service_role (F-146)';
+  assert not has_function_privilege('authenticated', 'public.registration_link_validate(text)', 'execute'),
+    '0040: ni authenticated';
+  assert has_function_privilege('service_role', 'public.registration_link_validate(text)', 'execute'),
+    '0040: ANCLA POSITIVA -- service_role SI valida';
+  assert has_function_privilege('authenticated', 'public.issue_registration_link(uuid)', 'execute'),
+    '0040: ANCLA POSITIVA -- authenticated SI ejecuta issue_registration_link (la puerta es is_platform_operator)';
+  assert not has_function_privilege('anon', 'app.redeem_registration_token(text)', 'execute'),
+    '0040: anon no canjea';
+  assert not has_function_privilege('authenticated', 'app.redeem_registration_token(text)', 'execute'),
+    '0040: ni authenticated: canjear es interno';
+  assert has_function_privilege('service_role', 'app.redeem_registration_token(text)', 'execute'),
+    '0040: ANCLA POSITIVA -- service_role SI canjea';
+  raise notice 'OK · 0040: privilegios leidos del catalogo';
+end
+$$;
+
+-- 2 · Un ADMIN de organizacion no genera el enlace de nadie ni ve su estado.
+begin;
+  select set_config('request.jwt.claim.sub', :a1, true);
+  set local role authenticated;
+  select public.expect_fail($q$select * from public.issue_registration_link('40400000-0000-4000-8000-000000000001')$q$,
+    '0040: un ADMIN de organizacion no genera el enlace de una solicitud');
+  select public.expect_fail($q$select * from public.registration_link_status('40400000-0000-4000-8000-000000000001')$q$,
+    '0040: ni ve su estado');
+commit;
+
+-- 3 · El Operador no genera sobre una solicitud sin aprobar ni inexistente; si sobre la aprobada.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail($q$select * from public.issue_registration_link('40400000-0000-4000-8000-000000000002')$q$,
+    '0040: una solicitud PENDING_REVIEW no tiene enlace');
+  select public.expect_fail($q$select * from public.issue_registration_link('40400000-0000-4000-8000-0000000000ff')$q$,
+    '0040: una solicitud que no existe tampoco');
+  do $$
+  begin
+    assert not exists (select 1 from public.registration_link_status('40400000-0000-4000-8000-000000000001')),
+      '0040: antes de generar, la solicitud no tiene estado de enlace';
+  end
+  $$;
+  select set_config('bw.tok1', (select token from public.issue_registration_link('40400000-0000-4000-8000-000000000001')), false);
+commit;
+
+do $$
+declare v record; t text := current_setting('bw.tok1');
+begin
+  assert t ~ '^[0-9a-f]{64}$', '0040: el token son 64 caracteres hexadecimales';
+  assert (select count(*) from public.access_tokens where registration_request_id = '40400000-0000-4000-8000-000000000001') = 1,
+    '0040: una fila de token';
+  assert not exists (select 1 from public.access_tokens where token_hash = t),
+    '0040: el token en claro NO esta guardado';
+  assert exists (select 1 from public.access_tokens
+                  where token_hash = encode(sha256(convert_to(t, 'UTF8')), 'hex')),
+    '0040: lo guardado es su hash sha256';
+  select * into v from public.access_tokens where registration_request_id = '40400000-0000-4000-8000-000000000001';
+  assert v.expires_at - v.created_at = interval '7 days', '0040: caduca a los 7 dias';
+  assert v.created_by = '0e000001-0000-0000-0000-000000000001', '0040: firmado por el Operador que lo genero';
+  raise notice 'OK · 0040: el Operador genera un token de 7 dias y se guarda solo su hash';
+end
+$$;
+
+-- 4 · Validar (como el servidor: la Edge Function): devuelve los datos del FSR; con un token malo, NADA.
+begin;
+  do $$
+  declare v record; n int;
+  begin
+    select * into v from public.registration_link_validate(current_setting('bw.tok1'));
+    assert v.org_name = 'Rodamientos Token SL' and v.applicant_email = 'ana@rodamientostoken.test'
+       and v.country = 'ES' and v.applicant_phone = '+34 600 000 001',
+      '0040: validar devuelve lo que se escribio en el FSR';
+    select count(*) into n from public.registration_link_validate('no-es-un-token');
+    assert n = 0, '0040: un token inventado no valida';
+    select count(*) into n from public.registration_link_validate(null);
+    assert n = 0, '0040: NULL tampoco';
+    select count(*) into n from public.registration_link_validate(repeat('0', 64));
+    assert n = 0, '0040: ni uno con forma correcta que no existe';
+    -- Validar no consume: vale otra vez.
+    select count(*) into n from public.registration_link_validate(current_setting('bw.tok1'));
+    assert n = 1, '0040: validar no gasta el token';
+    raise notice 'OK · 0040: solo vale el token verdadero y validar no lo gasta';
+  end
+  $$;
+commit;
+
+-- 5 · Volver a generar revoca el anterior: solo el ultimo vale.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.tok2', (select token from public.issue_registration_link('40400000-0000-4000-8000-000000000001')), false);
+  do $$
+  begin
+    assert (select status from public.registration_link_status('40400000-0000-4000-8000-000000000001')) = 'Vigente',
+      '0040: el estado del enlace es Vigente';
+  end
+  $$;
+commit;
+
+do $$
+begin
+  assert current_setting('bw.tok1') <> current_setting('bw.tok2'), '0040: el segundo token es otro';
+  assert (select count(*) from public.access_tokens where registration_request_id = '40400000-0000-4000-8000-000000000001') = 2,
+    '0040: quedan dos filas';
+  assert (select count(*) from public.access_tokens
+           where registration_request_id = '40400000-0000-4000-8000-000000000001'
+             and used_at is null and revoked_at is null) = 1,
+    '0040: y solo una vigente';
+  assert not exists (select 1 from public.registration_link_validate(current_setting('bw.tok1'))),
+    '0040: el primero, revocado, ya no valida';
+  assert exists (select 1 from public.registration_link_validate(current_setting('bw.tok2'))),
+    '0040: el segundo si';
+  assert app.redeem_registration_token(current_setting('bw.tok1')) is null,
+    '0040: el revocado tampoco se canjea';
+  raise notice 'OK · 0040: generar otro revoca el anterior';
+end
+$$;
+
+-- 6 · Canjear es de un solo uso.
+do $$
+begin
+  assert app.redeem_registration_token(current_setting('bw.tok2')) = '40400000-0000-4000-8000-000000000001',
+    '0040: canjear devuelve la solicitud';
+  assert app.redeem_registration_token(current_setting('bw.tok2')) is null,
+    '0040: y a la segunda ya no vale';
+  assert not exists (select 1 from public.registration_link_validate(current_setting('bw.tok2'))),
+    '0040: un token canjeado ya no valida';
+  assert app.redeem_registration_token('no-es-un-token') is null and app.redeem_registration_token(null) is null,
+    '0040: un token inventado o NULL no se canjea';
+  raise notice 'OK · 0040: un token se canjea una vez';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select status from public.registration_link_status('40400000-0000-4000-8000-000000000001')) = 'Canjeado',
+      '0040: el estado pasa a Canjeado';
+  end
+  $$;
+  select public.expect_fail($q$select * from public.issue_registration_link('40400000-0000-4000-8000-000000000001')$q$,
+    '0040: tras canjear no se genera otro enlace de la misma solicitud');
+commit;
+
+-- 7 · Caducado: ni valida ni se canjea, y se puede volver a generar.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.tok3', (select token from public.issue_registration_link('40400000-0000-4000-8000-000000000003')), false);
+commit;
+
+update public.access_tokens
+   set created_at = now() - interval '8 days', expires_at = now() - interval '1 day'
+ where registration_request_id = '40400000-0000-4000-8000-000000000003';
+
+do $$
+begin
+  assert not exists (select 1 from public.registration_link_validate(current_setting('bw.tok3'))),
+    '0040: un token caducado no valida';
+  assert app.redeem_registration_token(current_setting('bw.tok3')) is null,
+    '0040: ni se canjea';
+  raise notice 'OK · 0040: un token caducado no vale';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select status from public.registration_link_status('40400000-0000-4000-8000-000000000003')) = 'Caducado',
+      '0040: el estado es Caducado';
+  end
+  $$;
+  select set_config('bw.tok3b', (select token from public.issue_registration_link('40400000-0000-4000-8000-000000000003')), false);
+commit;
+
+do $$
+begin
+  assert exists (select 1 from public.registration_link_validate(current_setting('bw.tok3b'))),
+    '0040: tras caducar se genera uno nuevo y ese valida';
+  raise notice 'OK · 0040: un enlace caducado se sustituye por otro';
+end
+$$;
+
+-- 8 · Si la solicitud deja de estar aprobada, el token no vale aunque este vivo.
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.tok4', (select token from public.issue_registration_link('40400000-0000-4000-8000-000000000004')), false);
+commit;
+
+update public.registration_requests set state = 'CANCELLED'
+ where id = '40400000-0000-4000-8000-000000000004';
+
+do $$
+begin
+  assert not exists (select 1 from public.registration_link_validate(current_setting('bw.tok4'))),
+    '0040: el token de una solicitud cancelada no valida';
+  assert app.redeem_registration_token(current_setting('bw.tok4')) is null,
+    '0040: ni se canjea';
+  raise notice 'OK · 0040: el token depende de que la solicitud siga aprobada';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-155 · la premisa que hace inmune a `security definer`, comprobada
 -- -----------------------------------------------------------------------------
 -- Que un ayudante `security definer` no vea RLS no es un axioma: depende de dos

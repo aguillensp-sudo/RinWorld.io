@@ -14,16 +14,18 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 25 de V1 · 28-sep-2026 · Estado: CERRADO.** Dos pantallas por el arnés, elegidas antes de
-construir: **`REG-00` (FSR, VERDE en 2, +10/−3) y `REG-00-WAIT` (espera, VERDE en 1, 0 tocadas)**,
-en producción y **pendientes de la C5 del PO**. Cada una tuvo una corrida 01 inválida por causas
-ajenas al Coder (`F-224`, `F-225`). Detalle en `diario/dia-25.md`.
+**Día 26 de V1 · 29-sep-2026 · Estado: CERRADO.** **C5 del PO dada a `REG-00` y `REG-00-WAIT`**
+(15 pantallas aceptadas). `REG-00` tenía un defecto: el teléfono se rellena ahora con el prefijo del país
+elegido y es editable (`3abc4c3`). Detalle en `diario/dia-26.md`; la construcción, en `diario/dia-25.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-28`; sesión de 05:49 a 07:20 UTC |
+| Fecha de máquina | `date -u` | `2026-09-29` (construcción: 28-sep, de 05:49 a 07:17 UTC) |
+| C5 de las dos pantallas | El PO, en el chat, 29-sep, tras probarlas en su localhost | `REG-00-WAIT` sin cambios; `REG-00` con un defecto (prefijo del teléfono) |
+| Prefijo del teléfono | 1 404 pruebas de unidad en verde; `test_checks`; localhost con el panel del navegador | ES → `+34 `, PT → `+351 `; los 194 países tienen prefijo; `+34 ` solo ya no es válido (6 dígitos mínimo, también en la función) |
+| Despliegue del prefijo | `gh run` 36528928347 en `3abc4c3`; `curl` del bundle y de la función | Seis jobs verdes; el bundle trae `+1 876` y `+351`; la función rechaza `+34 ` solo (400, antes de escribir) |
 | Elección previa a construir | `git log`: `18d7cfc` (adenda §8) antes que `fa29058` (capa de datos) | Regla 1 del umbral cumplida |
 | `access-request` en la base de e2e | `curl` sin sesión; fila de prueba borrada después (0 quedan) | envío 200, duplicado 409, `http://` 400, estado 200, inexistente 404, id basura 400, GET 405; rechazo con motivo leído por la función |
 | `access-request` en producción | `curl` de solo lectura y preflight `OPTIONS` | sin JWT responde (404 limpio a un id inexistente); CORS 200 con los cuatro headers. **No se envió ninguna solicitud** |
@@ -41,31 +43,27 @@ ajenas al Coder (`F-224`, `F-225`). Detalle en `diario/dia-25.md`.
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **15 pantallas construidas**: 13 aceptadas y `REG-00` y
-  `REG-00-WAIT` pendientes de C5. Quedan 9 de 24, todas con un motivo de descarte escrito
-  (`DECISIONES-V1.md`, 26-sep y 28-sep): la siguiente exige decidir algo antes (§3.4).
+- **Corriente B · Fábrica — EN MARCHA.** **15 pantallas construidas y aceptadas** (las dos últimas,
+  `REG-00` y `REG-00-WAIT`, el 29-sep). Quedan 9 de 24, todas con un motivo de descarte escrito
+  (`DECISIONES-V1.md`, 26-sep y 28-sep): la siguiente exige decidir algo antes (§3.3).
   Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-1. **C5 de `REG-00` y `REG-00-WAIT` (PO).** Sin sesión: en el login, `Solicitud de Registro` (o
-   `/#solicitud-de-registro`). ⚠ **`Enviar solicitud` escribe una fila real en la cola de
-   `ADMIN-01`**: si se prueba, entrar después como Operador y rechazarla o cancelarla, y la
-   espera (si la pestaña sigue abierta) lo enseñará en ≤ 60 s. `Cerrar y esperar el email` la olvida.
-2. **Comprobar en pantalla que el `REGISTERED` ve el shell vacío** (`alvaro@vistabahia.eu`) tras
+1. **Comprobar en pantalla que el `REGISTERED` ve el shell vacío** (`alvaro@vistabahia.eu`) tras
    `0039`, y **después borrar esa cuenta** si el PO está de acuerdo: con ella, dos e2e fallan en
    local (`F-224`) y están excusados en las tareas; al borrarla, la exclusión se canta sola.
-3. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e
+2. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e
    entera**, con los marcadores; solo puede fallar el contrato de la tarea (más lo declarado en
    `e2e_fuera_de_contrato`). Un contrato en rojo solo en el árbol si su corrida es la siguiente (`F-219`).
-4. **Siguiente pantalla: antes hay que decidir algo.** Lo que queda es `REG-01` (token de invitación:
+3. **Siguiente pantalla: antes hay que decidir algo.** Lo que queda es `REG-01` (token de invitación:
    depende de `F-212`/`F-217`/`F-223`), `REG-05`/`06`/`07`, `REC-01` y `SET-SEC-01` (criptografía,
    Plan §4.3), `INV-02`/`03`/`04` (subida de ficheros y correo) y `MSG-03` (componente de `MSG-02`).
-5. **Revisión a mano: tipografía contra el HTML (`F-209`) y todos los `var(--bw-*)` contra
+4. **Revisión a mano: tipografía contra el HTML (`F-209`) y todos los `var(--bw-*)` contra
    `tokens.css`**: una variable inexistente no la ve ningún check (hoy, el logo a 407 px).
-6. **Decisiones que esperan al PO** (§5): `F-217`, `F-223` y cómo tratar `F-225`.
-7. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`; y `harness-review.csv` sin filas de `DIR-02`,
+5. **Decisiones que esperan al PO** (§5): `F-217`, `F-223` y cómo tratar `F-225`.
+6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`; y `harness-review.csv` sin filas de `DIR-02`,
    `INVT-01`, `REG-09` y `FRU` (desde el 24-sep solo se apuntaron hoy las dos nuevas).
 
 **Fecha límite:** Cuscinetti Padana vence el **30-sep** y la siembra de cobros cambia de
@@ -101,7 +99,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de más de un ADMIN tiene que llegar a la interfaz | Producto |
 | 🟠 | **Cifras 7 y 8** · solo `SRCH-03` tiene medida limpia (`F-205`) | Una sesión propia por pantalla |
-| 🟡 | **`F-224`** · dos e2e excusados en `REG-00`/`REG-00-WAIT` mientras exista la cuenta de prueba del PO | PO (§3.2) |
+| 🟡 | **`F-224`** · dos e2e excusados en `REG-00`/`REG-00-WAIT` mientras exista la cuenta de prueba del PO | PO (§3.1) |
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos (RLS en las 19 tablas). **Se reabre antes de datos reales o de abrir el registro a terceros**; el FSR público no crea cuentas | PO (25-sep) |
 | 🟡 | **`F-218`** · nada lleva a un ADMIN a `KEY_ACTIVE` (REG-05 a REG-07 no existen) | Al construir el flujo E2EE |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |

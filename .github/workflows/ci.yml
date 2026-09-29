@@ -239,6 +239,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
+      - name: Desplegar la función register-organization (REG-01, sin sesión)
+        run: npx supabase functions deploy register-organization --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+
   deploy-app:
     name: Despliegue continuo · app (Vercel)
     runs-on: ubuntu-latest

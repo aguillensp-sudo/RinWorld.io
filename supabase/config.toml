@@ -81,3 +81,10 @@ major_version = 17
 # función no se fía del que llama (valida, frena el abuso y escribe con
 # `service_role`); el paso de CI la despliega además con `--no-verify-jwt`.
 verify_jwt = false
+
+[functions.register-organization]
+# REG-01 (29-sep-2026): la segunda función que atiende a quien NO tiene sesión. El
+# solicitante aprobado llega con el enlace de `0040` y no tiene JWT. El único permiso
+# es el token, que la función comprueba antes de hacer nada; el paso de CI la
+# despliega además con `--no-verify-jwt`.
+verify_jwt = false

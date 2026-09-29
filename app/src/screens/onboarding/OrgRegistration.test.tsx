@@ -74,7 +74,9 @@ const emailContacto = () => screen.getByRole('textbox', { name: 'Email de contac
 const prefijo = () => screen.getByRole('combobox', { name: 'Prefijo telefónico' });
 const telefono = () => screen.getByRole('textbox', { name: 'Teléfono de contacto público' });
 const web = () => screen.getByRole('textbox', { name: 'Sitio web corporativo' });
-const paisesOperacion = () => screen.getByRole('textbox', { name: 'Países de operación' });
+// 29-sep (C5 del PO): los países se ELIGEN de un desplegable; ya no se escriben ni se añaden con Intro.
+const paisesOperacion = () => screen.getByRole('combobox', { name: 'Países de operación' });
+const opcionesDePaises = () => within(paisesOperacion()).getAllByRole('option').map((o) => (o as HTMLOptionElement).value);
 const marcas = () => screen.getByRole('textbox', { name: 'Marcas principales que distribuye' });
 const nombreAdmin = () => screen.getByRole('textbox', { name: 'Nombre completo' });
 const emailAdmin = () => screen.getByRole('textbox', { name: 'Email del administrador' });
@@ -170,7 +172,7 @@ describe('REG-01 · la página', () => {
     expect(emailContacto()).toHaveAttribute('maxlength', '30');
     expect(telefono()).toHaveAttribute('placeholder', '954 123 456');
     expect(web()).toHaveAttribute('placeholder', 'https://www.empresa.com');
-    expect(paisesOperacion()).toHaveAttribute('placeholder', 'Buscar país...');
+    expect(within(paisesOperacion()).getAllByRole('option')[0]).toHaveTextContent('Selecciona un país para añadirlo');
     expect(marcas()).toHaveAttribute('placeholder', 'Escribe una marca...');
     expect(nombreAdmin()).toHaveAttribute('maxlength', '50');
     expect(clave()).toHaveAttribute('placeholder', 'Mín. 10 caracteres');
@@ -181,7 +183,7 @@ describe('REG-01 · la página', () => {
       'Máx 150 caracteres',
       'Máx 10 car.',
       'Lista ISO 3166-1 · establece prefijo telefónico',
-      'Máx 30 caracteres · distinto del email del administrador',
+      'Máx 30 caracteres',
       'Solo dígitos, espacios y guiones',
       'Debe comenzar por https:// si se introduce',
       'Mín 1 · país de sede preseleccionado',
@@ -284,39 +286,45 @@ describe('REG-01 · país de sede y prefijo', () => {
 });
 
 describe('REG-01 · etiquetas de países y de marcas', () => {
-  it('un país se añade con su nombre y Intro, y el campo se vacía', async () => {
+  it('un país se elige del desplegable, se añade a la caja y el desplegable vuelve a su texto de ayuda', async () => {
     const u = await montar();
-    await u.type(paisesOperacion(), 'Alemania{Enter}');
+    await u.selectOptions(paisesOperacion(), 'DE');
     expect(etiqueta('Alemania (DE)')).toBeInTheDocument();
     expect(paisesOperacion()).toHaveValue('');
   });
 
-  it('acepta el código y no repite', async () => {
+  it('los países añadidos van en una caja aparte, en varias líneas, con su botón de quitar', async () => {
     const u = await montar();
-    await u.type(paisesOperacion(), 'fr{Enter}');
-    expect(etiqueta('Francia (FR)')).toBeInTheDocument();
-    await u.type(paisesOperacion(), 'Francia{Enter}');
-    expect(etiquetas('Francia (FR)')).toHaveLength(1);
+    await u.selectOptions(paisesOperacion(), 'DE');
+    await u.selectOptions(paisesOperacion(), 'FR');
+    const caja = screen.getByRole('group', { name: 'Países añadidos' });
+    for (const texto of ['España (ES)', 'Alemania (DE)', 'Francia (FR)']) {
+      expect(within(caja).getByText(texto)).toBeInTheDocument();
+    }
+    expect(within(caja).getAllByRole('button')).toHaveLength(3);
   });
 
-  it('un texto que no es un país no añade nada', async () => {
+  it('un país ya elegido deja de ofrecerse, y al quitarlo vuelve a ofrecerse', async () => {
     const u = await montar();
-    await u.type(paisesOperacion(), 'Narnia{Enter}');
-    expect(screen.queryAllByText(/Narnia/)).toHaveLength(0);
+    expect(opcionesDePaises()).not.toContain('ES'); // el de sede viene preseleccionado
+    expect(opcionesDePaises()).toContain('DE');
+    await u.selectOptions(paisesOperacion(), 'DE');
+    expect(opcionesDePaises()).not.toContain('DE');
+    await u.click(screen.getByRole('button', { name: 'Eliminar Alemania (DE)' }));
+    expect(opcionesDePaises()).toContain('DE');
+    expect(etiquetas('Alemania (DE)')).toHaveLength(0);
+  });
+
+  it('el desplegable ofrece los 194 países menos los ya elegidos, y ningún campo de texto para los países', async () => {
+    await montar();
+    expect(opcionesDePaises().filter((v) => v !== '')).toHaveLength(REGISTRATION_COUNTRIES.length - 1);
+    expect(screen.queryByRole('textbox', { name: 'Países de operación' })).not.toBeInTheDocument();
   });
 
   it('Intro en un campo de etiquetas no envía el formulario', async () => {
     const u = await montar();
     await u.type(marcas(), 'SKF{Enter}');
     expect(submitRegistration).not.toHaveBeenCalled();
-  });
-
-  it('un país se quita con su botón «Eliminar»', async () => {
-    const u = await montar();
-    await u.type(paisesOperacion(), 'Alemania{Enter}');
-    await u.click(screen.getByRole('button', { name: 'Eliminar Alemania (DE)' }));
-    expect(etiquetas('Alemania (DE)')).toHaveLength(0);
-    expect(etiqueta('España (ES)')).toBeInTheDocument();
   });
 
   it('las marcas se añaden con Intro, sin repetir aunque cambien las mayúsculas, y se quitan', async () => {
@@ -377,6 +385,53 @@ describe('REG-01 · la contraseña', () => {
   });
 });
 
+describe('REG-01 · leyenda de obligatorios en blanco', () => {
+  const leyenda = () => screen.queryByRole('status');
+
+  it('desde el principio, sin tocar nada, lista los obligatorios que siguen en blanco', async () => {
+    await montar();
+    const texto = leyenda()?.textContent ?? '';
+    expect(texto).toMatch(/^Faltan campos obligatorios por completar: /);
+    for (const etiqueta of ['NIF / CIF', 'Dirección', 'Código postal', 'Email de contacto público', 'Contraseña', 'Repetir contraseña']) {
+      expect(texto).toContain(etiqueta);
+    }
+    // Lo que el FSR ya trae y lo opcional no cuenta.
+    expect(texto).not.toContain('Nombre legal de la empresa');
+    expect(texto).not.toContain('Sitio web corporativo');
+    expect(texto).not.toContain('País de sede');
+    expect(texto).not.toContain('Teléfono de contacto público');
+  });
+
+  it('está aunque los términos estén marcados: marcarlos habilita el botón pero no calla la leyenda', async () => {
+    const u = await montar();
+    await u.click(terminos());
+    expect(crear()).toBeEnabled();
+    expect(leyenda()?.textContent).toContain('NIF / CIF');
+  });
+
+  it('se va acortando a medida que se rellena, y desaparece cuando no falta ninguno', async () => {
+    const u = await montar();
+    await u.type(nif(), 'B-12345678');
+    expect(leyenda()?.textContent).not.toContain('NIF / CIF');
+    expect(leyenda()?.textContent).toContain('Dirección');
+    await u.type(direccion(), 'Calle Industria, 47, Nave 3');
+    await u.type(cp(), '41900');
+    await u.type(emailContacto(), 'info@sur.es');
+    await u.type(clave(), 'Correcta-2026!');
+    expect(leyenda()).not.toBeNull();
+    await u.type(repetir(), 'Correcta-2026!');
+    expect(leyenda()).toBeNull();
+  });
+
+  it('quitar el último país de operación la vuelve a poner', async () => {
+    const u = await montar();
+    await completar(u);
+    expect(leyenda()).toBeNull();
+    await u.click(screen.getByRole('button', { name: 'Eliminar España (ES)' }));
+    expect(leyenda()?.textContent).toContain('Países de operación');
+  });
+});
+
 describe('REG-01 · errores', () => {
   it('al salir de un campo VACÍO no se enseña error; con algo que no vale, sí', async () => {
     const u = await montar();
@@ -398,6 +453,14 @@ describe('REG-01 · errores', () => {
     expect(emailAdmin()).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Introduce un email válido')).toBeInTheDocument();
     expect(screen.queryByText('Formato email · unicidad en tiempo real')).not.toBeInTheDocument();
+  });
+
+  it('el email de contacto público puede ser el mismo que el del administrador: no se queja', async () => {
+    const u = await montar();
+    await u.type(emailContacto(), 'juan@sur.es'); // el del administrador, ya pre-rellenado
+    await u.tab();
+    expect(emailContacto()).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByText('Máx 30 caracteres · distinto del email del administrador')).not.toBeInTheDocument();
   });
 
   it('la web sin https:// enseña «La URL debe comenzar por https://»', async () => {
@@ -475,7 +538,7 @@ describe('REG-01 · el envío', () => {
   it('con todo válido llama a submitRegistration UNA vez con el token y el formulario, y después a onRegistered', async () => {
     const u = await montar();
     await u.type(marcas(), 'SKF{Enter}');
-    await u.type(paisesOperacion(), 'Portugal{Enter}');
+    await u.selectOptions(paisesOperacion(), 'PT');
     await u.click(screen.getByRole('radio', { name: /Visibilidad restringida/ }));
     await completar(u);
     await u.click(crear());
@@ -530,6 +593,20 @@ describe('REG-01 · el envío', () => {
     expect(web()).not.toHaveAttribute('aria-invalid');
     expect(nif()).toHaveFocus();
     expect(screen.getByText('Dato interno · máx 20 caracteres')).toBeInTheDocument();
+  });
+
+  it('con el email de contacto igual al del administrador SÍ envía', async () => {
+    const u = await montar();
+    await u.type(nif(), 'B-12345678');
+    await u.type(direccion(), 'Calle Industria, 47, Nave 3');
+    await u.type(cp(), '41900');
+    await u.type(emailContacto(), 'juan@sur.es');
+    await u.type(clave(), 'Correcta-2026!');
+    await u.type(repetir(), 'Correcta-2026!');
+    await u.click(terminos());
+    await u.click(crear());
+    await waitFor(() => expect(submitRegistration).toHaveBeenCalledTimes(1));
+    expect(submitRegistration.mock.calls[0]?.[1]).toMatchObject({ contactEmail: 'juan@sur.es', adminEmail: 'juan@sur.es' });
   });
 
   it('sin países de operación tampoco envía', async () => {

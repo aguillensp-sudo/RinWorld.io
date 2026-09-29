@@ -133,7 +133,7 @@ export const FIELD_META: Record<RegistrationField | 'brands' | 'logo', FieldMeta
   contactEmail: {
     label: 'Email de contacto público',
     placeholder: 'info@empresa.com',
-    hint: 'Máx 30 caracteres · distinto del email del administrador',
+    hint: 'Máx 30 caracteres',
     maxLength: 30,
   },
   phoneNumber: {
@@ -148,9 +148,8 @@ export const FIELD_META: Record<RegistrationField | 'brands' | 'logo', FieldMeta
   },
   operatingCountries: {
     label: 'Países de operación',
-    placeholder: 'Buscar país...',
+    placeholder: 'Selecciona un país para añadirlo',
     hint: 'Mín 1 · país de sede preseleccionado',
-    maxLength: 60,
   },
   brands: {
     label: 'Marcas principales que distribuye',
@@ -208,6 +207,8 @@ export const REGISTRATION_TEXTS = {
   logoTitle: 'Arrastra o haz clic para subir',
   logoHint: 'PNG, JPG o WEBP · máx. 2 MB',
   visibilityLabel: 'Visibilidad del inventario',
+  /** Leyenda bajo los términos mientras haya obligatorios en blanco; sigue la lista de sus etiquetas. */
+  missingRequired: 'Faltan campos obligatorios por completar: ',
 } as const;
 
 export const VISIBILITY_OPTIONS: ReadonlyArray<{ value: Visibility; label: string; description: string }> = [
@@ -260,35 +261,17 @@ export const DIAL_OPTIONS: ReadonlyArray<{ code: string; label: string }> = COUN
   .filter((o) => o.label.startsWith('+'))
   .sort((a, b) => a.label.localeCompare(b.label, 'es'));
 
-function normalize(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-const COUNTRY_BY_TEXT: ReadonlyMap<string, string> = new Map(
-  REGISTRATION_COUNTRIES.flatMap(({ code, label }) => [
-    [normalize(label), code],
-    [normalize(countryName(code)), code],
-    [normalize(code), code],
-  ]),
-);
-
 /**
- * El país que dice un texto: `España`, `españa`, `Espana`, `ES` o `España (ES)`. `null`
- * si no es ninguno. Es lo que hace el campo «Países de operación» al pulsar Intro.
+ * Añade el país elegido en el desplegable de «Países de operación» (su código). Un código que
+ * no existe, o que ya está, deja la lista como estaba.
  */
-export function matchCountry(text: string): string | null {
-  const key = normalize(text);
-  return key === '' ? null : (COUNTRY_BY_TEXT.get(key) ?? null);
+export function addOperatingCountry(list: readonly string[], code: string): string[] {
+  return !COUNTRY_CODES.has(code) || list.includes(code) ? [...list] : [...list, code];
 }
 
-/** Añade el país que dice `text` si es uno y no está ya; si no, devuelve la misma lista. */
-export function addOperatingCountry(list: readonly string[], text: string): string[] {
-  const code = matchCountry(text);
-  return code === null || list.includes(code) ? [...list] : [...list, code];
+/** Los países que todavía se pueden añadir: los 194 menos los ya elegidos, en el orden del desplegable. */
+export function availableCountries(list: readonly string[]): { code: string; label: string }[] {
+  return REGISTRATION_COUNTRIES.filter((c) => !list.includes(c.code));
 }
 
 export const BRANDS_MAX = 20;
@@ -367,8 +350,10 @@ export function isFieldValid(field: RegistrationField, form: RegistrationForm): 
     case 'country':
       return COUNTRY_CODES.has(form.country);
     case 'contactEmail': {
+      // Sin comparar con el email del administrador: si quiere ser también el contacto público,
+      // no hay razón para impedírselo (PO, C5 del 29-sep).
       const v = form.contactEmail.trim().toLowerCase();
-      return EMAIL.test(v) && v.length <= 30 && v !== form.adminEmail.trim().toLowerCase();
+      return EMAIL.test(v) && v.length <= 30;
     }
     case 'phoneNumber': {
       const v = form.phoneNumber.trim();
@@ -416,20 +401,44 @@ export function fieldError(field: RegistrationField, form: RegistrationForm): st
   }
 }
 
+/** ¿Está el campo en blanco? Para el país de sede y los de operación, «sin elegir». */
+export function isBlank(field: RegistrationField, form: RegistrationForm): boolean {
+  switch (field) {
+    case 'operatingCountries':
+      return form.operatingCountries.length === 0;
+    case 'country':
+      return form.country === '';
+    case 'phoneNumber':
+      return form.phoneNumber.trim() === '';
+    default:
+      return (form[field] as string).trim() === '';
+  }
+}
+
 /**
  * El error al SALIR de un campo (`blur`). Un campo vacío no se queja: pasar por él con el
- * tabulador no es un error, y los vacíos ya salen al intentar enviar (`submitErrors`).
+ * tabulador no es un error, y los vacíos ya salen al intentar enviar (`submitErrors`) y en la
+ * leyenda de obligatorios en blanco (`missingRequiredText`).
  */
 export function blurError(field: RegistrationField, form: RegistrationForm): string | null {
-  const empty =
-    field === 'operatingCountries'
-      ? form.operatingCountries.length === 0
-      : field === 'country'
-        ? form.country === ''
-        : field === 'phoneNumber'
-          ? form.phoneNumber.trim() === ''
-          : (form[field] as string).trim() === '';
-  return empty ? null : fieldError(field, form);
+  return isBlank(field, form) ? null : fieldError(field, form);
+}
+
+/** Los obligatorios que siguen en blanco, en el orden del formulario. La web es opcional y no cuenta. */
+export function blankRequiredFields(form: RegistrationForm): RegistrationField[] {
+  return REGISTRATION_FIELDS.filter((f) => f !== 'website' && isBlank(f, form));
+}
+
+/**
+ * La leyenda que va bajo los términos mientras falte algún obligatorio: `Faltan campos obligatorios
+ * por completar: NIF / CIF, Dirección.` `null` si no falta ninguno. Se calcula del formulario, no de
+ * los errores enseñados: se ve desde el principio, sin haber tocado nada.
+ */
+export function missingRequiredText(form: RegistrationForm): string | null {
+  const blank = blankRequiredFields(form);
+  return blank.length === 0
+    ? null
+    : `${REGISTRATION_TEXTS.missingRequired}${blank.map((f) => FIELD_META[f].label).join(', ')}.`;
 }
 
 /** Todos los campos que no valen, al intentar enviar. Vacío si se puede enviar. */

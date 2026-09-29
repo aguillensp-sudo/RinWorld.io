@@ -610,3 +610,15 @@
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
+
+/* ---- Leyenda de obligatorios en blanco (petición del PO en la C5, 29-sep) ---- */
+.missing {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--bw-warning);
+  border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+  background: var(--bw-badge-warning-bg);
+  color: var(--bw-warning-dark);
+  font-size: 12px;
+  line-height: 1.5;
+}

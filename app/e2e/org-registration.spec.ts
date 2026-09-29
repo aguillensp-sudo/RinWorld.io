@@ -104,6 +104,25 @@ test.describe('REG-01 · FRO sin sesión', () => {
     await expect(crear).toBeInViewport();
   });
 
+  test('una leyenda avisa de los obligatorios en blanco y desaparece al rellenarlos', async ({ page }) => {
+    await interceptar(page, valido);
+    await page.goto(`/#registro?token=${TOKEN}`);
+    const leyenda = page.getByRole('status');
+    await expect(leyenda).toContainText('Faltan campos obligatorios por completar');
+    await expect(leyenda).toContainText('NIF / CIF');
+    await page.getByRole('checkbox', { name: /Acepto los Términos y Condiciones/ }).check();
+    await expect(page.getByRole('button', { name: 'Crear mi cuenta' })).toBeEnabled();
+    await expect(leyenda).toContainText('NIF / CIF'); // marcar los términos no la calla
+    await page.getByRole('textbox', { name: /^NIF \/ CIF/ }).fill('B-12345678');
+    await page.getByRole('textbox', { name: 'Dirección' }).fill('Calle Industria, 47, Nave 3');
+    await page.getByRole('textbox', { name: 'Código postal' }).fill('41900');
+    // El email de contacto público puede ser el del administrador (PO, C5 del 29-sep).
+    await page.getByRole('textbox', { name: 'Email de contacto público' }).fill('juan@rodamientosdelsur.test');
+    await page.getByLabel(/^Contraseña\s*\*?$/).fill('Correcta-2026!');
+    await page.getByLabel(/^Repetir contraseña\s*\*?$/).fill('Correcta-2026!');
+    await expect(leyenda).toHaveCount(0);
+  });
+
   test('rellenado y con los términos, «Crear mi cuenta» se habilita; un email ocupado se avisa al salir del campo', async ({ page }) => {
     let ocupado = false;
     await interceptar(page, (accion) =>
@@ -128,16 +147,18 @@ test.describe('REG-01 · FRO sin sesión', () => {
     await expect(page.getByText('Este email ya tiene cuenta en Bearingworld.io')).toBeVisible();
   });
 
-  test('países y marcas se añaden con Intro y se quitan, sin enviar el formulario', async ({ page }) => {
+  test('los países se eligen de un desplegable y las marcas se añaden con Intro, sin enviar el formulario', async ({ page }) => {
     await interceptar(page, valido);
     await page.goto(`/#registro?token=${TOKEN}`);
-    const paises = page.getByRole('textbox', { name: 'Países de operación' });
-    await paises.fill('Alemania');
-    await paises.press('Enter');
+    // C5 del PO (29-sep): los países no se escriben, se eligen. Cada uno pasa a la caja de abajo.
+    const paises = page.getByRole('combobox', { name: 'Países de operación' });
+    await paises.selectOption('DE');
     // El texto `Alemania (DE)` también es una <option> de los desplegables: se mide por el botón.
     await expect(page.getByRole('button', { name: 'Eliminar Alemania (DE)' })).toBeVisible();
+    await expect(paises.locator('option[value="DE"]')).toHaveCount(0); // ya elegido: deja de ofrecerse
     await page.getByRole('button', { name: 'Eliminar Alemania (DE)' }).click();
     await expect(page.getByRole('button', { name: 'Eliminar Alemania (DE)' })).toHaveCount(0);
+    await expect(paises.locator('option[value="DE"]')).toHaveCount(1); // vuelve a ofrecerse
 
     const marcas = page.getByRole('textbox', { name: 'Marcas principales que distribuye' });
     await marcas.fill('SKF');

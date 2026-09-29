@@ -22,6 +22,8 @@ const {
   WEBSITE_ERROR,
   addBrand,
   addOperatingCountry,
+  availableCountries,
+  blankRequiredFields,
   blurError,
   canSubmitRegistration,
   composePhone,
@@ -29,7 +31,7 @@ const {
   formFromPrefill,
   isAdminEmailAvailable,
   isFieldValid,
-  matchCountry,
+  missingRequiredText,
   passwordStrength,
   registrationTokenFromHash,
   removeAt,
@@ -104,21 +106,21 @@ describe('países y prefijos', () => {
     expect(DIAL_OPTIONS.find((o) => o.code === 'CA')?.label).toBe('+1 · CA');
   });
 
-  it('matchCountry entiende nombre, código, mayúsculas y acentos', () => {
-    expect(matchCountry('España')).toBe('ES');
-    expect(matchCountry('  espana ')).toBe('ES');
-    expect(matchCountry('ES')).toBe('ES');
-    expect(matchCountry('es')).toBe('ES');
-    expect(matchCountry('España (ES)')).toBe('ES');
-    expect(matchCountry('Alemania')).toBe('DE');
-    expect(matchCountry('')).toBeNull();
-    expect(matchCountry('Narnia')).toBeNull();
+  it('addOperatingCountry añade el código elegido, sin repetir y sin inventar', () => {
+    expect(addOperatingCountry(['ES'], 'PT')).toEqual(['ES', 'PT']);
+    expect(addOperatingCountry(['ES'], 'ES')).toEqual(['ES']);
+    expect(addOperatingCountry(['ES'], 'ZZ')).toEqual(['ES']);
+    expect(addOperatingCountry(['ES'], '')).toEqual(['ES']);
+    expect(addOperatingCountry(['ES'], 'España')).toEqual(['ES']); // ya no se escribe: se elige
   });
 
-  it('addOperatingCountry añade un país que existe y no repite', () => {
-    expect(addOperatingCountry(['ES'], 'Portugal')).toEqual(['ES', 'PT']);
-    expect(addOperatingCountry(['ES'], 'españa')).toEqual(['ES']);
-    expect(addOperatingCountry(['ES'], 'Narnia')).toEqual(['ES']);
+  it('availableCountries ofrece los 194 menos los ya elegidos, en el orden del desplegable', () => {
+    expect(availableCountries([])).toHaveLength(194);
+    const sin = availableCountries(['ES', 'PT']);
+    expect(sin).toHaveLength(192);
+    expect(sin.find((c) => c.code === 'ES')).toBeUndefined();
+    expect(sin.find((c) => c.code === 'DE')?.label).toBe('Alemania (DE)');
+    expect(sin.map((c) => c.label)).toEqual(availableCountries(['ES', 'PT']).map((c) => c.label));
   });
 
   it('elegir el país de sede pone su prefijo y lo deja preseleccionado en operación', () => {
@@ -192,8 +194,8 @@ describe('isFieldValid · las reglas de la spec §4', () => {
     ['country', { country: 'ZZ' }, false],
     ['contactEmail', { contactEmail: 'sin-arroba' }, false],
     ['contactEmail', { contactEmail: 'informacion.general@rodamientos.es' }, false], // > 30
-    ['contactEmail', { contactEmail: 'juan@sur.es' }, false], // igual que el del admin
-    ['contactEmail', { contactEmail: 'JUAN@SUR.ES' }, false], // sin mirar mayúsculas
+    ['contactEmail', { contactEmail: 'juan@sur.es' }, true], // igual que el del admin: PO, C5 del 29-sep
+    ['contactEmail', { contactEmail: 'JUAN@SUR.ES' }, true],
     ['phoneNumber', { phoneNumber: '954' }, false],
     ['phoneNumber', { phoneNumber: '954 abc 456' }, false],
     ['phoneNumber', { phoneNumber: '954-123-456' }, true],
@@ -230,8 +232,15 @@ describe('los errores que se enseñan', () => {
     );
   });
 
-  it('un email de contacto bien formado pero repetido enseña la ayuda, no «email válido»', () => {
-    expect(fieldError('contactEmail', valid({ contactEmail: 'juan@sur.es' }))).toBe(FIELD_META.contactEmail.hint);
+  it('el email de contacto puede ser el mismo que el del administrador, y la ayuda ya no lo prohíbe', () => {
+    expect(fieldError('contactEmail', valid({ contactEmail: 'juan@sur.es' }))).toBeNull();
+    expect(FIELD_META.contactEmail.hint).toBe('Máx 30 caracteres');
+  });
+
+  it('un email de contacto demasiado largo enseña la ayuda, no «email válido»', () => {
+    expect(fieldError('contactEmail', valid({ contactEmail: 'informacion.general@rodamientos.es' }))).toBe(
+      FIELD_META.contactEmail.hint,
+    );
   });
 
   it('un campo válido no tiene error', () => {
@@ -246,6 +255,28 @@ describe('los errores que se enseñan', () => {
     expect(blurError('legalName', valid({ legalName: 'Sur' }))).toBe(FIELD_META.legalName.hint);
     expect(blurError('adminEmail', valid({ adminEmail: 'x' }))).toBe(EMAIL_ERROR);
     expect(blurError('legalName', valid())).toBeNull();
+  });
+
+  it('los obligatorios en blanco: el formulario vacío los lista todos menos la web, en el orden del formulario', () => {
+    expect(blankRequiredFields(EMPTY_REGISTRATION_FORM)).toEqual(REGISTRATION_FIELDS.filter((f) => f !== 'website'));
+    expect(blankRequiredFields(valid())).toEqual([]);
+    expect(blankRequiredFields(valid({ taxId: '   ', operatingCountries: [] }))).toEqual(['taxId', 'operatingCountries']);
+  });
+
+  it('un obligatorio con algo escrito que no vale NO está en blanco (eso lo dice su error, no la leyenda)', () => {
+    expect(blankRequiredFields(valid({ adminName: 'Juan' }))).toEqual([]);
+  });
+
+  it('la leyenda de obligatorios en blanco lista sus etiquetas y desaparece cuando no falta ninguno', () => {
+    expect(missingRequiredText(valid())).toBeNull();
+    expect(missingRequiredText(valid({ taxId: '', address: '' }))).toBe(
+      'Faltan campos obligatorios por completar: NIF / CIF, Dirección.',
+    );
+    expect(missingRequiredText(valid({ operatingCountries: [], country: '' }))).toBe(
+      'Faltan campos obligatorios por completar: País de sede, Países de operación.',
+    );
+    expect(missingRequiredText(EMPTY_REGISTRATION_FORM)).toContain('Nombre legal de la empresa');
+    expect(missingRequiredText(EMPTY_REGISTRATION_FORM)).not.toContain('Sitio web');
   });
 
   it('el botón solo depende de los términos: lo demás se valida al enviar', () => {

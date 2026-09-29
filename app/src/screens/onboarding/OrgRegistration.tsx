@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { FormEvent, KeyboardEvent } from 'react';
+import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react';
 import {
   DIAL_OPTIONS,
   EMAIL_TAKEN_ERROR,
@@ -13,11 +13,13 @@ import {
   VISIBILITY_OPTIONS,
   addBrand,
   addOperatingCountry,
+  availableCountries,
   blurError,
   canSubmitRegistration,
   formFromPrefill,
   isAdminEmailAvailable,
   isFieldValid,
+  missingRequiredText,
   passwordStrength,
   removeAt,
   submitErrors,
@@ -67,7 +69,6 @@ export function OrgRegistration({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [takenEmail, setTakenEmail] = useState<string | null>(null);
-  const [countryDraft, setCountryDraft] = useState('');
   const [brandDraft, setBrandDraft] = useState('');
 
   // El enlace se comprueba UNA vez al montar. Si el componente se va antes de
@@ -144,12 +145,10 @@ export function OrgRegistration({
     });
   };
 
-  const handleCountryKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== 'Enter') return;
-    // Intro en una caja de etiquetas NO envía el formulario.
-    event.preventDefault();
-    setValue({ operatingCountries: addOperatingCountry(form.operatingCountries, countryDraft) });
-    setCountryDraft('');
+  // Los países de operación se eligen de una lista: cada elección se añade a la caja y el
+  // desplegable vuelve a su texto de ayuda (siempre `value=""`).
+  const handleCountryChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setValue({ operatingCountries: addOperatingCountry(form.operatingCountries, event.target.value) });
   };
 
   const handleBrandKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -195,6 +194,7 @@ export function OrgRegistration({
 
   const strength = passwordStrength(form.password);
   const canSubmit = canSubmitRegistration(form);
+  const missingRequired = missingRequiredText(form);
 
   const countryLabel = (code: string) =>
     REGISTRATION_COUNTRIES.find((option) => option.code === code)?.label ?? code;
@@ -465,12 +465,36 @@ export function OrgRegistration({
                       *
                     </span>
                   </label>
+                  <select
+                    id="operatingCountries"
+                    className={
+                      errors.operatingCountries
+                        ? `${styles.input} ${styles.select} ${styles.inputError}`
+                        : `${styles.input} ${styles.select}`
+                    }
+                    value=""
+                    aria-invalid={errors.operatingCountries ? true : undefined}
+                    aria-describedby="operatingCountries-hint"
+                    onChange={handleCountryChange}
+                    onBlur={() => handleBlur('operatingCountries')}
+                  >
+                    <option value="" disabled>
+                      {FIELD_META.operatingCountries.placeholder}
+                    </option>
+                    {availableCountries(form.operatingCountries).map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                   <div
                     className={
                       errors.operatingCountries
                         ? `${styles.tagsBox} ${styles.inputError}`
                         : styles.tagsBox
                     }
+                    role="group"
+                    aria-label="Países añadidos"
                   >
                     {form.operatingCountries.map((code, index) => {
                       const label = countryLabel(code);
@@ -492,19 +516,6 @@ export function OrgRegistration({
                         </span>
                       );
                     })}
-                    <input
-                      id="operatingCountries"
-                      className={styles.tagInput}
-                      type="text"
-                      placeholder={FIELD_META.operatingCountries.placeholder}
-                      maxLength={FIELD_META.operatingCountries.maxLength}
-                      value={countryDraft}
-                      aria-invalid={errors.operatingCountries ? true : undefined}
-                      aria-describedby="operatingCountries-hint"
-                      onChange={(event) => setCountryDraft(event.target.value)}
-                      onKeyDown={handleCountryKeyDown}
-                      onBlur={() => handleBlur('operatingCountries')}
-                    />
                   </div>
                   {hintFor('operatingCountries')}
                 </div>
@@ -768,6 +779,12 @@ export function OrgRegistration({
                   </span>
                 </label>
               </div>
+
+              {missingRequired !== null && (
+                <p className={styles.missing} role="status">
+                  {missingRequired}
+                </p>
+              )}
 
               {submitError !== null && (
                 <p className={styles.alert} role="alert">

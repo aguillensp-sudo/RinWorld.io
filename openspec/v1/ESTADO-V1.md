@@ -58,12 +58,12 @@ elegido y es editable (`3abc4c3`). Detalle en `diario/dia-26.md`; la construcci�
 2. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e
    entera**, con los marcadores; solo puede fallar el contrato de la tarea (más lo declarado en
    `e2e_fuera_de_contrato`). Un contrato en rojo solo en el árbol si su corrida es la siguiente (`F-219`).
-3. **Siguiente pantalla: antes hay que decidir algo.** Lo que queda es `REG-01` (token de invitación:
-   depende de `F-212`/`F-217`/`F-223`), `REG-05`/`06`/`07`, `REC-01` y `SET-SEC-01` (criptografía,
+3. **Siguiente pantalla: `REG-01`, cuando exista su token (punto 5).** Lo que queda es `REG-01` (desbloqueada por la decisión de
+   `F-223`: primero su token), `REG-05`/`06`/`07`, `REC-01` y `SET-SEC-01` (criptografía,
    Plan §4.3), `INV-02`/`03`/`04` (subida de ficheros y correo) y `MSG-03` (componente de `MSG-02`).
 4. **Revisión a mano: tipografía contra el HTML (`F-209`) y todos los `var(--bw-*)` contra
    `tokens.css`**: una variable inexistente no la ve ningún check (hoy, el logo a 407 px).
-5. **Decisiones que esperan al PO** (§5): `F-217`, `F-223` y cómo tratar `F-225`.
+5. **Construir lo decidido en `F-223`**: el token de invitación con enlace copiable en `ADMIN-01` (esquema y seguridad, a mano; sirve también a `INVT-01`) y después `REG-01` por el arnés. Queda para el PO: `F-217` y cómo tratar `F-225`.
 6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`; y `harness-review.csv` sin filas de `DIR-02`,
    `INVT-01`, `REG-09` y `FRU` (desde el 24-sep solo se apuntaron hoy las dos nuevas).
 
@@ -92,7 +92,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-223`** · la Ruta 00.2 promete VERA sin sesión y un correo tras la decisión: aprobar en `ADMIN-01` solo cambia el estado; el aprobado ve «revisa tu email» y no llega nada | PO: ¿VERA sin sesión? ¿orden entre correo, invitación y `REG-01`? |
+| 🟠 | **`F-223`** · DECIDIDO (29-sep): token de un solo uso con enlace copiable en `ADMIN-01`, sin correo, y después `REG-01`; VERA fuera; ningún texto cambia | Construir: token y enlace (a mano), luego `REG-01` (arnés) |
 | 🟠 | **`F-217`** · el alta de `FRU` crea una cuenta que queda `REGISTERED` sin flujo para activarse | PO (misma pregunta que `F-223`) |
 | 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token | PO / producto |
 | 🟠 | **`F-225`** · la suite e2e local contra producción falla a ratos en tests ajenos; el C2 se los cobra al Coder | PO: `retries`, base de e2e o suite en serie, al cerrar la serie |

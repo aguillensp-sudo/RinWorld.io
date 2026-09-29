@@ -565,7 +565,7 @@ function trimmed(form: AccessRequestForm): AccessRequestForm {
 }
 
 /** Saca el `{ error }` del cuerpo de una respuesta no 2xx de la función. */
-async function functionError(error: unknown, fallback: string): Promise<Error> {
+export async function functionError(error: unknown, fallback: string): Promise<Error> {
   const response = (error as { context?: unknown }).context;
   if (response instanceof Response) {
     try {

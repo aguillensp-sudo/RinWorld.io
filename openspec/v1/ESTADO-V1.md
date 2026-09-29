@@ -16,7 +16,8 @@ Empieza por §6 y luego §3.
 
 **Día 27 de V1 · 29-sep-2026 · Estado: CERRADO.** **`REG-01` (decimosexta pantalla) construida y desplegada, a falta
 de la C5 del PO**, con su token (`0040`), su alta (`0041`), su función de borde y el **enlace copiable en `ADMIN-01`**.
-`F-225` con `workers: 1`. Detalle en `diario/dia-27.md`.
+`F-225` con `workers: 1`. **C5 parcial del PO sobre `REG-01`** (pasos 1 a 8): países por desplegable, leyenda de
+obligatorios en blanco y contacto = administrador permitido (`0042`). Detalle en `diario/dia-27.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
@@ -30,6 +31,8 @@ de la C5 del PO**, con su token (`0040`), su alta (`0041`), su función de borde
 | Enlace en `ADMIN-01` | 1 537 pruebas de unidad; tsc; e2e | Verde. **Probado con mocks; no aprobado de verdad en producción** (`F-188`) |
 | `REG-01` | `harness/metrics/REG-01/corrida-01/`, `git show --numstat 857b46a` | VERDE en 1 intento; 37 030 / 36 433 tokens; **0,064 $**; 2,1 min; 1 342 líneas; **+60/−3 a mano** |
 | Fidelidad de `REG-01` | 0 `var(--bw-*)` inexistentes, 0 colores literales; tamaños 24/13/12/10; captura real contra la del aprobado (subagente) | 4 defectos visuales corregidos; quedan 2 cosméticos (forma de la flecha del select, relleno de los términos) |
+| C5 parcial de `REG-01` | El PO, en el chat, 29-sep, en su localhost con un enlace de prueba | Pasos 1-3, 5-7 «perfectos»; tres cambios pedidos y hechos (`9da5785`, `6749723`); **pasos 9 y 10 sin probar** |
+| `0042` | Banco de esquema (exit 0) y `pg_get_functiondef` + catálogo de producción | Sin la regla del contacto; `register_organization` sigue solo para `service_role` |
 | Contrato de `REG-01` | Implementación de referencia desechable (fuera del árbol) | 40 unitarias, 2 de CSS y 7 e2e verdes con ella; salieron 3 errores del propio contrato |
 | CI y producción | `gh run` 36540317696 en `857b46a` (seis jobs verdes) y `curl` del bundle de `rin-world-io.vercel.app` (`F-168`) | El bundle trae los textos de `REG-01` y del enlace; la función responde 404 a un token que no vale |
 | Medidor de orquestación | `python -m harness.core.orchestration_metrics` antes y después | **10,02 $ → 40,06 $** el 29-sep; se paraba con Sonnet 5.5 (`F-227`); tarifa añadida. **No limpia** |
@@ -49,7 +52,10 @@ de la C5 del PO**, con su token (`0040`), su alta (`0041`), su función de borde
 
 ## 3 · Qué toca, en este orden
 
-1. **C5 del PO sobre `REG-01` y sobre la sección «Enlace de acceso» de `ADMIN-01`.** Recorrido completo en su
+1. **Terminar la C5 del PO sobre `REG-01` (pasos 9 y 10: crear la cuenta y reusar el enlace) y la de la sección «Enlace de acceso»
+   de `ADMIN-01`.** **Hay filas de prueba vivas en producción**: la solicitud `ZZ Prueba REG-01 SL`
+   (`prueba-reg01@bearingworld.test`) con su token de un solo uso, y la cuenta y la organización que el PO cree; **borrarlas al
+   terminar.** Recorrido completo en su
    localhost (`preview_start` con `app`, puerto 5173; **va contra producción y escribe**): aprobar una solicitud
    → copiar el enlace → abrirlo sin sesión → rellenar y crear la cuenta. Crea una organización y una cuenta reales:
    hay que decidir con el PO si se hace así (`F-188`) y **borrar las filas después** (`auth.users`, `organizations`,

@@ -74,3 +74,24 @@ esto son **2 de 5 pasadas con fallos ajenos**, frente a 3 de 4 antes. La suite t
   después desde el repositorio (el fichero entero).
 - `bearingworld-e2e` sigue en `0039`: sin `0040`, `0041` ni las funciones. No afecta a la CI (el e2e de `REG-01`
   intercepta la función) pero hay que ponerla al día antes de un e2e que toque el alta de verdad.
+
+## C5 parcial del PO sobre `REG-01` (la misma tarde)
+
+El PO probó `REG-01` en su localhost con un enlace de prueba (solicitud sintética `ZZ Prueba REG-01 SL` y su token) y
+validó los pasos 1, 2, 3, 5, 6 y 7 («perfectos»). **Tres peticiones**, ninguna un error del artefacto (no entran en la
+cifra 4):
+
+1. **Países de operación:** el campo de texto con Intro era «funcionalmente malo» —no dice el idioma ni que haya que pulsar
+   Intro—. Ahora es un desplegable de los 194 países que va añadiendo a una caja multilínea con su ×; el país elegido
+   deja de ofrecerse y vuelve a ofrecerse al quitarlo. `matchCountry` y la normalización de texto salen de la capa de datos.
+2. **Leyenda de obligatorios en blanco:** marcar los términos habilitaba el botón sin decir qué faltaba. Bajo los términos
+   hay ahora una leyenda (`role="status"`) con las etiquetas de los obligatorios en blanco, desde el principio. El botón
+   sigue dependiendo solo de los términos (spec §4); al pulsar con huecos, el foco va al primero, como antes.
+3. **Contacto = administrador:** «si el administrador quiere que su email sea el de contacto público no hay razón para no
+   dejarle». Se quita en la pantalla, en la capa de datos y en la base (`0042`, único cambio respecto a `0041`).
+   **Se aparta del HTML aprobado**, cuya ayuda decía «distinto del email del administrador»: ahora dice `Máx 30 caracteres`.
+
+Comprobado: 48 pruebas de unidad de la pantalla, 75 de la capa de datos, 8 e2e, vitest entero (1 547) y el banco de
+esquema (con el alta de contacto = administrador). Los pasos 4 y 8 del PO quedan cubiertos por esto; **los 9 y 10 (crear
+la cuenta y reusar el enlace) los tiene sin probar**. La solicitud y el token de prueba siguen vivos hasta que el PO
+termine: **borrarlos después** (`auth.users` con el email que use, `organizations`, `registration_requests`).

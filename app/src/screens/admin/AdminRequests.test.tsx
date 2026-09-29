@@ -23,6 +23,10 @@ const fetchRequestHistory = vi.fn<(id: string) => Promise<RequestEvent[]>>();
 const approveRequest = vi.fn<(id: string) => Promise<RequestRow>>();
 const rejectRequest = vi.fn<(id: string, reason: string) => Promise<RequestRow>>();
 const returnToReview = vi.fn<(id: string) => Promise<RequestRow>>();
+// F-223: el enlace de acceso. Este fichero no lo mide (lo mide `AdminRequestsLink.test.tsx`);
+// se mockea para que `Aprobar` no salga a la red de verdad.
+const issueRegistrationLink = vi.fn();
+const fetchRegistrationLinkStatus = vi.fn();
 
 vi.mock('../../lib/admin-requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/admin-requests')>()),
@@ -31,6 +35,8 @@ vi.mock('../../lib/admin-requests', async (importOriginal) => ({
   approveRequest: (id: string) => approveRequest(id),
   rejectRequest: (id: string, reason: string) => rejectRequest(id, reason),
   returnToReview: (id: string) => returnToReview(id),
+  issueRegistrationLink: (id: string) => issueRegistrationLink(id),
+  fetchRegistrationLinkStatus: (id: string) => fetchRegistrationLinkStatus(id),
 }));
 
 const { AdminRequests } = await import('./AdminRequests');
@@ -66,6 +72,8 @@ beforeEach(() => {
   approveRequest.mockReset();
   rejectRequest.mockReset();
   returnToReview.mockReset();
+  issueRegistrationLink.mockReset().mockResolvedValue({ token: 'a'.repeat(64), expiresAt: '2026-10-06T08:00:00Z' });
+  fetchRegistrationLinkStatus.mockReset().mockResolvedValue(null);
 });
 
 describe('AdminRequests', () => {

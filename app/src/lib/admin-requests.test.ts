@@ -10,6 +10,7 @@ import {
   REASON_MAX,
   REASON_MIN,
   REQUEST_STATES,
+  registrationLinkUrl,
   requestDateLabel,
   toRequestEvent,
   toRequestRow,
@@ -191,5 +192,17 @@ describe('websiteHref', () => {
   it('no toca una URL que ya trae esquema, http o https', () => {
     expect(websiteHref('https://roulementsfrance.fr')).toBe('https://roulementsfrance.fr');
     expect(websiteHref('http://roulementsfrance.fr')).toBe('http://roulementsfrance.fr');
+  });
+});
+
+describe('registrationLinkUrl', () => {
+  it('cuelga el token de #registro?token= sobre el origen dado', () => {
+    expect(registrationLinkUrl('a'.repeat(64), 'https://app.bearingworld.io')).toBe(
+      `https://app.bearingworld.io/#registro?token=${'a'.repeat(64)}`,
+    );
+  });
+
+  it('sin origen usa el de la ventana', () => {
+    expect(registrationLinkUrl('abc')).toBe(`${window.location.origin}/#registro?token=abc`);
   });
 });

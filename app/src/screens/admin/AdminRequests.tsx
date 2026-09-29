@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_FILTER,
   QUEUE_FILTERS,
   approveRequest,
+  fetchRegistrationLinkStatus,
   fetchRequestHistory,
   fetchRequests,
+  issueRegistrationLink,
+  registrationLinkUrl,
   rejectRequest,
   returnToReview,
   type RequestEvent,
@@ -13,10 +16,20 @@ import {
 } from '../../lib/admin-requests';
 import { errorMessage, type OperatorProfile } from '../../lib/session';
 import { RequestDetailPanel } from './RequestDetailPanel';
+import type { LinkView } from './RequestLinkSection';
 import { RequestsTable } from './RequestsTable';
 import styles from './AdminRequests.module.css';
 
 type Feedback = 'approved' | 'rejected' | null;
+
+/**
+ * El enlace de la solicitud abierta. `issued` lleva el enlace EN CLARO y `requestId`
+ * para saber de quién es: solo se guarda el hash del token en la base (`0040`), así
+ * que este estado es la única vez que se puede enseñar.
+ */
+type LinkState =
+  | Exclude<LinkView, { kind: 'issued' }>
+  | { kind: 'issued'; requestId: string; url: string; expiresAt: string };
 
 /**
  * ADMIN-01 · Panel de Aprobación del Operador (cola de solicitudes).
@@ -62,7 +75,17 @@ export function AdminRequests({ operator }: { operator: OperatorProfile }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
 
+  // ── El enlace de acceso de una solicitud aprobada (F-223) ───────────────────
+  const [link, setLink] = useState<LinkState>({ kind: 'loading' });
+  const linkRef = useRef(link);
+  linkRef.current = link;
+  // La solicitud cuyo enlace se está generando AHORA, dentro de `Aprobar`. Al aprobar,
+  // `selectedApproved` pasa a cierto antes de que llegue el enlace, y sin esta marca
+  // el efecto de abajo pediría el estado y lo pintaría encima del enlace en claro.
+  const issuingRef = useRef<string | null>(null);
+
   const selectedId = selectedRow ? selectedRow.id : null;
+  const selectedApproved = selectedRow !== null && selectedRow.state === 'INVITED_APPROVED';
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +136,32 @@ export function AdminRequests({ operator }: { operator: OperatorProfile }) {
     };
   }, [selectedId]);
 
+  // El estado del enlace se pide al abrir una solicitud aprobada. Si acaba de
+  // generarse aquí mismo, el enlace en claro manda y NO se pisa con un estado sin él.
+  useEffect(() => {
+    if (selectedId === null || !selectedApproved) return;
+    const current = linkRef.current;
+    if (current.kind === 'issued' && current.requestId === selectedId) return;
+    if (issuingRef.current === selectedId) return;
+
+    let cancelled = false;
+    setLink({ kind: 'loading' });
+
+    fetchRegistrationLinkStatus(selectedId)
+      .then((status) => {
+        if (cancelled) return;
+        setLink({ kind: 'status', status });
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setLink({ kind: 'error', message: errorMessage(e) });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, selectedApproved]);
+
   function refreshList() {
     setReloadToken((t) => t + 1);
   }
@@ -120,6 +169,7 @@ export function AdminRequests({ operator }: { operator: OperatorProfile }) {
   /** Cierra y vacía el panel entero: fila, historial, formulario, aviso y error. */
   function resetPanel() {
     setSelectedRow(null);
+    setLink({ kind: 'loading' });
     setHistory([]);
     setHistoryLoading(false);
     setRejecting(false);
@@ -142,6 +192,7 @@ export function AdminRequests({ operator }: { operator: OperatorProfile }) {
    */
   function handleSelect(row: RequestRow) {
     setSelectedRow(row);
+    setLink({ kind: 'loading' });
     setRejecting(false);
     setRejectReason('');
     setActionError(null);
@@ -171,11 +222,48 @@ export function AdminRequests({ operator }: { operator: OperatorProfile }) {
     const id = selectedRow.id;
     setActionBusy(true);
     setActionError(null);
+    issuingRef.current = id;
     try {
       const updated = await approveRequest(id);
       setSelectedRow(updated);
       setFeedback('approved');
       refreshList();
+      // El enlace es un segundo paso: si falla, la solicitud YA está aprobada y el
+      // Operador lo vuelve a pedir desde la sección, así que el error no la deshace.
+      try {
+        const issued = await issueRegistrationLink(id);
+        setLink({
+          kind: 'issued',
+          requestId: id,
+          url: registrationLinkUrl(issued.token),
+          expiresAt: issued.expiresAt,
+        });
+      } catch (e: unknown) {
+        // Recién aprobada y sin enlace: no hay estado que pedir, es «Sin enlace».
+        setLink({ kind: 'status', status: null });
+        setActionError(`Aprobada, pero no se pudo generar el enlace: ${errorMessage(e)}`);
+      }
+    } catch (e: unknown) {
+      setActionError(errorMessage(e));
+    } finally {
+      issuingRef.current = null;
+      setActionBusy(false);
+    }
+  }
+
+  async function handleGenerateLink() {
+    if (selectedRow === null) return;
+    const id = selectedRow.id;
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      const issued = await issueRegistrationLink(id);
+      setLink({
+        kind: 'issued',
+        requestId: id,
+        url: registrationLinkUrl(issued.token),
+        expiresAt: issued.expiresAt,
+      });
     } catch (e: unknown) {
       setActionError(errorMessage(e));
     } finally {
@@ -287,6 +375,8 @@ export function AdminRequests({ operator }: { operator: OperatorProfile }) {
             onCancelReject={handleCancelReject}
             onReturnToReview={handleReturnToReview}
             onClose={handleClose}
+            link={link}
+            onGenerateLink={handleGenerateLink}
           />
         )}
       </div>

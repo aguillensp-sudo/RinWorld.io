@@ -324,3 +324,55 @@ export function rejectRequest(id: string, reason: string): Promise<RequestRow> {
 export function returnToReview(id: string): Promise<RequestRow> {
   return decidir(id, { state: 'PENDING_REVIEW' });
 }
+
+// -----------------------------------------------------------------------------
+// El enlace de acceso de una solicitud aprobada (F-223, `0040`)
+// -----------------------------------------------------------------------------
+
+/**
+ * Estado del ULTIMO enlace de una solicitud, tal como lo dice la base. El token no
+ * viaja aqui: se guarda solo su hash y se ve una vez, al generarlo.
+ */
+export type LinkStatusLabel = 'Vigente' | 'Revocado' | 'Canjeado' | 'Caducado';
+
+export interface RequestLinkStatus {
+  status: LinkStatusLabel;
+  expiresAt: string;
+  usedAt: string | null;
+}
+
+export interface IssuedLink {
+  token: string;
+  expiresAt: string;
+}
+
+/**
+ * La ruta de REG-01. Fuente unica del formato: quien construya esa pantalla lee
+ * el token de `#registro?token=...`. Va en el `hash` como `#solicitud-de-registro`,
+ * porque la app no tiene router ni servidor que reescriba rutas.
+ */
+export function registrationLinkUrl(token: string, origin: string = window.location.origin): string {
+  return `${origin}/#registro?token=${token}`;
+}
+
+/** `null` si la solicitud no tiene ningun enlace ("Sin enlace"). */
+export async function fetchRegistrationLinkStatus(requestId: string): Promise<RequestLinkStatus | null> {
+  const { data, error } = await supabase.rpc('registration_link_status', { p_request_id: requestId });
+  if (error) throw error;
+  const row = (data as { status: LinkStatusLabel; expires_at: string; used_at: string | null }[] | null)?.[0];
+  if (!row) return null;
+  return { status: row.status, expiresAt: row.expires_at, usedAt: row.used_at };
+}
+
+/**
+ * Genera el enlace de una solicitud APROBADA y devuelve el token EN CLARO, una sola
+ * vez. Generar otro revoca el anterior. No es parte de `Aprobar`: se pide despues,
+ * asi que si falla, la solicitud queda aprobada y el Operador lo vuelve a pedir.
+ */
+export async function issueRegistrationLink(requestId: string): Promise<IssuedLink> {
+  const { data, error } = await supabase.rpc('issue_registration_link', { p_request_id: requestId });
+  if (error) throw error;
+  const row = (data as { token: string; expires_at: string }[] | null)?.[0];
+  if (!row) throw new Error('La base no devolvio ningun enlace.');
+  return { token: row.token, expiresAt: row.expires_at };
+}

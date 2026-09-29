@@ -6,6 +6,7 @@ import {
   type RequestRow,
   type RequestState,
 } from '../../lib/admin-requests';
+import { RequestLinkSection, type LinkView } from './RequestLinkSection';
 import styles from './RequestDetailPanel.module.css';
 
 interface Props {
@@ -24,6 +25,13 @@ interface Props {
   onCancelReject: () => void;
   onReturnToReview: () => void;
   onClose: () => void;
+  /**
+   * El enlace de acceso (F-223) es opcional: la sección solo se pinta si llegan las
+   * dos props Y la solicitud está aprobada. Opcional para no romper el contrato que
+   * `ADMIN-01` aceptó, que no las pasa.
+   */
+  link?: LinkView;
+  onGenerateLink?: () => void;
 }
 
 /**
@@ -68,6 +76,8 @@ export function RequestDetailPanel({
   onCancelReject,
   onReturnToReview,
   onClose,
+  link,
+  onGenerateLink,
 }: Props) {
   const canConfirmReject = isValidRejectionReason(rejectReason);
 
@@ -138,6 +148,10 @@ export function RequestDetailPanel({
             </span>
           </div>
         </div>
+
+        {row.state === 'INVITED_APPROVED' && link !== undefined && onGenerateLink !== undefined && (
+          <RequestLinkSection link={link} busy={actionBusy} onGenerate={onGenerateLink} />
+        )}
 
         <div className={styles.section}>
           <div className={styles.sectionLabel}>Historial de estado</div>

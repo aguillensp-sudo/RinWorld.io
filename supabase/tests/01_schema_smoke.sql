@@ -4454,7 +4454,6 @@ select public.expect_fail($q$select pg_temp.reg('{"postal":"12345678901"}')$q$, 
 select public.expect_fail($q$select pg_temp.reg('{"country":"ZZ"}')$q$, '0041: pais de sede inexistente');
 select public.expect_fail($q$select pg_temp.reg('{"cemail":"sin-arroba"}')$q$, '0041: email de contacto sin forma');
 select public.expect_fail($q$select pg_temp.reg('{"cemail":"informacion.general@rodamientos-sur.test"}')$q$, '0041: email de contacto de mas de 30');
-select public.expect_fail($q$select pg_temp.reg('{"cemail":"admin@sur.test"}')$q$, '0041: contacto igual que el del administrador');
 select public.expect_fail($q$select pg_temp.reg('{"phone":"954123456"}')$q$, '0041: telefono sin prefijo');
 select public.expect_fail($q$select pg_temp.reg('{"web":"http://sur.test"}')$q$, '0041: web sin https');
 select public.expect_fail($q$select pg_temp.reg('{"aname":"Juan"}')$q$, '0041: nombre del administrador de menos de 6');
@@ -4552,6 +4551,35 @@ begin;
   end
   $$;
 commit;
+
+-- 8 · 0042 · El email de contacto PUEDE ser el del administrador (C5 del PO, 29-sep). Una segunda
+--     solicitud aprobada, con su token, y un alta cuyo contacto y administrador son el mismo.
+insert into public.registration_requests
+  (id, org_name, country, applicant_full_name, applicant_email, state)
+values
+  ('41410000-0000-4000-8000-000000000042', 'Mismo Email SL', 'ES', 'Mia Mismo', 'mismo@sur.test', 'INVITED_APPROVED');
+insert into auth.users (id, email) values ('41f00003-0000-0000-0000-000000000003', 'mismo@sur.test');
+
+begin;
+  select set_config('request.jwt.claim.sub', '0e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.rtok', (select token from public.issue_registration_link('41410000-0000-4000-8000-000000000042')), false);
+commit;
+
+select pg_temp.reg('{"user":"41f00003-0000-0000-0000-000000000003","aemail":"mismo@sur.test","cemail":"mismo@sur.test","legal":"Mismo Email SL"}') as org_mismo \gset
+
+do $$
+declare o record;
+begin
+  select * into o from public.organizations where legal_name = 'Mismo Email SL';
+  assert o.contact_email = 'mismo@sur.test', '0042: el contacto publico es el email del administrador';
+  assert (select email from public.members where id = '41f00003-0000-0000-0000-000000000003') = 'mismo@sur.test',
+    '0042: y el administrador tiene ese mismo email';
+  assert not exists (select 1 from public.registration_link_validate(current_setting('bw.rtok'))),
+    '0042: y el token se canjeo';
+  raise notice 'OK · 0042: el email de contacto puede ser el del administrador';
+end
+$$;
 
 -- -----------------------------------------------------------------------------
 -- F-155 · la premisa que hace inmune a `security definer`, comprobada

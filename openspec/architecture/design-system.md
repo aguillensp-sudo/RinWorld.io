@@ -192,7 +192,7 @@ overflow:hidden`). Para pantalla completa: `position:fixed; inset:0`.
   (`.bwvera.col`): `width:32px`.
 - **Sidebar** (`.bwsb`): overlay puro `position:absolute; width:210px; background:#1B2537`,
   `transform:translateX(-100%)` cerrado / `translateX(0)` abierto. **No empuja el layout.**
-- **Excepción sin shell:** solo `REG-00` y `REG-00-WAIT` (fondo Deep Steel + tarjeta blanca + VERA).
+- **Excepción sin shell:** `REG-00` y `REG-00-WAIT` (fondo Deep Steel + tarjeta blanca + VERA) y, desde el 29-sep-2026, `REG-01` (fondo Cold White + tarjeta blanca de hasta 900 px con esquinas de latón; el HTML la dibuja dentro del shell con el nombre del usuario, pero no hay sesión: brand bar y cabecera mínima con el logo, sin menú ni VERA — `F-226`).
 
 ---
 

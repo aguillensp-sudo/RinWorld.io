@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
@@ -18,8 +18,10 @@ import { Welcome } from './screens/onboarding/Welcome';
 import { AdditionalUser } from './screens/onboarding/AdditionalUser';
 import { AccessRequest } from './screens/onboarding/AccessRequest';
 import { AccessRequestWait } from './screens/onboarding/AccessRequestWait';
+import { OrgRegistration } from './screens/onboarding/OrgRegistration';
 import { clearWaitingRequest, loadWaitingRequest, saveWaitingRequest } from './lib/access-request';
 import type { SubmittedAccessRequest } from './lib/access-request';
+import { registrationTokenFromHash } from './lib/register-org';
 import { activateOwnMembership } from './lib/onboarding';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
@@ -217,6 +219,28 @@ export function App() {
   );
   const [waitingRequest, setWaitingRequest] = useState<SubmittedAccessRequest | null>(loadWaitingRequest);
 
+  /**
+   * Ruta 00.2, segunda mitad (REG-01): el solicitante aprobado llega con el enlace
+   * `#registro?token=…` que el Operador le envió (`0040`). El token se lee del `hash` al
+   * cargar y cada vez que cambia (pegar el enlace en una pestaña ya abierta no recarga).
+   * Tiene prioridad sobre el resto de la rama sin sesión: quien trae un enlace no quiere
+   * el login ni la espera de una solicitud vieja. Al terminar (o al abandonar un enlace
+   * que no vale) se borra el `hash`: el token ya no sirve y no debe volver a aparecer
+   * cuando esta pestaña cierre sesión.
+   */
+  const [registrationToken, setRegistrationToken] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : registrationTokenFromHash(window.location.hash),
+  );
+  useEffect(() => {
+    const onHashChange = () => setRegistrationToken(registrationTokenFromHash(window.location.hash));
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+  const leaveRegistration = () => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    setRegistrationToken(null);
+  };
+
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
@@ -234,6 +258,15 @@ export function App() {
   }
 
   if (state.status === 'anonymous') {
+    if (registrationToken !== null) {
+      return (
+        <OrgRegistration
+          token={registrationToken}
+          onRegistered={leaveRegistration}
+          onBackToLogin={leaveRegistration}
+        />
+      );
+    }
     if (waitingRequest) {
       return (
         <AccessRequestWait

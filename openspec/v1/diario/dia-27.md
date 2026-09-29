@@ -95,3 +95,23 @@ Comprobado: 48 pruebas de unidad de la pantalla, 75 de la capa de datos, 8 e2e, 
 esquema (con el alta de contacto = administrador). Los pasos 4 y 8 del PO quedan cubiertos por esto; **los 9 y 10 (crear
 la cuenta y reusar el enlace) los tiene sin probar**. La solicitud y el token de prueba siguen vivos hasta que el PO
 termine: **borrarlos después** (`auth.users` con el email que use, `organizations`, `registration_requests`).
+
+## Pasos 9 y 10 del PO, y lo que encontró (la misma tarde)
+
+- **Pasos 9 y 10: correctos, y «todos los cambios OK».** El PO creó una organización con el enlace de prueba y el enlace
+  quedó gastado (con sesión abierta lleva al panel; sin ella, «Este enlace no es válido»). Se borraron los datos de la primera
+  vuelta (cuenta, organización con su NIF y solicitud sintética) y se le dio un enlace nuevo.
+- **Preguntas del PO sobre lo que ve como Operador**, contestadas con datos: la solicitud `ZZ Prueba REG-01 SL` sale en
+  `ADMIN-01` porque la creé yo, ya aprobada, para poder darle un enlace (no es una solicitud real): su historial tiene un
+  solo evento «Envío FSR» en estado aprobado y sin decisor, porque se insertó directamente así. Y la organización nueva sale en
+  la gestión de cobros **por diseño** (`0034`): toda organización nace con su fila de cobro, «EN PRUEBA» 90 días.
+- **El fallo real: se coló `alpha@bearingworld.test` como email de contacto público.** Nada lo comparaba con otras
+  organizaciones. `0043`: `contact_email_available` rechaza el email de acceso de otro usuario, el de una cuenta solo-Auth y
+  el contacto público de otra organización, y admite el del propio administrador. La comprueba `register_organization` (sin
+  gastar el token) y la Edge Function (`check_contact_email`, con token) al salir del campo. Probado en el banco de esquema y con
+  `curl` contra producción (otra organización `false`, libre `true`, sin token 404).
+- Comprobado: tsc; vitest entero (1 556); 54 unitarias de la pantalla y 78 de la capa de datos; 9 e2e; banco de esquema.
+
+**Datos de prueba vivos en producción al cierre:** la organización «JULSA INDUSTRIAL S.A» (segunda vuelta del PO, con `alpha@…`
+como contacto: anterior a `0043`), su administrador `a.guillen@julsaindustrial.com` y la solicitud sintética `ZZ Prueba
+REG-01 SL` con su token ya gastado. **El PO no ha dicho que se borren**; hacerlo antes de repetir el alta con ese correo.

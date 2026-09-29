@@ -26,12 +26,15 @@ import type { RegistrationForm, RegistrationPrefill } from '../../lib/register-o
 const validateRegistrationLink = vi.fn<(token: string) => Promise<RegistrationPrefill>>();
 const isAdminEmailAvailable = vi.fn<(token: string, email: string) => Promise<boolean>>();
 const submitRegistration = vi.fn<(token: string, form: RegistrationForm) => Promise<void>>();
+const isContactEmailAvailable = vi.fn<(token: string, email: string, adminEmail: string) => Promise<boolean>>();
 
 vi.mock('../../lib/register-org', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/register-org')>()),
   validateRegistrationLink: (token: string) => validateRegistrationLink(token),
   isAdminEmailAvailable: (token: string, email: string) => isAdminEmailAvailable(token, email),
   submitRegistration: (token: string, form: RegistrationForm) => submitRegistration(token, form),
+  isContactEmailAvailable: (token: string, email: string, adminEmail: string) =>
+    isContactEmailAvailable(token, email, adminEmail),
 }));
 
 const { OrgRegistration } = await import('./OrgRegistration');
@@ -59,6 +62,7 @@ beforeEach(() => {
   validateRegistrationLink.mockReset().mockResolvedValue(PREFILL);
   isAdminEmailAvailable.mockReset().mockResolvedValue(true);
   submitRegistration.mockReset().mockResolvedValue(undefined);
+  isContactEmailAvailable.mockReset().mockResolvedValue(true);
   onRegistered.mockReset();
   onBackToLogin.mockReset();
 });
@@ -531,6 +535,62 @@ describe('REG-01 · email del administrador «en tiempo real»', () => {
     await screen.findByText('Este email ya tiene cuenta en Bearingworld.io');
     await u.click(crear());
     expect(submitRegistration).not.toHaveBeenCalled();
+  });
+});
+
+describe('REG-01 · email de contacto público: no puede ser el de otra organización', () => {
+  it('al salir de un contacto con forma de email pregunta si vale, con el token y el email del administrador', async () => {
+    const u = await montar();
+    await u.type(emailContacto(), 'info@sur.es');
+    await u.tab();
+    await waitFor(() => expect(isContactEmailAvailable).toHaveBeenCalledWith(TOKEN, 'info@sur.es', 'juan@sur.es'));
+    expect(emailContacto()).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('si es de otra organización, enseña «Este email ya pertenece a otra organización»', async () => {
+    isContactEmailAvailable.mockResolvedValue(false);
+    const u = await montar();
+    await u.type(emailContacto(), 'alpha@bearingworld.test');
+    await u.tab();
+    expect(await screen.findByText('Este email ya pertenece a otra organización')).toBeInTheDocument();
+    expect(emailContacto()).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('si es el del propio administrador NO pregunta y vale', async () => {
+    isContactEmailAvailable.mockResolvedValue(false);
+    const u = await montar();
+    await u.type(emailContacto(), 'juan@sur.es'); // el del administrador, pre-rellenado
+    await u.tab();
+    expect(isContactEmailAvailable).not.toHaveBeenCalled();
+    expect(emailContacto()).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('no pregunta por un contacto que no tiene forma de email', async () => {
+    const u = await montar();
+    await u.type(emailContacto(), 'sin-arroba');
+    await u.tab();
+    expect(isContactEmailAvailable).not.toHaveBeenCalled();
+  });
+
+  it('un contacto ya comprobado como de otra organización bloquea el envío hasta que se cambie', async () => {
+    isContactEmailAvailable.mockResolvedValue(false);
+    const u = await montar();
+    await completar(u);
+    await u.clear(emailContacto());
+    await u.type(emailContacto(), 'alpha@bearingworld.test');
+    await u.tab();
+    await screen.findByText('Este email ya pertenece a otra organización');
+    await u.click(crear());
+    expect(submitRegistration).not.toHaveBeenCalled();
+  });
+
+  it('si la función lo rechaza al enviar, además de la alerta lo marca en su campo', async () => {
+    submitRegistration.mockReset().mockRejectedValue(new Error('Este email de contacto ya pertenece a otra organización.'));
+    const u = await montar();
+    await completar(u);
+    await u.click(crear());
+    expect(await screen.findByRole('alert')).toHaveTextContent('Este email de contacto ya pertenece a otra organización.');
+    expect(emailContacto()).toHaveAttribute('aria-invalid', 'true');
   });
 });
 

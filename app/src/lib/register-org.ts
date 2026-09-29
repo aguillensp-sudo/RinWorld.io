@@ -227,6 +227,8 @@ export const VISIBILITY_OPTIONS: ReadonlyArray<{ value: Visibility; label: strin
 /** Los errores con texto propio, de la spec §6 (el HTML no los pinta). Sin punto final. */
 export const EMAIL_ERROR = 'Introduce un email válido';
 export const EMAIL_TAKEN_ERROR = 'Este email ya tiene cuenta en Bearingworld.io';
+/** El contacto público no puede ser el de otra organización (`0043`), pero sí el del propio administrador. */
+export const CONTACT_TAKEN_ERROR = 'Este email ya pertenece a otra organización';
 export const WEBSITE_ERROR = 'La URL debe comenzar por https://';
 export const PASSWORD_MISMATCH_ERROR = 'Las contraseñas no coinciden';
 
@@ -564,6 +566,28 @@ export async function isAdminEmailAvailable(token: string, email: string): Promi
   try {
     const { data, error } = await supabase.functions.invoke('register-organization', {
       body: { action: 'check_email', token, email: email.trim().toLowerCase() },
+    });
+    if (error) return true;
+    return (data as { available?: unknown } | null)?.available !== false;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * ¿Puede ser este email el de contacto público? No si es el de otra organización (el de acceso de
+ * uno de sus usuarios o su contacto público); sí si es el del administrador que se da de alta.
+ * Como `isAdminEmailAvailable`, si la red falla devuelve `true`: la decisión es la del alta.
+ */
+export async function isContactEmailAvailable(token: string, email: string, adminEmail: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.functions.invoke('register-organization', {
+      body: {
+        action: 'check_contact_email',
+        token,
+        email: email.trim().toLowerCase(),
+        admin_email: adminEmail.trim().toLowerCase(),
+      },
     });
     if (error) return true;
     return (data as { available?: unknown } | null)?.available !== false;

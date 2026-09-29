@@ -30,6 +30,7 @@ const {
   fieldError,
   formFromPrefill,
   isAdminEmailAvailable,
+  isContactEmailAvailable,
   isFieldValid,
   missingRequiredText,
   passwordStrength,
@@ -423,6 +424,28 @@ describe('isAdminEmailAvailable', () => {
     expect(await isAdminEmailAvailable(TOKEN, 'ana@sur.es')).toBe(true);
     invoke.mockReset().mockRejectedValue(new Error('sin red'));
     expect(await isAdminEmailAvailable(TOKEN, 'ana@sur.es')).toBe(true);
+  });
+});
+
+describe('isContactEmailAvailable', () => {
+  it('pregunta por el contacto y por el email del administrador, en minúsculas y recortados', async () => {
+    invoke.mockReset().mockResolvedValue({ data: { available: true }, error: null });
+    expect(await isContactEmailAvailable(TOKEN, ' Info@Sur.es ', ' JUAN@sur.es ')).toBe(true);
+    expect(invoke).toHaveBeenCalledWith('register-organization', {
+      body: { action: 'check_contact_email', token: TOKEN, email: 'info@sur.es', admin_email: 'juan@sur.es' },
+    });
+  });
+
+  it('false si es de otra organización', async () => {
+    invoke.mockReset().mockResolvedValue({ data: { available: false }, error: null });
+    expect(await isContactEmailAvailable(TOKEN, 'alpha@x.test', 'juan@sur.es')).toBe(false);
+  });
+
+  it('si la red falla no bloquea: la decisión definitiva es la del alta', async () => {
+    invoke.mockReset().mockResolvedValue({ data: null, error: respuestaDeError(500, 'x') });
+    expect(await isContactEmailAvailable(TOKEN, 'a@b.es', 'c@d.es')).toBe(true);
+    invoke.mockReset().mockRejectedValue(new Error('sin red'));
+    expect(await isContactEmailAvailable(TOKEN, 'a@b.es', 'c@d.es')).toBe(true);
   });
 });
 

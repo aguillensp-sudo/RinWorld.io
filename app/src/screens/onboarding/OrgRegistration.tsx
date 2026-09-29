@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react';
 import {
   DIAL_OPTIONS,
+  CONTACT_TAKEN_ERROR,
   EMAIL_TAKEN_ERROR,
   EMPTY_REGISTRATION_FORM,
   FIELD_META,
@@ -18,6 +19,7 @@ import {
   canSubmitRegistration,
   formFromPrefill,
   isAdminEmailAvailable,
+  isContactEmailAvailable,
   isFieldValid,
   missingRequiredText,
   passwordStrength,
@@ -69,6 +71,8 @@ export function OrgRegistration({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [takenEmail, setTakenEmail] = useState<string | null>(null);
+  // Un email de contacto que ya se sabe de otra organización (`0043`): el que se comprobó.
+  const [takenContact, setTakenContact] = useState<string | null>(null);
   const [brandDraft, setBrandDraft] = useState('');
 
   // El enlace se comprueba UNA vez al montar. Si el componente se va antes de
@@ -130,6 +134,10 @@ export function OrgRegistration({
   // se sabe ocupado, el error se queda y no se vuelve a preguntar.
   const handleBlur = (field: RegistrationField) => {
     applyBlurError(field);
+    if (field === 'contactEmail') {
+      handleContactBlur();
+      return;
+    }
     if (field !== 'adminEmail') return;
 
     const email = form.adminEmail.trim().toLowerCase();
@@ -142,6 +150,28 @@ export function OrgRegistration({
       if (available) return;
       setTakenEmail(email);
       setErrors((current) => ({ ...current, adminEmail: EMAIL_TAKEN_ERROR }));
+    });
+  };
+
+  // El email de contacto público no puede ser el de otra organización, pero sí el del propio
+  // administrador (`0043`): igual que el del administrador, al salir del campo se pregunta una vez.
+  const isContactTaken = (contact: string) =>
+    takenContact !== null &&
+    contact === takenContact &&
+    contact !== form.adminEmail.trim().toLowerCase();
+
+  const handleContactBlur = () => {
+    const contact = form.contactEmail.trim().toLowerCase();
+    if (contact === '' || !isFieldValid('contactEmail', form)) return;
+    if (contact === form.adminEmail.trim().toLowerCase()) return; // el del propio administrador vale
+    if (isContactTaken(contact)) {
+      setErrors((current) => ({ ...current, contactEmail: CONTACT_TAKEN_ERROR }));
+      return;
+    }
+    void isContactEmailAvailable(token, form.contactEmail, form.adminEmail).then((available) => {
+      if (available) return;
+      setTakenContact(contact);
+      setErrors((current) => ({ ...current, contactEmail: CONTACT_TAKEN_ERROR }));
     });
   };
 
@@ -166,6 +196,9 @@ export function OrgRegistration({
     if (takenEmail !== null && form.adminEmail.trim().toLowerCase() === takenEmail) {
       nextErrors.adminEmail = EMAIL_TAKEN_ERROR;
     }
+    if (isContactTaken(form.contactEmail.trim().toLowerCase())) {
+      nextErrors.contactEmail = CONTACT_TAKEN_ERROR;
+    }
 
     const firstError = REGISTRATION_FIELDS.find((field) => nextErrors[field] !== undefined);
     if (firstError !== undefined) {
@@ -186,6 +219,10 @@ export function OrgRegistration({
       if (message.toLowerCase().includes('ya tiene cuenta')) {
         setTakenEmail(form.adminEmail.trim().toLowerCase());
         setErrors({ adminEmail: EMAIL_TAKEN_ERROR });
+      }
+      if (message.toLowerCase().includes('de contacto ya pertenece')) {
+        setTakenContact(form.contactEmail.trim().toLowerCase());
+        setErrors({ contactEmail: CONTACT_TAKEN_ERROR });
       }
     } finally {
       setSubmitting(false);

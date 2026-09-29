@@ -55,7 +55,7 @@ async function interceptar(page: Page, responder: (accion: string) => Respuesta)
 const valido = (accion: string): Respuesta =>
   accion === 'validate'
     ? { status: 200, body: { prefill: PREFILL } }
-    : accion === 'check_email'
+    : accion === 'check_email' || accion === 'check_contact_email'
       ? { status: 200, body: { available: true } }
       : { status: 200, body: { registered: true } };
 
@@ -145,6 +145,21 @@ test.describe('REG-01 · FRO sin sesión', () => {
     await email.fill('ocupado@sur.test');
     await email.blur();
     await expect(page.getByText('Este email ya tiene cuenta en Bearingworld.io')).toBeVisible();
+  });
+
+  test('un email de contacto que es de otra organización se avisa al salir del campo; el del administrador vale', async ({ page }) => {
+    await interceptar(page, (accion) =>
+      accion === 'check_contact_email' ? { status: 200, body: { available: false } } : valido(accion),
+    );
+    await page.goto(`/#registro?token=${TOKEN}`);
+    const contacto = page.getByRole('textbox', { name: 'Email de contacto público' });
+    await contacto.fill('alpha@bearingworld.test');
+    await contacto.blur();
+    await expect(page.getByText('Este email ya pertenece a otra organización')).toBeVisible();
+    // El del propio administrador no se pregunta: vale aunque la función dijera que no.
+    await contacto.fill('juan@rodamientosdelsur.test');
+    await contacto.blur();
+    await expect(page.getByText('Este email ya pertenece a otra organización')).toHaveCount(0);
   });
 
   test('los países se eligen de un desplegable y las marcas se añaden con Intro, sin enviar el formulario', async ({ page }) => {

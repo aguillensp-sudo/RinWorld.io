@@ -8,6 +8,7 @@ vi.mock('./supabase', () => ({
 
 const {
   COUNTRY_OPTIONS,
+  DIAL_CODES,
   EMPTY_ACCESS_REQUEST,
   FIELD_ERRORS,
   POLL_INTERVAL_MS,
@@ -18,6 +19,7 @@ const {
   isFieldValid,
   isFinalState,
   loadWaitingRequest,
+  phoneForCountry,
   requestSummary,
   saveWaitingRequest,
   submitAccessRequest,
@@ -76,8 +78,10 @@ describe('isFieldValid', () => {
     expect(isFieldValid('country', 'XX')).toBe(false);
     expect(isFieldValid('country', '')).toBe(false);
   });
-  it('teléfono: basta con que haya algo', () => {
-    expect(isFieldValid('phone', '+1')).toBe(true);
+  it('teléfono: al menos 6 dígitos; el prefijo solo no vale (29-sep)', () => {
+    expect(isFieldValid('phone', '+34 963 456 789')).toBe(true);
+    expect(isFieldValid('phone', '+34 ')).toBe(false);
+    expect(isFieldValid('phone', '+1')).toBe(false);
     expect(isFieldValid('phone', '   ')).toBe(false);
   });
   it('sitio web que empieza por https://', () => {
@@ -232,5 +236,31 @@ describe('la solicitud en espera vive en sessionStorage', () => {
     expect(loadWaitingRequest()).toBeNull();
     sessionStorage.setItem('bw.accessRequest', 'no-json');
     expect(loadWaitingRequest()).toBeNull();
+  });
+});
+
+describe('el prefijo telefónico del país (petición del PO, 29-sep)', () => {
+  it('hay prefijo para cada uno de los 194 países de la lista', () => {
+    for (const [code] of COUNTRY_OPTIONS) expect(DIAL_CODES[code], code).toMatch(/^\+\d{1,3}( \d{3})?$/);
+  });
+  it('algunos conocidos', () => {
+    expect(DIAL_CODES.ES).toBe('+34');
+    expect(DIAL_CODES.US).toBe('+1');
+    expect(DIAL_CODES.DE).toBe('+49');
+    expect(DIAL_CODES.JM).toBe('+1 876');
+  });
+  it('vacío → el prefijo del país con un espacio', () => {
+    expect(phoneForCountry('', '', 'ES')).toBe('+34 ');
+  });
+  it('cambiar de país cambia solo el prefijo y conserva lo escrito', () => {
+    expect(phoneForCountry('+34 963 456 789', 'ES', 'PT')).toBe('+351 963 456 789');
+    expect(phoneForCountry('+34 ', 'ES', 'DE')).toBe('+49 ');
+  });
+  it('un número propio del usuario no se toca', () => {
+    expect(phoneForCountry('0034 963 456 789', 'ES', 'DE')).toBe('0034 963 456 789');
+    expect(phoneForCountry('963 456 789', '', 'ES')).toBe('963 456 789');
+  });
+  it('un país sin prefijo conocido deja el teléfono igual', () => {
+    expect(phoneForCountry('+34 ', 'ES', 'XX')).toBe('+34 ');
   });
 });

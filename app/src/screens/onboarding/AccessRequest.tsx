@@ -7,6 +7,7 @@ import {
   FIELD_META,
   blurError,
   canSubmitAccessRequest,
+  phoneForCountry,
   submitAccessRequest,
 } from '../../lib/access-request';
 import type { AccessRequestField, AccessRequestForm, SubmittedAccessRequest } from '../../lib/access-request';
@@ -134,7 +135,16 @@ export function AccessRequest({
                       value={form.country}
                       aria-invalid={invalid ? true : undefined}
                       aria-describedby={invalid ? errorId : undefined}
-                      onChange={(event) => setField(field, event.target.value)}
+                      onChange={(event) => {
+                        // Petición del PO en la C5 (29-sep): al elegir país, el teléfono
+                        // muestra su prefijo (`+34 `) y sigue siendo editable.
+                        const country = event.target.value;
+                        setForm((current) => ({
+                          ...current,
+                          country,
+                          phone: phoneForCountry(current.phone, current.country, country),
+                        }));
+                      }}
                       onBlur={() => handleBlur(field)}
                     >
                       <option value="" disabled>

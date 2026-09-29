@@ -70,7 +70,12 @@ async function rellenar(over: Partial<AccessRequestForm> = {}) {
   if (d.fullName) await userEvent.type(nombre(), d.fullName);
   if (d.orgName) await userEvent.type(org(), d.orgName);
   if (d.country) await userEvent.selectOptions(pais(), d.country);
-  if (d.phone) await userEvent.type(telefono(), d.phone);
+  if (d.phone) {
+    // 29-sep: elegir país rellena el prefijo (petición del PO en la C5); el
+    // teléfono de los datos ya lo lleva, así que se escribe sobre el campo vacío.
+    await userEvent.clear(telefono());
+    await userEvent.type(telefono(), d.phone);
+  }
   if (d.website) await userEvent.type(web(), d.website);
 }
 

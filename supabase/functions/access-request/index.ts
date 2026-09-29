@@ -76,7 +76,11 @@ function problem(f: {
     return 'El nombre de la organización debe tener entre 2 y 120 caracteres.';
   }
   if (!COUNTRY.test(f.country)) return 'El país no es válido.';
-  if (f.phone.length < 1 || f.phone.length > 30) return 'Falta el teléfono de contacto.';
+  // Al menos 6 dígitos (29-sep): la pantalla rellena el prefijo del país, y un
+  // prefijo solo no es un teléfono. Mismo umbral que `PHONE_MIN_DIGITS`.
+  if (f.phone.length > 30 || (f.phone.match(/\d/g) ?? []).length < 6) {
+    return 'Falta el teléfono de contacto.';
+  }
   if (!f.website.startsWith('https://') || f.website.length > 200) {
     return 'La URL debe comenzar por https://';
   }

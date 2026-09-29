@@ -57,6 +57,8 @@
   flex: 1 0 auto;
   display: flex;
   align-items: flex-start;
+  /* Sin el panel de VERA a la derecha, la tarjeta de 900 px se centra (revision a mano). */
+  justify-content: center;
   padding: 40px 48px;
   background: var(--bw-cold-white);
 }
@@ -569,4 +571,42 @@
 .submit:disabled {
   background: var(--bw-chip-active-border);
   cursor: not-allowed;
+}
+
+/* ---- Revision a mano (F-226): lo que la comparacion con el HTML aprobado echo en falta ---- */
+
+/* Opcion elegida: fondo y borde azules, como `.radio-opt.on` y `.chk-field.on` del HTML. */
+.radioOption:has(input:checked),
+.terms:has(input:checked) {
+  border-color: var(--bw-calibration-blue);
+  background: var(--bw-chip-active-bg);
+}
+
+/* Aviso de rol: el icono circular del HTML precede al texto. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--bw-brass);
+}
+
+/* Selects: flecha propia, fina y gris, en lugar de la nativa (`appearance: none` del HTML).
+   Dos degradados forman el chevron sin un color literal, que un data-URI SVG exigiria. */
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--bw-steel-mist) 50%),
+    linear-gradient(135deg, var(--bw-steel-mist) 50%, transparent 50%);
+  background-position:
+    calc(100% - 17px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
 }

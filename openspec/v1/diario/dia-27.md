@@ -115,3 +115,11 @@ termine: **borrarlos después** (`auth.users` con el email que use, `organizatio
 **Datos de prueba vivos en producción al cierre:** la organización «JULSA INDUSTRIAL S.A» (segunda vuelta del PO, con `alpha@…`
 como contacto: anterior a `0043`), su administrador `a.guillen@julsaindustrial.com` y la solicitud sintética `ZZ Prueba
 REG-01 SL` con su token ya gastado. **El PO no ha dicho que se borren**; hacerlo antes de repetir el alta con ese correo.
+
+## Cierre
+
+- **CI de `e3c0ea5` roja solo en el paso de verificación de producción** (`F-228`): el despliegue de Vercel salió bien y el alias
+  tardó un minuto más que los 30 s de reintentos. Comprobado a mano: la web devuelve 200 con el bundle nuevo (textos de la
+  leyenda, el desplegable y el contacto; sin la ayuda vieja).
+- **Pendiente para la próxima sesión, dicho por el PO:** la C5 de la sección «Enlace de acceso» de `ADMIN-01` (aprobar una
+  solicitud, copiar el enlace, abrirlo). Los datos de prueba de la organización «JULSA INDUSTRIAL S.A» siguen vivos.

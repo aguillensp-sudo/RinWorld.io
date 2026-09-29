@@ -36,7 +36,7 @@ obligatorios en blanco y contacto = administrador permitido (`0042`); **pasos 9 
 | `0043` y `check_contact_email` | Banco de esquema (exit 0); `curl` contra producción con una solicitud efímera, borrada | `alpha@…` como contacto → `false`; email libre → `true`; sin token → 404 |
 | `0042` | Banco de esquema (exit 0) y `pg_get_functiondef` + catálogo de producción | Sin la regla del contacto; `register_organization` sigue solo para `service_role` |
 | Contrato de `REG-01` | Implementación de referencia desechable (fuera del árbol) | 40 unitarias, 2 de CSS y 7 e2e verdes con ella; salieron 3 errores del propio contrato |
-| CI y producción | `gh run` 36540317696 en `857b46a` (seis jobs verdes) y `curl` del bundle de `rin-world-io.vercel.app` (`F-168`) | El bundle trae los textos de `REG-01` y del enlace; la función responde 404 a un token que no vale |
+| CI y producción | `gh run` 36540317696 (`857b46a`) y 36586619528 (`9da5785`), seis jobs verdes; el de `e3c0ea5` (36590098438) **rojo solo en el paso de verificación** (`F-228`, propagación del alias); `curl` del bundle | El bundle de producción trae los textos de `REG-01`, la leyenda, el desplegable, `check_contact_email` y NO trae la ayuda vieja del contacto |
 | Medidor de orquestación | `python -m harness.core.orchestration_metrics` antes y después | **10,02 $ → 40,06 $** el 29-sep; se paraba con Sonnet 5.5 (`F-227`); tarifa añadida. **No limpia** |
 | Base de e2e | `list_migrations` de `ogdhyzgjjbbikjbkhxmu` | En `0039`; sin `0040`/`0041` ni las funciones |
 
@@ -118,6 +118,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos (RLS en las 19 tablas). **Se reabre antes de datos reales o de abrir el registro a terceros**: ahora existe un camino que crea cuentas sin sesión, pero solo con un token que emite el Operador | PO (25-sep) |
 | 🟡 | **`F-218`** · nada lleva a un ADMIN a `KEY_ACTIVE` (`REG-05` a `07` no existen); ahora `REG-01` también termina ahí | Al construir el flujo E2EE |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
+| 🟡 | **`F-228`** · rojo falso e intermitente del paso `F-168` de la CI (alias de Vercel tarda más que 30 s) | Subir el margen de reintentos en `ci.yml` |
 | 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040`/`0041` ni funciones | Aplicarlas por el MCP, revisadas |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |

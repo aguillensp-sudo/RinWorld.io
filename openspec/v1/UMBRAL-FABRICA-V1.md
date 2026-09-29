@@ -353,3 +353,22 @@ Las demás pendientes siguen fuera por lo mismo que el 26-sep (`DECISIONES-V1.md
 antes de empezar: 5,06 $ el 28-sep hasta las 05:50 UTC.
 
 *§8 ampliado el 28-sep-2026, antes de construir nada de `REG-00` ni de `REG-00-WAIT`.*
+
+---
+
+**Adenda del 29-sep-2026 — decimosexta pantalla (`REG-01`).**
+Orden del PO en la apertura de jornada, decidida en `F-223`: después del token y del enlace de
+`ADMIN-01` (a mano, hechos hoy), `REG-01` por el arnés. **Elegida antes de construir**: es la puerta a la
+que lleva el enlace, y sin ella el token no se puede canjear. Módulo 01.
+
+**Coste conocido de antemano, y por qué no es una pantalla barata:** su capa de datos es la mayor de la Ruta
+00.2 — migración `0041` (una tabla y tres columnas), una función `security definer` que canjea el token y
+crea organización y ADMIN, y una Edge Function nueva sin JWT (`register-organization`) que crea la cuenta de
+Auth y compensa si la base falla —. Todo eso es **precondición a mano**, no tarea del Coder (mismo criterio
+que `access-request` en `REG-00`). Lo que mide el arnés es el formulario de 17 campos.
+
+**Lo que NO es: un punto limpio de las cifras 7 y 8.** Comparte sesión con el cierre de `F-225` y con
+`ADMIN-01`. Medidor corrido antes de empezar: **10,02 $** el 29-sep hasta las 07:15 UTC (con la tarifa de
+Sonnet 5.5 añadida ese mismo día, que el medidor no conocía).
+
+*§8 ampliado el 29-sep-2026, antes de construir nada de `REG-01`.*

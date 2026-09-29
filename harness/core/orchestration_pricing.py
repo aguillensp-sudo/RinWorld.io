@@ -24,7 +24,7 @@ pueda desviar de ella con el tiempo.
 import datetime
 import sys
 
-PRICE_TABLE_DATE = "2026-09-14"
+PRICE_TABLE_DATE = "2026-09-29"
 STALE_AFTER_DAYS = 90
 
 PRICES = {
@@ -66,6 +66,14 @@ PRICES = {
     "claude-opus-5-5:fast": {
         "input": 8.0, "cache_write_5m": 5.0, "cache_write_1h": 8.0,
         "cache_read": 0.20, "output": 40.0,
+    },
+    # 29-sep-2026: la sesion de REG-01 corre en Sonnet 5.5 y el medidor se paro al
+    # no encontrarlo (mismo fallo que Opus 5.5 el 28-sep). Publicado en la pagina de
+    # precios, comprobada hoy: $2 input / $2.50 escritura 5m / $4 escritura 1h /
+    # $0.20 lectura de cache / $10 output. Sonnet no tiene fast mode.
+    "claude-sonnet-5-5": {
+        "input": 2.0, "cache_write_5m": 2.50, "cache_write_1h": 4.0,
+        "cache_read": 0.20, "output": 10.0,
     },
 }
 

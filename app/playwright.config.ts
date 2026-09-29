@@ -18,9 +18,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
-  // En CI, un worker: los dos contextos del test de la puerta ya prueban el
-  // paralelismo que importa, y serializar hace los fallos legibles.
-  ...(isCI ? { workers: 1 } : {}),
+  // Un worker, en CI y en local (F-225). Los dos contextos del test de la
+  // puerta ya prueban el paralelismo que importa, y serializar hace los fallos
+  // legibles. En local la suite corre contra la base compartida de produccion:
+  // con varios workers, tests ajenos se pisaban filas y fallaban a ratos.
+  workers: 1,
   reporter,
   use: {
     baseURL: 'http://localhost:4173',

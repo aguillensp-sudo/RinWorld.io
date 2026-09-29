@@ -26,6 +26,7 @@ elegido y es editable (`3abc4c3`). Detalle en `diario/dia-26.md`; la construcci�
 | C5 de las dos pantallas | El PO, en el chat, 29-sep, tras probarlas en su localhost | `REG-00-WAIT` sin cambios; `REG-00` con un defecto (prefijo del teléfono) |
 | Prefijo del teléfono | 1 404 pruebas de unidad en verde; `test_checks`; localhost con el panel del navegador | ES → `+34 `, PT → `+351 `; los 194 países tienen prefijo; `+34 ` solo ya no es válido (6 dígitos mínimo, también en la función) |
 | Despliegue del prefijo | `gh run` 36528928347 en `3abc4c3`; `curl` del bundle y de la función | Seis jobs verdes; el bundle trae `+1 876` y `+351`; la función rechaza `+34 ` solo (400, antes de escribir) |
+| FSR de extremo a extremo | El PO en su localhost (contra producción), 29-sep; `registration_requests` y sus eventos por `execute_sql` | Una solicitud rechazada con motivo, devuelta a revisión, y otra aprobada; la espera enseñó los cambios. **Las dos filas de prueba, borradas con su sí** (quedan las 3 de la demo, pendientes) |
 | Elección previa a construir | `git log`: `18d7cfc` (adenda §8) antes que `fa29058` (capa de datos) | Regla 1 del umbral cumplida |
 | `access-request` en la base de e2e | `curl` sin sesión; fila de prueba borrada después (0 quedan) | envío 200, duplicado 409, `http://` 400, estado 200, inexistente 404, id basura 400, GET 405; rechazo con motivo leído por la función |
 | `access-request` en producción | `curl` de solo lectura y preflight `OPTIONS` | sin JWT responde (404 limpio a un id inexistente); CORS 200 con los cuatro headers. **No se envió ninguna solicitud** |
@@ -113,11 +114,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ## 6 · Lo que este fichero NO sabe
 
-- **Si el FSR funciona de extremo a extremo en producción con un navegador**: la función se probó con
-  `curl` en la base de e2e y en producción solo en lectura; el e2e no envía. Nadie ha enviado una
-  solicitud real desde la pantalla ni la ha visto aparecer en `ADMIN-01`.
-- **Si el sondeo de la espera ve el cambio de estado de verdad**: los tests lo miden con temporizadores
-  falsos y el e2e con la respuesta sustituida.
 - **Si 20 solicitudes por hora es un techo razonable** para un formulario público sin captcha: es juicio.
 - **Qué ve `alvaro@vistabahia.eu` en pantalla tras `0039`** (medido por SQL, no visto).
 - **Si invitar y reenviar funcionan desde la pantalla de `INVT-01`** (medido en el banco de esquema).

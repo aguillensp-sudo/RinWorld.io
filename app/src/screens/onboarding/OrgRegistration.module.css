@@ -1,4 +1,572 @@
-/* REG-01 · OrgRegistration — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
+/* =============================================================================
+   REG-01 — FRO · Formulario de Registro de Organización (Ruta 00.2)
+   =============================================================================
+   Pantalla completa SIN shell: es hija directa de `#root`, que es
+   `position: fixed; inset: 0` y no declara overflow. Por eso `.page` lleva
+   scroll propio (`height: 100%` + `overflow-y: auto`): sin él, un formulario de
+   17 campos se recortaría sin barra.
+
+   Ningún color literal: todo sale de `tokens.css`. Los tamaños de tipo del HTML
+   aprobado mandan sobre los tokens (§F-209): título a 24px, subtítulo a 13px,
+   etiqueta a 12px y ayuda a 10px.
+   ========================================================================== */
+
+.page {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bw-cold-white);
+  color: var(--bw-deep-steel);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-body);
+}
+
+/* ---- Barra de marca ---- */
+.brandBar {
+  flex-shrink: 0;
+  min-height: var(--bw-h-brand);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bw-pad-brand);
+  background: var(--bw-deep-steel-darkest);
+  color: var(--bw-on-dark-brand);
+  font-size: var(--bw-size-brand);
+  letter-spacing: var(--bw-ls-brand);
+  text-transform: uppercase;
+}
+
+/* ---- Cabecera mínima: solo el logo ---- */
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--bw-deep-steel-darkest);
+}
+
+.logo {
   display: block;
+  height: var(--bw-w-logo-height);
+  width: auto;
+}
+
+/* ---- Cuerpo ---- */
+.body {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: flex-start;
+  padding: 40px 48px;
+  background: var(--bw-cold-white);
+}
+
+/* ---- Tarjeta ---- */
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  padding: 36px 48px 44px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  background: var(--bw-warm-cream);
+}
+
+/* Esquinas decorativas de latón, a 12px de cada borde. */
+.corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 0 solid var(--bw-brass);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.corner:nth-of-type(1) {
+  top: 12px;
+  left: 12px;
+  border-width: 1px 0 0 1px;
+}
+
+.corner:nth-of-type(2) {
+  top: 12px;
+  right: 12px;
+  border-width: 1px 1px 0 0;
+}
+
+.corner:nth-of-type(3) {
+  bottom: 12px;
+  left: 12px;
+  border-width: 0 0 1px 1px;
+}
+
+.corner:nth-of-type(4) {
+  bottom: 12px;
+  right: 12px;
+  border-width: 0 1px 1px 0;
+}
+
+/* ---- Cabecera de la tarjeta ---- */
+.title {
+  margin: 0 0 8px;
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+  color: var(--bw-deep-steel);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--bw-steel-mist);
+}
+
+/* ---- Separador de sección ---- */
+.section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 20px;
+}
+
+.section::before,
+.section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bw-line-steel);
+}
+
+.sectionLabel {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  letter-spacing: var(--bw-ls-divider);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+  white-space: nowrap;
+}
+
+/* ---- Rejilla de campos ---- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+/* Dirección y CP en la misma fila, proporción 2,5 a 1. */
+.addrRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 2.5fr 1fr;
+  gap: 18px;
+}
+
+/* ---- Etiquetas y ayudas ---- */
+.label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-deep-steel);
+}
+
+.required {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bw-brass);
+}
+
+.lockIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--bw-steel-mist);
+}
+
+.sensitiveTag {
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: var(--bw-sensitive-bg);
+  color: var(--bw-sensitive-text);
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hint {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  letter-spacing: var(--bw-ls-hint);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+}
+
+.hintError {
+  color: var(--bw-error-text);
+}
+
+/* ---- Controles ---- */
+.input,
+.select {
+  width: 100%;
+  padding: var(--bw-pad-input);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  color: var(--bw-input-text);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.inputError {
+  border-color: var(--bw-error-text);
+}
+
+/* ---- Teléfono: prefijo + número ---- */
+.telRow {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px;
+}
+
+/* ---- Cajas de etiquetas ---- */
+.tagsBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 6px 8px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  cursor: text;
+}
+
+.tagsBox:focus-within {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--bw-tag-border);
+  border-radius: 2px;
+  background: var(--bw-tag-bg);
+  color: var(--bw-deep-steel);
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.tagRemove {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--bw-steel-mist);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tagRemove:hover {
+  color: var(--bw-error-text);
+}
+
+.tagInput {
+  flex: 1;
+  min-width: 100px;
+  padding: 3px 2px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--bw-input-text);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+}
+
+.tagInput::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+/* ---- Logo (desactivado: no hay almacenamiento de ficheros) ---- */
+.fileBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px dashed var(--bw-dropzone-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-warm-cream);
+}
+
+.fileIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 2px;
+  background: var(--bw-surface-mist);
+  color: var(--bw-steel-mist);
+}
+
+.fileText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.fileTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.fileHint {
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+}
+
+.soon {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  border: 1px solid var(--bw-badge-neutral-border);
+  border-radius: 2px;
+  background: var(--bw-badge-neutral-bg);
+  color: var(--bw-ink-steel-soft);
+  font-family: var(--bw-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---- Visibilidad del inventario ---- */
+.radio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radioOption {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 2px 10px;
+  align-items: start;
+  padding: var(--bw-pad-radio);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  cursor: pointer;
+}
+
+.radioOption input {
+  margin: 2px 0 0;
+}
+
+.radioLabel {
+  grid-column: 2;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.radioDesc {
+  grid-column: 2;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--bw-steel-mist);
+}
+
+/* ---- Aviso de rol ---- */
+.notice {
+  margin-bottom: 20px;
+  padding: 11px 15px;
+  border-left: 3px solid var(--bw-brass);
+  border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+  background: var(--bw-tag-bg);
+  color: var(--bw-steel-mist);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.notice strong {
+  color: var(--bw-deep-steel);
+  font-weight: 600;
+}
+
+/* ---- Google (desactivado: no hay proveedor OAuth) ---- */
+.google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  color: var(--bw-deep-steel);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.google:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0 16px;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+}
+
+.or::before,
+.or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bw-line-steel);
+}
+
+/* ---- Medidor de fuerza de la contraseña ---- */
+.meter {
+  display: flex;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--bw-line-steel);
+}
+
+.barOn {
+  background: var(--bw-brass);
+}
+
+.barHot {
+  background: var(--bw-signal-green);
+}
+
+/* ---- Términos ---- */
+.terms {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bw-deep-steel);
+  cursor: pointer;
+}
+
+.termsInput {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.termsText {
+  flex: 1;
+}
+
+.termsText strong {
+  color: var(--bw-calibration-blue);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+/* ---- Error de envío ---- */
+.alert {
+  margin: 18px 0 0;
+  padding: 11px 14px;
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  background: var(--bw-tint-danger);
+  color: var(--bw-error-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---- Botón primario ---- */
+.submit {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: var(--bw-calibration-blue);
+  color: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--bw-primary-dark);
+}
+
+.submit:disabled {
+  background: var(--bw-chip-active-border);
+  cursor: not-allowed;
 }

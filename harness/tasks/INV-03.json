@@ -52,7 +52,7 @@
       },
       {
         "test": "pinta las organizaciones de la base",
-        "motivo": "DIR-01 espera las 6 organizaciones sembradas y en produccion hay 8 (`JULSA INDUSTRIAL S.A` y `Jose Bearings`). Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+        "motivo": "DIR-01 espera las 6 organizaciones sembradas y en produccion hay 8 (`JULSA INDUSTRIAL S.A`, de la C5 de REG-01, y `Jose Bearings`, alta del 29-sep 17:43 UTC de origen no documentado). Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
       },
       {
         "test": "por nombre espera a Enter",

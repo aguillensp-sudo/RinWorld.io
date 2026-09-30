@@ -14,31 +14,24 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 27 de V1 · 29-sep-2026 · Estado: CERRADO.** **`REG-01` (decimosexta pantalla) construida y desplegada, a falta
-de la C5 del PO**, con su token (`0040`), su alta (`0041`), su función de borde y el **enlace copiable en `ADMIN-01`**.
-`F-225` con `workers: 1`. **C5 parcial del PO sobre `REG-01`** (pasos 1 a 8): países por desplegable, leyenda de
-obligatorios en blanco y contacto = administrador permitido (`0042`); **pasos 9 y 10 dados por correctos** y contacto
-!= otra organización (`0043`). Detalle en `diario/dia-27.md`.
+**Día 28 de V1 · 30-sep-2026 · Estado: CERRADO.** **`INV-03` (decimoséptima pantalla) construida, a falta de la C5 del PO**,
+por delegación («1 pantalla a elegir libremente»). Se construye contra el tipo `ImportSummary`: su productor, `INV-02`, no existe,
+así que **en producción nadie la abre**. Corrida ESCALADA en el intento 3 por un e2e ajeno (`F-225`); 0 líneas tocadas a mano.
+Detalle en `diario/dia-28.md`. La C5 de `REG-01` (pasos 1 a 10) está dada; falta la de la sección «Enlace de acceso» de `ADMIN-01`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-09-29` (sesión: de 06:25 a ~08:15 UTC) |
-| `F-225`, `workers: 1` | 5 pasadas de la suite e2e entera contra producción, con `date` | 4,2–4,6 min por pasada; fallos ajenos en 2 de 5 (`SRCH-01`, `INV-01`); `INV-01` pasa solo, 16/16. **No lo elimina** |
-| Token `0040` | Banco de esquema (`supabase/tests/run.sh`, exit 0) y catálogo de producción por `execute_sql` | Solo hash; privilegios: ni `anon` ni `authenticated` tocan la tabla; la validación y el canje solo `service_role`; RLS sin fuerza; 0 filas |
-| Alta `0041` | Banco de esquema (23 rechazos con su mensaje, camino feliz, fallo tardío que deshace el canje, NIF) y catálogo de producción | `register_organization` solo `service_role`; `organization_internal` con RLS; dueño `postgres` |
-| Edge Function `register-organization` | `curl` contra producción con una solicitud sintética `@bearingworld.test` | validar 200, email libre/ocupado, contraseña floja 400, datos malos 400 sin cuenta huérfana, alta 200, reuso 404, login 200. **Filas borradas: 0 quedan** |
-| Enlace en `ADMIN-01` | 1 537 pruebas de unidad; tsc; e2e | Verde. **Probado con mocks; no aprobado de verdad en producción** (`F-188`) |
-| `REG-01` | `harness/metrics/REG-01/corrida-01/`, `git show --numstat 857b46a` | VERDE en 1 intento; 37 030 / 36 433 tokens; **0,064 $**; 2,1 min; 1 342 líneas; **+60/−3 a mano** |
-| Fidelidad de `REG-01` | 0 `var(--bw-*)` inexistentes, 0 colores literales; tamaños 24/13/12/10; captura real contra la del aprobado (subagente) | 4 defectos visuales corregidos; quedan 2 cosméticos (forma de la flecha del select, relleno de los términos) |
-| C5 parcial de `REG-01` | El PO, en el chat, 29-sep, en su localhost con un enlace de prueba | Pasos 1-3, 5-7 «perfectos»; tres cambios pedidos y hechos (`9da5785`, `6749723`); **pasos 9 y 10 sin probar** |
-| `0043` y `check_contact_email` | Banco de esquema (exit 0); `curl` contra producción con una solicitud efímera, borrada | `alpha@…` como contacto → `false`; email libre → `true`; sin token → 404 |
-| `0042` | Banco de esquema (exit 0) y `pg_get_functiondef` + catálogo de producción | Sin la regla del contacto; `register_organization` sigue solo para `service_role` |
-| Contrato de `REG-01` | Implementación de referencia desechable (fuera del árbol) | 40 unitarias, 2 de CSS y 7 e2e verdes con ella; salieron 3 errores del propio contrato |
-| CI y producción | `gh run` 36540317696 (`857b46a`) y 36586619528 (`9da5785`), seis jobs verdes; el de `e3c0ea5` (36590098438) **rojo solo en el paso de verificación** (`F-228`, propagación del alias); `curl` del bundle | El bundle de producción trae los textos de `REG-01`, la leyenda, el desplegable, `check_contact_email` y NO trae la ayuda vieja del contacto |
-| Medidor de orquestación | `python -m harness.core.orchestration_metrics` antes y después | **10,02 $ → 40,06 $** el 29-sep; se paraba con Sonnet 5.5 (`F-227`); tarifa añadida. **No limpia** |
-| Base de e2e | `list_migrations` de `ogdhyzgjjbbikjbkhxmu` | En `0039`; sin `0040`/`0041` ni las funciones |
+| Fecha de máquina | `date -u` | `2026-09-30` (sesión: de 07:23 a ~08:30 UTC) |
+| Producción antes de la lista previa | `execute_sql` sobre `threads` | 9 hilos en vez de 5: 4 de `beta@` del 29-sep 17:14 UTC. **Borrados con el sí del PO** (`F-230`) |
+| Datos vivos de altas de prueba | `execute_sql` sobre `organizations` | `JULSA INDUSTRIAL S.A` (29-sep 15:09) y `Jose Bearings` (29-sep 17:43, **origen no documentado**), las dos `APPROVED`. Siguen |
+| `lib/import-result.ts` | `vitest`, 33 pruebas | Verde. `toLocaleString('es-ES')` da `1247` en Node (`F-231`) |
+| Contrato de `INV-03` | Referencia desechable (no comiteada) | 29 de pantalla y CSS + 6 de cableado, verdes con ella; contra el marcador fallan 34 (una del cableado pasa) |
+| Lista previa | `tsc`; `vitest` entero; `playwright test` entero | Solo fallaba el contrato. E2E: 139 pasan y fallan justo los 5 excusados en la tarea |
+| Corrida 01 de `INV-03` | `harness/metrics/INV-03/`, `harness-metrics.csv` | ESCALADA en 3 intentos; C1/C3/C4 verdes en el 3; C2 rojo solo por `INV-01` (16/16 solo). **0,43 $, 21,1 min**, 814 líneas, **0 tocadas** |
+| Fidelidad de `INV-03` | Capturas reales de `warn` y `fail` contra el HTML; script sobre `tokens.css` | 0 variables inexistentes, 0 colores literales fuera de comentarios, tamaños 11/24/14/10/22 |
+| Suite tras la corrida | `tsc` y `vitest` entero | Limpio; 1 629 pruebas |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -46,22 +39,23 @@ obligatorios en blanco y contacto = administrador permitido (`0042`); **pasos 9 
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **16 pantallas construidas, 15 aceptadas** (`REG-01`, pendiente de C5).
-  Quedan 8 de 24, todas con un motivo de descarte escrito (`DECISIONES-V1.md`): `REG-05`/`06`/`07`,
-  `REC-01`, `SET-SEC-01` (criptografía), `INV-02`/`03`/`04` (subida de ficheros y correo) y `MSG-03`.
+- **Corriente B · Fábrica — EN MARCHA.** **17 pantallas construidas, 15 aceptadas** (`REG-01` e `INV-03`, pendientes de C5).
+  Quedan, todas con un motivo de descarte escrito (`DECISIONES-V1.md`): `REG-05`/`06`/`07`, `REC-01`, `SET-SEC-01`
+  (criptografía), `INV-02` (subida de ficheros), `INV-04` (correo sin proveedor) y `MSG-03` (ya vive dentro de `MSG-02`).
   Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-1. **Falta la C5 de la sección «Enlace de acceso» de `ADMIN-01`** (la de `REG-01` está dada: pasos 1 a 10 correctos).
-   **Hay datos de prueba vivos en producción**: la organización «JULSA INDUSTRIAL S.A» del PO, su administrador
-   `a.guillen@julsaindustrial.com` y la solicitud sintética `ZZ Prueba REG-01 SL` (token gastado); **el PO aún no ha dicho que
-   se borren.** Recorrido completo en su
-   localhost (`preview_start` con `app`, puerto 5173; **va contra producción y escribe**): aprobar una solicitud
-   → copiar el enlace → abrirlo sin sesión → rellenar y crear la cuenta. Crea una organización y una cuenta reales:
-   hay que decidir con el PO si se hace así (`F-188`) y **borrar las filas después** (`auth.users`, `organizations`,
-   `registration_requests`; los tokens y el NIF caen por cascada). Sin el PO, solo se ha probado por partes.
+0. **C5 de `INV-03`.** No se alcanza en la web: en su localhost (`preview_start` con `app`, puerto 5173), con sesión, abrir
+   `#importacion-ejemplo=warn` (también `ok` y `fail`). No escribe nada. **Y decidir con el PO** si se borran los datos de las altas de
+   prueba (`JULSA INDUSTRIAL S.A`, `Jose Bearings`, `ZZ Prueba REG-01 SL`): rompen 3 tests e2e locales (`F-230`).
+1. **Falta la C5 de la sección «Enlace de acceso» de `ADMIN-01`** (la de `REG-01` está dada). Datos de prueba vivos en producción: la
+   organización «JULSA INDUSTRIAL S.A» del PO, su administrador `a.guillen@julsaindustrial.com` y la solicitud `ZZ Prueba REG-01 SL`
+   (token gastado); **el PO aún no ha dicho que se borren.** Recorrido en su localhost (`preview_start` con `app`; **va contra
+   producción y escribe**): aprobar una solicitud → copiar el enlace → abrirlo sin sesión → crear la cuenta. Crea una organización y una
+   cuenta reales: decidir con el PO (`F-188`) y **borrar las filas después** (`auth.users`, `organizations`, `registration_requests`;
+   los tokens y el NIF caen por cascada).
 2. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e
    entera**, con los marcadores; solo puede fallar el contrato de la tarea (más lo declarado en
    `e2e_fuera_de_contrato`). Un contrato en rojo solo en el árbol si su corrida es la siguiente (`F-219`).
@@ -70,8 +64,8 @@ obligatorios en blanco y contacto = administrador permitido (`0042`); **pasos 9 
    entero delante.
 4. **`INVT-01` con token (`F-212`, `F-217`)**: la tabla ya lo admite (`access_tokens.member_invitation_id`) pero
    **no existe la función que lo genere ni el canje**; y `FRU` crea cuentas `REGISTERED` sin flujo para activarse.
-5. **Revisión a mano: tipografía contra el HTML (`F-209`) y todos los `var(--bw-*)` contra `tokens.css`**, y
-   **comparar una captura del formulario real con la del aprobado**: los estados `.on` del HTML no se infieren de la spec.
+5. **Revisión a mano: tipografía contra el HTML (`F-209`), todos los `var(--bw-*)` contra `tokens.css` y una captura real contra la
+   del aprobado**: los estados `.on` del HTML no se infieren de la spec.
 6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`, `F-227` (medidor tolerante), poner `bearingworld-e2e` en
    `0041` y desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
 
@@ -106,6 +100,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.1) |
+| 🟠 | **`INV-03`** · construida; falta la C5 del PO. Sin productor (`INV-02`): en producción nadie la abre | PO (§3.0) |
+| 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (3 tests excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
 | 🟠 | **`F-223`** · el enlace y `REG-01` están; falta el equivalente para `INVT-01` | Construir: generar y canjear por invitación (§3.4) |
 | 🟠 | **`F-217`** · el alta de `FRU` crea una cuenta que queda `REGISTERED` sin flujo para activarse | PO / al construir `REG-05` a `07` |
 | 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token | Construir (§3.4) |
@@ -117,6 +113,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-224`** · dos e2e excusados en las tareas mientras exista la cuenta de prueba del PO en Rodamientos Ibéricos | PO |
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos (RLS en las 19 tablas). **Se reabre antes de datos reales o de abrir el registro a terceros**: ahora existe un camino que crea cuentas sin sesión, pero solo con un token que emite el Operador | PO (25-sep) |
 | 🟡 | **`F-218`** · nada lleva a un ADMIN a `KEY_ACTIVE` (`REG-05` a `07` no existen); ahora `REG-01` también termina ahí | Al construir el flujo E2EE |
+| 🟡 | **`F-231`** · `toLocaleString('es-ES')` no agrupa `1247`: `Inventory`, `InventoryTable`, `Messages` y `Panel` lo usan | Cambiar a `formatCount` |
+| 🟡 | **`F-232`** · el intento 3 de `INV-03` se truncó dos veces y gastó el 84 % del coste de la corrida | Un dato; sin acción |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
 | 🟡 | **`F-228`** · rojo falso e intermitente del paso `F-168` de la CI (alias de Vercel tarda más que 30 s) | Subir el margen de reintentos en `ci.yml` |
 | 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040`/`0041` ni funciones | Aplicarlas por el MCP, revisadas |
@@ -143,8 +141,10 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si invitar y reenviar funcionan desde la pantalla de `INVT-01`** (medido en el banco de esquema).
 - **Cuántas tablas más tienen privilegios de sobra**, columna a columna (`F-192`, aceptado).
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
+- **Cómo se ve `INV-03` dentro de la app real** (con sesión, shell y VERA): medida en una página de prueba, sin shell; y **qué forma tendrá el resumen que produzca `INV-02`**.
+- **De quién es `Jose Bearings`** (alta del 29-sep 17:43 UTC, sin rastro en ningún documento).
 - **Con qué frecuencia exacta falla la suite e2e contra producción** (`F-225`): 2 de 5 pasadas con `workers: 1`; muestra pequeña.
 
 ---
 
-*Cierre del Día 27 · 29-sep-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 28 · 30-sep-2026 · Dirección Técnica, Nortex Systems*

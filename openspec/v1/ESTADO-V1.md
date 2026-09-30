@@ -31,7 +31,7 @@ Detalle en `diario/dia-28.md`. La C5 de `REG-01` (pasos 1 a 10) está dada; falt
 | Lista previa | `tsc`; `vitest` entero; `playwright test` entero | Solo fallaba el contrato. E2E: 139 pasan y fallan justo los 5 excusados en la tarea |
 | Corrida 01 de `INV-03` | `harness/metrics/INV-03/`, `harness-metrics.csv` | ESCALADA en 3 intentos; C1/C3/C4 verdes en el 3; C2 rojo solo por `INV-01` (16/16 solo). **0,43 $, 21,1 min**, 814 líneas, **0 tocadas** |
 | Fidelidad de `INV-03` | Capturas reales de `warn` y `fail` contra el HTML; script sobre `tokens.css` | 0 variables inexistentes, 0 colores literales fuera de comentarios, tamaños 11/24/14/10/22 |
-| Suite tras la corrida | `tsc` y `vitest` entero | Limpio; 1 629 pruebas |
+| CI y producción | `gh run` 36689160979 (`1d9d830`) y `curl` del bundle de `rin-world-io.vercel.app` | Roja al principio solo por `ADMIN-02` (siembra de cobros de `bearingworld-e2e` envejecida; **resembrada** con `demo_billing.sql`); relanzada, seis jobs verdes. El bundle trae los textos de `INV-03` y **no** trae `importacion-ejemplo`. `tsc` y 1 629 pruebas de unidad |
 
 ## 2 · Dónde estamos, por corriente
 

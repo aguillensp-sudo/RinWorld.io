@@ -1,0 +1,103 @@
+
+==============================================================================
+· corrida arrancada 2026-09-30 09:45:40 · harness/tasks/INV-03.json
+==============================================================================
+Log de esta corrida: harness\metrics\INV-03\INV-03.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/inventory/ImportResult.module.css', 'app/src/screens/inventory/ImportResult.tsx']
+  tokens in/out: 26346/20815   cache: 0.0% hit
+  coste real: $0.039068   en frio: $0.039068
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: ROJO
+  · intento 1 ya en disco: harness\metrics\INV-03\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/inventory/ImportResult.module.css', 'app/src/screens/inventory/ImportResult.tsx']
+  tokens in/out: 33652/20800   cache: 77.97% hit
+  coste real: $0.031085   en frio: $0.042263
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: ROJO
+  · intento 2 ya en disco: harness\metrics\INV-03\attempt_2.json (F-122)
+[intento 3] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  TRUNCADO (finish_reason=length). Reintento con max_tokens=131072 (F-005)
+  TRUNCADO (finish_reason=length). Reintento con max_tokens=262144 (F-005)
+  ficheros: ['app/src/screens/inventory/ImportResult.module.css', 'app/src/screens/inventory/ImportResult.tsx']
+  tokens in/out: 105354/268218   cache: 91.24% hit
+  coste real: $0.359453   en frio: $0.400404
+  C1: verde
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 3 ya en disco: harness\metrics\INV-03\attempt_3.json (F-122)
+  CSV: 2026-09-30,INV-03,INV-03,deepseek-v4-flash,26346,20815,0.039068,1,1.1,app/src/screens/inventory/ImportResult.module.css;app/src/screens/inventory/ImportResult.tsx,0.00,no,-,-,-,FALLA 1/4 (verde: C3 / rojo: C1;C2;C4). C5 lo da el PO
+  CSV: 2026-09-30,INV-03,INV-03,deepseek-v4-flash,33652,20800,0.031085,2,1.3,app/src/screens/inventory/ImportResult.module.css;app/src/screens/inventory/ImportResult.tsx,77.97,no,-,-,-,FALLA 2/4 (verde: C1;C3 / rojo: C2;C4). C5 lo da el PO
+  CSV: 2026-09-30,INV-03,INV-03,deepseek-v4-flash,105354,268218,0.359453,3,18.7,app/src/screens/inventory/ImportResult.module.css;app/src/screens/inventory/ImportResult.tsx,91.24,si,-,-,-,ESCALADO 3/4 (verde: C1;C3;C4 / rojo: C2). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\INV-03\attempt_1.json
+  harness\metrics\INV-03\attempt_2.json
+  harness\metrics\INV-03\attempt_3.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: ESCALADO en 3 intento(s)
+ESCALADO al humano. Ultimo feedback:
+### C2 ROJO
+suite e2e COMPLETA (exit 1) · 1 fallo(s) SI son de este artefacto:
+  · e2e\inventory.spec.ts:113:3 › INV-01 · inventario real › el filtro Publicados reduce o iguala, y nunca vacía un inventario que tiene stock
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('heading', { name: /^¡Bienvenido a Bearingworld\.io, .+!$/, level: 1 })
+
+
+      53 |     await comoKeyActive(page);
+      54 |     await signIn(page, ALPHA);
+    > 55 |     await expect(page.getByRole('heading', { level: 1, name: /^¡Bienvenido a Bearingworld\.io, .+!$/ })).toBeVisible();
+         |                                                                                                          ^
+      56 |     await expect(page.getByText(/ya está activa\. Antes de ir al panel/)).toContainText('Rodamientos Ibéricos');
+      57 |     await expect(page.getByText('¿Deseas añadir usuarios ahora?')).toBeVisible();
+      58 |     await expect(page.getByRole('button', { name: 'Sí, añadir un usuario ahora' })).toBeEnabled();
+        at C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\app\e2e\onboarding.spec.ts:55:106
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\onboarding-REG-09-·-bienve-b7555--dos-botones-y-SIN-contador-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\onboarding-REG-09-·-bienve-b7555--dos-botones-y-SIN-contador-chromium\error-context.md
+
+  6 failed
+    [chromium] › e2e\admin-requests.spec.ts:94:3 › ADMIN-01 · cola de solicitudes real › el filtro "Aprobadas" no enseña las tres pendientes de la siembra 
+    [chromium] › e2e\directory.spec.ts:70:3 › DIR-01 · directorio real › pinta las organizaciones de la base, no las cinco de ejemplo del mock 
+    [chromium] › e2e\directory.spec.ts:87:3 › DIR-01 · directorio real › la búsqueda por nombre espera a Enter -no es live search- y encuentra coincidencia parcial 
+    [chromium] › e2e\inventory.spec.ts:113:3 › INV-01 · inventario real › el filtro Publicados reduce o iguala, y nunca vacía un inventario que tiene stock 
+    [chromium] › e2e\invitations.spec.ts:119:5 › INVT-01 · quién llega a la pantalla › el ADMIN de Rodamientos Ibéricos › ve la pantalla desde «Configuración», con su propia organización: 1/5 
+    [chromium] › e2e\onboarding.spec.ts:52:3 › REG-09 · bienvenida · ADMIN en KEY_ACTIVE › un ADMIN solo: título de bienvenida, su organización, los dos botones y SIN contador 
+  138 passed (2.9m)
+npm notice run bearingworld-app@0.1.0 npx
+npm notice run playwright test
+[WebServer] npm notice run bearingworld-app@0.1.0 build
+[WebServer] npm notice run tsc -p tsconfig.build.json && vite build
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] npm notice run bearingworld-app@0.1.0 preview
+[WebServer] npm notice run vite preview
+5 fallo(s) de la suite e2e NO se le apuntan al Coder: la tarea los declara fuera de su contrato (F-134). La suite se corrio ENTERA y aqui estan, uno por uno:
+  · e2e\admin-requests.spec.ts:94:3 › ADMIN-01 · cola de solicitudes real › el filtro "Aprobadas" no enseña las tres pendientes de la siembra
+      motivo: ADMIN-01 espera cero solicitudes aprobadas y la sintetica `ZZ Prueba REG-01 SL` esta aprobada. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita.
+  · e2e\directory.spec.ts:70:3 › DIR-01 · directorio real › pinta las organizaciones de la base, no las cinco de ejemplo del mock
+      motivo: DIR-01 espera las 6 organizaciones sembradas y en produccion hay 8 (`JULSA INDUSTRIAL S.A` y `Jose Bearings`). Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita.
+  · e2e\directory.spec.ts:87:3 › DIR-01 · directorio real › la búsqueda por nombre espera a Enter -no es live search- y encuentra coincidencia parcial
+      motivo: DIR-01, misma causa: el directorio de produccion lleva 2 organizaciones que la siembra no tiene. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita.
+  · e2e\invitations.spec.ts:119:5 › INVT-01 · quién llega a la pantalla › el ADMIN de Rodamientos Ibéricos › ve la pantalla desde «Configuración», con su propia organización: 1/5
+      motivo: INVT-01 cuenta `1/5` plazas. F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito: ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita.
+  · e2e\onboarding.spec.ts:52:3 › REG-09 · bienvenida · ADMIN en KEY_ACTIVE › un ADMIN solo: título de bienvenida, su organización, los dos botones y SIN contador
+      motivo: REG-09 espera un ADMIN sin nadie mas (sin contador). F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito: ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita.

@@ -57,3 +57,5 @@ solicitud sintética aprobada), que se excusaron uno a uno en la tarea. **`Jose 
 - **El commit del artefacto (`e49ec1c`) lleva `[skip ci]`** aunque no salió verde del arnés (escaló): es el caso que la regla permite. La CI entera va en el commit del cierre.
 - **No se pudo probar la pantalla en el navegador dentro de la app**: entrar exige sesión contra producción. Se miró con una página de prueba desechable (no comiteada).
 - **La corrida no se repite.** El artefacto pasa todas las comprobaciones que dependen de él; repetirla costaría otra tanda de tokens para una cifra que la regla 3 ya excluye.
+- **El commit de cierre (`e7d796e`) no lanzó la CI**: su mensaje citaba, para explicar la regla, el literal de omitir la CI, y GitHub lo lee aunque no sea la marca de verdad.
+  Se empujó otro commit sin ese literal. (Un mensaje que explica una marca no debe escribirla.)

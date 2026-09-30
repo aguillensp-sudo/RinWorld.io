@@ -28,6 +28,9 @@ import { ForumCategory } from './screens/forum/ForumCategory';
 import { ForumThread } from './screens/forum/ForumThread';
 import { Inventory } from './screens/inventory/Inventory';
 import { Visibility } from './screens/inventory/Visibility';
+import { ImportResult } from './screens/inventory/ImportResult';
+import { importExampleFromHash } from './lib/import-result';
+import type { ImportSummary } from './lib/import-result';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
 import { SearchResults } from './screens/search/SearchResults';
@@ -177,6 +180,31 @@ export function App() {
   const [visibilityOpen, setVisibilityOpen] = useState(false);
 
   /**
+   * INV-03 (`Resultado de la Importación`) abierta, con el resumen que enseña. Comparte ítem de
+   * nav con INV-01 (`Inventario`, INV-03 §2), igual que `visibilityOpen`, y se limpia al
+   * cambiar de ítem de nav.
+   *
+   * **Nadie lo pone todavía en producción**: lo pondría INV-02 (la importación), que no
+   * existe. En desarrollo se abre con `#importacion-ejemplo=warn|ok|fail` (los tres estados
+   * de la spec, con sus cifras de ejemplo); `import.meta.env.DEV` es `false` en el build, así
+   * que un ejemplo nunca se ve en la web desplegada.
+   */
+  const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const openExample = () => {
+      const example = importExampleFromHash(window.location.hash);
+      if (!example) return;
+      setNav(INVENTORY_NAV);
+      setVisibilityOpen(false);
+      setImportSummary(example);
+    };
+    openExample();
+    window.addEventListener('hashchange', openExample);
+    return () => window.removeEventListener('hashchange', openExample);
+  }, []);
+
+  /**
    * DIR-02 (la ficha de una organización) abierta, con su id. Comparte ítem de nav
    * con DIR-01 (`Empresas`, DIR-02 §2), igual que `visibilityOpen` con INV-01. Se
    * limpia al cambiar de ítem de nav.
@@ -249,6 +277,7 @@ export function App() {
     setWatchersOpen(false);
     setBatchOpen(false);
     setVisibilityOpen(false);
+    setImportSummary(null);
     setOrgProfileId(null);
     setSettingsOpen(false);
   };
@@ -531,7 +560,15 @@ export function App() {
           }}
         />
       ) : onInventory ? (
-        visibilityOpen ? (
+        importSummary ? (
+          /* INV-03. `Subir correcciones` y `Volver al panel de inventario` llevan las dos a INV-01:
+           * la zona de arrastre destacada que pide la spec no existe (INV-02 está fuera). */
+          <ImportResult
+            summary={importSummary}
+            onBackToInventory={() => setImportSummary(null)}
+            onUploadCorrections={() => setImportSummary(null)}
+          />
+        ) : visibilityOpen ? (
           /* INV-07. Sin `now`: nada de su pantalla es relativo al reloj. */
           <Visibility profile={state.profile} />
         ) : (

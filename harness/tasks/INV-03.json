@@ -36,7 +36,7 @@
       "app/src/screens/inventory/ImportResultScroll.test.ts",
       "app/src/AppImportResult.test.tsx"
     ],
-    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementación de referencia desechable (no comiteada, borrada) antes de la corrida: el contrato se puede cumplir (34 pruebas de pantalla y de CSS más 6 de cableado de `App.tsx`, verdes con ella). NO hay e2e (ver `_nota_producto`): en el build la pantalla no es alcanzable. `AppImportResult.test.tsx` es el cableado, de Claude Code: monta `App` con una sesión falsa y comprueba que la pantalla aparece con `#importacion-ejemplo=…` y que sus dos botones vuelven a INV-01; queda rojo hasta que exista la pantalla.",
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementación de referencia desechable (no comiteada, borrada) antes de la corrida: el contrato se puede cumplir (29 pruebas de pantalla y de CSS más 6 de cableado de `App.tsx`, verdes con ella). NO hay e2e (ver `_nota_producto`): en el build la pantalla no es alcanzable. `AppImportResult.test.tsx` es el cableado, de Claude Code: monta `App` con una sesión falsa y comprueba que la pantalla aparece con `#importacion-ejemplo=…` y que sus dos botones vuelven a INV-01; queda rojo hasta que exista la pantalla.",
     "e2e_fuera_de_contrato": [
       {
         "test": "ve la pantalla desde",

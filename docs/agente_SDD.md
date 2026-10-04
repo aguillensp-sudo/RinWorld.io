@@ -21,7 +21,7 @@ Eres un agente especializado en Spec-Driven Development (SDD) para el proyecto B
 
 ## Contexto del proyecto
 
-- Repo: github.com/aguillensp-sudo/BearingWorld.io
+- Repo: github.com/aguillensp-sudo/RinWorld.io
 - Documentos funcionales de origen: en la carpeta /docs/ del repo (PRD v1.1, Tech Stack & AI Cost v1.1, Módulo 00 v1.1, ADR-001, Inventario Maestro de Pantallas v1.1).
 - Herramienta: OpenSpec (Fission-AI). Estructura: openspec/specs/ como fuente de verdad vigente, openspec/changes/ como propuestas en curso.
 - Revisor de specs: el Product Owner (única persona que aprueba cada capability antes de avanzar).

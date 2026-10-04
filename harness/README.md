@@ -1,5 +1,9 @@
 # `harness/` — el arnés del MVP
 
+> **Nota.** Este README es del arnés del MVP (agosto de 2026). El arnés sigue en uso en V1 y desde entonces
+> ha medido cientos de intentos; los resultados están en `openspec/mvp/harness-metrics.csv` y el estado
+> vigente en [`openspec/v1/ESTADO-V1.md`](../openspec/v1/ESTADO-V1.md).
+
 Grafo LangGraph de **dos nodos**: Coder + Test-runner. Ni uno más. Planner, Evaluator,
 Reviewer y Escalation quedan fuera del MVP (`Plan §6`) porque sus umbrales se calibran
 con datos de fallo reales, que es justo lo que estos 15 días van a generar.

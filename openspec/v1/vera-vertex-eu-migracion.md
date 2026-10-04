@@ -134,7 +134,7 @@ dashboard.
 
 | Paso del §1 | Estado | Detalle |
 |---|---|---|
-| 1. Proyecto GCP con facturación | ✅ | `bearingworld-vera-eu` (número `828676704243`), cuenta `a.guillen.sp@gmail.com`. Facturación `014A85-69538E-B501FA` vinculada, `billingEnabled: true` |
+| 1. Proyecto GCP con facturación | ✅ | `bearingworld-vera-eu` (proyecto GCP propio, número de proyecto y cuenta de facturación omitidos del repositorio público), cuenta del autor. Facturación vinculada, `billingEnabled: true` |
 | 2. API de Vertex AI habilitada | ✅ | `aiplatform.googleapis.com`, confirmado con `gcloud services list --enabled` |
 | 3. Modelo Sonnet 5 de Anthropic en Model Garden | 🟡 **distinto de lo previsto** — ver §7 | No hizo falta ningún clic de habilitación: una llamada real a `rawPredict` llegó hasta la comprobación de cupo sin que Vertex se quejara de acceso al modelo. El bloqueo real es de cupo, no de Model Garden |
 | 4. Cuenta de servicio, rol mínimo | ✅ | `vera-vertex@bearingworld-vera-eu.iam.gserviceaccount.com`, `roles/aiplatform.user` únicamente — confirmado con `gcloud projects add-iam-policy-binding`, sin `Editor`/`Owner` |
@@ -168,7 +168,7 @@ Acceptable Use Policy (asesoría legal/médica/financiera o chatbot cara al cons
 respondió que no, VERA es B2B interno). Región elegida: `EU`, coherente con el entregable.
 
 **El primer envío se cortó a mitad, por un bloqueo distinto y previo:** la cuenta de
-facturación `014A85-69538E-B501FA` seguía en **prueba gratuita**, y Google no deja comprar
+facturación del proyecto seguía en **prueba gratuita**, y Google no deja comprar
 productos de terceros (como los modelos de Anthropic) contra crédito de prueba — "Elige una
 cuenta de facturación diferente o actualiza a una cuenta pagada". El PO actualizó la cuenta a
 pagada (confirmado con `gcloud billing accounts describe`, `open: true`) y volvió a enviar el

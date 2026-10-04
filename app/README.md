@@ -1,5 +1,8 @@
 # App · Bearingworld.io MVP
 
+> **Nota.** Este README recoge el arranque del MVP (agosto de 2026) y no describe el estado actual.
+> Para el estado vigente, ver [`openspec/v1/ESTADO-V1.md`](../openspec/v1/ESTADO-V1.md) y el [README raíz](../README.md).
+
 React 18 + TypeScript + Vite.
 
 | Día | Qué entró |

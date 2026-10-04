@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   ageLabel,
@@ -16,6 +16,7 @@ import {
   type InventoryLine,
   type Stats,
 } from '../../lib/inventory';
+import { UPLOAD_ACCEPT, UPLOAD_REJECTED, isAcceptedUpload } from '../../lib/inventory-import';
 import { InventoryTable } from './InventoryTable';
 import styles from './Inventory.module.css';
 
@@ -88,6 +89,15 @@ const UPLOAD_LABEL = 'Subir nuevo inventario';
 const UPLOAD_WHY = 'La importación de inventario (INV-02) está fuera del alcance del MVP';
 const OUT_OF_SCOPE_NOTE =
   'La importación de inventario (INV-02, INV-03, INV-04) y la configuración de visibilidad (INV-07) están fuera del alcance del MVP. Las líneas de abajo se sembraron directamente en la base de datos.';
+/**
+ * Con `onPickFile` (desde el 2-oct, INV-02 existe): la subida manual funciona y
+ * solo el canal email sigue fuera. Sin dominio propio ni proveedor de correo, una
+ * dirección de ingestión sería una a la que alguien puede mandar su inventario
+ * (`bearingworld.io` ni siquiera está registrado).
+ */
+const EMAIL_OUT_OF_SCOPE_NOTE =
+  'El canal email (INV-04) está fuera del alcance del MVP: no hay dirección de ingestión. La subida manual sí funciona.';
+const MANUAL_AVAILABLE = 'Siempre disponible';
 
 interface Props {
   profile: MemberProfile;
@@ -99,9 +109,38 @@ interface Props {
    * y sin este prop no se pinta ningún botón.
    */
   onOpenVisibility?: () => void;
+  /**
+   * Abre INV-02 con el archivo elegido (o soltado) en la subida manual. **Opcional
+   * a propósito**, como `onOpenVisibility`: sin él la pantalla es la del contrato de
+   * INV-01 (subida inerte y «Fuera del MVP»). Solo se llama con un archivo que la
+   * dropzone admite (`isAcceptedUpload`); si no, se pinta su error y no se llama.
+   */
+  onPickFile?: (file: File) => void;
 }
 
-export function Inventory({ profile, now, onOpenVisibility }: Props) {
+export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [dzError, setDzError] = useState(false);
+  const [dzDrag, setDzDrag] = useState(false);
+  const pickFile = useCallback(
+    (file: File | undefined) => {
+      if (!file || !onPickFile) return;
+      if (!isAcceptedUpload(file)) {
+        setDzError(true);
+        return;
+      }
+      setDzError(false);
+      onPickFile(file);
+    },
+    [onPickFile],
+  );
+  const openPicker = () => fileInput.current?.click();
+  const onDrop = (e: DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    setDzDrag(false);
+    pickFile(e.dataTransfer.files[0]);
+  };
+
   const [filter, setFilter] = useState<Filter>('todos');
   const [page, setPage] = useState(1);
   /** Lo que hay escrito en la caja. */
@@ -224,7 +263,7 @@ export function Inventory({ profile, now, onOpenVisibility }: Props) {
             Canales de actualización
           </h2>
           <p className={styles.channelsNote} data-testid="channels-scope">
-            {OUT_OF_SCOPE_NOTE}
+            {onPickFile ? EMAIL_OUT_OF_SCOPE_NOTE : OUT_OF_SCOPE_NOTE}
           </p>
 
           <div className={styles.channelsRow}>
@@ -235,19 +274,65 @@ export function Inventory({ profile, now, onOpenVisibility }: Props) {
                 </div>
                 <div>
                   <div className={styles.chName}>{CHANNELS.manualName}</div>
-                  <span className={styles.chBadge}>{OUT_OF_SCOPE}</span>
+                  {onPickFile ? (
+                    <span className={`${styles.chBadge} ${styles.chBadgeOk}`}>{MANUAL_AVAILABLE}</span>
+                  ) : (
+                    <span className={styles.chBadge}>{OUT_OF_SCOPE}</span>
+                  )}
                 </div>
               </div>
               <p className={styles.chDesc}>{CHANNELS.manualDesc}</p>
-              {/* Inerte a propósito: no es un botón, no acepta drop y no abre un
-                  selector de archivos. Ofrecer el gesto y no hacer nada es peor
-                  que no ofrecerlo. */}
-              <div className={styles.miniDz} aria-disabled="true">
-                <i className="ti ti-cloud-upload" aria-hidden="true" />
-                <div className={styles.dzMain}>{CHANNELS.dropMain}</div>
-                <div className={styles.dzSec}>{CHANNELS.dropSecondary}</div>
-                <div className={styles.dzHint}>{CHANNELS.dropHint}</div>
-              </div>
+              {onPickFile ? (
+                <>
+                  {/* Un <button> de verdad (teclado y lector de pantalla) que además
+                      acepta que le suelten un archivo encima. */}
+                  <button
+                    type="button"
+                    className={`${styles.miniDz} ${styles.miniDzLive} ${dzDrag ? styles.miniDzDrag : ''}`}
+                    data-testid="inventory-dropzone"
+                    onClick={openPicker}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDzDrag(true);
+                    }}
+                    onDragLeave={() => setDzDrag(false)}
+                    onDrop={onDrop}
+                  >
+                    <i className="ti ti-cloud-upload" aria-hidden="true" />
+                    <div className={styles.dzMain}>{CHANNELS.dropMain}</div>
+                    <div className={styles.dzSec}>{CHANNELS.dropSecondary}</div>
+                    <div className={styles.dzHint}>{CHANNELS.dropHint}</div>
+                  </button>
+                  {dzError && (
+                    <div className={styles.dzErr} role="alert">
+                      {UPLOAD_REJECTED}
+                    </div>
+                  )}
+                  <input
+                    ref={fileInput}
+                    type="file"
+                    accept={UPLOAD_ACCEPT}
+                    className={styles.srOnly}
+                    data-testid="inventory-file-input"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    onChange={(e) => {
+                      pickFile(e.target.files?.[0]);
+                      e.target.value = '';
+                    }}
+                  />
+                </>
+              ) : (
+                /* Inerte a propósito: no es un botón, no acepta drop y no abre un
+                   selector de archivos. Ofrecer el gesto y no hacer nada es peor
+                   que no ofrecerlo. */
+                <div className={styles.miniDz} aria-disabled="true">
+                  <i className="ti ti-cloud-upload" aria-hidden="true" />
+                  <div className={styles.dzMain}>{CHANNELS.dropMain}</div>
+                  <div className={styles.dzSec}>{CHANNELS.dropSecondary}</div>
+                  <div className={styles.dzHint}>{CHANNELS.dropHint}</div>
+                </div>
+              )}
             </div>
 
             <div className={styles.chCard}>
@@ -333,19 +418,28 @@ export function Inventory({ profile, now, onOpenVisibility }: Props) {
                 pero INV-02 está en el Plan §9 "Fuera" y no puede llevar a ningún
                 sitio. `disabled` más `title` es lo que lo hace honesto: se ve dónde
                 estará y se dice por qué todavía no. */}
-            <button
-              type="button"
-              className={styles.btnUpload}
-              disabled
-              title={UPLOAD_WHY}
-              aria-describedby="upload-why"
-            >
-              <i className="ti ti-upload" aria-hidden="true" />
-              {UPLOAD_LABEL}
-            </button>
-            <span id="upload-why" className={styles.srOnly}>
-              {UPLOAD_WHY}
-            </span>
+            {onPickFile ? (
+              <button type="button" className={styles.btnUpload} onClick={openPicker}>
+                <i className="ti ti-upload" aria-hidden="true" />
+                {UPLOAD_LABEL}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={styles.btnUpload}
+                  disabled
+                  title={UPLOAD_WHY}
+                  aria-describedby="upload-why"
+                >
+                  <i className="ti ti-upload" aria-hidden="true" />
+                  {UPLOAD_LABEL}
+                </button>
+                <span id="upload-why" className={styles.srOnly}>
+                  {UPLOAD_WHY}
+                </span>
+              </>
+            )}
           </div>
         </div>
 

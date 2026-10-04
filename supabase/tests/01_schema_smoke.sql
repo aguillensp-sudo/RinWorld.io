@@ -4649,6 +4649,174 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 0044 · import_inventory (INV-02)
+-- -----------------------------------------------------------------------------
+-- Una organización propia para que los recuentos no dependan de lo que las
+-- secciones anteriores hayan hecho con Alpha/Beta. Un EDITOR activo, un ADMIN
+-- REGISTERED (no puede) y una organización suspendida (tampoco).
+insert into auth.users (id, email) values
+  ('44000001-0000-0000-0000-000000000001', 'ed@imp.test'),
+  ('44000002-0000-0000-0000-000000000002', 'reg@imp.test'),
+  ('44000003-0000-0000-0000-000000000003', 'sus@imp.test');
+insert into public.organizations (id, name, country, continent, status) values
+  ('44440000-0000-4000-8000-000000000001', 'Importa SL', 'ES', 'EU', 'APPROVED'),
+  ('44440000-0000-4000-8000-000000000002', 'Suspendida SL', 'ES', 'EU', 'APPROVED');
+insert into public.members (id, org_id, email, role, state) values
+  ('44000002-0000-0000-0000-000000000002', '44440000-0000-4000-8000-000000000001', 'reg@imp.test', 'ADMIN', 'REGISTERED'),
+  ('44000001-0000-0000-0000-000000000001', '44440000-0000-4000-8000-000000000001', 'ed@imp.test', 'EDITOR', 'ACTIVE'),
+  ('44000003-0000-0000-0000-000000000003', '44440000-0000-4000-8000-000000000002', 'sus@imp.test', 'ADMIN', 'ACTIVE');
+update public.members set role = 'EDITOR', state = 'ACTIVE' where id = '44000001-0000-0000-0000-000000000001';
+update public.members set state = 'ACTIVE' where id = '44000003-0000-0000-0000-000000000003';
+update public.organizations set status = 'SUSPENDED' where id = '44440000-0000-4000-8000-000000000002';
+
+-- Dos líneas ya publicadas y una archivada: la base sobre la que se importa.
+insert into public.inventory_lines (org_id, part_number, brand, quantity, location_country, product_family, status) values
+  ('44440000-0000-4000-8000-000000000001', '6205-2RS', 'SKF', 10, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED'),
+  ('44440000-0000-4000-8000-000000000001', 'NU216', 'FAG', 5, 'ES', 'Rodamiento de rodillos cilindricos', 'PUBLISHED'),
+  ('44440000-0000-4000-8000-000000000001', '30204', 'TIMKEN', 2, 'DE', 'Rodamiento de rodillos conicos', 'ARCHIVED');
+
+do $$
+begin
+  assert (select state from public.members where id = '44000001-0000-0000-0000-000000000001') = 'ACTIVE',
+    '0044 (semilla): el EDITOR de Importa SL tiene que estar ACTIVE';
+  assert not has_function_privilege('anon', 'public.import_inventory(jsonb,text,text,text,jsonb)', 'execute'),
+    '0044: anon NO ejecuta import_inventory';
+  assert has_function_privilege('authenticated', 'public.import_inventory(jsonb,text,text,text,jsonb)', 'execute'),
+    '0044: authenticated SI ejecuta import_inventory';
+  assert not has_table_privilege('authenticated', 'public.inventory_import_profiles', 'insert'),
+    '0044: los perfiles no se escriben directamente';
+  raise notice 'OK · 0044: privilegios de import_inventory y de los perfiles';
+end
+$$;
+
+-- Quién NO puede.
+begin;
+  select set_config('request.jwt.claim.sub', '44000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"}]', 'ACCUMULATE')$q$,
+    '0044: un ADMIN REGISTERED no importa');
+commit;
+begin;
+  select set_config('request.jwt.claim.sub', '44000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"}]', 'ACCUMULATE')$q$,
+    '0044: un miembro de una organización suspendida no importa');
+commit;
+
+-- Lotes inválidos: se rechazan enteros y sin escribir nada.
+begin;
+  select set_config('request.jwt.claim.sub', '44000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"}]', 'TODO')$q$,
+    '0044: política desconocida');
+  select public.expect_fail(
+    $q$select public.import_inventory('[]', 'ACCUMULATE')$q$,
+    '0044: lote vacío');
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":-1,"location_country":"ES","product_family":"X"}]', 'ACCUMULATE')$q$,
+    '0044: cantidad negativa');
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"España","product_family":"X"}]', 'ACCUMULATE')$q$,
+    '0044: país que no es ISO-2');
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":""}]', 'ACCUMULATE')$q$,
+    '0044: familia vacía');
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"},{"part_number":"6205","brand":"skf","quantity":2,"location_country":"es","product_family":"X"}]', 'ACCUMULATE')$q$,
+    '0044: líneas repetidas (sin mirar mayúsculas)');
+  select public.expect_fail(
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"}]', 'ACCUMULATE', 'ab', 'sig', '[]')$q$,
+    '0044: nombre de perfil de menos de 3 caracteres');
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.inventory_lines where org_id = '44440000-0000-4000-8000-000000000001') = 3,
+    '0044: ningún lote rechazado escribió nada';
+  raise notice 'OK · 0044: quién no puede y qué lotes se rechazan';
+end
+$$;
+
+-- Acumulativo: actualiza 6205 (con otra caja), inserta 7205B, no toca NU216, y
+-- reactiva la archivada 30204/DE. Guarda un perfil.
+begin;
+  select set_config('request.jwt.claim.sub', '44000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.imp1', public.import_inventory(
+    '[{"part_number":"6205-2rs","brand":"skf","quantity":40,"location_country":"es","product_family":"Rodamiento rigido de bolas","lead_time_days":3,"notes":" Almacén norte "},
+      {"part_number":"7205B","brand":"SKF","quantity":7,"location_country":"FR","product_family":"Rodamiento de bolas de contacto angular"},
+      {"part_number":"30204","brand":"Timken","quantity":9,"location_country":"DE","product_family":"Rodamiento de rodillos conicos"}]',
+    'ACCUMULATE', ' Formato ERP ', 'ref|marca|uds|pais', '["part_number","brand","quantity","location_country"]')::text, false);
+commit;
+
+do $$
+declare
+  r jsonb := current_setting('bw.imp1')::jsonb;
+  o uuid := '44440000-0000-4000-8000-000000000001';
+begin
+  assert (r->>'published')::int = 3, '0044: acumulativo publica las 3 líneas del lote';
+  assert r->'removed' = 'null'::jsonb, '0044: acumulativo devuelve removed = null';
+  assert (select count(*) from public.inventory_lines where org_id = o) = 4, '0044: 3 que había + 1 nueva';
+  assert (select quantity from public.inventory_lines where org_id = o and part_number = '6205-2RS') = 40,
+    '0044: la existente se actualiza (sin mirar mayúsculas) y conserva su escritura original';
+  assert (select notes from public.inventory_lines where org_id = o and part_number = '6205-2RS') = 'Almacén norte',
+    '0044: las notas llegan recortadas';
+  assert (select status from public.inventory_lines where org_id = o and part_number = 'NU216') = 'PUBLISHED',
+    '0044: acumulativo no toca lo que no viene';
+  assert (select status from public.inventory_lines where org_id = o and part_number = '30204') = 'PUBLISHED',
+    '0044: una archivada que viene en el archivo vuelve a publicarse';
+  assert (select location_country from public.inventory_lines where org_id = o and part_number = '7205B') = 'FR',
+    '0044: la nueva entra con su país en mayúsculas';
+  assert (select name from public.inventory_import_profiles where org_id = o and header_signature = 'ref|marca|uds|pais') = 'Formato ERP',
+    '0044: el perfil se guarda con el nombre recortado';
+  raise notice 'OK · 0044: importación acumulativa';
+end
+$$;
+
+-- Reemplazo total: solo viene 6205. NU216, 7205B y 30204 pasan a DELETED.
+-- Mismo perfil (misma estructura): se sobrescribe, no se duplica.
+begin;
+  select set_config('request.jwt.claim.sub', '44000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.imp2', public.import_inventory(
+    '[{"part_number":"6205-2RS","brand":"SKF","quantity":41,"location_country":"ES","product_family":"Rodamiento rigido de bolas"}]',
+    'REPLACE', 'Formato ERP v2', 'ref|marca|uds|pais', '["part_number","brand","quantity","location_country"]')::text, false);
+  -- Por RLS, el EDITOR ve el perfil de su organización.
+  select set_config('bw.imp_prof', (select count(*) from public.inventory_import_profiles)::text, false);
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.imp_prof_ajeno', (select count(*) from public.inventory_import_profiles)::text, false);
+commit;
+
+do $$
+declare
+  r jsonb := current_setting('bw.imp2')::jsonb;
+  o uuid := '44440000-0000-4000-8000-000000000001';
+begin
+  assert (r->>'published')::int = 1, '0044: reemplazo publica la línea del lote';
+  assert (r->>'removed')::int = 3, '0044: reemplazo retira las 3 publicadas que no vienen';
+  assert (select count(*) from public.inventory_lines where org_id = o and status = 'DELETED') = 3,
+    '0044: retiradas = DELETED, sin borrar filas';
+  assert (select count(*) from public.inventory_lines where org_id = o) = 4, '0044: ninguna fila borrada';
+  assert (select notes from public.inventory_lines where org_id = o and part_number = '6205-2RS') is null,
+    '0044: una línea sin notas en el archivo queda sin notas';
+  assert (select count(*) from public.inventory_import_profiles where org_id = o) = 1,
+    '0044: misma estructura, un solo perfil';
+  assert (select name from public.inventory_import_profiles where org_id = o) = 'Formato ERP v2',
+    '0044: el perfil se sobrescribe';
+  assert current_setting('bw.imp_prof') = '1', '0044: el EDITOR lee el perfil de su organización';
+  assert current_setting('bw.imp_prof_ajeno') = '0', '0044: otra organización no lo ve';
+  raise notice 'OK · 0044: reemplazo total y perfiles';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- F-155 · la premisa que hace inmune a `security definer`, comprobada
 -- -----------------------------------------------------------------------------
 -- Que un ayudante `security definer` no vea RLS no es un axioma: depende de dos

@@ -29,6 +29,22 @@ import { ForumThread } from './screens/forum/ForumThread';
 import { Inventory } from './screens/inventory/Inventory';
 import { Visibility } from './screens/inventory/Visibility';
 import { ImportResult } from './screens/inventory/ImportResult';
+import { ImportMapping } from './screens/inventory/ImportMapping';
+import {
+  applyProfileMapping,
+  columnsOf,
+  fetchProfile,
+  headerSignature,
+  proposeMapping,
+  readImportFile,
+  runImport,
+  unreadableSummary,
+  type ColumnProposal,
+  type ImportChoice,
+  type ParsedFile,
+  type PlatformField,
+} from './lib/inventory-import';
+import { errorMessage } from './lib/session';
 import { importExampleFromHash } from './lib/import-result';
 import type { ImportSummary } from './lib/import-result';
 import { Messages } from './screens/messages/Messages';
@@ -190,6 +206,60 @@ export function App() {
    * que un ejemplo nunca se ve en la web desplegada.
    */
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
+
+  /**
+   * INV-02 (`Confirma el mapeo de columnas`) abierta, con el archivo ya leído y la
+   * propuesta de mapeo. Comparte ítem de nav con INV-01 y se limpia igual. Al
+   * confirmar, `runImport` escribe (0044) y abre INV-03 con el resumen real; un
+   * archivo que no se puede leer (XLSX/XLS, vacío) salta directo a INV-03 en fallo.
+   */
+  const [importDraft, setImportDraft] = useState<{
+    file: ParsedFile;
+    proposal: ColumnProposal[];
+    initialMapping: PlatformField[];
+    appliedProfile: string | null;
+  } | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const openImport = async (picked: File) => {
+    setImportError(null);
+    const read = await readImportFile(picked);
+    if (read.kind !== 'ok') {
+      setImportSummary(unreadableSummary());
+      return;
+    }
+    const columns = columnsOf(read.file);
+    const proposal = proposeMapping(columns);
+    const profile = await fetchProfile(headerSignature(read.file.headers));
+    const fromProfile = profile ? applyProfileMapping(columns, profile.mapping) : null;
+    setImportDraft({
+      file: read.file,
+      proposal,
+      initialMapping: fromProfile ?? proposal.map((p) => p.field),
+      appliedProfile: fromProfile ? profile!.name : null,
+    });
+  };
+
+  const confirmImport = async (choice: ImportChoice) => {
+    if (!importDraft || importBusy) return;
+    setImportBusy(true);
+    setImportError(null);
+    try {
+      const summary = await runImport(importDraft.file, choice);
+      setImportDraft(null);
+      setImportSummary(summary);
+    } catch (e) {
+      setImportError(errorMessage(e));
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const closeImport = () => {
+    setImportDraft(null);
+    setImportError(null);
+  };
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     const openExample = () => {
@@ -278,6 +348,8 @@ export function App() {
     setBatchOpen(false);
     setVisibilityOpen(false);
     setImportSummary(null);
+    setImportDraft(null);
+    setImportError(null);
     setOrgProfileId(null);
     setSettingsOpen(false);
   };
@@ -561,18 +633,34 @@ export function App() {
         />
       ) : onInventory ? (
         importSummary ? (
-          /* INV-03. `Subir correcciones` y `Volver al panel de inventario` llevan las dos a INV-01:
-           * la zona de arrastre destacada que pide la spec no existe (INV-02 está fuera). */
+          /* INV-03. `Subir correcciones` y `Volver al panel de inventario` llevan las dos a INV-01,
+           * que es donde está la subida manual (la zona destacada que pide la spec no existe). */
           <ImportResult
             summary={importSummary}
             onBackToInventory={() => setImportSummary(null)}
             onUploadCorrections={() => setImportSummary(null)}
           />
+        ) : importDraft ? (
+          /* INV-02. Solo se llega desde la subida manual de INV-01 (spec §2). */
+          <ImportMapping
+            file={importDraft.file}
+            proposal={importDraft.proposal}
+            initialMapping={importDraft.initialMapping}
+            appliedProfile={importDraft.appliedProfile}
+            busy={importBusy}
+            error={importError}
+            onConfirm={(choice) => void confirmImport(choice)}
+            onCancel={closeImport}
+          />
         ) : visibilityOpen ? (
           /* INV-07. Sin `now`: nada de su pantalla es relativo al reloj. */
           <Visibility profile={state.profile} />
         ) : (
-          <Inventory profile={state.profile} onOpenVisibility={() => setVisibilityOpen(true)} />
+          <Inventory
+            profile={state.profile}
+            onOpenVisibility={() => setVisibilityOpen(true)}
+            onPickFile={(f) => void openImport(f)}
+          />
         )
       ) : onEmpresas ? (
         /*

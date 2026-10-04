@@ -186,20 +186,26 @@ test.describe('INV-01 · inventario real', () => {
     await expect(page.getByTestId('vera-subtitle')).toHaveText('Agente de inventario');
   });
 
-  test('los canales de actualización dicen que están fuera del MVP', async ({ page }) => {
-    await expect(page.getByTestId('channels-scope')).toContainText('fuera del alcance del MVP');
-    await expect(page.getByText('Fuera del MVP')).toHaveCount(2);
-    // El HTML aprobado promete un canal "Activo" y una dirección de ingestión.
+  /**
+   * Desde el 2-oct (INV-02 construida) la subida manual funciona y solo el canal email
+   * sigue fuera: sin dominio propio ni proveedor, una dirección de ingestión sería una a la
+   * que alguien puede mandar su inventario.
+   */
+  test('la subida manual está disponible y solo el canal email sigue fuera del MVP', async ({ page }) => {
+    await expect(page.getByTestId('channels-scope')).toContainText('El canal email (INV-04) está fuera del alcance del MVP');
+    await expect(page.getByText('Siempre disponible')).toHaveCount(1);
+    await expect(page.getByText('Fuera del MVP')).toHaveCount(1);
+    // El HTML aprobado promete un canal email "Activo" y una dirección de ingestión.
     // Ninguna de las dos existe, y la pantalla no finge que sí.
     await expect(page.getByText('Activo', { exact: true })).toHaveCount(0);
     await expect(page.getByTestId('ingest-addr')).toHaveText('—');
   });
 
-  /** Decisión del PO el 7-ago: deshabilitado, no ausente. */
-  test('el botón de subir inventario se ve pero no se puede pulsar', async ({ page }) => {
+  /** Era «deshabilitado, no ausente» (PO, 7-ago) mientras INV-02 no existía. */
+  test('el botón de subir inventario se puede pulsar', async ({ page }) => {
     const btn = page.getByRole('button', { name: /Subir nuevo inventario/i });
     await expect(btn).toBeVisible();
-    await expect(btn).toBeDisabled();
+    await expect(btn).toBeEnabled();
   });
 
   /**

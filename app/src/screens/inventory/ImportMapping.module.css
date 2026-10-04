@@ -5,11 +5,10 @@
    del HTML aprobado (verde, amarillo, rojo, latón, azul) se resuelven con los tokens
    de badge y de tinte ya definidos, nunca con un rgba escrito a mano.
 
-   NOTA DE TOKENS: no hay token de blanco puro, así que las superficies de tarjeta
-   —blancas en el HTML aprobado— usan `--bw-warm-cream` (#FAF8F4), que es la
-   superficie más clara de la paleta; el texto sobre el botón azul usa el mismo token
-   porque tampoco existe un blanco de texto sólido. Si algún día entra un blanco en
-   §1.4, estos dos sitios son los que cambian.
+   NOTA DE TOKENS: no hay token de blanco puro. Las superficies blancas del HTML
+   aprobado (tarjetas, select, input y el texto del botón azul) van con `white`,
+   como en `Inventory.module.css` (revisión a mano: el Coder las había puesto en
+   `--bw-warm-cream`, que es crema y no blanco).
 
    SCROLL PROPIO (F-186/F-189/F-190): la raíz es hija directa de `.bwcnt`, que es
    `overflow: hidden`; sin `flex:1; min-height:0; overflow-y:auto` la pantalla se
@@ -22,6 +21,9 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  /* El padding va FUERA del contenedor de 860 px, como `.bwcntb` del HTML aprobado
+     (revisión a mano: dentro, el contenido quedaba en 764 px y recortaba los select). */
+  padding: 40px 48px 56px;
   background: var(--bw-cold-white);
 }
 
@@ -29,8 +31,6 @@
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
-  padding: 40px 48px 56px;
-  box-sizing: border-box;
   flex-shrink: 0;
 }
 
@@ -66,7 +66,7 @@
 
 /* ── Bloque del archivo ───────────────────────────────────────────────────── */
 .fileBlock {
-  background: var(--bw-warm-cream);
+  background: white;
   border: 1px solid var(--bw-line-steel);
   border-radius: 6px;
   padding: 16px 20px;
@@ -159,7 +159,7 @@
 
 /* ── Tabla de mapeo ───────────────────────────────────────────────────────── */
 .tblCard {
-  background: var(--bw-warm-cream);
+  background: white;
   border: 1px solid var(--bw-line-steel);
   border-radius: 6px;
   overflow: hidden;
@@ -228,7 +228,7 @@
   font-family: var(--bw-font-body);
   font-size: 13px;
   color: var(--bw-deep-steel);
-  background: var(--bw-warm-cream);
+  background: white;
   outline: none;
   cursor: pointer;
   transition: border-color 0.15s;
@@ -274,7 +274,7 @@
 
 /* ── Guardar como perfil ──────────────────────────────────────────────────── */
 .formCard {
-  background: var(--bw-warm-cream);
+  background: white;
   border: 1px solid var(--bw-line-steel);
   border-radius: 6px;
   padding: 18px 20px;
@@ -318,7 +318,7 @@
   font-family: var(--bw-font-body);
   font-size: 14px;
   color: var(--bw-deep-steel);
-  background: var(--bw-warm-cream);
+  background: white;
   outline: none;
   transition: border-color 0.15s;
 }
@@ -340,7 +340,7 @@
 
 /* ── Política de actualización ────────────────────────────────────────────── */
 .radioCard {
-  background: var(--bw-warm-cream);
+  background: white;
   border: 1px solid var(--bw-line-steel);
   border-radius: 6px;
   overflow: hidden;
@@ -409,7 +409,7 @@
 .btnPrimary {
   padding: 11px 24px;
   background: var(--bw-calibration-blue);
-  color: var(--bw-warm-cream);
+  color: white;
   border: none;
   border-radius: var(--bw-radius);
   font-family: var(--bw-font-body);

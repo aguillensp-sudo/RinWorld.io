@@ -1,1 +1,449 @@
-/* MARCADOR de INV-02: la tarea del arnés lo sustituye entero. */
+/* =============================================================================
+   INV-02 · Procesamiento y Mapeo de Columnas (Módulo 02)
+
+   Ningún color literal: todo sale de los tokens de `tokens.css`. Los fondos suaves
+   del HTML aprobado (verde, amarillo, rojo, latón, azul) se resuelven con los tokens
+   de badge y de tinte ya definidos, nunca con un rgba escrito a mano.
+
+   NOTA DE TOKENS: no hay token de blanco puro, así que las superficies de tarjeta
+   —blancas en el HTML aprobado— usan `--bw-warm-cream` (#FAF8F4), que es la
+   superficie más clara de la paleta; el texto sobre el botón azul usa el mismo token
+   porque tampoco existe un blanco de texto sólido. Si algún día entra un blanco en
+   §1.4, estos dos sitios son los que cambian.
+
+   SCROLL PROPIO (F-186/F-189/F-190): la raíz es hija directa de `.bwcnt`, que es
+   `overflow: hidden`; sin `flex:1; min-height:0; overflow-y:auto` la pantalla se
+   recorta sin barra de scroll con la ventana baja.
+   ========================================================================== */
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bw-cold-white);
+}
+
+.inner {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 48px 56px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* ── Cabecera ─────────────────────────────────────────────────────────────── */
+/* Tamaños del HTML aprobado (.pg-eyebrow / .pg-title / .pg-sub), NO de los tokens
+   de tamaño (F-209). */
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin-bottom: 8px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--bw-deep-steel);
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--bw-steel-mist);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+/* ── Bloque del archivo ───────────────────────────────────────────────────── */
+.fileBlock {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.fileIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: var(--bw-icon-tint-blue);
+  color: var(--bw-calibration-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-family: var(--bw-font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  margin-bottom: 3px;
+}
+
+.fileMeta {
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+}
+
+.filePills {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.filePill {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-ink-steel-soft);
+  background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  padding: 3px 9px;
+}
+
+/* ── Banner de perfil ─────────────────────────────────────────────────────── */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-brass-border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13px;
+  /* El HTML usa #92702e, un latón oscuro que no tiene token; el más cercano de la
+     paleta es el propio latón de acento. */
+  color: var(--bw-brass);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.bannerIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.bannerText strong {
+  font-weight: 600;
+}
+
+/* ── Título de sección ────────────────────────────────────────────────────── */
+.secTitle {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-steel-mist);
+  margin: 0 0 10px;
+}
+
+/* ── Tabla de mapeo ───────────────────────────────────────────────────────── */
+.tblCard {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  background: var(--bw-surface-mist);
+  padding: 9px 14px;
+  text-align: left;
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bw-steel-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  color: var(--bw-ink-steel);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Fila de una columna ignorada mientras falta algún obligatorio. */
+.unmapped {
+  border-left: 3px solid var(--bw-danger);
+}
+
+.unmapped td:first-child {
+  padding-left: 11px;
+}
+
+.colOrig {
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+}
+
+.colEx {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Desplegable de campo ─────────────────────────────────────────────────── */
+.mapSel {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  color: var(--bw-deep-steel);
+  background: var(--bw-warm-cream);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.mapSel:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.mapSelIgnore {
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Badge de confianza ───────────────────────────────────────────────────── */
+.conf {
+  display: inline-block;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.confHi {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-success-dark);
+}
+
+.confMid {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning-dark);
+}
+
+.confLo {
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  color: var(--bw-sensitive-text);
+}
+
+/* ── Guardar como perfil ──────────────────────────────────────────────────── */
+.formCard {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkRow input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--bw-calibration-blue);
+}
+
+.checkLbl {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  user-select: none;
+}
+
+.profileWrap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bw-divider-mist);
+}
+
+.finput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-deep-steel);
+  background: var(--bw-warm-cream);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.finput::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.finput:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.fhint {
+  font-size: 11px;
+  color: var(--bw-input-placeholder);
+  margin-top: 4px;
+}
+
+/* ── Política de actualización ────────────────────────────────────────────── */
+.radioCard {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.radioOpt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  transition: background 0.12s;
+}
+
+.radioOpt:last-child {
+  border-bottom: none;
+}
+
+.radioOpt:hover {
+  background: var(--bw-row-hover-tint);
+}
+
+.radioOpt input[type='radio'] {
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--bw-calibration-blue);
+}
+
+.radioOptLbl {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  margin-bottom: 2px;
+}
+
+.radioOptDesc {
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+  line-height: 1.5;
+}
+
+/* ── Avisos ───────────────────────────────────────────────────────────────── */
+.alert {
+  background: var(--bw-tint-danger);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--bw-error-text);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* ── Acciones ─────────────────────────────────────────────────────────────── */
+.btnRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btnPrimary {
+  padding: 11px 24px;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-warm-cream);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnCancel {
+  padding: 11px 16px;
+  background: transparent;
+  border: none;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.btnCancel:hover:not(:disabled) {
+  color: var(--bw-ink-steel);
+}
+
+.btnCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

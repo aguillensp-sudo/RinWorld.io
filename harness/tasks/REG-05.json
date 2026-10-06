@@ -1,0 +1,137 @@
+{
+  "task_id": "REG-05",
+  "screen": "REG-05",
+  "goal": "Panel de contenido de REG-05 (Introduccion a las claves E2EE, Modulo 01 Onboarding, Fase B): pantalla EXPLICATIVA antes de crear la frase de seguridad. Indicador de los cuatro pasos del registro (Solicitud y Organizacion hechos, Seguridad actual, Activacion pendiente), antetitulo, titulo, tres bloques con icono (privacidad, la llave, la frase de seguridad), un aviso y el boton `Entendido, crear mi frase de seguridad`, que solo avisa al wiring. Solo la ve un ADMIN en estado REGISTERED (el que acaba de crear REG-01); va DENTRO del shell estandar. Decimonovena pantalla de la fabrica y primera de la Fase B (REG-05, REG-06, REG-07). Sin migracion, sin capa de datos y sin red.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll propio en `constraints` (F-198).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §1: la capa de datos se escribe a mano antes de la corrida. REG-05 NO TIENE capa de datos: no lee ni escribe nada y no toca criptografia (las claves las genera REG-07, escrita a mano, Plan §4.3). Lo unico previo es el wiring de `App.tsx` y el marcador de REG-06, ya escritos por Claude Code. Comparte sesion con la preparacion del contrato, asi que sus cifras 7 y 8 no son limpias.",
+  "_nota_spec": "No hay spec en Markdown de REG-05: la referencia es el HTML aprobado (y su captura `specs/REG-05.pdf`, que dice `Rinworld.io` donde el HTML ya dice `Bearingworld.io`: manda el HTML). La spec funcional (`docs/Rinworld.io_Funcional_Modulo01_Onboarding_v1.5.md` §3.3.2) discrepa en el titulo, los textos, el boton y un enlace `¿Cómo funciona esto?`; MANDA EL HTML (F-170) y ese enlace NO va.",
+  "_nota_shell": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea: `App.tsx` monta `<KeysIntro onContinue />` dentro del `AppShell`, con VERA `Asistente de registro`, cuando el miembro es ADMIN y su estado es `REGISTERED`; `onContinue` pasa a REG-06 (hoy un marcador, `BackupPassphrase.tsx`). `KeysIntro.tsx` existe hoy como MARCADOR: esta tarea sustituye ese fichero ENTERO y su `.module.css`. El HTML aprobado dibuja esta pantalla con una cabecera minima, SIN sidebar y con VERA; como REG-09, se monta en el shell estandar (DECISIONES-V1.md): VERA la monta el shell, no esta pantalla.",
+  "inputs": {
+    "approved_html": "openspec/design-gui/specs y html aprobados/REG-05 · E2EE v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/onboarding/Welcome.tsx",
+    "_nota_style_reference": "`Welcome.tsx`/`Welcome.module.css` (REG-09) es la pantalla hermana: misma familia de onboarding dentro del shell, misma lista de pasos (`<ol aria-label=\"Pasos del registro\">`) y mismo scroll propio (`.screen`). Aqui los pasos NO estan todos hechos: dos hechos, uno actual y uno pendiente, como en el HTML aprobado.",
+    "_nota_data_layer": "NO HAY. Todos los textos son literales del HTML aprobado y van VERBATIM en `component_api`."
+  },
+  "outputs": [
+    "app/src/screens/onboarding/KeysIntro.tsx",
+    "app/src/screens/onboarding/KeysIntro.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos, entre comillas simples. El punto medio ' · ' es U+00B7 con un espacio a cada lado; el guion largo '—' es U+2014, la flecha '→' es U+2192 y los puntos suspensivos '…' son U+2026 (un solo caracter).",
+    "_nota_accesibilidad": "Todo lo accionable es `<button type=\"button\">`, nunca un `<div onClick>`. La lista de pasos es una `<ol aria-label=\"Pasos del registro\">` con cuatro `<li>` de verdad: NO se les pone `role=` encima (un `role` explicito sustituye al implicito, F-131). El paso actual lleva `aria-current=\"step\"` y es el UNICO que lo lleva. Todo `<svg>` es decorativo y lleva `aria-hidden=\"true\"`.",
+    "_nota_css_modules": "LAS CLASES DE UN MODULO CSS SON `string | undefined`, NUNCA `string` A SECAS (F-143): con `noUncheckedIndexedAccess` activo, cualquier propiedad de `styles` puede no existir en el `.module.css`, asi que TypeScript la tipa `string | undefined`. Una funcion que devuelve `styles.x` y esta declarada `: string`, o un `Record<Tipo, string>` con valores `styles.x`, NO COMPILA (`TS2322`). El tipo de retorno es `string | undefined` y el diccionario `Record<Tipo, string | undefined>`, y el `?? ''` que resuelve el hueco va en el UNICO sitio donde se consume (`className={X[k] ?? ''}`), para que una clase que falte no escriba la palabra `undefined` en el atributo.",
+    "app/src/screens/onboarding/KeysIntro.tsx": "export function KeysIntro({ onContinue }: { onContinue: () => void }). No importa NADA de `lib/` (ni supabase, ni session, ni crypto): no llama a la red, no tiene estado de carga ni de error y se pinta entera al montar. RAIZ: un elemento con la clase `screen` (ver constraints: scroll propio). De arriba abajo: (1) LOS PASOS: una `<ol aria-label=\"Pasos del registro\">` con cuatro `<li>`, en este orden: 'Solicitud', 'Organización', 'Seguridad', 'Activación'. Cada `<li>` lleva un circulo y el texto del paso. Los dos primeros estan HECHOS: su circulo lleva un icono de verificacion (svg, `aria-hidden`), NO un numero ni el caracter ✓. El tercero es el ACTUAL: lleva `aria-current=\"step\"` y su circulo dice '3'. El cuarto esta PENDIENTE: su circulo dice '4'. Entre paso y paso, una linea separadora (un pseudo-elemento o un `<span aria-hidden=\"true\">` DENTRO del `<li>`; NUNCA un hijo directo de la `<ol>` que no sea `<li>`). (2) EL ANTETITULO: un `<p>` con 'Módulo 01 · Onboarding'. (3) EL TITULO: el UNICO `<h1>`, con 'Antes de continuar,' seguido de un `<br />` y de 'una cosa importante'. (4) LOS TRES BLOQUES, en este orden, cada uno con un icono (svg, `aria-hidden`) y un cuerpo con un `<h2>` (titulo) y un `<p>` (descripcion): 'Tus negociaciones son privadas' / 'Los precios y condiciones que intercambies en Bearingworld.io se cifran en tu dispositivo. Ni nosotros ni nadie puede leerlos.'; 'Tú tienes la llave' / 'Para garantizar esa privacidad, vamos a generar un par de claves criptográficas únicas para ti.'; 'Necesitas una frase de seguridad' / 'Guardaremos una copia cifrada de tu clave en nuestros servidores, protegida con una frase que solo tú conocerás. Si la pierdes, perderás el acceso a tu historial cifrado.'. Los iconos son los del HTML aprobado (candado, llave, escudo). (5) EL AVISO: un icono de advertencia (svg, `aria-hidden`) y un `<p>` con un `<strong>` 'Anota tu frase de seguridad en un lugar seguro.' seguido de ' No podemos recuperarla por ti.' (con el espacio delante). (6) EL BOTON: el UNICO `<button type=\"button\">` de la pantalla, 'Entendido, crear mi frase de seguridad', ancho completo y primario; al pulsar llama a `onContinue()` UNA vez. No hay mas `<h2>` que los tres de los bloques. RED: ninguna. El contrato sustituye el `fetch` global por un espia (`fetchSpy`) y exige que NO se llame ni al montar ni al pulsar el boton.",
+    "app/src/screens/onboarding/KeysIntro.module.css": "Estilos de la pantalla con TOKENS de `tokens.css` (nada de valores literales de color). Clases minimas: `screen` (ver constraints), `steps`, `step`, `stepDone`, `stepActive`, `stepPending`, `stepDot`, `eyebrow`, `title`, `blocks`, `block`, `blockIcon`, `blockTitle`, `blockDesc`, `notice`, `primary`. Fiel al HTML aprobado: una columna centrada de hasta 600 px; pasos hechos en laton, el actual en azul de accion y el pendiente en gris; bloques con fondo claro, borde fino y radio pequeno; icono en un cuadrado de laton translucido; aviso con borde izquierdo de laton; boton azul a todo el ancho."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/onboarding/KeysIntro.test.tsx",
+      "app/src/screens/onboarding/KeysIntroScroll.test.ts"
+    ],
+    "e2e": [
+      "app/e2e/keys-intro.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementacion de referencia desechable (no comiteada, borrada) antes de la corrida. El e2e va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a REGISTERED (como el de REG-09), comprueba la pantalla dentro del shell con VERA `Asistente de registro`, que el boton lleva al marcador de REG-06 (REG-05 no escribe nada), que en una ventana baja el boton se alcanza, y que un Editor y un ADMIN normal NO la ven.",
+    "_nota_e2e_fuera_de_contrato": "F-134. C2 corre la suite e2e ENTERA; solo cambia a quien se apunta el fallo. Se excusan los MISMOS CINCO tests que en INV-03, uno por uno: dos por F-224 y tres por los datos vivos de la C5 de REG-01 en produccion (F-230). Comprobado el 4-oct con la suite entera contra los marcadores: fallan exactamente esos cinco y los dos del contrato (`import.spec.ts`), y pasan los otros 138 (ADMIN-02 tras resembrar `demo_billing.sql` en produccion: la siembra habia caducado el 30-sep). Los `test` van en ASCII (se casan por subcadena). REG-05 anade 13, uno por test de `inventory.spec.ts`, por F-234 (descubierto en la lista previa de esta corrida). El de `VERA lleva el subtitulo` se casa por fichero y linea (`inventory.spec.ts:185:3`) porque su titulo se repite en otras specs.",
+    "e2e_fuera_de_contrato": [
+      {
+        "test": "ve la pantalla desde",
+        "motivo": "INVT-01 cuenta `1/5` plazas. F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito: ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "un ADMIN solo",
+        "motivo": "REG-09 espera un ADMIN sin nadie mas (sin contador). F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito: ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "filtro \"Aprobadas\" no ense",
+        "motivo": "ADMIN-01 espera cero solicitudes aprobadas y la sintetica `ZZ Prueba REG-01 SL` esta aprobada. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "pinta las organizaciones de la base",
+        "motivo": "DIR-01 espera las 6 organizaciones sembradas y en produccion hay 8 (`JULSA INDUSTRIAL S.A`, de la C5 de REG-01, y `Jose Bearings`, alta del 29-sep 17:43 UTC de origen no documentado). Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "por nombre espera a Enter",
+        "motivo": "DIR-01, misma causa: el directorio de produccion lleva 2 organizaciones que la siembra no tiene. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "no datos de ejemplo del HTML aprobado",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "las siete columnas de la spec, en orden",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "solo muestra inventario propio, aunque la RLS permita ver el ajeno",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "el resumen cuadra con lo que la tabla dice de s",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "el filtro Publicados reduce o iguala",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "squeda es server-side y NO se lanza al teclear",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "sin resultados dice que es el filtro, no que no hay inventario",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "con caracteres del lenguaje de filtros no rompe la consulta",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "inventory.spec.ts:185:3",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "la subida manual est",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "n de subir inventario se puede pulsar",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "tem de nav activo es Inventario",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      },
+      {
+        "test": "Alpha y Beta ven inventario propio, y no es el mismo",
+        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+      }
+    ]
+  },
+  "out_of_scope": [
+    "La criptografia: generar el par de claves, derivar la clave de la frase y guardar el backup (REG-07, escrita a mano, Plan §4.3). Esta pantalla no importa nada de crypto.",
+    "REG-06 (establecer la frase de seguridad): otra pantalla, con su propia tarea. Aqui el boton solo llama a `onContinue()`.",
+    "El enlace `¿Cómo funciona esto?` de la spec funcional: el HTML aprobado no lo dibuja (F-170).",
+    "La conversacion de demostracion de VERA del HTML aprobado: el shell monta VERA y esta pantalla no la toca.",
+    "La cabecera minima con el logo y la barra de marca del HTML aprobado: las pone el shell estandar.",
+    "El wiring en `App.tsx`: ya hecho a mano."
+  ],
+  "constraints": [
+    "SCROLL PROPIO (F-186/F-189/F-190/F-198): la raiz de la pantalla es hija DIRECTA de `.bwcnt`, que es `overflow: hidden`. La clase `.screen` de `KeysIntro.module.css` DEBE declarar `flex: 1; min-height: 0; overflow-y: auto;` (mas `display: flex; flex-direction: column`). Mira `Welcome.module.css` (`.screen`) para el patron ya resuelto.",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb().",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`.",
+    "No tocar `app/src/shell/**` ni `App.tsx`: tienen contrato y tests propios. Tampoco `BackupPassphrase.tsx` (marcador de REG-06) ni nada de `app/src/lib/`.",
+    "Ninguna llamada a la red y ningun import de `lib/supabase`, `lib/session` ni `lib/crypto*`.",
+    "El TITULO de la pantalla va en un `<h1>` de verdad, y es el UNICO `<h1>`. Los tres titulos de bloque son `<h2>` y son los UNICOS `<h2>`.",
+    "La marca en el texto es `Bearingworld.io`, nunca `Rinworld` (CLAUDE.md §1.2)."
+  ]
+}

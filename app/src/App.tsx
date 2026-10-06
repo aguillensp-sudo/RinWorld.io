@@ -15,6 +15,8 @@ import { Directory } from './screens/directory/Directory';
 import { OrganizationProfile } from './screens/directory/OrganizationProfile';
 import { Invitations } from './screens/onboarding/Invitations';
 import { Welcome } from './screens/onboarding/Welcome';
+import { KeysIntro } from './screens/onboarding/KeysIntro';
+import { BackupPassphrase } from './screens/onboarding/BackupPassphrase';
 import { AdditionalUser } from './screens/onboarding/AdditionalUser';
 import { AccessRequest } from './screens/onboarding/AccessRequest';
 import { AccessRequestWait } from './screens/onboarding/AccessRequestWait';
@@ -303,6 +305,13 @@ export function App() {
   const [addingUser, setAddingUser] = useState(false);
 
   /**
+   * Fase B del onboarding del ADMIN (REG-05 → REG-06 → REG-07): en qué paso está un
+   * ADMIN `REGISTERED`. No se guarda en ningún sitio a propósito: REG-05 es una
+   * pantalla explicativa, y al recargar se vuelve a ella (la que escribe es REG-07).
+   */
+  const [keyStep, setKeyStep] = useState<'intro' | 'passphrase'>('intro');
+
+  /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
    * es el de un miembro distribuidor (ocho ítems, no cinco). Los dos hooks
    * viven aquí, incondicionales, porque los `return` de `anonymous`/`operator`/
@@ -510,6 +519,34 @@ export function App() {
       },
     ),
   };
+
+  /*
+   * FASE B del onboarding del ADMIN (REG-05 → REG-06 → REG-07). Un ADMIN recién
+   * dado de alta por REG-01 nace `REGISTERED` (F-226) y aún no tiene claves: hasta
+   * que REG-07 le lleve a `KEY_ACTIVE`, el panel es esta fase y nada más. Mismo
+   * criterio que REG-09: dentro del shell estándar, con VERA `Asistente de
+   * registro`. Solo el ADMIN: un usuario de FRU también nace `REGISTERED`, pero los
+   * pasos que pinta REG-05 (Solicitud, Organización) no son los suyos (F-217).
+   * REG-06 es hoy un MARCADOR.
+   */
+  if (state.profile.role === 'ADMIN' && state.profile.state === 'REGISTERED') {
+    return (
+      <AppShell
+        profile={state.profile}
+        onSignOut={signOut}
+        activeNav={nav}
+        onNavigate={navigate}
+        vera={vera}
+        veraSubtitle={ONBOARDING_VERA_SUBTITLE}
+      >
+        {keyStep === 'intro' ? (
+          <KeysIntro onContinue={() => setKeyStep('passphrase')} />
+        ) : (
+          <BackupPassphrase profile={state.profile} />
+        )}
+      </AppShell>
+    );
+  }
 
   /*
    * ONBOARDING del ADMIN (REG-09 → FRU). Un miembro `KEY_ACTIVE` aún no es ACTIVE:

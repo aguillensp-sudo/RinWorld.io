@@ -117,6 +117,16 @@ describe('App · INV-02', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Confirma el mapeo de columnas' })).toBeInTheDocument();
   });
 
+  it('si NINGUNA línea es válida, se queda en INV-02 con los motivos (no salta al fallo de INV-03)', async () => {
+    const user = userEvent.setup();
+    nextFile = new File([['Ref;Marca;Uds;País', 'ZZ-1;SKF;5;ES', 'ZZ-2;SKF;3;ES'].join('\n')], 'malo.csv');
+    await openInv02(user);
+    await user.click(screen.getByRole('button', { name: 'Confirmar e importar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Familia no identificable (2)');
+    expect(screen.getByRole('heading', { level: 1, name: 'Confirma el mapeo de columnas' })).toBeInTheDocument();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it('un perfil guardado para esta estructura se aplica y se anuncia', async () => {
     const user = userEvent.setup();
     maybeSingle.mockResolvedValueOnce({

@@ -587,6 +587,27 @@ export function sampleOf(lines: ImportLinePayload[]): ImportSampleLine[] {
   }));
 }
 
+/**
+ * Por qué no se ha importado nada cuando NINGUNA línea es válida. INV-03 en fallo solo
+ * sabe decir «no ha podido leer el archivo» (su spec), y eso es falso aquí: el archivo se
+ * leyó y lo que falla son sus líneas. Se enseña en INV-02, con los motivos y un ejemplo.
+ * `null` si hay alguna línea publicada o ninguna fila con error.
+ */
+export function noValidLinesMessage(summary: Pick<ImportSummary, 'published' | 'errors'>): string | null {
+  if (summary.published > 0 || summary.errors.length === 0) return null;
+  const counts = new Map<string, number>();
+  for (const e of summary.errors) counts.set(e.errorType, (counts.get(e.errorType) ?? 0) + 1);
+  const reasons = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, n]) => `${type} (${formatCount(n)})`)
+    .join(', ');
+  const first = summary.errors[0];
+  const example = first
+    ? ` Ejemplo: fila ${first.row}, columna «${first.column || '—'}», valor «${first.received ?? '—'}».`
+    : '';
+  return `Ninguna línea del archivo es válida, así que no se ha importado nada. Motivos: ${reasons}.${example}`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Red
 // ─────────────────────────────────────────────────────────────────────────────

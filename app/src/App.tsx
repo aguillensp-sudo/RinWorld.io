@@ -35,6 +35,7 @@ import {
   columnsOf,
   fetchProfile,
   headerSignature,
+  noValidLinesMessage,
   proposeMapping,
   readImportFile,
   runImport,
@@ -247,6 +248,11 @@ export function App() {
     setImportError(null);
     try {
       const summary = await runImport(importDraft.file, choice);
+      const none = noValidLinesMessage(summary);
+      if (none !== null) {
+        setImportError(none);
+        return;
+      }
       setImportDraft(null);
       setImportSummary(summary);
     } catch (e) {

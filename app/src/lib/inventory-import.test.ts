@@ -12,6 +12,7 @@ vi.mock('./supabase', () => ({
 import {
   CONFIDENCE,
   defaultCountryNotice,
+  noValidLinesMessage,
   usableDefaultCountry,
   ERROR_TYPES,
   FIELD_OPTIONS,
@@ -392,6 +393,25 @@ describe('país por defecto (la organización)', () => {
     rpc.mockReset().mockResolvedValueOnce({ data: { published: 2, removed: null }, error: null });
     await runImport(file, { mapping, policy: 'ACCUMULATE', profileName: null, defaultCountry: 'ES' });
     expect(rpc.mock.calls[0]?.[1].p_lines.map((l: { location_country: string }) => l.location_country)).toEqual(['ES', 'ES']);
+  });
+});
+
+describe('noValidLinesMessage', () => {
+  const err = (row: number, errorType: string, received: string | null) => ({ row, column: 'Item Number', errorType, received });
+
+  it('resume los motivos por frecuencia y da un ejemplo', () => {
+    const m = noValidLinesMessage({
+      published: 0,
+      errors: [err(2, ERROR_TYPES.family, 'XX-1'), err(3, ERROR_TYPES.family, 'XX-2'), err(4, ERROR_TYPES.negative, '-5')],
+    });
+    expect(m).toBe(
+      'Ninguna línea del archivo es válida, así que no se ha importado nada. Motivos: Familia no identificable (2), Cantidad negativa (1). Ejemplo: fila 2, columna «Item Number», valor «XX-1».',
+    );
+  });
+
+  it('null si algo se publicó o no hay errores', () => {
+    expect(noValidLinesMessage({ published: 3, errors: [err(2, ERROR_TYPES.family, 'x')] })).toBeNull();
+    expect(noValidLinesMessage({ published: 0, errors: [] })).toBeNull();
   });
 });
 

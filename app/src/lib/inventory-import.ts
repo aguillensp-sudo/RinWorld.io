@@ -27,10 +27,10 @@ import { SAMPLE_SIZE, formatCount, type ImportErrorRow, type ImportSampleLine, t
  *    deshabilitada, con su etiqueta del HTML aprobado.
  * 3. **Solo CSV, TSV y TXT.** XLSX/XLS necesitan una dependencia que no está; un
  *    archivo así acaba en el estado de fallo de INV-03 («formato no compatible»).
- * 4. **`product_family` es obligatoria en la base y no está en el desplegable.** Se
- *    infiere de la referencia (`inferFamily`); una línea cuya familia no se
- *    reconoce es un error de esa línea («Familia no identificable»), como dice el
- *    comentario de 0002.
+ * 4. **`product_family` es opcional (0045, decisión del PO del 6-oct) y no está en el
+ *    desplegable.** Se rellena solo si `inferFamily` reconoce la referencia; si no,
+ *    la línea entra igual con `null`. Antes era obligatoria y 54 líneas de la
+ *    primera importación real se quedaron fuera por eso.
  * 5. **Máximo 20.000 líneas por subida** (`MAX_LINES_PER_UPLOAD`): es lo que cabe
  *    en una petición. El de 500.000 líneas publicadas lo sigue poniendo la base.
  */
@@ -448,7 +448,8 @@ export interface ImportLinePayload {
   brand: string;
   quantity: number;
   location_country: string;
-  product_family: string;
+  /** Opcional desde 0045: la que se reconozca por la referencia, o `null`. Nunca bloquea una línea. */
+  product_family: string | null;
   lead_time_days: number | null;
   notes: string | null;
 }
@@ -459,7 +460,6 @@ export const ERROR_TYPES = {
   negative: 'Cantidad negativa',
   country: 'País no reconocido',
   leadTime: 'Plazo no válido',
-  family: 'Familia no identificable',
   duplicate: 'Línea duplicada',
   tooLong: 'Valor demasiado largo',
 } as const;
@@ -551,7 +551,6 @@ export function buildLines(file: ParsedFile, mapping: PlatformField[], defaultCo
     const notes = cell(iNotes) === '' ? null : cell(iNotes);
     if (notes !== null && notes.length > 500) return fail(iNotes, ERROR_TYPES.tooLong, `${notes.slice(0, 40)}…`);
     const family = inferFamily(part);
-    if (!family) return fail(iPart, ERROR_TYPES.family, part);
     const key = `${part.toUpperCase()}|${brand.toUpperCase()}|${country}`;
     if (seen.has(key)) return fail(iPart, ERROR_TYPES.duplicate, part);
     seen.add(key);

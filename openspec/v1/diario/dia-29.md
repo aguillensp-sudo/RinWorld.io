@@ -68,3 +68,5 @@ llamarse a `import_inventory`) y en la base, ninguna línea nueva. Causa doble: 
 de país (obligatoria) y `Item Number` no estaba entre los sinónimos de la referencia; y el motivo solo salía como `title`, que un botón deshabilitado no
 enseña. Arreglado a mano, por decisión del PO: sinónimos nuevos, motivo a la vista y país de la organización por defecto (`DECISIONES-V1.md`, 6-oct).
 **Lección:** la C5 de una pantalla con un botón condicionado tiene que probarse con un archivo que NO sea el feliz; los de prueba del contrato traían país.
+
+**Segunda tanda del 6-oct:** el PO pidió quitar la familia como dato exigido (`0045`, aplicada y comprobada en producción; 3 aserciones nuevas en el banco). Sus 54 líneas rechazadas por eso se recuperan volviendo a subir el archivo con «Acumulativo»: las ya importadas se actualizan y las 54 entran sin familia.

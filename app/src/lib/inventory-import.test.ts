@@ -322,6 +322,16 @@ describe('validación de líneas', () => {
         lead_time_days: 3,
         notes: 'nota',
       },
+      // 0045: una referencia que no se reconoce ENTRA, con la familia vacía.
+      {
+        part_number: 'ABC',
+        brand: 'SKF',
+        quantity: 1,
+        location_country: 'ES',
+        product_family: null,
+        lead_time_days: null,
+        notes: null,
+      },
     ]);
     expect(errors).toEqual([
       { row: 3, column: 'Ref', errorType: ERROR_TYPES.empty, received: null },
@@ -329,7 +339,6 @@ describe('validación de líneas', () => {
       { row: 5, column: 'Uds', errorType: ERROR_TYPES.negative, received: '-1' },
       { row: 6, column: 'Pais', errorType: ERROR_TYPES.country, received: 'Narnia' },
       { row: 7, column: 'Plazo', errorType: ERROR_TYPES.leadTime, received: 'pronto' },
-      { row: 8, column: 'Ref', errorType: ERROR_TYPES.family, received: 'ABC' },
       { row: 9, column: 'Ref', errorType: ERROR_TYPES.duplicate, received: '6205' },
     ]);
   });
@@ -402,15 +411,15 @@ describe('noValidLinesMessage', () => {
   it('resume los motivos por frecuencia y da un ejemplo', () => {
     const m = noValidLinesMessage({
       published: 0,
-      errors: [err(2, ERROR_TYPES.family, 'XX-1'), err(3, ERROR_TYPES.family, 'XX-2'), err(4, ERROR_TYPES.negative, '-5')],
+      errors: [err(2, ERROR_TYPES.negative, '-1'), err(3, ERROR_TYPES.negative, '-2'), err(4, ERROR_TYPES.country, 'Narnia')],
     });
     expect(m).toBe(
-      'Ninguna línea del archivo es válida, así que no se ha importado nada. Motivos: Familia no identificable (2), Cantidad negativa (1). Ejemplo: fila 2, columna «Item Number», valor «XX-1».',
+      'Ninguna línea del archivo es válida, así que no se ha importado nada. Motivos: Cantidad negativa (2), País no reconocido (1). Ejemplo: fila 2, columna «Item Number», valor «-1».',
     );
   });
 
   it('null si algo se publicó o no hay errores', () => {
-    expect(noValidLinesMessage({ published: 3, errors: [err(2, ERROR_TYPES.family, 'x')] })).toBeNull();
+    expect(noValidLinesMessage({ published: 3, errors: [err(2, ERROR_TYPES.negative, '-1')] })).toBeNull();
     expect(noValidLinesMessage({ published: 0, errors: [] })).toBeNull();
   });
 });
@@ -459,7 +468,7 @@ describe('runImport', () => {
   });
 
   it('sin ninguna línea válida no llama a la base y sale en fallo con los errores', async () => {
-    const bad: ParsedFile = { name: 'x', headers: ['Ref', 'Marca', 'Uds', 'Pais'], rows: [['ABC', 'SKF', '1', 'ES']] };
+    const bad: ParsedFile = { name: 'x', headers: ['Ref', 'Marca', 'Uds', 'Pais'], rows: [['ABC', 'SKF', '-1', 'ES']] };
     const s = await runImport(bad, { mapping: ['part_number', 'brand', 'quantity', 'location_country'], policy: 'ACCUMULATE', profileName: null }, clock);
     expect(rpc).not.toHaveBeenCalled();
     expect(s).toMatchObject({ processed: 1, published: 0, failed: 1, removed: null, sample: [] });

@@ -4722,8 +4722,11 @@ begin;
     $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"España","product_family":"X"}]', 'ACCUMULATE')$q$,
     '0044: país que no es ISO-2');
   select public.expect_fail(
-    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":""}]', 'ACCUMULATE')$q$,
-    '0044: familia vacía');
+    $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"}]', 'ACCUMULATE', 'ab', 'sig', '[]')$q$,
+    '0044: nombre de perfil corto (la familia vacía ya NO falla, 0045)');
+  select public.expect_fail(
+    format($q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"%s"}]', 'ACCUMULATE')$q$, repeat('x', 81)),
+    '0045: una familia de más de 80 caracteres sigue rechazándose');
   select public.expect_fail(
     $q$select public.import_inventory('[{"part_number":"6205","brand":"SKF","quantity":1,"location_country":"ES","product_family":"X"},{"part_number":"6205","brand":"skf","quantity":2,"location_country":"es","product_family":"X"}]', 'ACCUMULATE')$q$,
     '0044: líneas repetidas (sin mirar mayúsculas)');
@@ -4813,6 +4816,33 @@ begin
   assert current_setting('bw.imp_prof') = '1', '0044: el EDITOR lee el perfil de su organización';
   assert current_setting('bw.imp_prof_ajeno') = '0', '0044: otra organización no lo ve';
   raise notice 'OK · 0044: reemplazo total y perfiles';
+end
+$$;
+
+-- 0045 · la familia es opcional: sin ella la línea entra, y una existente conserva la suya.
+begin;
+  select set_config('request.jwt.claim.sub', '44000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select set_config('bw.imp3', public.import_inventory(
+    '[{"part_number":"ZZ-1","brand":"SKF","quantity":3,"location_country":"ES"},
+      {"part_number":"ZZ-2","brand":"SKF","quantity":4,"location_country":"ES","product_family":""},
+      {"part_number":"6205-2RS","brand":"SKF","quantity":50,"location_country":"ES"}]',
+    'ACCUMULATE')::text, false);
+commit;
+
+do $$
+declare o uuid := '44440000-0000-4000-8000-000000000001';
+begin
+  assert (current_setting('bw.imp3')::jsonb->>'published')::int = 3, '0045: las tres líneas sin familia entran';
+  assert (select product_family from public.inventory_lines where org_id = o and part_number = 'ZZ-1') is null,
+    '0045: sin familia en el archivo, NULL';
+  assert (select product_family from public.inventory_lines where org_id = o and part_number = 'ZZ-2') is null,
+    '0045: una familia vacía es NULL, no cadena vacía';
+  assert (select product_family from public.inventory_lines where org_id = o and part_number = '6205-2RS') = 'Rodamiento rigido de bolas',
+    '0045: una línea existente conserva su familia si el archivo no la trae';
+  assert (select quantity from public.inventory_lines where org_id = o and part_number = '6205-2RS') = 50,
+    '0045: y se actualiza lo demás';
+  raise notice 'OK · 0045: familia opcional';
 end
 $$;
 

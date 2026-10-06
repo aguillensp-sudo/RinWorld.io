@@ -63,7 +63,7 @@ async function goToInventory(user: ReturnType<typeof userEvent.setup>) {
   await user.click((await screen.findAllByRole('button', { name: 'Inventario' }))[0] as HTMLElement);
 }
 
-const CSV = 'Ref;Marca;Uds;País\n6205-2RS;SKF;850;ES\nNU216;FAG;5;DE\nABC;SKF;1;ES\n';
+const CSV = 'Ref;Marca;Uds;País\n6205-2RS;SKF;850;ES\nNU216;FAG;5;DE\nABC;SKF;-1;ES\n';
 
 beforeEach(() => {
   window.location.hash = '';
@@ -119,10 +119,10 @@ describe('App · INV-02', () => {
 
   it('si NINGUNA línea es válida, se queda en INV-02 con los motivos (no salta al fallo de INV-03)', async () => {
     const user = userEvent.setup();
-    nextFile = new File([['Ref;Marca;Uds;País', 'ZZ-1;SKF;5;ES', 'ZZ-2;SKF;3;ES'].join('\n')], 'malo.csv');
+    nextFile = new File([['Ref;Marca;Uds;País', 'ZZ-1;SKF;-5;ES', 'ZZ-2;SKF;-3;ES'].join('\n')], 'malo.csv');
     await openInv02(user);
     await user.click(screen.getByRole('button', { name: 'Confirmar e importar' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Familia no identificable (2)');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Cantidad negativa (2)');
     expect(screen.getByRole('heading', { level: 1, name: 'Confirma el mapeo de columnas' })).toBeInTheDocument();
     expect(rpc).not.toHaveBeenCalled();
   });

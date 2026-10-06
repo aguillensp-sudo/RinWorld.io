@@ -152,7 +152,9 @@
   padding: 10px 40px 10px 13px;
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: 4px;
-  background: var(--bw-surface-mist);
+  /* Blanco, como el HTML aprobado: el sistema no tiene token de blanco puro y el
+     panel ya lo es (mismo criterio que los campos de FRU). */
+  background: transparent;
   font-family: var(--bw-font-mono);
   font-size: var(--bw-size-input);
   letter-spacing: 0.05em;

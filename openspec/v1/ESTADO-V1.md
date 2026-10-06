@@ -66,7 +66,7 @@ registrado (`F-233`). Detalle en `diario/dia-29.md`. Pendientes de C5: `INV-02`,
    `0039`) y desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
 
 **Fecha límite:** la siembra de cobros de producción se resembró el 4-oct; Cuscinetti Padana vence a los 10 días (**~14-oct**) y
-cambia de estado. Antes de correr la e2e o revisar `ADMIN-02` después, resembrar (`demo_billing.sql`). `bearingworld-e2e`, igual.
+cambia de estado. Antes de correr la e2e o revisar `ADMIN-02` después, resembrar (`demo_billing.sql`). `bearingworld-e2e`, igual, y `demo_watchers.sql` (envejeció el 6-oct: CI roja, sin desplegar).
 
 En paralelo, sin acción de este lado: la aprobación de Model Garden; `F-073` (re-loguear la
 CLI de Supabase) y el plan de pago de Vercel, fuera de sesión.

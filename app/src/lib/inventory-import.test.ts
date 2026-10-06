@@ -78,10 +78,9 @@ describe('lectura del archivo', () => {
     expect(parseImportText('x.csv', '\n \n')).toBeNull();
   });
 
-  it('XLSX y XLS no se leen todavía: unsupported', async () => {
-    const r = await readImportFile(new File(['x'], 'inventario.xlsx'));
-    expect(r).toEqual({ kind: 'unsupported', name: 'inventario.xlsx' });
+  it('el .xls binario antiguo y otras extensiones: unsupported (el .xlsx sí se lee, ver xlsx-reader.test.ts)', async () => {
     expect((await readImportFile(new File(['x'], 'a.XLS'))).kind).toBe('unsupported');
+    expect((await readImportFile(new File(['x'], 'a.pdf'))).kind).toBe('unsupported');
   });
 
   it('CSV, TSV y TXT se leen', async () => {

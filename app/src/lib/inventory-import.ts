@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { errorMessage } from './session';
+import { XlsxError, readXlsxRows } from './xlsx-reader';
 import { SAMPLE_SIZE, formatCount, type ImportErrorRow, type ImportSampleLine, type ImportSummary } from './import-result';
 
 /**
@@ -25,8 +26,8 @@ import { SAMPLE_SIZE, formatCount, type ImportErrorRow, type ImportSampleLine, t
  * 2. **`price` no se puede elegir.** El precio de catálogo es E2EE (0002) y hoy
  *    nadie tiene una clave con la que cifrarlo para su lector. La opción sale
  *    deshabilitada, con su etiqueta del HTML aprobado.
- * 3. **Solo CSV, TSV y TXT.** XLSX/XLS necesitan una dependencia que no está; un
- *    archivo así acaba en el estado de fallo de INV-03 («formato no compatible»).
+ * 3. **CSV, TSV, TXT y XLSX** (primera hoja, `lib/xlsx-reader.ts`, sin dependencias).
+ *    El `.xls` binario antiguo no se lee: acaba en el estado de fallo de INV-03.
  * 4. **`product_family` es opcional (0045, decisión del PO del 6-oct) y no está en el
  *    desplegable.** Se rellena solo si `inferFamily` reconoce la referencia; si no,
  *    la línea entra igual con `null`. Antes era obligatoria y 54 líneas de la
@@ -181,7 +182,11 @@ export function parseDelimited(text: string, delimiter: string): string[][] {
 export function parseImportText(name: string, raw: string): ParsedFile | null {
   const text = raw.replace(/^﻿/, '');
   const firstLine = text.split(/\r?\n/, 1)[0] ?? '';
-  const all = parseDelimited(text, detectDelimiter(firstLine));
+  return fromRows(name, parseDelimited(text, detectDelimiter(firstLine)));
+}
+
+/** Matriz de celdas (de un CSV o de la primera hoja de un XLSX) → `ParsedFile`; `null` sin cabecera. */
+export function fromRows(name: string, all: string[][]): ParsedFile | null {
   const nonEmpty = all.filter((r) => r.some((c) => c.trim() !== ''));
   const [headerRow, ...rows] = nonEmpty;
   if (!headerRow) return null;
@@ -211,11 +216,26 @@ function readBytes(file: Blob): Promise<ArrayBuffer> {
   });
 }
 
-/** Lee el `File` de INV-01. Solo texto; XLSX/XLS y lo demás, `unsupported`. */
+/**
+ * Lee el `File` de INV-01: CSV/TSV/TXT como texto y `.xlsx` con `readXlsxRows` (primera
+ * hoja). `.xls` (el binario antiguo) y lo demás, `unsupported`; un `.xlsx` que no se puede
+ * abrir (dañado, con contraseña), `empty`.
+ */
 export async function readImportFile(file: File): Promise<ReadResult> {
-  if (!TEXT_EXTENSIONS.includes(fileExtension(file.name))) return { kind: 'unsupported', name: file.name };
+  const ext = fileExtension(file.name);
+  if (!TEXT_EXTENSIONS.includes(ext) && ext !== 'xlsx') return { kind: 'unsupported', name: file.name };
   if (file.size > MAX_FILE_BYTES) return { kind: 'too_big', name: file.name };
-  const parsed = parseImportText(file.name, decodeText(await readBytes(file)));
+  let parsed: ParsedFile | null;
+  if (ext === 'xlsx') {
+    try {
+      parsed = fromRows(file.name, await readXlsxRows(await readBytes(file)));
+    } catch (e) {
+      if (e instanceof XlsxError) return { kind: 'empty', name: file.name };
+      throw e;
+    }
+  } else {
+    parsed = parseImportText(file.name, decodeText(await readBytes(file)));
+  }
   if (!parsed) return { kind: 'empty', name: file.name };
   return { kind: 'ok', file: parsed };
 }

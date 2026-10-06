@@ -48,8 +48,8 @@ registrado (`F-233`). Detalle en `diario/dia-29.md`. Pendientes de C5: `INV-02`,
 ## 3 · Qué toca, en este orden
 
 0. **C5 de `INV-02` + `INV-03`: HECHA POR EL PO el 6-oct** con importaciones reales en `Rodamientos Ibéricos` (500 líneas publicadas, 0 repetidas;
-   la base está al día: 1 015 filas, 513 `DELETED`, de ellas 500 basura del mapeo equivocado de las 10:04). Quedan por probar: un XLSX (debe ir al fallo de
-   `INV-03`) y un `.pdf` (error en la dropzone). **Pendiente de decidir:** borrar del todo esas 500 filas `DELETED`, y decidir la referencia por el
+   la base está al día: 1 015 filas, 513 `DELETED`, de ellas 500 basura del mapeo equivocado de las 10:04). Los `.xlsx` ya se leen (6-oct, primera hoja, sin dependencias); el `.xls`
+   antiguo no. Queda por probar un `.pdf` (error en la dropzone). **Pendiente de decidir:** borrar del todo esas 500 filas `DELETED`, y decidir la referencia por el
    CONTENIDO de la columna y no solo por su nombre: en el archivo del PO `Item Number` es un contador y la referencia es `Item Type` (su perfil «test»
    lo corrige; un archivo nuevo sin perfil propondría mal).
 1. **Decidir con el PO** si se borran los datos de las altas de prueba (`JULSA INDUSTRIAL S.A`, `Jose Bearings`, `ZZ Prueba REG-01 SL`): rompen 3
@@ -85,7 +85,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **La importación (`0044`–`0046`)**: una transacción; solo `ACTIVE` (ADMIN o EDITOR) de una `APPROVED`; identidad = referencia + marca + país;
   `Reemplazo total` pasa a `DELETED` lo publicado que no viene; devuelve `inserted` y `updated` (el resultado dice «N nuevas y M que ya existían»).
   **La familia de producto es opcional (`0045`, PO 6-oct)**; el país puede salir de la organización (PO 6-oct). `price` no se importa (E2EE); solo
-  CSV/TSV/TXT; tope 20.000 filas por subida. Si NINGUNA línea es válida, se queda en `INV-02` con los motivos, no salta al fallo de `INV-03`.
+  CSV/TSV/TXT/XLSX; tope 20.000 filas por subida. Si NINGUNA línea es válida, se queda en `INV-02` con los motivos, no salta al fallo de `INV-03`.
 - **`INV-01` sin `onPickFile` es la pantalla de su contrato** (subida inerte): el prop lo pasa `App.tsx`.
 - **La CD despliega dos funciones sin JWT**: `access-request` y `register-organization`. Su único permiso es el
   token (la segunda) o el límite por hora (la primera).
@@ -118,7 +118,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-232`** · el intento 3 de `INV-03` se truncó dos veces y gastó el 84 % del coste de la corrida | Un dato; sin acción |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
 | 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0046` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
-| 🟡 | **XLSX/XLS no se leen** (sin dependencia): van al fallo de `INV-03` | Producto: elegir lector o quitarlos del texto |
+| 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí desde el 6-oct, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir que lo guarden como `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |
 | 🟡 | **La siembra de cobros envejece** y `resetDemo` no la re-ancla | Decidir: verbo `security definer` o resembrar a mano |

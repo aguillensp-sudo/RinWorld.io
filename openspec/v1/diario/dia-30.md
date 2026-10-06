@@ -48,3 +48,29 @@ generador a escribir peor**.
 ## Siembras
 
 `demo_watchers.sql` resembrada (había perdido el `PAUSED`). `npm run demo:reset` antes de cada corrida.
+
+## Por la tarde: `REG-06`
+
+El PO dio la C5 de `REG-05` en su localhost con JULSA y pidió seguir con `REG-06` (`date -u`: 18:35 UTC al cerrar esta parte).
+
+**Dos decisiones del PO antes de escribir nada** (las dos en `DECISIONES-V1.md`):
+
+1. **Frase ≠ contraseña sin mandar la frase a ningún sitio.** Tras el login la app ya no tiene la contraseña, y ADR-001 prohíbe que la frase
+   salga del navegador. Se guarda una huella en memoria (`SHA-256(sal ‖ contraseña)`, atada al email) en el login y en el alta de `REG-01`.
+   Una recarga la pierde: el botón de `REG-05` cierra entonces la sesión y pide entrar de nuevo.
+2. **zxcvbn, como dice la spec**, y no la heurística del HTML. Al medirlo tuve que corregir el ejemplo con el que lo había argumentado:
+   `Aaaaaaaaaaaa1!` también saca 3 con zxcvbn. Lo que sí separa: rechaza `Password2024!`, `Qwerty123456!` y `12345678Aa!!` y acepta cuatro
+   palabras al azar, al revés que la heurística. Y un timeout en la suite destapó que **con Levenshtein cada medida tardaba hasta 1,4 s por
+   pulsación**; sin ella, 3–30 ms. Se quitó.
+
+A mano: `lib/passphrase.ts` (27 pruebas, zxcvbn real), `lib/login-fingerprint.ts` (6), el wiring (`REG-05` → `REG-06` → marcador de `REG-07`,
+la frase en un `useRef`), tres tokens de color de la barra sacados del HTML y el contrato: 26 + 1 de unidad y 6 e2e, entre ellos uno que
+**espía todas las peticiones de red y falla si alguna lleva la frase**. Referencia desechable: todo verde. Lista previa limpia.
+
+**Corrida 01: VERDE al primer intento**, 0,062 $. Revisión a mano: **una línea de CSS** (fondo gris en los campos en vez de blanco). El
+indicador de pasos salió bien a la primera: la tarea le decía que lo copiara de `KeysIntro`, ya revisada.
+
+Un arranque falló sin coste: el proceso en segundo plano heredó otro directorio y Python no encontró `harness`. Se relanzó desde la raíz.
+
+Para `REG-07`: el llavero de demo del MVP (`ensureKeyring`) publica una `public_key` en cada inicio de sesión; por eso JULSA ya tiene una
+sin haber pasado por la Fase B. `REG-07` tendrá que decidir qué hace con él.

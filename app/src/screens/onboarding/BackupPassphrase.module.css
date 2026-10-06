@@ -1,4 +1,360 @@
-/* REG-06 · BackupPassphrase — marcador; lo sustituye su corrida del arnés. */
-.placeholder {
-  display: block;
+/* =============================================================================
+   REG-06 · Crea tu frase de seguridad — estilos.
+   Única fuente de color: los tokens de `tokens.css`. Aquí no hay un solo hex.
+   ========================================================================== */
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px var(--bw-pad-panel) 56px;
+}
+
+.column {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* ── Indicador de los cuatro pasos ───────────────────────────────────────── */
+
+.steps {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  white-space: nowrap;
+}
+
+.step:not(:last-child) {
+  flex: 1;
+}
+
+.stepDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--bw-size-hint);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.stepLabel {
+  line-height: 1;
+}
+
+.stepLine {
+  flex: 1;
+  height: 1px;
+  min-width: 12px;
+  margin: 0 10px;
+  background: var(--bw-line-steel);
+}
+
+.stepDone .stepDot {
+  background: var(--bw-brass);
+  color: var(--bw-cold-white);
+}
+
+.stepDone .stepLabel {
+  color: var(--bw-brass);
+}
+
+.stepActive .stepDot {
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+}
+
+.stepActive .stepLabel {
+  color: var(--bw-calibration-blue);
+}
+
+.stepPending .stepDot {
+  background: var(--bw-cold-white);
+  color: var(--bw-input-placeholder);
+  border: 1px solid var(--bw-line-steel-strong);
+}
+
+.stepPending .stepLabel {
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Encabezado ──────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin: 0 0 10px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-title);
+  letter-spacing: var(--bw-ls-title);
+  line-height: 1.25;
+  color: var(--bw-deep-steel);
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: var(--bw-size-body);
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin: 0 0 32px;
+}
+
+/* ── Campos ──────────────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.label {
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  letter-spacing: var(--bw-ls-label);
+  color: var(--bw-ink-steel);
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 40px 10px 13px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 4px;
+  background: var(--bw-surface-mist);
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-input);
+  letter-spacing: 0.05em;
+  color: var(--bw-input-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+  letter-spacing: normal;
+}
+
+.input:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.input.inputOk {
+  border-color: var(--bw-signal-green);
+}
+
+.input.inputError {
+  border-color: var(--bw-danger);
+}
+
+.eye {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  background: none;
+  border: none;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.eye:hover {
+  color: var(--bw-deep-steel);
+}
+
+/* ── Barra de fortaleza de cinco segmentos ───────────────────────────────── */
+
+.strength {
+  margin-top: 8px;
+}
+
+.strengthBar {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 5px;
+}
+
+.segment {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bw-line-steel);
+  transition: background 0.25s;
+}
+
+.segment[data-on='true'][data-level='muy-debil'] {
+  background: var(--bw-danger);
+}
+
+.segment[data-on='true'][data-level='debil'] {
+  background: var(--bw-strength-weak);
+}
+
+.segment[data-on='true'][data-level='aceptable'] {
+  background: var(--bw-strength-fair);
+}
+
+.segment[data-on='true'][data-level='fuerte'] {
+  background: var(--bw-strength-good);
+}
+
+.segment[data-on='true'][data-level='muy-fuerte'] {
+  background: var(--bw-signal-green);
+}
+
+.strengthLabel {
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bw-input-placeholder);
+  transition: color 0.25s;
+}
+
+.strengthLabel[data-level='muy-debil'] {
+  color: var(--bw-danger);
+}
+
+.strengthLabel[data-level='debil'] {
+  color: var(--bw-strength-weak);
+}
+
+.strengthLabel[data-level='aceptable'] {
+  color: var(--bw-strength-fair);
+}
+
+.strengthLabel[data-level='fuerte'] {
+  color: var(--bw-strength-good);
+}
+
+.strengthLabel[data-level='muy-fuerte'] {
+  color: var(--bw-signal-green);
+}
+
+/* ── Mensajes de error y aviso ───────────────────────────────────────────── */
+
+.error {
+  font-size: 12px;
+  color: var(--bw-error-text);
+  margin: 2px 0 0;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--bw-brass);
+  border-radius: 0 4px 4px 0;
+  background: var(--bw-tag-bg);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin-bottom: 24px;
+}
+
+.notice p {
+  margin: 0;
+}
+
+.notice strong {
+  /* El HTML aprobado tinta el `<strong>` con un latón oscurecido (#92702e) que no
+     tiene token propio: se usa el latón base, el más cercano de la paleta. */
+  color: var(--bw-brass);
+  font-weight: 600;
+}
+
+.noticeIcon {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--bw-brass);
+}
+
+/* ── Casilla de confirmación de consecuencias ────────────────────────────── */
+
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 4px;
+  background: var(--bw-surface-mist);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bw-ink-steel);
+  margin-bottom: 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 1px 0 0;
+  accent-color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+
+/* ── Botón principal ─────────────────────────────────────────────────────── */
+
+.primary {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: var(--bw-calibration-blue);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-cold-white);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.primary:not(:disabled):hover {
+  opacity: 0.9;
 }

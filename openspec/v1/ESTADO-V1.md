@@ -25,15 +25,13 @@ registrado (`F-233`). Detalle en `diario/dia-29.md`. Pendientes de C5: `INV-02`,
 |---|---|---|
 | Fecha de máquina | `date -u` | `2026-10-02 09:21` al arrancar; `2026-10-04` al cerrar (una sola sesión) |
 | `bearingworld.io` | `nslookup` (dominio, MX, `ingest.`) | *Non-existent domain* en los tres (`F-233`) |
-| `0044` en producción | `apply_migration` + catálogo (`has_*_privilege`, `pg_class`, `pg_policies`) | `anon` no ejecuta ni lee; `authenticated` ejecuta y solo LEE perfiles; RLS activa, 1 política; columna `notes` |
-| `0044` en el banco de esquema | `supabase/tests/run.sh` (Docker) | `TODOS LOS ASSERTS PASAN`, 15 nuevos (quién no puede, lotes inválidos, acumulativo, reemplazo, perfiles) |
+| `0044`–`0046` en producción y en el banco | `apply_migration` + catálogo (`has_*_privilege`, `pg_proc`); `supabase/tests/run.sh` | `anon` no ejecuta ni lee; `authenticated` ejecuta y solo LEE perfiles; RLS activa; `product_family` admite NULL; la función devuelve `inserted`/`updated`. Banco: `TODOS LOS ASSERTS PASAN` (21 de importación) |
 | Contrato de `INV-02` | Referencia desechable (no comiteada) | 36 de unidad y 2 e2e verdes con ella; contra el marcador fallan 33 |
 | Lista previa | `tsc`; `vitest` entero; `playwright test` entero | Solo el contrato; e2e: 138 pasan, fallan los 2 del contrato y los 5 excusados (tras resembrar cobros) |
 | Siembra de cobros de producción | `execute_sql` con `demo_billing.sql` + `billing_org_status` | Había caducado (rompía `ADMIN-02`); resembrada: los cuatro estados; `ADMIN-02` 15/15 |
 | Corrida 01 de `INV-02` | `harness/metrics/INV-02/`, `harness-metrics.csv` | VERDE en 1 intento (C1–C4). **0,049 $**, 30 668/27 263 tokens, 0 % caché, 837 líneas |
 | Fidelidad de `INV-02` | Captura real (build + sesión ALPHA) contra el HTML aprobado; script sobre `tokens.css` | 2 desviaciones corregidas a mano (14 líneas, `harness-review.csv`); 0 variables inexistentes, 0 colores literales |
-| CI de `0f82de3` | `gh run` 37196204151 | 5 jobs verdes; despliegue de la app rojo **solo** por el paso F-168 (404 del alias en 30 s, `F-228`) |
-| Producción | `curl` del bundle de `rin-world-io.vercel.app` | `index-DGHNjIbP.js` trae «Confirma el mapeo de columnas», «Siempre disponible», `import_inventory` y el aviso del canal email; **no** trae `importacion-ejemplo` |
+| CI y producción | `gh run` 37196204151 y 37196758766; `curl` del bundle | La 1.ª roja solo por el paso F-168 (404 del alias, `F-228`, ya con 3 min de margen); la 2.ª, seis jobs verdes. El bundle trae «Confirma el mapeo de columnas», `import_inventory` y **no** `importacion-ejemplo` |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -49,10 +47,11 @@ registrado (`F-233`). Detalle en `diario/dia-29.md`. Pendientes de C5: `INV-02`,
 
 ## 3 · Qué toca, en este orden
 
-0. **C5 de `INV-02` + `INV-03`, en la web real** (ya se alcanzan): `Inventario` → «Subir nuevo inventario» o la dropzone → un CSV → mapeo →
-   `Confirmar e importar` → resultado. **Escribe en producción.** En una organización de demo, usar **`Acumulativo`** con una o dos referencias
-   nuevas: un `Reemplazo total` retira todo su inventario y **`npm run demo:reset` no lo repone** (hay que resembrar `catalog_demo.sql`).
-   Probar también un XLSX (debe ir directo al fallo de `INV-03`) y un `.pdf` (error en la dropzone). Después, borrar las líneas de prueba.
+0. **C5 de `INV-02` + `INV-03`: HECHA POR EL PO el 6-oct** con importaciones reales en `Rodamientos Ibéricos` (500 líneas publicadas, 0 repetidas;
+   la base está al día: 1 015 filas, 513 `DELETED`, de ellas 500 basura del mapeo equivocado de las 10:04). Quedan por probar: un XLSX (debe ir al fallo de
+   `INV-03`) y un `.pdf` (error en la dropzone). **Pendiente de decidir:** borrar del todo esas 500 filas `DELETED`, y decidir la referencia por el
+   CONTENIDO de la columna y no solo por su nombre: en el archivo del PO `Item Number` es un contador y la referencia es `Item Type` (su perfil «test»
+   lo corrige; un archivo nuevo sin perfil propondría mal).
 1. **Decidir con el PO** si se borran los datos de las altas de prueba (`JULSA INDUSTRIAL S.A`, `Jose Bearings`, `ZZ Prueba REG-01 SL`): rompen 3
    tests e2e locales (`F-230`). Y si se registra `bearingworld.io` (`F-233`).
 2. **Falta la C5 de la sección «Enlace de acceso» de `ADMIN-01`** (la de `REG-01` está dada). Recorrido en su localhost (`preview_start` con `app`;
@@ -63,7 +62,7 @@ registrado (`F-233`). Detalle en `diario/dia-29.md`. Pendientes de C5: `INV-02`,
 4. **Lo que falta para que la ruta sirva: `REG-05`/`06`/`07`.** `REG-01` crea un ADMIN `REGISTERED` y ahí acaba (`F-218`). Son criptografía
    (Plan §4.3): a mano, con `docs/ADR-002` §10 entero delante. **Es lo siguiente de la fábrica**: no quedan pantallas sin criptografía.
 5. **`INVT-01` con token (`F-212`, `F-217`)**: la tabla ya lo admite pero **no existe la función que lo genere ni el canje**.
-6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`, `F-227` (medidor tolerante), `F-231`; poner `bearingworld-e2e` en `0044` (está en
+6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`, `F-227` (medidor tolerante), `F-231`; poner `bearingworld-e2e` en `0046` (está en
    `0039`) y desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
 
 **Fecha límite:** la siembra de cobros de producción se resembró el 4-oct; Cuscinetti Padana vence a los 10 días (**~14-oct**) y
@@ -83,8 +82,10 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
   con `height: 100%; overflow-y: auto` (su raíz cuelga de `#root`, que es `fixed` sin overflow).
 - Lo que se afirme sobre privilegios o RLS se comprueba **contra el catálogo** (`F-146`); y **ninguna función de
   `public` la ejecuta `anon`**: lo sin sesión va por Edge Function con `service_role`.
-- **La importación (`0044`)**: una transacción; solo `ACTIVE` (ADMIN o EDITOR) de una `APPROVED`; identidad = referencia + marca + país;
-  `Reemplazo total` pasa a `DELETED` lo publicado que no viene. `price` no se importa (E2EE); solo CSV/TSV/TXT; tope 20.000 filas por subida.
+- **La importación (`0044`–`0046`)**: una transacción; solo `ACTIVE` (ADMIN o EDITOR) de una `APPROVED`; identidad = referencia + marca + país;
+  `Reemplazo total` pasa a `DELETED` lo publicado que no viene; devuelve `inserted` y `updated` (el resultado dice «N nuevas y M que ya existían»).
+  **La familia de producto es opcional (`0045`, PO 6-oct)**; el país puede salir de la organización (PO 6-oct). `price` no se importa (E2EE); solo
+  CSV/TSV/TXT; tope 20.000 filas por subida. Si NINGUNA línea es válida, se queda en `INV-02` con los motivos, no salta al fallo de `INV-03`.
 - **`INV-01` sin `onPickFile` es la pantalla de su contrato** (subida inerte): el prop lo pasa `App.tsx`.
 - **La CD despliega dos funciones sin JWT**: `access-request` y `register-organization`. Su único permiso es el
   token (la segunda) o el límite por hora (la primera).
@@ -116,7 +117,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-231`** · `toLocaleString('es-ES')` no agrupa `1247`: `Inventory`, `InventoryTable`, `Messages` y `Panel` lo usan | Cambiar a `formatCount` |
 | 🟡 | **`F-232`** · el intento 3 de `INV-03` se truncó dos veces y gastó el 84 % del coste de la corrida | Un dato; sin acción |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
-| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0044` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
+| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0046` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
 | 🟡 | **XLSX/XLS no se leen** (sin dependencia): van al fallo de `INV-03` | Producto: elegir lector o quitarlos del texto |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |
@@ -133,7 +134,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
   cancela antes de escribir. Nadie ha pulsado «Confirmar e importar» contra la base real.
 - **Cómo se comporta con 20.000 filas** (tiempo de la función, tamaño de la petición): probado con decenas.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores** (cabeceras, codificación, separadores): solo con los de prueba.
-- **Si la familia inferida acierta fuera de las siete formas de referencia** que conoce `inferFamily`: lo demás sale como error de línea.
 - **Si el recorrido entero funciona en un navegador real**: aprobar en `ADMIN-01` → copiar el enlace → `REG-01` → cuenta. Medido **por partes**.
 - **Qué ve en pantalla un ADMIN recién creado por `REG-01`** (`REGISTERED`, shell vacío): sin visto.
 - **Si «Copiar enlace» copia en el navegador del PO** (el portapapeles real; los tests lo simulan).

@@ -447,3 +447,11 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Texto bajo los avisos y sobre los botones: por qué no se puede confirmar, o de dónde sale el país. */
+.hint {
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}

@@ -3,6 +3,7 @@ import {
   FIELD_OPTIONS,
   assignField,
   canConfirm,
+  defaultCountryNotice,
   columnsOf,
   confidenceLabel,
   confidenceTone,
@@ -128,6 +129,12 @@ interface Props {
   error: string | null;
   onConfirm: (choice: ImportChoice) => void;
   onCancel: () => void;
+  /**
+   * País de la organización (ISO-2). Opcional: con él, un archivo SIN columna de país se
+   * puede importar (todas las líneas salen con ese país) y la pantalla lo dice. Sin él, el
+   * país es obligatorio en el archivo, como en la spec §3. Añadido a mano el 6-oct.
+   */
+  defaultCountry?: string | null;
 }
 
 export function ImportMapping({
@@ -139,6 +146,7 @@ export function ImportMapping({
   error,
   onConfirm,
   onCancel,
+  defaultCountry,
 }: Props) {
   const [mapping, setMapping] = useState<PlatformField[]>(initialMapping);
   const [saveProfile, setSaveProfile] = useState(false);
@@ -148,13 +156,15 @@ export function ImportMapping({
   const columns = columnsOf(file);
   const stats = fileStats(file);
   const warning = lineLimitWarning(file.rows.length);
-  const missing = missingRequired(mapping).length > 0;
-  const missingTip = missingRequiredMessage(mapping);
+  const missing = missingRequired(mapping, defaultCountry).length > 0;
+  const missingTip = missingRequiredMessage(mapping, defaultCountry);
+  const countryNotice = defaultCountryNotice(mapping, defaultCountry);
   const confirmable = canConfirm({
     mapping,
     saveProfile,
     profileName,
     rowCount: file.rows.length,
+    defaultCountry,
   });
   const banner = appliedProfile === null ? null : bannerParts(appliedProfile);
 
@@ -361,6 +371,19 @@ export function ImportMapping({
           </div>
         )}
 
+        {/* Por qué el botón no se deja pulsar, a la vista: el `title` de un botón
+            deshabilitado no sale en Chrome ni en Edge. */}
+        {missingTip !== null && (
+          <div className={styles.hint} data-testid="missing-hint">
+            {missingTip}
+          </div>
+        )}
+        {countryNotice !== null && (
+          <div className={styles.hint} data-testid="country-notice">
+            {countryNotice}
+          </div>
+        )}
+
         {/* ── Acciones ─────────────────────────────────────────────────────── */}
         <div className={styles.btnRow}>
           <button
@@ -373,6 +396,7 @@ export function ImportMapping({
                 mapping,
                 policy,
                 profileName: saveProfile ? profileName.trim() : null,
+                ...(defaultCountry ? { defaultCountry } : {}),
               })
             }
           >

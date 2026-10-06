@@ -651,6 +651,7 @@ export function App() {
             error={importError}
             onConfirm={(choice) => void confirmImport(choice)}
             onCancel={closeImport}
+            defaultCountry={state.profile.orgCountry}
           />
         ) : visibilityOpen ? (
           /* INV-07. Sin `now`: nada de su pantalla es relativo al reloj. */

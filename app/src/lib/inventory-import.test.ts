@@ -11,6 +11,8 @@ vi.mock('./supabase', () => ({
 
 import {
   CONFIDENCE,
+  defaultCountryNotice,
+  usableDefaultCountry,
   ERROR_TYPES,
   FIELD_OPTIONS,
   MAX_LINES_PER_UPLOAD,
@@ -336,6 +338,74 @@ describe('validación de líneas', () => {
     const { lines } = buildLines(file, ['part_number', 'brand', 'quantity', 'location_country', 'ignore']);
     expect(lines[0]?.notes).toBeNull();
     expect(lines[0]?.lead_time_days).toBeNull();
+  });
+});
+
+describe('país por defecto (la organización)', () => {
+  const file: ParsedFile = { name: 'x.csv', headers: ['Ref', 'Marca', 'Uds'], rows: [['6205', 'SKF', '5'], ['NU216', 'FAG', '3']] };
+  const mapping: PlatformField[] = ['part_number', 'brand', 'quantity'];
+
+  it('un país de organización usable es un ISO-2 en mayúsculas; «—» y vacío no', () => {
+    expect(usableDefaultCountry(' es ')).toBe('ES');
+    expect(usableDefaultCountry('—')).toBeNull();
+    expect(usableDefaultCountry('')).toBeNull();
+    expect(usableDefaultCountry(undefined)).toBeNull();
+    expect(usableDefaultCountry('España')).toBeNull();
+  });
+
+  it('sin país por defecto el país sigue siendo obligatorio (la regla de la spec)', () => {
+    expect(missingRequired(mapping)).toEqual(['location_country']);
+    expect(missingRequiredMessage(mapping)).toBe('Debes mapear las columnas: location_country');
+    expect(canConfirm({ mapping, saveProfile: false, profileName: '', rowCount: 2 })).toBe(false);
+  });
+
+  it('con país por defecto deja de serlo, pero los otros tres siguen siéndolo', () => {
+    expect(missingRequired(mapping, 'ES')).toEqual([]);
+    expect(missingRequired(['part_number', 'ignore', 'quantity'], 'ES')).toEqual(['brand']);
+    expect(canConfirm({ mapping, saveProfile: false, profileName: '', rowCount: 2, defaultCountry: 'ES' })).toBe(true);
+  });
+
+  it('el aviso solo sale si no hay columna de país y hay país que usar', () => {
+    expect(defaultCountryNotice(mapping, 'ES')).toBe(
+      'Tu archivo no trae país: todas las líneas se importarán con ES, el país de tu organización.',
+    );
+    expect(defaultCountryNotice(mapping, '—')).toBeNull();
+    expect(defaultCountryNotice([...mapping, 'location_country'], 'ES')).toBeNull();
+  });
+
+  it('buildLines rellena el país de las líneas; sin él, cada fila es un error', () => {
+    const ok = buildLines(file, mapping, 'pt');
+    expect(ok.errors).toEqual([]);
+    expect(ok.lines.map((l) => l.location_country)).toEqual(['PT', 'PT']);
+    const bad = buildLines(file, mapping);
+    expect(bad.lines).toEqual([]);
+    expect(bad.errors).toHaveLength(2);
+  });
+
+  it('una columna de país en el archivo manda sobre el país por defecto', () => {
+    const f: ParsedFile = { name: 'x', headers: ['Ref', 'Marca', 'Uds', 'Pais'], rows: [['6205', 'SKF', '5', 'DE']] };
+    const { lines } = buildLines(f, ['part_number', 'brand', 'quantity', 'location_country'], 'ES');
+    expect(lines[0]?.location_country).toBe('DE');
+  });
+
+  it('runImport manda el país por defecto en las líneas', async () => {
+    rpc.mockReset().mockResolvedValueOnce({ data: { published: 2, removed: null }, error: null });
+    await runImport(file, { mapping, policy: 'ACCUMULATE', profileName: null, defaultCountry: 'ES' });
+    expect(rpc.mock.calls[0]?.[1].p_lines.map((l: { location_country: string }) => l.location_country)).toEqual(['ES', 'ES']);
+  });
+});
+
+describe('sinónimos de la referencia', () => {
+  it.each(['Item Number', 'ITEM NO.', 'Item', 'Part', 'Material', 'Nº Parte', 'Artikelnummer', 'Part Num'])('«%s» es la referencia', (h) => {
+    expect(proposeMapping([{ index: 0, header: h, example: '' }])[0]?.field).toBe('part_number');
+  });
+
+  it('«Item Type» no le quita la referencia a «Item Number»', () => {
+    const p = proposeMapping([
+      { index: 0, header: 'Item Type', example: '' },
+      { index: 1, header: 'Item Number', example: '' },
+    ]);
+    expect(p.map((x) => x.field)).toEqual(['ignore', 'part_number']);
   });
 });
 

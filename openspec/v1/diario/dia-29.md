@@ -60,3 +60,11 @@ comentarios, tamaños 11/24/14.
   y en una organización de demo un `Reemplazo total` retira su inventario entero. **`npm run demo:reset` no lo repone** (no toca `inventory_lines`): hay que resembrar
   `supabase/seed/catalog_demo.sql`. Lo seguro para la C5 es `Acumulativo` con un CSV de una o dos referencias nuevas.
 - **`bearingworld-e2e` sigue en `0039`**: sin `0044`, `fetchProfile` falla en silencio (a propósito) y nadie importa en la CI.
+
+## Postdata · 6-oct · la primera importación real del PO
+
+El PO probó en su localhost y el botón «Confirmar e importar» quedó deshabilitado. En los logs de Supabase solo había la lectura de perfiles (nunca llegó a
+llamarse a `import_inventory`) y en la base, ninguna línea nueva. Causa doble: su archivo (`Item Number`, `Item Type`, `Qty`, `Marca`) no tenía columna
+de país (obligatoria) y `Item Number` no estaba entre los sinónimos de la referencia; y el motivo solo salía como `title`, que un botón deshabilitado no
+enseña. Arreglado a mano, por decisión del PO: sinónimos nuevos, motivo a la vista y país de la organización por defecto (`DECISIONES-V1.md`, 6-oct).
+**Lección:** la C5 de una pantalla con un botón condicionado tiene que probarse con un archivo que NO sea el feliz; los de prueba del contrato traían país.

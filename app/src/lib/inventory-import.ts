@@ -257,7 +257,11 @@ export function normalizeHeader(header: string): string {
 
 /** Sinónimos (ya normalizados) por campo elegible. `price` no está: no se propone. */
 const SYNONYMS: Record<Exclude<PlatformField, 'ignore' | 'price'>, string[]> = {
-  part_number: ['ref', 'referencia', 'reference', 'partnumber', 'partno', 'pn', 'codigo', 'code', 'designacion', 'designation', 'articulo', 'modelo', 'model', 'sku'],
+  part_number: [
+    'ref', 'referencia', 'reference', 'partnumber', 'partno', 'partnum', 'part', 'pn', 'codigo', 'code',
+    'designacion', 'designation', 'articulo', 'modelo', 'model', 'sku', 'itemnumber', 'itemno', 'item',
+    'material', 'materialnumber', 'nparte', 'numeroparte', 'numerodeparte', 'artikel', 'artikelnummer',
+  ],
   brand: ['marca', 'brand', 'fabricante', 'manufacturer', 'make', 'mfr', 'proveedor'],
   quantity: ['cantidad', 'qty', 'quantity', 'uds', 'unidades', 'units', 'stock', 'existencias', 'cant'],
   location_country: ['pais', 'country', 'locationcountry', 'paisdestock', 'origen', 'ubicacion', 'location'],
@@ -336,15 +340,40 @@ export function assignField(mapping: PlatformField[], index: number, field: Plat
   });
 }
 
-/** Obligatorios sin columna, en el orden de `REQUIRED_FIELDS`. */
-export function missingRequired(mapping: PlatformField[]): PlatformField[] {
-  return REQUIRED_FIELDS.filter((f) => !mapping.includes(f));
+/**
+ * El país por defecto que se puede usar: el de la organización, si es un ISO-2.
+ * `profile.orgCountry` vale `—` cuando no se conoce, y eso no es un país.
+ */
+export function usableDefaultCountry(country: string | null | undefined): string | null {
+  const c = (country ?? '').trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(c) ? c : null;
 }
 
-/** Tooltip del botón deshabilitado (spec §6). `null` si no falta ninguno. */
-export function missingRequiredMessage(mapping: PlatformField[]): string | null {
-  const missing = missingRequired(mapping);
+/**
+ * Obligatorios sin columna, en el orden de `REQUIRED_FIELDS`. Con `defaultCountry`
+ * (el de la organización) el país deja de ser obligatorio EN EL ARCHIVO: un archivo de
+ * un almacén propio no suele traerlo. Es una desviación de la spec §3 (decisión del PO,
+ * 6-oct): sin el segundo argumento, la regla es la de la spec.
+ */
+export function missingRequired(mapping: PlatformField[], defaultCountry?: string | null | undefined): PlatformField[] {
+  const fallback = usableDefaultCountry(defaultCountry) !== null;
+  return REQUIRED_FIELDS.filter((f) => !mapping.includes(f) && !(fallback && f === 'location_country'));
+}
+
+/** Tooltip y aviso del botón deshabilitado (spec §6). `null` si no falta ninguno. */
+export function missingRequiredMessage(mapping: PlatformField[], defaultCountry?: string | null | undefined): string | null {
+  const missing = missingRequired(mapping, defaultCountry);
   return missing.length === 0 ? null : `Debes mapear las columnas: ${missing.join(', ')}`;
+}
+
+/**
+ * Aviso de que el país sale de la organización, o `null` si el archivo trae su
+ * columna de país (o no hay país de organización que usar).
+ */
+export function defaultCountryNotice(mapping: PlatformField[], defaultCountry?: string | null | undefined): string | null {
+  const c = usableDefaultCountry(defaultCountry);
+  if (c === null || mapping.includes('location_country')) return null;
+  return `Tu archivo no trae país: todas las líneas se importarán con ${c}, el país de tu organización.`;
 }
 
 /** Spec §4: nombre del perfil, mín. 3 y máx. 50 caracteres (sin contar espacios de los bordes). */
@@ -365,8 +394,9 @@ export function canConfirm(args: {
   saveProfile: boolean;
   profileName: string;
   rowCount: number;
+  defaultCountry?: string | null | undefined;
 }): boolean {
-  if (missingRequired(args.mapping).length > 0) return false;
+  if (missingRequired(args.mapping, args.defaultCountry).length > 0) return false;
   if (args.saveProfile && !isValidProfileName(args.profileName)) return false;
   return lineLimitWarning(args.rowCount) === null;
 }
@@ -480,7 +510,8 @@ export interface BuiltLines {
  * UNA fila de error (la primera que encuentra). `row` es la fila del archivo: la
  * cabecera es la 1, así que la primera de datos es la 2.
  */
-export function buildLines(file: ParsedFile, mapping: PlatformField[]): BuiltLines {
+export function buildLines(file: ParsedFile, mapping: PlatformField[], defaultCountry?: string | null | undefined): BuiltLines {
+  const fallbackCountry = usableDefaultCountry(defaultCountry);
   const col = (f: PlatformField) => mapping.indexOf(f);
   const iPart = col('part_number');
   const iBrand = col('brand');
@@ -499,6 +530,7 @@ export function buildLines(file: ParsedFile, mapping: PlatformField[]): BuiltLin
       errors.push({ row, column: file.headers[i] ?? '', errorType, received });
 
     for (const i of [iPart, iBrand, iQty, iCountry]) {
+      if (i === iCountry && iCountry < 0 && fallbackCountry !== null) continue;
       if (cell(i) === '') return fail(i, ERROR_TYPES.empty, null);
     }
     const part = cell(iPart);
@@ -509,7 +541,7 @@ export function buildLines(file: ParsedFile, mapping: PlatformField[]): BuiltLin
     if (Number.isNaN(qty)) return fail(iQty, ERROR_TYPES.quantity, cell(iQty));
     if (qty < 0) return fail(iQty, ERROR_TYPES.negative, cell(iQty));
     if (qty > 2147483647) return fail(iQty, ERROR_TYPES.quantity, cell(iQty));
-    const country = normalizeCountry(cell(iCountry));
+    const country = iCountry < 0 && fallbackCountry !== null ? fallbackCountry : normalizeCountry(cell(iCountry));
     if (!country) return fail(iCountry, ERROR_TYPES.country, cell(iCountry));
     let lead: number | null = null;
     if (cell(iLead) !== '') {
@@ -584,6 +616,8 @@ export interface ImportChoice {
   policy: ImportPolicy;
   /** `null` si no se marca «Guardar este mapeo como perfil». */
   profileName: string | null;
+  /** País de la organización, para el archivo sin columna de país (ver `missingRequired`). */
+  defaultCountry?: string | null | undefined;
 }
 
 /** Inyectable para los tests (sin reloj real). */
@@ -597,7 +631,7 @@ type Clock = () => number;
  */
 export async function runImport(file: ParsedFile, choice: ImportChoice, now: Clock = () => performance.now()): Promise<ImportSummary> {
   const t0 = now();
-  const { lines, errors } = buildLines(file, choice.mapping);
+  const { lines, errors } = buildLines(file, choice.mapping, choice.defaultCountry);
   const base = { processed: file.rows.length, failed: errors.length, errors, sample: sampleOf(lines) };
   if (lines.length === 0) {
     return { ...base, published: 0, removed: null, seconds: (now() - t0) / 1000, sample: [] };

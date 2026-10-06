@@ -1,4 +1,228 @@
-/* REG-05 · KeysIntro — marcador; lo sustituye la corrida del arnés. */
-.placeholder {
-  display: block;
+/* REG-05 · Introducción a las claves E2EE.
+   Todos los colores salen de variables de `tokens.css`; ningún hex ni rgb().
+   Los tokens de tamaño se usan por su valor: `--bw-size-eyebrow` (14px) y
+   `--bw-size-input` (13px) son los tokens de 14 y 13 px del sistema. */
+
+/* Hija directa de `.bwcnt` (que es `overflow: hidden`): el scroll es nuestro. */
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px 48px 56px;
+  box-sizing: border-box;
+}
+
+/* Una columna centrada de hasta 600 px. */
+.column {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* ── Pasos del registro ─────────────────────────────────────────────────── */
+
+.steps {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0 0 36px;
+  padding: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  white-space: nowrap;
+}
+
+.stepDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--bw-size-hint);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Hechos: latón. */
+.stepDone .stepDot {
+  background: var(--bw-brass);
+  color: var(--bw-warm-cream);
+}
+
+.stepDone .stepLabel {
+  color: var(--bw-brass);
+}
+
+/* Actual: azul de acción. */
+.stepActive .stepDot {
+  background: var(--bw-calibration-blue);
+  color: var(--bw-warm-cream);
+}
+
+.stepActive .stepLabel {
+  color: var(--bw-calibration-blue);
+}
+
+/* Pendiente: gris. */
+.stepPending .stepDot {
+  background: var(--bw-cold-white);
+  color: var(--bw-input-placeholder);
+  border: 1px solid var(--bw-line-steel-strong);
+}
+
+.stepPending .stepLabel {
+  color: var(--bw-input-placeholder);
+}
+
+/* La línea que une un paso con el siguiente, dentro del propio `<li>`. */
+.stepLine {
+  flex: 1;
+  height: 1px;
+  min-width: 12px;
+  margin: 0 10px;
+  background: var(--bw-line-steel);
+}
+
+/* ── Antetítulo y título ────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-label);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin: 0 0 10px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-title);
+  color: var(--bw-deep-steel);
+  letter-spacing: var(--bw-ls-title);
+  line-height: 1.25;
+  margin: 0 0 36px;
+}
+
+/* ── Los tres bloques ───────────────────────────────────────────────────── */
+
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.block {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 20px 22px;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+}
+
+.blockIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--bw-radius-hamburger);
+  background: var(--bw-icon-tint-brass);
+  border: 1px solid var(--bw-brass-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--bw-brass);
+}
+
+.blockBody {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.blockTitle {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-eyebrow);
+  color: var(--bw-deep-steel);
+  margin: 0;
+}
+
+.blockDesc {
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Aviso ──────────────────────────────────────────────────────────────── */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-left: 3px solid var(--bw-brass);
+  background: var(--bw-tag-bg);
+  padding: 14px 16px;
+  border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+  margin-bottom: 28px;
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--bw-brass);
+}
+
+.noticeText {
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.noticeText strong {
+  color: var(--bw-brass);
+  font-weight: 600;
+}
+
+/* ── Botón ──────────────────────────────────────────────────────────────── */
+
+.primary {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 600;
+  color: var(--bw-warm-cream);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.primary:hover {
+  background: var(--bw-primary-dark);
+}
+
+.primary:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-halo);
 }

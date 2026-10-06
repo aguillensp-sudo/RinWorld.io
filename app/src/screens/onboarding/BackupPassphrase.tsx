@@ -3,12 +3,14 @@ import styles from './BackupPassphrase.module.css';
 
 interface Props {
   profile: MemberProfile;
+  /** `Continuar`: entrega la frase al wiring (en memoria), que pasa a REG-07. */
+  onContinue: (passphrase: string) => void;
 }
 
 /**
- * MARCADOR de REG-06 · Establecer la frase de seguridad. Lo sustituirá su propia
- * tarea del arnés, que fijará su API definitiva. Existe para que el botón de REG-05
- * lleve a algún sitio y el e2e de REG-05 pueda comprobar que se avanza.
+ * MARCADOR de REG-06 · Establecer la frase de seguridad. La tarea del arnés
+ * (`harness/tasks/REG-06.json`) sustituye este fichero y su `.module.css`. Existe para
+ * que `App.tsx` compile y el e2e tenga una ruta real que visitar antes de la corrida.
  */
 export function BackupPassphrase({ profile }: Props) {
   return <div className={styles.placeholder} data-testid="reg06-placeholder" data-org={profile.orgId} />;

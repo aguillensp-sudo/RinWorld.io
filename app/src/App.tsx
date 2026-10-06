@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
@@ -17,6 +17,8 @@ import { Invitations } from './screens/onboarding/Invitations';
 import { Welcome } from './screens/onboarding/Welcome';
 import { KeysIntro } from './screens/onboarding/KeysIntro';
 import { BackupPassphrase } from './screens/onboarding/BackupPassphrase';
+import { KeyGeneration } from './screens/onboarding/KeyGeneration';
+import { hasLoginFingerprint } from './lib/login-fingerprint';
 import { AdditionalUser } from './screens/onboarding/AdditionalUser';
 import { AccessRequest } from './screens/onboarding/AccessRequest';
 import { AccessRequestWait } from './screens/onboarding/AccessRequestWait';
@@ -134,6 +136,12 @@ const COBROS_NAV = operatorNavIndexOf('Cobros');
 
 /** REG-09 y FRU §5: "**Subtítulo del panel:** `Asistente de registro`" (HTML aprobado). */
 const ONBOARDING_VERA_SUBTITLE = 'Asistente de registro';
+
+/**
+ * REG-06 sin huella de la contraseña de acceso (una recarga a mitad de la Fase B): se
+ * cierra la sesión y la pantalla de login dice esto. No lo pinta ningún HTML aprobado.
+ */
+const REAUTH_FOR_PASSPHRASE = 'Por seguridad, vuelve a iniciar sesión para crear tu frase de seguridad.';
 
 /** FORO-01 §5: "**Subtítulo del panel:** `Agente del foro`". */
 const FORUM_VERA_SUBTITLE = 'Agente del foro';
@@ -309,7 +317,21 @@ export function App() {
    * ADMIN `REGISTERED`. No se guarda en ningún sitio a propósito: REG-05 es una
    * pantalla explicativa, y al recargar se vuelve a ella (la que escribe es REG-07).
    */
-  const [keyStep, setKeyStep] = useState<'intro' | 'passphrase'>('intro');
+  const [keyStep, setKeyStep] = useState<'intro' | 'passphrase' | 'keys'>('intro');
+
+  /**
+   * La frase de seguridad que REG-06 entrega y REG-07 consumirá para derivar la clave
+   * de envoltura (ADR-001). SOLO EN MEMORIA: ni estado de React que se vuelque en las
+   * herramientas de desarrollo, ni almacenamiento, ni red. Se tira al salir de la sesión.
+   */
+  const backupPassphrase = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (state.status !== 'authenticated') {
+      backupPassphrase.current = null;
+      setKeyStep('intro');
+    }
+  }, [state.status]);
 
   /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
@@ -527,9 +549,26 @@ export function App() {
    * criterio que REG-09: dentro del shell estándar, con VERA `Asistente de
    * registro`. Solo el ADMIN: un usuario de FRU también nace `REGISTERED`, pero los
    * pasos que pinta REG-05 (Solicitud, Organización) no son los suyos (F-217).
-   * REG-06 es hoy un MARCADOR.
+   *
+   * REG-06 compara la frase con la huella en memoria de la contraseña de acceso
+   * (ADR-001: deben ser distintas, y la frase no puede ir al servidor). Sin huella
+   * —una recarga a mitad del flujo la pierde— se cierra la sesión y se pide entrar
+   * de nuevo antes de dejar crear la frase (decisión del PO, 6-oct). REG-07 es hoy
+   * un MARCADOR.
    */
   if (state.profile.role === 'ADMIN' && state.profile.state === 'REGISTERED') {
+    const profile = state.profile;
+    const toPassphrase = () => {
+      if (!hasLoginFingerprint(profile.email)) {
+        void signOut(REAUTH_FOR_PASSPHRASE);
+        return;
+      }
+      setKeyStep('passphrase');
+    };
+    const toKeys = (passphrase: string) => {
+      backupPassphrase.current = passphrase;
+      setKeyStep('keys');
+    };
     return (
       <AppShell
         profile={state.profile}
@@ -540,9 +579,11 @@ export function App() {
         veraSubtitle={ONBOARDING_VERA_SUBTITLE}
       >
         {keyStep === 'intro' ? (
-          <KeysIntro onContinue={() => setKeyStep('passphrase')} />
+          <KeysIntro onContinue={toPassphrase} />
+        ) : keyStep === 'passphrase' ? (
+          <BackupPassphrase profile={profile} onContinue={toKeys} />
         ) : (
-          <BackupPassphrase profile={state.profile} />
+          <KeyGeneration profile={profile} />
         )}
       </AppShell>
     );

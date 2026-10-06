@@ -1,0 +1,103 @@
+{
+  "task_id": "REG-06",
+  "screen": "REG-06",
+  "goal": "Panel de contenido de REG-06 (Establecer la frase de seguridad / Backup Passphrase, Modulo 01 Onboarding, Fase B): indicador de los cuatro pasos (Seguridad actual), antetitulo, titulo, subtitulo, dos campos de contrasena (la frase y su repeticion) con boton de mostrar u ocultar, barra de fortaleza de cinco segmentos con su etiqueta, errores en linea, un aviso, una casilla de confirmacion y el boton `Continuar`, que entrega la frase al wiring. Solo la ve un ADMIN en estado REGISTERED tras REG-05; va DENTRO del shell estandar. Vigesima pantalla de la fabrica y segunda de la Fase B. Sin migracion. La frase NO sale del navegador.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll propio en `constraints` (F-198).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §1: la capa de datos es precondicion, escrita y entregada por Claude Code: `app/src/lib/passphrase.ts` (zxcvbn, niveles, textos, `passphraseView`; 27 pruebas con zxcvbn real) y `app/src/lib/login-fingerprint.ts` (huella en memoria de la contrasena de acceso; 6 pruebas). REG-06 no toca criptografia: la frase se mide en local y se entrega en memoria; las claves las genera REG-07, a mano (Plan §4.3). Comparte sesion con REG-05 y con la capa de datos, asi que sus cifras 7 y 8 no son limpias.",
+  "_nota_spec": "La spec es `Rinworld_spec_REG-06.md`. Donde el HTML aprobado y la spec discrepan MANDA EL HTML (F-170) en lo visual; los estados que el HTML no pinta (errores de `igual a la contrasena` y `demasiado debil`) son los de la spec §6. Dos decisiones del PO del 6-oct (DECISIONES-V1.md): la fortaleza es zxcvbn (la spec), no la heuristica del HTML; y la comparacion con la contrasena de acceso va contra una huella en memoria. TODO ESO YA ESTA EN `lib/passphrase.ts`: el Coder no decide ni un texto ni un umbral, los pinta.",
+  "_nota_shell": "PRECONDICION escrita a mano por Claude Code, fuera de esta tarea: `App.tsx` monta `<BackupPassphrase profile onContinue />` dentro del `AppShell` (VERA `Asistente de registro`) cuando un ADMIN `REGISTERED` pulsa el boton de REG-05 y hay huella de su contrasena (si no la hay, cierra la sesion y pide entrar de nuevo: no es cosa de esta pantalla). `onContinue(frase)` la guarda en memoria y pasa a REG-07 (hoy un marcador, `KeyGeneration.tsx`). `BackupPassphrase.tsx` existe hoy como MARCADOR: esta tarea sustituye ese fichero ENTERO y su `.module.css`. El HTML aprobado dibuja una cabecera minima sin sidebar: como REG-05 y REG-09, se monta en el shell estandar; VERA la monta el shell.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_REG-06.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/REG-06 · EBP v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§3",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/onboarding/KeysIntro.tsx",
+    "_nota_style_reference": "`KeysIntro.tsx`/`KeysIntro.module.css` (REG-05) es la pantalla hermana inmediata: MISMO indicador de pasos (copialo tal cual, con `.step:not(:last-child) { flex: 1 }` y el tic en un disco de laton), mismo antetitulo, mismo titulo, mismo aviso con borde de laton, mismo boton primario a todo el ancho y mismo `.screen`. Para el patron de campo con etiqueta, error y `aria-describedby`: `app/src/screens/onboarding/AdditionalUser.tsx` (FRU).",
+    "data_layer": "app/src/lib/passphrase.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `checkPassphrase`, `passphraseView`, `EMPTY_PASSPHRASE_FORM`, `PASSPHRASE_TEXTS`, `STRENGTH_LEVELS` y los tipos `PassphraseCheck`, `PassphraseForm`, `PassphraseView`, `StrengthKey`. NO se reimplementa: ni la fortaleza, ni el umbral, ni el minimo de 12, ni cuando sale cada error, ni cuando se habilita el boton, ni un solo texto. `login-fingerprint.ts` NO se importa: `checkPassphrase` ya lo usa por dentro."
+  },
+  "outputs": [
+    "app/src/screens/onboarding/BackupPassphrase.tsx",
+    "app/src/screens/onboarding/BackupPassphrase.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos, entre comillas simples. El punto medio ' · ' es U+00B7 con un espacio a cada lado; el guion largo '—' es U+2014, la flecha '→' es U+2192 y los puntos suspensivos '…' son U+2026 (un solo caracter).",
+    "_nota_accesibilidad": "Los botones de mostrar u ocultar son `<button type=\"button\">`; el de continuar es `<button type=\"submit\">` dentro de un `<form>`. La lista de pasos es una `<ol aria-label=\"Pasos del registro\">` con cuatro `<li>` sin `role=` (F-131); el actual lleva `aria-current=\"step\"`. Todo `<svg>` lleva `aria-hidden=\"true\"`. Cada campo tiene un `<label htmlFor>` con su `id`. La casilla es un `<input type=\"checkbox\">` DE VERDAD dentro de su `<label>` (aunque el HTML aprobado la dibuje con un `div`): se puede estilizar, pero tiene que existir y ser accesible por su texto.",
+    "_nota_css_modules": "LAS CLASES DE UN MODULO CSS SON `string | undefined`, NUNCA `string` A SECAS (F-143): con `noUncheckedIndexedAccess` activo, cualquier propiedad de `styles` puede no existir en el `.module.css`, asi que TypeScript la tipa `string | undefined`. Una funcion que devuelve `styles.x` y esta declarada `: string`, o un `Record<Tipo, string>` con valores `styles.x`, NO COMPILA (`TS2322`). El tipo de retorno es `string | undefined` y el diccionario `Record<Tipo, string | undefined>`, y el `?? ''` que resuelve el hueco va en el UNICO sitio donde se consume (`className={X[k] ?? ''}`), para que una clase que falte no escriba la palabra `undefined` en el atributo.",
+    "app/src/screens/onboarding/BackupPassphrase.tsx": "export function BackupPassphrase({ profile, onContinue }: { profile: MemberProfile; onContinue: (passphrase: string) => void }). `MemberProfile` de '../../lib/session'; todo lo demas de '../../lib/passphrase' (ver `_nota_data_layer`). Sea `T = PASSPHRASE_TEXTS`. ESTADO: `form: PassphraseForm` (empieza en `EMPTY_PASSPHRASE_FORM`), `check: PassphraseCheck | null` (empieza en `null`), y un booleano de visibilidad por campo. `view = passphraseView(form, check)` en cada render. MEDIR: cada vez que cambia el campo 1 se llama a `checkPassphrase(profile.email, valorNuevo, [profile.fullName ?? '', profile.orgName])` y, cuando resuelve, se guarda el resultado en `check` SOLO SI `resultado.passphrase` es el valor que el campo 1 tiene EN ESE MOMENTO (guarda el ultimo valor tecleado en un `useRef` y compara contra el; las respuestas pueden llegar desordenadas y una vieja NO puede pisar a la buena). El campo 2 y la casilla no llaman a nada. RAIZ: un elemento con la clase `screen` (ver constraints). Dentro, un `<form noValidate>` cuyo `onSubmit` hace `preventDefault()` y, SOLO si `view.canContinue`, llama a `onContinue(form.passphrase)` UNA vez. De arriba abajo: (1) LOS PASOS: identicos a los de REG-05 (`KeysIntro.tsx`): 'Solicitud' y 'Organización' hechos (tic svg en disco de laton, sin numero), 'Seguridad' actual con `aria-current=\"step\"` y '3', 'Activación' pendiente con '4'. (2) Un `<p>` con `T.eyebrow`. (3) El UNICO `<h1>`, con `T.title`. (4) Un `<p>` con `T.subtitle`. (5) CAMPO 1: `<label htmlFor>` con `T.passphraseLabel`; un `<input>` con `type` 'password' (o 'text' si esta visible), `autoComplete=\"new-password\"`, `placeholder={T.passphrasePlaceholder}`, `aria-invalid` 'true' si `view.passphraseError` y 'false' si no, y `aria-describedby` con el `id` de su error cuando lo hay; a su derecha, dentro del campo, un `<button type=\"button\">` con un ojo (svg) cuyo `aria-label` es `T.showPassphrase` mientras esta oculto y `T.hidePassphrase` mientras se ve, y que alterna el `type` SOLO de su campo. Debajo, SOLO si `view.strength` no es null: la barra, con CINCO elementos `data-testid=\"strength-segment\"` y `data-on=\"true\"` en los `view.strength.segments` primeros y `data-on=\"false\"` en el resto, seguidos de un elemento `data-testid=\"strength-label\"` con `view.strength.label`; segmentos encendidos y etiqueta llevan el color del nivel (`view.strength.key`, ver el `.module.css`). Debajo, SOLO si `view.passphraseError`: un `<p>` con `id` propio y ese texto. (6) CAMPO 2: igual, con `T.repeatLabel`, `T.repeatPlaceholder`, su propio ojo, `view.repeatError` y su `<p>` de error con `id` propio; sin barra. (7) EL AVISO: icono de advertencia (svg) y un `<p>` con un `<strong>` `T.noticeStrong` seguido de un espacio y `T.noticeRest`. (8) LA CASILLA: un `<label>` con un `<input type=\"checkbox\">` (`checked={form.acknowledged}`) y `T.acknowledgement`. (9) EL BOTON: `<button type=\"submit\" disabled={!view.canContinue}>` con `T.submit`, primario a todo el ancho (azul al 35 % deshabilitado). Bordes de los campos: verde si `view.passphraseOk` / `view.repeatOk`, rojo si hay error, normal si no. La frase NO se pinta fuera de los `<input>`: ni en un texto, ni en un `title`, ni en un `data-*`, ni en consola. RED: ninguna fuera de `checkPassphrase` (que es local). El contrato sustituye el `fetch` global por un espia (`fetchSpy`) y exige que NO se llame.",
+    "app/src/screens/onboarding/BackupPassphrase.module.css": "Estilos con TOKENS de `tokens.css` (nada de valores literales de color). Clases minimas: `screen` (ver constraints), `column`, `steps`, `step`, `stepDone`, `stepActive`, `stepPending`, `stepDot`, `stepLabel`, `stepLine`, `eyebrow`, `title`, `subtitle`, `field`, `label`, `inputWrap`, `input`, `inputOk`, `inputError`, `eye`, `strength`, `segment`, `strengthLabel`, `error`, `notice`, `checkbox`, `primary`. Colores de la barra por nivel (`StrengthKey`): 'muy-debil' `var(--bw-danger)`, 'debil' `var(--bw-strength-weak)`, 'aceptable' `var(--bw-strength-fair)`, 'fuerte' `var(--bw-strength-good)`, 'muy-fuerte' `var(--bw-signal-green)`; segmento apagado `var(--bw-line-steel)`. Error de campo `var(--bw-error-text)`, 12 px. Fiel al HTML aprobado: columna de hasta 600 px como REG-05; segmentos de 4 px de alto con radio 2 px y hueco entre ellos; etiqueta de nivel en IBM Plex Mono 11 px; boton deshabilitado con `opacity: .35` y `cursor: not-allowed`."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/onboarding/BackupPassphrase.test.tsx",
+      "app/src/screens/onboarding/BackupPassphraseScroll.test.ts"
+    ],
+    "e2e": [
+      "app/e2e/backup-passphrase.spec.ts"
+    ],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementacion de referencia desechable (no comiteada, borrada) antes de la corrida: 26 de unidad, 1 de CSS y 6 e2e verdes con ella. El e2e va contra el Supabase real y SOLO LEE (REG-06 no escribe): entra como ADMIN con el estado del perfil reescrito a REGISTERED, pasa por REG-05, mide con zxcvbn de verdad, prueba que la contrasena con la que entro no vale, que NINGUNA peticion de red lleva la frase, que una recarga pide volver a entrar y que `Continuar` lleva al marcador de REG-07. Tambien se amplio (6-oct) un e2e de REG-05 para que acepte el marcador o la pantalla real de REG-06.",
+    "_nota_e2e_fuera_de_contrato": "F-134. C2 corre la suite e2e ENTERA; solo cambia a quien se apunta el fallo. Se excusan los MISMOS CINCO tests que en INV-03, uno por uno: dos por F-224 y tres por los datos vivos de la C5 de REG-01 en produccion (F-230). Comprobado el 4-oct con la suite entera contra los marcadores: fallan exactamente esos cinco y los dos del contrato (`import.spec.ts`), y pasan los otros 138 (ADMIN-02 tras resembrar `demo_billing.sql` en produccion: la siembra habia caducado el 30-sep). Los `test` van en ASCII (se casan por subcadena). REG-05 anade 3 de `inventory.spec.ts` por los datos vivos de F-234 (descubiertos en la lista previa de esta corrida).",
+    "e2e_fuera_de_contrato": [
+      {
+        "test": "ve la pantalla desde",
+        "motivo": "INVT-01 cuenta `1/5` plazas. F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito: ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "un ADMIN solo",
+        "motivo": "REG-09 espera un ADMIN sin nadie mas (sin contador). F-224. Cuenta de prueba del PO (`alvaro@vistabahia.eu`, EDITOR REGISTERED) que vive en PRODUCCION en Rodamientos Ibericos a proposito: ocupa una plaza, asi que el ADMIN ya no esta solo. El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esa cuenta no existe y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO borre la cuenta, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "filtro \"Aprobadas\" no ense",
+        "motivo": "ADMIN-01 espera cero solicitudes aprobadas y la sintetica `ZZ Prueba REG-01 SL` esta aprobada. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "pinta las organizaciones de la base",
+        "motivo": "DIR-01 espera las 6 organizaciones sembradas y en produccion hay 8 (`JULSA INDUSTRIAL S.A`, de la C5 de REG-01, y `Jose Bearings`, alta del 29-sep 17:43 UTC de origen no documentado). Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "por nombre espera a Enter",
+        "motivo": "DIR-01, misma causa: el directorio de produccion lleva 2 organizaciones que la siembra no tiene. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
+      },
+      {
+        "test": "solo muestra inventario propio, aunque la RLS permita ver el ajeno",
+        "motivo": "Datos vivos de PRODUCCION, F-234: Rodamientos Ibericos (ALPHA) tiene 18 303 lineas PUBLISHED desde la importacion real del PO del 6-oct, y este test supone la siembra de demo (unas 15 lineas: total < 100, el total sin separador de miles, 6205-2RS en la primera pagina). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen y pasa. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. La lentitud de F-234 ya esta arreglada (0047); lo que queda es el dato. Cuando el PO decida que hacer con esas lineas, se canta sola y se quita."
+      },
+      {
+        "test": "squeda es server-side y NO se lanza al teclear",
+        "motivo": "Datos vivos de PRODUCCION, F-234: Rodamientos Ibericos (ALPHA) tiene 18 303 lineas PUBLISHED desde la importacion real del PO del 6-oct, y este test supone la siembra de demo (unas 15 lineas: total < 100, el total sin separador de miles, 6205-2RS en la primera pagina). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen y pasa. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. La lentitud de F-234 ya esta arreglada (0047); lo que queda es el dato. Cuando el PO decida que hacer con esas lineas, se canta sola y se quita."
+      },
+      {
+        "test": "Alpha y Beta ven inventario propio, y no es el mismo",
+        "motivo": "Datos vivos de PRODUCCION, F-234: Rodamientos Ibericos (ALPHA) tiene 18 303 lineas PUBLISHED desde la importacion real del PO del 6-oct, y este test supone la siembra de demo (unas 15 lineas: total < 100, el total sin separador de miles, 6205-2RS en la primera pagina). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen y pasa. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. La lentitud de F-234 ya esta arreglada (0047); lo que queda es el dato. Cuando el PO decida que hacer con esas lineas, se canta sola y se quita."
+      }
+    ]
+  },
+  "out_of_scope": [
+    "La criptografia: derivar la clave de la frase (Argon2id), generar el par de claves y guardar el backup cifrado. Es REG-07, escrita a mano (Plan §4.3, ADR-001).",
+    "Comprobar la contrasena de acceso: lo hace `checkPassphrase` contra la huella en memoria. Esta pantalla no importa `login-fingerprint.ts`.",
+    "Cerrar la sesion cuando no hay huella (tras una recarga): lo hace el wiring antes de montar esta pantalla.",
+    "La conversacion de demostracion de VERA de la spec §5: el shell monta VERA.",
+    "La cabecera minima con el logo y la barra de marca del HTML aprobado: las pone el shell estandar.",
+    "Los valores de ejemplo precargados del HTML aprobado (`correct-horse-battery-staple-2024` y la casilla marcada): son andamiaje del prototipo; la pantalla arranca vacia.",
+    "La heuristica de fortaleza del `<script>` del HTML aprobado: la sustituye zxcvbn (decision del PO).",
+    "El wiring en `App.tsx`: ya hecho a mano."
+  ],
+  "constraints": [
+    "SCROLL PROPIO (F-186/F-189/F-190/F-198): la raiz de la pantalla es hija DIRECTA de `.bwcnt`, que es `overflow: hidden`. La clase `.screen` de `BackupPassphrase.module.css` DEBE declarar `flex: 1; min-height: 0; overflow-y: auto;` (mas `display: flex; flex-direction: column`). Mira `KeysIntro.module.css` (`.screen`).",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb(). Los tres colores de la barra que no estaban (`--bw-strength-weak`, `--bw-strength-fair`, `--bw-strength-good`) ya estan en `tokens.css`.",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json. NO importes `@zxcvbn-ts/*` directamente: lo carga `lib/passphrase.ts`.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`, y sin `console.*`.",
+    "Ni `localStorage`, ni `sessionStorage`, ni cookies, ni nada que persista la frase: solo estado de React en memoria.",
+    "No tocar `app/src/shell/**` ni `App.tsx`. Tampoco `KeysIntro.tsx`, `KeyGeneration.tsx` ni nada de `app/src/lib/`.",
+    "No reimplementar nada de `app/src/lib/passphrase.ts` (ver `_nota_data_layer`).",
+    "El TITULO va en un `<h1>` de verdad, y es el UNICO `<h1>`.",
+    "La marca en el texto es `Bearingworld.io`, nunca `Rinworld` (CLAUDE.md §1.2)."
+  ]
+}

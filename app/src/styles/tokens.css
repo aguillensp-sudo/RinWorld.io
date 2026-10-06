@@ -63,6 +63,11 @@
   --bw-success-dark: #15803D;    /* texto de badge PUBLISHED */
   --bw-primary-dark: #1D4ED8;    /* texto de chip activo */
   --bw-danger-light: #F87171;    /* hover del × que quita un chip */
+  /* Barra de fortaleza de REG-06 (HTML aprobado): Muy débil = --bw-danger, Débil, Aceptable,
+     Fuerte, Muy fuerte = --bw-signal-green. Añadidos el 6-oct (design-system §1.5). */
+  --bw-strength-weak: #F97316;
+  --bw-strength-fair: #EAB308;
+  --bw-strength-good: #84CC16;
 
   /* Superficies tintadas: fondo sólido del color semántico, distinto del rgba
      de los badges. Las dos primeras son los tintes de tarjeta de MSG-02. */

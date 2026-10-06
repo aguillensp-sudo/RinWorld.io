@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import { clearKeyring, ensureKeyring } from './keys';
+import { forgetLoginPassword, rememberLoginPassword } from './login-fingerprint';
 
 /** Lo que la sesión necesita saber del miembro y su organización. */
 export interface MemberProfile {
@@ -197,6 +198,7 @@ export function useSession() {
     const apply = async (userId: string | undefined, email: string | undefined) => {
       if (!userId || !email) {
         clearKeyring();
+        forgetLoginPassword();
         if (alive) setState({ status: 'anonymous' });
         return;
       }
@@ -272,16 +274,25 @@ export function useSession() {
       setError(signInErrorMessage(e.message));
       return false;
     }
+    // REG-06 comprueba que la frase de seguridad no sea la contraseña (ADR-001): la
+    // huella se queda en memoria y nada más. Ver `login-fingerprint.ts`.
+    await rememberLoginPassword(email, password);
     return true;
   }, []);
 
-  const signOut = useCallback(async () => {
+  /**
+   * `notice`, si viene, es lo que dirá la pantalla de login al volver: REG-06 cierra la
+   * sesión cuando no tiene la huella de la contraseña y pide entrar de nuevo.
+   */
+  const signOut = useCallback(async (notice?: string) => {
     // El llavero se tira ANTES de cerrar sesión, no después: es lo que hace que
     // cerrar sesión signifique algo. Sin esto, la privada X25519 del miembro
     // anterior seguiría en memoria mientras la pestaña siguiera abierta, y la
     // siguiente persona que entrara en el mismo navegador la tendría delante.
     clearKeyring();
+    forgetLoginPassword();
     await supabase.auth.signOut();
+    setError(typeof notice === 'string' ? notice : null);
   }, []);
 
   return { state, error, signIn, signOut, refresh };

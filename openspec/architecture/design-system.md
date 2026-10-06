@@ -137,6 +137,9 @@ de stock: sin él INV-01 no se puede pintar.
 | Success oscuro | `#15803D` | 2 · INV-01 | Texto de badge PUBLISHED sobre `rgba(22,163,74,.08)` |
 | Primary oscuro | `#1D4ED8` | 2 · 2/6 | Texto de chip activo |
 | Danger claro | `#F87171` | 1 · SRCH-01 | Hover del `×` que quita un chip |
+| Fortaleza aceptable | `#EAB308` | 1 · REG-06 | Nivel `Aceptable` de la barra de fortaleza de la frase (6-oct) |
+| Fortaleza buena | `#84CC16` | 1 · REG-06 | Nivel `Fuerte` de la barra de fortaleza (los otros tres niveles: `#EF4444` danger, `#F97316` y `#16A34A` signal-green) |
+| Fortaleza débil | `#F97316` | 1 · REG-06 | Nivel `Débil` de la barra de fortaleza |
 
 **Superficies tintadas.** Fondo sólido y claro del color semántico, distinto del `rgba` de los
 badges. Los dos primeros son los tintes de tipo de tarjeta de MSG-02, la pantalla del día 7:

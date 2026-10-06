@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { countryName } from './search';
 import { COUNTRY_OPTIONS, DIAL_CODES, functionError } from './access-request';
 import { isValidPassword } from './onboarding';
+import { rememberLoginPassword } from './login-fingerprint';
 
 /**
  * Capa de datos de REG-01 (FRO · Formulario de Registro de Organización). Ruta 00.2,
@@ -644,4 +645,7 @@ export async function submitRegistration(token: string, form: RegistrationForm):
     password: form.password,
   });
   if (signInError) throw new Error(SIGN_IN_AFTER_ERROR);
+  // La cuenta nace `REGISTERED` y va derecha a la Fase B: REG-06 necesita la huella de
+  // esta contraseña para comprobar que la frase de seguridad es distinta (ADR-001).
+  await rememberLoginPassword(form.adminEmail, form.password);
 }

@@ -73,7 +73,11 @@ test.describe('REG-05 · introducción a las claves · ADMIN en REGISTERED', () 
     await comoRegistered(page);
     await signIn(page, ALPHA);
     await page.getByRole('button', { name: BOTON }).click();
-    await expect(page.getByTestId('reg06-placeholder')).toBeAttached();
+    // El marcador mientras REG-06 no exista; su título cuando exista (ampliado el 6-oct
+    // al preparar REG-06: la tarea de REG-06 sustituye el marcador).
+    await expect(
+      page.getByTestId('reg06-placeholder').or(page.getByRole('heading', { level: 1, name: 'Crea tu frase de seguridad' })),
+    ).toBeAttached();
     await expect(page.getByRole('heading', { level: 1, name: TITULO })).toHaveCount(0);
   });
 

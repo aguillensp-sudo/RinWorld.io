@@ -43,6 +43,12 @@
   white-space: nowrap;
 }
 
+/* La línea va dentro del `<li>`: es el `<li>` el que tiene que crecer para que
+   el indicador ocupe la columna entera, como en el HTML aprobado. */
+.step:not(:last-child) {
+  flex: 1;
+}
+
 .stepDot {
   width: 20px;
   height: 20px;

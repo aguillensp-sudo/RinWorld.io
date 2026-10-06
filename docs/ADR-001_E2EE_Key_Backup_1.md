@@ -1,4 +1,4 @@
-Architecture Decision Record
+﻿Architecture Decision Record
 
 **ADR-001 — E2EE Private Key Backup Strategy**
 

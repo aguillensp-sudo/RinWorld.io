@@ -1,4 +1,4 @@
-__BEARINGWORLD\.IO__
+﻿__Ringworld\.IO__
 
 __LA PLATAFORMA__
 
@@ -10,7 +10,7 @@ Versión 1\.1  ·  Junio 2026  ·  CONFIDENCIAL
 
 # __0\. Propósito y Metodología__
 
-Este documento consolida en un único lugar todas las pantallas y formularios definidos a lo largo de los ocho módulos funcionales de Bearingworld\.io \(Módulos 00 a 08\), que hasta ahora estaban distribuidos de forma dispersa en ocho documentos distintos\. El objetivo es doble: servir como mapa visual de navegación entre pantallas, y servir como input estructurado para la siguiente fase del proyecto — Spec\-Driven Development \(OpenSpec\) — donde cada campo, tipo y validación aquí recogido se traduce directamente en esquemas de datos y contratos de API\.
+Este documento consolida en un único lugar todas las pantallas y formularios definidos a lo largo de los ocho módulos funcionales de Ringworld\.io \(Módulos 00 a 08\), que hasta ahora estaban distribuidos de forma dispersa en ocho documentos distintos\. El objetivo es doble: servir como mapa visual de navegación entre pantallas, y servir como input estructurado para la siguiente fase del proyecto — Spec\-Driven Development \(OpenSpec\) — donde cada campo, tipo y validación aquí recogido se traduce directamente en esquemas de datos y contratos de API\.
 
 Este no es un documento de diseño de interfaz\. No define estilos visuales, disposición exacta de píxeles, ni componentes de UI concretos\. Es un inventario funcional: qué pantallas existen, cómo se navega entre ellas, y qué campos exactos contiene cada formulario, con su tipo de dato y su regla de validación, tal como ya estaban especificados — dispersos — en los funcionales de origen\.
 
@@ -136,7 +136,7 @@ Mensaje de estado
 
 Texto estático
 
-Informa que la solicitud está en revisión por el equipo de Bearingworld\.io\.
+Informa que la solicitud está en revisión por el equipo de Ringworld\.io\.
 
 Indicador de polling
 

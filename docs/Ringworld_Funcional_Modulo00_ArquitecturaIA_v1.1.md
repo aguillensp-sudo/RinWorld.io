@@ -1,4 +1,4 @@
-**BEARINGNET COMPETITOR**
+﻿**RINGWORLD COMPETITOR**
 
 **PLATAFORMA**
 
@@ -20,7 +20,7 @@ Este documento — Módulo 00 — define las reglas del juego que gobiernan esa 
 
 |  |
 | --- |
-| **🎯 LA APUESTA ESTRATÉGICA**  Ninguna plataforma B2B vertical de nicho ha implementado todavía un agente conversacional como interfaz primaria. BearingNet opera con una UX de 2005. Esta arquitectura no es solo una mejora de experiencia de usuario — es la decisión que hace que la plataforma sea imposible de copiar a corto plazo sin reconstruir desde cero. |
+| **🎯 LA APUESTA ESTRATÉGICA**  Ninguna plataforma B2B vertical de nicho ha implementado todavía un agente conversacional como interfaz primaria. Ringworld opera con una UX de 2005. Esta arquitectura no es solo una mejora de experiencia de usuario — es la decisión que hace que la plataforma sea imposible de copiar a corto plazo sin reconstruir desde cero. |
 
 # 2. El Modelo Mental de la Interfaz
 
@@ -28,7 +28,7 @@ Este documento — Módulo 00 — define las reglas del juego que gobiernan esa 
 
 En una aplicación web clásica, el usuario navega por pantallas y el chat (si existe) es un asistente secundario que aparece como un widget en una esquina. En esta plataforma la relación es la inversa:
 
-| **Dimensión** | **Modelo clásico (BearingNet y equivalentes)** | **Nuestro modelo** |
+| **Dimensión** | **Modelo clásico (Ringworld y equivalentes)** | **Nuestro modelo** |
 | --- | --- | --- |
 | Interfaz primaria | Pantallas, formularios, menús de navegación. | El agente conversacional — siempre visible, siempre activo. |
 | Interfaz secundaria | No existe alternativa conversacional. | La UI visual — representa el estado actual y permite interacción directa cuando es más eficiente que el chat. |

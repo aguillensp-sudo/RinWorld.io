@@ -1,4 +1,4 @@
-**BEARINGWORLD.IO**
+﻿**Ringworld.IO**
 
 **LA PLATAFORMA**
 
@@ -12,7 +12,7 @@ Versión 1.1 · Junio 2026 · CONFIDENCIAL
 
 # **1. Propósito y Alcance del Módulo**
 
-Este documento especifica el Foro de la Comunidad de Bearingworld.io: un espacio público de discusión entre miembros de la plataforma, organizado en categorías temáticas, sin relación directa con inventario, búsqueda o negociación. Es la primera funcionalidad puramente social de la plataforma — no cifrada (a diferencia del Módulo 04), no privada entre dos partes, sino visible para toda la comunidad de miembros.
+Este documento especifica el Foro de la Comunidad de Ringworld.io: un espacio público de discusión entre miembros de la plataforma, organizado en categorías temáticas, sin relación directa con inventario, búsqueda o negociación. Es la primera funcionalidad puramente social de la plataforma — no cifrada (a diferencia del Módulo 04), no privada entre dos partes, sino visible para toda la comunidad de miembros.
 
 Este módulo cubre: la estructura de categorías, la creación y respuesta de hilos, el sistema de reacciones simples, la identidad con la que se publica, las reglas de autorregulación sin moderador humano en V1, y la capa conversacional de VERA en este contexto.
 
@@ -56,7 +56,7 @@ El contenido del foro se organiza en categorías temáticas fijas, definidas por
 | General | Conversación abierta del sector, presentaciones, noticias relevantes para la comunidad. |
 | Referencias técnicas | Dudas y discusión sobre equivalencias entre marcas, especificaciones técnicas, sustitución de referencias. |
 | Logística y aduanas | Experiencias e intercambio de información sobre transporte, aranceles, incoterms — complementario, no sustituto, de la Calculadora del Módulo 05. |
-| Plataforma y soporte | Preguntas sobre el funcionamiento de Bearingworld.io, sugerencias de mejora, problemas técnicos. |
+| Plataforma y soporte | Preguntas sobre el funcionamiento de Ringworld.io, sugerencias de mejora, problemas técnicos. |
 
 |  |
 | --- |

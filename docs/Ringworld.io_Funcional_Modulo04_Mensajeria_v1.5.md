@@ -1,4 +1,4 @@
-**BEARINGWORLD.IO**
+﻿**Ringworld.IO**
 
 **LA PLATAFORMA**
 
@@ -12,7 +12,7 @@ Versión 1.5 · Junio 2026 · CONFIDENCIAL
 
 # **1. Propósito y Alcance del Módulo**
 
-Este documento especifica el módulo de Mensajería Cifrada de Extremo a Extremo (E2EE), Consultas y Negociación de Bearingworld.io. Es el módulo donde el descubrimiento (Módulo 03) se convierte en contacto humano real entre dos organizaciones: desde una pregunta simple de disponibilidad hasta una oferta formal de precio. Todo el contenido de estas conversaciones está cifrado de extremo a extremo usando las claves X25519 generadas durante el onboarding (Módulo 01); ni el servidor ni VERA pueden leer el contenido de los mensajes ni de ninguna tarjeta estructurada (consulta u oferta).
+Este documento especifica el módulo de Mensajería Cifrada de Extremo a Extremo (E2EE), Consultas y Negociación de Ringworld.io. Es el módulo donde el descubrimiento (Módulo 03) se convierte en contacto humano real entre dos organizaciones: desde una pregunta simple de disponibilidad hasta una oferta formal de precio. Todo el contenido de estas conversaciones está cifrado de extremo a extremo usando las claves X25519 generadas durante el onboarding (Módulo 01); ni el servidor ni VERA pueden leer el contenido de los mensajes ni de ninguna tarjeta estructurada (consulta u oferta).
 
 Este módulo cubre: el modelo de hilo único de conversación, que puede contener tres tipos de contenido — mensajes libres, tarjetas de consulta y tarjetas de oferta —; los tres flujos de entrada al contacto (Contactar, Consultar y la ficha de organización); el cifrado E2EE de cada elemento del hilo; el ciclo de vida del hilo y de cada tarjeta; el marcado persistente de líneas ya consultadas; la ficha pública de organización como directorio mínimo de miembros; y la capa conversacional de VERA, que ayuda a redactar y a rellenar formularios pero nunca decide ni conoce cifras comerciales por sí misma.
 
@@ -32,7 +32,7 @@ Este módulo cubre: el modelo de hilo único de conversación, que puede contene
 
 |  |
 | --- |
-| **🔒 PRINCIPIO RECTOR: E2EE REAL, Y NINGÚN PAGO PASA POR LA PLATAFORMA**  Dos invariantes gobiernan este módulo de forma permanente, no solo para V1. Primero, el cifrado E2EE: cada mensaje, tarjeta de consulta y tarjeta de oferta se cifra en el dispositivo del emisor con la clave pública X25519 del receptor y solo puede descifrarse con la clave privada del receptor. El servidor almacena y reenvía ciphertext sin poder leerlo — esto incluye explícitamente cualquier cifra de precio o cantidad. Segundo, y como declaración de principio de la plataforma (no una limitación temporal de V1): Bearingworld.io no procesa pagos ni gestiona transacciones financieras en ninguna versión. La plataforma facilita el contacto y la negociación; el acuerdo comercial y su ejecución (pago, envío, factura) ocurren siempre fuera de la plataforma, entre las dos organizaciones. Esta segunda declaración debe revisarse también en el PRD y en el Tech Stack para asegurar coherencia (no hay Billing Service de transacciones entre miembros — el Billing Service del Tech Stack se refiere exclusivamente a las suscripciones de los miembros a la plataforma, no a pagos entre ellos). |
+| **🔒 PRINCIPIO RECTOR: E2EE REAL, Y NINGÚN PAGO PASA POR LA PLATAFORMA**  Dos invariantes gobiernan este módulo de forma permanente, no solo para V1. Primero, el cifrado E2EE: cada mensaje, tarjeta de consulta y tarjeta de oferta se cifra en el dispositivo del emisor con la clave pública X25519 del receptor y solo puede descifrarse con la clave privada del receptor. El servidor almacena y reenvía ciphertext sin poder leerlo — esto incluye explícitamente cualquier cifra de precio o cantidad. Segundo, y como declaración de principio de la plataforma (no una limitación temporal de V1): Ringworld.io no procesa pagos ni gestiona transacciones financieras en ninguna versión. La plataforma facilita el contacto y la negociación; el acuerdo comercial y su ejecución (pago, envío, factura) ocurren siempre fuera de la plataforma, entre las dos organizaciones. Esta segunda declaración debe revisarse también en el PRD y en el Tech Stack para asegurar coherencia (no hay Billing Service de transacciones entre miembros — el Billing Service del Tech Stack se refiere exclusivamente a las suscripciones de los miembros a la plataforma, no a pagos entre ellos). |
 
 # **2. Actores del Módulo**
 
@@ -224,7 +224,7 @@ Ambas tarjetas se renderizan en el historial del hilo (MSG-02) con componentes v
 
 ## **7.2 Reversión de "Acuerdo Alcanzado"**
 
-A diferencia de la v1.0, la transición ACUERDO ALCANZADO → ABIERTO es siempre posible, por cualquiera de las dos partes, sin restricciones ni período de gracia. Esto refleja que "acuerdo alcanzado" en Bearingworld.io no tiene valor contractual ni legal por sí mismo — es una anotación de buena fe entre las partes sobre el estado de su negociación, no un contrato. Si alguna de las partes considera que el acuerdo anotado ya no refleja la realidad (cambio de condiciones, error al marcarlo, etc.), puede revertirlo libremente. VERA, al ejecutar esta reversión a petición del usuario, la trata como ACCIÓN REVERSIBLE con confirmación ligera (Módulo 00) — no como una acción de alto impacto, precisamente porque no tiene consecuencias contractuales.
+A diferencia de la v1.0, la transición ACUERDO ALCANZADO → ABIERTO es siempre posible, por cualquiera de las dos partes, sin restricciones ni período de gracia. Esto refleja que "acuerdo alcanzado" en Ringworld.io no tiene valor contractual ni legal por sí mismo — es una anotación de buena fe entre las partes sobre el estado de su negociación, no un contrato. Si alguna de las partes considera que el acuerdo anotado ya no refleja la realidad (cambio de condiciones, error al marcarlo, etc.), puede revertirlo libremente. VERA, al ejecutar esta reversión a petición del usuario, la trata como ACCIÓN REVERSIBLE con confirmación ligera (Módulo 00) — no como una acción de alto impacto, precisamente porque no tiene consecuencias contractuales.
 
 ## **7.3 Cierre sin acuerdo**
 
@@ -287,7 +287,7 @@ El Directorio de Organizaciones es una sección de navegación accesible directa
 
 |  |
 | --- |
-| **📇 DIRECTORIO ABIERTO — "PÁGINAS AMARILLAS" DEL SECTOR**  El Directorio de Organizaciones y los datos de contacto público (teléfono, email) que muestra son visibles para todos los miembros de la plataforma, sin restricciones de visibilidad ni reglas de whitelist/blacklist (que en el Módulo 02 aplican al inventario, no a los datos de la organización en sí). La intención de producto es deliberada: Bearingworld.io no busca forzar todo el contacto a través de su mensajería E2EE. Si dos organizaciones, tras verse en el directorio o en resultados de búsqueda, prefieren llamarse por teléfono o escribirse a un email comercial directamente, la plataforma no lo impide ni lo penaliza — es el mismo espíritu del directorio de miembros que ya existe en BearingNet, mejorado con datos de contacto más completos y con filtros. |
+| **📇 DIRECTORIO ABIERTO — "PÁGINAS AMARILLAS" DEL SECTOR**  El Directorio de Organizaciones y los datos de contacto público (teléfono, email) que muestra son visibles para todos los miembros de la plataforma, sin restricciones de visibilidad ni reglas de whitelist/blacklist (que en el Módulo 02 aplican al inventario, no a los datos de la organización en sí). La intención de producto es deliberada: Ringworld.io no busca forzar todo el contacto a través de su mensajería E2EE. Si dos organizaciones, tras verse en el directorio o en resultados de búsqueda, prefieren llamarse por teléfono o escribirse a un email comercial directamente, la plataforma no lo impide ni lo penaliza — es el mismo espíritu del directorio de miembros que ya existe en BearingNet, mejorado con datos de contacto más completos y con filtros. |
 
 # **9. Capa Conversacional VERA en este Módulo**
 
@@ -325,7 +325,7 @@ Esta sección detalla cómo VERA participa en cada vía de contacto, respetando 
 | RNG-MSG-05 | El marcado de "línea consultada" (sección 5.4) es persistente en base de datos, por par (línea de inventario, organización compradora), y bloquea el envío de nuevas tarjetas de consulta sobre esa misma línea. No se traslada a líneas nuevas generadas por reemplazo total (Módulo 02 v1.2). | **ALTA** |
 | RNG-MSG-06 | Existe un único hilo de conversación por par de organizaciones. Cualquier vía de contacto (sección 4.2) hacia una organización con la que ya existe un hilo reutiliza ese hilo, nunca crea uno nuevo. | **ALTA** |
 | RNG-MSG-07 | La transición ACUERDO ALCANZADO → ABIERTO (sección 7.2) está siempre disponible para cualquiera de las dos partes, sin restricciones, condiciones ni período de gracia. | MEDIA |
-| RNG-MSG-08 | Bearingworld.io no procesa pagos ni transacciones financieras entre miembros en ninguna versión de la plataforma. Ningún flujo de este módulo puede interpretarse ni evolucionar hacia gestionar dicho pago. | **CRÍTICA** |
+| RNG-MSG-08 | Ringworld.io no procesa pagos ni transacciones financieras entre miembros en ninguna versión de la plataforma. Ningún flujo de este módulo puede interpretarse ni evolucionar hacia gestionar dicho pago. | **CRÍTICA** |
 | RNG-MSG-09 | Para prevenir spam de contacto masivo, el Messaging Service aplica un límite de tasa de nuevos hilos iniciados por organización: 25 hilos nuevos por organización y día natural como valor de partida (QA-MSG-01 cerrada), configurable a nivel de plataforma (no hardcoded) y revisable tras observar el uso real post-lanzamiento. Superar el límite no bloquea hilos existentes, solo la creación de nuevos. | MEDIA |
 
 # **11. Criterios de Aceptación por Flujo**

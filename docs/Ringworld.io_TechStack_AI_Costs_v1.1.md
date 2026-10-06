@@ -1,4 +1,4 @@
-**BEARINGWORLD.IO**
+﻿**Ringworld.IO**
 
 **LA PLATAFORMA**
 
@@ -16,11 +16,11 @@ Este documento es una revisión específica del Tech Stack & AI Cost Estimation 
 
 |  |
 | --- |
-| **🔄 CAMBIO DE PRODUCTO QUE MOTIVA ESTA REVISIÓN**  Durante el desarrollo del funcional (Módulo 03 — Búsqueda Conversacional v1.1), se decidió que Bearingworld.io no calculará ninguna puntuación de reputación algorítmica ni verificada criptográficamente en V1. El único indicador social sobre un distribuidor es el sistema de Favoritos: cualquier miembro puede marcar a otra organización como favorita, y el indicador visible es un simple recuento de cuántos miembros distintos lo han hecho. Es un mecanismo exclusivamente manual, sin IA, sin algoritmo, y sin necesidad de ningún componente criptográfico de verificación de transacciones. En consecuencia, todo el trabajo de arquitectura ZK-SNARK (snarkjs, Groth16, circuitos de prueba, Reputation Service) que el Tech Stack v1.0 contemplaba queda eliminado del proyecto. El Módulo 06 — Reputación ZKP, reservado en la hoja de ruta original, queda formalmente descartado y absorbido por la funcionalidad de Favoritos ya especificada en el Módulo 03. |
+| **🔄 CAMBIO DE PRODUCTO QUE MOTIVA ESTA REVISIÓN**  Durante el desarrollo del funcional (Módulo 03 — Búsqueda Conversacional v1.1), se decidió que Ringworld.io no calculará ninguna puntuación de reputación algorítmica ni verificada criptográficamente en V1. El único indicador social sobre un distribuidor es el sistema de Favoritos: cualquier miembro puede marcar a otra organización como favorita, y el indicador visible es un simple recuento de cuántos miembros distintos lo han hecho. Es un mecanismo exclusivamente manual, sin IA, sin algoritmo, y sin necesidad de ningún componente criptográfico de verificación de transacciones. En consecuencia, todo el trabajo de arquitectura ZK-SNARK (snarkjs, Groth16, circuitos de prueba, Reputation Service) que el Tech Stack v1.0 contemplaba queda eliminado del proyecto. El Módulo 06 — Reputación ZKP, reservado en la hoja de ruta original, queda formalmente descartado y absorbido por la funcionalidad de Favoritos ya especificada en el Módulo 03. |
 
 # 1. Architecture Overview
 
-This document describes the recommended technology stack for the Bearingworld.io platform and provides a detailed cost model for its AI layer. The stack is designed around three non-negotiable constraints derived from the PRD: (1) end-to-end encryption that mathematically guarantees commercial-data privacy, (2) AI-powered workflows that eliminate the manual friction users experience on the incumbent platform today, and (3) a total infrastructure cost envelope of €80–120k/year at steady state to preserve the 65–75% net margin target.
+This document describes the recommended technology stack for the Ringworld.io platform and provides a detailed cost model for its AI layer. The stack is designed around three non-negotiable constraints derived from the PRD: (1) end-to-end encryption that mathematically guarantees commercial-data privacy, (2) AI-powered workflows that eliminate the manual friction users experience on the incumbent platform today, and (3) a total infrastructure cost envelope of €80–120k/year at steady state to preserve the 65–75% net margin target.
 
 # 2. Technology Stack — Layer by Layer
 
@@ -62,7 +62,7 @@ Ingestion Service — Accepts CSV/Excel uploads via HTTP, email attachment, or f
 
 Alerts Service — Evaluates standing watcher conditions (e.g. ‘100+ units of 6205 2RS in Spain’) against every stock.updated Kafka event. Pushes notifications via FCM/APNs/email.
 
-Billing Service — Stripe integration for member subscriptions to the platform (annual fee). Handles trial periods, dunning, and invoicing. NOTA v1.1: este servicio gestiona exclusivamente el cobro de la suscripción anual del miembro a Bearingworld.io. Por declaración de principio de la plataforma (Módulo 04 v1.1, RNG-MSG-08), Bearingworld.io no procesa pagos ni transacciones financieras entre miembros en ninguna versión — este servicio no gestiona, ni gestionará, pagos entre distribuidores.
+Billing Service — Stripe integration for member subscriptions to the platform (annual fee). Handles trial periods, dunning, and invoicing. NOTA v1.1: este servicio gestiona exclusivamente el cobro de la suscripción anual del miembro a Ringworld.io. Por declaración de principio de la plataforma (Módulo 04 v1.1, RNG-MSG-08), Ringworld.io no procesa pagos ni transacciones financieras entre miembros en ninguna versión — este servicio no gestiona, ni gestionará, pagos entre distribuidores.
 
 ## E2EE / Zero-Knowledge Core
 

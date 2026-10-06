@@ -1,4 +1,4 @@
-**BEARINGWORLD.IO**
+﻿**RINGWORLD.IO**
 
 **LA PLATAFORMA**
 
@@ -10,7 +10,7 @@ Versión 1.1 · Junio 2026 · CONFIDENCIAL
 
 # Nota de Revisión v1.1
 
-Este PRD se actualiza tras completar la especificación funcional de los ocho módulos de Bearingworld.io (Módulos 00 a 08) y el Tech Stack v1.1. El v1.0 describía la visión y posicionamiento inicial del producto; varias decisiones tomadas durante el desarrollo del funcional difieren de lo descrito originalmente, especialmente en monetización, reputación, y logística. Este documento incorpora esos cambios mientras conserva la visión estratégica central, que permanece intacta: zero-knowledge architecture como diferenciador irreplicable frente a BearingNet.
+Este PRD se actualiza tras completar la especificación funcional de los ocho módulos de Ringworld.io (Módulos 00 a 08) y el Tech Stack v1.1. El v1.0 describía la visión y posicionamiento inicial del producto; varias decisiones tomadas durante el desarrollo del funcional difieren de lo descrito originalmente, especialmente en monetización, reputación, y logística. Este documento incorpora esos cambios mientras conserva la visión estratégica central, que permanece intacta: zero-knowledge architecture como diferenciador irreplicable frente a BearingNet.
 
 |  |
 | --- |
@@ -18,7 +18,7 @@ Este PRD se actualiza tras completar la especificación funcional de los ocho m�
 
 # 1. Executive Summary
 
-Este documento define los requisitos de producto para Bearingworld.io, un marketplace global de nueva generación para distribuidores de rodamientos y transmisión de potencia. La plataforma está diseñada para competir directamente con BearingNet — el incumbente actual del mercado — y desplazarlo, abordando sus debilidades estructurales fundamentales: una experiencia de usuario anticuada, un modelo de visibilidad binario, garantías de privacidad nulas para los datos comerciales, ausencia de inteligencia artificial, y un flujo de trabajo que obliga a los usuarios a abandonar la plataforma hacia el email para completar cualquier transacción relevante.
+Este documento define los requisitos de producto para Ringworld.io, un marketplace global de nueva generación para distribuidores de rodamientos y transmisión de potencia. La plataforma está diseñada para competir directamente con BearingNet — el incumbente actual del mercado — y desplazarlo, abordando sus debilidades estructurales fundamentales: una experiencia de usuario anticuada, un modelo de visibilidad binario, garantías de privacidad nulas para los datos comerciales, ausencia de inteligencia artificial, y un flujo de trabajo que obliga a los usuarios a abandonar la plataforma hacia el email para completar cualquier transacción relevante.
 
 La idea estratégica central es esta: BearingNet funciona hoy como un directorio sofisticado. Los distribuidores lo usan para identificar quién tiene stock, y después abandonan inmediatamente la plataforma para negociar por email. Esto significa que la plataforma captura el paso menos valioso de la cadena de la transacción, y ninguno de su valor comercial. Nuestra plataforma está diseñada para capturar todo el flujo de trabajo — búsqueda, negociación, y gestión de relaciones — sin obligar nunca al usuario a salir.
 
@@ -164,7 +164,7 @@ Tras el desarrollo del funcional (Módulo 05), se decide reducir drásticamente 
 
 Listado completo de organizaciones miembro, accesible desde el menú principal de la plataforma, equivalente funcional al listado de miembros que ya existe en BearingNet, pero ampliado. Cada organización aporta, de forma obligatoria desde el registro, un email y un teléfono de contacto público — distintos de las credenciales de acceso del administrador — visibles para todos los miembros sin restricción, junto con su país, dirección y código postal.
 
-Filosofía de producto: Bearingworld.io no obliga a que todo el contacto entre miembros pase por su mensajería cifrada. Si dos organizaciones, tras descubrirse en el directorio o en resultados de búsqueda, prefieren llamarse por teléfono o escribirse a un email comercial directo, la plataforma no lo impide ni lo penaliza.
+Filosofía de producto: Ringworld.io no obliga a que todo el contacto entre miembros pase por su mensajería cifrada. Si dos organizaciones, tras descubrirse en el directorio o en resultados de búsqueda, prefieren llamarse por teléfono o escribirse a un email comercial directo, la plataforma no lo impide ni lo penaliza.
 
 ## 5.7 Foro de la Comunidad (NUEVO v1.1)
 

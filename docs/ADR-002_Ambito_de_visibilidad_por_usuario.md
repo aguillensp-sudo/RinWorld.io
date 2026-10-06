@@ -1,4 +1,4 @@
-# ADR-002 · Ámbito de visibilidad por usuario dentro de la organización
+﻿# ADR-002 · Ámbito de visibilidad por usuario dentro de la organización
 
 | | |
 |---|---|
@@ -19,7 +19,7 @@
 
 Durante la revisión del MVP se detectó que **bearingnet.net permite que cada usuario
 de una empresa vea solo las consultas y ofertas en las que ha participado**, y que
-bearingworld no tiene esa configuración porque se decidió lo contrario en la fase
+Ringworld no tiene esa configuración porque se decidió lo contrario en la fase
 funcional.
 
 **El motivo de paridad competitiva no es suficiente por sí solo** y así se hizo
@@ -27,7 +27,7 @@ constar. El motivo que sí sostiene la decisión es otro, y es una extensión de
 diferenciador:
 
 > BearingNet hace un **filtro de presentación**: su servidor lee todo el contenido y
-> decide qué muestra a cada usuario. Bearingworld puede hacer una **garantía
+> decide qué muestra a cada usuario. Ringworld puede hacer una **garantía
 > criptográfica**: el compañero de al lado no es que no vea la negociación, es que
 > **no puede** verla, porque la clave de contenido nunca se envolvió para él.
 >

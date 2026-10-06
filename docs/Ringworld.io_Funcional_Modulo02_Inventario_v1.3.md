@@ -1,4 +1,4 @@
-**BEARINGNET COMPETITOR**
+﻿**BEARINGNET COMPETITOR**
 
 **LA PLATAFORMA**
 
@@ -10,9 +10,9 @@ Versión 1.3 · Junio 2026 · CONFIDENCIAL
 
 # **1. Propósito y Alcance del Módulo**
 
-Este documento describe con detalle funcional completo el módulo de Gestión de Inventario de la plataforma Bearingworld.io. Cubre la subida de stock en cualquier formato, el procesamiento inteligente por IA, las reglas de visibilidad granular por miembro, el indicador de frescura de datos, y la gestión del ciclo de vida del inventario publicado.
+Este documento describe con detalle funcional completo el módulo de Gestión de Inventario de la plataforma Ringworld.io. Cubre la subida de stock en cualquier formato, el procesamiento inteligente por IA, las reglas de visibilidad granular por miembro, el indicador de frescura de datos, y la gestión del ciclo de vida del inventario publicado.
 
-Este módulo es el combustible de la plataforma. Sin inventario publicado no existe utilidad para los compradores. Su diseño impacta directamente sobre la tasa de activación, la densidad de red y la frecuencia de uso diario. La ventaja competitiva frente a Bearingworld.io se materializa aquí en tres ejes: formato libre (sin plantilla rígida), actualización automática (sin intervención manual) y control granular de visibilidad (sin el modelo binario del competidor).
+Este módulo es el combustible de la plataforma. Sin inventario publicado no existe utilidad para los compradores. Su diseño impacta directamente sobre la tasa de activación, la densidad de red y la frecuencia de uso diario. La ventaja competitiva frente a Ringworld.io se materializa aquí en tres ejes: formato libre (sin plantilla rígida), actualización automática (sin intervención manual) y control granular de visibilidad (sin el modelo binario del competidor).
 
 ## **1.1 Objetivos funcionales**
 
@@ -161,13 +161,13 @@ Pantalla de resumen tras completar el procesamiento. Se muestra tanto para subid
 
 ### **4.3.1 Descripción del canal**
 
-Cada miembro tiene asignada una dirección de email única en la plataforma con el formato: stock+[member\_id]@ingest.bearingworld.io. El miembro configura su sistema o ERP para enviar un email con el archivo de stock adjunto a esa dirección. La plataforma lo procesa automáticamente sin intervención humana.
+Cada miembro tiene asignada una dirección de email única en la plataforma con el formato: stock+[member\_id]@ingest.Ringworld.io. El miembro configura su sistema o ERP para enviar un email con el archivo de stock adjunto a esa dirección. La plataforma lo procesa automáticamente sin intervención humana.
 
 ### **4.3.2 Pantalla INV-04 — Configuración del canal email**
 
 | **Elemento** | **Comportamiento** |
 | --- | --- |
-| Dirección de email asignada | Mostrada en texto grande y copiable. Botón "Copiar". Formato: stock+[uuid\_corto]@ingest.bearingworld.io. |
+| Dirección de email asignada | Mostrada en texto grande y copiable. Botón "Copiar". Formato: stock+[uuid\_corto]@ingest.Ringworld.io. |
 | Whitelist de remitentes | Lista de emails autorizados a enviar stock. Por defecto: solo el email del administrador. El miembro puede añadir otros (ej: el email del ERP corporativo, el email del responsable de almacén). Emails no en la whitelist son rechazados silenciosamente y registrados en el log de seguridad. |
 | Perfil de mapeo por defecto | Selector del perfil de columnas a aplicar automáticamente. Si el archivo recibido no coincide con ningún perfil guardado, el sistema intenta mapeo automático y notifica al miembro para revisión antes de publicar. |
 | Comportamiento ante errores | Radio: (a) Publicar las líneas válidas e ignorar las erróneas, notificando por email / (b) No publicar nada si hay cualquier error, notificar para revisión manual. Default: opción (a). |
@@ -218,7 +218,7 @@ Las API Keys se generan y revocan desde INV-06 (panel de API). Cada key tiene: n
 
 ## **5.1 Descripción general**
 
-El AI CSV Mapper es el componente que permite a cualquier miembro subir su inventario en su propio formato, sin necesidad de adaptarse a una plantilla. Es uno de los diferenciadores clave frente a Bearingworld.io, que requiere un formato CSV específico y rechaza cualquier desviación.
+El AI CSV Mapper es el componente que permite a cualquier miembro subir su inventario en su propio formato, sin necesidad de adaptarse a una plantilla. Es uno de los diferenciadores clave frente a Ringworld.io, que requiere un formato CSV específico y rechaza cualquier desviación.
 
 ## **5.2 Funcionamiento del mapeo**
 
@@ -297,7 +297,7 @@ Panel de gestión de la visibilidad del inventario. Accesible desde el botón "C
 
 ## **7.1 Descripción y motivación**
 
-Uno de los problemas más citados por los usuarios de Bearingworld.io es el stock fantasma: referencias que aparecen disponibles en la búsqueda pero que en realidad fueron vendidas semanas antes. El distribuidor que llama para preguntar pierde tiempo. El que tiene el stock y no lo actualiza pierde credibilidad. La plataforma resuelve esto con un sistema de frescura visible y activo.
+Uno de los problemas más citados por los usuarios de Ringworld.io es el stock fantasma: referencias que aparecen disponibles en la búsqueda pero que en realidad fueron vendidas semanas antes. El distribuidor que llama para preguntar pierde tiempo. El que tiene el stock y no lo actualiza pierde credibilidad. La plataforma resuelve esto con un sistema de frescura visible y activo.
 
 ## **7.2 Reglas de frescura**
 
@@ -393,7 +393,7 @@ El miembro puede editar cualquier campo de una línea publicada individualmente,
 
 # **12. Capa Conversacional — VERA en la Gestión de Inventario**
 
-De acuerdo con el Módulo 00 (Arquitectura de Interacción IA v1.1), VERA es la interfaz primaria de Bearingworld.io. Esta sección especifica cómo se integra VERA en cada uno de los flujos del módulo de Gestión de Inventario, tanto como asistente proactivo como canal alternativo para ejecutar operaciones sin tocar la UI visual.
+De acuerdo con el Módulo 00 (Arquitectura de Interacción IA v1.1), VERA es la interfaz primaria de Ringworld.io. Esta sección especifica cómo se integra VERA en cada uno de los flujos del módulo de Gestión de Inventario, tanto como asistente proactivo como canal alternativo para ejecutar operaciones sin tocar la UI visual.
 
 |  |
 | --- |
@@ -412,7 +412,7 @@ El usuario puede ejecutar cualquier operación del módulo mediante instruccione
 | "Archiva todas las líneas con más de 60 días sin movimiento" | ACCIÓN IRREVERSIBLE | VERA calcula el impacto: "Esto archivará 87 líneas (última actualización hace más de 60 días). Seguirán en tu historial pero dejarán de aparecer en búsquedas. ¿Confirmas? [botón: Sí, archivar 87 líneas] [Cancelar]". Solo ejecuta tras confirmación explícita. |
 | "No quiero que Distribuciones García vea mi inventario" | ACCIÓN REVERSIBLE | VERA identifica al miembro: "Activo visibilidad restringida y añado a Distribuciones García S.L. a tu lista de exclusión. El resto de miembros seguirá viendo tu inventario con normalidad. ¿Confirmas?" |
 | "¿Quién puede ver mi inventario ahora mismo?" | CONSULTA | VERA evalúa la configuración de visibilidad activa y responde: "Tu inventario es visible para todos los miembros excepto Distribuciones García S.L., que tienes en tu lista de exclusión." |
-| "Configura la carpeta C:\ERP\stock\_export como carpeta monitorizada" | ACCIÓN REVERSIBLE | VERA detecta que el Desktop Agent no está instalado si es el caso: "Para monitorizar una carpeta necesitas instalar el agente de escritorio de Bearingworld.io. Te muestro las instrucciones." Zona A muestra INV-05. |
+| "Configura la carpeta C:\ERP\stock\_export como carpeta monitorizada" | ACCIÓN REVERSIBLE | VERA detecta que el Desktop Agent no está instalado si es el caso: "Para monitorizar una carpeta necesitas instalar el agente de escritorio de Ringworld.io. Te muestro las instrucciones." Zona A muestra INV-05. |
 | "Elimina todas mis líneas archivadas" | ACCIÓN IRREVERSIBLE | VERA aplica el protocolo completo: impacto cuantificado, advertencia de irreversibilidad, botón con texto específico "Eliminar X líneas archivadas". Sin esta confirmación explícita, no ejecuta. |
 
 ## **12.2 VERA como asistente durante la subida de inventario**
@@ -487,7 +487,7 @@ Todas las preguntas abiertas del Módulo 02 han sido resueltas. Este registro do
 | **Versión** | **Fecha** | **Autor** | **Descripción** |
 | --- | --- | --- | --- |
 | 1.0 | Junio 2026 | Equipo de Producto | Versión inicial. Cubre todos los canales de subida, motor IA, visibilidad granular y sistema de frescura. |
-| 1.1 | Junio 2026 | Equipo de Producto | Actualización de identidad a Bearingworld.io. Añadida sección 12 completa de capa conversacional VERA. |
+| 1.1 | Junio 2026 | Equipo de Producto | Actualización de identidad a Ringworld.io. Añadida sección 12 completa de capa conversacional VERA. |
 | 1.2 | Junio 2026 | Equipo de Producto | Revisión completa según comentarios de producto: (1) Añadido campo product\_family al esquema canónico — base de las reglas de visibilidad por familia. (2) Eliminado campo condition — no es práctica estándar del sector. (3) Política de actualización cambiada a REEMPLAZO TOTAL por defecto. (4) Eliminado mecanismo de auto-archivo — el stock nunca se retira automáticamente por antigüedad. (5) Indicadores de frescura redefinidos como puramente informativos, sin penalización. (6) Modo TIERED diferido a V2. (7) CAN-03 (desktop agent) diferido a V2. (8) Mensajes de VERA sobre frescura redefinidos con tono informativo sin urgencia artificial. (9) Todas las preguntas abiertas cerradas. |
 | 1.3 | Junio 2026 | Equipo de Producto | Cierre de comentarios de revisión del Inventario de Pantallas: (1) Rediseño completo del sistema de visibilidad (sección 6): de cinco modos (Público/Whitelist/Blacklist/Bilateral/Tiered) a dos (Visible para todos los miembros / Visibilidad restringida), aplicados siempre al inventario completo de la organización sin granularidad por categoría ni referencia. Bilateral descartado por completo; Whitelist absorbido conceptualmente por el nuevo modo restringido; Tiered se mantiene diferido a V2. La lista de exclusión del modo restringido se construye combinando búsqueda por nombre y exclusión por continente/país. (2) Corregidos tres residuos del campo condition (tabla INV-01, edición de línea INV-08, ejemplo conversacional) que debían haberse eliminado en v1.2 pero no se limpiaron del todo. (3) Traducida la terminología STALE a "desactualizado" en las cinco menciones que quedaban en inglés. (4) Aclarado el significado de "Guardar como perfil" en INV-02. (5) INV-03 ahora muestra explícitamente solo un ejemplo de 10 líneas, nunca el listado completo, independientemente del volumen del archivo importado. |
 

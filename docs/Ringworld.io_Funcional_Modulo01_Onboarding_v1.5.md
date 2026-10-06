@@ -1,4 +1,4 @@
-**BEARINGNET COMPETITOR**
+﻿**BEARINGNET COMPETITOR**
 
 **PLATAFORMA**
 
@@ -10,7 +10,7 @@ Versión 1.5 · Junio 2026 · CONFIDENCIAL
 
 # **1. Propósito y Alcance del Módulo**
 
-Este documento describe con nivel de detalle funcional completo el módulo de Onboarding, Registro y Gestión de Claves E2EE de la plataforma Bearingworld.io. Cubre todos los flujos de usuario, pantallas, reglas de negocio, validaciones y decisiones de diseño relevantes para el desarrollo, QA y aceptación del módulo.
+Este documento describe con nivel de detalle funcional completo el módulo de Onboarding, Registro y Gestión de Claves E2EE de la plataforma Ringworld.io. Cubre todos los flujos de usuario, pantallas, reglas de negocio, validaciones y decisiones de diseño relevantes para el desarrollo, QA y aceptación del módulo.
 
 El módulo de Onboarding es la entrada al sistema. Cualquier fallo en su diseño impacta directamente sobre la primera impresión del usuario, la tasa de activación y — de forma crítica — la correcta generación y custodia de las claves criptográficas E2EE, que son el fundamento de la propuesta de valor diferencial de la plataforma.
 
@@ -39,7 +39,7 @@ El módulo de Onboarding es la entrada al sistema. Cualquier fallo en su diseño
 | Nuevo miembro (admin) | Primer usuario de una organización que completa el registro. Asume automáticamente el rol de Administrador de Organización. | Puede completar el onboarding, configurar el perfil de organización e invitar usuarios adicionales. |
 | Usuario invitado | Empleado de una organización ya registrada que acepta una invitación del administrador. | Completa registro personal y generación de claves. No configura el perfil de organización. |
 | Administrador de Organización | Miembro con rol Admin dentro de su organización. | Puede invitar usuarios, revocar invitaciones y gestionar claves del equipo. |
-| Operador de Plataforma (Administrador Bearingworld.io) | Personal interno de Bearingworld.io con acceso al panel de administración de la plataforma. | ÚNICO actor con capacidad de aprobar o rechazar el alta de nuevas organizaciones. Sin su aprobación, ninguna organización puede activarse. No puede ver claves privadas (imposible por arquitectura E2EE). |
+| Operador de Plataforma (Administrador Ringworld.io) | Personal interno de Ringworld.io con acceso al panel de administración de la plataforma. | ÚNICO actor con capacidad de aprobar o rechazar el alta de nuevas organizaciones. Sin su aprobación, ninguna organización puede activarse. No puede ver claves privadas (imposible por arquitectura E2EE). |
 
 # **3. Flujos de Usuario Principales**
 
@@ -144,7 +144,7 @@ Formulario único que recoge todos los datos necesarios para crear la organizaci
 * RN-01.2: La contraseña se hashea con bcrypt (cost factor 12) en el servidor. Nunca se almacena en texto plano ni se envía en logs.
 * RN-01.3: La combinación [nombre empresa + país] no se valida como única en el registro. Es responsabilidad del operador revisar duplicados si se activa el proceso de validación manual.
 * RN-01.4: Si el dominio del email corporativo ya existe registrado en la plataforma bajo otra organización, el sistema muestra un aviso no bloqueante: "Existen otros usuarios de tu empresa en la plataforma. Si quieres unirte a su organización, pide a tu administrador que te invite."
-* RN-01.5: Los usuarios que se registran con Google SSO no tienen contraseña en la plataforma. Su identidad es gestionada por Google. Sin embargo, deben configurar una Passphrase de Backup E2EE independiente del método de login. Esta passphrase no puede ser recuperada por Google ni por Bearingworld.io.
+* RN-01.5: Los usuarios que se registran con Google SSO no tienen contraseña en la plataforma. Su identidad es gestionada por Google. Sin embargo, deben configurar una Passphrase de Backup E2EE independiente del método de login. Esta passphrase no puede ser recuperada por Google ni por Ringworld.io.
 * RN-01.6: Si un email ya registrado en la plataforma (formulario clásico) intenta registrarse con Google SSO con el mismo email, el sistema lo reconoce como la misma cuenta y ofrece vincular el acceso con Google. No crea una cuenta duplicada.
 * RN-01.7 (NUEVO v1.3): El email y el teléfono de contacto público son obligatorios para completar el registro — no se valida su unicidad (a diferencia del email del administrador, RN-01.1), solo su formato. Ambos campos son editables posteriormente desde Ajustes → Datos de la organización, y se reflejan automáticamente en el Directorio de Organizaciones y en la ficha pública (Módulo 04) tras cualquier edición.
 * RN-01.8 (NUEVO v1.4): El rol de un usuario no es un campo editable ni seleccionable en ningún formulario. El primer usuario que completa el registro de una organización (a través del FRO) asume automáticamente el rol de Administrador. Todos los usuarios adicionales — ya sea añadidos inmediatamente tras el FRO (REG-09) o invitados posteriormente desde INVT-01 — asumen automáticamente el rol de Editor, sin excepción y sin posibilidad de elegir o cambiar este valor desde ningún formulario de registro o invitación.
@@ -154,7 +154,7 @@ Formulario único que recoge todos los datos necesarios para crear la organizaci
 
 ### **3.2B.1 Descripción del flujo**
 
-Este es el flujo más crítico del módulo desde el punto de vista de la seguridad de la comunidad. El Operador de Plataforma (administrador de Bearingworld.io) es el único actor autorizado para activar nuevas organizaciones. El objetivo es garantizar que solo accedan empresas que pertenecen genuinamente al sector de distribución de rodamientos y transmisión de potencia.
+Este es el flujo más crítico del módulo desde el punto de vista de la seguridad de la comunidad. El Operador de Plataforma (administrador de Ringworld.io) es el único actor autorizado para activar nuevas organizaciones. El objetivo es garantizar que solo accedan empresas que pertenecen genuinamente al sector de distribución de rodamientos y transmisión de potencia.
 
 |  |
 | --- |
@@ -166,11 +166,11 @@ Pantalla que se muestra al usuario inmediatamente después de enviar el FSR, mie
 
 | **Elemento** | **Comportamiento** |
 | --- | --- |
-| Mensaje principal | "Hemos recibido tu solicitud. Nuestro equipo está revisando tu solicitud de acceso a Bearingworld.io. Recibirás un email de confirmación en un plazo de 1-2 días hábiles." |
-| Información de contexto | Explicación breve de por qué existe este paso: "Bearingworld.io es una red exclusiva para distribuidores profesionales de rodamientos y transmisión de potencia. Verificamos cada solicitud para garantizar la calidad de la comunidad." |
+| Mensaje principal | "Hemos recibido tu solicitud. Nuestro equipo está revisando tu solicitud de acceso a Ringworld.io. Recibirás un email de confirmación en un plazo de 1-2 días hábiles." |
+| Información de contexto | Explicación breve de por qué existe este paso: "Ringworld.io es una red exclusiva para distribuidores profesionales de rodamientos y transmisión de potencia. Verificamos cada solicitud para garantizar la calidad de la comunidad." |
 | Estado visual | Indicador de progreso de 3 pasos: (1) Solicitud enviada ✓ / (2) Revisión en curso (activo, animado) / (3) Acceso activado (pendiente). |
 | Polling de estado | La pantalla hace polling cada 60 segundos a GET /api/auth/approval-status. Si el operador aprueba, redirige automáticamente al FRO (REG-01) con un mensaje: "¡Tu solicitud ha sido aprobada! Continuemos con el registro de tu organización." |
-| Contacto de soporte | Enlace discreto: "¿Tienes alguna pregunta? Escríbenos a soporte@bearingworld.io" |
+| Contacto de soporte | Enlace discreto: "¿Tienes alguna pregunta? Escríbenos a soporte@Ringworld.io" |
 
 |  |
 | --- |
@@ -290,7 +290,7 @@ Pantalla de éxito que confirma la finalización del onboarding y ofrece al usua
 
 **Elementos de la pantalla**
 
-* Mensaje de bienvenida personalizado: "¡Bienvenido a Bearingworld.io, [nombre del usuario]! Tu cuenta y la de [nombre empresa] están listas."
+* Mensaje de bienvenida personalizado: "¡Bienvenido a Ringworld.io, [nombre del usuario]! Tu cuenta y la de [nombre empresa] están listas."
 * Resumen de lo que acaba de configurar: claves E2EE activas, backup guardado, perfil de organización creado.
 * Pregunta sobre usuarios adicionales: "¿Deseas registrar más usuarios para tu organización ahora?" con dos opciones: [Sí, añadir usuario] / [No, ir al dashboard].
   + Si el usuario elige "Sí, añadir usuario": se lanza el FRU (Formulario de Registro de Usuario, NUEVO v1.4 — formulario separado y simplificado, sin ningún campo de organización), que solicita únicamente los datos del usuario adicional: nombre, email, contraseña, confirmar contraseña, aceptar Términos y Condiciones. El rol se asigna automáticamente como Editor — no es un campo seleccionable (RN-01.8, sección 3.2.5). El proceso es iterativo: al finalizar el registro de cada usuario adicional, se vuelve a preguntar si desea añadir otro, hasta alcanzar el límite de 5 usuarios por organización (RNG-09). Al llegar al límite o al elegir "No", se redirige al dashboard.
@@ -419,9 +419,9 @@ A continuación se describe la máquina de estados del objeto Member durante el 
 | RNG-06 | Todos los formularios del módulo deben funcionar correctamente con gestores de contraseñas (1Password, Bitwarden, etc.). Los campos de passphrase deben tener autocomplete="new-password" para la creación y autocomplete="current-password" para la introducción. | MEDIA |
 | RNG-07 | La plataforma debe ser completamente funcional en los navegadores: Chrome 120+, Firefox 120+, Safari 17+, Edge 120+. Las operaciones WebCrypto y la API de IndexedDB deben verificarse en todos los targets antes de lanzamiento. | MEDIA |
 | RNG-08 | El onboarding debe ser completable en mobile (iOS Safari, Chrome Android). El diseño de las pantallas REG-05, REG-06 y REG-07 debe optimizarse para viewport reducido. | MEDIA |
-| RNG-09 | El límite de usuarios por organización en V1 es de 5 (cinco). El Administrador de Organización no puede enviar una sexta invitación hasta que una de las existentes sea rechazada, expire o el usuario sea revocado. Por encima de 5, el admin debe contactar con soporte@bearingworld.io para solicitar ampliación. | **ALTA** |
+| RNG-09 | El límite de usuarios por organización en V1 es de 5 (cinco). El Administrador de Organización no puede enviar una sexta invitación hasta que una de las existentes sea rechazada, expire o el usuario sea revocado. Por encima de 5, el admin debe contactar con soporte@Ringworld.io para solicitar ampliación. | **ALTA** |
 | RNG-10 | La revocación de un usuario de una organización (acción del Administrador de Organización) NO elimina su clave privada ni su historial cifrado. El usuario pierde el acceso a la plataforma pero su par de claves permanece válido. Si el usuario es re-invitado posteriormente, recupera acceso a su historial previo con la misma passphrase de backup. | **ALTA** |
-| RNG-11 | El panel de administración del Operador de Plataforma (ADMIN-01) es accesible exclusivamente desde IPs de la lista blanca corporativa de Bearingworld.io. No es accesible desde internet público. Cualquier intento de acceso desde IP no autorizada devuelve 404 (no 403). | **CRÍTICA** |
+| RNG-11 | El panel de administración del Operador de Plataforma (ADMIN-01) es accesible exclusivamente desde IPs de la lista blanca corporativa de Ringworld.io. No es accesible desde internet público. Cualquier intento de acceso desde IP no autorizada devuelve 404 (no 403). | **CRÍTICA** |
 
 # **6. Emails Transaccionales del Módulo**
 
@@ -430,7 +430,7 @@ A continuación se describe la máquina de estados del objeto Member durante el 
 | EML-01 | Registro exitoso (POST /api/auth/register OK) | Verifica tu email para activar tu cuenta | Nombre del usuario, nombre de empresa, enlace de verificación (expira en 24h), advertencia de expiración. | Botón "Verificar email" |
 | EML-02 | Reenvío de verificación solicitado | Nuevo enlace de verificación | Igual que EML-01 con nuevo token. Menciona que el enlace anterior ya no es válido. | Botón "Verificar email" |
 | EML-03 | Cambio de email pendiente de verificación | Verifica tu nuevo email | Confirma el nuevo email introducido. Token de verificación vinculado al nuevo email. | Botón "Verificar nuevo email" |
-| EML-04 | Invitación a unirse a organización | [Nombre admin] te invita a unirte a [Nombre empresa] en Bearingworld.io | Nombre del admin que invita, nombre de la empresa, descripción breve de la plataforma, enlace de invitación (expira en 7 días). | Botón "Aceptar invitación" |
+| EML-04 | Invitación a unirse a organización | [Nombre admin] te invita a unirte a [Nombre empresa] en Ringworld.io | Nombre del admin que invita, nombre de la empresa, descripción breve de la plataforma, enlace de invitación (expira en 7 días). | Botón "Aceptar invitación" |
 | EML-05 | Recordatorio de backup no configurado (Day 3 post-registro) | Tu historial cifrado no está protegido aún | Explica que el backup de clave no ha sido configurado. Enlace directo a /settings/security. | Botón "Configurar backup ahora" |
 | EML-06 | Confirmación de cambio de backup passphrase | Tu passphrase de backup ha sido actualizada | Confirma el cambio. Fecha y hora. Instrucción: "Si no fuiste tú, contacta soporte inmediatamente." | — |
 
@@ -485,7 +485,7 @@ A diferencia del resto de la plataforma, donde el panel de VERA ocupa el 30-40% 
 
 | **Fase del onboarding** | **Comportamiento de VERA** |
 | --- | --- |
-| Fase A — FRO: datos de organización y administrador (REG-01) | VERA saluda al nuevo usuario con un mensaje de bienvenida breve y contextual: "Hola, soy VERA. Voy a ayudarte a crear tu cuenta en Bearingworld.io. Son unos minutos y te guío en cada paso." VERA permanece en silencio mientras el usuario rellena el formulario unificado (organización + administrador). Si el usuario lleva más de 3 minutos sin avanzar en un campo, VERA pregunta: "¿Tienes alguna duda con este paso?" VERA responde a preguntas sobre los campos del formulario: qué es el campo sitio web, por qué se pide dirección y código postal, qué requisitos tiene la contraseña. |
+| Fase A — FRO: datos de organización y administrador (REG-01) | VERA saluda al nuevo usuario con un mensaje de bienvenida breve y contextual: "Hola, soy VERA. Voy a ayudarte a crear tu cuenta en Ringworld.io. Son unos minutos y te guío en cada paso." VERA permanece en silencio mientras el usuario rellena el formulario unificado (organización + administrador). Si el usuario lleva más de 3 minutos sin avanzar en un campo, VERA pregunta: "¿Tienes alguna duda con este paso?" VERA responde a preguntas sobre los campos del formulario: qué es el campo sitio web, por qué se pide dirección y código postal, qué requisitos tiene la contraseña. |
 | Fase B — Generación de claves E2EE y backup passphrase (REG-05, REG-06, REG-07) | Esta es la fase donde VERA tiene el rol más crítico. El concepto de claves criptográficas es técnicamente complejo para el usuario tipo. VERA lo introduce en REG-05 con lenguaje de negocio, no técnico. VERA responde a las preguntas más frecuentes de esta fase (ver tabla 8.2). Si el usuario intenta cerrar la ventana antes de completar la fase, VERA advierte: "Espera — si cierras ahora sin guardar tu passphrase de backup, perderás acceso a tu historial cifrado si cambias de dispositivo." Durante el procesamiento en REG-07, VERA muestra mensajes de progreso en el panel: "Generando tus claves... esto tarda unos segundos y solo ocurre una vez." |
 | Fase C — Bienvenida, usuarios adicionales y acceso al dashboard (REG-09) | VERA acompaña la pregunta de si desea registrar más usuarios ahora, y sugiere el siguiente paso más relevante según el perfil del usuario: si indicó países de operación en Europa durante el FRO, sugiere buscar stock en esas regiones como primer paso tras llegar al dashboard. |
 
@@ -537,7 +537,7 @@ Como se especifica en el Módulo 00, el usuario puede completar el onboarding re
 | QA-03 | ¿Cuántos usuarios máximos por organización en V1? Se ha propuesto 10 como límite provisional. | Product Owner | Sprint 1 |
 | QA-04 | ¿El backup de clave opcional en iCloud/Google Drive (Opción B del ADR-001) se implementa en V1 o se difiere a V2? | CTO | Sprint 1 |
 | QA-05 | ¿Cómo gestionamos la revocación de un usuario de una organización? ¿Su clave privada (y por tanto acceso a su historial) se mantiene o se elimina? (Impacta en diseño de FL-04) | CTO + Legal | Sprint 2 |
-| QA-06 | ¿El nombre del producto final está decidido? Los textos de las pantallas usan "Bearingworld.io" como placeholder. | Product Owner | Sprint 0 |
+| QA-06 | ¿El nombre del producto final está decidido? Los textos de las pantallas usan "Ringworld.io" como placeholder. | Product Owner | Sprint 0 |
 
 # **10. Historial de Versiones**
 
@@ -545,7 +545,7 @@ Como se especifica en el Módulo 00, el usuario puede completar el onboarding re
 | --- | --- | --- | --- |
 | 1.0 | Junio 2026 | Equipo de Producto | Versión inicial. Cubre FL-01 a FL-06. Basado en PRD v1.0 y ADR-001. |
 | 1.1 | Junio 2026 | Equipo de Producto | Revisión según Módulo 00 v1.1. Añadida sección 8 completa de capa conversacional VERA. |
-| 1.2 | Junio 2026 | Equipo de Producto | Resolución de todas las preguntas abiertas del módulo: (QA-01) aprobación manual obligatoria por operador — nuevo FL-00 y pantalla ADMIN-01; (QA-02) Google SSO en V1 con passphrase E2EE independiente; (QA-03) límite 5 usuarios/organización; (QA-04) backup iCloud/Drive diferido a V2; (QA-05) clave privada se mantiene al revocar usuario; (QA-06) nombre definitivo Bearingworld.io. Máquina de estados ampliada con estados APPROVED y REJECTED. Nuevos emails EML-07, EML-08, EML-OP-01 y EML-OP-02. Nuevas reglas RNG-09, RNG-10, RNG-11. |
+| 1.2 | Junio 2026 | Equipo de Producto | Resolución de todas las preguntas abiertas del módulo: (QA-01) aprobación manual obligatoria por operador — nuevo FL-00 y pantalla ADMIN-01; (QA-02) Google SSO en V1 con passphrase E2EE independiente; (QA-03) límite 5 usuarios/organización; (QA-04) backup iCloud/Drive diferido a V2; (QA-05) clave privada se mantiene al revocar usuario; (QA-06) nombre definitivo Ringworld.io. Máquina de estados ampliada con estados APPROVED y REJECTED. Nuevos emails EML-07, EML-08, EML-OP-01 y EML-OP-02. Nuevas reglas RNG-09, RNG-10, RNG-11. |
 | 1.3 | Junio 2026 | Equipo de Producto | Soporte al Directorio de Organizaciones (Módulo 04 v1.2): campos obligatorios de email de contacto público y teléfono de contacto público añadidos al registro. Nueva regla RN-01.7. |
 | 1.4 | Junio 2026 | Equipo de Producto | Reestructuración completa del flujo de registro (FL-01) según el diseño simplificado acordado: (1) Dos rutas de entrada: Ruta 00.1 (invitado conocido, aprobación automática) y Ruta 00.2 (desconocido con FSR, aprobación manual por operador). (2) Eliminación de la verificación de email como paso intermedio — simplificación deliberada para reducir fricción. (3) FRO unificado (REG-01 rediseñado) que consolida los datos de organización y del usuario administrador en una única pantalla con dos secciones, incluyendo los nuevos campos obligatorios de dirección y código postal. (4) Eliminación de REG-02 (confirmación), REG-03 (espera de verificación) y REG-04 (destino de enlace de verificación). (5) REG-08 eliminada como pantalla separada — sus campos se incorporan al FRO. (6) REG-09 ampliada con el flujo iterativo de registro de usuarios adicionales ("¿Deseas registrar más usuarios?") hasta el límite de 5 por organización. (7) Máquina de estados simplificada: eliminados PENDING\_VERIFICATION y EMAIL\_VERIFIED, añadidos PENDING\_REVIEW, INVITED\_APPROVED y REGISTERED. (8) Dirección y código postal añadidos como campos obligatorios del perfil de organización, visibles en el FRO, en la ficha pública (MSG-04) y en el Directorio de Organizaciones (MSG-05) del Módulo 04. |
 | 1.5 | Junio 2026 | Equipo de Producto | Cierre de comentarios de revisión del Inventario de Pantallas: (1) Corregido un residuo del patch anterior — REG-00-WAIT seguía mostrando un mensaje de verificación de email ya eliminada del flujo; corregido y añadida nota explícita de que es una pantalla de un solo uso, sin acceso posterior una vez resuelta la solicitud. (2) Añadido NIF/CIF como campo obligatorio del FRO (REG-01), reordenados los campos de la Sección 1 según un criterio de relleno lógico (nombre → NIF/CIF → dirección → código postal → país → contacto público → web → operación → marcas → logo → visibilidad). (3) Nueva regla RN-01.8: el rol no es editable en ningún formulario — el primer usuario es Administrador automáticamente, todos los adicionales son Editor. Corregidas las referencias residuales a un selector de rol en INVT-01 y en el ejemplo conversacional FL-04. (4) El FRU se documenta ahora como pantalla propia (sección 3.4.2), separada del FRO, sin ningún campo de organización. (5) Renombrada la pantalla de invitaciones de INV-01 a INVT-01 para evitar conflicto de código con el panel de inventario del Módulo 02. (6) Nueva regla RN-01.9 sobre el NIF/CIF. |

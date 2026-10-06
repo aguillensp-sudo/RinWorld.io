@@ -1,4 +1,4 @@
-**BEARINGWORLD.IO**
+﻿**Ringworld.IO**
 
 **LA PLATAFORMA**
 
@@ -12,7 +12,7 @@ Versión 1.1 · Junio 2026 · CONFIDENCIAL
 
 # **1. Propósito y Alcance del Módulo**
 
-Este documento especifica el módulo de Suscripción y Billing de Bearingworld.io: el ciclo de vida del pago anual de cada organización miembro, desde el periodo de prueba gratuito tras la aprobación del registro (Módulo 01) hasta la renovación o suspensión anual. A diferencia de lo que contemplaba el Tech Stack v1.0 (integración con Stripe para gestión automática de cobros), este módulo especifica un modelo deliberadamente manual: la plataforma no procesa ningún pago, y el ciclo de cobro se gestiona mediante transferencia bancaria entre el cliente y Bearingworld.io, fuera de la plataforma, con el Operador de Plataforma confirmando manualmente cada pago recibido.
+Este documento especifica el módulo de Suscripción y Billing de Ringworld.io: el ciclo de vida del pago anual de cada organización miembro, desde el periodo de prueba gratuito tras la aprobación del registro (Módulo 01) hasta la renovación o suspensión anual. A diferencia de lo que contemplaba el Tech Stack v1.0 (integración con Stripe para gestión automática de cobros), este módulo especifica un modelo deliberadamente manual: la plataforma no procesa ningún pago, y el ciclo de cobro se gestiona mediante transferencia bancaria entre el cliente y Ringworld.io, fuera de la plataforma, con el Operador de Plataforma confirmando manualmente cada pago recibido.
 
 Este módulo cubre: el periodo de prueba gratuito de 3 meses, el cálculo automático del ciclo anual de 365 días desde el último pago confirmado, los avisos de vencimiento próximo (al cliente y al operador), el panel de gestión de cobros del operador, la suspensión automática por falta de pago confirmado, y la reactivación tras confirmar un pago.
 
@@ -27,12 +27,12 @@ Este módulo cubre: el periodo de prueba gratuito de 3 meses, el cálculo autom�
 ## **1.2 Fuera de alcance en este módulo**
 
 * Cualquier procesamiento de pago dentro de la plataforma. No existe pasarela de pago, no se integra Stripe ni ningún proveedor equivalente, y la plataforma no almacena ni gestiona datos de tarjetas ni cuentas bancarias de los clientes.
-* Pagos entre miembros por transacciones comerciales (rodamientos, logística) — cubierto por el principio permanente RNG-MSG-08 del Módulo 04: Bearingworld.io no procesa pagos en ninguna versión, ni entre miembros ni, con este módulo, tampoco para su propia suscripción.
-* Gestión contable o fiscal interna de Bearingworld.io (libros contables, declaraciones) — fuera del alcance de un módulo funcional de producto.
+* Pagos entre miembros por transacciones comerciales (rodamientos, logística) — cubierto por el principio permanente RNG-MSG-08 del Módulo 04: Ringworld.io no procesa pagos en ninguna versión, ni entre miembros ni, con este módulo, tampoco para su propia suscripción.
+* Gestión contable o fiscal interna de Ringworld.io (libros contables, declaraciones) — fuera del alcance de un módulo funcional de producto.
 
 |  |
 | --- |
-| **🏦 SIN PASARELA DE PAGO — TRANSFERENCIA BANCARIA FUERA DE LA PLATAFORMA**  El Tech Stack v1.0 contemplaba un Billing Service con integración Stripe para automatizar cobros, periodos de prueba y dunning. Este módulo lo sustituye por completo: Bearingworld.io no acepta pagos a través de la plataforma bajo ninguna circunstancia, ni de sus propios miembros por la suscripción ni, como ya se estableció en el Módulo 04 (RNG-MSG-08), entre miembros por transacciones comerciales. El cobro de la suscripción anual se realiza por transferencia bancaria directa entre el cliente y Bearingworld.io, gestionada completamente fuera de la plataforma. La plataforma se limita a: (1) calcular y mostrar fechas de vencimiento, (2) generar avisos automáticos, y (3) ofrecer al operador un mecanismo para registrar manualmente que un pago ha sido recibido. El Tech Stack debe actualizarse en una futura revisión para eliminar el Billing Service basado en Stripe y sustituirlo por esta lógica de cálculo de fechas y registro manual, mucho más simple de implementar. |
+| **🏦 SIN PASARELA DE PAGO — TRANSFERENCIA BANCARIA FUERA DE LA PLATAFORMA**  El Tech Stack v1.0 contemplaba un Billing Service con integración Stripe para automatizar cobros, periodos de prueba y dunning. Este módulo lo sustituye por completo: Ringworld.io no acepta pagos a través de la plataforma bajo ninguna circunstancia, ni de sus propios miembros por la suscripción ni, como ya se estableció en el Módulo 04 (RNG-MSG-08), entre miembros por transacciones comerciales. El cobro de la suscripción anual se realiza por transferencia bancaria directa entre el cliente y Ringworld.io, gestionada completamente fuera de la plataforma. La plataforma se limita a: (1) calcular y mostrar fechas de vencimiento, (2) generar avisos automáticos, y (3) ofrecer al operador un mecanismo para registrar manualmente que un pago ha sido recibido. El Tech Stack debe actualizarse en una futura revisión para eliminar el Billing Service basado en Stripe y sustituirlo por esta lógica de cálculo de fechas y registro manual, mucho más simple de implementar. |
 
 # **2. Actores del Módulo**
 
@@ -46,7 +46,7 @@ Este módulo cubre: el periodo de prueba gratuito de 3 meses, el cálculo autom�
 
 ## **3.1 Modelo de precios**
 
-Bearingworld.io utiliza un modelo de precio único: todas las organizaciones pagan la misma cuota de suscripción anual, sin tiers ni planes diferenciados, replicando la política de precio plano del incumbente (PRD, sección 2.1) pero a un precio inferior (Tech Stack v1.1, sección 3.4: recomendación de lanzamiento entre €700–750/año). No existen descuentos automáticos ni planes de pago fraccionado en V1 — el ciclo de cobro es siempre anual.
+Ringworld.io utiliza un modelo de precio único: todas las organizaciones pagan la misma cuota de suscripción anual, sin tiers ni planes diferenciados, replicando la política de precio plano del incumbente (PRD, sección 2.1) pero a un precio inferior (Tech Stack v1.1, sección 3.4: recomendación de lanzamiento entre €700–750/año). No existen descuentos automáticos ni planes de pago fraccionado en V1 — el ciclo de cobro es siempre anual.
 
 ## **3.2 Fases del ciclo**
 
@@ -72,7 +72,7 @@ El sistema evalúa diariamente la fecha de vencimiento de cada organización act
 
 | **Canal** | **Contenido** |
 | --- | --- |
-| Email al Administrador de Organización | Asunto: aviso de próximo vencimiento de la suscripción a Bearingworld.io. Contenido: fecha exacta de vencimiento, importe de la cuota anual, datos bancarios para realizar la transferencia (IBAN, titular, concepto recomendado incluyendo el identificador de la organización para facilitar la conciliación), y una advertencia explícita de que, sin pago confirmado antes de esa fecha, el acceso a la plataforma se suspenderá automáticamente sin periodo de gracia. NOTA v1.1 (QA-BILL-01 cerrada): el email es el único canal por el que se comunican los datos bancarios. No se muestran en ningún banner, pantalla ni componente de la plataforma — es contenido exclusivo de la plantilla de email, sin intervención de la interfaz de usuario. |
+| Email al Administrador de Organización | Asunto: aviso de próximo vencimiento de la suscripción a Ringworld.io. Contenido: fecha exacta de vencimiento, importe de la cuota anual, datos bancarios para realizar la transferencia (IBAN, titular, concepto recomendado incluyendo el identificador de la organización para facilitar la conciliación), y una advertencia explícita de que, sin pago confirmado antes de esa fecha, el acceso a la plataforma se suspenderá automáticamente sin periodo de gracia. NOTA v1.1 (QA-BILL-01 cerrada): el email es el único canal por el que se comunican los datos bancarios. No se muestran en ningún banner, pantalla ni componente de la plataforma — es contenido exclusivo de la plantilla de email, sin intervención de la interfaz de usuario. |
 
 ## **4.3 Alerta en el panel del Operador**
 
@@ -87,7 +87,7 @@ Si llega la fecha de vencimiento exacta (día 90 del periodo de prueba, o día 3
 | **Aspecto** | **Comportamiento** |
 | --- | --- |
 | Acceso de los usuarios | Todos los usuarios de la organización suspendida pierden acceso a las funcionalidades de la plataforma (búsqueda, mensajería, inventario, etc.) al iniciar sesión. |
-| Pantalla mostrada | En lugar del dashboard habitual, se muestra una pantalla de suspensión: explica que la suscripción ha vencido, indica que los datos bancarios para regularizar se han enviado por email al administrador (y se reenvían de nuevo en este momento, ver fila siguiente), y que el acceso se restaurará automáticamente en cuanto el pago sea confirmado por el equipo de Bearingworld.io. La pantalla no muestra los datos bancarios directamente. |
+| Pantalla mostrada | En lugar del dashboard habitual, se muestra una pantalla de suspensión: explica que la suscripción ha vencido, indica que los datos bancarios para regularizar se han enviado por email al administrador (y se reenvían de nuevo en este momento, ver fila siguiente), y que el acceso se restaurará automáticamente en cuanto el pago sea confirmado por el equipo de Ringworld.io. La pantalla no muestra los datos bancarios directamente. |
 | Datos del miembro | Se conservan íntegros (inventario, claves E2EE, historial de mensajería cifrada, favoritos). La suspensión es un bloqueo de acceso, no una eliminación de datos. |
 | Visibilidad para otros miembros | El inventario de una organización suspendida deja de aparecer en los resultados de búsqueda de otros miembros mientras dure la suspensión (igual tratamiento que el estado SUSPENDED ya definido en el Módulo 01). |
 | Notificación de la suspensión | Email automático al Administrador de Organización en el momento exacto de la transición a SUSPENDED, reiterando los datos bancarios y los pasos para reactivar. |
@@ -151,7 +151,7 @@ La interacción de VERA en este módulo es deliberadamente limitada: se trata de
 
 | **ID** | **Regla** | **Prioridad** |
 | --- | --- | --- |
-| RNG-BILL-01 | Bearingworld.io no procesa pagos de ningún tipo dentro de la plataforma. El cobro de la suscripción se realiza exclusivamente por transferencia bancaria, gestionada fuera de la plataforma entre el cliente y Bearingworld.io. | **CRÍTICA** |
+| RNG-BILL-01 | Ringworld.io no procesa pagos de ningún tipo dentro de la plataforma. El cobro de la suscripción se realiza exclusivamente por transferencia bancaria, gestionada fuera de la plataforma entre el cliente y Ringworld.io. | **CRÍTICA** |
 | RNG-BILL-02 | El periodo de prueba es de 90 días naturales desde la aprobación de la organización (Módulo 01). No es configurable por el cliente ni extensible automáticamente. | **ALTA** |
 | RNG-BILL-03 | Todo ciclo de pago posterior al primero es de 365 días desde la fecha del último pago confirmado por el operador, no desde la fecha de vencimiento teórica anterior. | **ALTA** |
 | RNG-BILL-04 | El aviso de vencimiento próximo se dispara exactamente 15 días antes de la fecha de vencimiento, una única vez por ciclo, tanto al cliente (email) como al panel del operador (ADMIN-02). | **ALTA** |
@@ -184,7 +184,7 @@ La interacción de VERA en este módulo es deliberadamente limitada: se trata de
 
 | **Versión** | **Fecha** | **Autor** | **Descripción** |
 | --- | --- | --- | --- |
-| 1.0 | Junio 2026 | Equipo de Producto | Versión inicial. Especifica el ciclo de vida de la suscripción anual de precio único: periodo de prueba de 90 días, ciclos anuales de 365 días desde el último pago, avisos de vencimiento a 15 días (cliente + operador), suspensión automática sin periodo de gracia, y reactivación manual por el Operador de Plataforma desde el nuevo panel ADMIN-02. Sustituye por completo la integración con Stripe contemplada en el Tech Stack v1.0/v1.1 — Bearingworld.io no procesa pagos de ningún tipo; el cobro se gestiona por transferencia bancaria fuera de la plataforma. |
+| 1.0 | Junio 2026 | Equipo de Producto | Versión inicial. Especifica el ciclo de vida de la suscripción anual de precio único: periodo de prueba de 90 días, ciclos anuales de 365 días desde el último pago, avisos de vencimiento a 15 días (cliente + operador), suspensión automática sin periodo de gracia, y reactivación manual por el Operador de Plataforma desde el nuevo panel ADMIN-02. Sustituye por completo la integración con Stripe contemplada en el Tech Stack v1.0/v1.1 — Ringworld.io no procesa pagos de ningún tipo; el cobro se gestiona por transferencia bancaria fuera de la plataforma. |
 | 1.1 | Junio 2026 | Equipo de Producto | Cierre de las tres preguntas abiertas: (1) QA-BILL-01 — los datos bancarios se comunican exclusivamente por email, sin mostrarse en ninguna pantalla ni banner de la plataforma. (2) QA-BILL-02 — nueva sección 5.3 y regla RNG-BILL-08: una organización con 6 meses continuados en estado SUSPENDED se marca como candidata a borrado en ADMIN-02, pero el borrado de sus datos nunca es automático — requiere siempre doble confirmación manual del Operador de Plataforma. La suspensión en sí no cambia: sigue conservando los datos íntegros. (3) QA-BILL-03 — confirmado que la regla de "sin periodo de gracia" es absoluta, sin ningún mecanismo de excepción manual (RNG-BILL-09). Añadido CA-BILL-08. |
 
 |  |

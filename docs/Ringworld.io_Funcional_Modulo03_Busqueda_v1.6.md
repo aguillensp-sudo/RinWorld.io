@@ -1,4 +1,4 @@
-**BEARINGWORLD.IO**
+﻿**Ringworld.IO**
 
 **LA PLATAFORMA**
 
@@ -12,7 +12,7 @@ Versión 1.6 · Junio 2026 · CONFIDENCIAL
 
 # **1. Propósito y Alcance del Módulo**
 
-Este documento especifica el módulo de Búsqueda Conversacional y Descubrimiento de Bearingworld.io. Es el módulo donde la propuesta de valor de la plataforma se materializa con mayor claridad: sustituir el formulario de búsqueda manual de BearingNet — una referencia, una consulta, un resultado a la vez — por una conversación natural con VERA capaz de procesar consultas individuales, listas completas y condiciones de vigilancia continua.
+Este documento especifica el módulo de Búsqueda Conversacional y Descubrimiento de Ringworld.io. Es el módulo donde la propuesta de valor de la plataforma se materializa con mayor claridad: sustituir el formulario de búsqueda manual de BearingNet — una referencia, una consulta, un resultado a la vez — por una conversación natural con VERA capaz de procesar consultas individuales, listas completas y condiciones de vigilancia continua.
 
 Este módulo cubre: la búsqueda de una sola referencia, la búsqueda por lotes (múltiples referencias en una sola consulta), el aprendizaje de preferencias del usuario, los watchers (alertas de condición continua) con su expiración gestionada, el sistema de favoritos como único indicador social de un distribuidor, y la presentación de resultados tanto en Zona A (UI visual) como en las respuestas de VERA. Los flujos de contacto (Consultar / Contactar) que se inician desde un resultado de búsqueda se especifican en detalle en el Módulo 04, con el que este módulo se integra estrechamente.
 
@@ -123,7 +123,7 @@ Cuando una búsqueda no devuelve resultados, VERA no se limita a informar de la 
 
 ## **4.4 Favoritos — único indicador social de un distribuidor**
 
-Bearingworld.io no calcula ninguna puntuación de reputación algorítmica en V1. El único indicador social visible sobre un distribuidor es el sistema de favoritos: cualquier miembro puede marcar a otra organización como favorita desde su ficha (Módulo 04, MSG-04) o desde un resultado de búsqueda. El indicador que se muestra en SRCH-01 es el recuento total de cuántos miembros distintos han marcado a esa organización como favorita.
+Ringworld.io no calcula ninguna puntuación de reputación algorítmica en V1. El único indicador social visible sobre un distribuidor es el sistema de favoritos: cualquier miembro puede marcar a otra organización como favorita desde su ficha (Módulo 04, MSG-04) o desde un resultado de búsqueda. El indicador que se muestra en SRCH-01 es el recuento total de cuántos miembros distintos han marcado a esa organización como favorita.
 
 | **Aspecto** | **Definición** |
 | --- | --- |
@@ -141,7 +141,7 @@ Bearingworld.io no calcula ninguna puntuación de reputación algorítmica en V1
 
 ## **5.1 Descripción**
 
-La búsqueda por lotes es uno de los diferenciadores más directos frente a BearingNet, donde una lista de 20 referencias requiere 20 formularios independientes. En Bearingworld.io, el usuario pega o dicta la lista completa en una sola interacción con VERA.
+La búsqueda por lotes es uno de los diferenciadores más directos frente a BearingNet, donde una lista de 20 referencias requiere 20 formularios independientes. En Ringworld.io, el usuario pega o dicta la lista completa en una sola interacción con VERA.
 
 ## **5.2 Flujo conversacional FL-SRCH-02**
 
@@ -167,7 +167,7 @@ La búsqueda por lotes es uno de los diferenciadores más directos frente a Bear
 
 |  |
 | --- |
-| **⚠️ ELIMINADO — CONTACTO AUTOMÁTICO A "MEJORES DISTRIBUIDORES" (QA-SRCH-03 cerrada)**  La v1.0 de este módulo incluía un botón "Contactar a los mejores de cada referencia" que abría automáticamente un hilo con el distribuidor mejor clasificado de cada tarjeta. Este botón se elimina por completo: Bearingworld.io no clasifica distribuidores como "mejores" bajo ningún criterio (ni cantidad, ni antigüedad, ni favoritos — sección 4.4). En V1, el usuario revisa el panel consolidado y decide manualmente, fila por fila, sobre qué referencias y con qué distribuidores quiere usar "Consultar" o "Contactar" (sección 4.2), o bien selecciona varias filas con el checkbox y usa "Consultar Seleccionados" (NUEVO v1.5, sección 4.2) — heredado aquí automáticamente porque la tarjeta expandida reutiliza la misma tabla que SRCH-01. |
+| **⚠️ ELIMINADO — CONTACTO AUTOMÁTICO A "MEJORES DISTRIBUIDORES" (QA-SRCH-03 cerrada)**  La v1.0 de este módulo incluía un botón "Contactar a los mejores de cada referencia" que abría automáticamente un hilo con el distribuidor mejor clasificado de cada tarjeta. Este botón se elimina por completo: Ringworld.io no clasifica distribuidores como "mejores" bajo ningún criterio (ni cantidad, ni antigüedad, ni favoritos — sección 4.4). En V1, el usuario revisa el panel consolidado y decide manualmente, fila por fila, sobre qué referencias y con qué distribuidores quiere usar "Consultar" o "Contactar" (sección 4.2), o bien selecciona varias filas con el checkbox y usa "Consultar Seleccionados" (NUEVO v1.5, sección 4.2) — heredado aquí automáticamente porque la tarjeta expandida reutiliza la misma tabla que SRCH-01. |
 
 ## **5.4 Reglas de negocio — búsqueda por lotes**
 
@@ -233,7 +233,7 @@ Accesible desde el menú principal — Alertas — o pidiéndole a VERA que mues
 | **Canal** | **Contenido** |
 | --- | --- |
 | VERA (próximo login o sesión activa) | Mensaje proactivo dentro del marco de notificaciones definidas — es una notificación de un watcher que el propio usuario configuró explícitamente, no un mensaje no solicitado, por lo que no contradice el Módulo 00. Informa qué condición se cumplió, qué distribuidor la cumplió y con qué cantidad, y ofrece ver el resultado o iniciar "Consultar"/"Contactar" directamente. |
-| Email | Asunto: alerta de Bearingworld.io activada para la referencia correspondiente. Contenido: descripción de la condición, distribuidor y cantidad que la cumplió, timestamp, enlace directo a la plataforma. |
+| Email | Asunto: alerta de Ringworld.io activada para la referencia correspondiente. Contenido: descripción de la condición, distribuidor y cantidad que la cumplió, timestamp, enlace directo a la plataforma. |
 | In-app (badge de notificaciones) | Contador en el icono de Alertas. Al hacer clic, abre SRCH-03 con el watcher disparado destacado. |
 
 |  |

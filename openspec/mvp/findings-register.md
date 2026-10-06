@@ -322,3 +322,4 @@ fallback P-256.
 | [F-232](findings/F-232.md) | 2026-09-30 | `MODEL` | El intento 3 de `INV-03` se truncó dos veces por longitud y gastó 268 218 tokens de salida (0,359 $, el 84 % de la corrida) | ABIERTO |
 | [F-233](findings/F-233.md) | 2026-10-04 | `INFRA` | El dominio `bearingworld.io` no está registrado (NXDOMAIN): la dirección de ingestión de `INV-04` apuntaría a un dominio que cualquiera puede comprar; `INV-04` sigue fuera | ABIERTO |
 | [F-234](findings/F-234.md) | 2026-10-06 | `INFRA` | `INV-01` no carga con 18 302 líneas (la importación real del PO): las políticas de `inventory_lines` llaman a funciones `SECURITY DEFINER` por fila y la API pasa del `statement_timeout` de 8 s (500) | ABIERTO |
+| [F-235](findings/F-235.md) | 2026-10-06 | `HARNESS` | `--seco` no comprueba `inputs.spec` y la corrida real de `REG-05` murió con `KeyError` antes de llamar al modelo (sin coste) | ABIERTO |

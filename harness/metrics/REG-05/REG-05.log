@@ -1,0 +1,56 @@
+
+==============================================================================
+· corrida arrancada 2026-10-06 15:28:19 · harness/tasks/REG-05.json
+==============================================================================
+Log de esta corrida: harness\metrics\REG-05\REG-05.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\harness\graph\run.py", line 686, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\harness\graph\run.py", line 651, in main
+    for estado in app.stream({"task": task, "attempt": 0, "metrics": []},
+                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             {"recursion_limit": MAX_ATTEMPTS * 4},
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             stream_mode="values"):
+                             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\main.py", line 2982, in stream
+    for _ in runner.tick(
+             ~~~~~~~~~~~^
+        [t for t in loop.tasks.values() if not t.writes],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        schedule_task=loop.accept_push,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_runner.py", line 207, in tick
+    run_with_retry(
+    ~~~~~~~~~~~~~~^
+        t,
+        ^^
+    ...<10 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\pregel\_retry.py", line 617, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 684, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "C:\Users\admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langgraph\_internal\_runnable.py", line 426, in invoke
+    ret = self.func(*args, **kwargs)
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\harness\graph\nodes\coder.py", line 249, in coder_node
+    messages = build_messages(task, state.get("files") or {}, state.get("feedback") or "")
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\harness\graph\nodes\coder.py", line 230, in build_messages
+    messages = [{"role": "system", "content": build_system(task)}]
+                                              ~~~~~~~~~~~~^^^^^^
+  File "C:\Users\admin\proyectos\Bearing.io\BearingWorld.io\harness\graph\nodes\coder.py", line 34, in build_system
+    spec = _read(inputs["spec"])
+                 ~~~~~~^^^^^^^^
+KeyError: 'spec'
+During task with name 'coder' and id 'b8b1b24a-d91f-fb87-8e6f-b4343a6dea51'

@@ -446,13 +446,13 @@ describe('runImport', () => {
   const clock = () => (t += 500);
 
   it('manda las líneas válidas y devuelve el resumen de INV-03', async () => {
-    rpc.mockResolvedValueOnce({ data: { published: 3, removed: 7 }, error: null });
+    rpc.mockResolvedValueOnce({ data: { published: 3, removed: 7, inserted: 1, updated: 2 }, error: null });
     const s = await runImport(file, { mapping, policy: 'REPLACE', profileName: null }, clock);
     expect(rpc).toHaveBeenCalledWith('import_inventory', expect.objectContaining({ p_policy: 'REPLACE', p_profile_name: null, p_mapping: null }));
     const sent = rpc.mock.calls[0]?.[1].p_lines;
     expect(sent).toHaveLength(3);
     expect(sent[1]).toMatchObject({ part_number: 'NU216', quantity: 1200, location_country: 'DE' });
-    expect(s).toMatchObject({ processed: 3, published: 3, failed: 0, removed: 7, seconds: 0.5, errors: [] });
+    expect(s).toMatchObject({ processed: 3, published: 3, failed: 0, removed: 7, seconds: 0.5, errors: [], created: 1, updated: 2 });
     expect(s.sample[0]).toEqual({ partNumber: '6205-2RS/C3', brand: 'SKF', quantity: 850, country: 'ES', status: 'PUBLISHED' });
   });
 

@@ -42,6 +42,13 @@ export interface ImportSummary {
   removed: number | null;
   /** Segundos de procesamiento; `null` si no se midió. */
   seconds: number | null;
+  /**
+   * De las `published`: cuántas son líneas NUEVAS y cuántas YA EXISTÍAN y se han actualizado
+   * con los datos del archivo (0046). Opcionales: el resumen de ejemplo y el de un archivo
+   * ilegible no los tienen, y entonces el subtítulo no dice nada de ellas.
+   */
+  created?: number | undefined;
+  updated?: number | undefined;
   /** Las líneas importadas, en orden de archivo. La pantalla enseña SIEMPRE solo las 10 primeras. */
   sample: ImportSampleLine[];
   /** Todas las líneas fallidas, en orden de archivo. */
@@ -87,13 +94,27 @@ export function formatSeconds(seconds: number | null): string {
   return `${seconds.toFixed(1).replace('.', ',')} s`;
 }
 
+/**
+ * « N nuevas y M que ya existían (actualizadas con los datos del archivo).» (con un espacio
+ * delante), o `''` si el resumen no trae el desglose. Lo que explica que subir de nuevo un archivo
+ * con «Acumulativo» no duplica: lo ya existente se actualiza.
+ */
+export function newVsExistingSentence(s: Pick<ImportSummary, 'created' | 'updated'>): string {
+  if (s.created === undefined || s.updated === undefined) return '';
+  const nuevas = `${formatCount(s.created)} ${s.created === 1 ? 'nueva' : 'nuevas'}`;
+  const existian = `${formatCount(s.updated)} ${s.updated === 1 ? 'que ya existía' : 'que ya existían'}`;
+  const tail = s.updated === 0 ? '' : ` (${s.updated === 1 ? 'actualizada' : 'actualizadas'} con los datos del archivo)`;
+  return ` ${nuevas} y ${existian}${tail}.`;
+}
+
 /** El subtítulo bajo el título: cambia con el resultado (HTML aprobado, `setState`). */
 export function outcomeSubtitle(s: ImportSummary): string {
+  const split = newVsExistingSentence(s);
   switch (importOutcome(s)) {
     case 'ok':
-      return `${formatCount(s.published)} líneas publicadas correctamente. No se han detectado errores.`;
+      return `${formatCount(s.published)} líneas publicadas correctamente.${split} No se han detectado errores.`;
     case 'warn':
-      return 'Tu inventario ha sido actualizado. Revisa las líneas que no pudieron importarse y corrígelas.';
+      return `Tu inventario ha sido actualizado.${split} Revisa las líneas que no pudieron importarse y corrígelas.`;
     case 'fail':
       return 'El sistema no ha podido procesar el archivo. Ninguna línea ha sido publicada.';
   }

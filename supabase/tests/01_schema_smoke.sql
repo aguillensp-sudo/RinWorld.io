@@ -4762,6 +4762,8 @@ declare
 begin
   assert (r->>'published')::int = 3, '0044: acumulativo publica las 3 líneas del lote';
   assert r->'removed' = 'null'::jsonb, '0044: acumulativo devuelve removed = null';
+  assert (r->>'inserted')::int = 1 and (r->>'updated')::int = 2,
+    '0046: acumulativo cuenta 1 línea nueva (7205B) y 2 que ya existían (6205 y la archivada 30204)';
   assert (select count(*) from public.inventory_lines where org_id = o) = 4, '0044: 3 que había + 1 nueva';
   assert (select quantity from public.inventory_lines where org_id = o and part_number = '6205-2RS') = 40,
     '0044: la existente se actualiza (sin mirar mayúsculas) y conserva su escritura original';
@@ -4804,6 +4806,7 @@ declare
 begin
   assert (r->>'published')::int = 1, '0044: reemplazo publica la línea del lote';
   assert (r->>'removed')::int = 3, '0044: reemplazo retira las 3 publicadas que no vienen';
+  assert (r->>'inserted')::int = 0 and (r->>'updated')::int = 1, '0046: reemplazo: 0 nuevas y 1 que ya existía';
   assert (select count(*) from public.inventory_lines where org_id = o and status = 'DELETED') = 3,
     '0044: retiradas = DELETED, sin borrar filas';
   assert (select count(*) from public.inventory_lines where org_id = o) = 4, '0044: ninguna fila borrada';
@@ -4834,6 +4837,8 @@ do $$
 declare o uuid := '44440000-0000-4000-8000-000000000001';
 begin
   assert (current_setting('bw.imp3')::jsonb->>'published')::int = 3, '0045: las tres líneas sin familia entran';
+  assert (current_setting('bw.imp3')::jsonb->>'inserted')::int = 2 and (current_setting('bw.imp3')::jsonb->>'updated')::int = 1,
+    '0046: ZZ-1 y ZZ-2 nuevas, 6205-2RS ya existía';
   assert (select product_family from public.inventory_lines where org_id = o and part_number = 'ZZ-1') is null,
     '0045: sin familia en el archivo, NULL';
   assert (select product_family from public.inventory_lines where org_id = o and part_number = 'ZZ-2') is null,

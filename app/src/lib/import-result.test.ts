@@ -9,6 +9,7 @@ import {
   IMPORT_EXAMPLES,
   importExampleFromHash,
   importOutcome,
+  newVsExistingSentence,
   moreErrorsLabel,
   outcomeSubtitle,
   outcomeTitle,
@@ -259,5 +260,30 @@ describe('importExampleFromHash', () => {
     expect(importExampleFromHash('#importacion-ejemplo=otro')).toBeNull();
     expect(importExampleFromHash('#registro?token=abc')).toBeNull();
     expect(importExampleFromHash('#importacion-ejemplo=warn&x=1')).toBeNull();
+  });
+});
+
+describe('desglose de nuevas y ya existentes (0046)', () => {
+  const base = { processed: 500, published: 500, failed: 0, removed: null, seconds: 1, sample: [], errors: [] };
+
+  it('sin desglose, los subtítulos son los de siempre', () => {
+    expect(outcomeSubtitle(base)).toBe('500 líneas publicadas correctamente. No se han detectado errores.');
+  });
+
+  it('con desglose, dice cuántas son nuevas y que las existentes se actualizan (no se duplican)', () => {
+    expect(outcomeSubtitle({ ...base, created: 54, updated: 446 })).toBe(
+      '500 líneas publicadas correctamente. 54 nuevas y 446 que ya existían (actualizadas con los datos del archivo). No se han detectado errores.',
+    );
+  });
+
+  it('singulares y sin cola si ninguna existía', () => {
+    expect(newVsExistingSentence({ created: 1, updated: 1 })).toBe(' 1 nueva y 1 que ya existía (actualizada con los datos del archivo).');
+    expect(newVsExistingSentence({ created: 500, updated: 0 })).toBe(' 500 nuevas y 0 que ya existían.');
+  });
+
+  it('también en el caso con advertencias', () => {
+    expect(outcomeSubtitle({ ...base, published: 10, failed: 2, created: 4, updated: 6 })).toBe(
+      'Tu inventario ha sido actualizado. 4 nuevas y 6 que ya existían (actualizadas con los datos del archivo). Revisa las líneas que no pudieron importarse y corrígelas.',
+    );
   });
 });

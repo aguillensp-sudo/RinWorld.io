@@ -664,9 +664,11 @@ export async function runImport(file: ParsedFile, choice: ImportChoice, now: Clo
     p_mapping: choice.profileName === null ? null : choice.mapping,
   });
   if (error) throw new Error(errorMessage(error));
-  const result = (data ?? {}) as { published?: number; removed?: number | null };
+  const result = (data ?? {}) as { published?: number; removed?: number | null; inserted?: number; updated?: number };
+  const hasSplit = typeof result.inserted === 'number' && typeof result.updated === 'number';
   return {
     ...base,
+    ...(hasSplit ? { created: Number(result.inserted), updated: Number(result.updated) } : {}),
     published: Number(result.published ?? lines.length),
     removed: result.removed === null || result.removed === undefined ? null : Number(result.removed),
     seconds: (now() - t0) / 1000,

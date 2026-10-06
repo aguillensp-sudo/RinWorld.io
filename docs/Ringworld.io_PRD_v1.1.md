@@ -10,7 +10,7 @@ Versión 1.1 · Junio 2026 · CONFIDENCIAL
 
 # Nota de Revisión v1.1
 
-Este PRD se actualiza tras completar la especificación funcional de los ocho módulos de Ringworld.io (Módulos 00 a 08) y el Tech Stack v1.1. El v1.0 describía la visión y posicionamiento inicial del producto; varias decisiones tomadas durante el desarrollo del funcional difieren de lo descrito originalmente, especialmente en monetización, reputación, y logística. Este documento incorpora esos cambios mientras conserva la visión estratégica central, que permanece intacta: zero-knowledge architecture como diferenciador irreplicable frente a BearingNet.
+Este PRD se actualiza tras completar la especificación funcional de los ocho módulos de Ringworld.io (Módulos 00 a 08) y el Tech Stack v1.1. El v1.0 describía la visión y posicionamiento inicial del producto; varias decisiones tomadas durante el desarrollo del funcional difieren de lo descrito originalmente, especialmente en monetización, reputación, y logística. Este documento incorpora esos cambios mientras conserva la visión estratégica central, que permanece intacta: zero-knowledge architecture como diferenciador irreplicable frente a (Competidor = XXXX).
 
 |  |
 | --- |
@@ -18,17 +18,17 @@ Este PRD se actualiza tras completar la especificación funcional de los ocho m�
 
 # 1. Executive Summary
 
-Este documento define los requisitos de producto para Ringworld.io, un marketplace global de nueva generación para distribuidores de rodamientos y transmisión de potencia. La plataforma está diseñada para competir directamente con BearingNet — el incumbente actual del mercado — y desplazarlo, abordando sus debilidades estructurales fundamentales: una experiencia de usuario anticuada, un modelo de visibilidad binario, garantías de privacidad nulas para los datos comerciales, ausencia de inteligencia artificial, y un flujo de trabajo que obliga a los usuarios a abandonar la plataforma hacia el email para completar cualquier transacción relevante.
+Este documento define los requisitos de producto para Ringworld.io, un marketplace global de nueva generación para distribuidores de rodamientos y transmisión de potencia. La plataforma está diseñada para competir directamente con (Competidor = XXXX) — el incumbente actual del mercado — y desplazarlo, abordando sus debilidades estructurales fundamentales: una experiencia de usuario anticuada, un modelo de visibilidad binario, garantías de privacidad nulas para los datos comerciales, ausencia de inteligencia artificial, y un flujo de trabajo que obliga a los usuarios a abandonar la plataforma hacia el email para completar cualquier transacción relevante.
 
-La idea estratégica central es esta: BearingNet funciona hoy como un directorio sofisticado. Los distribuidores lo usan para identificar quién tiene stock, y después abandonan inmediatamente la plataforma para negociar por email. Esto significa que la plataforma captura el paso menos valioso de la cadena de la transacción, y ninguno de su valor comercial. Nuestra plataforma está diseñada para capturar todo el flujo de trabajo — búsqueda, negociación, y gestión de relaciones — sin obligar nunca al usuario a salir.
+La idea estratégica central es esta: (Competidor = XXXX) funciona hoy como un directorio sofisticado. Los distribuidores lo usan para identificar quién tiene stock, y después abandonan inmediatamente la plataforma para negociar por email. Esto significa que la plataforma captura el paso menos valioso de la cadena de la transacción, y ninguno de su valor comercial. Nuestra plataforma está diseñada para capturar todo el flujo de trabajo — búsqueda, negociación, y gestión de relaciones — sin obligar nunca al usuario a salir.
 
-El diferenciador más potente es una arquitectura de conocimiento cero (zero-knowledge): una plataforma donde ni siquiera los operadores pueden acceder a los datos comerciales (precios, historial de negociación, patrones de compra) intercambiados entre miembros. No es una promesa de política interna. Es una garantía matemática impuesta por el cifrado de extremo a extremo. Ningún competidor — incluido BearingNet — puede replicar esto sobre su infraestructura actual sin una reconstrucción completa.
+El diferenciador más potente es una arquitectura de conocimiento cero (zero-knowledge): una plataforma donde ni siquiera los operadores pueden acceder a los datos comerciales (precios, historial de negociación, patrones de compra) intercambiados entre miembros. No es una promesa de política interna. Es una garantía matemática impuesta por el cifrado de extremo a extremo. Ningún competidor — incluido (Competidor = XXXX) — puede replicar esto sobre su infraestructura actual sin una reconstrucción completa.
 
 # 2. Contexto de Mercado
 
-## 2.1 Incumbente actual — BearingNet
+## 2.1 Incumbente actual — (Competidor = XXXX)
 
-BearingNet Limited (constituida en 1995, Much Hadham, Reino Unido) es la plataforma global dominante para distribuidores de rodamientos, con más de 2.000 miembros de pago en más de 80 países, 18,6 millones de líneas de inventario, y aproximadamente 145.000 búsquedas diarias. Según datos públicos y los precios de suscripción conocidos, los ingresos anuales se estiman entre £2,5–2,75 millones, con márgenes netos del 70–80%, lo que refleja una operación ligera con personal mínimo e infraestructura totalmente amortizada.
+(Competidor = XXXX) Limited (constituida en 1995, Much Hadham, Reino Unido) es la plataforma global dominante para distribuidores de rodamientos, con más de 2.000 miembros de pago en más de 80 países, 18,6 millones de líneas de inventario, y aproximadamente 145.000 búsquedas diarias. Según datos públicos y los precios de suscripción conocidos, los ingresos anuales se estiman entre £2,5–2,75 millones, con márgenes netos del 70–80%, lo que refleja una operación ligera con personal mínimo e infraestructura totalmente amortizada.
 
 La plataforma opera con un modelo de suscripción pura (sin comisión por transacción), cobrando aproximadamente entre £1.100–1.400 por miembro al año. Todos los miembros pagan el mismo precio independientemente de su tamaño o nivel de actividad. No existen cuentas de nivel gratuito.
 
@@ -40,11 +40,11 @@ El sector global de distribución de rodamientos se caracteriza por tres rasgos 
 * Es comercialmente reservado. El precio se considera el activo competitivo más sensible. Los distribuidores no compartirán precios en ningún entorno donde un competidor pueda observarlos — independientemente de cualquier promesa de política por parte del operador de la plataforma.
 * Está operativamente fragmentado. Cada distribuidor usa un ERP diferente, convenciones de nomenclatura distintas, y arreglos logísticos propios. No existe una capa de datos estándar en todo el sector.
 
-## 2.3 La debilidad central de BearingNet
+## 2.3 La debilidad central de (Competidor = XXXX)
 
-El fallo fundamental de BearingNet es arquitectónico, no cosmético. La plataforma es un servidor centralizado que ve todos los datos. Los distribuidores lo saben. Como resultado, la plataforma se usa solo para la acción más segura — comprobar quién tiene stock — y toda la actividad comercial migra inmediatamente al email privado. La plataforma nunca ha intentado resolver esto porque hacerlo requeriría reconstruir toda su infraestructura.
+El fallo fundamental de (Competidor = XXXX) es arquitectónico, no cosmético. La plataforma es un servidor centralizado que ve todos los datos. Los distribuidores lo saben. Como resultado, la plataforma se usa solo para la acción más segura — comprobar quién tiene stock — y toda la actividad comercial migra inmediatamente al email privado. La plataforma nunca ha intentado resolver esto porque hacerlo requeriría reconstruir toda su infraestructura.
 
-Esto crea una brecha permanente y explotable: una plataforma construida sobre arquitectura zero-knowledge desde el primer día puede ofrecer una garantía que BearingNet estructuralmente no puede igualar, nunca.
+Esto crea una brecha permanente y explotable: una plataforma construida sobre arquitectura zero-knowledge desde el primer día puede ofrecer una garantía que (Competidor = XXXX) estructuralmente no puede igualar, nunca.
 
 # 3. Posicionamiento Estratégico
 
@@ -56,14 +56,14 @@ Por primera vez, una plataforma de distribución de rodamientos donde el operado
 
 | **Funcionalidad** | **Descripción** | **Ventaja competitiva** |
 | --- | --- | --- |
-| Arquitectura zero-knowledge | Cifrado de extremo a extremo para todos los datos comerciales. Precios, negociaciones e historial de transacciones se cifran en el dispositivo del miembro antes de la transmisión. El servidor solo almacena texto cifrado. | No puede ser replicado por BearingNet sin una reconstrucción completa de infraestructura y la pérdida de todo su histórico. |
-| Búsqueda conversacional con IA | Interfaz en lenguaje natural que sustituye la búsqueda basada en formularios. Los miembros escriben o pegan consultas y reciben resultados filtrados al instante, aprendiendo preferencias personales con el tiempo. | BearingNet no tiene capacidad de IA. Sin evidencia de ninguna inversión planificada. |
-| Control de visibilidad granular | Los miembros definen exactamente qué otros miembros pueden ver qué partes de su inventario. Whitelists, blacklists, y acuerdos bilaterales sustituyen el modelo binario actual. | BearingNet no ofrece control de visibilidad. Se es visible para todos o invisible para todos. |
-| Ingesta inteligente de stock | Importación de CSV/Excel con IA que mapea automáticamente cualquier estructura de columnas al esquema de la plataforma. Sin plantilla requerida. | BearingNet exige un formato CSV estricto. Cualquier desviación causa fallo de importación. |
-| Mensajería instantánea integrada | Mensajería 1 a 1 cifrada de extremo a extremo entre miembros, ancladas contextualmente a referencias y consultas concretas, con tarjetas de consulta y de oferta estructuradas. | BearingNet no tiene mensajería. Toda la negociación ocurre fuera de la plataforma por email. |
-| Directorio de Organizaciones (NUEVO v1.1) | Listado público de todos los miembros, filtrable por nombre y país, con datos de contacto directo (teléfono, email) — estilo "páginas amarillas" del sector. | BearingNet sí tiene un listado de miembros equivalente; nuestra versión añade datos de contacto completos y filtros más ricos. |
-| Foro de la Comunidad (NUEVO v1.1) | Espacio público de discusión entre miembros, organizado en categorías temáticas, con autorregulación entre la propia comunidad. | BearingNet no tiene ningún espacio de conversación pública entre sus miembros. |
-| Precio competitivo | Precio de suscripción único, significativamente por debajo de BearingNet, con más funcionalidad. | Los precios de BearingNet no se han reestructurado en años, a pesar de la ausencia de inversión real en producto. |
+| Arquitectura zero-knowledge | Cifrado de extremo a extremo para todos los datos comerciales. Precios, negociaciones e historial de transacciones se cifran en el dispositivo del miembro antes de la transmisión. El servidor solo almacena texto cifrado. | No puede ser replicado por (Competidor = XXXX) sin una reconstrucción completa de infraestructura y la pérdida de todo su histórico. |
+| Búsqueda conversacional con IA | Interfaz en lenguaje natural que sustituye la búsqueda basada en formularios. Los miembros escriben o pegan consultas y reciben resultados filtrados al instante, aprendiendo preferencias personales con el tiempo. | (Competidor = XXXX) no tiene capacidad de IA. Sin evidencia de ninguna inversión planificada. |
+| Control de visibilidad granular | Los miembros definen exactamente qué otros miembros pueden ver qué partes de su inventario. Whitelists, blacklists, y acuerdos bilaterales sustituyen el modelo binario actual. | (Competidor = XXXX) no ofrece control de visibilidad. Se es visible para todos o invisible para todos. |
+| Ingesta inteligente de stock | Importación de CSV/Excel con IA que mapea automáticamente cualquier estructura de columnas al esquema de la plataforma. Sin plantilla requerida. | (Competidor = XXXX) exige un formato CSV estricto. Cualquier desviación causa fallo de importación. |
+| Mensajería instantánea integrada | Mensajería 1 a 1 cifrada de extremo a extremo entre miembros, ancladas contextualmente a referencias y consultas concretas, con tarjetas de consulta y de oferta estructuradas. | (Competidor = XXXX) no tiene mensajería. Toda la negociación ocurre fuera de la plataforma por email. |
+| Directorio de Organizaciones (NUEVO v1.1) | Listado público de todos los miembros, filtrable por nombre y país, con datos de contacto directo (teléfono, email) — estilo "páginas amarillas" del sector. | (Competidor = XXXX) sí tiene un listado de miembros equivalente; nuestra versión añade datos de contacto completos y filtros más ricos. |
+| Foro de la Comunidad (NUEVO v1.1) | Espacio público de discusión entre miembros, organizado en categorías temáticas, con autorregulación entre la propia comunidad. | (Competidor = XXXX) no tiene ningún espacio de conversación pública entre sus miembros. |
+| Precio competitivo | Precio de suscripción único, significativamente por debajo de (Competidor = XXXX), con más funcionalidad. | Los precios de (Competidor = XXXX) no se han reestructurado en años, a pesar de la ausencia de inversión real en producto. |
 
 # 4. Arquitectura Zero-Knowledge
 
@@ -124,7 +124,7 @@ Sustituye el paradigma de búsqueda basado en formularios por una interfaz conve
 * Aprendizaje de preferencias: el sistema observa elecciones de filtro recurrentes y las aplica automáticamente sin que se le pida.
 * Watchers (alertas de condición continua): el miembro fija una instrucción permanente y el sistema vigila y avisa cuando se cumple la condición.
 
-Diferenciador clave: BearingNet exige completar un formulario manual por cada consulta individual. Una lista de 20 referencias requiere 20 envíos de formulario distintos. La interfaz conversacional reduce esto a una sola interacción.
+Diferenciador clave: (Competidor = XXXX) exige completar un formulario manual por cada consulta individual. Una lista de 20 referencias requiere 20 envíos de formulario distintos. La interfaz conversacional reduce esto a una sola interacción.
 
 ## 5.2 Control de visibilidad granular
 
@@ -135,7 +135,7 @@ Cada miembro controla exactamente quién puede ver su inventario, a nivel de mie
 * Blacklist: visible para todos los miembros excepto los explícitamente bloqueados.
 * Bilateral: dos miembros acuerdan mutuamente visibilidad reciproca completa, formalizada con un solo clic.
 
-Diferenciador clave: BearingNet es binario — un miembro lista públicamente o no lista en absoluto. El control granular desbloquea inventario que hoy es invisible para el mercado.
+Diferenciador clave: (Competidor = XXXX) es binario — un miembro lista públicamente o no lista en absoluto. El control granular desbloquea inventario que hoy es invisible para el mercado.
 
 ## 5.3 Ingesta inteligente de stock
 
@@ -152,7 +152,7 @@ Mensajería 1 a 1 entre cualquier par de miembros, completamente cifrada de extr
 * Iniciado desde búsqueda: el botón "Consultar" en un resultado abre una tarjeta de consulta pre-cargada con la referencia; el botón "Contactar" abre un hilo libre sin requisitos.
 * Historial de mensajes completo almacenado cifrado en el servidor. La plataforma no puede leerlo; el miembro puede buscar y revisar su propio historial en cualquier momento con su clave privada.
 
-Diferenciador clave: BearingNet no tiene ninguna capacidad de mensajería. Toda la negociación comercial ocurre fuera de la plataforma por email. La mensajería cifrada integrada elimina la última razón para abandonar la plataforma durante una transacción.
+Diferenciador clave: (Competidor = XXXX) no tiene ninguna capacidad de mensajería. Toda la negociación comercial ocurre fuera de la plataforma por email. La mensajería cifrada integrada elimina la última razón para abandonar la plataforma durante una transacción.
 
 ## 5.5 Coste de transporte en la oferta (REVISADO v1.1)
 
@@ -162,7 +162,7 @@ Tras el desarrollo del funcional (Módulo 05), se decide reducir drásticamente 
 
 ## 5.6 Directorio de Organizaciones (NUEVO v1.1)
 
-Listado completo de organizaciones miembro, accesible desde el menú principal de la plataforma, equivalente funcional al listado de miembros que ya existe en BearingNet, pero ampliado. Cada organización aporta, de forma obligatoria desde el registro, un email y un teléfono de contacto público — distintos de las credenciales de acceso del administrador — visibles para todos los miembros sin restricción, junto con su país, dirección y código postal.
+Listado completo de organizaciones miembro, accesible desde el menú principal de la plataforma, equivalente funcional al listado de miembros que ya existe en (Competidor = XXXX), pero ampliado. Cada organización aporta, de forma obligatoria desde el registro, un email y un teléfono de contacto público — distintos de las credenciales de acceso del administrador — visibles para todos los miembros sin restricción, junto con su país, dirección y código postal.
 
 Filosofía de producto: Ringworld.io no obliga a que todo el contacto entre miembros pase por su mensajería cifrada. Si dos organizaciones, tras descubrirse en el directorio o en resultados de búsqueda, prefieren llamarse por teléfono o escribirse a un email comercial directo, la plataforma no lo impide ni lo penaliza.
 
@@ -174,31 +174,31 @@ En V1, el foro funciona con autorregulación entre miembros: la identidad de org
 
 # 6. Comparativa Competitiva
 
-| **Capacidad** | **BearingNet vs. Nuestra Plataforma** |
+| **Capacidad** | **(Competidor = XXXX) vs. Nuestra Plataforma** |
 | --- | --- |
-| Garantía de privacidad de precios | BearingNet: solo promesa de política (el servidor lee todos los datos). Nosotros: garantía matemática (E2EE, el servidor no puede leer). |
-| Interfaz de búsqueda | BearingNet: formulario manual, una referencia a la vez. Nosotros: conversacional con IA, consultas por lotes, aprendizaje de preferencias. |
-| Control de visibilidad de inventario | BearingNet: binario (público o no listado). Nosotros: granular por miembro, por categoría, acuerdos bilaterales. |
-| Frescura de los datos de stock | BearingNet: subida manual de CSV, sin indicador de frescura. Nosotros: subida mapeada con IA, sincronización por email/carpeta, marca de tiempo de frescura. |
-| Comunicación dentro de la plataforma | BearingNet: ninguna — toda la negociación por email externo. Nosotros: mensajería 1 a 1 cifrada E2EE, con tarjetas de consulta y oferta contextuales a la referencia. |
-| Coste de transporte (REVISADO v1.1) | BearingNet: ninguno — cálculo manual externo. Nosotros: campo simple dentro de la oferta en V1; cálculo automático completo diferido a V2 tras un análisis más amplio. |
-| Sistema de reputación (REVISADO v1.1) | BearingNet: ninguno. Nosotros: sistema de Favoritos manual y transparente — sin verificación criptográfica, sin algoritmo, sin exposición de datos comerciales. |
-| Directorio de miembros (REVISADO v1.1) | BearingNet: listado básico de miembros. Nosotros: Directorio de Organizaciones con datos de contacto público completos y filtros por nombre/país. |
-| Espacio de comunidad (NUEVO v1.1) | BearingNet: ninguno. Nosotros: Foro de la Comunidad con categorías temáticas y autorregulación. |
-| Capacidades de IA | BearingNet: ninguna. Nosotros: búsqueda, mapeo de ingesta, aprendizaje de preferencias. |
-| Modelo de cobro de suscripción (REVISADO v1.1) | BearingNet: cobro recurrente estándar. Nosotros: precio único, sin pasarela de pago — transferencia bancaria con confirmación manual del operador; ninguna versión de la plataforma procesa pagos, ni entre miembros ni para su propia suscripción. |
+| Garantía de privacidad de precios | (Competidor = XXXX): solo promesa de política (el servidor lee todos los datos). Nosotros: garantía matemática (E2EE, el servidor no puede leer). |
+| Interfaz de búsqueda | (Competidor = XXXX): formulario manual, una referencia a la vez. Nosotros: conversacional con IA, consultas por lotes, aprendizaje de preferencias. |
+| Control de visibilidad de inventario | (Competidor = XXXX): binario (público o no listado). Nosotros: granular por miembro, por categoría, acuerdos bilaterales. |
+| Frescura de los datos de stock | (Competidor = XXXX): subida manual de CSV, sin indicador de frescura. Nosotros: subida mapeada con IA, sincronización por email/carpeta, marca de tiempo de frescura. |
+| Comunicación dentro de la plataforma | (Competidor = XXXX): ninguna — toda la negociación por email externo. Nosotros: mensajería 1 a 1 cifrada E2EE, con tarjetas de consulta y oferta contextuales a la referencia. |
+| Coste de transporte (REVISADO v1.1) | (Competidor = XXXX): ninguno — cálculo manual externo. Nosotros: campo simple dentro de la oferta en V1; cálculo automático completo diferido a V2 tras un análisis más amplio. |
+| Sistema de reputación (REVISADO v1.1) | (Competidor = XXXX): ninguno. Nosotros: sistema de Favoritos manual y transparente — sin verificación criptográfica, sin algoritmo, sin exposición de datos comerciales. |
+| Directorio de miembros (REVISADO v1.1) | (Competidor = XXXX): listado básico de miembros. Nosotros: Directorio de Organizaciones con datos de contacto público completos y filtros por nombre/país. |
+| Espacio de comunidad (NUEVO v1.1) | (Competidor = XXXX): ninguno. Nosotros: Foro de la Comunidad con categorías temáticas y autorregulación. |
+| Capacidades de IA | (Competidor = XXXX): ninguna. Nosotros: búsqueda, mapeo de ingesta, aprendizaje de preferencias. |
+| Modelo de cobro de suscripción (REVISADO v1.1) | (Competidor = XXXX): cobro recurrente estándar. Nosotros: precio único, sin pasarela de pago — transferencia bancaria con confirmación manual del operador; ninguna versión de la plataforma procesa pagos, ni entre miembros ni para su propia suscripción. |
 
 # 7. Estrategia de Salida al Mercado
 
 ## 7.1 Audiencia objetivo
 
-Todos los miembros actuales de BearingNet (aproximadamente 2.000 distribuidores en más de 80 países) son el objetivo primario. Los objetivos secundarios incluyen distribuidores de rodamientos activos que actualmente no están en BearingNet.
+Todos los miembros actuales de (Competidor = XXXX) (aproximadamente 2.000 distribuidores en más de 80 países) son el objetivo primario. Los objetivos secundarios incluyen distribuidores de rodamientos activos que actualmente no están en (Competidor = XXXX).
 
 ## 7.2 Fases de lanzamiento
 
 | **Fase** | **Descripción** |
 | --- | --- |
-| Fase 1 — Datos y MVP (meses 1–6) | Construir y validar el MVP con las funcionalidades diferenciadoras centrales: búsqueda con IA, mensajería E2EE, visibilidad granular, e ingesta inteligente de stock. Preparar la base de contactos de miembros de BearingNet. |
+| Fase 1 — Datos y MVP (meses 1–6) | Construir y validar el MVP con las funcionalidades diferenciadoras centrales: búsqueda con IA, mensajería E2EE, visibilidad granular, e ingesta inteligente de stock. Preparar la base de contactos de miembros de (Competidor = XXXX). |
 | Fase 2 — Lanzamiento suave (meses 4–9) | Contacto con los primeros 200–300 miembros objetivo con una oferta de prueba gratuita de 3 meses (REVISADO v1.1 — antes 6 meses, ahora coherente con el Módulo 07 v1.1). Objetivo: alcanzar densidad de red mínima viable. |
 | Fase 3 — Monetización (meses 9+) | Activar el cobro de suscripción al precio objetivo, gestionado por transferencia bancaria con confirmación manual del operador (REVISADO v1.1 — sin pasarela de pago). La garantía de privacidad E2EE y las capacidades de IA son el argumento de conversión principal. |
 | Fase 4 — Escala (meses 12+) | Expandir el foco geográfico, añadir capacidad de IA de referencias cruzadas, y desarrollar un nivel de inteligencia de mercado para suscriptores premium. El análisis ampliado de la calculadora de logística (V2) se evalúa en esta fase. |
@@ -216,27 +216,27 @@ Precio único para todos los miembros (sin tiers ni planes diferenciados), fijad
 | Crecimiento (año 3) | 1.200 miembros × €900 = €1.080.000 |
 | Maduro (año 4–5) | 2.000 miembros × €950 = €1.900.000 |
 
-Los costes de infraestructura a escala se estiman entre €80.000–120.000 al año (hosting en la nube, CDN, auditoría de seguridad). Con una estructura de equipo ligera, los márgenes netos en madurez se proyectan entre el 65–75%, consistentes con el benchmark de BearingNet. NOTA v1.1: estas proyecciones no incluyen ningún coste de procesamiento de pagos, ya que la plataforma no integra ninguna pasarela — el cobro se gestiona por transferencia bancaria, sin comisión de procesador.
+Los costes de infraestructura a escala se estiman entre €80.000–120.000 al año (hosting en la nube, CDN, auditoría de seguridad). Con una estructura de equipo ligera, los márgenes netos en madurez se proyectan entre el 65–75%, consistentes con el benchmark de (Competidor = XXXX). NOTA v1.1: estas proyecciones no incluyen ningún coste de procesamiento de pagos, ya que la plataforma no integra ninguna pasarela — el cobro se gestiona por transferencia bancaria, sin comisión de procesador.
 
 # 9. Riesgos y Mitigaciones
 
 | **Riesgo** | **Descripción** | **Mitigación** |
 | --- | --- | --- |
 | Dependencia del efecto de red | El valor de la plataforma depende de la densidad de miembros. Por debajo de una masa crítica, los resultados de búsqueda son demasiado escasos para ser útiles. | Periodo de prueba gratuito agresivo (3 meses). Priorizar clústeres geográficos — sembrar una o dos regiones densamente antes de expandir globalmente. |
-| Respuesta de precios de BearingNet | El incumbente puede recortar precios agresivamente en respuesta a la entrada competitiva. | El precio no es el diferenciador principal. La arquitectura E2EE no puede igualarse con recortes de precio. Posicionarse en capacidad y confianza, no en precio. |
+| Respuesta de precios de (Competidor = XXXX) | El incumbente puede recortar precios agresivamente en respuesta a la entrada competitiva. | El precio no es el diferenciador principal. La arquitectura E2EE no puede igualarse con recortes de precio. Posicionarse en capacidad y confianza, no en precio. |
 | Complejidad técnica del E2EE | El cifrado de extremo a extremo añade complejidad de implementación significativa, especialmente la gestión de claves para clientes web. | Usar librerías de código abierto del Protocolo Signal. Revisión criptográfica especializada. Construir sobre implementaciones ya probadas. |
-| Inercia de los miembros | Los distribuidores pueden ser reacios a migrar desde una plataforma que han usado durante años. | Onboarding sin friccion: importación CSV compatible con el formato de BearingNet. Herramienta de migración de lista de contactos. Coste de cambio cero durante el periodo de prueba. |
-| Legal / protección de datos | El uso de datos de contacto de miembros de BearingNet para difusión debe cumplir con el RGPD y los Términos de Servicio de BearingNet. | Obtener revisión legal de la estrategia de difusión antes del lanzamiento. Muchos contactos de miembros están disponibles de forma independiente en directorios públicos y LinkedIn. |
+| Inercia de los miembros | Los distribuidores pueden ser reacios a migrar desde una plataforma que han usado durante años. | Onboarding sin friccion: importación CSV compatible con el formato de (Competidor = XXXX). Herramienta de migración de lista de contactos. Coste de cambio cero durante el periodo de prueba. |
+| Legal / protección de datos | El uso de datos de contacto de miembros de (Competidor = XXXX) para difusión debe cumplir con el RGPD y los Términos de Servicio de (Competidor = XXXX). | Obtener revisión legal de la estrategia de difusión antes del lanzamiento. Muchos contactos de miembros están disponibles de forma independiente en directorios públicos y LinkedIn. |
 | Cobro manual sin pasarela (NUEVO v1.1) | El cobro por transferencia bancaria con confirmación manual del operador introduce una dependencia operativa humana — un error o retraso del operador puede causar suspensiones o reactivaciones incorrectas. | Panel dedicado de gestión de cobros (ADMIN-02, Módulo 07 v1.1) con alertas automáticas de vencimiento próximo, para minimizar la dependencia de que el operador recuerde fechas manualmente. |
 | Foro sin moderación (NUEVO v1.1) | La ausencia de moderación activa en el Foro de la Comunidad podría permitir abuso o spam no controlado. | Criterio cuantitativo de revisión fijado de antemano (Módulo 08 v1.1, sección 5.4): más del 5% de publicaciones eliminadas en 30 días, o 3+ quejas de soporte en el mismo periodo, obliga a priorizar el diseño de moderación. |
 
-# Apéndice — Perfil Técnico de BearingNet
+# Apéndice — Perfil Técnico de (Competidor = XXXX)
 
 Compilado de fuentes públicas y análisis de la plataforma, junio 2026. Sin cambios respecto a v1.0.
 
 | **Parámetro** | **Detalle** |
 | --- | --- |
-| Empresa | BearingNet Limited (Companies House nº 03114053) |
+| Empresa | (Competidor = XXXX) Limited (Companies House nº 03114053) |
 | Constituida | 16 de octubre de 1995 |
 | Ubicación | Much Hadham, Hertfordshire, Reino Unido |
 | Director | Peter James Annis (fundador, desde 1995) |
@@ -257,7 +257,7 @@ Compilado de fuentes públicas y análisis de la plataforma, junio 2026. Sin cam
 
 | **Versión** | **Fecha** | **Autor** | **Descripción** |
 | --- | --- | --- | --- |
-| 1.0 | Junio 2026 | Equipo de Producto | Versión inicial. Define la visión y posicionamiento estratégico de la plataforma frente a BearingNet, incluyendo arquitectura zero-knowledge, reputación ZKP, calculadora de logística automática, y modelo de cobro con pasarela de pago. |
+| 1.0 | Junio 2026 | Equipo de Producto | Versión inicial. Define la visión y posicionamiento estratégico de la plataforma frente a (Competidor = XXXX), incluyendo arquitectura zero-knowledge, reputación ZKP, calculadora de logística automática, y modelo de cobro con pasarela de pago. |
 | 1.1 | Junio 2026 | Equipo de Producto | Actualización completa tras finalizar la especificación funcional de los Módulos 00–08. Cambios principales: (1) sistema de reputación ZKP descartado y sustituido por Favoritos manual (sección 4.3); (2) calculadora de logística reducida a un campo simple de coste de transporte en V1, análisis completo diferido a V2 (sección 5.5); (3) eliminada toda pasarela de pago — cobro de suscripción por transferencia bancaria con confirmación manual del operador, principio aplicado también a transacciones entre miembros; (4) periodo de prueba gratuito ajustado de 6 a 3 meses; (5) añadido el Directorio de Organizaciones como nueva funcionalidad (sección 5.6); (6) añadido el Foro de la Comunidad como nueva funcionalidad (sección 5.7); (7) comparativa competitiva, riesgos y proyecciones financieras actualizados en consecuencia. |
 
 |  |

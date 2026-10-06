@@ -131,8 +131,14 @@ def check_idiomatic(files: dict, allowed_outputs: list, dependencies: set) -> di
         #
         # Es F-033 otra vez, un rojo del arnes cobrado como rojo del Coder, y el
         # mas enganoso de los vistos: el mensaje suena a defecto real.
+        #
+        # 3 · (F-236) `\b` tambien DETRAS de `import`. «una cosa importante» en el
+        #     texto de un JSX empareja igual que `!important`, con el `{' '}` de
+        #     tres lineas mas abajo: REG-05 salio con *"dependencia nueva ` `"*.
+        #     Toda sentencia real lleva frontera detras: `import x`, `import 'y'`,
+        #     `import(`, `import{`.
         codigo = name.endswith((".ts", ".tsx"))
-        for m in re.finditer(r"""(?:\bimport[^'"]*|\bfrom\s*)['"]([^'"]+)['"]""",
+        for m in re.finditer(r"""(?:\bimport\b[^'"]*|\bfrom\s*)['"]([^'"]+)['"]""",
                              clean if codigo else ""):
             mod = m.group(1)
             if mod.startswith(".") or mod.startswith("/"):

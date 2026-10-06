@@ -760,6 +760,19 @@ def test_important_no_es_un_import():
     r = check_idiomatic({"a.tsx": tsx}, salidas, DEPS)
     check("⚠ y `!important` dentro de un .tsx tampoco lo dispara", r["ok"], r["detail"])
 
+    # F-236 · el mismo error en español: «importante» en el texto de un JSX,
+    # seguido de un `{' '}`. Reducido de la corrida 01 de REG-05 (6-oct), que
+    # salió con *"dependencia nueva ` `"* y el Coder lo esquivó escribiendo
+    # `impo{'r'}tante`.
+    tsx = ("export function A() {\n  return (<div><h1>una cosa importante</h1>\n"
+           "    <p><strong>Anota.</strong>{' '}No podemos.</p></div>);\n}\n")
+    r = check_idiomatic({"a.tsx": tsx}, salidas, DEPS)
+    check("⚠ F-236 · «importante» en un JSX no es un `import`", r["ok"], r["detail"])
+
+    r = check_idiomatic({"a.tsx": "import 'zod';\nconst m = import('zod2');\n"}, salidas, DEPS)
+    check("y `import 'x'` e `import('x')` siguen cazando", not r["ok"]
+          and "`zod`" in r["detail"] and "`zod2`" in r["detail"], r["detail"])
+
 
 def test_transporte_no_gasta_intento():
     """F-119 · lo que falla por debajo del modelo no gasta intento del modelo.

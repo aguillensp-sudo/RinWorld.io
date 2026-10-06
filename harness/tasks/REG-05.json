@@ -40,7 +40,7 @@
       "app/e2e/keys-intro.spec.ts"
     ],
     "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. Comprobados contra una implementacion de referencia desechable (no comiteada, borrada) antes de la corrida. El e2e va contra el Supabase real y SOLO LEE: entra como ADMIN con el navegador reescribiendo SOLO el estado del perfil a REGISTERED (como el de REG-09), comprueba la pantalla dentro del shell con VERA `Asistente de registro`, que el boton lleva al marcador de REG-06 (REG-05 no escribe nada), que en una ventana baja el boton se alcanza, y que un Editor y un ADMIN normal NO la ven.",
-    "_nota_e2e_fuera_de_contrato": "F-134. C2 corre la suite e2e ENTERA; solo cambia a quien se apunta el fallo. Se excusan los MISMOS CINCO tests que en INV-03, uno por uno: dos por F-224 y tres por los datos vivos de la C5 de REG-01 en produccion (F-230). Comprobado el 4-oct con la suite entera contra los marcadores: fallan exactamente esos cinco y los dos del contrato (`import.spec.ts`), y pasan los otros 138 (ADMIN-02 tras resembrar `demo_billing.sql` en produccion: la siembra habia caducado el 30-sep). Los `test` van en ASCII (se casan por subcadena). REG-05 anade 13, uno por test de `inventory.spec.ts`, por F-234 (descubierto en la lista previa de esta corrida). El de `VERA lleva el subtitulo` se casa por fichero y linea (`inventory.spec.ts:185:3`) porque su titulo se repite en otras specs.",
+    "_nota_e2e_fuera_de_contrato": "F-134. C2 corre la suite e2e ENTERA; solo cambia a quien se apunta el fallo. Se excusan los MISMOS CINCO tests que en INV-03, uno por uno: dos por F-224 y tres por los datos vivos de la C5 de REG-01 en produccion (F-230). Comprobado el 4-oct con la suite entera contra los marcadores: fallan exactamente esos cinco y los dos del contrato (`import.spec.ts`), y pasan los otros 138 (ADMIN-02 tras resembrar `demo_billing.sql` en produccion: la siembra habia caducado el 30-sep). Los `test` van en ASCII (se casan por subcadena). REG-05 anade 3 de `inventory.spec.ts` por los datos vivos de F-234 (descubiertos en la lista previa de esta corrida).",
     "e2e_fuera_de_contrato": [
       {
         "test": "ve la pantalla desde",
@@ -63,56 +63,16 @@
         "motivo": "DIR-01, misma causa: el directorio de produccion lleva 2 organizaciones que la siembra no tiene. Datos vivos de la C5 de REG-01 en PRODUCCION (dia 27: la organizacion `JULSA INDUSTRIAL S.A`, su administrador y la solicitud sintetica `ZZ Prueba REG-01 SL` ya aprobada), que el PO aun no ha dicho que se borren (ESTADO-V1 §3.1). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde no existen y este test pasa. Falla HAGA LO QUE HAGA EL CODER. Cuando el PO los borre, esta exclusion se canta sola como caducada y se quita."
       },
       {
-        "test": "no datos de ejemplo del HTML aprobado",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "las siete columnas de la spec, en orden",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
         "test": "solo muestra inventario propio, aunque la RLS permita ver el ajeno",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "el resumen cuadra con lo que la tabla dice de s",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "el filtro Publicados reduce o iguala",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+        "motivo": "Datos vivos de PRODUCCION, F-234: Rodamientos Ibericos (ALPHA) tiene 18 303 lineas PUBLISHED desde la importacion real del PO del 6-oct, y este test supone la siembra de demo (unas 15 lineas: total < 100, el total sin separador de miles, 6205-2RS en la primera pagina). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen y pasa. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. La lentitud de F-234 ya esta arreglada (0047); lo que queda es el dato. Cuando el PO decida que hacer con esas lineas, se canta sola y se quita."
       },
       {
         "test": "squeda es server-side y NO se lanza al teclear",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "sin resultados dice que es el filtro, no que no hay inventario",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "con caracteres del lenguaje de filtros no rompe la consulta",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "inventory.spec.ts:185:3",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "la subida manual est",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "n de subir inventario se puede pulsar",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
-      },
-      {
-        "test": "tem de nav activo es Inventario",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+        "motivo": "Datos vivos de PRODUCCION, F-234: Rodamientos Ibericos (ALPHA) tiene 18 303 lineas PUBLISHED desde la importacion real del PO del 6-oct, y este test supone la siembra de demo (unas 15 lineas: total < 100, el total sin separador de miles, 6205-2RS en la primera pagina). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen y pasa. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. La lentitud de F-234 ya esta arreglada (0047); lo que queda es el dato. Cuando el PO decida que hacer con esas lineas, se canta sola y se quita."
       },
       {
         "test": "Alpha y Beta ven inventario propio, y no es el mismo",
-        "motivo": "INV-01 no carga: F-234. Rodamientos Ibericos tiene 18 302 lineas PUBLISHED desde la importacion real del PO del 6-oct (11:34-11:39 UTC) y la consulta de `fetchPage` pasa del statement_timeout de 8 s (las politicas de inventory_lines llaman a funciones SECURITY DEFINER por fila). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. Cuando se arregle F-234, estas exclusiones se cantan solas como caducadas y se quitan."
+        "motivo": "Datos vivos de PRODUCCION, F-234: Rodamientos Ibericos (ALPHA) tiene 18 303 lineas PUBLISHED desde la importacion real del PO del 6-oct, y este test supone la siembra de demo (unas 15 lineas: total < 100, el total sin separador de miles, 6205-2RS en la primera pagina). El e2e local del arnes corre contra produccion; la CI, contra bearingworld-e2e, donde esas filas no existen y pasa. Falla HAGA LO QUE HAGA EL CODER: REG-05 no toca INV-01. La lentitud de F-234 ya esta arreglada (0047); lo que queda es el dato. Cuando el PO decida que hacer con esas lineas, se canta sola y se quita."
       }
     ]
   },

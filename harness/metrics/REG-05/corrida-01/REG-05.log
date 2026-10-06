@@ -54,3 +54,22 @@ Traceback (most recent call last):
                  ~~~~~~^^^^^^^^
 KeyError: 'spec'
 During task with name 'coder' and id 'b8b1b24a-d91f-fb87-8e6f-b4343a6dea51'
+
+==============================================================================
+· corrida arrancada 2026-10-06 15:30:03 · harness/tasks/REG-05.json
+==============================================================================
+Log de esta corrida: harness\metrics\REG-05\REG-05.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/KeysIntro.module.css', 'app/src/screens/onboarding/KeysIntro.tsx']
+  tokens in/out: 17978/14966   cache: 0.0% hit
+  coste real: $0.027665   en frio: $0.027665
+  C1: verde
+  C2: INEJECUTABLE
+  C3: verde
+  C4: ROJO
+  · intento 1 ya en disco: harness\metrics\REG-05\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/onboarding/KeysIntro.module.css', 'app/src/screens/onboarding/KeysIntro.tsx']
+  tokens in/out: 21891/50174   cache: 81.86% hit
+  coste real: $0.068228   en frio: $0.075862

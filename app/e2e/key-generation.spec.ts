@@ -67,10 +67,16 @@ async function montarServidor(page: Page, fallosDeSubida = 0): Promise<Servidor>
     await route.fulfill({ status: 204, body: '' });
   });
 
-  // Paso 4: la relectura de la fila devuelve lo último que se subió.
-  await page.route(/\/rest\/v1\/members\?select=public_key(%2C|,)encrypted_key_blob/, async (route) => {
-    const id = /id=eq\.([0-9a-f-]{36})/.exec(route.request().url())?.[1] ?? null;
-    s.memberId = id;
+  // Paso 4: la relectura del backup devuelve lo último que se subió. Desde 0052 no es un `select` de la tabla
+  // (el blob ya no se lee así) sino `read_pending_key_backup`; el id del miembro, que era la AAD que el test
+  // necesita, ya no va en la URL: sale del `sub` del JWT de la petición.
+  await page.route(/\/rest\/v1\/rpc\/read_pending_key_backup/, async (route) => {
+    const jwt = (route.request().headers().authorization ?? '').replace(/^Bearer\s+/i, '');
+    try {
+      s.memberId = (JSON.parse(Buffer.from(jwt.split('.')[1] ?? '', 'base64url').toString('utf8')) as { sub?: string }).sub ?? null;
+    } catch {
+      s.memberId = null;
+    }
     const ultima = s.subidas.at(-1);
     const fila = ultima
       ? {
@@ -81,8 +87,7 @@ async function montarServidor(page: Page, fallosDeSubida = 0): Promise<Servidor>
           kdf_params: ultima.p_kdf_params,
         }
       : null;
-    const quiereObjeto = (route.request().headers().accept ?? '').includes('vnd.pgrst.object');
-    await route.fulfill({ status: 200, json: quiereObjeto ? fila : fila ? [fila] : [] });
+    await route.fulfill({ status: 200, json: fila ? [fila] : [] });
   });
 
   await page.route(/\/rest\/v1\/rpc\/confirm_key_backup/, async (route) => {

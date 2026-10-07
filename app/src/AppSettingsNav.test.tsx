@@ -31,6 +31,9 @@ vi.mock('./screens/panel/Panel', () => ({ Panel: () => <div>panel</div> }));
 
 const { App } = await import('./App');
 
+/** Tres pantallas y tres clics con la suite entera en paralelo: el límite por defecto (5 s) se queda corto (F-225). */
+vi.setConfig({ testTimeout: 30_000 });
+
 describe('App · pie del menú', () => {
   it('Configuración abre INVT-01 y Seguridad abre SET-SEC-01, y cada una cierra la otra', async () => {
     const user = userEvent.setup();

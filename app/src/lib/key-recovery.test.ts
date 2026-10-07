@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fromBytea, keyPairFromPrivateBytes, toBytea } from './crypto';
-import { type Argon2Runner, createKeyPair, deriveWrappingKey, openPrivateKey, protectPrivateKey, runArgon2 } from './key-backup';
+import {
+  type Argon2Runner,
+  createKeyPair,
+  deriveBackupKeys,
+  deriveWrappingKey,
+  keyVerifierOf,
+  openPrivateKey,
+  protectPrivateKey,
+  runArgon2,
+} from './key-backup';
 import { changeBackupPassphrase, discardKeyBackup, openOwnBackup, recoverKey } from './key-recovery';
 import { clearKeyring, currentKeyPair, keyringHasBackup } from './keys';
 
@@ -43,7 +52,7 @@ vi.mock('./device-key', () => ({
 }));
 
 /** Un backup real, cerrado con parámetros reducidos, tal como lo devolvería `begin_key_recovery`. */
-async function backupRow(attemptsLeft = 4, secondsLeft = 0) {
+async function backupRow(attemptsLeft = 4, secondsLeft = 0, hasVerifier = true) {
   const generated = await createKeyPair();
   const publicKey = generated.keyPair.publicKey;
   const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, generated, fast);
@@ -56,6 +65,7 @@ async function backupRow(attemptsLeft = 4, secondsLeft = 0) {
     key_iv: toBytea(payload.keyIv),
     argon2_salt: toBytea(payload.argon2Salt),
     kdf_params: payload.kdfParams,
+    has_verifier: hasVerifier,
   };
 }
 
@@ -167,6 +177,44 @@ describe('changeBackupPassphrase · SET-SEC-01', () => {
     await expect(open(PASSPHRASE)).rejects.toThrow();
   });
 
+  it('F-242: sube la PRUEBA de la frase actual y el verificador de la nueva', async () => {
+    const row = await backupRow();
+    beginResponse = { data: [row], error: null };
+    await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')?.args as Record<string, string | null>;
+
+    // La prueba de la frase ACTUAL, derivada con la sal del backup que había.
+    const old = await deriveBackupKeys(PASSPHRASE, fromBytea(row.argon2_salt), undefined, fast);
+    expect(replace.p_old_proof).toBe(toBytea(old.proof));
+    // El verificador de la NUEVA, derivado con la sal nueva.
+    const next = await deriveBackupKeys(NEW_PASSPHRASE, fromBytea(replace.p_argon2_salt!), undefined, fast);
+    expect(replace.p_key_verifier).toBe(toBytea(await keyVerifierOf(next.proof)));
+    // Y nunca viajan la frase ni la clave de envoltura.
+    const wire = JSON.stringify(rpcCalls);
+    expect(wire).not.toContain(PASSPHRASE);
+    expect(wire).not.toContain(NEW_PASSPHRASE);
+  });
+
+  it('la prueba no es la clave de envoltura ni el verificador: tres cosas distintas', async () => {
+    const salt = new Uint8Array(32).fill(5);
+    const { proof } = await deriveBackupKeys(PASSPHRASE, salt, undefined, fast);
+    const verifier = await keyVerifierOf(proof);
+    expect(proof).toHaveLength(32);
+    expect(verifier).toHaveLength(32);
+    expect(toBytea(proof)).not.toBe(toBytea(verifier));
+    // Determinista: la misma frase y sal dan la misma prueba; otra frase, otra.
+    expect((await deriveBackupKeys(PASSPHRASE, salt, undefined, fast)).proof).toEqual(proof);
+    expect((await deriveBackupKeys(NEW_PASSPHRASE, salt, undefined, fast)).proof).not.toEqual(proof);
+  });
+
+  it('un backup ANTERIOR a 0053 (sin verificador) se cambia sin prueba, y el nuevo ya lo lleva', async () => {
+    beginResponse = { data: [await backupRow(4, 0, false)], error: null };
+    await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')?.args as Record<string, string | null>;
+    expect(replace.p_old_proof).toBeNull();
+    expect(replace.p_key_verifier).toBeTruthy();
+  });
+
   it('con la frase actual mala no sube nada', async () => {
     beginResponse = { data: [await backupRow(3)], error: null };
     const out = await changeBackupPassphrase('no es esta frase 123', NEW_PASSPHRASE, MEMBER, fast);
@@ -178,6 +226,43 @@ describe('changeBackupPassphrase · SET-SEC-01', () => {
     beginResponse = { data: [await backupRow()], error: null };
     otherError = { message: 'no' };
     await expect(changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast)).rejects.toThrow();
+  });
+});
+
+describe('recoverKey · un backup anterior a 0053 sube su verificador al abrirse', () => {
+  it('con la MISMA frase: nuevo blob y verificador, y la privada recuperada es la misma', async () => {
+    const row = await backupRow(4, 0, false);
+    beginResponse = { data: [row], error: null };
+    const out = await recoverKey(PASSPHRASE, MEMBER, fast);
+    expect(out).toEqual({ kind: 'recovered' });
+
+    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')?.args as Record<string, string | null>;
+    expect(replace.p_old_proof).toBeNull();
+    expect(replace.p_public_key).toBe(row.public_key);
+    const key = await deriveWrappingKey(PASSPHRASE, fromBytea(replace.p_argon2_salt!), undefined, fast);
+    const bytes = await openPrivateKey(fromBytea(replace.p_encrypted_key_blob!), fromBytea(replace.p_key_iv!), key, MEMBER);
+    expect((await keyPairFromPrivateBytes(bytes)).publicKey).toEqual(fromBytea(row.public_key));
+    const proof = (await deriveBackupKeys(PASSPHRASE, fromBytea(replace.p_argon2_salt!), undefined, fast)).proof;
+    expect(replace.p_key_verifier).toBe(toBytea(await keyVerifierOf(proof)));
+  });
+
+  it('si no se puede subir, la recuperación sale igualmente bien', async () => {
+    beginResponse = { data: [await backupRow(4, 0, false)], error: null };
+    otherError = { message: 'sin red' };
+    await expect(recoverKey(PASSPHRASE, MEMBER, fast)).resolves.toEqual({ kind: 'recovered' });
+    expect(currentKeyPair()).not.toBeNull();
+  });
+
+  it('un backup que ya lleva verificador no se toca', async () => {
+    beginResponse = { data: [await backupRow(4, 0, true)], error: null };
+    await recoverKey(PASSPHRASE, MEMBER, fast);
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['begin_key_recovery']);
+  });
+
+  it('con la frase mala no se sube nada', async () => {
+    beginResponse = { data: [await backupRow(3, 0, false)], error: null };
+    await recoverKey('otra frase muy distinta 9', MEMBER, fast);
+    expect(rpcCalls.some((c) => c.fn === 'replace_key_backup')).toBe(false);
   });
 });
 

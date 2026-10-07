@@ -40,6 +40,7 @@ type Subida = {
   p_key_iv: string;
   p_argon2_salt: string;
   p_kdf_params: Record<string, unknown>;
+  p_key_verifier: string;
 };
 
 interface Servidor {
@@ -150,16 +151,17 @@ test.describe('REG-07 · generar las claves y guardar el backup · ADMIN en REGI
     // Argon2id, fuera del hilo principal.
     expect(workers.some((u) => u.includes('argon2'))).toBe(true);
 
-    // La subida: los cinco campos, con sus tamaños.
+    // La subida: los cinco campos y el verificador de la frase (0053), con sus tamaños.
     expect(servidor.subidas).toHaveLength(1);
     const subida = servidor.subidas[0]!;
     expect(Object.keys(subida).sort()).toEqual(
-      ['p_argon2_salt', 'p_encrypted_key_blob', 'p_key_iv', 'p_kdf_params', 'p_public_key'].sort(),
+      ['p_argon2_salt', 'p_encrypted_key_blob', 'p_key_iv', 'p_kdf_params', 'p_key_verifier', 'p_public_key'].sort(),
     );
     expect(bytes(subida.p_public_key)).toHaveLength(32);
     expect(bytes(subida.p_encrypted_key_blob)).toHaveLength(48);
     expect(bytes(subida.p_key_iv)).toHaveLength(12);
     expect(bytes(subida.p_argon2_salt)).toHaveLength(32);
+    expect(bytes(subida.p_key_verifier)).toHaveLength(32);
     expect(subida.p_kdf_params).toEqual({ algo: 'argon2id', m: 65536, t: 3, p: 4, v: 19 });
     expect(servidor.confirmaciones).toEqual([{ p_public_key: subida.p_public_key }]);
     expect(filtradas).toEqual([]);

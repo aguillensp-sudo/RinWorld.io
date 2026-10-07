@@ -26,7 +26,7 @@ import { adoptKeyring, clearKeyring } from './keys';
 import {
   KDF_PARAMS,
   type Argon2Runner,
-  deriveWrappingKey,
+  deriveBackupKeys,
   openPrivateKey,
   protectPrivateKey,
   runArgon2,
@@ -45,8 +45,11 @@ export type OpenOutcome =
   | { kind: 'locked'; secondsLeft: number }
   /** La frase no abre el backup. `lockedSeconds` > 0 si este era el último intento. */
   | { kind: 'wrong'; attemptsLeft: number; lockedSeconds: number }
-  /** Abierto. El llamante BORRA `privateBytes`. */
-  | { kind: 'opened'; privateBytes: Uint8Array; publicKey: Uint8Array; attemptsLeft: number };
+  /**
+   * Abierto. El llamante BORRA `privateBytes` y `proof`. `proof` es la prueba de ESTA frase (F-242);
+   * `hasVerifier` dice si el servidor ya tiene su verificador (falso en los backups anteriores a 0053).
+   */
+  | { kind: 'opened'; privateBytes: Uint8Array; publicKey: Uint8Array; attemptsLeft: number; proof: Uint8Array; hasVerifier: boolean };
 
 interface RecoveryRow {
   status: string;
@@ -56,6 +59,8 @@ interface RecoveryRow {
   encrypted_key_blob: string | null;
   key_iv: string | null;
   argon2_salt: string | null;
+  /** 0053. Ausente en un servidor anterior: se trata como «sin verificador». */
+  has_verifier?: boolean | null;
 }
 
 function same(a: Uint8Array, b: Uint8Array): boolean {
@@ -92,10 +97,13 @@ export async function openOwnBackup(
   };
 
   let privateBytes: Uint8Array | null = null;
+  let proof: Uint8Array | null = null;
   try {
-    const wrappingKey = await deriveWrappingKey(passphrase, fromBytea(row.argon2_salt), KDF_PARAMS, argon2);
-    privateBytes = await openPrivateKey(fromBytea(row.encrypted_key_blob), fromBytea(row.key_iv), wrappingKey, memberId);
+    const keys = await deriveBackupKeys(passphrase, fromBytea(row.argon2_salt), KDF_PARAMS, argon2);
+    proof = keys.proof;
+    privateBytes = await openPrivateKey(fromBytea(row.encrypted_key_blob), fromBytea(row.key_iv), keys.wrappingKey, memberId);
   } catch {
+    proof?.fill(0);
     return wrongAnswer;
   }
 
@@ -106,13 +114,22 @@ export async function openOwnBackup(
     const pair = await keyPairFromPrivateBytes(privateBytes);
     if (!same(pair.publicKey, publicKey)) {
       privateBytes.fill(0);
+      proof.fill(0);
       return wrongAnswer;
     }
   } catch {
     privateBytes.fill(0);
+    proof.fill(0);
     return wrongAnswer;
   }
-  return { kind: 'opened', privateBytes, publicKey, attemptsLeft: row.attempts_left };
+  return {
+    kind: 'opened',
+    privateBytes,
+    publicKey,
+    attemptsLeft: row.attempts_left,
+    proof,
+    hasVerifier: row.has_verifier === true,
+  };
 }
 
 // -----------------------------------------------------------------------------
@@ -131,15 +148,29 @@ export async function recoverKey(
   const opened = await openOwnBackup(passphrase, memberId, argon2);
   if (opened.kind !== 'opened') return opened;
 
+  // Un backup anterior a 0053 no tiene verificador (F-242). El navegador acaba de demostrar que conoce la
+  // frase: es el momento de subirlo. Se guarda una copia de la privada solo para eso, y se borra.
+  const toUpgrade = opened.hasVerifier ? null : new Uint8Array(opened.privateBytes);
   let pair: SessionKeyPair;
   try {
     pair = await keyPairFromPrivateBytes(opened.privateBytes);
   } finally {
     opened.privateBytes.fill(0);
+    opened.proof.fill(0);
   }
   // Si IndexedDB no deja, el llavero de la sesión sirve igual; en la siguiente se pedirá otra vez.
   await saveDeviceKey(memberId, pair);
   adoptKeyring(memberId, pair);
+  if (toUpgrade) {
+    try {
+      await rewrapBackup(toUpgrade, opened.publicKey, null, passphrase, memberId, argon2);
+    } catch {
+      // Mejor esfuerzo: recuperar la clave ya está hecho. Si no sube, queda como estaba y se reintenta en la
+      // próxima recuperación o al cambiar la frase.
+    } finally {
+      toUpgrade.fill(0);
+    }
+  }
   // Acertar NO reinicia el contador (0052): el límite es de 5 peticiones por ventana de 30 minutos, y quien
   // pudiera reiniciarlo a voluntad lo habría vuelto inútil.
   return { kind: 'recovered' };
@@ -161,33 +192,35 @@ export type ChangeOutcome = { kind: 'locked'; secondsLeft: number }
   | { kind: 'changed' };
 
 /**
- * Abre el backup con la frase actual, re-cifra la misma privada con la nueva y sube el
- * resultado. Antes de subir lo abre otra vez con la clave nueva: un backup que no se
- * pudiera abrir sustituiría a uno que sí, y no hay histórico (SET-SEC-01 §3).
+ * Re-cifra la MISMA privada con `newPassphrase` y sustituye el backup. Antes de subir lo abre otra vez con
+ * la clave nueva: un backup que no se pudiera abrir sustituiría a uno que sí, y no hay histórico
+ * (SET-SEC-01 §3). `oldProof` es la prueba de la frase ANTERIOR (F-242: el servidor la exige si ya tiene
+ * verificador); `null` solo para un backup anterior a 0053, que no lo tiene.
+ *
+ * **Borra `privateBytes`** salga como salga: quien llame pasa una copia si todavía la necesita.
  */
-export async function changeBackupPassphrase(
-  currentPassphrase: string,
+async function rewrapBackup(
+  privateBytes: Uint8Array,
+  publicKey: Uint8Array,
+  oldProof: Uint8Array | null,
   newPassphrase: string,
   memberId: string,
-  argon2: Argon2Runner = runArgon2,
-): Promise<ChangeOutcome> {
-  const opened = await openOwnBackup(currentPassphrase, memberId, argon2);
-  if (opened.kind !== 'opened') return opened;
-
+  argon2: Argon2Runner,
+): Promise<void> {
   let sealed: Awaited<ReturnType<typeof protectPrivateKey>>;
   try {
-    const keyPair = await keyPairFromPrivateBytes(opened.privateBytes);
+    const keyPair = await keyPairFromPrivateBytes(privateBytes);
     // `protectPrivateKey` borra `privateBytes` salga bien o mal; el `finally` cubre el resto.
-    sealed = await protectPrivateKey(newPassphrase, memberId, { privateBytes: opened.privateBytes, keyPair }, argon2);
+    sealed = await protectPrivateKey(newPassphrase, memberId, { privateBytes, keyPair }, argon2);
   } finally {
-    opened.privateBytes.fill(0);
+    privateBytes.fill(0);
   }
   const { payload, wrappingKey } = sealed;
 
   const check = await openPrivateKey(payload.encryptedKeyBlob, payload.keyIv, wrappingKey, memberId);
   try {
     const again = await keyPairFromPrivateBytes(check);
-    if (!same(again.publicKey, opened.publicKey)) throw new Error('El backup nuevo no se puede abrir.');
+    if (!same(again.publicKey, publicKey)) throw new Error('El backup nuevo no se puede abrir.');
   } finally {
     check.fill(0);
   }
@@ -198,8 +231,38 @@ export async function changeBackupPassphrase(
     p_key_iv: toBytea(payload.keyIv),
     p_argon2_salt: toBytea(payload.argon2Salt),
     p_kdf_params: payload.kdfParams,
+    p_key_verifier: toBytea(payload.keyVerifier),
+    p_old_proof: oldProof ? toBytea(oldProof) : null,
   });
   if (error) throw new Error('No se pudo guardar la nueva frase.');
+}
+
+/**
+ * Abre el backup con la frase actual, re-cifra la misma privada con la nueva y sube el resultado. La prueba
+ * de la frase actual (que el navegador acaba de calcular al abrir) viaja con el cambio: sin ella, quien
+ * tuviera la sesión pero no la frase podría sustituir el backup (F-242).
+ */
+export async function changeBackupPassphrase(
+  currentPassphrase: string,
+  newPassphrase: string,
+  memberId: string,
+  argon2: Argon2Runner = runArgon2,
+): Promise<ChangeOutcome> {
+  const opened = await openOwnBackup(currentPassphrase, memberId, argon2);
+  if (opened.kind !== 'opened') return opened;
+  try {
+    await rewrapBackup(
+      opened.privateBytes,
+      opened.publicKey,
+      opened.hasVerifier ? opened.proof : null,
+      newPassphrase,
+      memberId,
+      argon2,
+    );
+  } finally {
+    opened.privateBytes.fill(0);
+    opened.proof.fill(0);
+  }
   return { kind: 'changed' };
 }
 

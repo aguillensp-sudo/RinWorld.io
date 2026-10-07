@@ -4899,11 +4899,11 @@ $$;
 -- Bytes de relleno con la forma exacta: pública 32, blob 48, IV 12, sal 32.
 do $$
 begin
-  assert not has_function_privilege('anon', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'),
+  assert not has_function_privilege('anon', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea)', 'execute'),
     '0048: anon no sube backups';
   assert not has_function_privilege('anon', 'public.confirm_key_backup(bytea)', 'execute'), '0048: anon no confirma';
   assert not has_function_privilege('authenticated', 'app.kdf_params_v1()', 'execute'), '0048: los parametros son internos';
-  assert has_function_privilege('authenticated', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'),
+  assert has_function_privilege('authenticated', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea)', 'execute'),
     '0048: el ancla positiva -- authenticated SI sube su backup';
   assert has_function_privilege('authenticated', 'public.confirm_key_backup(bytea)', 'execute'),
     '0048: y SI lo confirma';
@@ -4918,13 +4918,13 @@ begin;
   select public.expect_fail($q$select public.confirm_key_backup(decode(repeat('a1', 32), 'hex'))$q$,
     '0048: no se confirma un backup que no existe');
   select public.expect_fail($q$select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 47), 'hex'),
-      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')))$q$,
     '0048: un blob que no es de 48 bytes (32 + etiqueta GCM) no entra');
   select public.expect_fail($q$select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
-      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":1024,"t":1,"p":1,"v":19}')$q$,
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":1024,"t":1,"p":1,"v":19}', sha256(decode(repeat('ab', 32), 'hex')))$q$,
     '0048: ni unos parametros de Argon2id mas flojos que los de ADR-001');
   select public.expect_fail($q$select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
-      decode(repeat('c1', 16), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+      decode(repeat('c1', 16), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')))$q$,
     '0048: ni un IV de 16');
 commit;
 
@@ -4933,9 +4933,9 @@ begin;
   select set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
   set local role authenticated;
   select public.store_key_backup(decode(repeat('a0', 32), 'hex'), decode(repeat('b0', 48), 'hex'),
-      decode(repeat('c0', 12), 'hex'), decode(repeat('d0', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+      decode(repeat('c0', 12), 'hex'), decode(repeat('d0', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')));
   select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
-      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')));
   select public.expect_fail($q$select public.confirm_key_backup(decode(repeat('a0', 32), 'hex'))$q$,
     '0048: no se confirma una publica que ya no es la del backup');
 commit;
@@ -4961,9 +4961,9 @@ begin;
   select public.confirm_key_backup(decode(repeat('a1', 32), 'hex'));
   select public.confirm_key_backup(decode(repeat('a1', 32), 'hex'));
   select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
-      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')));
   select public.expect_fail($q$select public.store_key_backup(decode(repeat('a2', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
-      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')))$q$,
     '0048: con la cuenta en KEY_ACTIVE no se sustituye la clave (eso es SET-SEC-01)');
 commit;
 
@@ -4972,7 +4972,7 @@ begin;
   select set_config('request.jwt.claim.sub', '1e000001-0000-0000-0000-000000000001', true);
   set local role authenticated;
   select public.expect_fail($q$select public.store_key_backup(decode(repeat('a3', 32), 'hex'), decode(repeat('b3', 48), 'hex'),
-      decode(repeat('c3', 12), 'hex'), decode(repeat('d3', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+      decode(repeat('c3', 12), 'hex'), decode(repeat('d3', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')))$q$,
     '0048: un ADMIN ACTIVE no sube un backup nuevo por aqui');
 commit;
 
@@ -4999,11 +4999,11 @@ $$;
 do $$
 begin
   assert not has_function_privilege('anon', 'public.begin_key_recovery()', 'execute'), '0049: anon no pide backups';
-  assert not has_function_privilege('anon', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'), '0049: anon no sustituye';
+  assert not has_function_privilege('anon', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea,bytea)', 'execute'), '0049: anon no sustituye';
   assert not has_function_privilege('anon', 'public.discard_key_backup()', 'execute'), '0049: anon no descarta';
   assert has_function_privilege('authenticated', 'public.begin_key_recovery()', 'execute'),
     '0049: el ancla positiva -- authenticated SI pide su backup';
-  assert has_function_privilege('authenticated', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'),
+  assert has_function_privilege('authenticated', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea,bytea)', 'execute'),
     '0049: y SI lo sustituye';
   assert not has_table_privilege('authenticated', 'public.key_recovery_attempts', 'select'),
     '0049: el contador no se lee';
@@ -5097,26 +5097,26 @@ do $$
 begin
   perform set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
   perform public.replace_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b9', 48), 'hex'),
-    decode(repeat('c9', 12), 'hex'), decode(repeat('d9', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+    decode(repeat('c9', 12), 'hex'), decode(repeat('d9', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
   assert (select encrypted_key_blob from public.members where id = '1e000003-0000-0000-0000-000000000003') = decode(repeat('b9', 48), 'hex')
      and (select public_key from public.members where id = '1e000003-0000-0000-0000-000000000003') = decode(repeat('a1', 32), 'hex')
      and (select state from public.members where id = '1e000003-0000-0000-0000-000000000003') = 'KEY_ACTIVE',
     '0049: replace_key_backup cambia el blob y deja la publica y el estado';
   perform public.begin_key_recovery();
   perform public.replace_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b9', 48), 'hex'),
-    decode(repeat('c9', 12), 'hex'), decode(repeat('d9', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+    decode(repeat('c9', 12), 'hex'), decode(repeat('d9', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
   assert (select attempts from public.key_recovery_attempts where member_id = '1e000003-0000-0000-0000-000000000003') = 1,
     '0052: cambiar la frase NO reinicia el contador';
   begin
     perform public.replace_key_backup(decode(repeat('a2', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
-      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
     raise exception 'DEBIA FALLAR';
   exception when others then
     assert sqlerrm like 'El cambio de frase no puede cambiar la clave%', '0049: otra publica no entra, dijo: ' || sqlerrm;
   end;
   begin
     perform public.replace_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
-      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":1024,"t":1,"p":1,"v":19}');
+      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":1024,"t":1,"p":1,"v":19}', sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
     raise exception 'DEBIA FALLAR';
   exception when others then
     assert sqlerrm like 'Par%metros de derivaci%', '0049: unos parametros flojos no entran, dijo: ' || sqlerrm;
@@ -5506,5 +5506,174 @@ delete from public.key_recovery_attempts where member_id::text like '9e00000%';
 delete from public.members where org_id = '99999999-9999-4999-8999-999999999999';
 delete from auth.users where id::text like '9e00000%';
 delete from public.organizations where id = '99999999-9999-4999-8999-999999999999';
+
+-- -----------------------------------------------------------------------------
+-- 0053 y 0054 · Verificador de la frase: sustituir el backup exige la anterior (F-242)
+-- -----------------------------------------------------------------------------
+-- Organizacion propia (India Test): i1 ADMIN con backup y verificador, i2 EDITOR con un backup ANTERIOR a 0053
+-- (sin verificador), i3 EDITOR REGISTERED. La «prueba» A es 32 bytes 'ab'; su verificador, sha256(A). Se borra al final.
+insert into public.organizations (id, name, country, continent, status)
+values ('10101010-1010-4010-8010-101010101010', 'India Test', 'DE', 'EU', 'APPROVED');
+insert into auth.users (id, email) values
+  ('a1000001-0000-0000-0000-000000000001', 'i1@india.test'), ('a1000002-0000-0000-0000-000000000002', 'i2@india.test'),
+  ('a1000003-0000-0000-0000-000000000003', 'i3@india.test');
+insert into public.members (id, org_id, email, state) values
+  ('a1000001-0000-0000-0000-000000000001', '10101010-1010-4010-8010-101010101010', 'i1@india.test', 'ACTIVE'),
+  ('a1000002-0000-0000-0000-000000000002', '10101010-1010-4010-8010-101010101010', 'i2@india.test', 'ACTIVE'),
+  ('a1000003-0000-0000-0000-000000000003', '10101010-1010-4010-8010-101010101010', 'i3@india.test', 'REGISTERED');
+update public.members m set public_key = decode(repeat(x.k, 32), 'hex'), encrypted_key_blob = decode(repeat(x.k, 48), 'hex'),
+       key_iv = decode(repeat(x.k, 12), 'hex'), argon2_salt = decode(repeat(x.k, 32), 'hex'),
+       kdf_params = '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}'::jsonb,
+       key_verifier = case when x.k = '11' then sha256(decode(repeat('ab', 32), 'hex')) else null end
+  from (values ('a1000001-0000-0000-0000-000000000001'::uuid, '11'), ('a1000002-0000-0000-0000-000000000002', '22')) as x(id, k)
+ where m.id = x.id;
+
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea)', 'execute'), '0053: anon no sube backups';
+  assert not has_function_privilege('anon', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea,bytea)', 'execute'), '0053: anon no sustituye';
+  assert has_function_privilege('authenticated', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea)', 'execute')
+     and has_function_privilege('authenticated', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb,bytea,bytea)', 'execute'),
+    '0053: el ancla positiva -- authenticated SI sube y sustituye';
+  assert not has_column_privilege('authenticated', 'public.members', 'key_verifier', 'select'), '0053: el verificador no se lee';
+  assert not has_column_privilege('authenticated', 'public.members', 'key_verifier', 'update'), '0053: ni se escribe';
+  assert not has_column_privilege('anon', 'public.members', 'key_verifier', 'select'), '0053: anon tampoco';
+  -- 0054: las firmas de cinco argumentos ya no existen (crearian un backup sin verificador).
+  assert not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                      where n.nspname = 'public' and p.proname in ('store_key_backup', 'replace_key_backup') and p.pronargs = 5),
+    '0054: no quedan las firmas viejas';
+  raise notice 'OK · 0053/0054: privilegios y firmas leidos del catalogo';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', 'a1000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_denied($q$select key_verifier from public.members$q$, '0053: un ADMIN no lee el verificador de nadie');
+commit;
+
+-- REG-07: el backup nuevo lleva su verificador, y con la forma mala no entra.
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', 'a1000003-0000-0000-0000-000000000003', true);
+  begin
+    perform public.store_key_backup(decode(repeat('33', 32), 'hex'), decode(repeat('33', 48), 'hex'), decode(repeat('33', 12), 'hex'),
+      decode(repeat('33', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', decode(repeat('ab', 31), 'hex'));
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'El backup de la clave no tiene la forma esperada%', '0053: un verificador de 31 bytes no entra, dijo: ' || sqlerrm;
+  end;
+  perform public.store_key_backup(decode(repeat('33', 32), 'hex'), decode(repeat('33', 48), 'hex'), decode(repeat('33', 12), 'hex'),
+    decode(repeat('33', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')));
+  assert (select key_verifier from public.members where id = 'a1000003-0000-0000-0000-000000000003') = sha256(decode(repeat('ab', 32), 'hex')),
+    '0053: el backup nuevo guarda su verificador';
+  -- Reintento idéntico: no es un error. Con otro verificador, sí.
+  perform public.store_key_backup(decode(repeat('33', 32), 'hex'), decode(repeat('33', 48), 'hex'), decode(repeat('33', 12), 'hex'),
+    decode(repeat('33', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}', sha256(decode(repeat('ab', 32), 'hex')));
+  raise notice 'OK · 0053: store_key_backup guarda el verificador';
+end
+$$;
+
+-- REC-01: el navegador sabe si el backup lleva verificador.
+do $$
+declare r record;
+begin
+  perform set_config('request.jwt.claim.sub', 'a1000001-0000-0000-0000-000000000001', true);
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.has_verifier is true, '0053: i1 tiene verificador';
+  perform set_config('request.jwt.claim.sub', 'a1000002-0000-0000-0000-000000000002', true);
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.has_verifier is false, '0053: i2 (backup anterior) no lo tiene';
+  raise notice 'OK · 0053: begin_key_recovery dice si hay verificador';
+end
+$$;
+
+-- SET-SEC-01: sustituir el backup exige la prueba de la frase anterior.
+do $$
+declare
+  kdf text := '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}';
+begin
+  perform set_config('request.jwt.claim.sub', 'a1000001-0000-0000-0000-000000000001', true);
+  -- Sin prueba, con una prueba de otra frase, o con una de longitud mala: no.
+  begin
+    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+      decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')));
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'La frase actual no es correcta%', '0053: sin la prueba de la frase anterior no se sustituye, dijo: ' || sqlerrm;
+  end;
+  begin
+    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+      decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ee', 32), 'hex'));
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'La frase actual no es correcta%', '0053: con la prueba de otra frase tampoco, dijo: ' || sqlerrm;
+  end;
+  begin
+    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+      decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ab', 31), 'hex'));
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'La frase actual no es correcta%', '0053: ni con una prueba de 31 bytes, dijo: ' || sqlerrm;
+  end;
+  assert (select encrypted_key_blob from public.members where id = 'a1000001-0000-0000-0000-000000000001') = decode(repeat('11', 48), 'hex'),
+    '0053: y el backup sigue siendo el de antes';
+
+  -- Con la prueba buena, entra; y entonces la prueba vieja ya no vale y la nueva si.
+  perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+    decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
+  assert (select encrypted_key_blob from public.members where id = 'a1000001-0000-0000-0000-000000000001') = decode(repeat('e1', 48), 'hex')
+     and (select key_verifier from public.members where id = 'a1000001-0000-0000-0000-000000000001') = sha256(decode(repeat('cd', 32), 'hex')),
+    '0053: con la prueba buena se sustituye y se guarda el verificador nuevo';
+  begin
+    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e2', 48), 'hex'), decode(repeat('e2', 12), 'hex'),
+      decode(repeat('e2', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'La frase actual no es correcta%', '0053: la prueba de la frase anterior ya no vale, dijo: ' || sqlerrm;
+  end;
+  perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e2', 48), 'hex'), decode(repeat('e2', 12), 'hex'),
+    decode(repeat('e2', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('cd', 32), 'hex'));
+  raise notice 'OK · 0053: replace_key_backup exige la prueba de la frase anterior';
+end
+$$;
+
+-- Un backup ANTERIOR a 0053 (sin verificador) se sustituye una vez sin prueba y el nuevo ya lo lleva.
+do $$
+declare
+  kdf jsonb := '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}';
+begin
+  perform set_config('request.jwt.claim.sub', 'a1000002-0000-0000-0000-000000000002', true);
+  perform public.replace_key_backup(decode(repeat('22', 32), 'hex'), decode(repeat('e3', 48), 'hex'), decode(repeat('e3', 12), 'hex'),
+    decode(repeat('e3', 32), 'hex'), kdf, sha256(decode(repeat('ab', 32), 'hex')));
+  assert (select key_verifier from public.members where id = 'a1000002-0000-0000-0000-000000000002') = sha256(decode(repeat('ab', 32), 'hex')),
+    '0053: el backup anterior sube su verificador al primer cambio';
+  begin
+    perform public.replace_key_backup(decode(repeat('22', 32), 'hex'), decode(repeat('e4', 48), 'hex'), decode(repeat('e4', 12), 'hex'),
+      decode(repeat('e4', 32), 'hex'), kdf, sha256(decode(repeat('ab', 32), 'hex')));
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'La frase actual no es correcta%', '0053: y a partir de ahi ya exige la prueba, dijo: ' || sqlerrm;
+  end;
+  raise notice 'OK · 0053: un backup anterior se actualiza una vez y queda protegido';
+end
+$$;
+
+-- «He perdido mi frase»: sin backup no hay verificador.
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', 'a1000001-0000-0000-0000-000000000001', true);
+  perform public.discard_key_backup();
+  assert (select key_verifier from public.members where id = 'a1000001-0000-0000-0000-000000000001') is null
+     and (select encrypted_key_blob from public.members where id = 'a1000001-0000-0000-0000-000000000001') is null,
+    '0053: descartar el backup borra tambien el verificador';
+  raise notice 'OK · 0053: discard_key_backup borra el verificador';
+end
+$$;
+
+delete from public.key_recovery_attempts where member_id::text like 'a100000%';
+delete from public.members where org_id = '10101010-1010-4010-8010-101010101010';
+delete from auth.users where id::text like 'a100000%';
+delete from public.organizations where id = '10101010-1010-4010-8010-101010101010';
 
 select 'TODOS LOS ASSERTS PASAN' as resultado;

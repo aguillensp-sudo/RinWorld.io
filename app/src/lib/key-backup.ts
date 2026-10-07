@@ -146,24 +146,61 @@ function own(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
 }
 
 /**
- * La clave de envoltura: Argon2id(frase, sal) importada como AES-256-GCM no
- * extraíble. Los 32 bytes de Argon2id se borran en cuanto están importados.
+ * Etiqueta HKDF de la «prueba» de la frase (F-242). Una por propósito: la prueba y la clave de envoltura
+ * salen de la misma salida de Argon2id pero son independientes; conocer una no da la otra.
  */
+const PROOF_INFO = 'bearingworld.io/key-backup/proof/v1';
+
+/**
+ * De UNA derivación de Argon2id salen dos cosas: la clave de envoltura (AES-256-GCM, no extraíble) y la
+ * **prueba** de la frase (32 bytes, HKDF-SHA-256). El servidor guarda `sha256(prueba)` como verificador y
+ * exige la prueba de la frase anterior para sustituir el backup (`0053`). Los 32 bytes de Argon2id se
+ * borran en cuanto salen las dos; **quien llame borra la prueba cuando termine**.
+ */
+export async function deriveBackupKeys(
+  passphrase: string,
+  salt: Uint8Array,
+  params: KdfParams = KDF_PARAMS,
+  argon2: Argon2Runner = runArgon2,
+): Promise<{ wrappingKey: CryptoKey; proof: Uint8Array }> {
+  const raw = await argon2({ password: passphraseBytes(passphrase), salt: own(salt), m: params.m, t: params.t, p: params.p });
+  try {
+    const wrappingKey = await crypto.subtle.importKey('raw', own(raw), { name: 'AES-GCM', length: 256 }, false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    const ikm = await crypto.subtle.importKey('raw', own(raw), 'HKDF', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(0) as Uint8Array<ArrayBuffer>,
+        info: new TextEncoder().encode(PROOF_INFO) as Uint8Array<ArrayBuffer>,
+      },
+      ikm,
+      256,
+    );
+    return { wrappingKey, proof: new Uint8Array(bits) };
+  } finally {
+    raw.fill(0);
+  }
+}
+
+/** La clave de envoltura sola: Argon2id(frase, sal) importada como AES-256-GCM no extraíble. */
 export async function deriveWrappingKey(
   passphrase: string,
   salt: Uint8Array,
   params: KdfParams = KDF_PARAMS,
   argon2: Argon2Runner = runArgon2,
 ): Promise<CryptoKey> {
-  const raw = await argon2({ password: passphraseBytes(passphrase), salt: own(salt), m: params.m, t: params.t, p: params.p });
-  try {
-    return await crypto.subtle.importKey('raw', own(raw), { name: 'AES-GCM', length: 256 }, false, [
-      'encrypt',
-      'decrypt',
-    ]);
-  } finally {
-    raw.fill(0);
-  }
+  const { wrappingKey, proof } = await deriveBackupKeys(passphrase, salt, params, argon2);
+  proof.fill(0);
+  return wrappingKey;
+}
+
+/** Lo que el servidor guarda de la prueba: su SHA-256. Con él solo se comprueba una prueba; no se puede hacer pasar por ella. */
+export async function keyVerifierOf(proof: Uint8Array): Promise<Uint8Array> {
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', own(proof)));
 }
 
 /** AES-256-GCM de la privada. Devuelve el blob de 48 bytes y su IV de 12. */
@@ -215,6 +252,8 @@ export interface KeyBackupPayload {
   keyIv: Uint8Array;
   argon2Salt: Uint8Array;
   kdfParams: KdfParams;
+  /** `sha256(prueba de la frase)`, 32 bytes (`0053`). Es lo único de la prueba que sale del navegador al crear el backup. */
+  keyVerifier: Uint8Array;
 }
 
 export interface ProtectedKey {
@@ -232,7 +271,13 @@ export async function protectPrivateKey(
 ): Promise<ProtectedKey> {
   try {
     const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
-    const wrappingKey = await deriveWrappingKey(passphrase, salt, KDF_PARAMS, argon2);
+    const { wrappingKey, proof } = await deriveBackupKeys(passphrase, salt, KDF_PARAMS, argon2);
+    let keyVerifier: Uint8Array;
+    try {
+      keyVerifier = await keyVerifierOf(proof);
+    } finally {
+      proof.fill(0);
+    }
     const { blob, iv } = await sealPrivateKey(generated.privateBytes, wrappingKey, memberId);
     return {
       payload: {
@@ -241,6 +286,7 @@ export async function protectPrivateKey(
         keyIv: iv,
         argon2Salt: salt,
         kdfParams: KDF_PARAMS,
+        keyVerifier,
       },
       wrappingKey,
     };
@@ -260,6 +306,7 @@ export async function uploadKeyBackup(payload: KeyBackupPayload): Promise<void> 
     p_key_iv: toBytea(payload.keyIv),
     p_argon2_salt: toBytea(payload.argon2Salt),
     p_kdf_params: payload.kdfParams,
+    p_key_verifier: toBytea(payload.keyVerifier),
   });
   if (error) throw new Error('No se pudo guardar el backup de la clave.');
 }

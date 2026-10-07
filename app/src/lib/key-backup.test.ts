@@ -191,8 +191,8 @@ describe('solo la misma frase, para el mismo miembro, abre el blob', () => {
   });
 });
 
-describe('paso 3 · a la red van los cinco campos y nada más', () => {
-  it('store_key_backup con pública, blob, IV, sal y parámetros, en bytea', async () => {
+describe('paso 3 · a la red van los cinco campos y el verificador, y nada más', () => {
+  it('store_key_backup con pública, blob, IV, sal, parámetros y verificador, en bytea', async () => {
     const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, await createKeyPair(), fast);
     await uploadKeyBackup(payload);
     expect(rpcCalls).toHaveLength(1);
@@ -203,7 +203,9 @@ describe('paso 3 · a la red van los cinco campos y nada más', () => {
       p_key_iv: toBytea(payload.keyIv),
       p_argon2_salt: toBytea(payload.argon2Salt),
       p_kdf_params: KDF_PARAMS,
+      p_key_verifier: toBytea(payload.keyVerifier),
     });
+    expect(payload.keyVerifier).toHaveLength(32);
   });
 
   it('la frase no está en el payload, ni en claro ni en hexadecimal', async () => {

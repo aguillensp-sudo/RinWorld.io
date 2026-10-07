@@ -14,24 +14,22 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 31 de V1 · 7-oct-2026 · Estado: CERRADO.** **`REG-07` construida a mano: la Fase B está entera** (`REG-05` → `06` → `07` → `REG-09`).
-Un ADMIN `REGISTERED` sale con su par X25519, el backup cifrado (ADR-001) en el servidor y la cuenta en `KEY_ACTIVE`. **`0048`** aplicada.
-El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. **C5 del PO dada** a `REG-06` y `REG-07` (JULSA, real). Detalle en `diario/dia-31.md`.
+**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO.** **`REC-01` y `SET-SEC-01` construidas a mano (22.ª y 23.ª pantallas)** a petición del PO.
+Un miembro con backup recupera su clave en otro navegador con la frase, y cambia la frase re-cifrando la MISMA privada. **`0049`** aplicada.
+**Nadie las ha visto en un navegador real**: falta la C5 del PO (§3.1). Detalle en `diario/dia-32.md`; dudas de producto en `F-239`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-10-07 07:31` al arrancar; `10:58` al cerrar |
-| C5 de `REG-06`/`REG-07` (PO, JULSA, base real) | `execute_sql` sobre `members` de su organización | JULSA `ACTIVE` tras «Ir al panel», backup completo (blob 48 B); FRU creó `a.guillen.sp@gmail.com` (EDITOR `REGISTERED`, sin pública) |
-| `0048` (`store_key_backup`, `confirm_key_backup`) | `run.sh` (banco de esquema); `pg_proc` y `has_function_privilege` del proyecto | Banco en verde; dueño `postgres`, `security definer`, `anon` no, `authenticated` sí |
-| Argon2id (`hash-wasm` 4.12.0) | Vector de referencia de argon2id en la unidad; Node | Coincide; ~0,3 s con los parámetros de ADR-001 |
-| Lo que sube el navegador se abre fuera | `key-generation.spec.ts`: Argon2id y AES-GCM de Node sobre el payload capturado | Abre con la frase y el id; sale la pública subida; con otra frase, no |
-| Copia del dispositivo | e2e (IndexedDB real) y `device-key.test.ts` | `CryptoKey` no extraíble con la pública subida |
-| Unidad y tipos | `vitest run`; `tsc --noEmit`; `check:palette` | 1871 verdes; limpio; paleta completa |
-| e2e | Suite entera en local (puerto 4391: el 4173 cae en un rango excluido de Windows) | 2.ª pasada: 154 verdes y los 8 rojos conocidos (`F-224`/`F-230`, 3 de `INV-01` por el dato). La 1.ª, más lenta, dio 5 más que no se reproducen |
-| Estado de las cuentas `REGISTERED` | `execute_sql` | JULSA (ADMIN), `jose@yo.net` (ADMIN), `alvaro@vistabahia.eu` (EDITOR de ALPHA, `F-230`): con `public_key` de demo, sin backup |
-| CI y producción | `gh run` 37593719431; `curl` del bundle de `rin-world-io.vercel.app` | `326cc34` todo verde y desplegado; textos de `REG-07`, las dos RPC y el worker de Argon2id (28 KB) servidos |
+| Fecha de máquina | `date -u` | `2026-10-07 12:02` al arrancar |
+| `0049` (`begin_key_recovery`, `end_key_recovery`, `replace_key_backup`, `discard_key_backup`) | Banco de esquema (`run.sh`) con sus asserts; `pg_proc` y `has_function_privilege` del proyecto | Banco en verde. Las cuatro: dueño `postgres`, `security definer`, `anon` no, `authenticated` sí; `key_recovery_attempts` con RLS y sin `select` |
+| Cinco intentos y 30 min | Asserts de `0049`: 1.º a 5.º entregan el backup (quedan 4,3,2,1,0), el 6.º `locked` sin un byte; vencido el bloqueo, de cero | Verde (en el banco, no en producción) |
+| La capa de datos | `lib/key-recovery.test.ts` (14), con Argon2id reducido; blob real | La frase buena abre, la mala no, otro miembro no (AAD); el cambio sube un blob que abre solo la frase nueva y con la MISMA pública |
+| Las dos pantallas | `KeyRecovery.test.tsx` (17) y `ChangePassphrase.test.tsx` (12) en jsdom | Verdes. **No son un navegador real** |
+| Unidad y tipos | `vitest run`; `tsc --noEmit`; `check:palette` | 1913 verdes y 1 rojo (timeout de `INV-02` por carga; solo, pasa); tipos limpios; paleta completa |
+| e2e | **No se ha corrido** | Ninguna spec nueva |
+| CI y producción | `gh run` 37620737822; `curl` del bundle de `rin-world-io.vercel.app` | `bf60b23`: los seis jobs en verde, desplegado; servidos los textos de `REC-01` y `SET-SEC-01` y las RPC `begin_key_recovery`, `replace_key_backup`, `discard_key_backup` |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -39,17 +37,18 @@ El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. *
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **21 pantallas construidas, 20 aceptadas** (`REG-01`, pendiente de C5).
-  **Fase B entera** (`REG-07` a mano, fuera de la cuenta de la fábrica). Después, **`REC-01`** (`F-237`), `SET-SEC-01` (criptografía), `INV-04` (dominio, `F-233`) y
-  `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
+- **Corriente B · Fábrica — EN MARCHA.** **23 pantallas construidas, 20 aceptadas** (`REG-01`, `REC-01` y `SET-SEC-01` esperan la C5 del PO).
+  `REC-01` y `SET-SEC-01` van **a mano** (criptografía), sin corrida del arnés: sin filas en `harness-metrics.csv`. Quedan `INV-04` (dominio,
+  `F-233`) y `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO (`F-237`): no borrar sus datos del sitio.
-1. **`REC-01`** (recuperar la clave con la frase, ADR-001 §7.2): ahora es lo que falta para que un miembro con backup tenga su clave en otro
-   navegador. **A mano**, con el formato de `lib/key-backup.ts` (NFC, AAD, parámetros) y el límite de 5 intentos EN EL SERVIDOR (§8). Decidir
-   con el PO antes, y los textos de error de `REG-07` sin aprobar (`F-237`).
+1. **C5 del PO de `REC-01` y `SET-SEC-01`, con cuidado: escriben en la base real.** `REC-01`: abrir JULSA en un navegador sin su clave
+   (ventana privada); cada «Desbloquear» **cuenta un intento** (5 y 30 min) y la frase buena lo reinicia. «Generar nuevas claves» **borra el
+   backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup: apuntar la frase nueva.
+   Decidir con el PO el cierre estanco del límite y los textos añadidos (`F-239`), y los textos de error de `REG-07` (`F-237`).
 2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO: el blob ya existe y es lo que protege.
 3. **Decidir con el PO** qué hacer con las 18 303 líneas de ALPHA (cuenta de pruebas): rompen 3 e2e locales (`F-234`). Y las altas de prueba
    (`F-230`), y si se registra `bearingworld.io` (`F-233`). Borrar las 500 `DELETED` basura del 6-oct y la referencia por contenido (de ayer).
@@ -101,7 +100,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-237`** · sin `REC-01`, un miembro con backup no tiene clave en otro navegador; textos de error de `REG-07` sin aprobar | PO + construir (§3.1) |
+| 🟠 | **`F-239`** · el límite de `REC-01` no es estanco (select directo de la fila; reinicio sin prueba); textos añadidos al HTML | PO (§3.1) |
+| 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (`REC-01` ya existe) | PO |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
 | 🟠 | **`F-233`** · `bearingworld.io` sin registrar: ninguna pantalla, texto ni correo puede usarlo como destino | PO |
@@ -132,8 +132,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 ## 6 · Lo que este fichero NO sabe
 
 - **Si las demás tablas tienen el problema de `F-234`** (`threads`, `thread_items`, `watchers`…): sin medir, porque aún no tienen volumen.
+- **Cómo se ven `REC-01` y `SET-SEC-01` en un navegador real** y si Argon2id (64 MiB) entra en un móvil modesto: solo jsdom.
 - **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU): la Fase B es solo del ADMIN (`F-217`).
-- **Cuánto tarda Argon2id en el navegador del PO** (en Node, ~0,3 s) ni si un móvil modesto aguanta los 64 MiB.
+- **Cuánto tarda Argon2id en el navegador del PO** (en Node, ~0,3 s).
 - **Si el umbral de zxcvbn basta** contra un ataque offline al blob cifrado (Argon2id frena, pero ≥ 3 son ~10⁸ intentos): es juicio.
 - **Cuánto tardó la importación de ~18 000 filas del PO** en el navegador: entró, nadie lo midió.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores**: solo con los de prueba y el del PO.
@@ -144,4 +145,4 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ---
 
-*Cierre del Día 31 · 7-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 32 · 7-oct-2026 · Dirección Técnica, Nortex Systems*

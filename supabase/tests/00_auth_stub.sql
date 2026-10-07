@@ -95,3 +95,29 @@ begin
   raise exception 'TEST FALLIDO · se esperaba que el esquema bloqueara: %', label;
 end;
 $$;
+
+-- Espera que una sentencia sea DENEGADA POR PRIVILEGIO (42501): lo contrario de `expect_fail`, que trata un 42501
+-- como test roto (un permiso que le falta al fixture). Se usa donde el permiso de columna es justo lo que se mide
+-- (0052). Cualquier otro error, o que pase, falla el test.
+create or replace function public.expect_denied(stmt text, label text)
+returns void
+language plpgsql
+as $$
+declare
+  st text;
+  msg text;
+begin
+  begin
+    execute stmt;
+  exception
+    when others then
+      st := sqlstate; msg := sqlerrm;
+      if st <> '42501' then
+        raise exception 'TEST ROTO · "%" debia fallar por privilegio (42501) y fallo con % %', label, st, msg;
+      end if;
+      raise notice 'OK · denegado: %  [% %]', label, st, msg;
+      return;
+  end;
+  raise exception 'TEST FALLIDO · se esperaba que se denegara el privilegio: %', label;
+end;
+$$;

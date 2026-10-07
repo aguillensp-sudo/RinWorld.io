@@ -283,14 +283,13 @@ function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
  */
 export async function verifyKeyBackup(memberId: string, protectedKey: ProtectedKey): Promise<void> {
   const { payload, wrappingKey } = protectedKey;
-  const { data, error } = await supabase
-    .from('members')
-    .select('public_key, encrypted_key_blob, key_iv, argon2_salt, kdf_params')
-    .eq('id', memberId)
-    .maybeSingle();
-  if (error || !data) throw new Error('No se pudo leer el backup guardado.');
+  // El blob ya no se lee con un `select` de la tabla (0052, F-239): solo lo entrega `begin_key_recovery`, que
+  // cuenta, y esta función, que solo responde mientras la cuenta sigue `REGISTERED` (justo lo que dura REG-07).
+  const { data, error } = await supabase.rpc('read_pending_key_backup');
+  const first = Array.isArray(data) ? data[0] : null;
+  if (error || !first) throw new Error('No se pudo leer el backup guardado.');
 
-  const row = data as Record<string, unknown>;
+  const row = first as Record<string, unknown>;
   const stored = {
     publicKey: typeof row.public_key === 'string' ? fromBytea(row.public_key) : null,
     blob: typeof row.encrypted_key_blob === 'string' ? fromBytea(row.encrypted_key_blob) : null,

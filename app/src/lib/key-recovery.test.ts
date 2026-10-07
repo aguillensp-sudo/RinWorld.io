@@ -125,7 +125,7 @@ describe('openOwnBackup · pedir y abrir', () => {
 });
 
 describe('recoverKey · REC-01', () => {
-  it('abre, guarda en el dispositivo, monta el llavero y reinicia el contador', async () => {
+  it('abre, guarda en el dispositivo y monta el llavero, sin tocar el contador', async () => {
     const row = await backupRow();
     beginResponse = { data: [row], error: null };
     const out = await recoverKey(PASSPHRASE, MEMBER, fast);
@@ -134,17 +134,16 @@ describe('recoverKey · REC-01', () => {
     expect(currentKeyPair()?.publicKey).toEqual(fromBytea(row.public_key));
     expect(currentKeyPair()?.privateKey.extractable).toBe(false);
     expect(keyringHasBackup()).toBe(true);
-    const end = rpcCalls.find((c) => c.fn === 'end_key_recovery');
-    expect(end?.args).toEqual({ p_public_key: row.public_key });
+    // 0052: acertar no reinicia nada; el servidor ya no tiene `end_key_recovery`.
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['begin_key_recovery']);
   });
 
-  it('con la frase mala no guarda nada, no monta el llavero y no reinicia', async () => {
+  it('con la frase mala no guarda nada ni monta el llavero', async () => {
     beginResponse = { data: [await backupRow(2)], error: null };
     const out = await recoverKey('mala mala mala mala', MEMBER, fast);
     expect(out.kind).toBe('wrong');
     expect(saved).toHaveLength(0);
     expect(currentKeyPair()).toBeNull();
-    expect(rpcCalls.some((c) => c.fn === 'end_key_recovery')).toBe(false);
   });
 });
 

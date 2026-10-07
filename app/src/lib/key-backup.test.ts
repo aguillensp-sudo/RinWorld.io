@@ -41,15 +41,12 @@ vi.mock('./supabase', () => ({
   supabase: {
     rpc: (fn: string, args: Record<string, unknown>) => {
       rpcCalls.push({ fn, args });
+      // La lectura del backup pendiente (REG-07) ya no es un `select` de la tabla (0052): es esta función.
+      if (fn === 'read_pending_key_backup') {
+        return Promise.resolve({ data: storedRow ? [storedRow] : [], error: null });
+      }
       return Promise.resolve({ data: null, error: rpcError });
     },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: () => Promise.resolve({ data: storedRow, error: null }),
-        }),
-      }),
-    }),
   },
 }));
 
@@ -235,8 +232,8 @@ describe('paso 4 · verificar la copia del servidor antes de confirmar', () => {
   it('abre la copia guardada y confirma con la pública', async () => {
     const protectedKey = await uploaded();
     await verifyKeyBackup(MEMBER, protectedKey);
-    expect(rpcCalls.map((c) => c.fn)).toEqual(['store_key_backup', 'confirm_key_backup']);
-    expect(rpcCalls[1]?.args).toEqual({ p_public_key: toBytea(protectedKey.payload.publicKey) });
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['store_key_backup', 'read_pending_key_backup', 'confirm_key_backup']);
+    expect(rpcCalls[2]?.args).toEqual({ p_public_key: toBytea(protectedKey.payload.publicKey) });
   });
 
   it('acepta los parámetros en otro orden (jsonb no lo conserva)', async () => {
@@ -263,8 +260,8 @@ describe('paso 4 · verificar la copia del servidor antes de confirmar', () => {
 
   it('sin fila que leer, falla sin confirmar', async () => {
     const protectedKey = await protectPrivateKey(PASSPHRASE, MEMBER, await createKeyPair(), fast);
-    await expect(verifyKeyBackup(MEMBER, protectedKey)).rejects.toThrow();
-    expect(rpcCalls).toHaveLength(0);
+    await expect(verifyKeyBackup(MEMBER, protectedKey)).rejects.toThrow('No se pudo leer el backup guardado.');
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['read_pending_key_backup']);
   });
 
   it('si la confirmación falla, lanza', async () => {

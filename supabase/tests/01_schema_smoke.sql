@@ -61,7 +61,8 @@ $$;
 begin;
   select set_config('request.jwt.claim.sub', '0a000002-0000-0000-0000-000000000002', true);
   set local role authenticated;
-  select public.expect_fail(
+  -- 0052: antes lo paraba el disparador; ahora ni siquiera hay permiso de columna (el disparador sigue, como segunda guarda).
+  select public.expect_denied(
     $$update public.members set visibility_scope = 'ORG_METADATA'
       where id = '0a000002-0000-0000-0000-000000000002'$$,
     'ADR-002 D-4: un EDITOR no puede auto-concederse ORG_METADATA');
@@ -2461,7 +2462,7 @@ $$;
 begin;
   select set_config('request.jwt.claim.sub', '1e000002-0000-0000-0000-000000000002', true);
   set local role authenticated;
-  select public.expect_fail($q$update public.members set state = 'ACTIVE' where id = '1e000002-0000-0000-0000-000000000002'$q$,
+  select public.expect_denied($q$update public.members set state = 'ACTIVE' where id = '1e000002-0000-0000-0000-000000000002'$q$,
     '0038: un Editor REGISTERED no se activa por UPDATE directo');
 commit;
 
@@ -3944,7 +3945,7 @@ begin
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public'
-     and p.proname <> 'expect_fail'
+     and p.proname not in ('expect_fail','expect_denied')
      and exists (select 1 from aclexplode(p.proacl) a
                    join pg_roles r on r.oid = a.grantee
                   where r.rolname = 'anon' and a.privilege_type = 'EXECUTE');
@@ -4025,7 +4026,7 @@ create or replace function app.f155_detector() returns text
    where n.nspname in ('app','public')
      and p.prokind = 'f'
      and not p.prosecdef
-     and p.proname not in ('expect_fail','f146_canaria')
+     and p.proname not in ('expect_fail','expect_denied','f146_canaria')
      and n.nspname || '.' || p.proname not in (
            'public.create_inquiry',
            'public.create_thread_item',
@@ -4095,7 +4096,7 @@ begin
    where n.nspname in ('app','public')
      and p.prokind = 'f'
      and not p.prosecdef
-     and p.proname not in ('expect_fail','f146_canaria')
+     and p.proname not in ('expect_fail','expect_denied','f146_canaria')
      and p.prosrc ~* '\yexecute\y';
 
   assert dinamicas is null,
@@ -4998,7 +4999,6 @@ $$;
 do $$
 begin
   assert not has_function_privilege('anon', 'public.begin_key_recovery()', 'execute'), '0049: anon no pide backups';
-  assert not has_function_privilege('anon', 'public.end_key_recovery(bytea)', 'execute'), '0049: anon no reinicia';
   assert not has_function_privilege('anon', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'), '0049: anon no sustituye';
   assert not has_function_privilege('anon', 'public.discard_key_backup()', 'execute'), '0049: anon no descarta';
   assert has_function_privilege('authenticated', 'public.begin_key_recovery()', 'execute'),
@@ -5035,15 +5035,12 @@ begin
   assert r.status = 'locked' and r.encrypted_key_blob is null and r.public_key is null and r.argon2_salt is null
      and r.seconds_left between 1790 and 1800, '0049: la sexta peticion recibe locked y nada del backup';
 
-  -- Reiniciar con la publica de OTRO backup no desbloquea.
-  perform public.end_key_recovery(decode(repeat('ff', 32), 'hex'));
+  -- 0052: no hay forma de reiniciar el contador desde fuera; end_key_recovery ya no existe.
+  assert not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                      where n.nspname = 'public' and p.proname = 'end_key_recovery'),
+    '0052: end_key_recovery se ha eliminado';
   select * into r from public.begin_key_recovery();
-  assert r.status = 'locked', '0049: end_key_recovery con otra publica no reinicia';
-
-  -- Con la suya, si.
-  perform public.end_key_recovery(decode(repeat('a1', 32), 'hex'));
-  select * into r from public.begin_key_recovery();
-  assert r.status = 'ok' and r.attempts_left = 4, '0049: abrir con exito borra el contador';
+  assert r.status = 'locked', '0052: sigue bloqueado: nada lo reinicia';
 
   -- Un bloqueo vencido se olvida: se envejece la fila a mano.
   update public.key_recovery_attempts set attempts = 5, locked_until = now() - interval '1 second'
@@ -5051,7 +5048,26 @@ begin
   select * into r from public.begin_key_recovery();
   assert r.status = 'ok' and r.attempts_left = 4, '0049: pasados los 30 minutos se empieza de cero';
 
-  raise notice 'OK · 0049: begin/end_key_recovery cuentan cinco intentos y bloquean media hora';
+  -- 0052: ventana fija de 30 minutos. Dentro de ella se acumula; vencida, empieza otra.
+  update public.key_recovery_attempts set attempts = 2, locked_until = null, window_started_at = now() - interval '10 minutes'
+   where member_id = '1e000003-0000-0000-0000-000000000003';
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.attempts_left = 2, '0052: dentro de la ventana el intento 3 deja 2, dijo: ' || r.attempts_left;
+  update public.key_recovery_attempts set attempts = 4, locked_until = null, window_started_at = now() - interval '31 minutes'
+   where member_id = '1e000003-0000-0000-0000-000000000003';
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.attempts_left = 4, '0052: vencida la ventana se empieza de cero, dijo: ' || r.attempts_left;
+  update public.key_recovery_attempts set attempts = 4, locked_until = null, window_started_at = now() - interval '5 minutes'
+   where member_id = '1e000003-0000-0000-0000-000000000003';
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.attempts_left = 0 and r.seconds_left between 1790 and 1800,
+    '0052: el quinto de la ventana cierra el grifo, dijo: ' || r.attempts_left || '/' || r.seconds_left;
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'locked' and r.encrypted_key_blob is null, '0052: y el sexto, nada';
+  -- Se deja el contador como lo esperan los bloques siguientes (uno en ventana nueva).
+  delete from public.key_recovery_attempts where member_id = '1e000003-0000-0000-0000-000000000003';
+
+  raise notice 'OK · 0049: begin_key_recovery cuenta cinco peticiones por ventana de media hora';
 end
 $$;
 
@@ -5086,8 +5102,11 @@ begin
      and (select public_key from public.members where id = '1e000003-0000-0000-0000-000000000003') = decode(repeat('a1', 32), 'hex')
      and (select state from public.members where id = '1e000003-0000-0000-0000-000000000003') = 'KEY_ACTIVE',
     '0049: replace_key_backup cambia el blob y deja la publica y el estado';
-  assert not exists (select 1 from public.key_recovery_attempts where member_id = '1e000003-0000-0000-0000-000000000003'),
-    '0049: y borra el contador';
+  perform public.begin_key_recovery();
+  perform public.replace_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b9', 48), 'hex'),
+    decode(repeat('c9', 12), 'hex'), decode(repeat('d9', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+  assert (select attempts from public.key_recovery_attempts where member_id = '1e000003-0000-0000-0000-000000000003') = 1,
+    '0052: cambiar la frase NO reinicia el contador';
   begin
     perform public.replace_key_backup(decode(repeat('a2', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
       decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
@@ -5372,5 +5391,120 @@ begin
   raise notice 'OK · 0051: las ocho politicas de threads, thread_items y thread_item_keys evaluan sus funciones una vez';
 end
 $$;
+
+-- -----------------------------------------------------------------------------
+-- 0052 · El backup de la clave, estanco (F-239)
+-- -----------------------------------------------------------------------------
+-- Organizacion propia (Hotel Test): h1 ADMIN con backup, h2 EDITOR con backup, h3 EDITOR REGISTERED con
+-- un backup recien subido (lo que REG-07 relee), h4 EDITOR sin backup. Se borra al final.
+insert into public.organizations (id, name, country, continent, status)
+values ('99999999-9999-4999-8999-999999999999', 'Hotel Test', 'FR', 'EU', 'APPROVED');
+insert into auth.users (id, email) values
+  ('9e000001-0000-0000-0000-000000000001', 'h1@hotel.test'), ('9e000002-0000-0000-0000-000000000002', 'h2@hotel.test'),
+  ('9e000003-0000-0000-0000-000000000003', 'h3@hotel.test'), ('9e000004-0000-0000-0000-000000000004', 'h4@hotel.test');
+insert into public.members (id, org_id, email, state) values
+  ('9e000001-0000-0000-0000-000000000001', '99999999-9999-4999-8999-999999999999', 'h1@hotel.test', 'ACTIVE'),
+  ('9e000002-0000-0000-0000-000000000002', '99999999-9999-4999-8999-999999999999', 'h2@hotel.test', 'ACTIVE'),
+  ('9e000003-0000-0000-0000-000000000003', '99999999-9999-4999-8999-999999999999', 'h3@hotel.test', 'REGISTERED'),
+  ('9e000004-0000-0000-0000-000000000004', '99999999-9999-4999-8999-999999999999', 'h4@hotel.test', 'ACTIVE');
+update public.members m set public_key = decode(repeat(x.k, 32), 'hex'), encrypted_key_blob = decode(repeat(x.k, 48), 'hex'),
+       key_iv = decode(repeat(x.k, 12), 'hex'), argon2_salt = decode(repeat(x.k, 32), 'hex'),
+       kdf_params = '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}'::jsonb
+  from (values ('9e000001-0000-0000-0000-000000000001'::uuid, 'f1'), ('9e000002-0000-0000-0000-000000000002', 'f2'),
+               ('9e000003-0000-0000-0000-000000000003', 'f3')) as x(id, k)
+ where m.id = x.id;
+
+do $$
+begin
+  assert not has_column_privilege('authenticated', 'public.members', 'encrypted_key_blob', 'select'), '0052: authenticated no lee el blob';
+  assert not has_column_privilege('authenticated', 'public.members', 'key_iv', 'select'), '0052: ni el iv';
+  assert not has_column_privilege('anon', 'public.members', 'encrypted_key_blob', 'select'), '0052: anon tampoco';
+  assert not has_table_privilege('authenticated', 'public.members', 'select'), '0052: no hay select de tabla entero';
+  assert has_column_privilege('authenticated', 'public.members', 'public_key', 'select')
+     and has_column_privilege('authenticated', 'public.members', 'kdf_params', 'select')
+     and has_column_privilege('authenticated', 'public.members', 'state', 'select'),
+    '0052: el ancla positiva -- las demas columnas siguen legibles';
+  assert not has_column_privilege('authenticated', 'public.members', 'encrypted_key_blob', 'update')
+     and not has_column_privilege('authenticated', 'public.members', 'key_iv', 'update')
+     and not has_column_privilege('authenticated', 'public.members', 'argon2_salt', 'update')
+     and not has_column_privilege('authenticated', 'public.members', 'kdf_params', 'update')
+     and not has_column_privilege('authenticated', 'public.members', 'state', 'update'),
+    '0052: no se escribe el backup ni el estado a mano';
+  assert has_column_privilege('authenticated', 'public.members', 'public_key', 'update'),
+    '0052: el ancla positiva -- public_key si (ensureKeyring la publica)';
+  assert not has_function_privilege('anon', 'public.read_pending_key_backup()', 'execute'), '0052: anon no lee el backup pendiente';
+  assert has_function_privilege('authenticated', 'public.read_pending_key_backup()', 'execute'),
+    '0052: el ancla positiva -- authenticated SI lo lee';
+  raise notice 'OK · 0052: privilegios por columna leidos del catalogo';
+end
+$$;
+
+-- Lo que un miembro ve de verdad: el ADMIN h1 NO lee el blob de su compañero h2 ni el suyo, con select directo.
+begin;
+  select set_config('request.jwt.claim.sub', '9e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_denied($q$select encrypted_key_blob from public.members where id = '9e000002-0000-0000-0000-000000000002'$q$,
+    '0052: un ADMIN no lee el blob de un companero');
+  select public.expect_denied($q$select key_iv from public.members where id = '9e000001-0000-0000-0000-000000000001'$q$,
+    '0052: ni el iv propio, con select directo');
+  select public.expect_denied($q$select * from public.members$q$, '0052: select * ya no vale');
+  select public.expect_denied($q$update public.members set encrypted_key_blob = decode(repeat('00', 48), 'hex') where id = '9e000001-0000-0000-0000-000000000001'$q$,
+    '0052: no se sustituye el blob con un update');
+  select public.expect_denied($q$update public.members set kdf_params = null where id = '9e000001-0000-0000-0000-000000000001'$q$,
+    '0052: ni se borran los parametros');
+  select public.expect_fail($q$update public.members set public_key = decode(repeat('00', 32), 'hex') where id = '9e000001-0000-0000-0000-000000000001'$q$,
+    '0052: con backup, la publica no se cambia desde el cliente');
+commit;
+
+-- Y lo que SI ve: las columnas permitidas, de si mismo y de sus companeros de organizacion.
+begin;
+  select set_config('request.jwt.claim.sub', '9e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare n int;
+  begin
+    select count(*) into n from (select id, org_id, email, full_name, role, state, public_key, argon2_salt, kdf_params, created_at, visibility_scope
+                                   from public.members) t;
+    assert n = 4, '0052: el ADMIN sigue viendo a los 4 de su organizacion con las columnas permitidas, ve ' || n;
+  end $$;
+commit;
+
+-- Un miembro sin backup (h4) sigue publicando su clave con un update, como hace ensureKeyring.
+begin;
+  select set_config('request.jwt.claim.sub', '9e000004-0000-0000-0000-000000000004', true);
+  set local role authenticated;
+  update public.members set public_key = decode(repeat('44', 32), 'hex') where id = '9e000004-0000-0000-0000-000000000004';
+commit;
+
+do $$
+begin
+  assert (select public_key from public.members where id = '9e000004-0000-0000-0000-000000000004') = decode(repeat('44', 32), 'hex'),
+    '0052: sin backup, el miembro publica su clave';
+  raise notice 'OK · 0052: el blob no se lee ni se escribe a mano, y lo demas sigue funcionando';
+end
+$$;
+
+-- read_pending_key_backup: solo REGISTERED y con blob; no devuelve el de nadie mas.
+do $$
+declare r record; n int;
+begin
+  perform set_config('request.jwt.claim.sub', '9e000003-0000-0000-0000-000000000003', true);
+  select * into r from public.read_pending_key_backup();
+  assert r.encrypted_key_blob = decode(repeat('f3', 48), 'hex') and r.public_key = decode(repeat('f3', 32), 'hex'),
+    '0052: un REGISTERED con backup recien subido lo relee (REG-07)';
+  perform set_config('request.jwt.claim.sub', '9e000002-0000-0000-0000-000000000002', true);
+  select count(*) into n from public.read_pending_key_backup();
+  assert n = 0, '0052: un miembro ACTIVE no lo lee por aqui (solo por begin_key_recovery)';
+  perform set_config('request.jwt.claim.sub', '9e000004-0000-0000-0000-000000000004', true);
+  select count(*) into n from public.read_pending_key_backup();
+  assert n = 0, '0052: y sin backup, nada';
+  raise notice 'OK · 0052: read_pending_key_backup solo responde a un REGISTERED con backup';
+end
+$$;
+
+delete from public.key_recovery_attempts where member_id::text like '9e00000%';
+delete from public.members where org_id = '99999999-9999-4999-8999-999999999999';
+delete from auth.users where id::text like '9e00000%';
+delete from public.organizations where id = '99999999-9999-4999-8999-999999999999';
 
 select 'TODOS LOS ASSERTS PASAN' as resultado;

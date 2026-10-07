@@ -115,11 +115,6 @@ export async function openOwnBackup(
   return { kind: 'opened', privateBytes, publicKey, attemptsLeft: row.attempts_left };
 }
 
-async function endRecovery(publicKey: Uint8Array): Promise<void> {
-  // Reiniciar el contador no es esencial: si falla, el siguiente intento cuenta uno de más.
-  await supabase.rpc('end_key_recovery', { p_public_key: toBytea(publicKey) });
-}
-
 // -----------------------------------------------------------------------------
 // REC-01 · recuperar en este navegador
 // -----------------------------------------------------------------------------
@@ -145,7 +140,8 @@ export async function recoverKey(
   // Si IndexedDB no deja, el llavero de la sesión sirve igual; en la siguiente se pedirá otra vez.
   await saveDeviceKey(memberId, pair);
   adoptKeyring(memberId, pair);
-  await endRecovery(opened.publicKey);
+  // Acertar NO reinicia el contador (0052): el límite es de 5 peticiones por ventana de 30 minutos, y quien
+  // pudiera reiniciarlo a voluntad lo habría vuelto inútil.
   return { kind: 'recovered' };
 }
 

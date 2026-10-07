@@ -16,13 +16,14 @@ Empieza por §6 y luego §3.
 
 **Día 31 de V1 · 7-oct-2026 · Estado: CERRADO.** **`REG-07` construida a mano: la Fase B está entera** (`REG-05` → `06` → `07` → `REG-09`).
 Un ADMIN `REGISTERED` sale con su par X25519, el backup cifrado (ADR-001) en el servidor y la cuenta en `KEY_ACTIVE`. **`0048`** aplicada.
-El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. Falta la C5 de `REG-06` y `REG-07`. Detalle en `diario/dia-31.md`.
+El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. **C5 del PO dada** a `REG-06` y `REG-07` (JULSA, real). Detalle en `diario/dia-31.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-10-07 07:31` al arrancar; `08:34` al cerrar |
+| Fecha de máquina | `date -u` | `2026-10-07 07:31` al arrancar; `10:56` al cerrar |
+| C5 de `REG-06`/`REG-07` (PO, JULSA, base real) | `execute_sql` sobre `members` de su organización | JULSA `KEY_ACTIVE`, backup completo (blob 48 B); FRU creó `a.guillen.sp@gmail.com` (EDITOR `REGISTERED`, sin pública) |
 | `0048` (`store_key_backup`, `confirm_key_backup`) | `run.sh` (banco de esquema); `pg_proc` y `has_function_privilege` del proyecto | Banco en verde; dueño `postgres`, `security definer`, `anon` no, `authenticated` sí |
 | Argon2id (`hash-wasm` 4.12.0) | Vector de referencia de argon2id en la unidad; Node | Coincide; ~0,3 s con los parámetros de ADR-001 |
 | Lo que sube el navegador se abre fuera | `key-generation.spec.ts`: Argon2id y AES-GCM de Node sobre el payload capturado | Abre con la frase y el id; sale la pública subida; con otra frase, no |
@@ -38,16 +39,14 @@ El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. F
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **21 pantallas construidas, 18 aceptadas** (`REG-01`, `REG-06` y `REG-07`, pendientes de C5).
+- **Corriente B · Fábrica — EN MARCHA.** **21 pantallas construidas, 20 aceptadas** (`REG-01`, pendiente de C5).
   **Fase B entera** (`REG-07` a mano, fuera de la cuenta de la fábrica). Después, **`REC-01`** (`F-237`), `SET-SEC-01` (criptografía), `INV-04` (dominio, `F-233`) y
   `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-0. **C5 de `REG-06` y `REG-07` con JULSA. Escribe, sin vuelta atrás desde la interfaz:** JULSA queda `KEY_ACTIVE` con backup (y `ACTIVE`
-   tras `REG-09`). Entrar con contraseña, `REG-05` → `06` → `07` → «Continuar» → `REG-09`. **Apuntar la frase** (sin `REC-01` no hay
-   recuperación); la privada queda en ESE navegador (`F-237`). Comprobar antes el despliegue por contenido.
+0. **JULSA está en `KEY_ACTIVE`** (sin pulsar «Ir al panel»). Su privada vive SOLO en el navegador del PO (`F-237`).
 1. **`REC-01`** (recuperar la clave con la frase, ADR-001 §7.2): ahora es lo que falta para que un miembro con backup tenga su clave en otro
    navegador. **A mano**, con el formato de `lib/key-backup.ts` (NFC, AAD, parámetros) y el límite de 5 intentos EN EL SERVIDOR (§8). Decidir
    con el PO antes, y los textos de error de `REG-07` sin aprobar (`F-237`).
@@ -102,7 +101,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`REG-06` y `REG-07`** · en producción; falta la C5 del PO (§3.0). La de `REG-07` escribe | PO |
 | 🟠 | **`F-237`** · sin `REC-01`, un miembro con backup no tiene clave en otro navegador; textos de error de `REG-07` sin aprobar | PO + construir (§3.1) |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
@@ -134,8 +132,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 ## 6 · Lo que este fichero NO sabe
 
 - **Si las demás tablas tienen el problema de `F-234`** (`threads`, `thread_items`, `watchers`…): sin medir, porque aún no tienen volumen.
-- **Qué ve un ADMIN `REGISTERED` real en `REG-06` y `REG-07`**: el e2e reescribe el estado de ALPHA y contesta las escrituras de `REG-07`.
-  **`0048` no la ha llamado nadie desde un navegador contra la base real**: solo el banco de esquema. Lo hará la C5.
+- **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU): la Fase B es solo del ADMIN (`F-217`).
 - **Cuánto tarda Argon2id en el navegador del PO** (en Node, ~0,3 s) ni si un móvil modesto aguanta los 64 MiB.
 - **Si el umbral de zxcvbn basta** contra un ataque offline al blob cifrado (Argon2id frena, pero ≥ 3 son ~10⁸ intentos): es juicio.
 - **Cuánto tardó la importación de ~18 000 filas del PO** en el navegador: entró, nadie lo midió.

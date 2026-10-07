@@ -61,3 +61,10 @@ de `REG-06` ahora corta esas dos llamadas, para seguir sin escribir.
 - **El puerto 4173 cae en un rango reservado de Windows** en esta máquina hoy (`netsh … excludedportrange`: 4077–4176). Los e2e se
   corrieron con una config temporal en el 4391, sin comitear. No se tocó la configuración del sistema.
 - **`F-238`**: la reescritura del perfil fallaba a veces y dejaba pasar el perfil real. Helper común con reintento.
+
+## C5 del PO
+
+El PO recorrió `REG-05` → `REG-06` → `REG-07` → `REG-09` con JULSA en su localhost, contra la base real: «va todo correcto, el diseño de
+las pantallas es correcto». Es la primera llamada a `0048` desde un navegador: JULSA quedó `KEY_ACTIVE` con el backup completo (blob de
+48 bytes, comprobado por SQL). Desde `REG-09` dio de alta con FRU a `a.guillen.sp@gmail.com` (EDITOR `REGISTERED`): FRU, visto por fin con un
+`KEY_ACTIVE` real. Un primer aviso de que «Registrar usuario» no se habilitaba lo retiró el propio PO: sí se habilitaba.

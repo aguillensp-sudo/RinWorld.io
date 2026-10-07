@@ -553,8 +553,10 @@ export function App() {
    * REG-06 compara la frase con la huella en memoria de la contraseña de acceso
    * (ADR-001: deben ser distintas, y la frase no puede ir al servidor). Sin huella
    * —una recarga a mitad del flujo la pierde— se cierra la sesión y se pide entrar
-   * de nuevo antes de dejar crear la frase (decisión del PO, 6-oct). REG-07 es hoy
-   * un MARCADOR.
+   * de nuevo antes de dejar crear la frase (decisión del PO, 6-oct). REG-07 genera
+   * el par, sube su backup cifrado y deja la cuenta en `KEY_ACTIVE` (0048); su
+   * «Continuar» relee el perfil, y el perfil `KEY_ACTIVE` cae en REG-09, aquí debajo.
+   * La frase se suelta en cuanto REG-07 la ha usado.
    */
   if (state.profile.role === 'ADMIN' && state.profile.state === 'REGISTERED') {
     const profile = state.profile;
@@ -583,7 +585,15 @@ export function App() {
         ) : keyStep === 'passphrase' ? (
           <BackupPassphrase profile={profile} onContinue={toKeys} />
         ) : (
-          <KeyGeneration profile={profile} />
+          <KeyGeneration
+            profile={profile}
+            passphrase={backupPassphrase.current}
+            onPassphraseConsumed={() => {
+              backupPassphrase.current = null;
+            }}
+            onPassphraseMissing={() => setKeyStep('passphrase')}
+            onContinue={refresh}
+          />
         )}
       </AppShell>
     );
@@ -593,8 +603,7 @@ export function App() {
    * ONBOARDING del ADMIN (REG-09 → FRU). Un miembro `KEY_ACTIVE` aún no es ACTIVE:
    * la RLS no le deja leer nada, así que el resto del shell estaría vacío. Hasta
    * `Ir al panel` (`activate_own_membership`, 0038) el panel es REG-09 o FRU.
-   * Ninguna de las dos se ve hoy sin que alguien ponga la cuenta en `KEY_ACTIVE`:
-   * el flujo que lleva hasta ahí (REG-05 a REG-07) no existe todavía.
+   * Se llega desde REG-07 (Fase B: REG-05 → REG-06 → REG-07).
    */
   if (state.profile.role === 'ADMIN' && state.profile.state === 'KEY_ACTIVE') {
     const goToPanel = async () => {

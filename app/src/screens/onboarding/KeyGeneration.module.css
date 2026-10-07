@@ -1,4 +1,348 @@
-/* REG-07 · KeyGeneration — marcador; lo sustituye REG-07, escrita a mano. */
-.placeholder {
+/* =============================================================================
+   REG-07 · Generando tus claves de seguridad — estilos.
+   Única fuente de color: los tokens de `tokens.css`. El indicador de pasos y el
+   encabezado son los de REG-06 (`BackupPassphrase.module.css`), ya revisados.
+   ========================================================================== */
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px var(--bw-pad-panel) 56px;
+}
+
+.column {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* ── Indicador de los cuatro pasos ───────────────────────────────────────── */
+
+.steps {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-brand);
+  white-space: nowrap;
+}
+
+.step:not(:last-child) {
+  flex: 1;
+}
+
+.stepDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--bw-size-hint);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.stepLabel {
+  line-height: 1;
+}
+
+.stepLine {
+  flex: 1;
+  height: 1px;
+  min-width: 12px;
+  margin: 0 10px;
+  background: var(--bw-line-steel);
+}
+
+.stepDone .stepDot {
+  background: var(--bw-brass);
+  color: var(--bw-cold-white);
+}
+
+.stepDone .stepLabel {
+  color: var(--bw-brass);
+}
+
+.stepActive .stepDot {
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+}
+
+.stepActive .stepLabel {
+  color: var(--bw-calibration-blue);
+}
+
+.stepPending .stepDot {
+  background: var(--bw-cold-white);
+  color: var(--bw-input-placeholder);
+  border: 1px solid var(--bw-line-steel-strong);
+}
+
+.stepPending .stepLabel {
+  color: var(--bw-input-placeholder);
+}
+
+/* ── Encabezado ──────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-weight: 600;
+  font-size: var(--bw-size-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-brass);
+  margin: 0 0 10px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: var(--bw-size-title);
+  letter-spacing: var(--bw-ls-title);
+  line-height: 1.25;
+  color: var(--bw-deep-steel);
+  margin: 0 0 8px;
+}
+.subtitle {
+  font-size: var(--bw-size-body);
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin: 0 0 36px;
+}
+
+/* ── Los cuatro pasos del proceso ────────────────────────────────────────── */
+
+.procList {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+}
+
+.proc {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+}
+
+/* La línea que une un paso con el siguiente, por detrás de los indicadores. */
+.proc:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 42px;
+  bottom: -14px;
+  width: 1px;
+  background: var(--bw-line-steel);
+}
+
+.procIndicator {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.procBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.procLabel {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.procDesc {
+  margin-top: 1px;
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  color: var(--bw-input-placeholder);
+}
+
+.procRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 36px;
+  padding-top: 3px;
+}
+
+.procDone .procIndicator {
+  background: var(--bw-brass);
+  color: var(--bw-cold-white);
+}
+
+.procDone .procLabel,
+.procActive .procLabel {
+  color: var(--bw-deep-steel);
+}
+
+.procActive .procIndicator {
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+}
+
+.procActive .procDesc {
+  color: var(--bw-calibration-blue);
+  opacity: 0.7;
+}
+
+.procPending .procIndicator {
+  background: var(--bw-cold-white);
+  color: var(--bw-input-placeholder);
+  border: 1.5px solid var(--bw-line-steel-strong);
+}
+
+.procPending .procLabel {
+  color: var(--bw-input-placeholder);
+}
+
+.procError .procIndicator {
+  background: var(--bw-tint-danger);
+  color: var(--bw-danger);
+  border: 1.5px solid var(--bw-badge-danger-border);
+}
+
+.procError .procLabel {
+  color: var(--bw-error-text);
+}
+
+.procError .procDesc {
+  color: var(--bw-danger);
+  opacity: 0.8;
+}
+
+/* ── El rodamiento que gira en el paso en curso ──────────────────────────── */
+
+@keyframes bearing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
   display: block;
+  color: var(--bw-calibration-blue);
+  transform-origin: center center;
+  animation: bearing-spin 1.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 6s;
+  }
+}
+
+/* ── Avisos ──────────────────────────────────────────────────────────────── */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--bw-brass);
+  border-radius: 0 4px 4px 0;
+  background: var(--bw-tag-bg);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin-bottom: 28px;
+}
+
+.notice p {
+  margin: 0;
+}
+
+.noticeIcon {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--bw-brass);
+}
+
+.noticeError {
+  border-left-color: var(--bw-danger);
+  background: var(--bw-danger-hover-bg);
+}
+
+.noticeError .noticeIcon {
+  color: var(--bw-danger);
+}
+
+.noticeError strong {
+  color: var(--bw-error-text);
+  font-weight: 600;
+}
+
+.success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--bw-signal-green);
+  border-radius: 0 4px 4px 0;
+  background: var(--bw-badge-success-bg);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  /* El HTML usa un verde oscuro (#166534) sin token: el más cercano de la paleta. */
+  color: var(--bw-success-dark);
+  margin: 0 0 24px;
+}
+
+.successIcon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--bw-signal-green);
+}
+
+/* ── Botón principal ─────────────────────────────────────────────────────── */
+
+.primary {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--bw-radius);
+  background: var(--bw-calibration-blue);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-cold-white);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.primary:hover {
+  opacity: 0.9;
 }

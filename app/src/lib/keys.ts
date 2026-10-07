@@ -6,6 +6,7 @@ import {
   generateKeyPair,
   toBytea,
 } from './crypto';
+import { loadDeviceKey } from './device-key';
 
 /**
  * El llavero de la sesión · rebanada E2EE, día 8.
@@ -34,6 +35,16 @@ import {
  * o sea `Contenido cifrado — introduce tu frase de seguridad para ver`. Eso es
  * el comportamiento correcto del MVP, no un fallo. Con la semilla de demo puesta
  * no ocurre, porque la clave vuelve a salir igual.
+ *
+ * ── DESDE REG-07 (ADR-001), DOS CLASES DE MIEMBRO ───────────────────────────
+ *
+ * Lo de arriba sigue valiendo para los miembros del MVP, que no tienen backup.
+ * Quien ha pasado por REG-07 tiene UN par para siempre: su pública es la del
+ * backup, y publicar otra la dejaría sin poder abrir nada de lo que le escriban.
+ * Para ellos el llavero NO genera ni publica: carga la copia de este dispositivo
+ * (`device-key.ts`) y, si no hay, se queda vacío hasta REC-01. Y un miembro
+ * `REGISTERED` no tiene par todavía: REG-07 se lo da, así que aquí no se publica
+ * nada (antes se publicaba una pública de usar y tirar en cada inicio de sesión).
  */
 
 /** Un destinatario posible de la CEK de un elemento del hilo. */
@@ -58,7 +69,7 @@ interface RecipientRow {
 
 let llavero: SessionKeyPair | null = null;
 let llaveroDe: string | null = null;
-let enCurso: Promise<SessionKeyPair> | null = null;
+let enCurso: Promise<SessionKeyPair | null> | null = null;
 
 /**
  * La semilla de las claves deterministas de la demo (D-08-01, opción (a)).
@@ -94,12 +105,38 @@ export function demoSeed(): string | null {
  * derivaciones en paralelo darían dos pares distintos por el camino aleatorio,
  * o sea un llavero que cambia debajo de una escritura a medias.
  */
-export async function ensureKeyring(memberId: string): Promise<SessionKeyPair> {
+export async function ensureKeyring(
+  memberId: string,
+  memberState: string,
+): Promise<SessionKeyPair | null> {
   if (llavero && llaveroDe === memberId) return llavero;
   if (enCurso && llaveroDe === memberId) return enCurso;
 
+  // Sin par todavía: se lo da REG-07, que lo adopta con `adoptKeyring`.
+  if (memberState === 'REGISTERED') return null;
+
   llaveroDe = memberId;
   enCurso = (async () => {
+    const { data: fila, error: errorFila } = await supabase
+      .from('members')
+      .select('public_key, kdf_params')
+      .eq('id', memberId)
+      .maybeSingle();
+    if (errorFila) throw errorFila;
+
+    // Con backup (REG-07, ADR-001): la copia de este dispositivo o nada. Nunca se
+    // genera ni se publica otra.
+    if (fila && (fila as { kdf_params: unknown }).kdf_params != null) {
+      const publicada = (fila as { public_key: string | null }).public_key;
+      const enDispositivo = await loadDeviceKey(memberId);
+      if (enDispositivo && publicada && mismaClave(enDispositivo.publicKey, fromBytea(publicada))) {
+        llavero = enDispositivo;
+        return enDispositivo;
+      }
+      llaveroDe = null;
+      return null;
+    }
+
     const semilla = demoSeed();
     const par = semilla
       ? await deriveKeyPairFromSeed(semilla, memberId)
@@ -130,6 +167,20 @@ export async function ensureKeyring(memberId: string): Promise<SessionKeyPair> {
     enCurso = null;
     throw e;
   }
+}
+
+function mismaClave(a: Uint8Array, b: Uint8Array): boolean {
+  return a.byteLength === b.byteLength && a.every((x, i) => x === b[i]);
+}
+
+/**
+ * REG-07 acaba de generar, respaldar y confirmar el par de este miembro: pasa a ser
+ * el llavero de la sesión sin volver a la base. Ya está publicado (`store_key_backup`).
+ */
+export function adoptKeyring(memberId: string, pair: SessionKeyPair): void {
+  llavero = pair;
+  llaveroDe = memberId;
+  enCurso = null;
 }
 
 /** El par de esta sesión, o `null` si aún no hay. No deriva nada por su cuenta. */

@@ -240,14 +240,34 @@ export async function deriveKeyPairFromSeed(
     ),
   );
 
-  const pkcs8 = new Uint8Array(PKCS8_X25519_PREFIX.length + escalar.length);
-  pkcs8.set(PKCS8_X25519_PREFIX, 0);
-  pkcs8.set(escalar, PKCS8_X25519_PREFIX.length);
+  return keyPairFromPrivateBytes(escalar);
+}
 
-  const privateKey = await subtle().importKey('pkcs8', pkcs8, { name: 'X25519' }, false, [
-    'deriveBits',
-  ]);
-  return { privateKey, publicKey: await publicKeyOf(privateKey) };
+/**
+ * El par que corresponde a 32 bytes de privada X25519, con la privada **no
+ * extraíble**. Lo usan la semilla de la demo y REG-07 (ADR-001): allí la privada
+ * nace como 32 bytes aleatorios porque hay que cifrarlos para el backup, y una vez
+ * cifrados la sesión solo necesita la `CryptoKey`, que ya no deja sacarlos.
+ *
+ * El llamante es dueño de `privateBytes` y debe borrarlos (`fill(0)`) cuando acabe:
+ * aquí se copian a un PKCS#8 propio, que sí se borra antes de volver.
+ */
+export async function keyPairFromPrivateBytes(privateBytes: Uint8Array): Promise<SessionKeyPair> {
+  if (privateBytes.byteLength !== PUBLIC_KEY_BYTES) {
+    throw new Error('Una privada X25519 tiene 32 bytes.');
+  }
+  const pkcs8 = new Uint8Array(PKCS8_X25519_PREFIX.length + privateBytes.length);
+  pkcs8.set(PKCS8_X25519_PREFIX, 0);
+  pkcs8.set(privateBytes, PKCS8_X25519_PREFIX.length);
+
+  try {
+    const privateKey = await subtle().importKey('pkcs8', pkcs8, { name: 'X25519' }, false, [
+      'deriveBits',
+    ]);
+    return { privateKey, publicKey: await publicKeyOf(privateKey) };
+  } finally {
+    pkcs8.fill(0);
+  }
 }
 
 // -----------------------------------------------------------------------------

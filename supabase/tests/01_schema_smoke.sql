@@ -4891,4 +4891,103 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- 0048 · REG-07: subir el backup de la clave y confirmarlo (ADR-001 §6–§7.1)
+-- -----------------------------------------------------------------------------
+-- Con los miembros de Echo de 0038: e3 y e4 siguen REGISTERED, e1 es ADMIN ACTIVE.
+-- Bytes de relleno con la forma exacta: pública 32, blob 48, IV 12, sal 32.
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'),
+    '0048: anon no sube backups';
+  assert not has_function_privilege('anon', 'public.confirm_key_backup(bytea)', 'execute'), '0048: anon no confirma';
+  assert not has_function_privilege('authenticated', 'app.kdf_params_v1()', 'execute'), '0048: los parametros son internos';
+  assert has_function_privilege('authenticated', 'public.store_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'),
+    '0048: el ancla positiva -- authenticated SI sube su backup';
+  assert has_function_privilege('authenticated', 'public.confirm_key_backup(bytea)', 'execute'),
+    '0048: y SI lo confirma';
+  raise notice 'OK · 0048: privilegios leidos del catalogo';
+end
+$$;
+
+-- 1 · La forma la decide el servidor, no el cliente; y sin backup no hay confirmacion.
+begin;
+  select set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  select public.expect_fail($q$select public.confirm_key_backup(decode(repeat('a1', 32), 'hex'))$q$,
+    '0048: no se confirma un backup que no existe');
+  select public.expect_fail($q$select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 47), 'hex'),
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+    '0048: un blob que no es de 48 bytes (32 + etiqueta GCM) no entra');
+  select public.expect_fail($q$select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":1024,"t":1,"p":1,"v":19}')$q$,
+    '0048: ni unos parametros de Argon2id mas flojos que los de ADR-001');
+  select public.expect_fail($q$select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
+      decode(repeat('c1', 16), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+    '0048: ni un IV de 16');
+commit;
+
+-- 2 · Subir: los cinco campos, y la cuenta SIGUE REGISTERED. Se puede repetir entero.
+begin;
+  select set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  select public.store_key_backup(decode(repeat('a0', 32), 'hex'), decode(repeat('b0', 48), 'hex'),
+      decode(repeat('c0', 12), 'hex'), decode(repeat('d0', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+  select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+  select public.expect_fail($q$select public.confirm_key_backup(decode(repeat('a0', 32), 'hex'))$q$,
+    '0048: no se confirma una publica que ya no es la del backup');
+commit;
+
+do $$
+declare v record;
+begin
+  select * into v from public.members where id = '1e000003-0000-0000-0000-000000000003';
+  assert v.state = 'REGISTERED', '0048: subir el backup no cambia el estado, es ' || v.state;
+  assert v.public_key = decode(repeat('a1', 32), 'hex') and v.encrypted_key_blob = decode(repeat('b1', 48), 'hex')
+     and v.key_iv = decode(repeat('c1', 12), 'hex') and v.argon2_salt = decode(repeat('d1', 32), 'hex')
+     and v.kdf_params = '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}'::jsonb,
+    '0048: la segunda subida sobrescribe la primera, los cinco campos';
+  raise notice 'OK · 0048: store_key_backup guarda los cinco campos y deja la cuenta REGISTERED';
+end
+$$;
+
+-- 3 · Confirmar: KEY_ACTIVE. Repetir la misma subida o la misma confirmacion es un
+-- no-op (respuesta perdida); una subida distinta ya no entra.
+begin;
+  select set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  select public.confirm_key_backup(decode(repeat('a1', 32), 'hex'));
+  select public.confirm_key_backup(decode(repeat('a1', 32), 'hex'));
+  select public.store_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b1', 48), 'hex'),
+      decode(repeat('c1', 12), 'hex'), decode(repeat('d1', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+  select public.expect_fail($q$select public.store_key_backup(decode(repeat('a2', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
+      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+    '0048: con la cuenta en KEY_ACTIVE no se sustituye la clave (eso es SET-SEC-01)');
+commit;
+
+-- 4 · Un miembro que ya esta ACTIVE no pasa por REG-07.
+begin;
+  select set_config('request.jwt.claim.sub', '1e000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail($q$select public.store_key_backup(decode(repeat('a3', 32), 'hex'), decode(repeat('b3', 48), 'hex'),
+      decode(repeat('c3', 12), 'hex'), decode(repeat('d3', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}')$q$,
+    '0048: un ADMIN ACTIVE no sube un backup nuevo por aqui');
+commit;
+
+do $$
+begin
+  assert (select state from public.members where id = '1e000003-0000-0000-0000-000000000003') = 'KEY_ACTIVE',
+    '0048: la confirmacion deja al miembro KEY_ACTIVE';
+  assert (select public_key from public.members where id = '1e000003-0000-0000-0000-000000000003') = decode(repeat('a1', 32), 'hex'),
+    '0048: con la publica del backup confirmado';
+  assert (select state from public.members where id = '1e000004-0000-0000-0000-000000000004') = 'REGISTERED'
+     and (select encrypted_key_blob from public.members where id = '1e000004-0000-0000-0000-000000000004') is null,
+    '0048: y a los demas como estaban';
+  assert (select encrypted_key_blob from public.members where id = '1e000001-0000-0000-0000-000000000001') is null,
+    '0048: el ADMIN ACTIVE sigue sin backup';
+  raise notice 'OK · 0048: confirm_key_backup pasa a KEY_ACTIVE y las repeticiones son no-op';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

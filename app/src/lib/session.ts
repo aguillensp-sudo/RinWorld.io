@@ -233,7 +233,7 @@ export function useSession() {
          */
         if (next.status === 'authenticated') {
           try {
-            await ensureKeyring(next.profile.id);
+            await ensureKeyring(next.profile.id, next.profile.state);
           } catch (e) {
             if (alive) {
               setError(

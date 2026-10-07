@@ -92,3 +92,41 @@ export async function signIn(page: Page, who: { email: string; password: string 
   // así que vaciar aquí no afecta al login. Ver F-038.
   await page.getByLabel('Contraseña').fill('');
 }
+
+/**
+ * Reescribe SOLO el `state` del perfil propio (la consulta de `loadProfile`), para
+ * ver las pantallas del onboarding con una cuenta que en la base sigue ACTIVE. Se
+ * registra ANTES de iniciar sesión. `state` es una función para que un test pueda
+ * cambiarlo a mitad (REG-07 pasa a `KEY_ACTIVE` al confirmar).
+ *
+ * **Con reintento, y sin dejar pasar nunca la respuesta real (F-238).** `route.fetch`
+ * falla a veces con *«Response has been disposed»* cuando dos lecturas del perfil se
+ * cruzan (`getSession` y `onAuthStateChange`, o una recarga): si el manejador lanza,
+ * la petición sigue sin reescribir, llega el perfil ACTIVE de verdad y el test ve el
+ * panel en vez de la pantalla. Se reintenta; si aun así no se puede, se aborta.
+ */
+export async function rewriteProfileState(page: Page, state: () => string): Promise<void> {
+  await page.route(/\/rest\/v1\/members\?.*organizations/, async (route) => {
+    for (let intento = 1; ; intento++) {
+      try {
+        const response = await route.fetch();
+        const body = JSON.parse(await response.text()) as Record<string, unknown> | Array<Record<string, unknown>>;
+        const parche = (fila: Record<string, unknown>) => ({ ...fila, state: state() });
+        const headers = { ...response.headers() };
+        delete headers['content-length'];
+        delete headers['content-encoding'];
+        await route.fulfill({
+          status: response.status(),
+          headers,
+          json: Array.isArray(body) ? body.map(parche) : parche(body),
+        });
+        return;
+      } catch {
+        if (intento >= 3) {
+          await route.abort().catch(() => undefined);
+          return;
+        }
+      }
+    }
+  });
+}

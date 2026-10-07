@@ -1,6 +1,6 @@
 import './env';
 import { expect, test, type Page } from '@playwright/test';
-import { ALPHA, haveCreds, NO_SESSION, signIn } from './fixtures';
+import { ALPHA, haveCreds, NO_SESSION, signIn, rewriteProfileState } from './fixtures';
 
 /**
  * CONTRATO DE ACEPTACIÓN · REG-06 · contra el Supabase real.
@@ -15,7 +15,11 @@ import { ALPHA, haveCreds, NO_SESSION, signIn } from './fixtures';
  *   · que la frase se compara con la contraseña con la que se ENTRÓ de verdad;
  *   · que **ninguna petición de red lleva la frase** (ADR-001, *server-blind*);
  *   · que tras una recarga (sin huella de la contraseña) se pide entrar de nuevo;
- *   · que `Continuar` lleva a REG-07 (hoy, su marcador).
+ *   · que `Continuar` lleva a REG-07.
+ *
+ * Desde que REG-07 existe, `Continuar` arranca la generación de claves y su subida.
+ * Aquí se CORTAN las dos llamadas que escriben (`store_key_backup`,
+ * `confirm_key_backup`): REG-06 sigue sin escribir nada. REG-07 tiene su e2e propio.
  */
 if (process.env.CI && !haveCreds) {
   throw new Error(
@@ -28,14 +32,10 @@ const TITULO = 'Crea tu frase de seguridad';
 const CASILLA =
   'Entiendo que si pierdo esta frase y no tengo backup en la nube, perderé mi historial cifrado permanentemente.';
 
-/** Reescribe SOLO el estado del perfil. Se registra ANTES de iniciar sesión. */
+/** Reescribe SOLO el estado del perfil, y corta las escrituras de REG-07. Antes de iniciar sesión. */
 async function comoRegistered(page: Page) {
-  await page.route(/\/rest\/v1\/members\?.*organizations/, async (route) => {
-    const response = await route.fetch();
-    const body = (await response.json()) as Record<string, unknown> | Array<Record<string, unknown>>;
-    const parche = (fila: Record<string, unknown>) => ({ ...fila, state: 'REGISTERED' });
-    await route.fulfill({ response, json: Array.isArray(body) ? body.map(parche) : parche(body) });
-  });
+  await page.route(/\/rest\/v1\/rpc\/(store_key_backup|confirm_key_backup)/, (route) => route.abort());
+  await rewriteProfileState(page, () => 'REGISTERED');
 }
 
 /** Login → REG-05 → REG-06. */
@@ -86,7 +86,7 @@ test.describe('REG-06 · frase de seguridad · ADMIN en REGISTERED', () => {
     await page.getByLabel('Repetir backup passphrase', { exact: true }).fill(FRASE);
     await page.getByRole('checkbox', { name: CASILLA }).check();
     await page.getByRole('button', { name: 'Continuar' }).click();
-    await expect(page.getByTestId('reg07-placeholder')).toBeAttached();
+    await expect(page.getByRole('heading', { level: 1, name: 'Generando tus claves de seguridad' })).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: TITULO })).toHaveCount(0);
     expect(filtradas).toEqual([]);
   });

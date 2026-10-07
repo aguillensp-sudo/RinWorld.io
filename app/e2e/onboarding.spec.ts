@@ -1,6 +1,6 @@
 import './env';
 import { expect, test, type Page } from '@playwright/test';
-import { ALPHA, BETA, haveCreds, NO_SESSION, signIn } from './fixtures';
+import { ALPHA, BETA, haveCreds, NO_SESSION, signIn, rewriteProfileState } from './fixtures';
 
 /**
  * CONTRATO DE ACEPTACIÓN · REG-09 · contra el Supabase real (el de FRU vive en `additional-user.spec.ts`, F-219).
@@ -37,12 +37,7 @@ const EDITOR = {
 
 /** Reescribe SOLO el estado del perfil. Se registra ANTES de iniciar sesión. */
 async function comoKeyActive(page: Page) {
-  await page.route(/\/rest\/v1\/members\?.*organizations/, async (route) => {
-    const response = await route.fetch();
-    const body = (await response.json()) as Record<string, unknown> | Array<Record<string, unknown>>;
-    const parche = (fila: Record<string, unknown>) => ({ ...fila, state: 'KEY_ACTIVE' });
-    await route.fulfill({ response, json: Array.isArray(body) ? body.map(parche) : parche(body) });
-  });
+  await rewriteProfileState(page, () => 'KEY_ACTIVE');
 }
 
 test.describe('REG-09 · bienvenida · ADMIN en KEY_ACTIVE', () => {

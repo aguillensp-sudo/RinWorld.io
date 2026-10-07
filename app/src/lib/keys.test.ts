@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PUBLIC_KEY_BYTES, toBytea } from './crypto';
-import { clearKeyring, currentKeyPair, demoSeed, ensureKeyring, fetchThreadRecipients } from './keys';
+import { PUBLIC_KEY_BYTES, type SessionKeyPair, generateKeyPair, toBytea } from './crypto';
+import { adoptKeyring, clearKeyring, currentKeyPair, demoSeed, ensureKeyring, fetchThreadRecipients } from './keys';
 
 /**
  * El llavero. Lo que hay que verificar aquí no es la criptografía —eso es
@@ -26,9 +26,27 @@ let fallaUpdate: unknown = null;
 let filasRpc: unknown[] = [];
 const llamadasRpc: { fn: string; args: unknown }[] = [];
 
+/** La fila propia que lee el llavero: sin backup por defecto (miembro del MVP). */
+let filaPropia: { public_key: string | null; kdf_params: unknown } | null = { public_key: null, kdf_params: null };
+const lecturas: string[] = [];
+/** La copia de dispositivo (`device-key.ts`), por miembro. */
+const enDispositivo = new Map<string, SessionKeyPair>();
+
+vi.mock('./device-key', () => ({
+  loadDeviceKey: (id: string) => Promise.resolve(enDispositivo.get(id) ?? null),
+}));
+
 vi.mock('./supabase', () => ({
   supabase: {
     from: (tabla: string) => ({
+      select: () => ({
+        eq: (_col: string, id: string) => ({
+          maybeSingle: () => {
+            lecturas.push(id);
+            return Promise.resolve({ data: filaPropia, error: null });
+          },
+        }),
+      }),
       update: (valores: Record<string, unknown>) => ({
         eq: (_col: string, id: string) => {
           escrituras.push({ tabla, valores, id });
@@ -44,6 +62,9 @@ vi.mock('./supabase', () => ({
 }));
 
 beforeEach(() => {
+  filaPropia = { public_key: null, kdf_params: null };
+  lecturas.length = 0;
+  enDispositivo.clear();
   escrituras.length = 0;
   llamadasRpc.length = 0;
   fallaUpdate = null;
@@ -61,9 +82,16 @@ function ponSemilla(valor: string | undefined) {
   else (import.meta.env as Record<string, unknown>).VITE_DEMO_KEY_SEED = valor;
 }
 
+/** Un miembro del MVP, ya ACTIVE y sin backup: el camino de siempre, que nunca da `null`. */
+async function montar(id: string): Promise<SessionKeyPair> {
+  const par = await ensureKeyring(id, 'ACTIVE');
+  if (!par) throw new Error('el camino del MVP siempre da un par');
+  return par;
+}
+
 describe('ANCLA · montar el llavero publica la clave pública', () => {
   it('escribe los 32 bytes en members.public_key del miembro que entra', async () => {
-    const par = await ensureKeyring(ALPHA);
+    const par = await montar(ALPHA);
 
     expect(par.publicKey).toHaveLength(PUBLIC_KEY_BYTES);
     expect(escrituras).toHaveLength(1);
@@ -76,16 +104,16 @@ describe('ANCLA · montar el llavero publica la clave pública', () => {
 
   it('sin publicar, la otra parte no podría escribirle: por eso NO se calla el fallo', async () => {
     fallaUpdate = { message: 'permission denied for table members' };
-    await expect(ensureKeyring(ALPHA)).rejects.toBeTruthy();
+    await expect(montar(ALPHA)).rejects.toBeTruthy();
     expect(currentKeyPair()).toBeNull();
   });
 
   it('tras un fallo se puede reintentar entero, no se queda pegado', async () => {
     fallaUpdate = { message: 'red caída' };
-    await expect(ensureKeyring(ALPHA)).rejects.toBeTruthy();
+    await expect(montar(ALPHA)).rejects.toBeTruthy();
 
     fallaUpdate = null;
-    const par = await ensureKeyring(ALPHA);
+    const par = await montar(ALPHA);
     expect(par.publicKey).toHaveLength(PUBLIC_KEY_BYTES);
     expect(currentKeyPair()).not.toBeNull();
   });
@@ -97,14 +125,14 @@ describe('concurrencia', () => {
     // `onAuthStateChange`—. Con el camino aleatorio, dos derivaciones en paralelo
     // darían dos pares distintos: el segundo pisaría la pública del primero y lo
     // cifrado con la primera dejaría de abrirse sin que nadie se enterara.
-    const [a, b] = await Promise.all([ensureKeyring(ALPHA), ensureKeyring(ALPHA)]);
+    const [a, b] = await Promise.all([montar(ALPHA), montar(ALPHA)]);
 
     expect(toBytea(a.publicKey)).toBe(toBytea(b.publicKey));
     expect(escrituras).toHaveLength(1);
   });
 
   it('cerrar sesión tira el llavero', async () => {
-    await ensureKeyring(ALPHA);
+    await montar(ALPHA);
     expect(currentKeyPair()).not.toBeNull();
     clearKeyring();
     expect(currentKeyPair()).toBeNull();
@@ -116,9 +144,9 @@ describe('la semilla de demo (D-08-01 a)', () => {
     ponSemilla(undefined);
     expect(demoSeed()).toBeNull();
 
-    const antes = await ensureKeyring(ALPHA);
+    const antes = await montar(ALPHA);
     clearKeyring(); // ≡ recargar la página
-    const despues = await ensureKeyring(ALPHA);
+    const despues = await montar(ALPHA);
 
     // Es el comportamiento correcto del MVP (CLAUDE.md §4), no un fallo: lo
     // cifrado para la clave anterior deja de abrirse y la pantalla lo dice.
@@ -128,18 +156,18 @@ describe('la semilla de demo (D-08-01 a)', () => {
   it('con semilla, recargar devuelve LA MISMA clave', async () => {
     ponSemilla('semilla-de-pruebas');
 
-    const antes = await ensureKeyring(ALPHA);
+    const antes = await montar(ALPHA);
     clearKeyring();
-    const despues = await ensureKeyring(ALPHA);
+    const despues = await montar(ALPHA);
 
     expect(toBytea(antes.publicKey)).toBe(toBytea(despues.publicKey));
   });
 
   it('con la misma semilla, dos miembros siguen siendo dos partes distintas', async () => {
     ponSemilla('semilla-de-pruebas');
-    const a = await ensureKeyring(ALPHA);
+    const a = await montar(ALPHA);
     clearKeyring();
-    const b = await ensureKeyring(BETA);
+    const b = await montar(BETA);
 
     expect(toBytea(a.publicKey)).not.toBe(toBytea(b.publicKey));
   });
@@ -147,6 +175,50 @@ describe('la semilla de demo (D-08-01 a)', () => {
   it('una semilla vacía cuenta como ausente', () => {
     ponSemilla('');
     expect(demoSeed()).toBeNull();
+  });
+});
+
+describe('REG-07 (ADR-001): quien tiene backup no estrena par en cada sesión', () => {
+  it('ANCLA · un miembro REGISTERED no publica nada ni lee nada: su par lo da REG-07', async () => {
+    expect(await ensureKeyring(ALPHA, 'REGISTERED')).toBeNull();
+    expect(escrituras).toHaveLength(0);
+    expect(lecturas).toHaveLength(0);
+    expect(currentKeyPair()).toBeNull();
+  });
+
+  it('ANCLA · con backup y la copia de este dispositivo: usa esa copia y NO publica', async () => {
+    const par = await generateKeyPair();
+    enDispositivo.set(ALPHA, par);
+    filaPropia = { public_key: toBytea(par.publicKey), kdf_params: { algo: 'argon2id' } };
+
+    expect(await ensureKeyring(ALPHA, 'ACTIVE')).toBe(par);
+    expect(currentKeyPair()).toBe(par);
+    expect(escrituras).toHaveLength(0);
+  });
+
+  it('con backup y sin copia en este dispositivo: sin llavero (REC-01) y sin publicar otra', async () => {
+    ponSemilla('semilla-de-pruebas');
+    filaPropia = { public_key: toBytea(new Uint8Array(32).fill(5)), kdf_params: { algo: 'argon2id' } };
+
+    expect(await ensureKeyring(ALPHA, 'ACTIVE')).toBeNull();
+    expect(currentKeyPair()).toBeNull();
+    expect(escrituras).toHaveLength(0);
+  });
+
+  it('una copia de dispositivo que no es la pública publicada no se usa', async () => {
+    enDispositivo.set(ALPHA, await generateKeyPair());
+    filaPropia = { public_key: toBytea(new Uint8Array(32).fill(5)), kdf_params: { algo: 'argon2id' } };
+
+    expect(await ensureKeyring(ALPHA, 'KEY_ACTIVE')).toBeNull();
+    expect(escrituras).toHaveLength(0);
+  });
+
+  it('el par que adopta REG-07 es el llavero de la sesión, sin volver a la base', async () => {
+    const par = await generateKeyPair();
+    adoptKeyring(ALPHA, par);
+    expect(await ensureKeyring(ALPHA, 'KEY_ACTIVE')).toBe(par);
+    expect(lecturas).toHaveLength(0);
+    expect(escrituras).toHaveLength(0);
   });
 });
 

@@ -47,7 +47,7 @@ visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/di
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO (`F-237`): no borrar sus datos del sitio.
 1. **C5 del PO de `REC-01` y `SET-SEC-01`, con cuidado: escriben en la base real.** `REC-01`: abrir JULSA en un navegador sin su clave
    (ventana privada); cada «Desbloquear» **cuenta un intento** (5 cada 30 min; **acertar ya no lo reinicia**, `0052`). «Generar nuevas claves» **borra el
-   backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup: apuntar la frase nueva.
+   backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup (y sube por primera vez su verificador, `F-242`): apuntar la frase nueva.
    Decidir los textos de error de `REG-07` (`F-237`).
 1b. **C5 del PO de `INVT-02` y `ACT-02` (escriben en la base real):** ADMIN → `Configuración` → invitar un correo tuyo → `Copiar enlace` (se ve una vez) →
    ventana privada → crear la cuenta → `ACT-02` → `REG-05`→`REG-07`. Luego `Eliminar` a ese usuario (queda `CANCELLED`: ese correo no se reinvita). Decidir `F-241`.
@@ -103,7 +103,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta aprobada; el enlace se entrega a mano; ninguna vista en navegador real | PO (§3.1b) |
-| 🟠 | **`F-242`** · `replace_key_backup` no exige la frase anterior: una sesión robada puede dejar a la víctima sin recuperación | PO (decidir cuándo) |
+| 🟠 | **`F-242`** · cerrado para backups nuevos; los dos anteriores (JULSA y la `CANCELLED`) no tienen verificador hasta su primer `REC-01` o `SET-SEC-01` | PO: hacer `SET-SEC-01` con JULSA (§3.1) |
 | 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (`REC-01` ya existe) | PO |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |

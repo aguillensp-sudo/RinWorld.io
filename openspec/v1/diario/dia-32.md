@@ -84,3 +84,13 @@ Orden: cliente primero (`verifyKeyBackup` pasa a `read_pending_key_backup`, `REC
 Incidencias: GitHub dio HTTP 500 al relanzar y al hacer `push` (reintentado en segundo plano hasta que volvió) y el e2e de `REG-07` falló porque su
 servidor simulado seguía contestando al `select` quitado; adaptado. Producción comprobada por el catálogo y con `select encrypted_key_blob` como
 `authenticated` → `42501`. Abierto: `F-242`.
+
+## Séptima sesión: `F-242` cerrado con `0053` y `0054`
+
+Verificador de la frase: de la salida de Argon2id sale, además de la clave de envoltura, una prueba (HKDF); el servidor guarda `sha256(prueba)` y exige la
+de la frase anterior para sustituir el backup. Dos migraciones para no romper a nadie en el cambio: `0053` aditiva, cliente, `0054` que elimina las firmas viejas.
+
+**Incidente a medias:** al probar `SET-SEC-01`, el PO recibió «No hemos podido guardar la nueva frase». Los registros de la API mostraron `replace_key_backup` → 404:
+su `localhost` sirve mi carpeta de trabajo, y ahí ya estaba el cliente de `F-242` llamando a argumentos que la base aún no tenía. No era producción. Se aplicó `0053`
+(aditiva) y el cliente nuevo funcionó. Efecto secundario real: el contador de JULSA quedó agotado (cada intento cuenta y acertar ya no lo reinicia), y se
+reinició a mano a petición del PO. **Lección: con un `localhost` apuntando a producción, lo que está a medio escribir en la carpeta lo ejecuta el PO.**

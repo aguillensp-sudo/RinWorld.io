@@ -1,6 +1,6 @@
 # Plan · `INV-04` — Ingestión de inventario por correo (Amazon SES)
 
-**Estado: PLAN del 7-oct-2026, sin construir.** Decidido por el PO: dominio propio (no `bearingworld.io`, `F-233`), Amazon SES, tope de
+**Estado: PLAN del 7-oct-2026, sin construir; las seis decisiones de abajo están CONFIRMADAS por el PO.** Dominio: `nortexsys.com` (canal en `ingest.nortexsys.com`, registrado en Arsys con web y dos buzones). Decidido por el PO: dominio propio (no `bearingworld.io`, `F-233`), Amazon SES, tope de
 **40 MB** por correo (la spec dice 50 MB; SES recibe hasta 40). El registro del dominio, su DNS en Arsys y la cuenta de AWS son del PO; yo no
 accedo a ellos. Spec: `Rinworld_spec_INV-04.md` (aprobada, solo lectura). **Nada de esto se ha construido ni se ha comprobado contra AWS**:
 los datos de SES, S3 y de los límites de las funciones de borde hay que **leerlos de su documentación al implementar**, no de este plan.

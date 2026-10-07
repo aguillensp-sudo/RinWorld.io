@@ -14,7 +14,7 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO.** Cuarta sesión: **`INVT-02` y `ACT-02` construidas a mano y desplegadas (24.ª y 25.ª pantallas)**,
+**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO.** Cierre de la sexta sesión (`F-239`, `0052`) tras la cuarta: **`INVT-02` y `ACT-02` construidas a mano y desplegadas (24.ª y 25.ª pantallas)**,
 a petición del PO. Un invitado canjea el enlace, crea su cuenta de EDITOR y la activa con su propia frase; **`0050`** aplicada. **Nadie las ha
 visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/dia-32.md`; lo que difiere de la propuesta, en `F-241`.
 
@@ -24,7 +24,7 @@ visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/di
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-10-07 13:59` |
+| `0052` (`F-239`): blob e IV sin `select`/`update` directos, `read_pending_key_backup`, 5 peticiones por ventana de 30 min sin reinicio al acertar | Banco de esquema entero; `has_column_privilege` y `pg_proc` de producción; `select encrypted_key_blob` como `authenticated` en producción; Playwright **relanzado después de aplicarla** | Banco en verde; blob/IV sin `select` para `authenticated` y `anon`; `end_key_recovery` no existe; `42501` en producción; e2e verde contra la base ya cambiada. **`REC-01` y `SET-SEC-01` no se han visto con JULSA tras el cambio** |
 | `0050` (`issue_invitation_link`, `revoke_invitation`, `invitation_link_validate`, `redeem_invitation`; `activate_own_membership` y `discard_key_backup` abiertos al EDITOR) | Banco de esquema (`run.sh`), seis bloques nuevos; `pg_proc` y `has_function_privilege` del proyecto | Banco en verde. Las ocho: dueño `postgres`, `security definer`, `anon` no; `validate` y `redeem` solo `service_role` |
 | `accept-invitation` (sin JWT) | `curl` a producción con una invitación sintética en una organización sin miembros | `validate` → OK; `accept` → 200; canjeado → 404. Datos de prueba borrados y contados a 0. **El canjeado salió ADMIN** (disparador de rol en organización vacía): el caso EDITOR solo está en el banco |
 | Las pantallas y su cableado | `vitest run` entero; `tsc --noEmit`; `check:palette` | 1967 verdes (23 omitidas), tipos y paleta limpios. jsdom: **no es un navegador real** |
@@ -46,9 +46,9 @@ visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/di
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO (`F-237`): no borrar sus datos del sitio.
 1. **C5 del PO de `REC-01` y `SET-SEC-01`, con cuidado: escriben en la base real.** `REC-01`: abrir JULSA en un navegador sin su clave
-   (ventana privada); cada «Desbloquear» **cuenta un intento** (5 y 30 min) y la frase buena lo reinicia. «Generar nuevas claves» **borra el
+   (ventana privada); cada «Desbloquear» **cuenta un intento** (5 cada 30 min; **acertar ya no lo reinicia**, `0052`). «Generar nuevas claves» **borra el
    backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup: apuntar la frase nueva.
-   Decidir con el PO el cierre estanco del límite y los textos añadidos (`F-239`), y los textos de error de `REG-07` (`F-237`).
+   Decidir los textos de error de `REG-07` (`F-237`).
 1b. **C5 del PO de `INVT-02` y `ACT-02` (escriben en la base real):** ADMIN → `Configuración` → invitar un correo tuyo → `Copiar enlace` (se ve una vez) →
    ventana privada → crear la cuenta → `ACT-02` → `REG-05`→`REG-07`. Luego `Eliminar` a ese usuario (queda `CANCELLED`: ese correo no se reinvita). Decidir `F-241`.
 2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO: el blob ya existe y es lo que protege.
@@ -103,7 +103,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta aprobada; el enlace se entrega a mano; ninguna vista en navegador real | PO (§3.1b) |
-| 🟠 | **`F-239`** · el límite de `REC-01` no es estanco (select directo de la fila; reinicio sin prueba); textos añadidos al HTML | PO (§3.1) |
+| 🟠 | **`F-242`** · `replace_key_backup` no exige la frase anterior: una sesión robada puede dejar a la víctima sin recuperación | PO (decidir cuándo) |
 | 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (`REC-01` ya existe) | PO |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |

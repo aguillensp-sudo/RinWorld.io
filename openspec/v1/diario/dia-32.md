@@ -73,3 +73,14 @@ caracteres y la función lo rechazó con razón; `userEvent.setup()` pisa el por
 - **`0051` (aprobado por el PO)**: las 8 políticas de `threads`, `thread_items` y `thread_item_keys` evalúan sus funciones de sesión una vez por
   consulta, igual que `0047`. Banco de esquema entero en verde con un chequeo del catálogo; aplicado por el MCP y comprobado en `pg_policies` de
   producción. Ganancia sin medir; quedan 31 políticas (`F-234`).
+
+## Sexta sesión: `F-239` cerrado con `0052`
+
+El PO pidió cerrarlo ya. Tres hallazgos al construirlo: (1) `members_select_own_org` dejaba leer el blob de **todos los compañeros**, no solo el
+propio; (2) el `update` directo del blob tampoco estaba cerrado; (3) la mitad de las pruebas antiguas del disparador de `members` esperaban que
+parara él, y ahora para antes el permiso de columna (nuevo `expect_denied`).
+
+Orden: cliente primero (`verifyKeyBackup` pasa a `read_pending_key_backup`, `REC-01` deja de llamar a `end_key_recovery`), migración después.
+Incidencias: GitHub dio HTTP 500 al relanzar y al hacer `push` (reintentado en segundo plano hasta que volvió) y el e2e de `REG-07` falló porque su
+servidor simulado seguía contestando al `select` quitado; adaptado. Producción comprobada por el catálogo y con `select encrypted_key_blob` como
+`authenticated` → `42501`. Abierto: `F-242`.

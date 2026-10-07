@@ -9,15 +9,18 @@ import {
   fetchTeam,
   inviteMember,
   isValidEmail,
+  issueInvitationLink,
   limitReached,
   removeMember,
   resendInvitation,
+  revokeInvitation,
   type CapacityDot,
   type InvitationRow,
   type TeamMember,
 } from '../../lib/invitations';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import { InvitationTables } from './InvitationTables';
+import { InvitationLinkDialog } from './InvitationLinkDialog';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
 import styles from './Invitations.module.css';
 
@@ -25,9 +28,13 @@ interface Props {
   profile: MemberProfile;
 }
 
-/** El acuse de una invitación es la INVITACIÓN REGISTRADA, no un correo enviado (F-212). */
-const INVITE_REGISTERED =
-  'Invitación registrada. El envío del correo de invitación llega con el flujo de registro por invitación.';
+/**
+ * Sin proveedor de correo (F-212) el acuse nunca dice que se envió nada: la invitación queda registrada y
+ * el ADMIN se lleva el ENLACE, que se enseña una vez (`InvitationLinkDialog`). Si el enlace falla, la
+ * invitación ya existe y se pide otro con `Nuevo enlace`.
+ */
+const INVITE_LINK_FAILED = 'Invitación registrada, pero no se pudo generar el enlace. Pídelo con «Nuevo enlace».';
+const REVOKED = 'Invitación anulada.';
 const EMAIL_TAKEN = 'Este email ya tiene cuenta en Bearingworld.io.';
 const RESENT = 'Invitación reenviada.';
 
@@ -101,6 +108,9 @@ export function Invitations({ profile }: Props) {
   const [sending, setSending] = useState(false);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  /** El enlace recién generado: solo vive aquí, y se olvida al cerrar el diálogo. */
+  const [link, setLink] = useState<{ email: string; url: string; expiresAt: string } | null>(null);
 
   const [pendingRemove, setPendingRemove] = useState<TeamMember | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -188,12 +198,18 @@ export function Invitations({ profile }: Props) {
     setSending(true);
     setFeedback(null);
 
-    inviteMember(email)
-      .then(() => {
+    const invited = email;
+    inviteMember(invited)
+      .then(async (id) => {
         setEmail('');
         setCheck(null);
-        setFeedback({ kind: 'ok', text: INVITE_REGISTERED });
         reload();
+        try {
+          const issued = await issueInvitationLink(id);
+          setLink({ email: invited, ...issued });
+        } catch {
+          setFeedback({ kind: 'error', text: INVITE_LINK_FAILED });
+        }
       })
       .catch((err: unknown) => {
         // El campo NO se vacía: lo escrito es lo que hay que corregir.
@@ -204,14 +220,51 @@ export function Invitations({ profile }: Props) {
       });
   }
 
-  function handleResend(invitationId: string) {
+  /** `Nuevo enlace` (pendiente): revoca el anterior. */
+  function handleNewLink(invitationId: string, invitedEmail: string) {
+    setBusy(true);
+    setFeedback(null);
+
+    issueInvitationLink(invitationId)
+      .then((issued) => setLink({ email: invitedEmail, ...issued }))
+      .catch((err: unknown) => {
+        setFeedback({ kind: 'error', text: errorMessage(asError(err)) });
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  }
+
+  function handleRevoke(invitationId: string) {
+    setBusy(true);
+    setFeedback(null);
+
+    revokeInvitation(invitationId)
+      .then(() => {
+        setFeedback({ kind: 'ok', text: REVOKED });
+        reload();
+      })
+      .catch((err: unknown) => {
+        setFeedback({ kind: 'error', text: errorMessage(asError(err)) });
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  }
+
+  function handleResend(invitationId: string, invitedEmail: string) {
     setBusy(true);
     setFeedback(null);
 
     resendInvitation(invitationId)
-      .then(() => {
-        setFeedback({ kind: 'ok', text: RESENT });
+      .then(async () => {
         reload();
+        try {
+          const issued = await issueInvitationLink(invitationId);
+          setLink({ email: invitedEmail, ...issued });
+        } catch {
+          setFeedback({ kind: 'ok', text: RESENT });
+        }
       })
       .catch((err: unknown) => {
         setFeedback({ kind: 'error', text: errorMessage(asError(err)) });
@@ -364,8 +417,19 @@ export function Invitations({ profile }: Props) {
         selfId={profile.id}
         busy={busy}
         onResend={handleResend}
+        onNewLink={handleNewLink}
+        onRevoke={handleRevoke}
         onRemove={handleRemove}
       />
+
+      {link !== null && (
+        <InvitationLinkDialog
+          email={link.email}
+          url={link.url}
+          expiresAt={link.expiresAt}
+          onClose={() => setLink(null)}
+        />
+      )}
 
       {pendingRemove !== null && (
         <RemoveMemberDialog

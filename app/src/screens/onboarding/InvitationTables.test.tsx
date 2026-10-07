@@ -73,7 +73,7 @@ describe('INVT-01 · InvitationTables · invitaciones', () => {
     const boton = screen.getByRole('button', { name: 'Reenviar m.sanchez@aceroindustrial.com' });
     await userEvent.setup().click(boton);
     expect(props.onResend).toHaveBeenCalledTimes(1);
-    expect(props.onResend).toHaveBeenCalledWith('inv-3');
+    expect(props.onResend).toHaveBeenCalledWith('inv-3', 'm.sanchez@aceroindustrial.com');
     expect(screen.getAllByRole('button', { name: /^Reenviar / })).toHaveLength(1);
   });
 

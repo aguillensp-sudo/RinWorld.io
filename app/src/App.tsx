@@ -27,9 +27,12 @@ import { AdditionalUser } from './screens/onboarding/AdditionalUser';
 import { AccessRequest } from './screens/onboarding/AccessRequest';
 import { AccessRequestWait } from './screens/onboarding/AccessRequestWait';
 import { OrgRegistration } from './screens/onboarding/OrgRegistration';
+import { InvitationAcceptance } from './screens/onboarding/InvitationAcceptance';
+import { ActivateAccount } from './screens/onboarding/ActivateAccount';
 import { clearWaitingRequest, loadWaitingRequest, saveWaitingRequest } from './lib/access-request';
 import type { SubmittedAccessRequest } from './lib/access-request';
 import { registrationTokenFromHash } from './lib/register-org';
+import { invitationTokenFromHash } from './lib/invitation-link';
 import { activateOwnMembership } from './lib/onboarding';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
@@ -373,12 +376,46 @@ export function App() {
    */
   const backupPassphrase = useRef<string | null>(null);
 
+  /**
+   * ACT-02: un EDITOR `REGISTERED` ve primero «Activa tu cuenta» y solo al pulsar
+   * `Empezar la activación` entra en REG-05. El ADMIN no pasa por aquí: su Fase B arranca en REG-05.
+   */
+  const [activationStarted, setActivationStarted] = useState(false);
+
   useEffect(() => {
     if (state.status !== 'authenticated') {
       backupPassphrase.current = null;
       setKeyStep('intro');
+      setActivationStarted(false);
     }
   }, [state.status]);
+
+  /**
+   * Un EDITOR no tiene REG-09: con su clave publicada (`KEY_ACTIVE`) la cuenta pasa a `ACTIVE` sola
+   * (`activate_own_membership`, 0050). Va en un efecto y no en el `onContinue` de REG-07 para que
+   * también valga si recarga entre los dos pasos. Si falla se dice, con reintento: no se pinta un shell vacío.
+   */
+  const autoActivate =
+    state.status === 'authenticated' && state.profile.role === 'EDITOR' && state.profile.state === 'KEY_ACTIVE';
+  const [activationError, setActivationError] = useState<string | null>(null);
+  const [activationTry, setActivationTry] = useState(0);
+  useEffect(() => {
+    if (!autoActivate) return;
+    let cancelled = false;
+    setActivationError(null);
+    activateOwnMembership().then(
+      () => {
+        if (!cancelled) refresh();
+      },
+      (e: unknown) => {
+        if (!cancelled) setActivationError(errorMessage(e));
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+    // `refresh` es estable (useCallback en useSession).
+  }, [autoActivate, activationTry]);
 
   /**
    * El ítem activo del nav del OPERADOR -- distinto del `nav` de arriba, que
@@ -423,6 +460,25 @@ export function App() {
     setRegistrationToken(null);
   };
 
+  /**
+   * INVT-02: el invitado llega con `#invitacion?token=…` (el ADMIN se lo pasa a mano: no hay proveedor de
+   * correo, F-212). Misma mecánica que el enlace de REG-01: el token se lee del `hash` al cargar y cuando
+   * cambia, tiene prioridad sobre el resto de la rama sin sesión, y al terminar (o al abandonar un enlace
+   * que no vale) se borra el `hash` para que el token no vuelva a aparecer al cerrar sesión.
+   */
+  const [invitationToken, setInvitationToken] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : invitationTokenFromHash(window.location.hash),
+  );
+  useEffect(() => {
+    const onHashChange = () => setInvitationToken(invitationTokenFromHash(window.location.hash));
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+  const leaveInvitation = () => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    setInvitationToken(null);
+  };
+
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
@@ -444,6 +500,15 @@ export function App() {
   }
 
   if (state.status === 'anonymous') {
+    if (invitationToken !== null) {
+      return (
+        <InvitationAcceptance
+          token={invitationToken}
+          onAccepted={leaveInvitation}
+          onBackToLogin={leaveInvitation}
+        />
+      );
+    }
     if (registrationToken !== null) {
       return (
         <OrgRegistration
@@ -606,8 +671,9 @@ export function App() {
    * «Continuar» relee el perfil, y el perfil `KEY_ACTIVE` cae en REG-09, aquí debajo.
    * La frase se suelta en cuanto REG-07 la ha usado.
    */
-  if (state.profile.role === 'ADMIN' && state.profile.state === 'REGISTERED') {
+  if (state.profile.state === 'REGISTERED') {
     const profile = state.profile;
+    const member = profile.role !== 'ADMIN';
     const toPassphrase = () => {
       if (!hasLoginFingerprint(profile.email)) {
         void signOut(REAUTH_FOR_PASSPHRASE);
@@ -628,8 +694,14 @@ export function App() {
         vera={vera}
         veraSubtitle={ONBOARDING_VERA_SUBTITLE}
       >
-        {keyStep === 'intro' ? (
-          <KeysIntro onContinue={toPassphrase} />
+        {member && !activationStarted ? (
+          <ActivateAccount
+            profile={profile}
+            onStart={() => setActivationStarted(true)}
+            onSignOut={() => void signOut()}
+          />
+        ) : keyStep === 'intro' ? (
+          <KeysIntro onContinue={toPassphrase} member={member} />
         ) : keyStep === 'passphrase' ? (
           <BackupPassphrase profile={profile} onContinue={toKeys} />
         ) : (
@@ -650,8 +722,8 @@ export function App() {
   /*
    * REC-01. Un miembro con backup, en un navegador sin su privada: lo primero que ve. Va
    * ANTES del onboarding de `KEY_ACTIVE` y del shell normal porque en los dos hace falta la
-   * clave. «He perdido mi frase» (borra el backup y vuelve a REG-05) solo se ofrece al ADMIN:
-   * un EDITOR que quedara `REGISTERED` no tiene flujo para activarse (F-217).
+   * clave. «He perdido mi frase» borra el backup y devuelve la cuenta a `REGISTERED`: el ADMIN
+   * vuelve a REG-05 y el EDITOR a ACT-02 (desde 0050 los dos tienen camino de vuelta, F-217).
    */
   if (
     recoveryNeeded &&
@@ -662,6 +734,7 @@ export function App() {
     const generateNew = async () => {
       await discardKeyBackup();
       setKeyStep('intro');
+      setActivationStarted(false);
       setRecoveryNeeded(false);
       setHasBackup(false);
       refresh();
@@ -682,8 +755,38 @@ export function App() {
             refresh();
           }}
           onSkip={() => setRecoveryDismissed(true)}
-          {...(profile.role === 'ADMIN' ? { onGenerateNew: generateNew } : {})}
+          onGenerateNew={generateNew}
         />
+      </AppShell>
+    );
+  }
+
+  /*
+   * Un EDITOR `KEY_ACTIVE` está a un paso de `ACTIVE`: lo da el efecto de arriba. Hasta entonces la RLS no
+   * le deja leer nada, así que se le dice qué pasa y no se le pinta un shell vacío.
+   */
+  if (autoActivate) {
+    return (
+      <AppShell
+        profile={state.profile}
+        onSignOut={signOut}
+        activeNav={nav}
+        onNavigate={navigate}
+        vera={vera}
+        veraSubtitle={ONBOARDING_VERA_SUBTITLE}
+      >
+        <div style={{ padding: 48 }} role="status" aria-busy={activationError === null}>
+          {activationError === null ? (
+            'Activando tu cuenta…'
+          ) : (
+            <>
+              <p role="alert">{activationError}</p>
+              <button type="button" onClick={() => setActivationTry((n) => n + 1)}>
+                Reintentar
+              </button>
+            </>
+          )}
+        </div>
       </AppShell>
     );
   }

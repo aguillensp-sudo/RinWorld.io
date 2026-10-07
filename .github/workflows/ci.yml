@@ -244,6 +244,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
+      - name: Desplegar la función accept-invitation (INVT-02, sin sesión)
+        run: npx supabase functions deploy accept-invitation --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+
   deploy-app:
     name: Despliegue continuo · app (Vercel)
     runs-on: ubuntu-latest

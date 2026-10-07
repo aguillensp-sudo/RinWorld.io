@@ -115,6 +115,7 @@ function WarningIcon() {
  * frase fuerte (score ≥ 3 y 12 caracteres), repetición coincidente y casilla marcada.
  */
 export function BackupPassphrase({ profile, onContinue }: Props) {
+  const member = profile.role !== 'ADMIN';
   const [form, setForm] = useState<PassphraseForm>(EMPTY_PASSPHRASE_FORM);
   const [check, setCheck] = useState<PassphraseCheck | null>(null);
   const [showPassphrase, setShowPassphrase] = useState(false);
@@ -173,14 +174,14 @@ export function BackupPassphrase({ profile, onContinue }: Props) {
               <span className={styles.stepDot}>
                 <CheckIcon />
               </span>
-              <span className={styles.stepLabel}>Solicitud</span>
+              <span className={styles.stepLabel}>{member ? 'Invitación' : 'Solicitud'}</span>
               <span aria-hidden="true" className={styles.stepLine} />
             </li>
             <li className={`${styles.step} ${styles.stepDone}`}>
               <span className={styles.stepDot}>
                 <CheckIcon />
               </span>
-              <span className={styles.stepLabel}>Organización</span>
+              <span className={styles.stepLabel}>{member ? 'Cuenta' : 'Organización'}</span>
               <span aria-hidden="true" className={styles.stepLine} />
             </li>
             <li className={`${styles.step} ${styles.stepActive}`} aria-current="step">

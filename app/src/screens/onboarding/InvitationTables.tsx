@@ -16,7 +16,11 @@ interface Props {
   team: TeamMember[];
   selfId: string;
   busy: boolean;
-  onResend: (invitationId: string) => void;
+  onResend: (invitationId: string, email: string) => void;
+  /** Pendiente: otro enlace (revoca el anterior). Opcional: sin él no se pinta el botón. */
+  onNewLink?: (invitationId: string, email: string) => void;
+  /** Pendiente: anular. Opcional: sin él no se pinta el botón. */
+  onRevoke?: (invitationId: string) => void;
   onRemove: (member: TeamMember) => void;
 }
 
@@ -31,7 +35,7 @@ const EMPTY_INVITATIONS = 'Todavía no has enviado ninguna invitación.';
  * puras de la capa de datos — `canRemove` sobre todo, para que la fila del propio
  * ADMIN y la del que no es Editor se expliquen solas.
  */
-export function InvitationTables({ invitations, team, selfId, busy, onResend, onRemove }: Props) {
+export function InvitationTables({ invitations, team, selfId, busy, onResend, onNewLink, onRevoke, onRemove }: Props) {
   return (
     <>
       <section>
@@ -74,16 +78,41 @@ export function InvitationTables({ invitations, team, selfId, busy, onResend, on
                     <td className={`${styles.td} ${styles.mono}`}>{sentAtLabel(invitation.sentAt)}</td>
                     <td className={expiresClass(invitation.status)}>{expiresInLabel(invitation.daysLeft)}</td>
                     <td className={styles.td}>
-                      {invitation.status === 'Expirada' ? (
+                      {invitation.status === 'Expirada' || invitation.status === 'Anulada' ? (
                         <button
                           type="button"
                           className={styles.actionButton}
                           aria-label={`Reenviar ${invitation.email}`}
                           disabled={busy}
-                          onClick={() => onResend(invitation.id)}
+                          onClick={() => onResend(invitation.id, invitation.email)}
                         >
                           Reenviar
                         </button>
+                      ) : invitation.status === 'Pendiente' && (onNewLink || onRevoke) ? (
+                        <>
+                          {onNewLink && (
+                            <button
+                              type="button"
+                              className={styles.actionButton}
+                              aria-label={`Nuevo enlace para ${invitation.email}`}
+                              disabled={busy}
+                              onClick={() => onNewLink(invitation.id, invitation.email)}
+                            >
+                              Nuevo enlace
+                            </button>
+                          )}
+                          {onRevoke && (
+                            <button
+                              type="button"
+                              className={styles.actionButton}
+                              aria-label={`Anular ${invitation.email}`}
+                              disabled={busy}
+                              onClick={() => onRevoke(invitation.id)}
+                            >
+                              Anular
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <span className={styles.none}>—</span>
                       )}
@@ -162,7 +191,7 @@ export function InvitationTables({ invitations, team, selfId, busy, onResend, on
 
 function statusClass(status: InvitationStatus): string {
   if (status === 'Aceptada') return `${styles.badge} ${styles.badgeAccepted}`;
-  if (status === 'Expirada') return `${styles.badge} ${styles.badgeExpired}`;
+  if (status === 'Expirada' || status === 'Anulada') return `${styles.badge} ${styles.badgeExpired}`;
   return `${styles.badge} ${styles.badgePending}`;
 }
 

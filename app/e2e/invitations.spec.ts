@@ -62,15 +62,18 @@ test.describe('INVT-01 · invitaciones reales · ADMIN de Nordwälz Lager', () =
     await expect(page.getByText(/ha alcanzado el límite de 5 usuarios/)).toHaveCount(0);
   });
 
-  test('las invitaciones salen de la base: Pendiente, Aceptada y Expirada, y solo la expirada se reenvía', async ({ page }) => {
+  test('las invitaciones salen de la base: Pendiente, Aceptada y Expirada, con las acciones de cada una', async ({ page }) => {
     const tabla = page.getByRole('table', { name: 'Invitaciones enviadas' });
     const pendiente = tabla.getByRole('row', { name: /carlos\.m@aceroindustrial\.com/ });
     await expect(pendiente).toContainText('Pendiente');
     await expect(pendiente).toContainText('5 días');
     await expect(tabla.getByRole('row', { name: /editor@bearingworld\.test/ })).toContainText('Aceptada');
     await expect(tabla.getByRole('row', { name: /m\.sanchez@aceroindustrial\.com/ })).toContainText('Expirada');
-    await expect(tabla.getByRole('button')).toHaveCount(1);
+    // 0050: la expirada se reenvía; la pendiente tiene «Nuevo enlace» y «Anular»; la aceptada, nada.
+    await expect(tabla.getByRole('button')).toHaveCount(3);
     await expect(tabla.getByRole('button', { name: 'Reenviar m.sanchez@aceroindustrial.com' })).toBeVisible();
+    await expect(tabla.getByRole('button', { name: 'Nuevo enlace para carlos.m@aceroindustrial.com' })).toBeVisible();
+    await expect(tabla.getByRole('button', { name: 'Anular carlos.m@aceroindustrial.com' })).toBeVisible();
   });
 
   test('los usuarios salen de la base: el ADMIN sin botón y el Editor con «Eliminar»', async ({ page }) => {

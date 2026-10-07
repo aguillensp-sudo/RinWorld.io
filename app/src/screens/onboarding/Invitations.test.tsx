@@ -26,8 +26,10 @@ import type { MemberProfile } from '../../lib/session';
 const fetchTeam = vi.fn<(orgId: string) => Promise<TeamMember[]>>();
 const fetchInvitations = vi.fn<() => Promise<InvitationRow[]>>();
 const emailHasAccount = vi.fn<(email: string) => Promise<boolean>>();
-const inviteMember = vi.fn<(email: string) => Promise<void>>();
+const inviteMember = vi.fn<(email: string) => Promise<string>>();
 const resendInvitation = vi.fn<(id: string) => Promise<void>>();
+const issueInvitationLink = vi.fn<(id: string) => Promise<{ url: string; expiresAt: string }>>();
+const revokeInvitation = vi.fn<(id: string) => Promise<void>>();
 const removeMember = vi.fn<(id: string) => Promise<void>>();
 
 vi.mock('../../lib/invitations', async (importOriginal) => ({
@@ -37,6 +39,8 @@ vi.mock('../../lib/invitations', async (importOriginal) => ({
   emailHasAccount: (email: string) => emailHasAccount(email),
   inviteMember: (email: string) => inviteMember(email),
   resendInvitation: (id: string) => resendInvitation(id),
+  issueInvitationLink: (id: string) => issueInvitationLink(id),
+  revokeInvitation: (id: string) => revokeInvitation(id),
   removeMember: (id: string) => removeMember(id),
 }));
 
@@ -64,8 +68,8 @@ const EXPIRADA: InvitationRow = { id: 'inv-3', email: 'm.sanchez@aceroindustrial
 const TEAM = [ANA, LUIS];
 const INVS = [PENDIENTE, ACEPTADA, EXPIRADA];
 
-const REGISTRADA =
-  'Invitación registrada. El envío del correo de invitación llega con el flujo de registro por invitación.';
+const ENLACE = 'https://app.test/#invitacion?token=' + 'ab'.repeat(32);
+const LINK = { url: ENLACE, expiresAt: '2030-01-15T10:00:00Z' };
 
 async function mountLoaded(over: Partial<{ profile: MemberProfile }> = {}) {
   const view = render(<Invitations profile={over.profile ?? profile} />);
@@ -77,11 +81,13 @@ const campo = () => screen.getByRole('textbox', { name: 'Email del nuevo usuario
 const enviar = () => screen.getByRole('button', { name: 'Enviar invitación' });
 
 beforeEach(() => {
-  for (const m of [fetchTeam, fetchInvitations, emailHasAccount, inviteMember, resendInvitation, removeMember]) m.mockReset();
+  for (const m of [fetchTeam, fetchInvitations, emailHasAccount, inviteMember, resendInvitation, issueInvitationLink, revokeInvitation, removeMember]) m.mockReset();
   fetchTeam.mockResolvedValue(TEAM);
   fetchInvitations.mockResolvedValue(INVS);
   emailHasAccount.mockResolvedValue(false);
-  inviteMember.mockResolvedValue(undefined);
+  inviteMember.mockResolvedValue('inv-new');
+  issueInvitationLink.mockResolvedValue(LINK);
+  revokeInvitation.mockResolvedValue(undefined);
   resendInvitation.mockResolvedValue(undefined);
   removeMember.mockResolvedValue(undefined);
 });
@@ -173,10 +179,20 @@ describe('INVT-01 · Invitations · las dos tablas', () => {
     expect(within(fila).getByText('5 días')).toBeInTheDocument();
   });
 
-  it('solo la fila EXPIRADA lleva «Reenviar»; la pendiente y la aceptada no', async () => {
+  it('la EXPIRADA lleva «Reenviar»; la PENDIENTE «Nuevo enlace» y «Anular»; la aceptada nada', async () => {
     await mountLoaded();
     const tabla = screen.getByRole('table', { name: 'Invitaciones enviadas' });
-    expect(within(tabla).getAllByRole('button')).toHaveLength(1);
+    expect(within(tabla).getAllByRole('button')).toHaveLength(3);
+    expect(within(tabla).getByRole('button', { name: 'Reenviar m.sanchez@aceroindustrial.com' })).toBeInTheDocument();
+    expect(within(tabla).getByRole('button', { name: 'Nuevo enlace para carlos.m@aceroindustrial.com' })).toBeInTheDocument();
+    expect(within(tabla).getByRole('button', { name: 'Anular carlos.m@aceroindustrial.com' })).toBeInTheDocument();
+  });
+
+  it('una ANULADA se reenvía, como una expirada', async () => {
+    fetchInvitations.mockResolvedValue([{ ...EXPIRADA, status: 'Anulada' }]);
+    await mountLoaded();
+    const tabla = screen.getByRole('table', { name: 'Invitaciones enviadas' });
+    expect(within(tabla).getByText('Anulada')).toBeInTheDocument();
     expect(within(tabla).getByRole('button', { name: 'Reenviar m.sanchez@aceroindustrial.com' })).toBeInTheDocument();
   });
 
@@ -232,7 +248,7 @@ describe('INVT-01 · Invitations · invitar', () => {
     expect(enviar()).toBeDisabled();
   });
 
-  it('enviar invita, dice que se ha REGISTRADO (sin afirmar ningún correo), vacía el campo y recarga las listas', async () => {
+  it('enviar invita, enseña el ENLACE (sin afirmar ningún correo), vacía el campo y recarga las listas', async () => {
     const user = userEvent.setup();
     await mountLoaded();
     await user.type(campo(), 'nuevo@empresa.test');
@@ -241,11 +257,25 @@ describe('INVT-01 · Invitations · invitar', () => {
 
     expect(inviteMember).toHaveBeenCalledTimes(1);
     expect(inviteMember).toHaveBeenCalledWith('nuevo@empresa.test');
-    expect(await screen.findByText(REGISTRADA)).toBeInTheDocument();
+    const dialogo = await screen.findByRole('dialog', { name: 'Enlace de invitación' });
+    expect(issueInvitationLink).toHaveBeenCalledWith('inv-new');
+    expect(within(dialogo).getByLabelText('Enlace de invitación')).toHaveValue(ENLACE);
+    expect(dialogo).toHaveTextContent('no se vuelve a mostrar');
     expect(campo()).toHaveValue('');
     await waitFor(() => expect(fetchInvitations).toHaveBeenCalledTimes(2));
     expect(fetchTeam).toHaveBeenCalledTimes(2);
-    expect(document.body.textContent).not.toMatch(/recibirá un email/);
+    expect(document.body.textContent).not.toMatch(/recibirá un email|correo enviado|hemos enviado/i);
+  });
+
+  it('si la invitación se registra pero el enlace falla, lo dice y deja pedir otro', async () => {
+    issueInvitationLink.mockRejectedValue(new Error('boom'));
+    const user = userEvent.setup();
+    await mountLoaded();
+    await user.type(campo(), 'nuevo@empresa.test');
+    await waitFor(() => expect(enviar()).toBeEnabled());
+    await user.click(enviar());
+    expect(await screen.findByRole('alert')).toHaveTextContent('no se pudo generar el enlace');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('si el servidor lo rechaza, dice el motivo en una alerta y NO vacía el campo', async () => {
@@ -261,13 +291,28 @@ describe('INVT-01 · Invitations · invitar', () => {
 });
 
 describe('INVT-01 · Invitations · reenviar', () => {
-  it('«Reenviar» renueva la invitación expirada, lo confirma y recarga', async () => {
+  it('«Reenviar» renueva la invitación expirada, enseña el enlace nuevo y recarga', async () => {
     const user = userEvent.setup();
     await mountLoaded();
     await user.click(screen.getByRole('button', { name: 'Reenviar m.sanchez@aceroindustrial.com' }));
     expect(resendInvitation).toHaveBeenCalledTimes(1);
     expect(resendInvitation).toHaveBeenCalledWith('inv-3');
-    expect(await screen.findByText('Invitación reenviada.')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Enlace de invitación' })).toBeInTheDocument();
+    expect(issueInvitationLink).toHaveBeenCalledWith('inv-3');
+    await waitFor(() => expect(fetchInvitations).toHaveBeenCalledTimes(2));
+  });
+
+  it('«Nuevo enlace» de una pendiente enseña otro enlace; «Anular» la anula y recarga', async () => {
+    const user = userEvent.setup();
+    await mountLoaded();
+    await user.click(screen.getByRole('button', { name: 'Nuevo enlace para carlos.m@aceroindustrial.com' }));
+    expect(issueInvitationLink).toHaveBeenCalledWith('inv-1');
+    await user.click(await screen.findByRole('button', { name: 'Cerrar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Anular carlos.m@aceroindustrial.com' }));
+    expect(revokeInvitation).toHaveBeenCalledWith('inv-1');
+    expect(await screen.findByText('Invitación anulada.')).toBeInTheDocument();
     await waitFor(() => expect(fetchInvitations).toHaveBeenCalledTimes(2));
   });
 

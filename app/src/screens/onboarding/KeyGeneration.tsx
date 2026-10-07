@@ -130,6 +130,7 @@ function SuccessIcon() {
  * mensajes guionizados: precedente de REG-05/REG-06 (`CLAUDE.md` §7).
  */
 export function KeyGeneration({ profile, passphrase, onPassphraseConsumed, onPassphraseMissing, onContinue }: Props) {
+  const member = profile.role !== 'ADMIN';
   const [step, setStep] = useState<Step>(1);
   const [phase, setPhase] = useState<Phase>('running');
 
@@ -235,14 +236,14 @@ export function KeyGeneration({ profile, passphrase, onPassphraseConsumed, onPas
             <span className={styles.stepDot}>
               <CheckIcon size={11} />
             </span>
-            <span className={styles.stepLabel}>Solicitud</span>
+            <span className={styles.stepLabel}>{member ? 'Invitación' : 'Solicitud'}</span>
             <span aria-hidden="true" className={styles.stepLine} />
           </li>
           <li className={`${styles.step} ${styles.stepDone}`}>
             <span className={styles.stepDot}>
               <CheckIcon size={11} />
             </span>
-            <span className={styles.stepLabel}>Organización</span>
+            <span className={styles.stepLabel}>{member ? 'Cuenta' : 'Organización'}</span>
             <span aria-hidden="true" className={styles.stepLine} />
           </li>
           <li className={`${styles.step} ${styles.stepActive}`} aria-current="step">

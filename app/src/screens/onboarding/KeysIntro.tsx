@@ -3,6 +3,8 @@ import styles from './KeysIntro.module.css';
 interface Props {
   /** `Entendido, crear mi frase de seguridad`: solo navega a REG-06. No es asíncrono. */
   onContinue: () => void;
+  /** Un miembro invitado (no el ADMIN que registró la organización): sus dos primeros pasos son otros. */
+  member?: boolean;
 }
 
 /** Icono de verificación, en `currentColor`: lo tiñe el círculo que lo envuelve. */
@@ -118,7 +120,7 @@ function WarningIcon() {
  * hace nada por su cuenta: llama a `onContinue()` una vez y es el wiring quien
  * lleva a REG-06.
  */
-export function KeysIntro({ onContinue }: Props) {
+export function KeysIntro({ onContinue, member = false }: Props) {
   return (
     <div className={styles.screen}>
       <div className={styles.column}>
@@ -129,14 +131,14 @@ export function KeysIntro({ onContinue }: Props) {
             <span className={styles.stepDot}>
               <CheckIcon />
             </span>
-            <span className={styles.stepLabel}>Solicitud</span>
+            <span className={styles.stepLabel}>{member ? 'Invitación' : 'Solicitud'}</span>
             <span aria-hidden="true" className={styles.stepLine} />
           </li>
           <li className={`${styles.step} ${styles.stepDone}`}>
             <span className={styles.stepDot}>
               <CheckIcon />
             </span>
-            <span className={styles.stepLabel}>Organización</span>
+            <span className={styles.stepLabel}>{member ? 'Cuenta' : 'Organización'}</span>
             <span aria-hidden="true" className={styles.stepLine} />
           </li>
           <li className={`${styles.step} ${styles.stepActive}`} aria-current="step">

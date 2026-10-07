@@ -119,6 +119,9 @@ Deno.serve(async (req: Request) => {
     email,
     password,
     email_confirm: true,
+    // ACT-02: la contraseña la puso el ADMIN. La primera pantalla del usuario le pide cambiarla.
+    // Es solo un aviso de interfaz: el cliente puede tocar su `user_metadata`, y no protege nada.
+    user_metadata: { must_change_password: true },
   });
   if (createError || !created.user) {
     const already = /already|registered|exists/i.test(createError?.message ?? '');

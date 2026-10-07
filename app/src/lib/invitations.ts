@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { errorMessage } from './session';
+import { invitationUrl } from './invitation-link';
 
 /**
  * Capa de datos de INVT-01 · Panel de Gestión de Invitaciones.
@@ -37,7 +38,7 @@ import { errorMessage } from './session';
 /** *«Límite: 5 usuarios por organización»* (spec §3, `additional-user-invitation`). */
 export const MAX_USERS = 5;
 
-export type InvitationStatus = 'Pendiente' | 'Aceptada' | 'Expirada';
+export type InvitationStatus = 'Pendiente' | 'Aceptada' | 'Expirada' | 'Anulada';
 
 export interface InvitationRow {
   id: string;
@@ -80,7 +81,7 @@ export interface TeamMemberRaw {
 // -----------------------------------------------------------------------------
 
 function toStatus(raw: string): InvitationStatus {
-  return raw === 'Aceptada' || raw === 'Expirada' ? raw : 'Pendiente';
+  return raw === 'Aceptada' || raw === 'Expirada' || raw === 'Anulada' ? raw : 'Pendiente';
 }
 
 export function toInvitationRow(raw: InvitationRowRaw): InvitationRow {
@@ -252,8 +253,30 @@ export async function emailHasAccount(email: string): Promise<boolean> {
   return data === true;
 }
 
-export async function inviteMember(email: string): Promise<void> {
-  const { error } = await supabase.rpc('invite_member', { p_email: normalizeEmail(email) });
+/** Devuelve el id de la invitación: con él se pide el enlace (`issueInvitationLink`). */
+export async function inviteMember(email: string): Promise<string> {
+  const { data, error } = await supabase.rpc('invite_member', { p_email: normalizeEmail(email) });
+  if (error) throw error;
+  return data as string;
+}
+
+/**
+ * El enlace de una invitación vigente (0050): se ve UNA vez, y pedir otro revoca el anterior.
+ * No hay proveedor de correo (F-212): el ADMIN lo copia y se lo pasa al invitado.
+ */
+export async function issueInvitationLink(id: string): Promise<{ url: string; expiresAt: string }> {
+  const { data, error } = await supabase.rpc('issue_invitation_link', { p_invitation_id: id });
+  if (error) throw error;
+  const row = (data as { token?: unknown; expires_at?: unknown }[] | null)?.[0];
+  if (!row || typeof row.token !== 'string' || typeof row.expires_at !== 'string') {
+    throw new Error('No se pudo generar el enlace.');
+  }
+  return { url: invitationUrl(row.token), expiresAt: row.expires_at };
+}
+
+/** Anular: el enlace deja de valer en el acto y la plaza queda libre. */
+export async function revokeInvitation(id: string): Promise<void> {
+  const { error } = await supabase.rpc('revoke_invitation', { p_id: id });
   if (error) throw error;
 }
 

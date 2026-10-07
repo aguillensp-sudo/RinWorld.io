@@ -1,7 +1,8 @@
 # Propuesta de diseño — `INVT-02` y `ACT-02` (sin aprobar)
 
-**Estado: PROPUESTA del 7-oct-2026, sin aprobar por el PO.** No es contrato (`CLAUDE.md` §1.3): no se construye hasta que el
-PO diga sí o corrija. Los HTML de esta carpeta son maquetas de revisión con una barra de estados («Propuesta · estados») que
+**Estado: APROBADA y CONSTRUIDA el 7-oct-2026** (el PO aprobó las cinco decisiones: «aprueba las cinco decisiones y construye»).
+**Lo construido difiere en cinco puntos —sobre todo el aviso de la frase de `ACT-02`, que aquí es falso—: ver `F-241`.** Esto queda como
+historia del diseño; manda el código. Los HTML de esta carpeta son maquetas de revisión con una barra de estados («Propuesta · estados») que
 **no formaría parte de la pantalla real**. Parten de `REG-01 · FRO v1.4` (misma cáscara, mismos tokens, mismas clases); lo único
 nuevo es el CSS de la cabecera de este fichero, con tokens ya existentes (`design-system.md` §1.1, §1.4, §1.5).
 

@@ -14,22 +14,22 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO.** **`REC-01` y `SET-SEC-01` construidas a mano (22.ª y 23.ª pantallas)** a petición del PO.
-Un miembro con backup recupera su clave en otro navegador con la frase, y cambia la frase re-cifrando la MISMA privada. **`0049`** aplicada.
-**Nadie las ha visto en un navegador real**: falta la C5 del PO (§3.1). Detalle en `diario/dia-32.md`; dudas de producto en `F-239`.
+**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO.** Cuarta sesión: **`INVT-02` y `ACT-02` construidas a mano y desplegadas (24.ª y 25.ª pantallas)**,
+a petición del PO. Un invitado canjea el enlace, crea su cuenta de EDITOR y la activa con su propia frase; **`0050`** aplicada. **Nadie las ha
+visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/dia-32.md`; lo que difiere de la propuesta, en `F-241`.
+
+---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-10-07 12:02` al arrancar |
-| `0049` (`begin_key_recovery`, `end_key_recovery`, `replace_key_backup`, `discard_key_backup`) | Banco de esquema (`run.sh`) con sus asserts; `pg_proc` y `has_function_privilege` del proyecto | Banco en verde. Las cuatro: dueño `postgres`, `security definer`, `anon` no, `authenticated` sí; `key_recovery_attempts` con RLS y sin `select` |
-| Cinco intentos y 30 min | Asserts de `0049`: 1.º a 5.º entregan el backup (quedan 4,3,2,1,0), el 6.º `locked` sin un byte; vencido el bloqueo, de cero | Verde (en el banco, no en producción) |
-| La capa de datos | `lib/key-recovery.test.ts` (14), con Argon2id reducido; blob real | La frase buena abre, la mala no, otro miembro no (AAD); el cambio sube un blob que abre solo la frase nueva y con la MISMA pública |
-| Las dos pantallas | `KeyRecovery.test.tsx` (17) y `ChangePassphrase.test.tsx` (12) en jsdom | Verdes. **No son un navegador real** |
-| Unidad y tipos | `vitest run`; `tsc --noEmit`; `check:palette` | 1913 verdes y 1 rojo (timeout de `INV-02` por carga; solo, pasa); tipos limpios; paleta completa |
-| e2e | **No se ha corrido** | Ninguna spec nueva |
-| CI y producción | `gh run` 37620737822; `curl` del bundle de `rin-world-io.vercel.app` | `bf60b23`: los seis jobs en verde, desplegado; servidos los textos de `REC-01` y `SET-SEC-01` y las RPC `begin_key_recovery`, `replace_key_backup`, `discard_key_backup` |
+| Fecha de máquina | `date -u` | `2026-10-07 13:59` |
+| `0050` (`issue_invitation_link`, `revoke_invitation`, `invitation_link_validate`, `redeem_invitation`; `activate_own_membership` y `discard_key_backup` abiertos al EDITOR) | Banco de esquema (`run.sh`), seis bloques nuevos; `pg_proc` y `has_function_privilege` del proyecto | Banco en verde. Las ocho: dueño `postgres`, `security definer`, `anon` no; `validate` y `redeem` solo `service_role` |
+| `accept-invitation` (sin JWT) | `curl` a producción con una invitación sintética en una organización sin miembros | `validate` → OK; `accept` → 200; canjeado → 404. Datos de prueba borrados y contados a 0. **El canjeado salió ADMIN** (disparador de rol en organización vacía): el caso EDITOR solo está en el banco |
+| Las pantallas y su cableado | `vitest run` entero; `tsc --noEmit`; `check:palette` | 1967 verdes (23 omitidas), tipos y paleta limpios. jsdom: **no es un navegador real** |
+| CI y producción | `gh run` 37631701665; `curl` del bundle de `rin-world-io.vercel.app` | Verde, desplegado, «Producción sirve la app por contenido»; servidos `Te han invitado a Bearingworld.io`, `Activa tu cuenta`, `Nuevo enlace`, `issue_invitation_link` y el aviso corregido |
+| e2e | `invitations.spec.ts` actualizada y pasó en la CI | **Ninguna spec nueva** de `INVT-02` ni `ACT-02` |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -37,8 +37,9 @@ Un miembro con backup recupera su clave en otro navegador con la frase, y cambia
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **23 pantallas construidas, 20 aceptadas** (`REG-01`, `REC-01` y `SET-SEC-01` esperan la C5 del PO).
-  `REC-01` y `SET-SEC-01` van **a mano** (criptografía), sin corrida del arnés: sin filas en `harness-metrics.csv`. **No queda ninguna pantalla aprobada por construir; hay dos propuestas sin aprobar (`INVT-02`, `ACT-02`, `F-240`)**: solo `INV-04` (dominio `F-233`, y sin correo entrante ni S3/R2) y `MSG-03` (ya vive en `MSG-02`). Una pantalla nueva exige diseño aprobado por el PO. Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
+- **Corriente B · Fábrica — EN MARCHA.** **25 pantallas construidas, 20 aceptadas** (`REG-01`, `REC-01`, `SET-SEC-01`, `INVT-02` y `ACT-02` esperan la
+  C5 del PO). Las cuatro últimas, **a mano**, sin filas en `harness-metrics.csv`. **No queda ninguna pantalla aprobada por construir**: solo `INV-04`
+  (dominio `F-233`) y `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
@@ -48,7 +49,8 @@ Un miembro con backup recupera su clave en otro navegador con la frase, y cambia
    (ventana privada); cada «Desbloquear» **cuenta un intento** (5 y 30 min) y la frase buena lo reinicia. «Generar nuevas claves» **borra el
    backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup: apuntar la frase nueva.
    Decidir con el PO el cierre estanco del límite y los textos añadidos (`F-239`), y los textos de error de `REG-07` (`F-237`).
-1b. **Revisar con el PO `v1/diseno/PROPUESTA-INVT-02-ACT-02.md`** (cinco decisiones; maquetas HTML sin ver en un navegador normal). No construir antes.
+1b. **C5 del PO de `INVT-02` y `ACT-02` (escriben en la base real):** ADMIN → `Configuración` → invitar un correo tuyo → `Copiar enlace` (se ve una vez) →
+   ventana privada → crear la cuenta → `ACT-02` → `REG-05`→`REG-07`. Luego `Eliminar` a ese usuario (queda `CANCELLED`: ese correo no se reinvita). Decidir `F-241`.
 2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO: el blob ya existe y es lo que protege.
 3. **Decidir con el PO** qué hacer con las 18 303 líneas de ALPHA (cuenta de pruebas): rompen 3 e2e locales (`F-234`). Y las altas de prueba
    (`F-230`), y si se registra `bearingworld.io` (`F-233`). Borrar las 500 `DELETED` basura del 6-oct y la referencia por contenido (de ayer).
@@ -57,7 +59,7 @@ Un miembro con backup recupera su clave en otro navegador con la frase, y cambia
 5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede
    fallar el contrato de la tarea (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
 6. **`F-234` en las demás tablas**: el mismo patrón (funciones por fila en la política) en `threads`, `thread_items`, `watchers`… sin revisar.
-7. **`INVT-01` con token (`F-212`, `F-217`)**: la tabla ya lo admite pero **no existe la función que lo genere ni el canje**.
+7. **Con proveedor de correo y dominio (`F-233`)**: el enlace de `INVT-01` se entrega hoy a mano. Sin ellos no hay invitación que llegue sola (`F-241`).
 8. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-231`, `F-235`; poner `bearingworld-e2e` en `0048` (está en `0039`) y
    desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
 
@@ -100,16 +102,13 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-240`** · propuesta de `INVT-02` y `ACT-02` (cierra `F-212`/`F-217` si se aprueba) | PO (§3.1b) |
+| 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta aprobada; el enlace se entrega a mano; ninguna vista en navegador real | PO (§3.1b) |
 | 🟠 | **`F-239`** · el límite de `REC-01` no es estanco (select directo de la fila; reinicio sin prueba); textos añadidos al HTML | PO (§3.1) |
 | 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (`REC-01` ya existe) | PO |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
 | 🟠 | **`F-233`** · `bearingworld.io` sin registrar: ninguna pantalla, texto ni correo puede usarlo como destino | PO |
 | 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
-| 🟠 | **`F-223`** · el enlace y `REG-01` están; falta el equivalente para `INVT-01` | Construir (§3.7) |
-| 🟠 | **`F-217`** · el alta de `FRU` crea una cuenta que queda `REGISTERED` sin flujo para activarse (la Fase B es solo del ADMIN) | PO |
-| 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token | Construir (§3.7) |
 | 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: la base `bearingworld-e2e` para el C2 |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
@@ -133,8 +132,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 ## 6 · Lo que este fichero NO sabe
 
 - **Si las demás tablas tienen el problema de `F-234`** (`threads`, `thread_items`, `watchers`…): sin medir, porque aún no tienen volumen.
+- **Cómo se ven `INVT-02` y `ACT-02` en un navegador real, y si el flujo entero** (ADMIN invita → EDITOR canjea → activa) **funciona con una organización real**: medido por partes.
 - **Cómo se ven `REC-01` y `SET-SEC-01` en un navegador real** y si Argon2id (64 MiB) entra en un móvil modesto: solo jsdom.
-- **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU): la Fase B es solo del ADMIN (`F-217`).
+- **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU antes de `0050`): `ACT-02` sin el aviso de contraseña provisional. Nadie lo ha visto.
 - **Cuánto tarda Argon2id en el navegador del PO** (en Node, ~0,3 s).
 - **Si el umbral de zxcvbn basta** contra un ataque offline al blob cifrado (Argon2id frena, pero ≥ 3 son ~10⁸ intentos): es juicio.
 - **Cuánto tardó la importación de ~18 000 filas del PO** en el navegador: entró, nadie lo midió.
@@ -146,4 +146,4 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ---
 
-*Cierre del Día 32 · 7-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 32 (cuarta sesión) · 7-oct-2026 · Dirección Técnica, Nortex Systems*

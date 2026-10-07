@@ -42,3 +42,24 @@ sin prueba): dicho en la cabecera de `0049` y en `F-239`, no escondido.
 El PO pidió «dos pantallas nuevas a tu elección». Comprobado contra `openspec/design-gui/` y `app/src/screens/`: todas las aprobadas están construidas salvo `INV-04` y `MSG-03`. Consultado: el PO eligió no construir pantallas. Sin cambios de código.
 
 A petición del PO («diseña ambas»), propuesta de `INVT-02` (canje de invitación) y `ACT-02` (activar a un EDITOR) en `openspec/v1/diseno/`, con spec y cinco decisiones (`F-240`). Maquetas abiertas solo en el panel del navegador: cargan sin errores y los estados conmutan; la maquetación no se vio.
+
+## Cuarta sesión del día: `INVT-02` y `ACT-02` construidas
+
+El PO aprobó las cinco decisiones y pidió construir. **Antes de escribir código** se comprobó contra el esquema lo que la propuesta
+había dejado sin comprobar, y la primera afirmación era falsa: un EDITOR que pierde su frase no puede «ser invitado de nuevo»
+(`invite_member` rechaza el correo y `remove_member` solo marca `CANCELLED`). Por eso `0050` abre `discard_key_backup` al EDITOR: con
+`ACT-02` ya tiene camino de vuelta, que era el motivo de que fuera solo del ADMIN (`F-217`).
+
+- **Base (`0050`)**: `access_tokens` ya admitía `MEMBER_INVITATION` desde `0040`, así que el enlace sigue el patrón de `REG-01` (hash, un
+  solo uso). `issue_invitation_link`, `revoke_invitation`, `invitation_link_validate`, `redeem_invitation`; `revoked_at` y estado
+  `Anulada`; `activate_own_membership` y `discard_key_backup` abiertos al EDITOR. Banco de esquema: seis bloques nuevos, en verde a la
+  primera salvo un nombre de organización repetido (el `sed` de arreglo tocó antes otro que no era mío; revertido).
+- **Función de borde `accept-invitation`**, sin JWT, desplegada por la CI. Probada en producción con una invitación sintética: `validate` →
+  `accept` → canjeado = 404; todo borrado y comprobado.
+- **Pantallas**: `INVT-02` (sin shell, como `REG-01`), `ACT-02` (con la variante de contraseña provisional), el modal del enlace de `INVT-01`
+  con `Nuevo enlace` y `Anular`, y el rótulo de los pasos de `REG-05/06/07` para un invitado. `App.tsx`: ruta del enlace, rama del EDITOR
+  `REGISTERED`, activación automática tras `REG-07`.
+- **Tests**: unitarios completos en verde (1967); nuevos para las dos capas de datos, las tres pantallas y el cableado. Sin e2e nueva.
+
+Tropiezos: dos heredocs de shell fallaron por comillas y se pasó a ficheros con el editor (`F-199`); el primer token de prueba tenía 66
+caracteres y la función lo rechazó con razón; `userEvent.setup()` pisa el portapapeles que un test acababa de definir.

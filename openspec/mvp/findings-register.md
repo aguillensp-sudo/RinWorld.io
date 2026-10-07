@@ -299,7 +299,7 @@ scaffold React. Único hallazgo que cambia una decisión de spec: SP-2 inclina G
 WebCrypto nativo (F-008), pendiente de confirmar X25519 en Safari/Firefox antes de retirar el
 fallback P-256.
 | [F-211](findings/F-211.md) | 2026-09-25 | `SPEC` | `Contactar` sin hilo previo no se puede construir con el esquema actual | ABIERTO |
-| [F-212](findings/F-212.md) | 2026-09-25 | `SPEC` | La spec y el HTML aprobado prometen un correo que el proyecto no puede enviar | ABIERTO |
+| [F-212](findings/F-212.md) | 2026-09-25 | `SPEC` | La spec y el HTML aprobado prometen un correo que el proyecto no puede enviar | CERRADO |
 | [F-213](findings/F-213.md) | 2026-09-25 | `DESIGN` | No existe `Ajustes` | ABIERTO, menor |
 | [F-214](findings/F-214.md) | 2026-09-25 | `SEGURIDAD` | Revocar un usuario no le impide iniciar sesión, solo le deja sin datos | CERRADO 26-sep: `session.ts` + Edge Function `ban-revoked-member`; ban real probado (`User is banned`) |
 | [F-215](findings/F-215.md) | 2026-09-25 | `INFRA` | Dos trampas del banco de esquema que costaron una vuelta cada una | Cerrado, sin acción |
@@ -327,4 +327,5 @@ fallback P-256.
 | [F-237](findings/F-237.md) | 2026-10-07 | `SPEC-GAP` | `REG-07` no tiene texto aprobado para el fallo en los pasos 1–2 ni para el del paso 4, (la parte de `REC-01` se cerró el 7-oct, ver `F-239`; quedan los textos sin aprobar) | ABIERTO |
 | [F-238](findings/F-238.md) | 2026-10-07 | `HARNESS` | La reescritura del perfil en los e2e del onboarding fallaba a veces (*«Response has been disposed»*) y dejaba pasar el perfil ACTIVE real; helper común con reintento que aborta en vez de filtrar | CERRADO |
 | [F-239](findings/F-239.md) | 2026-10-07 | `SPEC-GAP` | El límite de 5 intentos de `REC-01` lo cuenta el servidor pero no es estanco (lectura directa de la fila propia, `end_key_recovery` sin prueba); y el HTML y la spec de `REC-01`/`SET-SEC-01` difieren en textos | ABIERTO |
-| [F-240](findings/F-240.md) | 2026-10-07 | `SPEC-GAP` | Sin pantalla para canjear una invitación (`F-212`) ni para activar a un EDITOR (`F-217`): propuesta de diseño `INVT-02` y `ACT-02` en `v1/diseno/`, sin aprobar | ABIERTO |
+| [F-240](findings/F-240.md) | 2026-10-07 | `SPEC-GAP` | Sin pantalla para canjear una invitación (`F-212`) ni para activar a un EDITOR (`F-217`): propuesta de diseño `INVT-02` y `ACT-02` en `v1/diseno/`, sin aprobar | CERRADO |
+| [F-241](findings/F-241.md) | 2026-10-07 | `SPEC-GAP` | `INVT-02` y `ACT-02` construidas: cinco desviaciones de la propuesta aprobada (aviso de la frase corregido, sin shell sin sesión, `Ir al inicio de sesión`, token en `#invitacion?token=`, `discard_key_backup` abierto al EDITOR), el enlace se entrega a mano y nada se ha visto en un navegador real | ABIERTO |

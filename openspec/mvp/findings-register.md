@@ -305,7 +305,7 @@ fallback P-256.
 | [F-215](findings/F-215.md) | 2026-09-25 | `INFRA` | Dos trampas del banco de esquema que costaron una vuelta cada una | Cerrado, sin acción |
 | [F-216](findings/F-216.md) | 2026-09-25 | `HARNESS` | Mi tarea no decía lo que el contrato exige (`string \| undefined` de un módulo CSS, `F-143`) | Cerrado para `INVT-01` |
 | [F-217](findings/F-217.md) | 2026-09-26 | `SPEC-GAP` | El alta de `FRU` crea cuentas de Auth con contraseña del ADMIN que nadie puede completar (sin flujo E2EE del nuevo usuario ni correo) | ABIERTO, del PO |
-| [F-218](findings/F-218.md) | 2026-09-26 | `SPEC-GAP` | `REG-09` solo se ve con un ADMIN en `KEY_ACTIVE`, que ningún flujo ni cuenta de prueba produce | ABIERTO, menor |
+| [F-218](findings/F-218.md) | 2026-09-26 | `SPEC-GAP` | `REG-09` solo se ve con un ADMIN en `KEY_ACTIVE`, que ningún flujo ni cuenta de prueba produce | CERRADO (7-oct: `REG-07` lleva a `KEY_ACTIVE`) |
 | [F-219](findings/F-219.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` en el árbol tumbaba `C1` y `C2` de `REG-09`: verde imposible en los tres intentos | Cerrado para `REG-09` |
 | [F-220](findings/F-220.md) | 2026-09-26 | `HARNESS` | Mi contrato de `FRU` no compilaba (`TS6133`, constante sin usar): `C1` rojo en los tres intentos; validé en seco y no ejecuté `tsc` | Cerrado para `FRU` |
 | [F-221](findings/F-221.md) | 2026-09-26 | `INFRA` | La comprobación por contenido del despliegue dio 404 unos segundos tras desplegar (carrera de propagación de Vercel) | Cerrado: reintentos |
@@ -324,3 +324,5 @@ fallback P-256.
 | [F-234](findings/F-234.md) | 2026-10-06 | `INFRA` | `INV-01` no carga con 18 302 líneas (la importación real del PO): las políticas de `inventory_lines` llaman a funciones `SECURITY DEFINER` por fila y la API pasa del `statement_timeout` de 8 s (500). Velocidad arreglada con `0047` (494 → 33 ms); quedan 3 e2e rotos por el dato | ABIERTO (el dato) |
 | [F-235](findings/F-235.md) | 2026-10-06 | `HARNESS` | `--seco` no comprueba `inputs.spec` y la corrida real de `REG-05` murió con `KeyError` antes de llamar al modelo (sin coste) | ABIERTO |
 | [F-236](findings/F-236.md) | 2026-10-06 | `HARNESS` | C4 leía «importante» en el texto de un JSX como un `import` y cobró al Coder una «dependencia nueva ` `»; el Coder lo esquivó con `impo{'r'}tante`. Arreglado (`\bimport\b`) | CERRADO |
+| [F-237](findings/F-237.md) | 2026-10-07 | `SPEC-GAP` | `REG-07` no tiene texto aprobado para el fallo en los pasos 1–2 ni para el del paso 4, y sin `REC-01` un miembro con backup no tiene clave en otro navegador | ABIERTO |
+| [F-238](findings/F-238.md) | 2026-10-07 | `HARNESS` | La reescritura del perfil en los e2e del onboarding fallaba a veces (*«Response has been disposed»*) y dejaba pasar el perfil ACTIVE real; helper común con reintento que aborta en vez de filtrar | CERRADO |

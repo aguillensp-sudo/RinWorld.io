@@ -14,25 +14,23 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 30 de V1 · 6-oct-2026 · Estado: CERRADO.** **`REG-05` y `REG-06` (decimonovena y vigésima, Fase B) construidas y EN PRODUCCIÓN.**
-`REG-05`: C5 del PO dada en localhost con JULSA. `REG-06`: VERDE al primer intento, 1 línea a mano; falta su C5. Su `Continuar` lleva a un
-**marcador** de `REG-07`. **`0047` arregla `INV-01`** (18 303 líneas del PO, `F-234`). Detalle en `diario/dia-30.md`.
+**Día 31 de V1 · 7-oct-2026 · Estado: CERRADO.** **`REG-07` construida a mano: la Fase B está entera** (`REG-05` → `06` → `07` → `REG-09`).
+Un ADMIN `REGISTERED` sale con su par X25519, el backup cifrado (ADR-001) en el servidor y la cuenta en `KEY_ACTIVE`. **`0048`** aplicada.
+El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. Falta la C5 de `REG-06` y `REG-07`. Detalle en `diario/dia-31.md`.
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-10-06 13:02` al arrancar; `14:28` al cerrar |
-| Inventario de Rodamientos Ibéricos (ALPHA) | `execute_sql` (recuento por estado) | 18 302 `PUBLISHED`, 518 `DELETED`, 1 `DRAFT`; importadas 11:34–11:39 UTC |
-| `F-234` y `0047` | `edge_logs`; `EXPLAIN ANALYZE` como `authenticated`; `run.sh`; `pg_policies` | Antes 6–11 s y 500 (8 s); 494 → 33 ms; banco en verde; las 3 políticas con `(select …)` |
-| `inventory.spec.ts` tras `0047` | Playwright contra producción | 13 de 16; los 3 restantes por el dato (suponen ~15 líneas de demo) |
-| Contrato de `REG-05` | Referencia desechable; marcador | 18 de unidad y 6 e2e verdes con ella; contra el marcador fallan 17 y 4 |
-| Corrida 02 de `REG-05` | `harness/metrics/REG-05/corrida-02/`, `harness-metrics.csv` | VERDE en 2 intentos (C1–C4), 0,049 $ |
-| Revisión a mano | Captura real (build + ALPHA como `REGISTERED`) contra HTML y PDF | 2 desviaciones del indicador de pasos, +7/−2 (`harness-review.csv`) |
-| `F-236` | `python -m harness.tests.test_checks` | Prueba nueva roja antes y verde después; suite entera en verde |
-| CI y producción | `gh run` 37479195432 y 37512384217; `curl` del bundle de `rin-world-io.vercel.app` | Ver §3.0: textos de `REG-05` y `REG-06` en el bundle |
-| Corrida 01 de `REG-06` y su revisión | `harness/metrics/REG-06/corrida-01/`; captura real; `harness-review.csv` | VERDE en 1 intento (0,062 $); 1 línea de CSS a mano |
-| zxcvbn: velocidad y criterio | Node, 12 frases con y sin Levenshtein | Sin Levenshtein 3–30 ms (con ella hasta 1,4 s); rechaza `Password2024!`; `Aaaaaaaaaaaa1!` saca 3 |
+| Fecha de máquina | `date -u` | `2026-10-07 07:31` al arrancar; `08:34` al cerrar |
+| `0048` (`store_key_backup`, `confirm_key_backup`) | `run.sh` (banco de esquema); `pg_proc` y `has_function_privilege` del proyecto | Banco en verde; dueño `postgres`, `security definer`, `anon` no, `authenticated` sí |
+| Argon2id (`hash-wasm` 4.12.0) | Vector de referencia de argon2id en la unidad; Node | Coincide; ~0,3 s con los parámetros de ADR-001 |
+| Lo que sube el navegador se abre fuera | `key-generation.spec.ts`: Argon2id y AES-GCM de Node sobre el payload capturado | Abre con la frase y el id; sale la pública subida; con otra frase, no |
+| Copia del dispositivo | e2e (IndexedDB real) y `device-key.test.ts` | `CryptoKey` no extraíble con la pública subida |
+| Unidad y tipos | `vitest run`; `tsc --noEmit`; `check:palette` | 1871 verdes; limpio; paleta completa |
+| e2e | Suite entera en local (puerto 4391: el 4173 cae en un rango excluido de Windows) | 2.ª pasada: 154 verdes y los 8 rojos conocidos (`F-224`/`F-230`, 3 de `INV-01` por el dato). La 1.ª, más lenta, dio 5 más que no se reproducen |
+| Estado de las cuentas `REGISTERED` | `execute_sql` | JULSA (ADMIN), `jose@yo.net` (ADMIN), `alvaro@vistabahia.eu` (EDITOR de ALPHA, `F-230`): con `public_key` de demo, sin backup |
+| CI y producción | `gh run` 37593719431; `curl` del bundle de `rin-world-io.vercel.app` | `326cc34` todo verde y desplegado; textos de `REG-07`, las dos RPC y el worker de Argon2id (28 KB) servidos |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -40,20 +38,20 @@ Empieza por §6 y luego §3.
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **20 pantallas construidas, 18 aceptadas** (`REG-01` y `REG-06`, pendientes de C5).
-  Fase B: `REG-05` y `REG-06` hechas; **queda `REG-07`**, a mano. Después, `REC-01`, `SET-SEC-01` (criptografía), `INV-04` (dominio, `F-233`) y
+- **Corriente B · Fábrica — EN MARCHA.** **21 pantallas construidas, 18 aceptadas** (`REG-01`, `REG-06` y `REG-07`, pendientes de C5).
+  **Fase B entera** (`REG-07` a mano, fuera de la cuenta de la fábrica). Después, **`REC-01`** (`F-237`), `SET-SEC-01` (criptografía), `INV-04` (dominio, `F-233`) y
   `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-0. **C5 de `REG-06`** con una cuenta `REGISTERED` (JULSA): entrar con contraseña (no vale una sesión recordada: pide entrar de nuevo),
-   `REG-05` → `REG-06`. No escribe nada: `Continuar` lleva al marcador de `REG-07`. **Comprobar antes el despliegue de `66fc871`** por contenido.
-1. **`REG-07`** (generar claves y guardar el backup): **a mano**, con `docs/ADR-002` §10 y `ADR-001` delante. `members` ya tiene
-   `public_key`, `encrypted_key_blob`, `key_iv`, `argon2_salt` y `kdf_params`. **Ojo:** el llavero de demo del MVP (`ensureKeyring`,
-   `keys.ts`) publica una `public_key` al iniciar CADA sesión —por eso JULSA ya tiene una—; `REG-07` tiene que decidir qué hace con él.
-   La frase llega en el `useRef` de `App.tsx`; normalización (NFC o no) sin decidir. Al acabar, `KEY_ACTIVE` y cae en `REG-09`.
-2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO, ahora que hay medidas: protege un blob offline.
+0. **C5 de `REG-06` y `REG-07` con JULSA. Escribe, sin vuelta atrás desde la interfaz:** JULSA queda `KEY_ACTIVE` con backup (y `ACTIVE`
+   tras `REG-09`). Entrar con contraseña, `REG-05` → `06` → `07` → «Continuar» → `REG-09`. **Apuntar la frase** (sin `REC-01` no hay
+   recuperación); la privada queda en ESE navegador (`F-237`). Comprobar antes el despliegue por contenido.
+1. **`REC-01`** (recuperar la clave con la frase, ADR-001 §7.2): ahora es lo que falta para que un miembro con backup tenga su clave en otro
+   navegador. **A mano**, con el formato de `lib/key-backup.ts` (NFC, AAD, parámetros) y el límite de 5 intentos EN EL SERVIDOR (§8). Decidir
+   con el PO antes, y los textos de error de `REG-07` sin aprobar (`F-237`).
+2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO: el blob ya existe y es lo que protege.
 3. **Decidir con el PO** qué hacer con las 18 303 líneas de ALPHA (cuenta de pruebas): rompen 3 e2e locales (`F-234`). Y las altas de prueba
    (`F-230`), y si se registra `bearingworld.io` (`F-233`). Borrar las 500 `DELETED` basura del 6-oct y la referencia por contenido (de ayer).
 4. **Falta la C5 de la sección «Enlace de acceso» de `ADMIN-01`.** Recorrido en su localhost (va contra producción y escribe): aprobar → copiar
@@ -62,7 +60,7 @@ Empieza por §6 y luego §3.
    fallar el contrato de la tarea (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
 6. **`F-234` en las demás tablas**: el mismo patrón (funciones por fila en la política) en `threads`, `thread_items`, `watchers`… sin revisar.
 7. **`INVT-01` con token (`F-212`, `F-217`)**: la tabla ya lo admite pero **no existe la función que lo genere ni el canje**.
-8. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-218`, `F-227`, `F-231`, `F-235`; poner `bearingworld-e2e` en `0047` (está en `0039`) y
+8. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-231`, `F-235`; poner `bearingworld-e2e` en `0048` (está en `0039`) y
    desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
 
 **Fecha límite:** la siembra de cobros de producción se resembró el 4-oct; Cuscinetti Padana vence a los 10 días (**~14-oct**) y
@@ -85,6 +83,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Fase B (`REG-05` → `06` → `07`)**: solo el ADMIN `REGISTERED`, dentro del shell con VERA `Asistente de registro`; el paso no se guarda;
   `REG-05` y `REG-06` las construye el Coder (sin criptografía), `REG-07` a mano (Plan §4.3). **La frase no sale nunca del navegador** y
   se compara con una huella en memoria de la contraseña (sin huella, se cierra la sesión); fortaleza con zxcvbn sin Levenshtein.
+- **ADR-001 en código** (`0048`, `key-backup.ts`): frase en NFC, AAD = id en minúsculas, Argon2id en worker; el estado cambia solo tras abrir
+  la copia del servidor. Privada en IndexedDB, no extraíble, y cerrar sesión no la borra. `ensureKeyring(id, estado)` no publica para
+  `REGISTERED` ni para quien tiene backup.
 - **La importación (`0044`–`0046`)**: una transacción; solo `ACTIVE` (ADMIN o EDITOR) de una `APPROVED`; identidad = referencia + marca + país;
   `Reemplazo total` pasa a `DELETED` lo publicado que no viene; devuelve `inserted` y `updated`. Familia opcional (`0045`); el país puede salir
   de la organización. `price` no se importa (E2EE); solo CSV/TSV/TXT/XLSX; tope 20.000 filas por subida.
@@ -101,12 +102,12 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`REG-06`** · en producción; falta la C5 del PO (§3.0) | PO |
+| 🟠 | **`REG-06` y `REG-07`** · en producción; falta la C5 del PO (§3.0). La de `REG-07` escribe | PO |
+| 🟠 | **`F-237`** · sin `REC-01`, un miembro con backup no tiene clave en otro navegador; textos de error de `REG-07` sin aprobar | PO + construir (§3.1) |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
 | 🟠 | **`F-233`** · `bearingworld.io` sin registrar: ninguna pantalla, texto ni correo puede usarlo como destino | PO |
 | 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
-| 🟠 | **`F-218`** · nada lleva a un ADMIN a `KEY_ACTIVE`: `REG-05` y `REG-06` hechas, falta `REG-07` | Construir a mano (§3.1) |
 | 🟠 | **`F-223`** · el enlace y `REG-01` están; falta el equivalente para `INVT-01` | Construir (§3.7) |
 | 🟠 | **`F-217`** · el alta de `FRU` crea una cuenta que queda `REGISTERED` sin flujo para activarse (la Fase B es solo del ADMIN) | PO |
 | 🟠 | **`F-212`** · una invitación de `INVT-01` queda *registrada*, sin correo ni token | Construir (§3.7) |
@@ -120,7 +121,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
 | 🟡 | **`F-231`** · `toLocaleString('es-ES')` no agrupa `1247`: `Inventory`, `InventoryTable`, `Messages` y `Panel` lo usan | Cambiar a `formatCount` |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
-| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0047` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
+| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0048` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
 | 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |
@@ -133,18 +134,17 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 ## 6 · Lo que este fichero NO sabe
 
 - **Si las demás tablas tienen el problema de `F-234`** (`threads`, `thread_items`, `watchers`…): sin medir, porque aún no tienen volumen.
-- **Qué ve un ADMIN `REGISTERED` real en `REG-06`**: el e2e reescribe el estado de ALPHA; `REG-05` sí la vio el PO con JULSA.
+- **Qué ve un ADMIN `REGISTERED` real en `REG-06` y `REG-07`**: el e2e reescribe el estado de ALPHA y contesta las escrituras de `REG-07`.
+  **`0048` no la ha llamado nadie desde un navegador contra la base real**: solo el banco de esquema. Lo hará la C5.
+- **Cuánto tarda Argon2id en el navegador del PO** (en Node, ~0,3 s) ni si un móvil modesto aguanta los 64 MiB.
 - **Si el umbral de zxcvbn basta** contra un ataque offline al blob cifrado (Argon2id frena, pero ≥ 3 son ~10⁸ intentos): es juicio.
-- **Si una importación de 20.000 filas funciona en el navegador** (tiempo de la función, tamaño de la petición): la del PO fue de ~18 000 y
-  entró; nadie midió cuánto tardó.
+- **Cuánto tardó la importación de ~18 000 filas del PO** en el navegador: entró, nadie lo midió.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores**: solo con los de prueba y el del PO.
 - **Si el recorrido entero funciona en un navegador real**: aprobar en `ADMIN-01` → copiar el enlace → `REG-01` → `REG-05`. Medido **por partes**.
-- **Si «Copiar enlace» copia en el navegador del PO** (el portapapeles real; los tests lo simulan).
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
-- **Si invitar y reenviar funcionan desde la pantalla de `INVT-01`** (medido en el banco de esquema).
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
 
 ---
 
-*Cierre del Día 30 · 6-oct-2026 (reabierto para `REG-06`) · Dirección Técnica, Nortex Systems*
+*Cierre del Día 31 · 7-oct-2026 · Dirección Técnica, Nortex Systems*

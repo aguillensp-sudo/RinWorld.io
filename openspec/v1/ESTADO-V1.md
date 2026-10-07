@@ -14,9 +14,10 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO.** Cierre de la sexta sesión (`F-239`, `0052`) tras la cuarta: **`INVT-02` y `ACT-02` construidas a mano y desplegadas (24.ª y 25.ª pantallas)**,
-a petición del PO. Un invitado canjea el enlace, crea su cuenta de EDITOR y la activa con su propia frase; **`0050`** aplicada. **Nadie las ha
-visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/dia-32.md`; lo que difiere de la propuesta, en `F-241`.
+**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO (17:45 UTC).** Día de ocho sesiones. Construido y en producción: **`REC-01` y `SET-SEC-01`**, **`INVT-02` y `ACT-02`**
+(25 pantallas; todas aceptadas por el PO: A.1, A.2 y A.3 de sus pruebas) y cuatro cierres de seguridad en la base: **`0050`** (canje de invitación), **`0051`**
+(`F-234`, 8 políticas), **`0052`** (`F-239`, backup estanco) y **`0053`/`0054`** (`F-242`, sustituir el backup exige la frase anterior). **`INV-04`** tiene plan
+(Amazon SES, `ingest.nortexsys.com`) y el PO está haciendo la fase 0 en AWS y Arsys. Detalle en `diario/dia-32.md`.
 
 ---
 
@@ -24,12 +25,12 @@ visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/di
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| `0052` (`F-239`): blob e IV sin `select`/`update` directos, `read_pending_key_backup`, 5 peticiones por ventana de 30 min sin reinicio al acertar | Banco de esquema entero; `has_column_privilege` y `pg_proc` de producción; `select encrypted_key_blob` como `authenticated` en producción; Playwright **relanzado después de aplicarla** | Banco en verde; blob/IV sin `select` para `authenticated` y `anon`; `end_key_recovery` no existe; `42501` en producción; e2e verde contra la base ya cambiada. **`REC-01` y `SET-SEC-01` no se han visto con JULSA tras el cambio** |
-| `0050` (`issue_invitation_link`, `revoke_invitation`, `invitation_link_validate`, `redeem_invitation`; `activate_own_membership` y `discard_key_backup` abiertos al EDITOR) | Banco de esquema (`run.sh`), seis bloques nuevos; `pg_proc` y `has_function_privilege` del proyecto | Banco en verde. Las ocho: dueño `postgres`, `security definer`, `anon` no; `validate` y `redeem` solo `service_role` |
-| `accept-invitation` (sin JWT) | `curl` a producción con una invitación sintética en una organización sin miembros | `validate` → OK; `accept` → 200; canjeado → 404. Datos de prueba borrados y contados a 0. **El canjeado salió ADMIN** (disparador de rol en organización vacía): el caso EDITOR solo está en el banco |
-| Las pantallas y su cableado | `vitest run` entero; `tsc --noEmit`; `check:palette` | 1967 verdes (23 omitidas), tipos y paleta limpios. jsdom: **no es un navegador real** |
-| CI y producción | `gh run` 37631701665; `curl` del bundle de `rin-world-io.vercel.app` | Verde, desplegado, «Producción sirve la app por contenido»; servidos `Te han invitado a Bearingworld.io`, `Activa tu cuenta`, `Nuevo enlace`, `issue_invitation_link` y el aviso corregido |
-| e2e | `invitations.spec.ts` actualizada y pasó en la CI | **Ninguna spec nueva** de `INVT-02` ni `ACT-02` |
+| `0050`–`0054` en producción | Banco de esquema entero tras cada una; `pg_proc`, `has_function_privilege`, `has_column_privilege` y `pg_policies` de producción | Verde. Blob e IV sin `select`/`update` para `authenticated` y `anon`; solo existen las firmas nuevas de `store`/`replace_key_backup`; `end_key_recovery` no existe; el verificador no se lee |
+| `accept-invitation` (sin JWT) | `curl` a producción con una invitación sintética (borrada, contada a 0) | `validate` OK, `accept` 200, canjeado 404. El canjeado salió ADMIN (organización vacía): el caso EDITOR solo está en el banco |
+| `SET-SEC-01` y el verificador | `select` por SQL tras la prueba del PO | JULSA (`a.guillen@julsaindustrial.com`) **ya tiene verificador**; la cuenta `CANCELLED` `contact@nortexsys.com` no |
+| Suite y CI | `vitest run` entero (1974 verdes, 23 omitidas); CI `37650282186` | Verde con e2e y despliegue en `8991133`. Después solo hay commits de documentación `[skip ci]` |
+| Pruebas del PO | Lo dijo en el chat («todo aprobado A.2 y A.3»; A.1 OK; `SET-SEC-01` «ya funciona») | **No lo midió este agente.** Las pruebas con JULSA fueron antes y después de `0052`/`0053` |
+| Conector AWS del PO | `session_connectors_status` | `AWS MCP` pasó de `pending` a conectado al final del día (herramienta `aws___run_script`). **No se ha usado ni se ha mirado qué permisos tiene** |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -37,36 +38,31 @@ visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/di
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
-- **Corriente B · Fábrica — EN MARCHA.** **25 pantallas construidas, 20 aceptadas** (`REG-01`, `REC-01`, `SET-SEC-01`, `INVT-02` y `ACT-02` esperan la
-  C5 del PO). Las cuatro últimas, **a mano**, sin filas en `harness-metrics.csv`. **No queda ninguna pantalla aprobada por construir**: solo `INV-04`
-  (dominio `F-233`) y `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
+- **Corriente B · Fábrica — EN MARCHA.** **25 pantallas construidas y 25 aceptadas.** Las últimas cuatro (`REC-01`, `SET-SEC-01`, `INVT-02`, `ACT-02`), **a mano**, sin
+  filas en `harness-metrics.csv`. **Ninguna pantalla aprobada queda por construir** salvo `INV-04` (plan en `v1/plan-inv04-ingestion-por-correo.md`) y `MSG-03` (vive
+  en `MSG-02`). Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
 
-0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO (`F-237`): no borrar sus datos del sitio.
-1. **C5 del PO de `REC-01` y `SET-SEC-01`, con cuidado: escriben en la base real.** `REC-01`: abrir JULSA en un navegador sin su clave
-   (ventana privada); cada «Desbloquear» **cuenta un intento** (5 cada 30 min; **acertar ya no lo reinicia**, `0052`). «Generar nuevas claves» **borra el
-   backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup (y sube por primera vez su verificador, `F-242`): apuntar la frase nueva.
-   Decidir los textos de error de `REG-07` (`F-237`).
-1b. **C5 del PO de `INVT-02` y `ACT-02` (escriben en la base real):** ADMIN → `Configuración` → invitar un correo tuyo → `Copiar enlace` (se ve una vez) →
-   ventana privada → crear la cuenta → `ACT-02` → `REG-05`→`REG-07`. Luego `Eliminar` a ese usuario (queda `CANCELLED`: ese correo no se reinvita). Decidir `F-241`.
-2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO: el blob ya existe y es lo que protege.
-3. **Decidir con el PO** qué hacer con las 18 303 líneas de ALPHA (cuenta de pruebas): rompen 3 e2e locales (`F-234`). Y las altas de prueba
-   (`F-230`), y si se registra `bearingworld.io` (`F-233`). Borrar las 500 `DELETED` basura del 6-oct y la referencia por contenido (de ayer).
-4. **Falta la C5 de la sección «Enlace de acceso» de `ADMIN-01`.** Recorrido en su localhost (va contra producción y escribe): aprobar → copiar
-   el enlace → abrirlo sin sesión → crear la cuenta. Decidir con el PO (`F-188`) y **borrar las filas después**.
-5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede
-   fallar el contrato de la tarea (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
-6. **`F-234` en las demás tablas**: `0051` envolvió las 8 de `threads`, `thread_items` y `thread_item_keys`. Quedan **31**, catalogadas en `F-234` por riesgo (`forum_*`, `watchers_*` primero).
-7. **Con proveedor de correo y dominio (`F-233`)**: el enlace de `INVT-01` se entrega hoy a mano. Sin ellos no hay invitación que llegue sola (`F-241`).
-8. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-231`, `F-235`; poner `bearingworld-e2e` en `0048` (está en `0039`) y
-   desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
+0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar
+   nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
+   acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
+1. **`F-237`: el PO elige** (1) los textos de error de `REG-07` tal cual, (2) tal cual más «Si se repite, escribe a soporte» tras dos fallos, o (3) otros. **Aún no ha contestado.**
+2. **`INV-04`, fase 0 (la hace el PO):** MFA y presupuesto de 5 USD en AWS, SES en **eu-west-1**, identidad de `ingest.nortexsys.com`, y los registros DNS en Arsys
+   (**sin tocar** los de la web ni los dos buzones). Este agente **espera los registros que el PO le pase, los revisa con él** y no pide credenciales. La **fase 1**
+   (tablas, RLS solo ADMIN, RPC; la pantalla sin enseñar) se puede empezar ya sin AWS. **Leer los límites vigentes de las funciones de borde antes de la fase 2.**
+   Las seis decisiones del plan están confirmadas. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y entonces con un rol de IAM de mínimo privilegio, nunca el raíz.
+3. **Decidir con el PO:** `F-241` (cinco desviaciones de `INVT-02`/`ACT-02`); `F-231` (`1247` o `1.247`: `F-024` decidió lo primero y las specs de `INV-03` escriben lo segundo, y
+   cuatro tests defienden `1247`); el **umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos): el blob protege con eso y con Argon2id; las 18 303 líneas de ALPHA (`F-234`); `F-230`.
+   Borrar las 500 `DELETED` basura del 6-oct.
+4. **`F-234` en las demás tablas:** `0051` envolvió 8; quedan **31** (`forum_*` y `watchers_*` primero). Patrón de `0047`/`0051`, con el banco delante.
+5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede fallar el contrato de la tarea
+   (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
+6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-235`; `bearingworld-e2e` en `0054`; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09`, `FRU`.
 
 **Fecha límite:** la siembra de cobros de producción se resembró el 4-oct; Cuscinetti Padana vence a los 10 días (**~14-oct**) y
 cambia de estado. Antes de correr la e2e o revisar `ADMIN-02` después, resembrar (`demo_billing.sql`). `demo_watchers.sql`, resembrada el 6-oct.
-
-En paralelo, sin acción de este lado: Model Garden; `F-073` (re-loguear la CLI de Supabase) y el plan de pago de Vercel.
 
 ## 4 · Decisiones vivas
 
@@ -83,6 +79,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Fase B (`REG-05` → `06` → `07`)**: solo el ADMIN `REGISTERED`, dentro del shell con VERA `Asistente de registro`; el paso no se guarda;
   `REG-05` y `REG-06` las construye el Coder (sin criptografía), `REG-07` a mano (Plan §4.3). **La frase no sale nunca del navegador** y
   se compara con una huella en memoria de la contraseña (sin huella, se cierra la sesión); fortaleza con zxcvbn sin Levenshtein.
+- **El backup de la clave** (`0052`–`0054`): sin `select` ni `update` directos de `encrypted_key_blob`/`key_iv`; el blob solo sale por `begin_key_recovery` (5 por 30 min,
+  acertar no reinicia) y `read_pending_key_backup` (solo `REGISTERED`); sustituirlo exige la prueba de la frase anterior (`key_verifier`). Una columna nueva de `members` nace sin permiso.
+- **El `localhost` del PO ejecuta tu carpeta de trabajo contra producción**: lo que dejes a medias lo prueba él (el 404 de `SET-SEC-01` fue eso). Migración aditiva primero, cliente después.
 - **ADR-001 en código** (`0048`, `key-backup.ts`): frase en NFC, AAD = id en minúsculas, Argon2id en worker; el estado cambia solo tras abrir
   la copia del servidor. Privada en IndexedDB, no extraíble, y cerrar sesión no la borra. `ensureKeyring(id, estado)` no publica para
   `REGISTERED` ni para quien tiene backup.
@@ -102,12 +101,12 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta aprobada; el enlace se entrega a mano; ninguna vista en navegador real | PO (§3.1b) |
-| 🟠 | **`F-242`** · cerrado para backups nuevos; los dos anteriores (JULSA y la `CANCELLED`) no tienen verificador hasta su primer `REC-01` o `SET-SEC-01` | PO: hacer `SET-SEC-01` con JULSA (§3.1) |
-| 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (`REC-01` ya existe) | PO |
-| 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |
+| 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta; el enlace se entrega a mano (sin proveedor de correo) | PO (§3.3) |
+| 🟡 | **`F-242`** · cerrado; solo la cuenta `CANCELLED` `contact@nortexsys.com` sigue sin verificador (irrelevante: está revocada) | — |
+| 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (§3.1) | PO |
+| 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
-| 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB); las 6 decisiones del plan están confirmadas. Falta la fase 0: verificar el dominio en SES, bucket y registros `MX` en Arsys | PO + yo (`v1/plan-inv04-ingestion-por-correo.md`) |
+| 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: falta la fase 0 del PO (§3.2) | PO + este agente |
 | 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
 | 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: la base `bearingworld-e2e` para el C2 |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
@@ -117,9 +116,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-235`** · `--seco` no construye el prompt del Coder: un campo obligatorio que falte revienta ya lanzado | Arnés |
 | 🟡 | **`F-224`** · dos e2e excusados en las tareas mientras exista la cuenta de prueba del PO en Rodamientos Ibéricos | PO |
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
-| 🟡 | **`F-231`** · `toLocaleString('es-ES')` no agrupa `1247`: `Inventory`, `InventoryTable`, `Messages` y `Panel` lo usan | Cambiar a `formatCount` |
+| 🟡 | **`F-231`** · `1247` o `1.247` (§3.3): decisión del PO, no arreglo; contradice a `F-024` | PO |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
-| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0048` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
+| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0054` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
 | 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |
@@ -132,10 +131,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 ## 6 · Lo que este fichero NO sabe
 
 - **Cuánto se gana con `0051`, y cuánto cuestan las 31 políticas sin envolver**: sin medir, porque aún no hay volumen. Solo se midió que no cambia lo que ve un miembro.
-- **Cómo se ven `INVT-02` y `ACT-02` en un navegador real, y si el flujo entero** (ADMIN invita → EDITOR canjea → activa) **funciona con una organización real**: medido por partes.
-- **Cómo se ven `REC-01` y `SET-SEC-01` en un navegador real** y si Argon2id (64 MiB) entra en un móvil modesto: solo jsdom.
+- **Si `INVT-02` y `ACT-02` funcionan con una organización real y con otros navegadores**: el PO las recorrió una vez y las aprobó; medido por partes, sin e2e propia.
+- **Si Argon2id (64 MiB) entra en un móvil modesto**: solo jsdom y el navegador del PO.
 - **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU antes de `0050`): `ACT-02` sin el aviso de contraseña provisional. Nadie lo ha visto.
-- **Cuánto tarda Argon2id en el navegador del PO** (en Node, ~0,3 s).
 - **Si el umbral de zxcvbn basta** contra un ataque offline al blob cifrado (Argon2id frena, pero ≥ 3 son ~10⁸ intentos): es juicio.
 - **Cuánto tardó la importación de ~18 000 filas del PO** en el navegador: entró, nadie lo midió.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores**: solo con los de prueba y el del PO.
@@ -143,7 +141,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
+- **Qué permisos tiene el conector `AWS MCP` del PO** y si usa credenciales acotadas: no se miró. **Si SES recibe en eu-west-1 y qué límites tienen las funciones de borde hoy**: sin leer.
 
 ---
 
-*Cierre del Día 32 (cuarta sesión) · 7-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 32 · 7-oct-2026 · Dirección Técnica, Nortex Systems*

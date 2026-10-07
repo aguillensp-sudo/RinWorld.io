@@ -98,3 +98,10 @@ reinició a mano a petición del PO. **Lección: con un `localhost` apuntando a 
 ## Octava sesión: plan de `INV-04`
 
 El PO quiere desbloquear `INV-04` con un dominio suyo en Arsys (web y dos buzones, DNS sin tocar) y Amazon SES. Plan por fases en `v1/plan-inv04-ingestion-por-correo.md`; el riesgo principal es procesar un `.xlsx` grande en una función de borde. Sin código ni infraestructura todavía.
+
+## Cierre del día (17:45 UTC)
+
+El PO aprobó A.1, A.2 y A.3 de sus pruebas y `SET-SEC-01` le funciona con JULSA tras `0053`. Ante `INV-04` eligió Amazon SES y 40 MB, confirmó las seis decisiones del plan y dio el
+dominio (`nortexsys.com`, canal `ingest.nortexsys.com`, en Arsys con web y dos buzones: el DNS principal no se toca). Dijo que ya tiene cuenta de AWS y creó conectores de AWS en su
+configuración; al cierre `AWS MCP` figuraba conectado en la sesión. **No se usó**: se le aconsejó no darle al agente acceso a la API de AWS sin un rol de mínimo privilegio, y la
+fase 0 son pasos de consola que hace él. Queda sin contestar `F-237`. Pasa a otro agente, con sesión nueva (esta llevaba un contexto enorme).

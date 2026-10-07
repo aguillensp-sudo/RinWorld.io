@@ -69,6 +69,8 @@ interface RecipientRow {
 
 let llavero: SessionKeyPair | null = null;
 let llaveroDe: string | null = null;
+/** El miembro de este llavero tiene backup (ADR-001): puede recuperar (REC-01) y cambiar la frase (SET-SEC-01). */
+let conBackup = false;
 let enCurso: Promise<SessionKeyPair | null> | null = null;
 
 /**
@@ -127,6 +129,7 @@ export async function ensureKeyring(
     // Con backup (REG-07, ADR-001): la copia de este dispositivo o nada. Nunca se
     // genera ni se publica otra.
     if (fila && (fila as { kdf_params: unknown }).kdf_params != null) {
+      conBackup = true;
       const publicada = (fila as { public_key: string | null }).public_key;
       const enDispositivo = await loadDeviceKey(memberId);
       if (enDispositivo && publicada && mismaClave(enDispositivo.publicKey, fromBytea(publicada))) {
@@ -180,7 +183,17 @@ function mismaClave(a: Uint8Array, b: Uint8Array): boolean {
 export function adoptKeyring(memberId: string, pair: SessionKeyPair): void {
   llavero = pair;
   llaveroDe = memberId;
+  conBackup = true;
   enCurso = null;
+}
+
+/**
+ * ¿Tiene backup el miembro cuyo llavero se montó? Solo vale después de `ensureKeyring`.
+ * REC-01 y SET-SEC-01 dependen de ello: un miembro del MVP, sin backup, no tiene nada
+ * que recuperar ni que cambiar.
+ */
+export function keyringHasBackup(): boolean {
+  return conBackup;
 }
 
 /** El par de esta sesión, o `null` si aún no hay. No deriva nada por su cuenta. */
@@ -196,6 +209,7 @@ export function currentKeyPair(): SessionKeyPair | null {
 export function clearKeyring(): void {
   llavero = null;
   llaveroDe = null;
+  conBackup = false;
   enCurso = null;
 }
 

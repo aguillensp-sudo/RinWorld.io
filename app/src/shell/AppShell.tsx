@@ -57,6 +57,11 @@ interface Props {
    * decide si lo pasa.
    */
   onOpenSettings?: () => void;
+  /**
+   * `Seguridad` (pie del menú lateral, SET-SEC-01). **Opcional**: solo lo pasa quien tiene
+   * backup de clave (ADR-001); sin esto no hay entrada. El shell no sabe qué hay detrás.
+   */
+  onOpenSecurity?: () => void;
   children: ReactNode;
 }
 
@@ -68,6 +73,7 @@ export function AppShell({
   veraSubtitle,
   vera,
   onOpenSettings,
+  onOpenSecurity,
   children,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -151,6 +157,19 @@ export function AppShell({
             ))}
           </nav>
           <div className={styles.bwsbft}>
+            {onOpenSecurity ? (
+              <button
+                type="button"
+                className={`${styles.bwsbset} ${styles.bwsbsetBtn}`}
+                onClick={() => {
+                  setSidebarOpen(false);
+                  onOpenSecurity();
+                }}
+              >
+                <i className="ti ti-shield-lock" aria-hidden="true" />
+                Seguridad
+              </button>
+            ) : null}
             {onOpenSettings ? (
               <button
                 type="button"

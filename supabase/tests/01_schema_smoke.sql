@@ -4990,4 +4990,149 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- 0049 · REC-01 y SET-SEC-01: recuperar la clave y cambiar la frase (ADR-001 §7.2, §8)
+-- -----------------------------------------------------------------------------
+-- e3 es EDITOR y esta KEY_ACTIVE con el backup a1/b1/c1/d1 de 0048. Las funciones son
+-- security definer y leen auth.uid() del claim, asi que se llaman desde un DO fijandolo.
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.begin_key_recovery()', 'execute'), '0049: anon no pide backups';
+  assert not has_function_privilege('anon', 'public.end_key_recovery(bytea)', 'execute'), '0049: anon no reinicia';
+  assert not has_function_privilege('anon', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'), '0049: anon no sustituye';
+  assert not has_function_privilege('anon', 'public.discard_key_backup()', 'execute'), '0049: anon no descarta';
+  assert has_function_privilege('authenticated', 'public.begin_key_recovery()', 'execute'),
+    '0049: el ancla positiva -- authenticated SI pide su backup';
+  assert has_function_privilege('authenticated', 'public.replace_key_backup(bytea,bytea,bytea,bytea,jsonb)', 'execute'),
+    '0049: y SI lo sustituye';
+  assert not has_table_privilege('authenticated', 'public.key_recovery_attempts', 'select'),
+    '0049: el contador no se lee';
+  assert not has_table_privilege('authenticated', 'public.key_recovery_attempts', 'update'),
+    '0049: ni se escribe';
+  raise notice 'OK · 0049: privilegios leidos del catalogo';
+end
+$$;
+
+do $$
+declare
+  r record;
+  n integer;
+begin
+  perform set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
+
+  -- Cinco peticiones devuelven el backup, con 4, 3, 2, 1 y 0 intentos; solo la quinta abre los 30 minutos.
+  for n in 1..5 loop
+    select * into r from public.begin_key_recovery();
+    assert r.status = 'ok' and r.encrypted_key_blob = decode(repeat('b1', 48), 'hex')
+       and r.public_key = decode(repeat('a1', 32), 'hex'), '0049: el intento ' || n || ' devuelve el backup';
+    assert r.attempts_left = 5 - n, '0049: tras el intento ' || n || ' quedan ' || (5 - n);
+    assert (n < 5 and r.seconds_left = 0) or (n = 5 and r.seconds_left between 1790 and 1800),
+      '0049: la cuenta atras empieza en el quinto';
+  end loop;
+
+  -- La sexta: locked y ningun byte.
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'locked' and r.encrypted_key_blob is null and r.public_key is null and r.argon2_salt is null
+     and r.seconds_left between 1790 and 1800, '0049: la sexta peticion recibe locked y nada del backup';
+
+  -- Reiniciar con la publica de OTRO backup no desbloquea.
+  perform public.end_key_recovery(decode(repeat('ff', 32), 'hex'));
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'locked', '0049: end_key_recovery con otra publica no reinicia';
+
+  -- Con la suya, si.
+  perform public.end_key_recovery(decode(repeat('a1', 32), 'hex'));
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.attempts_left = 4, '0049: abrir con exito borra el contador';
+
+  -- Un bloqueo vencido se olvida: se envejece la fila a mano.
+  update public.key_recovery_attempts set attempts = 5, locked_until = now() - interval '1 second'
+   where member_id = '1e000003-0000-0000-0000-000000000003';
+  select * into r from public.begin_key_recovery();
+  assert r.status = 'ok' and r.attempts_left = 4, '0049: pasados los 30 minutos se empieza de cero';
+
+  raise notice 'OK · 0049: begin/end_key_recovery cuentan cinco intentos y bloquean media hora';
+end
+$$;
+
+-- Quien no tiene backup no lo pide (e4 es REGISTERED); y descartar es cosa del ADMIN.
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '1e000004-0000-0000-0000-000000000004', true);
+  begin
+    perform * from public.begin_key_recovery();
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like '%no tiene un backup%', '0049: un REGISTERED no pide backup, dijo: ' || sqlerrm;
+  end;
+end
+$$;
+
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
+  begin
+    perform public.discard_key_backup();
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'Solo un administrador%', '0049: un EDITOR no descarta su backup, dijo: ' || sqlerrm;
+  end;
+  raise notice 'OK · 0049: un REGISTERED no pide backup y un EDITOR no descarta';
+end
+$$;
+
+-- SET-SEC-01: misma publica, otro blob. Con otra publica, o con la forma mala, no.
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
+  perform public.replace_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b9', 48), 'hex'),
+    decode(repeat('c9', 12), 'hex'), decode(repeat('d9', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+  assert (select encrypted_key_blob from public.members where id = '1e000003-0000-0000-0000-000000000003') = decode(repeat('b9', 48), 'hex')
+     and (select public_key from public.members where id = '1e000003-0000-0000-0000-000000000003') = decode(repeat('a1', 32), 'hex')
+     and (select state from public.members where id = '1e000003-0000-0000-0000-000000000003') = 'KEY_ACTIVE',
+    '0049: replace_key_backup cambia el blob y deja la publica y el estado';
+  assert not exists (select 1 from public.key_recovery_attempts where member_id = '1e000003-0000-0000-0000-000000000003'),
+    '0049: y borra el contador';
+  begin
+    perform public.replace_key_backup(decode(repeat('a2', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
+      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}');
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'El cambio de frase no puede cambiar la clave%', '0049: otra publica no entra, dijo: ' || sqlerrm;
+  end;
+  begin
+    perform public.replace_key_backup(decode(repeat('a1', 32), 'hex'), decode(repeat('b2', 48), 'hex'),
+      decode(repeat('c2', 12), 'hex'), decode(repeat('d2', 32), 'hex'), '{"algo":"argon2id","m":1024,"t":1,"p":1,"v":19}');
+    raise exception 'DEBIA FALLAR';
+  exception when others then
+    assert sqlerrm like 'Par%metros de derivaci%', '0049: unos parametros flojos no entran, dijo: ' || sqlerrm;
+  end;
+  raise notice 'OK · 0049: replace_key_backup mantiene la clave y solo cambia la envoltura';
+end
+$$;
+
+-- discard_key_backup: un ADMIN activo vuelve a REGISTERED sin nada de clave. Se deshace al final.
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '1e000001-0000-0000-0000-000000000001', true);
+  -- e1 (ADMIN ACTIVE): se le da un backup de prueba, se descarta, y se le devuelve a como estaba.
+  update public.members set public_key = decode(repeat('a7', 32), 'hex'), encrypted_key_blob = decode(repeat('b7', 48), 'hex'),
+         key_iv = decode(repeat('c7', 12), 'hex'), argon2_salt = decode(repeat('d7', 32), 'hex'),
+         kdf_params = '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}'::jsonb
+   where id = '1e000001-0000-0000-0000-000000000001';
+  perform public.begin_key_recovery();
+  perform public.discard_key_backup();
+  assert (select state from public.members where id = '1e000001-0000-0000-0000-000000000001') = 'REGISTERED'
+     and (select public_key from public.members where id = '1e000001-0000-0000-0000-000000000001') is null
+     and (select encrypted_key_blob from public.members where id = '1e000001-0000-0000-0000-000000000001') is null
+     and (select kdf_params from public.members where id = '1e000001-0000-0000-0000-000000000001') is null,
+    '0049: discard_key_backup deja al ADMIN REGISTERED y sin nada de clave';
+  assert not exists (select 1 from public.key_recovery_attempts where member_id = '1e000001-0000-0000-0000-000000000001'),
+    '0049: y sin contador';
+  update public.members set state = 'ACTIVE' where id = '1e000001-0000-0000-0000-000000000001';
+  raise notice 'OK · 0049: discard_key_backup devuelve al ADMIN a REGISTERED';
+end
+$$;
+
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

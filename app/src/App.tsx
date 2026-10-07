@@ -18,6 +18,10 @@ import { Welcome } from './screens/onboarding/Welcome';
 import { KeysIntro } from './screens/onboarding/KeysIntro';
 import { BackupPassphrase } from './screens/onboarding/BackupPassphrase';
 import { KeyGeneration } from './screens/onboarding/KeyGeneration';
+import { KeyRecovery } from './screens/onboarding/KeyRecovery';
+import { ChangePassphrase } from './screens/settings/ChangePassphrase';
+import { ensureKeyring, keyringHasBackup } from './lib/keys';
+import { discardKeyBackup } from './lib/key-recovery';
 import { hasLoginFingerprint } from './lib/login-fingerprint';
 import { AdditionalUser } from './screens/onboarding/AdditionalUser';
 import { AccessRequest } from './screens/onboarding/AccessRequest';
@@ -136,6 +140,7 @@ const COBROS_NAV = operatorNavIndexOf('Cobros');
 
 /** REG-09 y FRU §5: "**Subtítulo del panel:** `Asistente de registro`" (HTML aprobado). */
 const ONBOARDING_VERA_SUBTITLE = 'Asistente de registro';
+const SECURITY_VERA_SUBTITLE = 'Asistente de seguridad';
 
 /**
  * REG-06 sin huella de la contraseña de acceso (una recarga a mitad de la Fase B): se
@@ -306,6 +311,48 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   /**
+   * SET-SEC-01 (`Cambiar backup passphrase`) abierta desde `Seguridad`, el otro botón del pie
+   * del menú lateral. Mismo criterio que `settingsOpen`: ocupa el panel y se limpia con el nav.
+   * Solo existe para quien tiene backup de clave (`hasBackup`).
+   */
+  const [securityOpen, setSecurityOpen] = useState(false);
+
+  /**
+   * REC-01 (recuperar la clave). El miembro tiene backup (ADR-001) pero ESTE navegador no tiene
+   * su privada: otro dispositivo, o los datos del sitio borrados. Se averigua una vez por
+   * sesión con el llavero (`ensureKeyring` es idempotente). No bloquea: `recoveryDismissed`
+   * deja seguir sin la clave, y volverá a aparecer en la próxima sesión.
+   */
+  const [recoveryNeeded, setRecoveryNeeded] = useState(false);
+  const [recoveryDismissed, setRecoveryDismissed] = useState(false);
+  const [hasBackup, setHasBackup] = useState(false);
+  const keyedProfileId = state.status === 'authenticated' ? state.profile.id : null;
+  const keyedProfileState = state.status === 'authenticated' ? state.profile.state : null;
+  useEffect(() => {
+    if (keyedProfileId === null || keyedProfileState === null) {
+      setRecoveryNeeded(false);
+      setRecoveryDismissed(false);
+      setHasBackup(false);
+      return;
+    }
+    if (keyedProfileState !== 'ACTIVE' && keyedProfileState !== 'KEY_ACTIVE') return;
+    let alive = true;
+    ensureKeyring(keyedProfileId, keyedProfileState)
+      .then((pair) => {
+        if (!alive) return;
+        const backup = keyringHasBackup();
+        setHasBackup(backup);
+        setRecoveryNeeded(pair === null && backup);
+      })
+      .catch(() => {
+        // `useSession` ya dice por qué no se pudo montar el llavero.
+      });
+    return () => {
+      alive = false;
+    };
+  }, [keyedProfileId, keyedProfileState]);
+
+  /**
    * FRU abierta desde REG-09 (el formulario de usuario adicional). Solo existe
    * dentro del onboarding del ADMIN en `KEY_ACTIVE`, así que no se mezcla con el
    * `nav`: mientras dura, el panel es REG-09 o FRU y nada más.
@@ -389,6 +436,7 @@ export function App() {
     setImportError(null);
     setOrgProfileId(null);
     setSettingsOpen(false);
+    setSecurityOpen(false);
   };
 
   if (state.status === 'loading') {
@@ -600,6 +648,47 @@ export function App() {
   }
 
   /*
+   * REC-01. Un miembro con backup, en un navegador sin su privada: lo primero que ve. Va
+   * ANTES del onboarding de `KEY_ACTIVE` y del shell normal porque en los dos hace falta la
+   * clave. «He perdido mi frase» (borra el backup y vuelve a REG-05) solo se ofrece al ADMIN:
+   * un EDITOR que quedara `REGISTERED` no tiene flujo para activarse (F-217).
+   */
+  if (
+    recoveryNeeded &&
+    !recoveryDismissed &&
+    (state.profile.state === 'ACTIVE' || state.profile.state === 'KEY_ACTIVE')
+  ) {
+    const profile = state.profile;
+    const generateNew = async () => {
+      await discardKeyBackup();
+      setKeyStep('intro');
+      setRecoveryNeeded(false);
+      setHasBackup(false);
+      refresh();
+    };
+    return (
+      <AppShell
+        profile={state.profile}
+        onSignOut={signOut}
+        activeNav={nav}
+        onNavigate={navigate}
+        vera={vera}
+        veraSubtitle={SECURITY_VERA_SUBTITLE}
+      >
+        <KeyRecovery
+          profile={profile}
+          onRecovered={() => {
+            setRecoveryNeeded(false);
+            refresh();
+          }}
+          onSkip={() => setRecoveryDismissed(true)}
+          {...(profile.role === 'ADMIN' ? { onGenerateNew: generateNew } : {})}
+        />
+      </AppShell>
+    );
+  }
+
+  /*
    * ONBOARDING del ADMIN (REG-09 → FRU). Un miembro `KEY_ACTIVE` aún no es ACTIVE:
    * la RLS no le deja leer nada, así que el resto del shell estaría vacío. Hasta
    * `Ir al panel` (`activate_own_membership`, 0038) el panel es REG-09 o FRU.
@@ -636,10 +725,28 @@ export function App() {
       activeNav={nav}
       onNavigate={navigate}
       vera={vera}
-      {...(state.profile.role === 'ADMIN' ? { onOpenSettings: () => setSettingsOpen(true) } : {})}
-      {...(veraSubtitle ? { veraSubtitle } : {})}
+      {...(state.profile.role === 'ADMIN'
+        ? {
+            onOpenSettings: () => {
+              setSecurityOpen(false);
+              setSettingsOpen(true);
+            },
+          }
+        : {})}
+      {...(hasBackup
+        ? {
+            onOpenSecurity: () => {
+              setSettingsOpen(false);
+              setSecurityOpen(true);
+            },
+          }
+        : {})}
+      {...(securityOpen ? { veraSubtitle: SECURITY_VERA_SUBTITLE } : veraSubtitle ? { veraSubtitle } : {})}
     >
-      {settingsOpen && state.profile.role === 'ADMIN' ? (
+      {securityOpen && hasBackup ? (
+        /* SET-SEC-01. Sin `now`: nada de su pantalla es relativo al reloj. */
+        <ChangePassphrase profile={state.profile} />
+      ) : settingsOpen && state.profile.role === 'ADMIN' ? (
         /* INVT-01. Sin `now`: las fechas de sus tablas son absolutas y `Expira en`
          * lo calcula la base. */
         <Invitations profile={state.profile} />

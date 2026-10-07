@@ -38,7 +38,7 @@ Un miembro con backup recupera su clave en otro navegador con la frase, y cambia
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
 - **Corriente B · Fábrica — EN MARCHA.** **23 pantallas construidas, 20 aceptadas** (`REG-01`, `REC-01` y `SET-SEC-01` esperan la C5 del PO).
-  `REC-01` y `SET-SEC-01` van **a mano** (criptografía), sin corrida del arnés: sin filas en `harness-metrics.csv`. **No queda ninguna pantalla aprobada por construir**: solo `INV-04` (dominio `F-233`, y sin correo entrante ni S3/R2) y `MSG-03` (ya vive en `MSG-02`). Una pantalla nueva exige diseño aprobado por el PO. Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
+  `REC-01` y `SET-SEC-01` van **a mano** (criptografía), sin corrida del arnés: sin filas en `harness-metrics.csv`. **No queda ninguna pantalla aprobada por construir; hay dos propuestas sin aprobar (`INVT-02`, `ACT-02`, `F-240`)**: solo `INV-04` (dominio `F-233`, y sin correo entrante ni S3/R2) y `MSG-03` (ya vive en `MSG-02`). Una pantalla nueva exige diseño aprobado por el PO. Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
@@ -48,6 +48,7 @@ Un miembro con backup recupera su clave en otro navegador con la frase, y cambia
    (ventana privada); cada «Desbloquear» **cuenta un intento** (5 y 30 min) y la frase buena lo reinicia. «Generar nuevas claves» **borra el
    backup de JULSA**: no pulsarlo con esa cuenta. `SET-SEC-01` (`Seguridad` en el pie del menú) **sustituye** su backup: apuntar la frase nueva.
    Decidir con el PO el cierre estanco del límite y los textos añadidos (`F-239`), y los textos de error de `REG-07` (`F-237`).
+1b. **Revisar con el PO `v1/diseno/PROPUESTA-INVT-02-ACT-02.md`** (cinco decisiones; maquetas HTML sin ver en un navegador normal). No construir antes.
 2. **Revisar el umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos, el de la spec) con el PO: el blob ya existe y es lo que protege.
 3. **Decidir con el PO** qué hacer con las 18 303 líneas de ALPHA (cuenta de pruebas): rompen 3 e2e locales (`F-234`). Y las altas de prueba
    (`F-230`), y si se registra `bearingworld.io` (`F-233`). Borrar las 500 `DELETED` basura del 6-oct y la referencia por contenido (de ayer).
@@ -99,6 +100,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
+| 🟠 | **`F-240`** · propuesta de `INVT-02` y `ACT-02` (cierra `F-212`/`F-217` si se aprueba) | PO (§3.1b) |
 | 🟠 | **`F-239`** · el límite de `REC-01` no es estanco (select directo de la fila; reinicio sin prueba); textos añadidos al HTML | PO (§3.1) |
 | 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (`REC-01` ya existe) | PO |
 | 🟠 | **`F-226`** · `REG-01` construida; falta la C5 del PO. Sin logo, sin Google y sin VERA | PO (§3.4) |

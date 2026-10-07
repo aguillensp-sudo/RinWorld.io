@@ -40,3 +40,5 @@ sin prueba): dicho en la cabecera de `0049` y en `F-239`, no escondido.
 ## Tercera sesión del día (7-oct)
 
 El PO pidió «dos pantallas nuevas a tu elección». Comprobado contra `openspec/design-gui/` y `app/src/screens/`: todas las aprobadas están construidas salvo `INV-04` y `MSG-03`. Consultado: el PO eligió no construir pantallas. Sin cambios de código.
+
+A petición del PO («diseña ambas»), propuesta de `INVT-02` (canje de invitación) y `ACT-02` (activar a un EDITOR) en `openspec/v1/diseno/`, con spec y cinco decisiones (`F-240`). Maquetas abiertas solo en el panel del navegador: cargan sin errores y los estados conmutan; la maquetación no se vio.

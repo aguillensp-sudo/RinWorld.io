@@ -68,3 +68,8 @@ El PO recorrió `REG-05` → `REG-06` → `REG-07` → `REG-09` con JULSA en su 
 las pantallas es correcto». Es la primera llamada a `0048` desde un navegador: JULSA quedó `KEY_ACTIVE` con el backup completo (blob de
 48 bytes, comprobado por SQL). Desde `REG-09` dio de alta con FRU a `a.guillen.sp@gmail.com` (EDITOR `REGISTERED`): FRU, visto por fin con un
 `KEY_ACTIVE` real. Un primer aviso de que «Registrar usuario» no se habilitaba lo retiró el propio PO: sí se habilitaba.
+
+Después el PO pulsó «Ir al panel»: JULSA quedó `ACTIVE` (comprobado por SQL). Es el primer miembro con ADR-001 completo de punta a punta:
+`REGISTERED` → `KEY_ACTIVE` → `ACTIVE`, con su backup en el servidor y su privada en su navegador.
+
+*Cierre del Día 31 · 7-oct-2026 · `10:58 UTC`.*

@@ -22,8 +22,8 @@ El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. *
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Fecha de máquina | `date -u` | `2026-10-07 07:31` al arrancar; `10:56` al cerrar |
-| C5 de `REG-06`/`REG-07` (PO, JULSA, base real) | `execute_sql` sobre `members` de su organización | JULSA `KEY_ACTIVE`, backup completo (blob 48 B); FRU creó `a.guillen.sp@gmail.com` (EDITOR `REGISTERED`, sin pública) |
+| Fecha de máquina | `date -u` | `2026-10-07 07:31` al arrancar; `10:58` al cerrar |
+| C5 de `REG-06`/`REG-07` (PO, JULSA, base real) | `execute_sql` sobre `members` de su organización | JULSA `ACTIVE` tras «Ir al panel», backup completo (blob 48 B); FRU creó `a.guillen.sp@gmail.com` (EDITOR `REGISTERED`, sin pública) |
 | `0048` (`store_key_backup`, `confirm_key_backup`) | `run.sh` (banco de esquema); `pg_proc` y `has_function_privilege` del proyecto | Banco en verde; dueño `postgres`, `security definer`, `anon` no, `authenticated` sí |
 | Argon2id (`hash-wasm` 4.12.0) | Vector de referencia de argon2id en la unidad; Node | Coincide; ~0,3 s con los parámetros de ADR-001 |
 | Lo que sube el navegador se abre fuera | `key-generation.spec.ts`: Argon2id y AES-GCM de Node sobre el payload capturado | Abre con la frase y el id; sale la pública subida; con otra frase, no |
@@ -46,7 +46,7 @@ El llavero de demo ya no publica para quien tiene backup o está `REGISTERED`. *
 
 ## 3 · Qué toca, en este orden
 
-0. **JULSA está en `KEY_ACTIVE`** (sin pulsar «Ir al panel»). Su privada vive SOLO en el navegador del PO (`F-237`).
+0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO (`F-237`): no borrar sus datos del sitio.
 1. **`REC-01`** (recuperar la clave con la frase, ADR-001 §7.2): ahora es lo que falta para que un miembro con backup tenga su clave en otro
    navegador. **A mano**, con el formato de `lib/key-backup.ts` (NFC, AAD, parámetros) y el límite de 5 intentos EN EL SERVIDOR (§8). Decidir
    con el PO antes, y los textos de error de `REG-07` sin aprobar (`F-237`).

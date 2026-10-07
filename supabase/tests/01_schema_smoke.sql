@@ -5336,4 +5336,41 @@ delete from public.members where org_id = '55555555-5555-5555-5555-555555555555'
 delete from auth.users where id::text like '5e00000%';
 delete from public.organizations where id = '55555555-5555-5555-5555-555555555555';
 
+-- -----------------------------------------------------------------------------
+-- 0051 · F-234 en la mensajeria: las funciones de sesion de las ocho politicas van envueltas
+-- -----------------------------------------------------------------------------
+-- Se lee del CATALOGO (pg_policies), no del .sql. Postgres normaliza `(select app.f())` como
+-- `( SELECT app.f() AS f)`: se quitan esos envoltorios y no debe quedar ninguna llamada a pelo.
+-- El comportamiento (quien ve y escribe que) lo miden los bloques anteriores de este banco.
+do $$
+declare
+  r record;
+  e text;
+  n int := 0;
+begin
+  for r in
+    select tablename, policyname, cmd, roles::text as roles, coalesce(qual, '') || ' ' || coalesce(with_check, '') as expr
+      from pg_policies
+     where schemaname = 'public'
+       and tablename in ('threads', 'thread_items', 'thread_item_keys')
+       and policyname in ('threads_insert_participant', 'threads_select_participant', 'threads_update_participant',
+                          'thread_items_insert_own', 'thread_items_select_participant', 'thread_items_update_participant',
+                          'item_keys_insert_sender', 'item_keys_select_own')
+  loop
+    n := n + 1;
+    assert r.roles = '{authenticated}', '0051: ' || r.policyname || ' sigue siendo solo de authenticated';
+    e := regexp_replace(r.expr, '\(\s*SELECT\s+(app\.[a-z_]+\(\)|auth\.uid\(\))\s+AS\s+[a-z_]+\)', '', 'gi');
+    assert e !~* 'app\.(current_org_id|is_active_member|caller_bypasses_visibility_scope)\(\)' and e !~* 'auth\.uid\(\)',
+      '0051: ' || r.policyname || ' tiene una funcion de sesion a pelo: ' || e;
+    assert r.expr ~* 'SELECT\s+(app\.[a-z_]+\(\)|auth\.uid\(\))',
+      '0051: ' || r.policyname || ' envuelve al menos una funcion';
+  end loop;
+  assert n = 8, '0051: las ocho politicas existen, hay ' || n;
+  -- Lo que depende de la fila NO se envuelve: se queda como estaba.
+  assert (select qual from pg_policies where policyname = 'thread_items_select_participant') ~ 'app\.can_access_thread\(thread_id\)',
+    '0051: can_access_thread(thread_id) sigue por fila';
+  raise notice 'OK · 0051: las ocho politicas de threads, thread_items y thread_item_keys evaluan sus funciones una vez';
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

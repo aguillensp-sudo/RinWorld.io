@@ -70,3 +70,6 @@ caracteres y la función lo rechazó con razón; `userEvent.setup()` pisa el por
   `Messages` y `Panel`. Cuatro tests lo impidieron, con razón: `F-024` decidió que `1247` es el español correcto (CLDR y RAE no agrupan cuatro
   cifras) y las specs de `INV-03` escriben `1.247`. Son dos decisiones que se contradicen: la elige el PO, no un arreglo. Revertido, sin commit.
 - **`F-234` en las demás tablas**: auditado contra `pg_policies` de producción, solo lectura. 39 políticas sin envolver, por riesgo en `F-234`.
+- **`0051` (aprobado por el PO)**: las 8 políticas de `threads`, `thread_items` y `thread_item_keys` evalúan sus funciones de sesión una vez por
+  consulta, igual que `0047`. Banco de esquema entero en verde con un chequeo del catálogo; aplicado por el MCP y comprobado en `pg_policies` de
+  producción. Ganancia sin medir; quedan 31 políticas (`F-234`).

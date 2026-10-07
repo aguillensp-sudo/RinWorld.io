@@ -5055,7 +5055,8 @@ begin
 end
 $$;
 
--- Quien no tiene backup no lo pide (e4 es REGISTERED); y descartar es cosa del ADMIN.
+-- Quien no tiene backup no lo pide (e4 es REGISTERED); y descartar es de un miembro activo
+-- (0050: tambien de un EDITOR; lo que no puede es un REGISTERED, que no tiene nada que descartar).
 do $$
 begin
   perform set_config('request.jwt.claim.sub', '1e000004-0000-0000-0000-000000000004', true);
@@ -5065,19 +5066,13 @@ begin
   exception when others then
     assert sqlerrm like '%no tiene un backup%', '0049: un REGISTERED no pide backup, dijo: ' || sqlerrm;
   end;
-end
-$$;
-
-do $$
-begin
-  perform set_config('request.jwt.claim.sub', '1e000003-0000-0000-0000-000000000003', true);
   begin
     perform public.discard_key_backup();
     raise exception 'DEBIA FALLAR';
   exception when others then
-    assert sqlerrm like 'Solo un administrador%', '0049: un EDITOR no descarta su backup, dijo: ' || sqlerrm;
+    assert sqlerrm like 'Solo un miembro activo%', '0050: un REGISTERED no descarta nada, dijo: ' || sqlerrm;
   end;
-  raise notice 'OK · 0049: un REGISTERED no pide backup y un EDITOR no descarta';
+  raise notice 'OK · 0049: un REGISTERED no pide backup ni descarta';
 end
 $$;
 
@@ -5134,5 +5129,211 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- 0050 · Canje de invitacion (INVT-02) y activacion de un EDITOR (ACT-02)
+-- -----------------------------------------------------------------------------
+-- Organizacion propia (Golf Test): ADMIN x1, EDITOR x2. Se borra al final.
+insert into public.organizations (id, name, country, continent, status)
+values ('55555555-5555-5555-5555-555555555555', 'Golf Test', 'PT', 'EU', 'APPROVED');
+insert into auth.users (id, email) values
+  ('5e000001-0000-0000-0000-000000000001', 'x1@echo.test'),
+  ('5e000002-0000-0000-0000-000000000002', 'x2@echo.test');
+insert into public.members (id, org_id, email, full_name, state)
+values ('5e000001-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'x1@echo.test', 'Ada Admin', 'ACTIVE');
+insert into public.members (id, org_id, email, state)
+values ('5e000002-0000-0000-0000-000000000002', '55555555-5555-5555-5555-555555555555', 'x2@echo.test', 'ACTIVE');
+
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.issue_invitation_link(uuid)', 'execute'), '0050: anon no genera enlaces';
+  assert not has_function_privilege('anon', 'public.revoke_invitation(uuid)', 'execute'), '0050: anon no anula';
+  assert not has_function_privilege('anon', 'public.invitation_link_validate(text)', 'execute'), '0050: anon no valida';
+  assert not has_function_privilege('anon', 'public.redeem_invitation(text,uuid,text)', 'execute'), '0050: anon no canjea';
+  assert not has_function_privilege('authenticated', 'public.invitation_link_validate(text)', 'execute'),
+    '0050: ni un miembro con sesion valida: es de la funcion de borde';
+  assert not has_function_privilege('authenticated', 'public.redeem_invitation(text,uuid,text)', 'execute'),
+    '0050: ni canjea';
+  assert has_function_privilege('service_role', 'public.invitation_link_validate(text)', 'execute')
+     and has_function_privilege('service_role', 'public.redeem_invitation(text,uuid,text)', 'execute'),
+    '0050: el ancla positiva -- service_role SI valida y canjea';
+  assert has_function_privilege('authenticated', 'public.issue_invitation_link(uuid)', 'execute')
+     and has_function_privilege('authenticated', 'public.revoke_invitation(uuid)', 'execute'),
+    '0050: y authenticated SI genera y anula (la funcion comprueba que sea ADMIN)';
+  raise notice 'OK · 0050: privilegios leidos del catalogo';
+end
+$$;
+
+-- El enlace: solo lo genera el ADMIN de la organizacion; se guarda el hash; el nuevo revoca el viejo.
+do $$
+declare
+  v_id uuid; v_tok text; v_tok2 text; v_exp timestamptz; r record;
+begin
+  perform set_config('request.jwt.claim.sub', '5e000002-0000-0000-0000-000000000002', true);
+  begin perform public.invite_member('nuevo@echo.test'); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'Solo el administrador%', '0050: un EDITOR no invita'; end;
+
+  perform set_config('request.jwt.claim.sub', '5e000001-0000-0000-0000-000000000001', true);
+  v_id := public.invite_member('nuevo@echo.test');
+
+  perform set_config('request.jwt.claim.sub', '5e000002-0000-0000-0000-000000000002', true);
+  begin perform public.issue_invitation_link(v_id); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'Solo el administrador%', '0050: un EDITOR no genera el enlace'; end;
+  begin perform public.revoke_invitation(v_id); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'Solo el administrador%', '0050: ni anula'; end;
+
+  perform set_config('request.jwt.claim.sub', '5e000001-0000-0000-0000-000000000001', true);
+  select t.token, t.expires_at into v_tok, v_exp from public.issue_invitation_link(v_id) t;
+  assert v_tok ~ '^[0-9a-f]{64}$', '0050: el token son 64 hexadecimales';
+  assert v_exp = (select expires_at from public.member_invitations where id = v_id), '0050: el enlace vence con la invitacion';
+  assert not exists (select 1 from public.access_tokens where token_hash = v_tok), '0050: el token no se guarda';
+  assert exists (select 1 from public.access_tokens where purpose = 'MEMBER_INVITATION' and member_invitation_id = v_id
+                    and token_hash = encode(sha256(convert_to(v_tok, 'UTF8')), 'hex')), '0050: solo su hash';
+
+  select * into r from public.invitation_link_validate(v_tok);
+  assert r.status = 'OK' and r.org_name = 'Golf Test' and r.inviter_name = 'Ada Admin' and r.email = 'nuevo@echo.test',
+    '0050: validar devuelve la invitacion, dijo: ' || coalesce(r.status, 'nada');
+  assert not exists (select 1 from public.invitation_link_validate('no-es-un-token')), '0050: un token que no existe, ninguna fila';
+
+  select t.token into v_tok2 from public.issue_invitation_link(v_id) t;
+  assert v_tok2 <> v_tok, '0050: otro enlace, otro token';
+  assert not exists (select 1 from public.invitation_link_validate(v_tok)), '0050: el anterior ya no vale';
+  assert (select count(*) from public.access_tokens where member_invitation_id = v_id and revoked_at is null and used_at is null) = 1,
+    '0050: un solo enlace vigente por invitacion';
+  raise notice 'OK · 0050: el enlace se genera una vez, con hash, y el nuevo revoca el anterior';
+end
+$$;
+
+-- Canjear: crea el miembro REGISTERED con el correo de la INVITACION; un solo uso.
+do $$
+declare
+  v_id uuid; v_tok text; v_org uuid; seats_before int;
+begin
+  select id into v_id from public.member_invitations where email = 'nuevo@echo.test';
+  perform set_config('request.jwt.claim.sub', '5e000001-0000-0000-0000-000000000001', true);
+  select t.token into v_tok from public.issue_invitation_link(v_id) t;
+  seats_before := app.org_seats_used('55555555-5555-5555-5555-555555555555');
+
+  insert into auth.users (id, email) values ('5e000003-0000-0000-0000-000000000003', 'nuevo@echo.test');
+  begin perform public.redeem_invitation(v_tok, '5e000003-0000-0000-0000-000000000003', 'A');
+    raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'Datos no validos%', '0050: un nombre de un caracter no entra, dijo: ' || sqlerrm; end;
+
+  v_org := public.redeem_invitation(v_tok, '5e000003-0000-0000-0000-000000000003', '  Nuria Nueva ');
+  assert v_org = '55555555-5555-5555-5555-555555555555', '0050: devuelve la organizacion';
+  assert (select role || '/' || state || '/' || email || '/' || full_name from public.members where id = '5e000003-0000-0000-0000-000000000003')
+         = 'EDITOR/REGISTERED/nuevo@echo.test/Nuria Nueva', '0050: nace EDITOR REGISTERED con el correo de la invitacion';
+  assert (select status from public.member_invitation_list where id = v_id) = 'Aceptada', '0050: la invitacion queda Aceptada';
+  assert app.org_seats_used('55555555-5555-5555-5555-555555555555') = seats_before, '0050: la plaza no se cuenta dos veces';
+
+  begin perform public.redeem_invitation(v_tok, '5e000003-0000-0000-0000-000000000003', 'Otra Vez');
+    raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'El enlace no es valido%', '0050: un enlace canjeado no se canjea otra vez, dijo: ' || sqlerrm; end;
+  assert not exists (select 1 from public.invitation_link_validate(v_tok)), '0050: ni se valida';
+  begin perform public.issue_invitation_link(v_id); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like '%ya fue aceptada%', '0050: ni se le genera otro enlace'; end;
+  raise notice 'OK · 0050: redeem_invitation crea un EDITOR REGISTERED y es de un solo uso';
+end
+$$;
+
+-- Anular: libera la plaza, mata el enlace, y el mismo correo se puede volver a invitar.
+do $$
+declare
+  v_id uuid; v_tok text; seats int;
+begin
+  perform set_config('request.jwt.claim.sub', '5e000001-0000-0000-0000-000000000001', true);
+  v_id := public.invite_member('otro@echo.test');
+  select t.token into v_tok from public.issue_invitation_link(v_id) t;
+  seats := app.org_seats_used('55555555-5555-5555-5555-555555555555');
+
+  perform public.revoke_invitation(v_id);
+  assert (select status from public.member_invitation_list where id = v_id) = 'Anulada', '0050: Anulada';
+  assert app.org_seats_used('55555555-5555-5555-5555-555555555555') = seats - 1, '0050: libera la plaza';
+  assert not exists (select 1 from public.invitation_link_validate(v_tok)), '0050: el enlace anulado no vale';
+  begin perform public.redeem_invitation(v_tok, '5e000003-0000-0000-0000-000000000003', 'Nadie');
+    raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'El enlace no es valido%', '0050: ni se canjea'; end;
+  begin perform public.revoke_invitation(v_id); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like '%ya est%anulada%', '0050: anular dos veces falla'; end;
+  begin perform public.issue_invitation_link(v_id); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like '%anulada%', '0050: a una anulada no se le genera enlace'; end;
+
+  -- Volver a invitar al mismo correo reutiliza la fila; Reenviar tambien renueva una anulada.
+  assert public.invite_member('otro@echo.test') = v_id, '0050: misma fila para el mismo correo';
+  assert (select status from public.member_invitation_list where id = v_id) = 'Pendiente', '0050: otra vez Pendiente';
+  perform public.revoke_invitation(v_id);
+  perform public.resend_invitation(v_id);
+  assert (select status from public.member_invitation_list where id = v_id) = 'Pendiente', '0050: Reenviar renueva una anulada';
+  raise notice 'OK · 0050: revoke_invitation anula, libera la plaza y se puede reinvitar';
+end
+$$;
+
+-- Caducada, correo existente y organizacion llena: lo que dice validate y lo que niega redeem.
+do $$
+declare
+  v_id uuid; v_tok text; r record;
+begin
+  perform set_config('request.jwt.claim.sub', '5e000001-0000-0000-0000-000000000001', true);
+  v_id := (select id from public.member_invitations where email = 'otro@echo.test');
+  select t.token into v_tok from public.issue_invitation_link(v_id) t;
+
+  -- FULL: 3 miembros + esta + 2 de relleno = 6 plazas; sin contar la suya, 5.
+  insert into public.member_invitations (org_id, email) values
+    ('55555555-5555-5555-5555-555555555555', 'r1@echo.test'),
+    ('55555555-5555-5555-5555-555555555555', 'r2@echo.test');
+  select * into r from public.invitation_link_validate(v_tok);
+  assert r.status = 'FULL', '0050: organizacion llena, dijo: ' || coalesce(r.status, 'nada');
+  begin perform public.redeem_invitation(v_tok, '5e000003-0000-0000-0000-000000000003', 'Lleno');
+    raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like '%l_mite de 5%', '0050: redeem respeta el limite, dijo: ' || sqlerrm; end;
+  delete from public.member_invitations where email in ('r1@echo.test', 'r2@echo.test');
+
+  -- EXISTS: el correo de la invitacion ya tiene cuenta.
+  insert into auth.users (id, email) values ('5e000004-0000-0000-0000-000000000004', 'otro@echo.test');
+  select * into r from public.invitation_link_validate(v_tok);
+  assert r.status = 'EXISTS', '0050: correo ya registrado, dijo: ' || coalesce(r.status, 'nada');
+  delete from auth.users where id = '5e000004-0000-0000-0000-000000000004';
+
+  -- EXPIRED: se envejece la fila a mano.
+  update public.member_invitations set sent_at = now() - interval '8 days', expires_at = now() - interval '1 day' where id = v_id;
+  select * into r from public.invitation_link_validate(v_tok);
+  assert r.status = 'EXPIRED', '0050: caducada, dijo: ' || coalesce(r.status, 'nada');
+  begin perform public.redeem_invitation(v_tok, '5e000003-0000-0000-0000-000000000003', 'Tarde');
+    raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'El enlace no es valido%', '0050: una caducada no se canjea'; end;
+  begin perform public.issue_invitation_link(v_id); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like '%expirado%', '0050: ni se le genera enlace'; end;
+  perform public.resend_invitation(v_id);
+  select t.token into v_tok from public.issue_invitation_link(v_id) t;
+  assert (select status from public.invitation_link_validate(v_tok)) = 'OK', '0050: renovada y con enlace nuevo, vale';
+  raise notice 'OK · 0050: validate distingue caducada, existente y llena; redeem las niega';
+end
+$$;
+
+-- ACT-02: un EDITOR KEY_ACTIVE se activa solo y puede empezar con una clave nueva.
+do $$
+begin
+  update public.members set state = 'KEY_ACTIVE', public_key = decode(repeat('e1', 32), 'hex'),
+         encrypted_key_blob = decode(repeat('e2', 48), 'hex'), key_iv = decode(repeat('e3', 12), 'hex'),
+         argon2_salt = decode(repeat('e4', 32), 'hex'), kdf_params = '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}'::jsonb
+   where id = '5e000003-0000-0000-0000-000000000003';
+  perform set_config('request.jwt.claim.sub', '5e000003-0000-0000-0000-000000000003', true);
+  perform public.activate_own_membership();
+  assert (select state from public.members where id = '5e000003-0000-0000-0000-000000000003') = 'ACTIVE',
+    '0050: un EDITOR KEY_ACTIVE pasa a ACTIVE';
+  begin perform public.activate_own_membership(); raise exception 'DEBIA FALLAR';
+  exception when others then assert sqlerrm like 'Tu cuenta no est%', '0050: y solo una vez'; end;
+
+  perform public.discard_key_backup();
+  assert (select state || '/' || coalesce(public_key::text, 'null') || '/' || coalesce(encrypted_key_blob::text, 'null')
+            from public.members where id = '5e000003-0000-0000-0000-000000000003') = 'REGISTERED/null/null',
+    '0050: un EDITOR activo empieza con una clave nueva: REGISTERED y sin nada de clave';
+  raise notice 'OK · 0050: un EDITOR se activa solo y puede descartar su backup';
+end
+$$;
+
+delete from public.member_invitations where org_id = '55555555-5555-5555-5555-555555555555';
+delete from public.members where org_id = '55555555-5555-5555-5555-555555555555';
+delete from auth.users where id::text like '5e00000%';
+delete from public.organizations where id = '55555555-5555-5555-5555-555555555555';
 
 select 'TODOS LOS ASSERTS PASAN' as resultado;

@@ -94,3 +94,7 @@ de la frase anterior para sustituir el backup. Dos migraciones para no romper a 
 su `localhost` sirve mi carpeta de trabajo, y ahí ya estaba el cliente de `F-242` llamando a argumentos que la base aún no tenía. No era producción. Se aplicó `0053`
 (aditiva) y el cliente nuevo funcionó. Efecto secundario real: el contador de JULSA quedó agotado (cada intento cuenta y acertar ya no lo reinicia), y se
 reinició a mano a petición del PO. **Lección: con un `localhost` apuntando a producción, lo que está a medio escribir en la carpeta lo ejecuta el PO.**
+
+## Octava sesión: plan de `INV-04`
+
+El PO quiere desbloquear `INV-04` con un dominio suyo en Arsys (web y dos buzones, DNS sin tocar) y Amazon SES. Plan por fases en `v1/plan-inv04-ingestion-por-correo.md`; el riesgo principal es procesar un `.xlsx` grande en una función de borde. Sin código ni infraestructura todavía.

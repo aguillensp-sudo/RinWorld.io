@@ -63,3 +63,10 @@ había dejado sin comprobar, y la primera afirmación era falsa: un EDITOR que p
 
 Tropiezos: dos heredocs de shell fallaron por comillas y se pasó a ficheros con el editor (`F-199`); el primer token de prueba tenía 66
 caracteres y la función lo rechazó con razón; `userEvent.setup()` pisa el portapapeles que un test acababa de definir.
+
+## Quinta sesión (mismo día): lo que no dependía del PO
+
+- **`F-231` no se tocó, y es lo importante.** Se intentó sustituir `toLocaleString('es-ES')` por `formatCount` en `Inventory`, `InventoryTable`,
+  `Messages` y `Panel`. Cuatro tests lo impidieron, con razón: `F-024` decidió que `1247` es el español correcto (CLDR y RAE no agrupan cuatro
+  cifras) y las specs de `INV-03` escriben `1.247`. Son dos decisiones que se contradicen: la elige el PO, no un arreglo. Revertido, sin commit.
+- **`F-234` en las demás tablas**: auditado contra `pg_policies` de producción, solo lectura. 39 políticas sin envolver, por riesgo en `F-234`.

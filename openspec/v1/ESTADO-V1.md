@@ -58,7 +58,7 @@ visto en un navegador real**: falta la C5 del PO (§3.1b). Detalle en `diario/di
    el enlace → abrirlo sin sesión → crear la cuenta. Decidir con el PO (`F-188`) y **borrar las filas después**.
 5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede
    fallar el contrato de la tarea (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
-6. **`F-234` en las demás tablas**: el mismo patrón (funciones por fila en la política) en `threads`, `thread_items`, `watchers`… sin revisar.
+6. **`F-234` en las demás tablas**: 39 políticas sin envolver, catalogadas en `F-234` por riesgo. Sin tocar ni medir; primero `thread_items`, `threads`, `thread_item_keys`.
 7. **Con proveedor de correo y dominio (`F-233`)**: el enlace de `INVT-01` se entrega hoy a mano. Sin ellos no hay invitación que llegue sola (`F-241`).
 8. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-231`, `F-235`; poner `bearingworld-e2e` en `0048` (está en `0039`) y
    desplegarle las funciones; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09` y `FRU`.
@@ -131,7 +131,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ## 6 · Lo que este fichero NO sabe
 
-- **Si las demás tablas tienen el problema de `F-234`** (`threads`, `thread_items`, `watchers`…): sin medir, porque aún no tienen volumen.
+- **Cuánto cuestan las 39 políticas sin envolver de `F-234`**: catalogadas, sin medir, porque aún no hay volumen.
 - **Cómo se ven `INVT-02` y `ACT-02` en un navegador real, y si el flujo entero** (ADMIN invita → EDITOR canjea → activa) **funciona con una organización real**: medido por partes.
 - **Cómo se ven `REC-01` y `SET-SEC-01` en un navegador real** y si Argon2id (64 MiB) entra en un móvil modesto: solo jsdom.
 - **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU antes de `0050`): `ACT-02` sin el aviso de contraseña provisional. Nadie lo ha visto.

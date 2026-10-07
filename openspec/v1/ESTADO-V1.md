@@ -38,8 +38,7 @@ Un miembro con backup recupera su clave en otro navegador con la frase, y cambia
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. No tocar `vera/index.ts`.
 - **Corriente B · Fábrica — EN MARCHA.** **23 pantallas construidas, 20 aceptadas** (`REG-01`, `REC-01` y `SET-SEC-01` esperan la C5 del PO).
-  `REC-01` y `SET-SEC-01` van **a mano** (criptografía), sin corrida del arnés: sin filas en `harness-metrics.csv`. Quedan `INV-04` (dominio,
-  `F-233`) y `MSG-03` (ya vive en `MSG-02`). Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
+  `REC-01` y `SET-SEC-01` van **a mano** (criptografía), sin corrida del arnés: sin filas en `harness-metrics.csv`. **No queda ninguna pantalla aprobada por construir**: solo `INV-04` (dominio `F-233`, y sin correo entrante ni S3/R2) y `MSG-03` (ya vive en `MSG-02`). Una pantalla nueva exige diseño aprobado por el PO. Las cifras 7 y 8 siguen con un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden

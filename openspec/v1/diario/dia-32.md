@@ -36,3 +36,7 @@ sin prueba): dicho en la cabecera de `0049` y en `F-239`, no escondido.
   Hace falta la C5 del PO. Las rutas contra producción escriben (`begin_key_recovery` cuenta intentos; `SET-SEC-01` sustituye el backup
   de JULSA), así que **no las he recorrido yo** con su cuenta.
 - Sin e2e de Playwright de las dos (el mock del servidor de `key-generation.spec.ts` serviría de base).
+
+## Tercera sesión del día (7-oct)
+
+El PO pidió «dos pantallas nuevas a tu elección». Comprobado contra `openspec/design-gui/` y `app/src/screens/`: todas las aprobadas están construidas salvo `INV-04` y `MSG-03`. Consultado: el PO eligió no construir pantallas. Sin cambios de código.

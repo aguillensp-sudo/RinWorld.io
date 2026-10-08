@@ -17,7 +17,8 @@ Empieza por §6 y luego §3.
 **Día 32 de V1 · 7-oct-2026 · Estado: CERRADO (17:45 UTC).** Día de ocho sesiones. Construido y en producción: **`REC-01` y `SET-SEC-01`**, **`INVT-02` y `ACT-02`**
 (25 pantallas; todas aceptadas por el PO: A.1, A.2 y A.3 de sus pruebas) y cuatro cierres de seguridad en la base: **`0050`** (canje de invitación), **`0051`**
 (`F-234`, 8 políticas), **`0052`** (`F-239`, backup estanco) y **`0053`/`0054`** (`F-242`, sustituir el backup exige la frase anterior). **`INV-04`** tiene plan
-(Amazon SES, `ingest.nortexsys.com`) y el PO está haciendo la fase 0 en AWS y Arsys. Detalle en `diario/dia-32.md`.
+(Amazon SES, `ingest.nortexsys.com`). Detalle en `diario/dia-32.md`.
+**8-oct (día 33), `INV-04` fase 0 hecha en lo que toca al correo:** dominio verificado en SES (eu-west-1), 3 CNAME de DKIM y MX en Arsys. Ver §1, §3.2 y `diario/dia-33.md`.
 
 ---
 
@@ -30,6 +31,7 @@ Empieza por §6 y luego §3.
 | `SET-SEC-01` y el verificador | `select` por SQL tras la prueba del PO | JULSA (`a.guillen@julsaindustrial.com`) **ya tiene verificador**; la cuenta `CANCELLED` `contact@nortexsys.com` no |
 | Suite y CI | `vitest run` entero (1974 verdes, 23 omitidas); CI `37650282186` | Verde con e2e y despliegue en `8991133`. Después solo hay commits de documentación `[skip ci]` |
 | Pruebas del PO | Lo dijo en el chat («todo aprobado A.2 y A.3»; A.1 OK; `SET-SEC-01` «ya funciona») | **No lo midió este agente.** Las pruebas con JULSA fueron antes y después de `0052`/`0053` |
+| `INV-04` fase 0: SES y DNS | `Resolve-DnsName` contra 8.8.8.8 (3 CNAME DKIM y MX de `ingest`, y el MX de `nortexsys.com` intacto: `mx.serviciodecorreo.es`); estado «Verificado» y menú «Recepción de correo electrónico» **pegados por el PO desde la consola** | DNS verde, medido. SES: lo dijo el PO, no se consultó la API |
 | Conector AWS del PO | `session_connectors_status` | `AWS MCP` pasó de `pending` a conectado al final del día (herramienta `aws___run_script`). **No se ha usado ni se ha mirado qué permisos tiene** |
 
 ## 2 · Dónde estamos, por corriente
@@ -49,10 +51,10 @@ Empieza por §6 y luego §3.
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
 1. **`F-237`: el PO elige** (1) los textos de error de `REG-07` tal cual, (2) tal cual más «Si se repite, escribe a soporte» tras dos fallos, o (3) otros. **Aún no ha contestado.**
-2. **`INV-04`, fase 0 (la hace el PO):** MFA y presupuesto de 5 USD en AWS, SES en **eu-west-1**, identidad de `ingest.nortexsys.com`, y los registros DNS en Arsys
-   (**sin tocar** los de la web ni los dos buzones). Este agente **espera los registros que el PO le pase, los revisa con él** y no pide credenciales. La **fase 1**
-   (tablas, RLS solo ADMIN, RPC; la pantalla sin enseñar) se puede empezar ya sin AWS. **Leer los límites vigentes de las funciones de borde antes de la fase 2.**
-   Las seis decisiones del plan están confirmadas. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y entonces con un rol de IAM de mínimo privilegio, nunca el raíz.
+2. **`INV-04`, fase 1 (la base, sin AWS):** tablas `ingest_addresses`/`ingest_senders`/`ingest_events`, RLS solo ADMIN, RPC; la pantalla sin enseñar. **Fase 0 hecha** (8-oct):
+   SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a `ingest` rebota hasta la fase 2: esperado).
+   **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, se entra con rol federado, no con raíz).
+   Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.
 3. **Decidir con el PO:** `F-241` (cinco desviaciones de `INVT-02`/`ACT-02`); `F-231` (`1247` o `1.247`: `F-024` decidió lo primero y las specs de `INV-03` escriben lo segundo, y
    cuatro tests defienden `1247`); el **umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos): el blob protege con eso y con Argon2id; las 18 303 líneas de ALPHA (`F-234`); `F-230`.
    Borrar las 500 `DELETED` basura del 6-oct.
@@ -106,7 +108,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (§3.1) | PO |
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
-| 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: falta la fase 0 del PO (§3.2) | PO + este agente |
+| 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: fase 0 hecha salvo MFA y presupuesto; sigue la fase 1 (§3.2) | PO + este agente |
 | 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
 | 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: la base `bearingworld-e2e` para el C2 |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
@@ -141,7 +143,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
-- **Qué permisos tiene el conector `AWS MCP` del PO** y si usa credenciales acotadas: no se miró. **Si SES recibe en eu-west-1 y qué límites tienen las funciones de borde hoy**: sin leer.
+- **Qué permisos tiene el conector `AWS MCP` del PO** y si usa credenciales acotadas: no se miró. **Qué límites tienen las funciones de borde hoy**: sin leer. **Si MFA y alarma de gasto están en la organización**: nadie lo ha visto.
 
 ---
 

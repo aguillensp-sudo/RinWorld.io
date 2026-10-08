@@ -65,10 +65,10 @@
   background: none;
   border: 1px solid var(--bw-line-steel-strong);
   border-radius: 5px;
-  color: var(--bw-hint-steel);
+  color: var(--bw-primary-dark);
   font-size: 12px;
   font-weight: 500;
-  cursor: not-allowed;
+  cursor: pointer;
   font-family: var(--bw-font-body);
   display: inline-flex;
   align-items: center;

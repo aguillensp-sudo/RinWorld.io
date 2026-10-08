@@ -196,11 +196,13 @@ export function ResultsTable({
                       <button
                         type="button"
                         className={styles.consult}
-                        disabled
+                        disabled={!selected.has(row.id) || row.consulted}
                         title={
                           row.consulted
                             ? 'Ya consultada anteriormente'
-                            : 'La consulta de una sola línea llega en la próxima versión. Marca la fila y usa «Consultar seleccionados».'
+                            : selected.has(row.id)
+                              ? 'Enviar la consulta de esta línea'
+                              : 'Marca la fila para poder consultarla.'
                         }
                         onClick={() => onConsult(row.id)}
                       >

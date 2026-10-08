@@ -258,12 +258,24 @@ describe('SRCH-01 · ordenación por cabecera', () => {
  * estén vivos, y que digan por qué. El wiring vuelve en V1 con `FL-MSG-01`.
  */
 describe('SRCH-01 · acciones de fila — apagadas y con el motivo (F-100)', () => {
-  it('Consultar está deshabilitado y remite a la acción que sí existe', () => {
+  it('Consultar está deshabilitado mientras la fila no esté marcada y dice por qué', () => {
     pintar([row({ id: 'linea-1' })]);
     const boton = within(filas()[0]!).getByRole('button', { name: 'Consultar' });
     expect(boton).toBeDisabled();
-    expect(boton).toHaveAccessibleDescription(/próxima versión/i);
-    expect(boton).toHaveAccessibleDescription(/Consultar seleccionados/i);
+    expect(boton).toHaveAccessibleDescription(/Marca la fila/i);
+  });
+
+  it('Consultar se habilita con la fila marcada y dispara onConsult con esa línea', async () => {
+    const h = pintar([row({ id: 'linea-1' })], { selected: new Set(['linea-1']) });
+    const boton = within(filas()[0]!).getByRole('button', { name: 'Consultar' });
+    expect(boton).toBeEnabled();
+    boton.click();
+    expect(h.onConsult).toHaveBeenCalledWith('linea-1');
+  });
+
+  it('una fila ya consultada sigue sin poder consultarse aunque esté marcada', () => {
+    pintar([row({ id: 'linea-1', consulted: true })], { selected: new Set(['linea-1']) });
+    expect(within(filas()[0]!).getByRole('button', { name: 'Consultar' })).toBeDisabled();
   });
 
   it('Contactar está deshabilitado y dice que está fuera de alcance', () => {

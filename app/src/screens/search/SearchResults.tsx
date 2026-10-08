@@ -134,7 +134,6 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
   // El destino de estos dos callbacks (abrir tarjeta de consulta / crear hilo)
   // es la fila del día 10 del Plan §3 (GAP-004). Hoy solo avisan, y el aviso lo
   // consume la pantalla cuando el wiring exista.
-  const handleConsult = useCallback((_lineId: string) => {}, []);
   const handleContact = useCallback((_orgId: string) => {}, []);
 
   /**
@@ -154,19 +153,19 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
    * estado "ya consultada", nunca de una marca puesta a mano en cliente) y
    * enseña el resultado.
    */
-  const handleConsultSelected = useCallback(async () => {
+  const consultRows = useCallback(async (ids: Set<string>) => {
     if (!page || consulting) return;
 
     // Defensivo, no solo cosmético: una fila ya consultada seguiría marcable
     // vía "Seleccionar todos", y create_inquiry la rechazaría con el aviso de
     // inquiry-card. Filtrar aquí evita mandar una llamada que se sabe inútil.
-    const filas = page.rows.filter((r) => selected.has(r.id) && !r.consulted);
+    const filas = page.rows.filter((r) => ids.has(r.id) && !r.consulted);
     /* F-087: lo que se descarta también se cuenta. La selección mixta —unas
      * filas nuevas y otras ya consultadas— es el caso NORMAL con "Seleccionar
      * todos", y hasta hoy el sistema se lo callaba: el banner solo hablaba de lo
      * que sí se enviaba y la única pista de lo demás era el sombreado de la
      * fila. Se cuenta aquí, que es donde se sabe, y lo dice `consultSummary`. */
-    const omitidas = page.rows.filter((r) => selected.has(r.id) && r.consulted).length;
+    const omitidas = page.rows.filter((r) => ids.has(r.id) && r.consulted).length;
     if (filas.length === 0) {
       setConsultBanner('Las filas seleccionadas ya estaban consultadas.');
       return;
@@ -181,12 +180,21 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
       }));
       const resultados = await sendInquiries(lineas, profile.orgId);
       setConsultBanner(consultSummary(resultados, omitidas));
-      setSelected(new Set());
+      setSelected((prev) => {
+        const resto = new Set(prev);
+        for (const id of ids) resto.delete(id);
+        return resto;
+      });
       await load(criteria);
     } finally {
       setConsulting(false);
     }
-  }, [page, selected, consulting, criteria, load]);
+  }, [page, consulting, criteria, load]);
+
+  const handleConsultSelected = useCallback(() => consultRows(selected), [consultRows, selected]);
+
+  /** «Consultar» de una fila: solo se habilita con la fila marcada, y envía solo esa. */
+  const handleConsult = useCallback((lineId: string) => void consultRows(new Set([lineId])), [consultRows]);
 
   const allSelected = page !== null && page.rows.length > 0 && page.rows.every((r) => selected.has(r.id));
 

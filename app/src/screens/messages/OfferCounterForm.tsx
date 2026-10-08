@@ -114,26 +114,60 @@ export function draftToOfferContent(d: OfferDraft): OfferContent {
   };
 }
 
+export function emptyDraft(): OfferDraft {
+  return {
+    unitPrice: '',
+    currency: 'EUR',
+    quantity: '',
+    leadTimeDays: '',
+    shippingCost: '',
+    shippingCostCurrency: 'EUR',
+    validUntil: '',
+    notes: '',
+  };
+}
+
 export function OfferCounterForm({
   partNumber,
   brand,
   original,
   onCancel,
   onSubmit,
+  referenceEditable = false,
+  title = 'Contra-oferta',
+  hint = 'Datos de la oferta original, pre-rellenados. Modifícalos y envía tu contraoferta.',
+  submitLabel = 'Enviar contraoferta',
+  initialQuantity,
 }: {
   partNumber: string;
   brand: string;
   /** La oferta que se está superando, ya descifrada: es el prerelleno. */
-  original: OfferContent;
+  original?: OfferContent;
   onCancel: () => void;
   /** Devuelve si el envío salió bien. Igual criterio que `ThreadComposer`. */
-  onSubmit: (content: OfferContent) => Promise<boolean>;
+  onSubmit: (content: OfferContent, reference: { partNumber: string; brand: string }) => Promise<boolean>;
+  /** Oferta directa: referencia y marca se escriben aquí (0055). */
+  referenceEditable?: boolean;
+  title?: string;
+  hint?: string;
+  submitLabel?: string;
+  /** Cantidad de la consulta que se responde, si se conoce. */
+  initialQuantity?: number | undefined;
 }) {
-  const [draft, setDraft] = useState<OfferDraft>(() => draftFromOffer(original));
+  const [draft, setDraft] = useState<OfferDraft>(() =>
+    original
+      ? draftFromOffer(original)
+      : { ...emptyDraft(), quantity: initialQuantity !== undefined ? String(initialQuantity) : '' },
+  );
+  const [ref, setRef] = useState({ partNumber, brand });
   const [tocado, setTocado] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  const error = offerDraftError(draft);
+  const refError =
+    referenceEditable && (!ref.partNumber.trim() || !ref.brand.trim())
+      ? 'Una oferta directa necesita referencia y marca.'
+      : null;
+  const error = refError ?? offerDraftError(draft);
   const referencia = [partNumber, brand].filter(Boolean).join(' · ');
 
   const campo =
@@ -147,7 +181,10 @@ export function OfferCounterForm({
     if (error || enviando) return;
     setEnviando(true);
     try {
-      await onSubmit(draftToOfferContent(draft));
+      await onSubmit(draftToOfferContent(draft), {
+        partNumber: ref.partNumber.trim(),
+        brand: ref.brand.trim(),
+      });
     } finally {
       setEnviando(false);
     }
@@ -157,12 +194,47 @@ export function OfferCounterForm({
     <div className={styles.overlay}>
       <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="counter-offer-title">
         <h2 className={styles.title} id="counter-offer-title">
-          Contra-oferta
+          {title}
         </h2>
-        <p className={styles.hint}>
-          Datos de la oferta original, pre-rellenados. Modifícalos y envía tu contraoferta.
-        </p>
-        <p className={styles.reference}>{referencia}</p>
+        <p className={styles.hint}>{hint}</p>
+        {referenceEditable ? (
+          <div className={styles.grid}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="co-part">
+                Referencia
+              </label>
+              <input
+                id="co-part"
+                className={styles.input}
+                maxLength={100}
+                value={ref.partNumber}
+                onChange={(e) => {
+                  setTocado(true);
+                  setRef((r) => ({ ...r, partNumber: e.target.value }));
+                }}
+                disabled={enviando}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="co-brand">
+                Marca
+              </label>
+              <input
+                id="co-brand"
+                className={styles.input}
+                maxLength={100}
+                value={ref.brand}
+                onChange={(e) => {
+                  setTocado(true);
+                  setRef((r) => ({ ...r, brand: e.target.value }));
+                }}
+                disabled={enviando}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className={styles.reference}>{referencia}</p>
+        )}
 
         <div className={styles.grid}>
           <div className={styles.field}>
@@ -307,7 +379,7 @@ export function OfferCounterForm({
               void enviar();
             }}
           >
-            Enviar contraoferta
+            {submitLabel}
           </button>
         </div>
       </div>

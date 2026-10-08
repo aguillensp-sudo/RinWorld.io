@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CREATE_OFFER_DISABLED_REASON } from '../../lib/thread-detail';
+import type { OfferContent } from '../../lib/thread-detail';
+import { OfferCounterForm } from './OfferCounterForm';
 import styles from './ThreadComposer.module.css';
 
 /**
@@ -32,13 +33,17 @@ import styles from './ThreadComposer.module.css';
  */
 export function ThreadComposer({
   onSend,
+  onCreateOffer,
 }: {
+  /** Oferta directa en el hilo (0055). Sin esta prop el botón no se pinta. */
+  onCreateOffer?: (reference: { partNumber: string; brand: string }, content: OfferContent) => Promise<boolean>;
   /** Devuelve si el envío salió bien. El campo solo se vacía cuando sí: perder
    *  lo escrito porque la red falló es la peor forma de gestionar un error. */
   onSend: (text: string) => Promise<boolean>;
 }) {
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [ofertando, setOfertando] = useState(false);
 
   const vacio = texto.trim().length === 0;
 
@@ -78,12 +83,29 @@ export function ThreadComposer({
         </button>
       </div>
       <div className={styles.subRow}>
-        <button type="button" className={styles.offerButton} disabled>
-          Crear oferta
-        </button>
-        <span className={styles.reason}>{CREATE_OFFER_DISABLED_REASON}</span>
+        {onCreateOffer && (
+          <button type="button" className={styles.offerButton} onClick={() => setOfertando(true)}>
+            Crear oferta
+          </button>
+        )}
         <span className={styles.encryptHint}>Cifrado E2EE antes del envío</span>
       </div>
+      {ofertando && onCreateOffer && (
+        <OfferCounterForm
+          partNumber=""
+          brand=""
+          referenceEditable
+          title="Crear oferta"
+          hint="Oferta directa en este hilo. Indica la referencia y las condiciones."
+          submitLabel="Enviar oferta"
+          onCancel={() => setOfertando(false)}
+          onSubmit={async (content, reference) => {
+            const ok = await onCreateOffer(reference, content);
+            if (ok) setOfertando(false);
+            return ok;
+          }}
+        />
+      )}
     </div>
   );
 }

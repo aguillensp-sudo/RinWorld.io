@@ -47,8 +47,8 @@ import { errorMessage } from './session';
 // Lo que hay dentro del blob
 // -----------------------------------------------------------------------------
 
-/** Los dos estados de `thread_items.estado_consulta` (CHECK de 0003). */
-export type InquiryState = 'Pendiente' | 'Respondida con oferta';
+/** Los estados de `thread_items.estado_consulta` (CHECK de 0003, ampliado en 0055). */
+export type InquiryState = 'Pendiente' | 'Respondida con oferta' | 'Sin stock';
 
 /**
  * El contenido descifrado de un elemento, por tipo.
@@ -173,8 +173,6 @@ export const ENCRYPTED_NOTICE = 'Contenido cifrado — introduce tu frase de seg
  */
 export const AGREEMENT_DISABLED_REASON = 'El acuerdo se alcanza aceptando una oferta.';
 
-/** `Crear oferta` abre MSG-03, que no está construida. */
-export const CREATE_OFFER_DISABLED_REASON = 'La tarjeta de oferta (MSG-03) queda fuera del MVP.';
 
 // -----------------------------------------------------------------------------
 // Lógica pura
@@ -655,6 +653,88 @@ export async function counterOffer(oldItemId: string, threadId: string, content:
     p_quantity: content.quantity,
   });
   if (error) throw error;
+}
+
+/**
+ * Crea una oferta (0055 `create_offer`): responde a una consulta recibida
+ * (`inquiryId`) o es directa (`inquiryId` null, con referencia y marca). Mismo
+ * procedimiento de cifrado que `counterOffer`; la base marca la consulta como
+ * «Respondida con oferta» en la misma transacción.
+ */
+export async function createOffer(
+  threadId: string,
+  inquiryId: string | null,
+  reference: { partNumber: string; brand: string } | null,
+  content: OfferContent,
+): Promise<void> {
+  const keyPair = currentKeyPair();
+  if (!keyPair) {
+    throw new Error(
+      'Tu clave de cifrado no está lista en esta sesión. Vuelve a entrar antes de ofertar.',
+    );
+  }
+
+  const destinatarios = await fetchThreadRecipients(threadId);
+  const sinClave = destinatarios.filter((d) => d.publicKey === null);
+  if (sinClave.length > 0) {
+    throw new Error(
+      `No se puede cifrar todavía: ${sinClave.length} ${
+        sinClave.length === 1 ? 'destinatario no ha' : 'destinatarios no han'
+      } publicado su clave pública. Tienen que entrar una vez en la aplicación.`,
+    );
+  }
+  if (destinatarios.length === 0) {
+    throw new Error('Este hilo no tiene destinatarios: vuelve a cargarlo.');
+  }
+
+  const cek = await generateCek();
+  const { ciphertext, iv } = await encryptContent(content, cek);
+
+  const claves = await Promise.all(
+    destinatarios.map(async (d) => {
+      const w = await wrapCekFor(cek, d.publicKey!);
+      return {
+        member_id: d.memberId,
+        wrapped_cek: toHex(w.wrappedCek),
+        wrap_iv: toHex(w.wrapIv),
+        ephemeral_pubkey: toHex(w.ephemeralPublicKey),
+      };
+    }),
+  );
+
+  const { error } = await supabase.rpc('create_offer', {
+    p_thread_id: threadId,
+    p_inquiry_id: inquiryId,
+    p_part_number: reference?.partNumber ?? null,
+    p_brand: reference?.brand ?? null,
+    p_ciphertext: toHex(ciphertext),
+    p_iv: toHex(iv),
+    p_keys: claves,
+    // ADR-002 D-3: la cantidad viaja además en claro, como en `counterOffer`.
+    p_quantity: content.quantity,
+  });
+  if (error) throw error;
+}
+
+/**
+ * «Sin stock»: lo decide quien recibe la consulta, una sola vez (0055,
+ * `guard_inquiry_decider`). Es una escritura de metadatos, sin cifrado.
+ */
+export async function markOutOfStock(inquiryId: string, viewerOrgId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('thread_items')
+    .update({ estado_consulta: 'Sin stock' })
+    .eq('id', inquiryId)
+    .eq('item_type', 'CONSULTA')
+    .eq('estado_consulta', 'Pendiente')
+    .neq('sender_org_id', viewerOrgId)
+    .select('id');
+  if (error) throw error;
+  if ((data ?? []).length === 0) {
+    throw new Error(
+      'La consulta ya no estaba pendiente, o es tuya. Vuelve a cargar el hilo para ver su estado actual.',
+    );
+  }
 }
 
 // -----------------------------------------------------------------------------

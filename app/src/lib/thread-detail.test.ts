@@ -8,7 +8,6 @@ import {
   sendInquiries,
   validUntilLabel,
   AGREEMENT_DISABLED_REASON,
-  CREATE_OFFER_DISABLED_REASON,
   ENCRYPTED_NOTICE,
   type EncryptedBlob,
   type InquiryLine,
@@ -238,7 +237,7 @@ describe('los literales que ve el usuario', () => {
     // Eran tres hasta el día 8. `SEND_DISABLED_REASON` se retiró con D-08-02:
     // decía *"El cifrado en cliente llega en la rebanada E2EE"* y la rebanada ya
     // está, así que el pie envía en vez de explicar por qué no.
-    for (const motivo of [AGREEMENT_DISABLED_REASON, CREATE_OFFER_DISABLED_REASON]) {
+    for (const motivo of [AGREEMENT_DISABLED_REASON]) {
       expect(motivo.length).toBeGreaterThan(20);
       expect(motivo.endsWith('.')).toBe(true);
       // "Próximamente" es una fecha que nadie se ha comprometido a cumplir.

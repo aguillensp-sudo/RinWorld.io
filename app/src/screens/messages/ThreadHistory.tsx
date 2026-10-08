@@ -33,6 +33,7 @@ const OFFER_STATE_CLASS: Record<string, string | undefined> = {
 const INQUIRY_STATE_CLASS: Record<string, string | undefined> = {
   Pendiente: styles.statePendiente,
   'Respondida con oferta': styles.stateRespondida,
+  'Sin stock': styles.stateSinStock,
 };
 
 function offerStateClass(state: string): string {
@@ -156,6 +157,8 @@ function Card({
   onAcceptOffer,
   onRejectOffer,
   onCounterOffer,
+  onRespondWithOffer,
+  onOutOfStock,
 }: {
   item: ThreadItem;
   threadId: string;
@@ -164,8 +167,14 @@ function Card({
   onAcceptOffer: (itemId: string) => void;
   onRejectOffer: (itemId: string) => void;
   onCounterOffer: (itemId: string, threadId: string, content: OfferContent) => Promise<boolean>;
+  onRespondWithOffer?: ((inquiryId: string, content: OfferContent) => Promise<boolean>) | undefined;
+  onOutOfStock?: ((inquiryId: string) => void) | undefined;
 }) {
   const [contraofertando, setContraofertando] = useState(false);
+  const [respondiendo, setRespondiendo] = useState(false);
+  // Una consulta la decide quien la recibe, una sola vez (0055).
+  const puedeDecidirConsulta =
+    item.type === 'CONSULTA' && !item.isOwn && item.inquiryState === 'Pendiente';
   const isOffer = item.type === 'OFERTA';
   const card = asOfferCard(item, threadId);
   // Las acciones solo salen de offerActions: es lo único que sabe que sólo el
@@ -239,7 +248,38 @@ function Card({
               ))}
           </div>
         )}
+        {puedeDecidirConsulta && (onRespondWithOffer || onOutOfStock) && (
+          <div className={styles.cardActions}>
+            {onRespondWithOffer && (
+              <button type="button" className={styles.acceptButton} onClick={() => setRespondiendo(true)}>
+                Responder con oferta
+              </button>
+            )}
+            {onOutOfStock && (
+              <button type="button" className={styles.rejectButton} onClick={() => onOutOfStock(item.id)}>
+                Sin stock
+              </button>
+            )}
+          </div>
+        )}
       </footer>
+
+      {respondiendo && onRespondWithOffer && (
+        <OfferCounterForm
+          partNumber={item.partNumber ?? ''}
+          brand={item.brand ?? ''}
+          title="Responder con oferta"
+          hint="Tu oferta responde a esta consulta y la marca como respondida."
+          submitLabel="Enviar oferta"
+          initialQuantity={item.content?.kind === 'CONSULTA' ? item.content.quantity : undefined}
+          onCancel={() => setRespondiendo(false)}
+          onSubmit={async (content) => {
+            const ok = await onRespondWithOffer(item.id, content);
+            if (ok) setRespondiendo(false);
+            return ok;
+          }}
+        />
+      )}
 
       {contraofertando && contenidoOferta && (
         <OfferCounterForm
@@ -274,6 +314,8 @@ export function ThreadHistory({
   onAcceptOffer,
   onRejectOffer,
   onCounterOffer,
+  onRespondWithOffer,
+  onOutOfStock,
 }: {
   items: ThreadItem[];
   threadId: string;
@@ -284,6 +326,8 @@ export function ThreadHistory({
   onAcceptOffer: (itemId: string) => void;
   onRejectOffer: (itemId: string) => void;
   onCounterOffer: (itemId: string, threadId: string, content: OfferContent) => Promise<boolean>;
+  onRespondWithOffer?: ((inquiryId: string, content: OfferContent) => Promise<boolean>) | undefined;
+  onOutOfStock?: ((inquiryId: string) => void) | undefined;
 }) {
   if (items.length === 0) {
     return <div className={styles.empty}>Este hilo no tiene elementos todavía.</div>;
@@ -321,6 +365,8 @@ export function ThreadHistory({
                 onAcceptOffer={onAcceptOffer}
                 onRejectOffer={onRejectOffer}
                 onCounterOffer={onCounterOffer}
+                onRespondWithOffer={onRespondWithOffer}
+                onOutOfStock={onOutOfStock}
               />
             )}
             <div className={styles.meta}>

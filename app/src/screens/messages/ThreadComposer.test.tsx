@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CREATE_OFFER_DISABLED_REASON } from '../../lib/thread-detail';
 import { ThreadComposer } from './ThreadComposer';
 
 /**
@@ -112,10 +111,28 @@ describe('el envío (D-08-02)', () => {
 });
 
 describe('lo que sigue fuera del MVP, y lo dice', () => {
-  it('`Crear oferta` está deshabilitado y dice que MSG-03 queda fuera', () => {
+  it('sin `onCreateOffer` el botón `Crear oferta` no se pinta (no hay control inerte)', () => {
     render(<ThreadComposer onSend={envioOk()} />);
-    expect(screen.getByRole('button', { name: 'Crear oferta' })).toBeDisabled();
-    expect(screen.getByText(CREATE_OFFER_DISABLED_REASON)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Crear oferta' })).toBeNull();
+  });
+
+  it('`Crear oferta` abre el formulario de oferta directa y envía referencia y condiciones', async () => {
+    const user = userEvent.setup();
+    const onCreateOffer = vi.fn().mockResolvedValue(true);
+    render(<ThreadComposer onSend={envioOk()} onCreateOffer={onCreateOffer} />);
+    await user.click(screen.getByRole('button', { name: 'Crear oferta' }));
+    const enviar = screen.getByRole('button', { name: 'Enviar oferta' });
+    expect(enviar).toBeDisabled(); // sin referencia ni precio
+    await user.type(screen.getByLabelText('Referencia'), '6205-2RS');
+    await user.type(screen.getByLabelText('Marca'), 'SKF');
+    await user.type(screen.getByLabelText('Precio unitario'), '4,5');
+    await user.type(screen.getByLabelText('Cantidad'), '100');
+    await user.click(enviar);
+    expect(onCreateOffer).toHaveBeenCalledTimes(1);
+    const [ref, content] = onCreateOffer.mock.calls[0]!;
+    expect(ref).toEqual({ partNumber: '6205-2RS', brand: 'SKF' });
+    expect(content).toMatchObject({ kind: 'OFERTA', unitPrice: 4.5, quantity: 100, currency: 'EUR' });
+    expect(screen.queryByRole('dialog')).toBeNull(); // se cierra al salir bien
   });
 
   it('el aviso de cifrado del HTML aprobado se queda, y desde hoy es verdad', () => {
@@ -134,7 +151,7 @@ describe('lo que el pie NO puede prometer', () => {
    */
   it('no anuncia una fecha que nadie se ha comprometido a cumplir', () => {
     const { container } = render(<ThreadComposer onSend={envioOk()} />);
-    expect(screen.getByText(CREATE_OFFER_DISABLED_REASON)).toBeInTheDocument(); // ancla
+    expect(screen.getByText('Cifrado E2EE antes del envío')).toBeInTheDocument(); // ancla
     expect(container.textContent ?? '').not.toMatch(/próximamente|pronto|en breve|muy pronto/i);
   });
 

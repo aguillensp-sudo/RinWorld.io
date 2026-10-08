@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   counterOffer,
+  createOffer,
+  markOutOfStock,
   fetchThreadDetail,
   fetchThreadItems,
   sendMessage,
@@ -168,6 +170,27 @@ export function Thread({
     [write],
   );
 
+  /** 0055 · responder a una consulta con oferta. */
+  const handleRespondWithOffer = useCallback(
+    (inquiryId: string, content: OfferContent) =>
+      write(() => createOffer(threadId, inquiryId, null, content)),
+    [threadId, write],
+  );
+
+  /** 0055 · oferta directa desde el pie del hilo. */
+  const handleCreateOffer = useCallback(
+    (reference: { partNumber: string; brand: string }, content: OfferContent) =>
+      write(() => createOffer(threadId, null, reference, content)),
+    [threadId, write],
+  );
+
+  const handleOutOfStock = useCallback(
+    (inquiryId: string) => {
+      void write(() => markOutOfStock(inquiryId, profile.orgId));
+    },
+    [profile.orgId, write],
+  );
+
   /**
    * D-08-02 · el mensaje libre cifrado.
    *
@@ -231,12 +254,14 @@ export function Thread({
                 void handleRejectOffer(itemId);
               }}
               onCounterOffer={handleCounterOffer}
+              onRespondWithOffer={handleRespondWithOffer}
+              onOutOfStock={handleOutOfStock}
             />
             {/* D-07-01: el pie se monta en los cinco estados del hilo, CERRADO
                 SIN ACUERDO incluido. La reapertura ocurre cuando alguien vuelve
                 a escribir (0009), así que el campo no puede desaparecer — y
                 desde hoy (D-08-02) ese "volver a escribir" es real. */}
-            <ThreadComposer onSend={handleSend} />
+            <ThreadComposer onSend={handleSend} onCreateOffer={handleCreateOffer} />
           </>
         )}
       </div>

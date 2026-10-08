@@ -4001,6 +4001,11 @@ drop function public.f146_canaria();
 --     `security definer` (`app.thread_counterpart`, `app.org_already_inquired`,
 --     `app.resolve_thread`). Lo que les queda bajo RLS son escrituras, que
 --     fallan con error en vez de decidir en silencio.
+--   · `create_offer` (0055, F-099) — el mismo patrón que `counter_offer`: la
+--     contraparte y el acceso al hilo van por `app.thread_counterpart` y
+--     `app.can_access_thread` (`definer`); lo único que lee bajo RLS es la
+--     consulta que responde, `for update`, y si no la ve lanza «no existe o no
+--     es visible» — falla, no decide.
 --   · `demo_state`, `demo_reanchor_freshness` — utilidades de demo, no guardias:
 --     no hay ninguna decisión colgando de que su lectura salga vacía.
 --   · `guard_member_privileges` — falso positivo del detector, y se deja dentro
@@ -4031,6 +4036,7 @@ create or replace function app.f155_detector() returns text
            'public.create_inquiry',
            'public.create_thread_item',
            'public.counter_offer',
+           'public.create_offer',
            'public.demo_state',
            'public.demo_reanchor_freshness',
            'app.guard_member_privileges',
@@ -5675,5 +5681,367 @@ delete from public.key_recovery_attempts where member_id::text like 'a100000%';
 delete from public.members where org_id = '10101010-1010-4010-8010-101010101010';
 delete from auth.users where id::text like 'a100000%';
 delete from public.organizations where id = '10101010-1010-4010-8010-101010101010';
+
+-- -----------------------------------------------------------------------------
+-- 0055 · Crear oferta (F-099), responder la consulta (F-244), destinatarios ACTIVE
+--        (F-243) y la integridad de thread_items frente a escrituras directas (F-245)
+-- -----------------------------------------------------------------------------
+-- Kilo Test compra y Lima Test vende, las dos con el ambito apagado. k2 es un EDITOR
+-- invitado que no ha activado su cuenta y no tiene clave: el caso de JULSA el
+-- 8-oct-2026, que bloqueaba todos los envios de y hacia su empresa. l3 es un EDITOR
+-- dado de baja que conserva su clave. Se borra todo al final.
+insert into public.organizations (id, name, country, continent, status) values
+  ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', 'Kilo Test', 'ES', 'EU', 'APPROVED'),
+  ('0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', 'Lima Test', 'DE', 'EU', 'APPROVED');
+insert into auth.users (id, email) values
+  ('ad000001-0000-0000-0000-000000000001', 'k1@kilo.test'), ('ad000002-0000-0000-0000-000000000002', 'k2@kilo.test'),
+  ('ae000001-0000-0000-0000-000000000001', 'l1@lima.test'), ('ae000002-0000-0000-0000-000000000002', 'l2@lima.test'),
+  ('ae000003-0000-0000-0000-000000000003', 'l3@lima.test');
+insert into public.members (id, org_id, email, state) values
+  ('ad000001-0000-0000-0000-000000000001', '0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', 'k1@kilo.test', 'ACTIVE'),
+  ('ad000002-0000-0000-0000-000000000002', '0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', 'k2@kilo.test', 'REGISTERED'),
+  ('ae000001-0000-0000-0000-000000000001', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', 'l1@lima.test', 'ACTIVE'),
+  ('ae000002-0000-0000-0000-000000000002', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', 'l2@lima.test', 'ACTIVE'),
+  ('ae000003-0000-0000-0000-000000000003', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', 'l3@lima.test', 'CANCELLED');
+update public.members m set public_key = decode(repeat(x.k, 32), 'hex')
+  from (values ('ad000001-0000-0000-0000-000000000001'::uuid, '61'),
+               ('ae000001-0000-0000-0000-000000000001'::uuid, '71'),
+               ('ae000002-0000-0000-0000-000000000002'::uuid, '72'),
+               ('ae000003-0000-0000-0000-000000000003'::uuid, '73')) as x(id, k)
+ where m.id = x.id;
+insert into public.inventory_lines
+  (id, org_id, part_number, brand, quantity, location_country, product_family, status) values
+  ('f5500000-0000-0000-0000-000000000001', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', '6205-2RS', 'SKF', 800, 'DE', 'Rodamiento rígido de bolas', 'PUBLISHED'),
+  ('f5500000-0000-0000-0000-000000000002', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', '6206-ZZ',  'FAG', 300, 'DE', 'Rodamiento rígido de bolas', 'PUBLISHED');
+
+-- El reparto de la CEK, con contenido de relleno: lo que se mide es quien sale en la
+-- lista, no el cifrado. Funcion de este banco; se borra al final.
+create or replace function public.t55_claves(variadic ids text[]) returns jsonb
+  language sql immutable as $$
+  select jsonb_agg(jsonb_build_object('member_id', i,
+           'wrapped_cek', repeat('11', 48), 'wrap_iv', repeat('13', 12),
+           'ephemeral_pubkey', repeat('22', 32)))
+    from unnest(ids) as i;
+$$;
+
+-- El hilo Kilo–Lima, sin RLS: para que un tercero pueda pedir ESE hilo y para acotar
+-- los asertos a esta seccion. Funcion de este banco; se borra al final.
+create or replace function public.t55_hilo() returns uuid
+  language sql stable security definer set search_path to 'public', 'pg_temp' as $$
+  select id from public.threads
+   where org_low_id  = least('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d'::uuid, '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e'::uuid)
+     and org_high_id = greatest('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d'::uuid, '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e'::uuid);
+$$;
+
+-- 1 · F-243 · las dos funciones de destinatarios devuelven solo miembros ACTIVE.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert (select array_agg(member_id order by member_id)::text
+              from public.org_public_keys('0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e'))
+           = '{ae000001-0000-0000-0000-000000000001,ae000002-0000-0000-0000-000000000002}',
+      'F-243: org_public_keys de Lima devuelve a l1 y l2; l3, CANCELLED, no';
+    assert (select array_agg(member_id order by member_id)::text
+              from public.org_public_keys('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d'))
+           = '{ad000001-0000-0000-0000-000000000001}',
+      'F-243: org_public_keys de la propia Kilo devuelve a k1; k2, REGISTERED y sin clave, no';
+    raise notice 'OK · 0055 · F-243: org_public_keys solo devuelve miembros ACTIVE';
+  end
+  $$;
+  -- Y con esa lista la consulta sale: antes, la clave NULL de k2 la bloqueaba en el cliente.
+  select * from public.create_inquiry('f5500000-0000-0000-0000-000000000001',
+      repeat('aa', 48), repeat('16', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                        'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+      500);
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', 'ae000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  declare h uuid;
+  begin
+    select thread_id into h from public.thread_items
+     where inventory_line_id = 'f5500000-0000-0000-0000-000000000001';
+    assert (select array_agg(member_id order by member_id)::text from public.thread_public_keys(h))
+           = '{ad000001-0000-0000-0000-000000000001,ae000001-0000-0000-0000-000000000001,ae000002-0000-0000-0000-000000000002}',
+      'F-243: thread_public_keys devuelve a k1, l1 y l2; ni a k2 (REGISTERED) ni a l3 (CANCELLED)';
+    raise notice 'OK · 0055 · F-243: thread_public_keys solo devuelve miembros ACTIVE';
+  end
+  $$;
+commit;
+
+-- 2 · create_offer respondiendo a la consulta: quien la envio no puede.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_offer(null,
+        (select id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+        null, null, repeat('bb', 96), repeat('17', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                          'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+        450)$$,
+    'F-099 (0055): quien envio la consulta no puede responderla con oferta');
+commit;
+
+-- 3 · Sin la copia del ADMIN de la otra parte (V-2), y con un destinatario que no es
+-- ACTIVE (la guardia del reparto sigue a thread_public_keys).
+begin;
+  select set_config('request.jwt.claim.sub', 'ae000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_offer(null,
+        (select id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+        null, null, repeat('bb', 96), repeat('17', 12),
+        public.t55_claves('ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+        450)$$,
+    'V-2 (0055): la oferta sin la copia del ADMIN comprador');
+  select public.expect_fail(
+    $$select public.create_offer(null,
+        (select id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+        null, null, repeat('bb', 96), repeat('17', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001', 'ad000002-0000-0000-0000-000000000002',
+                          'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+        450)$$,
+    'F-243 (0055): envolver para k2, que no es ACTIVE, excede el reparto del hilo');
+commit;
+
+-- 4 · ANCLA. l1, que recibio la consulta, la responde con oferta.
+begin;
+  select set_config('request.jwt.claim.sub', 'ae000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.create_offer(null,
+      (select id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+      'IGNORADA', 'IGNORADA', repeat('bb', 96), repeat('17', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                        'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+      450);
+commit;
+
+do $$
+declare
+  consulta public.thread_items%rowtype;
+  oferta   public.thread_items%rowtype;
+begin
+  select * into consulta from public.thread_items
+   where inventory_line_id = 'f5500000-0000-0000-0000-000000000001';
+  select * into oferta from public.thread_items
+   where item_type = 'OFERTA' and responds_to_item_id = consulta.id;
+
+  assert oferta.id is not null and oferta.estado_oferta = 'Pendiente'
+     and oferta.sender_org_id = '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e'
+     and oferta.sender_member_id = 'ae000001-0000-0000-0000-000000000001',
+    'F-099: la oferta existe, Pendiente, emitida por l1 de Lima';
+  assert oferta.part_number = '6205-2RS' and oferta.brand = 'SKF',
+    'F-099: referencia y marca se heredan de la consulta; los parametros se ignoran';
+  assert oferta.quantity = 450 and oferta.thread_id = consulta.thread_id,
+    'F-099: la cantidad viaja en claro (ADR-002 D-3) y la oferta va al hilo de la consulta';
+  assert consulta.estado_consulta = 'Respondida con oferta',
+    'F-244: la consulta pasa a «Respondida con oferta» en la misma transaccion';
+  assert (select state from public.threads where id = consulta.thread_id) = 'CON OFERTA PENDIENTE',
+    'F-244: el hilo queda CON OFERTA PENDIENTE';
+  assert (select count(*) from public.thread_item_keys where item_id = oferta.id) = 3,
+    'F-099: una CEK envuelta por destinatario (k1, l1, l2), la del emisor incluida';
+  raise notice 'OK · 0055 · F-099/F-244: create_offer responde la consulta y la marca respondida, atomico';
+end
+$$;
+
+-- 5 · Una consulta ya respondida no se responde otra vez.
+begin;
+  select set_config('request.jwt.claim.sub', 'ae000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_offer(null,
+        (select id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+        null, null, repeat('bc', 96), repeat('18', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                          'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+        450)$$,
+    'F-244 (0055): responder con oferta una consulta que ya no esta Pendiente');
+commit;
+
+-- 6 · ANCLA de F-244. k1 acepta: el hilo llega a ACUERDO ALCANZADO. Antes de 0055 la
+-- consulta seguia Pendiente y el hilo se quedaba en CON CONSULTA PENDIENTE.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  update public.thread_items set estado_oferta = 'Aceptada'
+   where item_type = 'OFERTA'
+     and responds_to_item_id = (select id from public.thread_items
+                                 where inventory_line_id = 'f5500000-0000-0000-0000-000000000001');
+commit;
+
+do $$
+begin
+  assert (select t.state from public.threads t
+            join public.thread_items i on i.thread_id = t.id
+           where i.inventory_line_id = 'f5500000-0000-0000-0000-000000000001') = 'ACUERDO ALCANZADO',
+    'F-244: consulta respondida + oferta aceptada = ACUERDO ALCANZADO';
+  raise notice 'OK · 0055 · F-244: el ciclo consulta -> oferta -> aceptar acaba en ACUERDO ALCANZADO';
+end
+$$;
+
+-- 7 · Oferta directa: un tercero no; sin marca no; l2 si, en el mismo hilo.
+begin;
+  select set_config('request.jwt.claim.sub', '0c000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_offer(public.t55_hilo(),
+        null, '6206-ZZ', 'FAG', repeat('cd', 96), repeat('19', 12),
+        public.t55_claves('0c000001-0000-0000-0000-000000000001'), 10)$$,
+    'F-099 (0055): una oferta directa en un hilo ajeno');
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', 'ae000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.create_offer(
+        (select thread_id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+        null, '6206-ZZ', '  ', repeat('cd', 96), repeat('19', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                          'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+        300)$$,
+    'F-099 (0055): una oferta directa sin marca');
+  select public.create_offer(
+      (select thread_id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+      null, ' 6206-ZZ ', 'FAG', repeat('cd', 96), repeat('19', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                        'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+      300);
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.thread_items
+           where thread_id = public.t55_hilo()
+             and item_type = 'OFERTA' and part_number = '6206-ZZ' and brand = 'FAG'
+             and responds_to_item_id is null and estado_oferta = 'Pendiente'
+             and sender_member_id = 'ae000002-0000-0000-0000-000000000002') = 1,
+    'F-099: la oferta directa existe, sin consulta, con la referencia recortada';
+  assert (select state from public.threads where id = public.t55_hilo()) = 'CON OFERTA PENDIENTE',
+    'F-099: una oferta directa vuelve a poner el hilo CON OFERTA PENDIENTE';
+  raise notice 'OK · 0055 · F-099: oferta directa de cualquiera de las dos partes, dentro de su hilo';
+end
+$$;
+
+-- 8 · «Sin stock» lo decide quien recibe la consulta, una vez; «Respondida con oferta»
+-- a mano, sin oferta, no.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select * from public.create_inquiry('f5500000-0000-0000-0000-000000000002',
+      repeat('ab', 48), repeat('1a', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                        'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+      40);
+  select public.expect_fail(
+    $$update public.thread_items set estado_consulta = 'Sin stock'
+       where inventory_line_id = 'f5500000-0000-0000-0000-000000000002'$$,
+    'F-245 (0055): quien envio la consulta la marca Sin stock');
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', 'ae000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$update public.thread_items set estado_consulta = 'Respondida con oferta'
+       where inventory_line_id = 'f5500000-0000-0000-0000-000000000002'$$,
+    'F-245 (0055): «Respondida con oferta» a mano, sin ninguna oferta que la responda');
+  update public.thread_items set estado_consulta = 'Sin stock'
+   where inventory_line_id = 'f5500000-0000-0000-0000-000000000002';
+  select public.expect_fail(
+    $$update public.thread_items set estado_consulta = 'Pendiente'
+       where inventory_line_id = 'f5500000-0000-0000-0000-000000000002'$$,
+    'F-245 (0055): una consulta Sin stock vuelve a Pendiente');
+commit;
+
+do $$
+begin
+  assert (select estado_consulta from public.thread_items
+           where inventory_line_id = 'f5500000-0000-0000-0000-000000000002') = 'Sin stock',
+    'F-245: la consulta queda Sin stock';
+  raise notice 'OK · 0055 · F-245: el estado de la consulta lo decide quien la recibe, una vez';
+end
+$$;
+
+-- 9 · F-245 · escrituras directas que se saltaban la maquina de estados.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$insert into public.thread_items
+        (thread_id, sender_org_id, sender_member_id, item_type, part_number, brand,
+         estado_oferta, content_ciphertext, content_iv)
+      values ((select thread_id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+              '0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', 'ad000001-0000-0000-0000-000000000001',
+              'OFERTA', '6205-2RS', 'SKF', 'Aceptada',
+              decode(repeat('ee', 96), 'hex'), decode(repeat('1b', 12), 'hex'))$$,
+    'F-245 (0055): insertar directamente una oferta ya Aceptada');
+  select public.expect_fail(
+    $$insert into public.thread_items
+        (thread_id, sender_org_id, sender_member_id, item_type, part_number, brand,
+         estado_consulta, content_ciphertext, content_iv)
+      values ((select thread_id from public.thread_items where inventory_line_id = 'f5500000-0000-0000-0000-000000000001'),
+              '0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', 'ad000001-0000-0000-0000-000000000001',
+              'CONSULTA', '6205-2RS', 'SKF', 'Respondida con oferta',
+              decode(repeat('ee', 96), 'hex'), decode(repeat('1b', 12), 'hex'))$$,
+    'F-245 (0055): insertar directamente una consulta ya respondida');
+  select public.expect_fail(
+    $$update public.thread_items set content_ciphertext = decode(repeat('ef', 96), 'hex')
+       where thread_id = public.t55_hilo() and item_type = 'OFERTA' and part_number = '6206-ZZ'$$,
+    'F-245 (0055): reescribir el contenido cifrado de la oferta de la otra parte');
+  select public.expect_fail(
+    $$update public.thread_items set quantity = 1
+       where thread_id = public.t55_hilo() and item_type = 'OFERTA' and part_number = '6206-ZZ'$$,
+    'F-245 (0055): cambiar la cantidad de una oferta ya emitida');
+  -- Lo legitimo sigue pasando: rechazar la oferta directa (solo cambia el estado).
+  update public.thread_items set estado_oferta = 'Rechazada'
+   where thread_id = public.t55_hilo() and item_type = 'OFERTA' and part_number = '6206-ZZ';
+commit;
+
+do $$
+begin
+  assert (select estado_oferta from public.thread_items
+           where thread_id = public.t55_hilo() and item_type = 'OFERTA' and part_number = '6206-ZZ') = 'Rechazada',
+    'F-245: aceptar y rechazar siguen funcionando: solo cambian el estado';
+  assert (select state from public.threads where id = public.t55_hilo()) = 'ACUERDO ALCANZADO',
+    'F-244: rechazada la directa y Sin stock la segunda consulta, vuelve a mandar el acuerdo vigente';
+  raise notice 'OK · 0055 · F-245: lo escrito no se reescribe y todo nace Pendiente; los cambios de estado legitimos pasan';
+end
+$$;
+
+-- 10 · La siembra y el operador no pasan por las guardias nuevas (como postgres).
+do $$
+declare
+  h uuid;
+begin
+  select thread_id into h from public.thread_items
+   where inventory_line_id = 'f5500000-0000-0000-0000-000000000001';
+  insert into public.thread_items
+    (thread_id, sender_org_id, sender_member_id, item_type, part_number, brand,
+     estado_oferta, content_ciphertext, content_iv)
+  values (h, '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e', 'ae000001-0000-0000-0000-000000000001',
+          'OFERTA', '6205-2RS', 'SKF', 'Aceptada',
+          decode(repeat('f0', 96), 'hex'), decode(repeat('1c', 12), 'hex'));
+  update public.thread_items set content_ciphertext = decode(repeat('f1', 96), 'hex')
+   where thread_id = h and item_type = 'OFERTA' and part_number = '6206-ZZ';
+  raise notice 'OK · 0055: la siembra (postgres) inserta una oferta Aceptada y reescribe contenido, como hace demo_threads.sql';
+end
+$$;
+
+delete from public.threads
+ where org_low_id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e')
+    or org_high_id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e');
+delete from public.inventory_lines where id::text like 'f5500000%';
+delete from public.members where org_id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e');
+delete from auth.users where id::text like 'ad00000%' or id::text like 'ae00000%';
+delete from public.organizations where id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e');
+drop function public.t55_claves(text[]);
+drop function public.t55_hilo();
 
 select 'TODOS LOS ASSERTS PASAN' as resultado;

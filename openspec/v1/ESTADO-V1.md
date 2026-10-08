@@ -11,7 +11,6 @@ va en `diario/`, las decisiones en `DECISIONES-V1.md`, los hallazgos en `../mvp/
 las reglas en `CLAUDE.md`. La versión larga anterior sigue en `git show d2df8d4:openspec/v1/ESTADO-V1.md`.
 
 Empieza por §6 y luego §3.
-
 ---
 
 **Día 32 de V1 · 7-oct-2026 · Estado: CERRADO (17:45 UTC).** Día de ocho sesiones. Construido y en producción: **`REC-01` y `SET-SEC-01`**, **`INVT-02` y `ACT-02`**
@@ -19,6 +18,7 @@ Empieza por §6 y luego §3.
 (`F-234`, 8 políticas), **`0052`** (`F-239`, backup estanco) y **`0053`/`0054`** (`F-242`, sustituir el backup exige la frase anterior). **`INV-04`** tiene plan
 (Amazon SES, `ingest.nortexsys.com`). Detalle en `diario/dia-32.md`.
 **8-oct (día 33), `INV-04` fase 0 hecha en lo que toca al correo:** dominio verificado en SES (eu-west-1), 3 CNAME de DKIM y MX en Arsys. Ver §1, §3.2 y `diario/dia-33.md`.
+**8-oct, microplan de 5 días: D1 (`0055`, `78182f2`) y D2 (`95cc7f8`, `29c1774`) hechos.** D2 = `createOffer`, `markOutOfStock`, «Responder con oferta», «Sin stock» y «Crear oferta». El PO los probó con dos sesiones (casos 1 a 4 OK, lo dijo en el chat); el estado del hilo se leyó de producción por SQL. Falta D3 (`bearingworld-e2e` sin `0040`+). Ver `diario/dia-34.md`.
 
 ---
 

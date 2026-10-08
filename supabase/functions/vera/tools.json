@@ -62,6 +62,10 @@
         "contraparte": {
           "type": "string",
           "description": "Filtra por nombre de la organización con la que se negocia, total o parcial."
+        },
+        "referencia": {
+          "type": "string",
+          "description": "Filtra por referencia (part number), total o parcial, en CUALQUIER elemento del hilo y no solo el último. Úsalo para '¿en qué hilo hay un 6205-2RS?'. Si la pregunta es por una referencia, PASA ESTE PARÁMETRO: sin él solo ves la referencia del último elemento de cada hilo y darías por inexistente lo que sí existe."
         }
       },
       "required": []

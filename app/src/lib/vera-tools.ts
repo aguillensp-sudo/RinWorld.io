@@ -299,6 +299,7 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
     orgId: ctx.profile.orgId,
     search: texto(input, 'contraparte'),
     page: 1,
+    reference: texto(input, 'referencia') || undefined,
   });
 
   /*
@@ -321,7 +322,19 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
         `${t.lastItem.partNumber ? ` sobre ${t.lastItem.partNumber}` : ''}` +
         `, ${t.lastItem.isOwn ? 'lo enviaste tú' : `lo envió ${t.counterpartyName}`}`
       : 'sin elementos';
-    return [t.counterpartyName, countryName(t.counterpartyCountry), t.state, ultimo].join(' · ');
+    const base = [t.counterpartyName, countryName(t.counterpartyCountry), t.state, ultimo].join(' · ');
+    if (!t.referenceMatches || t.referenceMatches.length === 0) return base;
+    // Búsqueda por referencia: se dicen TODOS los elementos que la llevan, no
+    // solo el último (un hilo puede tener varias referencias).
+    const coincidencias = t.referenceMatches
+      .map(
+        (m) =>
+          `${m.type}${m.state ? ` ${m.state}` : ''} sobre ${m.partNumber ?? '—'}${m.brand ? ` (${m.brand})` : ''}, ${
+            m.isOwn ? 'lo enviaste tú' : 'lo envió la contraparte'
+          }`,
+      )
+      .join('; ');
+    return `${base} · con esa referencia: ${coincidencias}`;
   });
 
   return {

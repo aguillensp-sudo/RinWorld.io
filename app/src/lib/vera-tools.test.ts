@@ -300,6 +300,31 @@ describe('listar_mis_hilos es metadata-only, y eso es la mitad del producto', ()
     expect(leaksCiphertext('…wrapped_cek: yGh8=…')).toBe(true);
   });
 
+  it('filtra por referencia en cualquier elemento del hilo y dice todas las coincidencias', async () => {
+    fetchThreadPage.mockResolvedValueOnce({
+      threads: [
+        {
+          id: 'thread-9',
+          counterpartyName: 'Anadolu Rulman',
+          counterpartyCountry: 'TR',
+          state: 'CON OFERTA PENDIENTE',
+          lastItemAt: '2026-08-11T10:00:00Z',
+          lastItem: { type: 'OFERTA', partNumber: '7210-B', isOwn: false },
+          referenceMatches: [
+            { type: 'CONSULTA', partNumber: '6205-2RS', brand: 'NSK', isOwn: true, state: 'Sin stock' },
+          ],
+        },
+      ],
+      total: 1,
+    });
+    const r = await runTool('listar_mis_hilos', { referencia: '6205-2RS' }, contexto());
+    const [arg] = fetchThreadPage.mock.calls.at(-1) as [{ reference?: string }];
+    expect(arg.reference).toBe('6205-2RS');
+    // La referencia buscada NO es la del último elemento: tiene que salir igual.
+    expect(r.content).toContain('6205-2RS');
+    expect(r.content).toContain('Sin stock');
+  });
+
   it('filtra por contraparte cuando el modelo la pasa', async () => {
     await runTool('listar_mis_hilos', { contraparte: 'Anadolu' }, contexto());
     const [arg] = fetchThreadPage.mock.calls[0] as [{ orgId: string; search: string }];

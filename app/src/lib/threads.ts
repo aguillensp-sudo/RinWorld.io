@@ -68,6 +68,17 @@ export interface ThreadSummary {
   state: ThreadState;
   lastItemAt: string;
   lastItem: LastItem | null;
+  /** Solo si se buscó por referencia: los elementos del hilo que la llevan, no
+   *  solo el último. Metadatos en claro (`part_number`, `brand`, estados). */
+  referenceMatches?: ReferenceMatch[];
+}
+
+export interface ReferenceMatch {
+  type: ItemType;
+  partNumber: string | null;
+  brand: string | null;
+  isOwn: boolean;
+  state: string | null;
 }
 
 /** Spec §3: 30 hilos por página, server-side. */
@@ -188,6 +199,8 @@ export interface ThreadQuery {
   orgId: string;
   search: string;
   page: number;
+  /** Filtra por referencia (`part_number`) en CUALQUIER elemento del hilo. */
+  reference?: string | undefined;
 }
 
 /**
@@ -228,8 +241,18 @@ async function orgIdsMatching(term: string): Promise<string[]> {
  * sumen. La diferencia está comprobada en `messages.spec.ts` contra la base real,
  * porque es justo la clase de cosa que un test de unidad con mock no puede ver.
  */
-export async function fetchThreadPage({ orgId, search, page }: ThreadQuery): Promise<ThreadPage> {
+export async function fetchThreadPage({ orgId, search, page, reference }: ThreadQuery): Promise<ThreadPage> {
   let q = supabase.from('threads').select(COLUMNS, { count: 'exact' });
+
+  // Búsqueda por referencia: mira TODOS los elementos, no solo el último. Los
+  // metadatos en claro bastan; nunca se piden las columnas cifradas.
+  let matches: Map<string, ReferenceMatch[]> | null = null;
+  const ref = sanitizeSearch(reference ?? '');
+  if (ref) {
+    matches = await fetchReferenceMatches(ref, orgId);
+    if (matches.size === 0) return { threads: [], total: 0 };
+    q = q.in('id', [...matches.keys()]);
+  }
 
   const term = sanitizeSearch(search);
   if (term) {
@@ -260,10 +283,45 @@ export async function fetchThreadPage({ orgId, search, page }: ThreadQuery): Pro
         state: r.state,
         lastItemAt: r.last_item_at,
         lastItem: lastItems.get(r.id) ?? null,
+        ...(matches ? { referenceMatches: matches.get(r.id) ?? [] } : {}),
       };
     }),
     total: count ?? 0,
   };
+}
+
+/** Los elementos cuya referencia contiene `term`, agrupados por hilo. */
+async function fetchReferenceMatches(
+  term: string,
+  orgId: string,
+): Promise<Map<string, ReferenceMatch[]>> {
+  const out = new Map<string, ReferenceMatch[]>();
+  const { data, error } = await supabase
+    .from('thread_items')
+    .select('thread_id, item_type, part_number, brand, sender_org_id, estado_oferta, estado_consulta')
+    .ilike('part_number', `%${term}%`)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  for (const row of (data ?? []) as unknown as {
+    thread_id: string;
+    item_type: ItemType;
+    part_number: string | null;
+    brand: string | null;
+    sender_org_id: string;
+    estado_oferta: string | null;
+    estado_consulta: string | null;
+  }[]) {
+    const list = out.get(row.thread_id) ?? [];
+    list.push({
+      type: row.item_type,
+      partNumber: row.part_number,
+      brand: row.brand,
+      isOwn: row.sender_org_id === orgId,
+      state: row.estado_oferta ?? row.estado_consulta,
+    });
+    out.set(row.thread_id, list);
+  }
+  return out;
 }
 
 /**

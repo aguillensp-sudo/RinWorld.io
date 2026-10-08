@@ -68,6 +68,23 @@ export function ThreadComposer({
           rows={1}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+            if (e.altKey || e.shiftKey) {
+              // Alt+Enter (y Shift+Enter) = salto de línea. El navegador no lo
+              // inserta con Alt, así que se hace a mano en la posición del cursor.
+              if (e.altKey) {
+                e.preventDefault();
+                const el = e.currentTarget;
+                const { selectionStart: a, selectionEnd: b } = el;
+                setTexto(texto.slice(0, a) + String.fromCharCode(10) + texto.slice(b));
+                requestAnimationFrame(() => el.setSelectionRange(a + 1, a + 1));
+              }
+              return;
+            }
+            e.preventDefault();
+            void enviar();
+          }}
           disabled={enviando}
         />
         <button

@@ -111,6 +111,18 @@ describe('el envío (D-08-02)', () => {
 });
 
 describe('lo que sigue fuera del MVP, y lo dice', () => {
+  it('Enter envía el mensaje y Alt+Enter mete un salto de línea', async () => {
+    const user = userEvent.setup();
+    const onSend = envioOk();
+    render(<ThreadComposer onSend={onSend} />);
+    const campo = screen.getByLabelText('Escribe un mensaje');
+    await user.type(campo, 'hola{Alt>}{Enter}{/Alt}adiós');
+    expect(campo).toHaveValue('hola\nadiós');
+    expect(onSend).not.toHaveBeenCalled();
+    await user.keyboard('{Enter}');
+    expect(onSend).toHaveBeenCalledWith('hola\nadiós');
+  });
+
   it('sin `onCreateOffer` el botón `Crear oferta` no se pinta (no hay control inerte)', () => {
     render(<ThreadComposer onSend={envioOk()} />);
     expect(screen.queryByRole('button', { name: 'Crear oferta' })).toBeNull();

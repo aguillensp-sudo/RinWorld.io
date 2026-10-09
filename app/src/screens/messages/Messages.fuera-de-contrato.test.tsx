@@ -125,3 +125,16 @@ describe('MSG-01 · cableado a MSG-02 — fuera del contrato del arnés', () => 
     ).resolves.not.toThrow();
   });
 });
+
+describe('MSG-01 · Nuevo contacto lleva al Directorio — fuera del contrato del arnés', () => {
+  it('con `onOpenDirectory`, "Nuevo contacto" está activo, lleva al Directorio y no lleva el aviso de «fuera del MVP»', async () => {
+    fetchThreadPage.mockResolvedValue(page([thread()], 1));
+    const onOpenDirectory = vi.fn();
+    render(<Messages profile={profile} now={NOW} onOpenDirectory={onOpenDirectory} />);
+    const boton = screen.getByRole('button', { name: /Nuevo contacto/ });
+    expect(boton).toBeEnabled();
+    expect(screen.queryByTestId('directorio-scope')).toBeNull();
+    await userEvent.click(boton);
+    expect(onOpenDirectory).toHaveBeenCalledTimes(1);
+  });
+});

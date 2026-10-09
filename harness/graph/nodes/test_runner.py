@@ -123,9 +123,20 @@ def check_toolchain_or_exit() -> None:
 # En Playwright `NO_COLOR` no apaga nada —los workers reciben `FORCE_COLOR=1`
 # igualmente— y solo produce los avisos, asi que ahi no se pone. El resto de
 # herramientas (vitest, tsc) sigue con las dos: son las que la necesitan.
+# F-230 · el e2e del arnes ya no corre contra produccion. Este script traduce las
+# `SUPABASE_E2E_*` de `app/.env` a las `VITE_*` que lee el build y lanza `npm run e2e`
+# contra `bearingworld-e2e`: las altas de prueba y las cuentas del PO que viven en
+# produccion dejan de romper la suite.
+E2E_SCRIPT = "scripts/run-e2e-against-e2e-project.mjs"
+
+
+def _es_playwright(cmd: list) -> bool:
+    return "playwright" in cmd or E2E_SCRIPT in cmd
+
+
 def _entorno_sin_color(cmd: list) -> dict:
     env = {**os.environ, "NO_COLOR": "1", "FORCE_COLOR": "0"}
-    if "playwright" in cmd:
+    if _es_playwright(cmd):
         env.pop("NO_COLOR")
     return env
 
@@ -558,6 +569,8 @@ def _correr_e2e(runner) -> tuple:
     cmd = ["npx", "playwright", "test"]
     if runner is not run_cmd:
         return runner(cmd, APP)
+    # F-230: la suite real va contra `bearingworld-e2e`, no contra produccion.
+    cmd = ["node", E2E_SCRIPT]
     limite = time.time() + E2E_GRACIA_PUERTO
     while puerto_ocupado() and time.time() < limite:
         time.sleep(1)

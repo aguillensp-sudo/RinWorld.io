@@ -270,6 +270,26 @@ def test_toolchain():
     check("la salida en UTF-8 sobrevive", code == 0 and "Nordwälz" in out, repr(out))
 
 
+def test_e2e_real_va_contra_el_proyecto_aislado():
+    """F-230. La suite e2e real se lanza por el script que apunta a `bearingworld-e2e`,
+    no con `npx playwright test` a secas (que usaba el `app/.env` de produccion)."""
+    print("\nEl e2e del arnes va contra bearingworld-e2e (F-230)")
+    from ..graph.nodes import test_runner as tr
+
+    vistos = []
+
+    def falso(cmd, cwd):
+        vistos.append(cmd)
+        return 0, ""
+
+    tr._correr_e2e(falso)
+    check("con un runner inyectado el comando logico no cambia", vistos == [["npx", "playwright", "test"]], repr(vistos))
+    check("⚠ el comando real es el script del proyecto aislado", tr.E2E_SCRIPT.endswith("run-e2e-against-e2e-project.mjs"))
+    check("y ese script existe en app/", (tr.APP / tr.E2E_SCRIPT).is_file())
+    env = tr._entorno_sin_color(["node", tr.E2E_SCRIPT])
+    check("⚠ el script tampoco hereda NO_COLOR (lanza Playwright)", "NO_COLOR" not in env)
+
+
 def test_playwright_no_hereda_no_color():
     """F-184. Playwright pone `FORCE_COLOR=1` a sus workers; si el arnes les deja
     `NO_COLOR=1` heredado, Node avisa en cada uno (y reinicia uno por test
@@ -1909,6 +1929,7 @@ def main() -> int:
     test_pricing_date_guard()
     test_parse()
     test_toolchain()
+    test_e2e_real_va_contra_el_proyecto_aislado()
     test_playwright_no_hereda_no_color()
     test_c2_paths()
     test_c2_no_cuenta_un_e2e_saltado()

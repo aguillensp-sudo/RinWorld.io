@@ -187,14 +187,12 @@ describe('MSG-01 · pantalla', () => {
       );
     });
 
-    it('el recuento se formatea con Intl, no a mano', async () => {
-      // F-024: el pie de INV-01 en el mock decía "1.247" y el español correcto es
-      // "1247" — el CLDR de `es` no agrupa cuatro cifras. Se compara contra la
-      // función de formato, nunca contra la cifra del mock.
+    it('el recuento lleva punto de millares desde cuatro cifras (F-231)', async () => {
+      // F-231 (9-oct-2026) revierte F-024: las specs escriben "1.247" y es lo que se pinta.
       fetchThreadPage.mockResolvedValue(page([thread()], 1247));
       pintar();
       const info = await screen.findByTestId('pag-info');
-      expect(info.textContent).toContain((1247).toLocaleString('es-ES'));
+      expect(info.textContent).toContain('1.247 hilos');
     });
   });
 

@@ -69,15 +69,13 @@ describe('InventoryTable', () => {
   });
 
   /**
-   * El separador de miles español es el punto, no la coma. Pero ojo con el caso de
-   * cuatro cifras: el CLDR de `es` (y la recomendación de la RAE) **no** agrupa
-   * cuatro dígitos, así que 1250 sale "1250" y solo a partir de cinco aparece el
-   * punto. El HTML aprobado escribe "1.247" a mano, que es el uso informal; aquí
-   * manda `toLocaleString('es-ES')`, que es correcto y se mantiene solo.
+   * El separador de miles español es el punto, también desde cuatro cifras (F-231,
+   * decisión del PO del 9-oct-2026: las specs escriben "1.247"; `toLocaleString('es-ES')`
+   * no agrupa cuatro dígitos, por eso se usa `formatCount`).
    */
-  it('formatea la cantidad en español: punto a partir de cinco cifras', () => {
+  it('formatea la cantidad en español: punto de millares desde cuatro cifras', () => {
     renderTable([line({ id: 'l-1', quantity: 1250 })]);
-    expect(screen.getByText('1250')).toBeInTheDocument();
+    expect(screen.getByText('1.250')).toBeInTheDocument();
   });
 
   it('y con cinco cifras sí agrupa con punto, no con coma', () => {

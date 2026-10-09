@@ -5,6 +5,7 @@ import { fetchThreadPage, pageCount } from '../../lib/threads';
 import type { ThreadSummary } from '../../lib/threads';
 import { ThreadList } from './ThreadList';
 import styles from './Messages.module.css';
+import { formatCount } from '../../lib/format-count';
 
 /**
  * MSG-01 · Lista de Hilos — pantalla completa del panel de contenido.
@@ -141,7 +142,7 @@ export function Messages({
           El Directorio (DIR-01) queda fuera del MVP.
         </span>
         <span className={styles.count} data-testid="pag-info">
-          {total.toLocaleString('es-ES')} {total === 1 ? 'hilo' : 'hilos'} · Página {page} de{' '}
+          {formatCount(total)} {total === 1 ? 'hilo' : 'hilos'} · Página {page} de{' '}
           {pages}
         </span>
       </div>

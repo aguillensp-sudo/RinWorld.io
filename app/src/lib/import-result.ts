@@ -1,3 +1,4 @@
+import { formatCount } from './format-count';
 /**
  * Capa de datos de INV-03 · Resultado de la Importación.
  *
@@ -81,12 +82,7 @@ export function outcomeTitle(outcome: ImportOutcome): string {
   return TITLES[outcome];
 }
 
-/** Entero con punto de millares desde cuatro cifras (`1247` → `1.247`). */
-export function formatCount(n: number): string {
-  const int = Math.trunc(Math.abs(n)).toString();
-  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return n < 0 ? `-${grouped}` : grouped;
-}
+export { formatCount } from './format-count';
 
 /** `4,2 s`; una sola decimal, coma decimal. Sin medida: `—`. */
 export function formatSeconds(seconds: number | null): string {

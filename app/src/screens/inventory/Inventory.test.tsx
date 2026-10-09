@@ -289,7 +289,7 @@ describe('INV-01 · paginación', () => {
   it('con 1247 líneas anuncia 25 páginas, como el pie del HTML aprobado', async () => {
     fetchPage.mockResolvedValue({ lines: [line()], total: 1247 });
     renderScreen();
-    expect(await screen.findByTestId('pag-info')).toHaveTextContent('1247 líneas · pág. 1/25');
+    expect(await screen.findByTestId('pag-info')).toHaveTextContent('1.247 líneas · pág. 1/25');
   });
 
   it('con 12.500 líneas agrupa con punto y calcula 250 páginas', async () => {

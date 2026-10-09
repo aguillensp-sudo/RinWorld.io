@@ -1,5 +1,6 @@
 import { ageLabel, ageLevel, daysSince, type InventoryLine, type LineStatus } from '../../lib/inventory';
 import styles from './InventoryTable.module.css';
+import { formatCount } from '../../lib/format-count';
 
 /**
  * Tabla de inventario de INV-01, escrita a mano.
@@ -71,7 +72,7 @@ export function InventoryTable({ lines, now, onArchive, onDelete, busyId }: Prop
               <td>
                 <span className={`${styles.badge} ${styles.brand}`}>{line.brand}</span>
               </td>
-              <td>{line.quantity.toLocaleString('es-ES')}</td>
+              <td>{formatCount(line.quantity)}</td>
               <td>
                 <span className={`${styles.badge} ${styles.iso}`}>{line.country}</span>
               </td>

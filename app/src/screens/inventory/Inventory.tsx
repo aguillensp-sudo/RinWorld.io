@@ -19,6 +19,7 @@ import {
 import { UPLOAD_ACCEPT, UPLOAD_REJECTED, isAcceptedUpload } from '../../lib/inventory-import';
 import { InventoryTable } from './InventoryTable';
 import styles from './Inventory.module.css';
+import { formatCount } from '../../lib/format-count';
 
 /**
  * INV-01 · Panel de Inventario. Escrita a mano (Claude Code), no por el arnés.
@@ -217,13 +218,13 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
         <div className={styles.statsRow}>
           <Stat
             label="Líneas publicadas"
-            value={stats ? stats.published.toLocaleString('es-ES') : null}
+            value={stats ? formatCount(stats.published) : null}
             sub="líneas activas"
             testId="stat-published"
           />
           <Stat
             label="Desactualizadas"
-            value={stats ? stats.stale.toLocaleString('es-ES') : null}
+            value={stats ? formatCount(stats.stale) : null}
             sub={`sin actualizar +${7} días`}
             /* Spec §3: "Las tarjetas con valor crítico (> 0) muestran el número en
                naranja aviso". A cero se pinta normal: un cero en naranja lee como
@@ -472,7 +473,7 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
               />
               <nav className={styles.pag} aria-label="Paginación del inventario">
                 <span className={styles.pagInfo} data-testid="pag-info">
-                  {total.toLocaleString('es-ES')} {total === 1 ? 'línea' : 'líneas'} · pág.{' '}
+                  {formatCount(total)} {total === 1 ? 'línea' : 'líneas'} · pág.{' '}
                   {page}/{pages}
                 </span>
                 <button

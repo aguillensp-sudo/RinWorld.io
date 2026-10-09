@@ -167,7 +167,7 @@ describe('caja Consultas · CA-PANEL-03', () => {
 describe('caja Inventario · CA-PANEL-04', () => {
   it('lleva las líneas publicadas y la última publicación', async () => {
     pintar();
-    expect(await screen.findByText('1247')).toBeInTheDocument();
+    expect(await screen.findByText('1.247')).toBeInTheDocument();
     expect(screen.getByText('líneas publicadas')).toBeInTheDocument();
     expect(screen.getByText(/Última publicación: 28 jun 2026/)).toBeInTheDocument();
   });

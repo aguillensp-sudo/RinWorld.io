@@ -10,6 +10,7 @@ import {
   type PanelSummary,
 } from '../../lib/panel';
 import styles from './Panel.module.css';
+import { formatCount } from '../../lib/format-count';
 
 const EYEBROW = 'Panel · PANEL-01';
 const TITLE = 'Mi Panel';
@@ -143,7 +144,7 @@ export function Panel({ profile, now, onNavigate }: Props) {
                 <span className={styles.cardTitle}>Inventario</span>
               </span>
               <span className={styles.invLine}>
-                <b>{summary.inventory.published.toLocaleString('es-ES')}</b> líneas publicadas
+                <b>{formatCount(summary.inventory.published)}</b> líneas publicadas
               </span>
               <span className={styles.invLine}>
                 Última publicación: {dateLabel(summary.inventory.lastUploadAt)}

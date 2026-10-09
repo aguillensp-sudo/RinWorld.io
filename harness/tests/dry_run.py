@@ -206,6 +206,20 @@ def validar_tarea(task: dict) -> list:
             if ruta and not (ROOT / ruta).exists():
                 problemas.append(f"inputs.{clave}: no existe {ruta!r}")
 
+    # F-235: el prompt del Coder se construye AQUI, con la tarea real. Un campo
+    # obligatorio que falte (`inputs.spec` en REG-05) reventaba con `KeyError` ya
+    # lanzado, antes de llamar al modelo; ahora revienta en seco. Solo si los
+    # ficheros existen: si no, el aviso de arriba ya dice la causa y esto sumaria
+    # ruido con el mismo fallo.
+    if not problemas:
+        try:
+            from ..graph.nodes import coder
+            coder.build_system(task)
+        except Exception as e:  # noqa: BLE001 -- cualquier fallo es un problema de la tarea
+            falta = f"inputs.{e.args[0]}" if isinstance(e, KeyError) and e.args else type(e).__name__
+            problemas.append(
+                f"el prompt del Coder no se puede construir ({falta}): {type(e).__name__}: {e}")
+
     outputs = task.get("outputs") or []
     if not outputs:
         problemas.append("outputs: vacio")

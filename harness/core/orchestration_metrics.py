@@ -100,16 +100,21 @@ def iter_session_usage(jsonl_path: pathlib.Path):
             yield model, usage, obj.get("timestamp")
 
 
-def scan(repo_path: pathlib.Path) -> list:
+def scan(repo_path: pathlib.Path, sin_tarifa: dict | None = None) -> list:
     """Una fila por (sesion, modelo) encontrada. No escribe nada -- eso es
-    `write_csv`, para que `scan()` se pueda probar sin tocar disco."""
+    `write_csv`, para que `scan()` se pueda probar sin tocar disco.
+
+    F-227: un modelo SIN tarifa no tumba la medicion. Se aparta (no entra al CSV, que
+    no lleva un coste falso) y, si el llamador pasa un dict, se anota ahi:
+    `{modelo: {"sesiones": {...}, "tokens": n, "turnos": n}}`, para que la salida
+    lo DECLARE. En cuanto se anade su fila a PRICES, la siguiente pasada lo mide."""
     filas = []
     for tdir, worktree in transcript_dirs(repo_path).items():
         for jf in sorted(tdir.glob("*.jsonl")):
             por_modelo = defaultdict(lambda: {
                 "tokens_in": 0, "tokens_out": 0, "cache_write_5m": 0,
                 "cache_write_1h": 0, "cache_read": 0, "coste": 0.0,
-                "turnos": 0, "fecha_min": None,
+                "turnos": 0, "fecha_min": None, "sin_tarifa": False,
             })
             for model, usage, ts in iter_session_usage(jf):
                 acc = por_modelo[model]
@@ -119,14 +124,27 @@ def scan(repo_path: pathlib.Path) -> list:
                 acc["cache_write_5m"] += cache.get("ephemeral_5m_input_tokens", 0)
                 acc["cache_write_1h"] += cache.get("ephemeral_1h_input_tokens", 0)
                 acc["cache_read"] += usage.get("cache_read_input_tokens", 0)
-                acc["coste"] += pricing.cost_usd(model, usage)
+                try:
+                    acc["coste"] += pricing.cost_usd(model, usage)
+                except pricing.PriceTableError:
+                    acc["sin_tarifa"] = True
+                    if sin_tarifa is not None:
+                        d = sin_tarifa.setdefault(
+                            model, {"sesiones": set(), "tokens": 0, "turnos": 0})
+                        d["sesiones"].add(jf.stem)
+                        d["turnos"] += 1
+                        d["tokens"] += (
+                            usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+                            + usage.get("cache_read_input_tokens", 0)
+                            + cache.get("ephemeral_5m_input_tokens", 0)
+                            + cache.get("ephemeral_1h_input_tokens", 0))
                 acc["turnos"] += 1
                 fecha = (ts or "")[:10]
                 if fecha and (acc["fecha_min"] is None or fecha < acc["fecha_min"]):
                     acc["fecha_min"] = fecha
 
             for model, acc in por_modelo.items():
-                if acc["turnos"] == 0:
+                if acc["turnos"] == 0 or acc["sin_tarifa"]:
                     continue
                 filas.append({
                     "fecha": acc["fecha_min"] or "?",
@@ -143,6 +161,19 @@ def scan(repo_path: pathlib.Path) -> list:
                     "price_table_date": pricing.PRICE_TABLE_DATE,
                 })
     return sorted(filas, key=lambda r: (r["fecha"], r["sesion"], r["modelo"]))
+
+
+def declarar_sin_tarifa(sin_tarifa: dict) -> str | None:
+    """El texto con el que la salida DECLARA lo que no se pudo valorar (F-227), o None."""
+    if not sin_tarifa:
+        return None
+    sesiones = set().union(*(d["sesiones"] for d in sin_tarifa.values()))
+    tokens = sum(d["tokens"] for d in sin_tarifa.values())
+    modelos = ", ".join(sorted(sin_tarifa))
+    return (f"AVISO F-227: {len(sesiones)} sesiones ({tokens:,} tokens) NO se han valorado "
+            f"y NO estan en el CSV ni en el total: modelo sin tarifa -> {modelos}. "
+            f"Anade su fila a PRICES en orchestration_pricing.py con el precio publicado "
+            f"y vuelve a correr: se medira entonces.")
 
 
 def fusionar(nuevas: list, csv_path: pathlib.Path):
@@ -222,7 +253,8 @@ def main(argv=None) -> int:
     if not out_path.is_absolute():
         out_path = toplevel / out_path
 
-    rows, conservadas = fusionar(scan(repo_path), out_path)
+    sin_tarifa: dict = {}
+    rows, conservadas = fusionar(scan(repo_path, sin_tarifa), out_path)
     write_csv(rows, out_path)
 
     sesiones = {r["sesion"] for r in rows}
@@ -243,6 +275,10 @@ def main(argv=None) -> int:
           "dia que empezo, ver docstring del modulo)")
     for fecha in sorted(por_dia):
         print(f"  {fecha}: ${por_dia[fecha]:,.2f}")
+    aviso = declarar_sin_tarifa(sin_tarifa)
+    if aviso:
+        print(aviso)
+        print(aviso, file=sys.stderr)
     return 0
 
 

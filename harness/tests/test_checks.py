@@ -1394,6 +1394,63 @@ def test_la_corrida_escribe_su_propio_log():
           roto is None, repr(roto))
 
 
+def test_seco_construye_el_prompt_del_coder():
+    """F-235. `--seco` construye el prompt del Coder con la tarea real: un campo
+    obligatorio que falte (`inputs.spec`) se ve en seco, no con el modelo lanzado."""
+    print("\nF-235 · --seco construye el prompt del Coder")
+    from .dry_run import validar_tarea
+
+    tarea = json.loads((pathlib.Path(__file__).resolve().parents[1] / "tasks" / "MSG-01.json")
+                       .read_text(encoding="utf-8"))
+    check("la tarea de verdad sigue pasando", not validar_tarea(tarea), str(validar_tarea(tarea)[:1]))
+    sin_spec = json.loads(json.dumps(tarea))
+    del sin_spec["inputs"]["spec"]
+    problemas = validar_tarea(sin_spec)
+    check("⚠ sin `inputs.spec` la tarea es INVALIDA en seco y dice cual falta",
+          any("inputs.spec" in p and "prompt del Coder" in p for p in problemas), str(problemas[:1]))
+
+
+def test_el_medidor_no_se_para_con_un_modelo_sin_tarifa():
+    """F-227. Un modelo nuevo de Claude Code no tumba la medicion: se aparta del CSV y
+    se DECLARA (sesiones y tokens sin valorar); el resto se mide como siempre."""
+    print("\nF-227 · el medidor aparta y declara lo que no puede valorar")
+
+    def linea(modelo, i):
+        return json.dumps({"timestamp": "2026-10-09T10:00:0%dZ" % i, "message": {
+            "model": modelo, "usage": {"input_tokens": 100, "output_tokens": 50}}})
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tdir = pathlib.Path(tmp)
+        (tdir / "sesion-conocida.jsonl").write_text(
+            linea("claude-opus-5", 1) + "\n", encoding="utf-8")
+        (tdir / "sesion-mixta.jsonl").write_text(
+            linea("claude-opus-5", 2) + "\n" + linea("modelo-nuevo-9", 3) + "\n"
+            + linea("modelo-nuevo-9", 4) + "\n", encoding="utf-8")
+        original = orchestration_metrics.transcript_dirs
+        orchestration_metrics.transcript_dirs = lambda repo: {tdir: "/tmp/wt"}
+        try:
+            sin = {}
+            filas = orchestration_metrics.scan(pathlib.Path(tmp), sin)
+        finally:
+            orchestration_metrics.transcript_dirs = original
+
+    check("⚠ no peta con un modelo sin tarifa", True)
+    check("el modelo conocido se mide en las dos sesiones",
+          sorted((f["sesion"], f["modelo"]) for f in filas)
+          == [("sesion-conocida", "claude-opus-5"), ("sesion-mixta", "claude-opus-5")],
+          str([(f["sesion"], f["modelo"]) for f in filas]))
+    check("el desconocido NO entra al CSV con un coste inventado",
+          all(f["modelo"] != "modelo-nuevo-9" for f in filas))
+    d = sin.get("modelo-nuevo-9")
+    check("queda anotado: 1 sesion, 2 turnos, 300 tokens",
+          d is not None and len(d["sesiones"]) == 1 and d["turnos"] == 2 and d["tokens"] == 300,
+          str(d))
+    aviso = orchestration_metrics.declarar_sin_tarifa(sin) or ""
+    check("⚠ y se declara en la salida, con el modelo y el hallazgo",
+          "F-227" in aviso and "modelo-nuevo-9" in aviso and "1 sesiones" in aviso, aviso)
+    check("sin nada que apartar no declara nada", orchestration_metrics.declarar_sin_tarifa({}) is None)
+
+
 def test_el_csv_de_orquestacion_no_pierde_historia():
     """F-157 · una pasada normal del medidor borraba la historia que ya no esta en disco.
 
@@ -1948,6 +2005,8 @@ def main() -> int:
     test_c2_reparte_las_culpas_del_e2e()
     test_la_corrida_escribe_su_propio_log()
     test_el_csv_de_orquestacion_no_pierde_historia()
+    test_seco_construye_el_prompt_del_coder()
+    test_el_medidor_no_se_para_con_un_modelo_sin_tarifa()
     test_segundo_proveedor_no_toca_el_primero()
     test_el_e2e_no_se_cruza_entre_arboles()
     test_la_muerte_por_infraestructura_no_tira_lo_pagado()

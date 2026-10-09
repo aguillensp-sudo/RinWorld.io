@@ -18,3 +18,6 @@ D3 del microplan: `bearingworld-e2e` al día.
 - F-172 cerrado: INV-01, MSG-01 y SentOffers usan SearchField (commit de codigo aparte). SentOffers ya no filtra al teclear. Vitest 1985 verdes, e2e inventario y mensajeria 33/33. No visto en navegador.
 - F-227 (medidor tolerante), F-235 (--seco construye el prompt) y harness-review.csv (4 filas reconstruidas desde git: DIR-02, INVT-01, REG-09, FRU) cerrados. F-170 fuera de la lista (ya estaba cerrado). Deuda sin fecha: solo F-213.
 - Ojo: al encender F-235, 7 tareas cerradas salen invalidas en --seco por contratos retocados a mano tras su corrida (ya lo eran antes).
+- D3 completo: F-211 (open_thread 0056, banco de esquema, aplicada a produccion y a e2e), enlaces muertos y textos (NotAvailable, Nuevo contacto, contraparte de MSG-02, canal email), e2e de H5 con dos contextos. Suite aislada 164/164.
+- Lecciones: (1) el e2e de H5 borraba el hilo de siembra y dejo rota la restauracion de bearingworld-e2e (repuesta a mano por SQL); ahora vacia los elementos y repone la fila. (2) 0056 se aplico por el MCP en produccion y en e2e despues del banco.
+- Sin decidir: el primer mensaje de Contactar es texto libre, sin plantilla.

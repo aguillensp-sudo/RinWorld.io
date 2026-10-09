@@ -298,7 +298,7 @@ pantalla INV-01 completa — eso es del día 3 en adelante.
 scaffold React. Único hallazgo que cambia una decisión de spec: SP-2 inclina GAP-001 hacia
 WebCrypto nativo (F-008), pendiente de confirmar X25519 en Safari/Firefox antes de retirar el
 fallback P-256.
-| [F-211](findings/F-211.md) | 2026-09-25 | `SPEC` | `Contactar` sin hilo previo no se puede construir con el esquema actual | ABIERTO |
+| [F-211](findings/F-211.md) | 2026-09-25 | `SPEC` | `Contactar` sin hilo previo no se puede construir con el esquema actual | Cerrado |
 | [F-212](findings/F-212.md) | 2026-09-25 | `SPEC` | La spec y el HTML aprobado prometen un correo que el proyecto no puede enviar | CERRADO |
 | [F-213](findings/F-213.md) | 2026-09-25 | `DESIGN` | No existe `Ajustes` | ABIERTO, menor |
 | [F-214](findings/F-214.md) | 2026-09-25 | `SEGURIDAD` | Revocar un usuario no le impide iniciar sesión, solo le deja sin datos | CERRADO 26-sep: `session.ts` + Edge Function `ban-revoked-member`; ban real probado (`User is banned`) |

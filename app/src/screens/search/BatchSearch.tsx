@@ -27,6 +27,8 @@ interface Props {
   profile: MemberProfile;
   /** Inyectable para que los tests no dependan del reloj. */
   now?: Date;
+  /** Abre la ficha de la empresa (DIR-02). Opcional: sin él `Contactar` queda apagado. */
+  onOpenOrganization?: (orgId: string) => void;
 }
 
 /**
@@ -43,7 +45,7 @@ interface Props {
  * y la lógica pura de parseo/tope/cabeceras/CSV vive en `lib/batch.ts`. Aquí
  * solo se pinta y se orquesta.
  */
-export function BatchSearch({ profile, now }: Props) {
+export function BatchSearch({ profile, now, onOpenOrganization }: Props) {
   const [text, setText] = useState('');
   /** `null` = no se ha lanzado ninguna búsqueda todavía en esta pantalla. */
   const [results, setResults] = useState<BatchResult[] | null>(null);
@@ -300,6 +302,7 @@ export function BatchSearch({ profile, now }: Props) {
                     }}
                     onConsult={handleConsult}
                     onContact={handleContact}
+                    onOpenOrganization={onOpenOrganization}
                   />
                 </li>
               ))}

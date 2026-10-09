@@ -484,6 +484,14 @@ export function App() {
     setInvitationToken(null);
   };
 
+  /** `Contactar` de una fila de búsqueda: la ficha de la empresa (DIR-02) vive en `Empresas`. */
+  const openOrganization = (orgId: string) => {
+    setWatchersOpen(false);
+    setBatchOpen(false);
+    setNav(EMPRESAS_NAV);
+    setOrgProfileId(orgId);
+  };
+
   const navigate = (index: number) => {
     setNav(index);
     setOpenThreadId(null);
@@ -927,7 +935,7 @@ export function App() {
         ) : batchOpen ? (
           /* SRCH-02. `now` explícito y construido en el render, mismo criterio
            * que SRCH-01: la columna Antigüedad de sus tablas es relativa al reloj. */
-          <BatchSearch profile={state.profile} now={new Date()} />
+          <BatchSearch profile={state.profile} now={new Date()} onOpenOrganization={openOrganization} />
         ) : (
           <SearchResults
             profile={state.profile}
@@ -935,6 +943,7 @@ export function App() {
             veraCriteria={veraCriteria}
             onOpenWatchers={() => setWatchersOpen(true)}
             onOpenBatch={() => setBatchOpen(true)}
+            onOpenOrganization={openOrganization}
           />
         )
       ) : onSelling ? (

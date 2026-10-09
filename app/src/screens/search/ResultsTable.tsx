@@ -22,6 +22,8 @@ interface Props {
   onToggleFavorite: (orgId: string) => void;
   onConsult: (lineId: string) => void;
   onContact: (orgId: string) => void;
+  /** Abre la ficha de la empresa (DIR-02), donde vive `Contactar`. Sin él el botón queda apagado con su motivo. */
+  onOpenOrganization?: ((orgId: string) => void) | undefined;
 }
 
 /**
@@ -60,6 +62,7 @@ export function ResultsTable({
   onToggleFavorite,
   onConsult,
   onContact,
+  onOpenOrganization,
 }: Props) {
   const nowValue = now ?? new Date();
 
@@ -211,9 +214,13 @@ export function ResultsTable({
                       <button
                         type="button"
                         className={styles.contact}
-                        disabled
-                        title="El hilo libre con el proveedor está fuera del alcance de esta versión"
-                        onClick={() => onContact(row.orgId)}
+                        disabled={!onOpenOrganization}
+                        title={
+                          onOpenOrganization
+                            ? 'Abre la ficha de la empresa para contactarla'
+                            : 'El hilo libre con el proveedor está fuera del alcance de esta versión'
+                        }
+                        onClick={() => (onOpenOrganization ? onOpenOrganization(row.orgId) : onContact(row.orgId))}
                       >
                         Contactar
                       </button>

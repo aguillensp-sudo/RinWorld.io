@@ -309,15 +309,17 @@ jobs:
         # todo lo que va detrás del `throw`) y el aviso sí.
         # F-228: 6 reintentos de 5 s (30 s) se quedaban cortos -el alias de Vercel
         # tarda más en servir el bundle nuevo y daba 404 con producción ya sana-;
-        # ahora 18 de 10 s (3 min). Un fallo de verdad sigue fallando, solo más tarde.
+        # 18 de 10 s (3 min). El 9-oct-2026 volvió a dar 404 DOS veces con el despliegue bien
+        # (el bundle nuevo ya se servía minutos después): ahora 36 de 10 s (6 min). Un fallo
+        # de verdad sigue fallando, solo más tarde.
         working-directory: ${{ github.workspace }}
         run: |
           url=https://rin-world-io.vercel.app
-          js=$(curl -fsS --retry 18 --retry-delay 10 --retry-all-errors "$url" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+          js=$(curl -fsS --retry 36 --retry-delay 10 --retry-all-errors "$url" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
           if [ -z "$js" ]; then
             echo "::error::F-168 · el index.html de producción no enlaza ningún bundle"; exit 1
           fi
-          curl -fsS --retry 18 --retry-delay 10 --retry-all-errors --compressed "$url/$js" -o bundle-produccion.js
+          curl -fsS --retry 36 --retry-delay 10 --retry-all-errors --compressed "$url/$js" -o bundle-produccion.js
           if grep -q 'Faltan VITE_SUPABASE_URL' bundle-produccion.js || ! grep -q 'Correo electr' bundle-produccion.js; then
             echo "::error::F-168 · $js no contiene la app: revisa las variables VITE_* del proyecto de Vercel (despliegue.md §2)"
             exit 1

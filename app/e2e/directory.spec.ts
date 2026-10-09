@@ -33,8 +33,9 @@ if (process.env.CI && !haveCreds) {
  *  pintando el HTML aprobado en vez del directorio real. */
 const INVENTADAS = ['Acme Bearings Ltd', 'Distribuciones Ruiz SL', 'Rodamientos del Sur SL'];
 
-/** Las seis de `supabase/seed/demo_orgs.sql`, todas `APPROVED`. */
+/** Las siete de `supabase/seed/demo_orgs.sql` (la última, sin hilo, es de F-211), todas `APPROVED`. */
 const SEMBRADAS = [
+  'Suministros Industriales Levante',
   'Rodamientos Ibéricos',
   'Nordwälz Lager',
   'Cuscinetti Padana',

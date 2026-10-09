@@ -44,6 +44,7 @@ export function Thread({
   threadId,
   now,
   onBack,
+  onOpenCounterparty,
 }: {
   profile: MemberProfile;
   threadId: string;
@@ -52,6 +53,9 @@ export function Thread({
    *  `Messages.onOpenThread`: el contrato de aceptación no lo pasa, y hacerlo
    *  obligatorio pondría C1 en rojo por el wiring y no por el artefacto. */
   onBack?: () => void;
+  /** El nombre de la contraparte abre su ficha pública (DIR-02). **Opcional**: sin él el
+   *  clic no hace nada, que es lo que ve el contrato de aceptación de MSG-02. */
+  onOpenCounterparty?: (orgId: string) => void;
 }) {
   const [detail, setDetail] = useState<ThreadDetail | null>(null);
   const [items, setItems] = useState<ThreadItem[]>([]);
@@ -217,11 +221,7 @@ export function Thread({
         <ThreadHeader
           detail={detail}
           onBack={() => onBack?.()}
-          onOpenCounterparty={() => {
-            // DIR-02 (ficha pública) queda fuera del MVP: el botón se pinta y su
-            // aviso no lleva a ninguna parte todavía, igual que `Consultar` y
-            // `Contactar` en SRCH-01.
-          }}
+          onOpenCounterparty={(orgId) => onOpenCounterparty?.(orgId)}
           onClose={handleClose}
           onRevert={() => {
             void handleRevert();

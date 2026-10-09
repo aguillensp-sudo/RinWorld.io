@@ -156,7 +156,17 @@ describe('MSG-01 · pantalla', () => {
       );
     });
 
-    it('"Nuevo contacto" está deshabilitado y dice por qué', async () => {
+    it('con `onOpenDirectory`, "Nuevo contacto" está activo, lleva al Directorio y no lleva el aviso de «fuera del MVP»', async () => {
+      const onOpenDirectory = vi.fn();
+      render(<Messages profile={profile} now={NOW} onOpenDirectory={onOpenDirectory} />);
+      const boton = screen.getByRole('button', { name: /Nuevo contacto/ });
+      expect(boton).toBeEnabled();
+      expect(screen.queryByTestId('directorio-scope')).toBeNull();
+      await userEvent.click(boton);
+      expect(onOpenDirectory).toHaveBeenCalledTimes(1);
+    });
+
+    it('sin `onOpenDirectory`, "Nuevo contacto" está deshabilitado y dice por qué', async () => {
       // DIR-01 no está entre las 8 pantallas del alcance (Plan §9). Mismo trato
       // que el botón de subida de INV-01: se queda en su sitio para no dejar la
       // barra a medias, deshabilitado y con el motivo también en texto, que un

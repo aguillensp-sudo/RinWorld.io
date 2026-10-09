@@ -47,8 +47,9 @@ describe('INV-01 · subida manual (con onPickFile)', () => {
   it('el canal manual dice «Siempre disponible» y solo el email sigue fuera', async () => {
     renderWith();
     expect(screen.getByText('Siempre disponible')).toBeInTheDocument();
-    expect(screen.getAllByText('Fuera del MVP')).toHaveLength(1);
-    expect(screen.getByTestId('channels-scope')).toHaveTextContent('El canal email (INV-04) está fuera del alcance del MVP');
+    expect(screen.getAllByText('Próximamente')).toHaveLength(1);
+    expect(screen.queryByText('Fuera del MVP')).toBeNull();
+    expect(screen.getByTestId('channels-scope')).toHaveTextContent('El canal email (INV-04) todavía no está disponible');
     // La dirección de ingestión sigue sin inventarse.
     expect(screen.getByTestId('ingest-addr')).toHaveTextContent('—');
     await waitFor(() => expect(fetchPage).toHaveBeenCalled());

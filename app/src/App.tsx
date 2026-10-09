@@ -6,13 +6,14 @@ import type { Screen } from './lib/vera-tools';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, navIndexOf } from './shell/AppShell';
-import { OperatorShell, operatorNavIndexOf } from './shell/OperatorShell';
+import { OPERATOR_NAV_ITEMS, OperatorShell, operatorNavIndexOf } from './shell/OperatorShell';
 import { Login } from './screens/Login';
 import { Panel } from './screens/panel/Panel';
 import { AdminRequests } from './screens/admin/AdminRequests';
 import { AdminBilling } from './screens/admin/AdminBilling';
 import { Directory } from './screens/directory/Directory';
 import { OrganizationProfile } from './screens/directory/OrganizationProfile';
+import { NotAvailable } from './screens/NotAvailable';
 import { Invitations } from './screens/onboarding/Invitations';
 import { Welcome } from './screens/onboarding/Welcome';
 import { KeysIntro } from './screens/onboarding/KeysIntro';
@@ -97,6 +98,8 @@ const HOME_NAV = navIndexOf('Panel');
 const EMPRESAS_NAV = navIndexOf('Empresas');
 /** FORO-01 §2: "Ítem activo en nav: **Foros**". Spec y HTML aprobado coinciden. */
 const FOROS_NAV = navIndexOf('Foros');
+/** El ítem `Contacto` del menú aprobado no tiene pantalla: dice que no está disponible. */
+const CONTACTO_NAV = navIndexOf('Contacto');
 
 /**
  * De índice de nav al nombre de pantalla que entiende VERA (F-090).
@@ -140,6 +143,8 @@ const ADMIN_VERA_SUBTITLE = 'Asistente del operador';
 
 /** ADMIN-02 §2: se abre desde el nav propio del Operador; ítem `Cobros` (HTML aprobado). */
 const COBROS_NAV = operatorNavIndexOf('Cobros');
+/** ADMIN-01: la cola de solicitudes. */
+const SOLICITUDES_NAV = operatorNavIndexOf('Solicitudes');
 
 /** REG-09 y FRU §5: "**Subtítulo del panel:** `Asistente de registro`" (HTML aprobado). */
 const ONBOARDING_VERA_SUBTITLE = 'Asistente de registro';
@@ -567,8 +572,12 @@ export function App() {
       >
         {operatorNav === COBROS_NAV ? (
           <AdminBilling operator={state.profile} />
-        ) : (
+        ) : operatorNav === SOLICITUDES_NAV ? (
           <AdminRequests operator={state.profile} />
+        ) : (
+          /* Panel, Organizaciones, Log de auditoría y Sistema no tienen pantalla: antes
+           * pintaban la cola de solicitudes con otro ítem marcado. */
+          <NotAvailable section={OPERATOR_NAV_ITEMS[operatorNav]?.label ?? 'Sección'} />
         )}
       </OperatorShell>
     );
@@ -878,9 +887,23 @@ export function App() {
             threadId={openThreadId}
             now={new Date()}
             onBack={() => setOpenThreadId(null)}
+            onOpenCounterparty={(orgId) => {
+              /* DIR-02 vive en `Empresas`: cambia el ítem de nav además de la pantalla. */
+              setOpenThreadId(null);
+              setNav(EMPRESAS_NAV);
+              setOrgProfileId(orgId);
+            }}
           />
         ) : (
-          <Messages profile={state.profile} now={new Date()} onOpenThread={setOpenThreadId} />
+          <Messages
+            profile={state.profile}
+            now={new Date()}
+            onOpenThread={setOpenThreadId}
+            onOpenDirectory={() => {
+              setOrgProfileId(null);
+              setNav(EMPRESAS_NAV);
+            }}
+          />
         )
       ) : onSearch ? (
         /* Mismo criterio que arriba con `now`, y por la misma razón: explícito
@@ -1024,6 +1047,8 @@ export function App() {
         ) : (
           <Forum profile={state.profile} now={new Date()} onOpenCategory={setForumCategorySlug} />
         )
+      ) : nav === CONTACTO_NAV ? (
+        <NotAvailable section="Contacto" />
       ) : (
         /*
          * PANEL-01, el punto de entrada tras el login. Sustituye al andamiaje

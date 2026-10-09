@@ -192,9 +192,10 @@ test.describe('INV-01 · inventario real', () => {
    * que alguien puede mandar su inventario.
    */
   test('la subida manual está disponible y solo el canal email sigue fuera del MVP', async ({ page }) => {
-    await expect(page.getByTestId('channels-scope')).toContainText('El canal email (INV-04) está fuera del alcance del MVP');
+    await expect(page.getByTestId('channels-scope')).toContainText('El canal email (INV-04) todavía no está disponible');
     await expect(page.getByText('Siempre disponible')).toHaveCount(1);
-    await expect(page.getByText('Fuera del MVP')).toHaveCount(1);
+    await expect(page.getByText('Próximamente')).toHaveCount(1);
+    await expect(page.getByText('Fuera del MVP')).toHaveCount(0);
     // El HTML aprobado promete un canal email "Activo" y una dirección de ingestión.
     // Ninguna de las dos existe, y la pantalla no finge que sí.
     await expect(page.getByText('Activo', { exact: true })).toHaveCount(0);

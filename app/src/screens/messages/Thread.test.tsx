@@ -86,6 +86,21 @@ beforeEach(() => {
 
 const pinta = () => render(<Thread profile={profile} threadId={HILO} now={NOW} />);
 
+describe('la contraparte', () => {
+  it('con `onOpenCounterparty`, su nombre abre su ficha pública con su id (DIR-02)', async () => {
+    const onOpenCounterparty = vi.fn();
+    render(<Thread profile={profile} threadId={HILO} now={NOW} onOpenCounterparty={onOpenCounterparty} />);
+    const esperado = detail();
+    await userEvent.click(await screen.findByRole('button', { name: esperado.counterpartyName }));
+    expect(onOpenCounterparty).toHaveBeenCalledWith(esperado.counterpartyId);
+  });
+
+  it('sin él, el clic no hace nada ni revienta', async () => {
+    pinta();
+    await userEvent.click(await screen.findByRole('button', { name: detail().counterpartyName }));
+  });
+});
+
 describe('carga', () => {
   it('pide el hilo y sus elementos con mi organización', async () => {
     pinta();

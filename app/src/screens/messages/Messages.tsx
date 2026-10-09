@@ -30,6 +30,7 @@ export function Messages({
   profile,
   now = new Date(),
   onOpenThread,
+  onOpenDirectory,
 }: {
   profile: MemberProfile;
   now?: Date;
@@ -38,6 +39,10 @@ export function Messages({
    *  obligatorio rompería sus tests por el wiring, no por la pantalla. Lo pasa
    *  `App.tsx` desde el día 7, cuando MSG-02 existe. */
   onOpenThread?: (id: string) => void;
+  /** `Nuevo contacto`: lleva al Directorio (DIR-01), donde se elige la organización y se
+   *  abre su ficha. **Opcional** por lo mismo que `onOpenThread`: sin él el botón sigue
+   *  apagado y lo dice, que es lo que ve el contrato de aceptación de MSG-01. */
+  onOpenDirectory?: () => void;
 }) {
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
@@ -129,15 +134,22 @@ export function Messages({
           inputLabel="Buscar por nombre de organización"
           submitLabel="Buscar"
         />
-        <button type="button" className={styles.primaryBtn} disabled>
+        <button
+          type="button"
+          className={styles.primaryBtn}
+          disabled={!onOpenDirectory}
+          onClick={onOpenDirectory}
+        >
           <i className="ti ti-address-book" aria-hidden="true" />
           Nuevo contacto
         </button>
         {/* El motivo va en texto visible, no en un `aria-describedby` invisible:
             F-023 e. Un botón deshabilitado sin explicación se lee como avería. */}
-        <span className={styles.scopeNote} data-testid="directorio-scope">
-          El Directorio (DIR-01) queda fuera del MVP.
-        </span>
+        {!onOpenDirectory && (
+          <span className={styles.scopeNote} data-testid="directorio-scope">
+            El Directorio (DIR-01) queda fuera del MVP.
+          </span>
+        )}
         <span className={styles.count} data-testid="pag-info">
           {formatCount(total)} {total === 1 ? 'hilo' : 'hilos'} · Página {page} de{' '}
           {pages}

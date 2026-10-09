@@ -98,7 +98,10 @@ const OUT_OF_SCOPE_NOTE =
  * (`bearingworld.io` ni siquiera está registrado).
  */
 const EMAIL_OUT_OF_SCOPE_NOTE =
-  'El canal email (INV-04) está fuera del alcance del MVP: no hay dirección de ingestión. La subida manual sí funciona.';
+  'El canal email (INV-04) todavía no está disponible: no hay dirección de ingestión. La subida manual sí funciona.';
+/** El MVP se cerró el 18-ago: con la subida manual ya cableada, «fuera del MVP» sobre el canal
+ *  email es un texto de otra época. Dice lo que pasa de verdad: aún no está. */
+const EMAIL_SOON = 'Próximamente';
 const MANUAL_AVAILABLE = 'Siempre disponible';
 
 interface Props {
@@ -344,7 +347,7 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
                 </div>
                 <div>
                   <div className={styles.chName}>{CHANNELS.emailName}</div>
-                  <span className={styles.chBadge}>{OUT_OF_SCOPE}</span>
+                  <span className={styles.chBadge}>{onPickFile ? EMAIL_SOON : OUT_OF_SCOPE}</span>
                 </div>
               </div>
               <p className={styles.chDesc}>{CHANNELS.emailDesc}</p>

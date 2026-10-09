@@ -122,11 +122,11 @@ test.describe('MSG-01 · hilos reales', () => {
     await expect(page.getByRole('listitem').first()).toContainText('Nordwälz Lager');
   });
 
-  test('"Nuevo contacto" está deshabilitado y dice por qué', async ({ page }) => {
-    // DIR-01 no está en el alcance (Plan §9). Mismo trato que el botón de subida
-    // de INV-01: presente, deshabilitado y con el motivo (F-023 e).
-    await expect(page.getByRole('button', { name: /Nuevo contacto/ })).toBeDisabled();
-    await expect(page.getByTestId('directorio-scope')).toContainText(/fuera del MVP/i);
+  test('"Nuevo contacto" lleva al Directorio, y la pantalla ya no dice que queda fuera del MVP', async ({ page }) => {
+    // DIR-01 existe desde el 11-sep: el botón estaba apagado con un motivo que ya es falso.
+    await expect(page.getByTestId('directorio-scope')).toHaveCount(0);
+    await page.getByRole('button', { name: /Nuevo contacto/ }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Empresas' })).toBeVisible();
   });
 });
 

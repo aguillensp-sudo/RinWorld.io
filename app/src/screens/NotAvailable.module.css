@@ -1,0 +1,36 @@
+.page {
+  background: var(--bw-cold-white);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 40px 48px 56px;
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bw-steel-mist);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+  margin: 0 0 16px;
+}
+
+.card {
+  max-width: 560px;
+  padding: 28px 24px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-body);
+  color: var(--bw-text-secondary);
+  line-height: 1.6;
+}

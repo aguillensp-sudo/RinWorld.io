@@ -22,3 +22,4 @@ D3 del microplan: `bearingworld-e2e` al día.
 - Lecciones: (1) el e2e de H5 borraba el hilo de siembra y dejo rota la restauracion de bearingworld-e2e (repuesta a mano por SQL); ahora vacia los elementos y repone la fila. (2) 0056 se aplico por el MCP en produccion y en e2e despues del banco.
 - Sin decidir: el primer mensaje de Contactar es texto libre, sin plantilla.
 - La CI de D3 salio roja en el job del arnes: el guardia de --seco cantaba MSG-01 porque mis tests de onOpenDirectory estaban en su contrato de aceptacion. Movidos a Messages.fuera-de-contrato (y los de la contraparte a Thread.fuera-de-contrato). Comprobado en local con python -m harness.tests.test_checks, no solo con pytest (pytest no ejecuta los check).
+- F-228: la comprobacion posterior al despliegue dio 404 dos veces con produccion sana; ahora espera 6 min (36x10 s). CI 37904929250 verde entera.

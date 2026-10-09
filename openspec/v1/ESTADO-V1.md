@@ -24,7 +24,7 @@ Vercel (token caducado). Quedan **D4** y **D5**. Detalle en `diario/dia-35.md`.
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
 | `bearingworld-e2e` en `0055` (hoy `0056`, aplicada igual) | Misma consulta al catálogo en los dos proyectos: 89 funciones (firma, `prosecdef`, ACL), 42 políticas, 258 columnas, 34 triggers, privilegios de columna de `members` | Los cinco hashes md5 coinciden. Se quitaron las líneas de comentario al aplicar: el `prosrc` no es byte a byte el del `.sql` |
-| Despliegue a Vercel | CI `37898798687` (verde, `deploy` incluido); `curl` a `rin-world-io.vercel.app` | Era un token caducado. 200 y el bundle contiene el texto del login. **No se vio la app en un navegador** |
+| Despliegue a Vercel | CI `37904929250` (verde, `deploy` incluido, con H5 y `Contactar` sin hilo en el e2e); `curl` a `rin-world-io.vercel.app` | Era un token caducado. 200 y el bundle contiene el texto del login. **No se vio la app en un navegador** |
 | Suite e2e entera contra `bearingworld-e2e` | `node app/scripts/run-e2e-against-e2e-project.mjs`, con H5 y `Contactar` sin hilo | 164 de 164 en local; la CI omite 3 (los de Editor: sin `E2E_EDITOR_*` en la CI) |
 | `open_thread` (`0056`) | Banco de esquema en Docker (`TODOS LOS ASSERTS PASAN`); `has_function_privilege` en producción | `anon` no ejecuta, `authenticated` sí; `prosecdef = false` |
 | `F-172` y `F-231` | `vitest run` entero (1985 verdes, 23 omitidas); e2e de inventario y mensajería 33/33; CI `37897770381` | Verde. **No se miró en un navegador** (ancho del campo, `1.247`) |

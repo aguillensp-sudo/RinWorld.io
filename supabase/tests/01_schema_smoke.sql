@@ -6180,4 +6180,252 @@ delete from public.organizations where id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0
 drop function public.t55_claves(text[]);
 drop function public.t55_hilo();
 
+-- =============================================================================
+-- 0057 · INV-04 fase 1: el canal de ingestión por correo
+-- =============================================================================
+-- Dos organizaciones: P1 con un ADMIN y un EDITOR, P2 con un ADMIN.
+insert into auth.users (id, email) values
+  ('a9000001-0000-0000-0000-000000000001', 'Admin@P1.test'),
+  ('a9000002-0000-0000-0000-000000000002', 'editor@p1.test'),
+  ('a9000003-0000-0000-0000-000000000003', 'admin@p2.test');
+insert into public.organizations (id, name, country, continent, status) values
+  ('a90b0001-0000-4000-8000-000000000001', 'Ingesta P1', 'ES', 'EU', 'APPROVED'),
+  ('a90b0002-0000-4000-8000-000000000002', 'Ingesta P2', 'DE', 'EU', 'APPROVED');
+insert into public.members (id, org_id, email, state) values
+  ('a9000001-0000-0000-0000-000000000001', 'a90b0001-0000-4000-8000-000000000001', 'Admin@P1.test', 'ACTIVE'),
+  ('a9000002-0000-0000-0000-000000000002', 'a90b0001-0000-4000-8000-000000000001', 'editor@p1.test', 'ACTIVE'),
+  ('a9000003-0000-0000-0000-000000000003', 'a90b0002-0000-4000-8000-000000000002', 'admin@p2.test', 'ACTIVE');
+
+-- Un EDITOR no abre el canal; el ADMIN sí, y es idempotente.
+do $$
+declare
+  t1 text; t2 text; ok boolean := false;
+begin
+  perform set_config('request.jwt.claim.sub', 'a9000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  begin
+    perform public.ensure_ingest_channel();
+  exception when insufficient_privilege then ok := true;
+  end;
+  reset role;
+  assert ok, 'INV-04: un EDITOR no puede abrir el canal de ingestión';
+
+  perform set_config('request.jwt.claim.sub', 'a9000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  t1 := public.ensure_ingest_channel();
+  t2 := public.ensure_ingest_channel();
+  reset role;
+  assert t1 ~ '^[a-km-np-z2-9]{12}$', 'INV-04: el token tiene 12 caracteres del alfabeto de 32';
+  assert t1 = t2, 'INV-04: abrir el canal dos veces devuelve la misma dirección';
+  assert (select count(*) from public.ingest_addresses where org_id = 'a90b0001-0000-4000-8000-000000000001') = 1,
+    'INV-04: y no crea una segunda fila';
+  assert (select email from public.ingest_senders where org_id = 'a90b0001-0000-4000-8000-000000000001' and is_protected)
+         = 'admin@p1.test', 'INV-04: el remitente protegido es el del ADMIN, en minúsculas';
+  raise notice 'OK · 0057 · INV-04: solo el ADMIN abre el canal, y es idempotente';
+end
+$$;
+
+-- Rotar revoca la anterior y deja una sola vigente. Un EDITOR no rota.
+do $$
+declare
+  antes text; despues text; ok boolean := false;
+begin
+  select token into antes from public.ingest_addresses
+   where org_id = 'a90b0001-0000-4000-8000-000000000001' and revoked_at is null;
+
+  perform set_config('request.jwt.claim.sub', 'a9000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  begin
+    perform public.rotate_ingest_address();
+  exception when insufficient_privilege then ok := true;
+  end;
+  reset role;
+  assert ok, 'INV-04: un EDITOR no puede rotar la dirección';
+
+  perform set_config('request.jwt.claim.sub', 'a9000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  despues := public.rotate_ingest_address();
+  reset role;
+  assert despues <> antes, 'INV-04: rotar da una dirección distinta';
+  assert (select revoked_at is not null from public.ingest_addresses where token = antes),
+    'INV-04: la anterior queda revocada en el mismo instante';
+  assert (select count(*) from public.ingest_addresses
+           where org_id = 'a90b0001-0000-4000-8000-000000000001' and revoked_at is null) = 1,
+    'INV-04: queda una sola vigente';
+
+  -- Rotar sin canal abierto (P2 nunca lo abrió) es un error, no una creación silenciosa.
+  ok := false;
+  perform set_config('request.jwt.claim.sub', 'a9000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  begin
+    perform public.rotate_ingest_address();
+  exception when others then ok := true;
+  end;
+  reset role;
+  assert ok, 'INV-04: rotar sin canal abierto falla';
+  raise notice 'OK · 0057 · INV-04: rotar revoca la anterior, deja una vigente y solo lo hace el ADMIN';
+end
+$$;
+
+-- Remitentes: validación, normalización, duplicado, protegido y tope.
+do $$
+declare
+  a uuid; b uuid; prot uuid; ok boolean;
+begin
+  perform set_config('request.jwt.claim.sub', 'a9000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+
+  a := public.add_ingest_sender('  ERP@Cliente.COM ');
+  b := public.add_ingest_sender('erp@cliente.com');
+  assert a = b, 'INV-04: añadir el mismo remitente dos veces devuelve la misma fila (y no distingue mayúsculas)';
+  assert exists (select 1 from public.ingest_senders where id = a and email = 'erp@cliente.com' and not is_protected),
+    'INV-04: el remitente se guarda en minúsculas y sin proteger';
+
+
+  ok := false;
+  begin perform public.add_ingest_sender('esto no es un email');
+  exception when invalid_parameter_value then ok := true; end;
+  assert ok, 'INV-04: un email inválido se rechaza';
+
+  ok := false;
+  begin perform public.add_ingest_sender('');
+  exception when invalid_parameter_value then ok := true; end;
+  assert ok, 'INV-04: un email vacío se rechaza';
+
+  select id into prot from public.ingest_senders
+   where org_id = 'a90b0001-0000-4000-8000-000000000001' and is_protected;
+  ok := false;
+  begin perform public.remove_ingest_sender(prot);
+  exception when insufficient_privilege then ok := true; end;
+  assert ok, 'INV-04: el remitente del ADMIN no se puede eliminar';
+
+  perform public.remove_ingest_sender(a);
+  assert not exists (select 1 from public.ingest_senders where id = a), 'INV-04: un remitente normal sí se elimina';
+
+  -- Tope de 20 (el protegido cuenta).
+  for i in 1..19 loop
+    perform public.add_ingest_sender('s' || i || '@cliente.com');
+  end loop;
+  ok := false;
+  begin perform public.add_ingest_sender('uno-mas@cliente.com');
+  exception when others then ok := true; end;
+  assert ok, 'INV-04: más de 20 remitentes por organización se rechaza';
+  reset role;
+  raise notice 'OK · 0057 · INV-04: remitentes normalizados, validados, con el del ADMIN protegido y tope de 20';
+end
+$$;
+
+-- El ADMIN de otra organización no toca ni ve lo de P1.
+do $$
+declare
+  x uuid; ok boolean := false;
+begin
+  select id into x from public.ingest_senders
+   where org_id = 'a90b0001-0000-4000-8000-000000000001' and not is_protected limit 1;
+
+  perform set_config('request.jwt.claim.sub', 'a9000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  begin perform public.remove_ingest_sender(x);
+  exception when others then ok := true; end;
+  assert ok, 'INV-04: el ADMIN de P2 no elimina un remitente de P1';
+  assert (select count(*) from public.ingest_senders) = 0, 'INV-04: y no ve ningún remitente de P1';
+  assert (select count(*) from public.ingest_addresses) = 0, 'INV-04: ni sus direcciones';
+  reset role;
+end
+$$;
+
+-- Los clientes no escriben en las tablas, y el EDITOR ni siquiera lee.
+do $$
+declare
+  ok boolean;
+begin
+  perform set_config('request.jwt.claim.sub', 'a9000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  ok := false;
+  begin insert into public.ingest_senders (org_id, email, is_protected)
+        values ('a90b0001-0000-4000-8000-000000000001', 'colado@x.com', true);
+  exception when insufficient_privilege then ok := true; end;
+  assert ok, 'INV-04: ni el ADMIN inserta directamente un remitente (ni se hace protegido)';
+  ok := false;
+  begin insert into public.ingest_events (org_id, sender_email, result)
+        values ('a90b0001-0000-4000-8000-000000000001', 'x@x.com', 'PROCESADO');
+  exception when insufficient_privilege then ok := true; end;
+  assert ok, 'INV-04: ni inserta un evento (los escribe service_role)';
+  ok := false;
+  begin update public.ingest_addresses set token = 'aaaaaaaaaaaa';
+  exception when insufficient_privilege then ok := true; end;
+  assert ok, 'INV-04: ni cambia un token a mano';
+  reset role;
+
+  perform set_config('request.jwt.claim.sub', 'a9000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  assert (select count(*) from public.ingest_senders) = 0 and (select count(*) from public.ingest_addresses) = 0,
+    'INV-04: un EDITOR de la misma organización no lee el canal';
+  reset role;
+
+  set local role anon;
+  ok := false;
+  begin perform count(*) from public.ingest_senders;
+  exception when insufficient_privilege then ok := true; end;
+  reset role;
+  assert ok, 'INV-04: anon no lee nada';
+  raise notice 'OK · 0057 · INV-04: los clientes solo leen, y solo el ADMIN de su organización';
+end
+$$;
+
+-- Historial: forma, solo lo ve el ADMIN de la organización, y la purga es de service_role.
+insert into public.ingest_events (org_id, sender_email, file_name, result, reason, rows_imported, message_id, received_at) values
+  ('a90b0001-0000-4000-8000-000000000001', 'erp@cliente.com', 'inv.csv', 'PROCESADO', null, 120, 'm-1', now()),
+  ('a90b0001-0000-4000-8000-000000000001', 'spam@x.com', null, 'RECHAZADO', 'REMITENTE_NO_AUTORIZADO', null, 'm-2', now() - interval '100 days'),
+  (null, 'otro@x.com', null, 'RECHAZADO', 'DIRECCION_INEXISTENTE', null, 'm-3', now() - interval '100 days');
+
+do $$
+declare
+  ok boolean; n integer;
+begin
+  -- La forma.
+  ok := false;
+  begin insert into public.ingest_events (sender_email, result, rows_imported) values ('a@b.com', 'RECHAZADO', 5);
+  exception when check_violation then ok := true; end;
+  assert ok, 'INV-04: un correo rechazado no puede traer filas importadas';
+  ok := false;
+  begin insert into public.ingest_events (sender_email, result, reason) values ('a@b.com', 'ERROR', 'texto libre con espacios');
+  exception when check_violation then ok := true; end;
+  assert ok, 'INV-04: el motivo es un código, no texto libre';
+  ok := false;
+  begin insert into public.ingest_events (sender_email, result, message_id) values ('a@b.com', 'ERROR', 'm-1');
+  exception when unique_violation then ok := true; end;
+  assert ok, 'INV-04: un mismo message_id no cuenta dos veces (los reintentos de SNS)';
+
+  -- La visibilidad.
+  perform set_config('request.jwt.claim.sub', 'a9000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  assert (select count(*) from public.ingest_events) = 2, 'INV-04: el ADMIN ve los eventos de su organización, no el sin organización';
+  reset role;
+  perform set_config('request.jwt.claim.sub', 'a9000003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  assert (select count(*) from public.ingest_events) = 0, 'INV-04: el ADMIN de P2 no ve los de P1';
+  ok := false;
+  begin perform public.purge_ingest_events(30);
+  exception when insufficient_privilege then ok := true; end;
+  reset role;
+  assert ok, 'INV-04: un cliente no purga el historial';
+
+  -- La purga.
+  set local role service_role;
+  n := public.purge_ingest_events(90);
+  reset role;
+  assert n = 2, 'INV-04: la purga borra los de más de 90 días (también el sin organización)';
+  assert (select count(*) from public.ingest_events) = 1, 'INV-04: y deja el reciente';
+  raise notice 'OK · 0057 · INV-04: el historial tiene su forma, su visibilidad y su purga';
+end
+$$;
+
+delete from public.ingest_events;
+delete from public.ingest_senders where org_id in ('a90b0001-0000-4000-8000-000000000001', 'a90b0002-0000-4000-8000-000000000002');
+delete from public.ingest_addresses where org_id in ('a90b0001-0000-4000-8000-000000000001', 'a90b0002-0000-4000-8000-000000000002');
+delete from public.members where org_id in ('a90b0001-0000-4000-8000-000000000001', 'a90b0002-0000-4000-8000-000000000002');
+delete from auth.users where id::text like 'a900000%';
+delete from public.organizations where id in ('a90b0001-0000-4000-8000-000000000001', 'a90b0002-0000-4000-8000-000000000002');
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

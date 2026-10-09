@@ -97,11 +97,15 @@ test.describe('REG-05 · quién NO la ve', () => {
     test.skip(!EDITOR.password, 'sin E2E_EDITOR_PASSWORD no hay cuenta de Editor con la que probarlo');
     test.use({ storageState: NO_SESSION });
 
-    test('no entra en la fase de claves: es solo del ADMIN (F-217)', async ({ page }) => {
+    // F-217 decía «es solo del ADMIN». Desde ACT-02 (7-oct-2026) el EDITOR tiene su propia
+    // puerta: `Activa tu cuenta`. Lo que sigue valiendo es que NO cae directo en la
+    // introducción a las claves de REG-05: tiene que pulsar `Empezar la activación`.
+    test('entra en ACT-02, no directo en la introducción a las claves de REG-05 (F-217)', async ({ page }) => {
       await comoRegistered(page);
       await signIn(page, EDITOR);
       await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toBeVisible();
-      await expect(page.getByText('Asistente de registro')).toHaveCount(0);
+      await expect(page.getByRole('heading', { level: 1, name: 'Activa tu cuenta' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: TITULO })).toHaveCount(0);
       await expect(page.getByRole('button', { name: BOTON })).toHaveCount(0);
     });
   });

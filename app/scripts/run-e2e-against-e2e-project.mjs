@@ -58,6 +58,12 @@ const childEnv = {
   VITE_SUPABASE_PUBLISHABLE_KEY: need('SUPABASE_E2E_PUBLISHABLE_KEY'),
   SUPABASE_SERVICE_KEY: need('SUPABASE_E2E_SERVICE_KEY'),
   VITE_DEMO_KEY_SEED: need('VITE_DEMO_KEY_SEED'),
+  // El operador de bearingworld-e2e tiene SU contrasena (la del secreto E2E_OPERATOR_PASSWORD
+  // de GitHub), distinta de la de produccion que lleva E2E_OPERATOR_PASSWORD en app/.env.
+  // Si SUPABASE_E2E_OPERATOR_PASSWORD esta en app/.env, manda para esta corrida (F-230).
+  ...(env.SUPABASE_E2E_OPERATOR_PASSWORD
+    ? { E2E_OPERATOR_PASSWORD: env.SUPABASE_E2E_OPERATOR_PASSWORD }
+    : {}),
   // E2E_ALPHA_*/E2E_BETA_*/E2E_EDITOR_* se heredan de process.env tal cual;
   // si no están ya puestas, dotenv (e2e/env.ts) las coge de app/.env.
 };

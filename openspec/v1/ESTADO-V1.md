@@ -13,26 +13,23 @@ las reglas en `CLAUDE.md`. La versión larga anterior sigue en `git show d2df8d4
 Empieza por §6 y luego §3.
 ---
 
-**Día 32 de V1 · 7-oct-2026 · Estado: CERRADO (17:45 UTC).** Día de ocho sesiones. Construido y en producción: **`REC-01` y `SET-SEC-01`**, **`INVT-02` y `ACT-02`**
-(25 pantallas; todas aceptadas por el PO: A.1, A.2 y A.3 de sus pruebas) y cuatro cierres de seguridad en la base: **`0050`** (canje de invitación), **`0051`**
-(`F-234`, 8 políticas), **`0052`** (`F-239`, backup estanco) y **`0053`/`0054`** (`F-242`, sustituir el backup exige la frase anterior). **`INV-04`** tiene plan
-(Amazon SES, `ingest.nortexsys.com`). Detalle en `diario/dia-32.md`.
-**8-oct (día 33), `INV-04` fase 0 hecha en lo que toca al correo:** dominio verificado en SES (eu-west-1), 3 CNAME de DKIM y MX en Arsys. Ver §1, §3.2 y `diario/dia-33.md`.
-**8-oct, microplan de 5 días: D1 (`0055`, `78182f2`) y D2 (`95cc7f8`, `29c1774`) hechos.** D2 = `createOffer`, `markOutOfStock`, «Responder con oferta», «Sin stock» y «Crear oferta». El PO los probó con dos sesiones (casos 1 a 4 OK, lo dijo en el chat); el estado del hilo se leyó de producción por SQL. **9-oct, D3 hecho:** `bearingworld-e2e` en `0055` (catálogo idéntico al de producción, medido). Ver `diario/dia-35.md`.
-
+**Día 35 de V1 · 9-oct-2026 · Estado: CERRADO (07:30 UTC).** Microplan de demo (8–12 oct, `plan-demo-h5.md`): **D1** (`0055`) y **D2** (`createOffer`, «Sin stock», «Crear oferta») hechos
+y probados por el PO. **D3, solo la mitad:** `bearingworld-e2e` ya está en `0055`; **sigue sin hacer** lo demás de D3 del plan §4 (`F-211` `Contactar` sin hilo, textos «fuera del MVP»
+falsos, enlaces muertos, e2e de H5 con dos contextos). Hoy además, cerrados por el PO o por este agente: `F-237`, `F-241`, `F-231` (millares con punto), `F-172` (buscador estándar
+en `INV-01`, `MSG-01` y `SentOffers`), `F-230` (el e2e del arnés va contra `bearingworld-e2e`, 162/162), `F-227`, `F-235` y `harness-review.csv`. Vercel desplegaba roto por un token caducado: arreglado.
+Detalle en `diario/dia-35.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| `0050`–`0054` en producción | Banco de esquema entero tras cada una; `pg_proc`, `has_function_privilege`, `has_column_privilege` y `pg_policies` de producción | Verde. Blob e IV sin `select`/`update` para `authenticated` y `anon`; solo existen las firmas nuevas de `store`/`replace_key_backup`; `end_key_recovery` no existe; el verificador no se lee |
-| `accept-invitation` (sin JWT) | `curl` a producción con una invitación sintética (borrada, contada a 0) | `validate` OK, `accept` 200, canjeado 404. El canjeado salió ADMIN (organización vacía): el caso EDITOR solo está en el banco |
-| `SET-SEC-01` y el verificador | `select` por SQL tras la prueba del PO | JULSA (`a.guillen@julsaindustrial.com`) **ya tiene verificador**; la cuenta `CANCELLED` `contact@nortexsys.com` no |
-| Suite y CI | `vitest run` entero (1974 verdes, 23 omitidas); CI `37650282186` | Verde con e2e y despliegue en `8991133`. Después solo hay commits de documentación `[skip ci]` |
-| Pruebas del PO | Lo dijo en el chat («todo aprobado A.2 y A.3»; A.1 OK; `SET-SEC-01` «ya funciona») | **No lo midió este agente.** Las pruebas con JULSA fueron antes y después de `0052`/`0053` |
-| `INV-04` fase 0: SES y DNS | `Resolve-DnsName` contra 8.8.8.8 (3 CNAME DKIM y MX de `ingest`, y el MX de `nortexsys.com` intacto: `mx.serviciodecorreo.es`); estado «Verificado» y menú «Recepción de correo electrónico» **pegados por el PO desde la consola** | DNS verde, medido. SES: lo dijo el PO, no se consultó la API |
-| Conector AWS del PO | `session_connectors_status` | `AWS MCP` pasó de `pending` a conectado al final del día (herramienta `aws___run_script`). **No se ha usado ni se ha mirado qué permisos tiene** |
+| `bearingworld-e2e` en `0055` | Misma consulta al catálogo en los dos proyectos: 89 funciones (firma, `prosecdef`, ACL), 42 políticas, 258 columnas, 34 triggers, privilegios de columna de `members` | Los cinco hashes md5 coinciden. Se quitaron las líneas de comentario al aplicar: el `prosrc` no es byte a byte el del `.sql` |
+| Despliegue a Vercel | CI `37898798687` (verde, `deploy` incluido); `curl` a `rin-world-io.vercel.app` | Era un token caducado. 200 y el bundle contiene el texto del login. **No se vio la app en un navegador** |
+| Suite e2e entera contra `bearingworld-e2e` | `node app/scripts/run-e2e-against-e2e-project.mjs` | 162 de 162 en local; la CI pasa 159 y omite 3 (los de Editor: sin `E2E_EDITOR_*` en la CI) |
+| `F-172` y `F-231` | `vitest run` entero (1985 verdes, 23 omitidas); e2e de inventario y mensajería 33/33; CI `37897770381` | Verde. **No se miró en un navegador** (ancho del campo, `1.247`) |
+| Datos de ALPHA | `select` por SQL tras el borrado | `Rodamientos Ibéricos`: 15 filas, 1 `PUBLISHED`. Se borraron 18 806 (`created_at >= 2026-10-06`), sin copia |
+| Pruebas del PO | Lo dijo en el chat | D2 casos 1–4 OK (ayer); hoy aprobó `F-241`, `F-231`, zxcvbn ≥ 3 y el borrado de ALPHA. **No lo midió este agente** |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -50,14 +47,15 @@ Empieza por §6 y luego §3.
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
-1. *(libre; `F-237` cerrado el 9-oct. Los números de §3 no se renumeran: otros documentos los citan.)*
+1. **Microplan de demo, lo que falta:** resto de **D3** (`F-211`, textos «fuera del MVP» falsos, enlaces muertos, e2e de H5), **D4** (alta real de las dos empresas, catálogo, ensayo 1,
+   resembrar cobros) y **D5** (arreglos, ensayo 2, congelación). Ver `plan-demo-h5.md` §4. Los números de §3 no se renumeran: otros documentos los citan.
 2. **`INV-04`, fase 1 (la base, sin AWS):** tablas `ingest_addresses`/`ingest_senders`/`ingest_events`, RLS solo ADMIN, RPC; la pantalla sin enseñar. **Fase 0 hecha** (8-oct):
    SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a `ingest` rebota hasta la fase 2: esperado).
    **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, se entra con rol federado, no con raíz).
    Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.
 3. *(resuelto el 9-oct: `F-241`, `F-231`, umbral de zxcvbn y datos de ALPHA; ver `DECISIONES-V1.md`. Sin renumerar.)*
 4. **`F-234` en las demás tablas:** `0051` envolvió 8; quedan **31** (`forum_*` y `watchers_*` primero). Patrón de `0047`/`0051`, con el banco delante.
-5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede fallar el contrato de la tarea
+5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera** (ahora contra `bearingworld-e2e`, `F-230`), con los marcadores; solo puede fallar el contrato de la tarea
    (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
 6. Deuda sin fecha: `F-213`.
 
@@ -104,12 +102,12 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-242`** · cerrado; solo la cuenta `CANCELLED` `contact@nortexsys.com` sigue sin verificador (irrelevante: está revocada) | — |
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
 | 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: fase 0 hecha salvo MFA y presupuesto; sigue la fase 1 (§3.2) | PO + este agente |
-| 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: `bearingworld-e2e` ya tiene el esquema (`0055`); sus Edge Functions no (solo `access-request` v1) |
+| 🟠 | **`F-225`** · el e2e del arnés ya no va contra producción (`F-230`); falta releer el hallazgo y cerrarlo · Edge Functions de `bearingworld-e2e` sin desplegar (solo `access-request` v1) | Este agente |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de más de un ADMIN tiene que llegar a la interfaz | Producto |
 | 🟠 | **Cifras 7 y 8** · solo `SRCH-03` tiene medida limpia (`F-205`) | Una sesión propia por pantalla |
-| 🟡 | **`F-224`** · dos e2e excusados en las tareas mientras exista la cuenta de prueba del PO en Rodamientos Ibéricos | PO |
+| 🟡 | **`F-224`** · dos e2e excusados en las tareas por la cuenta de prueba del PO en Rodamientos Ibéricos; el e2e aislado no la tiene (`F-230`) | Releer y cerrar |
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
 | 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
@@ -131,9 +129,11 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si el recorrido entero funciona en un navegador real**: aprobar en `ADMIN-01` → copiar el enlace → `REG-01` → `REG-05`. Medido **por partes**.
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
+- **Cómo se ven el `SearchField` en `Inventory`, `Messages` y `SentOffers`, y el `1.247`**: solo jsdom y e2e; nadie los ha mirado en un navegador.
+- **Si el despliegue de Vercel sirve el commit último**: la CI lo da verde y el bundle responde; no se comparó contra el SHA.
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
 - **Qué permisos tiene el conector `AWS MCP` del PO** y si usa credenciales acotadas: no se miró. **Qué límites tienen las funciones de borde hoy**: sin leer. **Si MFA y alarma de gasto están en la organización**: nadie lo ha visto.
 
 ---
 
-*Cierre del Día 32 · 7-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 35 · 9-oct-2026 · Dirección Técnica, Nortex Systems*

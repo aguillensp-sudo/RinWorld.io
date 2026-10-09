@@ -104,7 +104,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-242`** · cerrado; solo la cuenta `CANCELLED` `contact@nortexsys.com` sigue sin verificador (irrelevante: está revocada) | — |
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
 | 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: fase 0 hecha salvo MFA y presupuesto; sigue la fase 1 (§3.2) | PO + este agente |
-| 🟠 | **`F-230`** · el e2e local va contra producción y las altas de prueba vivas (`JULSA`, `Jose Bearings`: son las de la demo, no se borran) lo rompen | Apuntar el e2e local a `bearingworld-e2e` (ya en `0055`) |
+| 🟠 | **`F-230`** · el e2e del arnés ya va contra `bearingworld-e2e` (146/162): faltan la contraseña de `operador@bearingworld.test` en esa base (15 tests) y un test de `REG-05` desactualizado tras `ACT-02` | PO: contraseña en el panel Auth de `bearingworld-e2e` |
 | 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: `bearingworld-e2e` ya tiene el esquema (`0055`); sus Edge Functions no (solo `access-request` v1) |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |

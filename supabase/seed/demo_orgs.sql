@@ -98,23 +98,6 @@ update public.organizations set address = '12 rue des Forges',                  
 update public.organizations set address = 'Organize Sanayi Bölgesi 3. Cadde 7',  city = 'Ankara',    postal_code = '06378'  where id = 'f6000000-0000-4000-8000-000000000006';
 
 -- -----------------------------------------------------------------------------
--- 4b · La séptima: una empresa SIN HILO con nadie (F-211)
--- -----------------------------------------------------------------------------
--- `Contactar` sin hilo previo abre el cuadro «Primer mensaje», y con las seis de
--- arriba no se podía ver: Alpha tiene hilo con todas. Esta no tiene hilo con ninguna
--- cuenta de prueba, ni inventario, ni miembros; solo existe en el directorio.
--- ⚠ Cuenta de prueba que se ensucia: al contactarla se crea un hilo real y esa
--- empresa deja de servir. Para repetir el caso, borrar el hilo creado:
---   delete from public.threads where org_low_id = 'a9000000-0000-4000-8000-000000000009'
---      or org_high_id = 'a9000000-0000-4000-8000-000000000009';
-insert into public.organizations
-  (id, name, legal_name, country, continent, status, contact_phone, contact_email, address, city, postal_code)
-values
-  ('a9000000-0000-4000-8000-000000000009', 'Suministros Industriales Levante', 'Suministros Industriales Levante S.L.',
-   'ES', 'EU', 'APPROVED', '+34 963 555 120', 'info@sumlevante.es', 'Polígono El Oliveral, nave 12', 'Valencia', '46394')
-on conflict (id) do nothing;
-
--- -----------------------------------------------------------------------------
 -- 5 · Comprobación
 -- -----------------------------------------------------------------------------
 select id, name, country, continent, status, contact_phone, contact_email, address, city, postal_code

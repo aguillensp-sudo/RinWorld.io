@@ -120,7 +120,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
 | 🟡 | **`F-231`** · `1247` o `1.247` (§3.3): decisión del PO, no arreglo; contradice a `F-024` | PO |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
-| 🟠 | **Despliegue a Vercel roto** desde ≥ 8-oct: `Could not retrieve Project Settings` (`VERCEL_NEWACCOUNT_TOKEN` o proyecto `prj_ybo4…`). Tests y e2e verdes, **nada llega a producción desde `2b66b54`** | PO: revisar el token/proyecto en Vercel |
 | 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |

@@ -49,7 +49,7 @@ Vercel (token caducado). Quedan **D4** y **D5**. Detalle en `diario/dia-35.md`.
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
 1. **Microplan de demo, lo que falta:** **D4** (alta real de las dos empresas por el recorrido completo, catálogo de la vendedora, ensayo 1, resembrar cobros) y **D5** (arreglos,
    ensayo 2, congelación). Ver `plan-demo-h5.md` §4. Los números de §3 no se renumeran: otros documentos los citan.
-2. **`INV-04`, fase 1 (la base, sin AWS):** tablas `ingest_addresses`/`ingest_senders`/`ingest_events`, RLS solo ADMIN, RPC; la pantalla sin enseñar. **Fase 0 hecha** (8-oct):
+2. **`INV-04`, fase 2 (recepción)** — la **fase 1 está hecha** (9-oct, `0057`, `0add0ee`): tablas `ingest_addresses`/`ingest_senders`/`ingest_events`, RLS solo ADMIN, `ensure_/rotate_ingest_address`, `add_/remove_ingest_sender`, `purge_ingest_events` (service_role). Aplicada a producción y a `bearingworld-e2e`; privilegios comprobados en el catálogo de producción; banco de esquema en verde. La pantalla sigue sin enseñarse. **Fase 0 hecha** (8-oct):
    SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a `ingest` rebota hasta la fase 2: esperado).
    **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, se entra con rol federado, no con raíz).
    Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.

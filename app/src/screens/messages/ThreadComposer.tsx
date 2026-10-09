@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { OfferContent } from '../../lib/thread-detail';
 import { OfferCounterForm } from './OfferCounterForm';
 import styles from './ThreadComposer.module.css';
@@ -43,6 +43,15 @@ export function ThreadComposer({
 }) {
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const campoRef = useRef<HTMLTextAreaElement>(null);
+  const cursorTrasSalto = useRef<number | null>(null);
+  // El cursor de un textarea controlado salta al final cuando React reescribe el valor:
+  // se restaura en el mismo ciclo del render, antes de que llegue la siguiente tecla.
+  useLayoutEffect(() => {
+    if (cursorTrasSalto.current === null) return;
+    campoRef.current?.setSelectionRange(cursorTrasSalto.current, cursorTrasSalto.current);
+    cursorTrasSalto.current = null;
+  }, [texto]);
   const [ofertando, setOfertando] = useState(false);
 
   const vacio = texto.trim().length === 0;
@@ -61,6 +70,7 @@ export function ThreadComposer({
     <div className={styles.composer}>
       <div className={styles.inputRow}>
         <textarea
+          ref={campoRef}
           className={styles.textarea}
           name="mensaje"
           aria-label="Escribe un mensaje"
@@ -78,7 +88,7 @@ export function ThreadComposer({
                 const el = e.currentTarget;
                 const { selectionStart: a, selectionEnd: b } = el;
                 setTexto(texto.slice(0, a) + String.fromCharCode(10) + texto.slice(b));
-                requestAnimationFrame(() => el.setSelectionRange(a + 1, a + 1));
+                cursorTrasSalto.current = a + 1;
               }
               return;
             }

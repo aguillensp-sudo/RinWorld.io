@@ -128,3 +128,4 @@ Nueva decisión: una fila arriba del todo, con fecha y quién decidió. Una deci
 | **Millares con punto desde cuatro cifras (`1.247`) en toda la aplicación; revierte `F-024`** | 9-oct-2026, PO | `mvp/findings/F-231.md`, `app/src/lib/format-count.ts` |
 | **El umbral de zxcvbn para la frase del backup se mantiene en score ≥ 3** | 9-oct-2026, PO | `app/src/lib/passphrase.ts` |
 | **Se borran las líneas importadas por el PO en ALPHA el 6-oct (18 806 filas); la siembra de agosto se queda** | 9-oct-2026, PO | `mvp/findings/F-234.md` |
+| **El e2e del arnés va contra `bearingworld-e2e`, no contra producción** | 9-oct-2026, PO («hazlo así»). Cierra `F-230`; la contraseña del operador de esa base es propia y vive en el secreto de GitHub y en `SUPABASE_E2E_OPERATOR_PASSWORD` de `app/.env` | `mvp/findings/F-230.md` |

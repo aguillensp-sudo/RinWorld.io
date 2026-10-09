@@ -14,3 +14,4 @@ D3 del microplan: `bearingworld-e2e` al día.
 - Decisiones del PO sobre §3.3: F-241 aprobada tal cual; F-231 = 1.247 (código en 9cb6028, 4 tests cambiados, CI pendiente de mirar); zxcvbn se queda en score >= 3; borradas de ALPHA las 18 806 filas de la importación del 6-oct (quedan 15 de siembra, 1 PUBLISHED). F-230 sigue: JULSA y Jose Bearings son las empresas de la demo y no se borran.
 - Ojo: el borrado de ALPHA no se puede deshacer y se hizo sin copia; el archivo origen lo tiene el PO.
 - F-230 en curso: el arnes ya corre el e2e contra bearingworld-e2e (commit del arnes). Suite entera: 146 pasan, 16 fallan (15 por la contrasena del operador en esa base, 1 test de REG-05 desactualizado tras ACT-02). No se borro JULSA ni Jose Bearings.
+- F-230 cerrado: suite aislada 162/162 en local. Causas: contrasena del operador distinta en bearingworld-e2e (script nuevo) y test de REG-05/Editor desactualizado tras ACT-02.

@@ -15,3 +15,4 @@ D3 del microplan: `bearingworld-e2e` al día.
 - Ojo: el borrado de ALPHA no se puede deshacer y se hizo sin copia; el archivo origen lo tiene el PO.
 - F-230 en curso: el arnes ya corre el e2e contra bearingworld-e2e (commit del arnes). Suite entera: 146 pasan, 16 fallan (15 por la contrasena del operador en esa base, 1 test de REG-05 desactualizado tras ACT-02). No se borro JULSA ni Jose Bearings.
 - F-230 cerrado: suite aislada 162/162 en local. Causas: contrasena del operador distinta en bearingworld-e2e (script nuevo) y test de REG-05/Editor desactualizado tras ACT-02.
+- F-172 cerrado: INV-01, MSG-01 y SentOffers usan SearchField (commit de codigo aparte). SentOffers ya no filtra al teclear. Vitest 1985 verdes, e2e inventario y mensajeria 33/33. No visto en navegador.

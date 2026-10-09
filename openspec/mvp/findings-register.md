@@ -178,7 +178,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-169](findings/F-169.md) | 2026-09-17 | `PROCESO` | La revisión C5 de `ADMIN-01` dejó descuadrada la siembra de la base de producción, y el e2e local lo cazó como 3 de 4 en rojo. | Cerrado el 17-sep |
 | [F-170](findings/F-170.md) | 2026-09-17 | `SPEC-GAP` | `F-158` no era un caso aislado: once contradicciones más de la misma clase | Cerrado el 17-sep, las once: `INVT-01` |
 | [F-171](findings/F-171.md) | 2026-09-17 | `INFRA` | El paso «Producción sirve la app» puede dar verde contra el despliegue ANTERIOR. | Abierto |
-| [F-172](findings/F-172.md) | 2026-09-18 | `DESIGN` | ningún | Cerrado en DIR-01 y FORO-02 |
+| [F-172](findings/F-172.md) | 2026-09-18 | `DESIGN` | ningún | Cerrado |
 | [F-173](findings/F-173.md) | 2026-09-18 | `HARNESS` | el límite no limitaba a nadie | Cerrado el mismo día, antes de aplicar a |
 | [F-174](findings/F-174.md) | 2026-09-18 | `HARNESS` | `ForumThread. | Cerrado el mismo día |
 | [F-175](findings/F-175.md) | 2026-09-18 | `HARNESS` | El commit se dejó SIN `[skip ci]` en un momento en que el repo ya tenía `ForumThread. | Cerrado sin acción -el rojo era exacto y |

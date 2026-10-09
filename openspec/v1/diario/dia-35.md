@@ -16,3 +16,5 @@ D3 del microplan: `bearingworld-e2e` al día.
 - F-230 en curso: el arnes ya corre el e2e contra bearingworld-e2e (commit del arnes). Suite entera: 146 pasan, 16 fallan (15 por la contrasena del operador en esa base, 1 test de REG-05 desactualizado tras ACT-02). No se borro JULSA ni Jose Bearings.
 - F-230 cerrado: suite aislada 162/162 en local. Causas: contrasena del operador distinta en bearingworld-e2e (script nuevo) y test de REG-05/Editor desactualizado tras ACT-02.
 - F-172 cerrado: INV-01, MSG-01 y SentOffers usan SearchField (commit de codigo aparte). SentOffers ya no filtra al teclear. Vitest 1985 verdes, e2e inventario y mensajeria 33/33. No visto en navegador.
+- F-227 (medidor tolerante), F-235 (--seco construye el prompt) y harness-review.csv (4 filas reconstruidas desde git: DIR-02, INVT-01, REG-09, FRU) cerrados. F-170 fuera de la lista (ya estaba cerrado). Deuda sin fecha: solo F-213.
+- Ojo: al encender F-235, 7 tareas cerradas salen invalidas en --seco por contratos retocados a mano tras su corrida (ya lo eran antes).

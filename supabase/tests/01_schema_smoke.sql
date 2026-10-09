@@ -3995,7 +3995,7 @@ drop function public.f146_canaria();
 -- literales: salen de `pg_class`, para que una tabla con RLS nueva quede
 -- cubierta sin tocar este fichero.
 --
--- Por qué cada una de las seis está permitida:
+-- Por qué cada una de las siete está permitida:
 --   · `create_inquiry`, `create_thread_item`, `counter_offer` — auditadas línea
 --     a línea el Día 13; sus lecturas sensibles ya van por ayudantes
 --     `security definer` (`app.thread_counterpart`, `app.org_already_inquired`,
@@ -4006,6 +4006,10 @@ drop function public.f146_canaria();
 --     `app.can_access_thread` (`definer`); lo único que lee bajo RLS es la
 --     consulta que responde, `for update`, y si no la ve lanza «no existe o no
 --     es visible» — falla, no decide.
+--   · `open_thread` (0056, F-211) — el mismo patrón que `create_inquiry`: el reparto de la
+--     CEK va por `app.guard_cek_recipients` y el hilo por `app.resolve_thread` (`definer`).
+--     Lo único que lee bajo RLS es `organizations` (que la otra exista y esté APPROVED), y
+--     si la política la ocultara lanza «no existe o no está disponible»: falla, no decide.
 --   · `demo_state`, `demo_reanchor_freshness` — utilidades de demo, no guardias:
 --     no hay ninguna decisión colgando de que su lectura salga vacía.
 --   · `guard_member_privileges` — falso positivo del detector, y se deja dentro
@@ -4037,6 +4041,7 @@ create or replace function app.f155_detector() returns text
            'public.create_thread_item',
            'public.counter_offer',
            'public.create_offer',
+           'public.open_thread',
            'public.demo_state',
            'public.demo_reanchor_freshness',
            'app.guard_member_privileges',
@@ -6033,6 +6038,137 @@ begin
   raise notice 'OK · 0055: la siembra (postgres) inserta una oferta Aceptada y reescribe contenido, como hace demo_threads.sql';
 end
 $$;
+
+-- 11 · 0056 · F-211 · `open_thread`: Contactar sin hilo previo.
+-- Mike Test (m1 ACTIVE con clave) no tiene ningun hilo con Kilo. November esta SUSPENDED.
+-- k1 abre el hilo; k2 (REGISTERED) no puede.
+insert into public.organizations (id, name, country, continent, status) values
+  ('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', 'Mike Test', 'FR', 'EU', 'APPROVED'),
+  ('0a0a0a0a-0a0a-4a0a-8a0a-0a0a0a0a0a0a', 'November Test', 'IT', 'EU', 'SUSPENDED');
+insert into auth.users (id, email) values
+  ('af000001-0000-0000-0000-000000000001', 'm1@mike.test');
+insert into public.members (id, org_id, email, state) values
+  ('af000001-0000-0000-0000-000000000001', '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', 'm1@mike.test', 'ACTIVE');
+update public.members set public_key = decode(repeat('81', 32), 'hex')
+ where id = 'af000001-0000-0000-0000-000000000001';
+
+-- Funcion de este banco: el hilo Kilo-Mike, sin RLS. Se borra al final.
+create or replace function public.t56_hilo() returns uuid
+  language sql stable security definer set search_path to 'public', 'pg_temp' as $$
+  select id from public.threads
+   where org_low_id  = least('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d'::uuid, '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f'::uuid)
+     and org_high_id = greatest('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d'::uuid, '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f'::uuid);
+$$;
+
+do $$
+begin
+  assert not has_function_privilege('anon', 'public.open_thread(uuid,text,text,jsonb)', 'execute'),
+    'F-211 (0056): anon no ejecuta open_thread';
+  assert has_function_privilege('authenticated', 'public.open_thread(uuid,text,text,jsonb)', 'execute'),
+    'F-211 (0056): authenticated si ejecuta open_thread';
+  assert (select count(*) from public.threads where id = public.t56_hilo()) = 0,
+    'F-211: antes de contactar no hay hilo Kilo-Mike';
+  raise notice 'OK · 0056 · F-211: privilegios de open_thread (anon no, authenticated si)';
+end
+$$;
+
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.open_thread('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', repeat('ab', 48), repeat('1a', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001'))$$,
+    'F-211 (0056): abrir un hilo con la propia organizacion');
+  select public.expect_fail(
+    $$select public.open_thread('0a0a0a0a-0a0a-4a0a-8a0a-0a0a0a0a0a0a', repeat('ab', 48), repeat('1a', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001'))$$,
+    'F-211 (0056): abrir un hilo con una organizacion no APPROVED');
+  select public.expect_fail(
+    $$select public.open_thread('00000000-0000-4000-8000-000000000000', repeat('ab', 48), repeat('1a', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001'))$$,
+    'F-211 (0056): abrir un hilo con una organizacion que no existe');
+  select public.expect_fail(
+    $$select public.open_thread('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', repeat('ab', 48), repeat('1a', 12), '[]'::jsonb)$$,
+    'F-211 (0056): sin ninguna CEK envuelta');
+  select public.expect_fail(
+    $$select public.open_thread('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', repeat('ab', 48), repeat('1a', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001'))$$,
+    'F-211 (0056): falta la copia del ADMIN de la otra organizacion (guardia de reparto)');
+commit;
+
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000002-0000-0000-0000-000000000002', true);
+  set local role authenticated;
+  select public.expect_fail(
+    $$select public.open_thread('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', repeat('ab', 48), repeat('1a', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001', 'af000001-0000-0000-0000-000000000001'))$$,
+    'F-211 (0056): un miembro REGISTERED (k2) no abre hilos');
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.threads where id = public.t56_hilo()) = 0,
+    'F-211: los intentos fallidos no dejan ningun hilo Kilo-Mike';
+  raise notice 'OK · 0056 · F-211: los casos que deben fallar, fallan sin dejar hilo';
+end
+$$;
+
+create table public.t56_resultado (hilo uuid);
+grant all on public.t56_resultado to authenticated;
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  insert into public.t56_resultado
+    select public.open_thread('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', repeat('ab', 48), repeat('1a', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001', 'af000001-0000-0000-0000-000000000001'));
+commit;
+
+do $$
+declare
+  h uuid;
+begin
+  select hilo into h from public.t56_resultado;
+  assert h is not null and h = public.t56_hilo(), 'F-211: open_thread devuelve el id del hilo creado';
+  assert (select count(*) from public.thread_items where thread_id = h and item_type = 'MENSAJE'
+             and sender_member_id = 'ad000001-0000-0000-0000-000000000001') = 1,
+    'F-211: queda un unico MENSAJE de k1 en el hilo nuevo';
+  assert (select count(*) from public.thread_item_keys k join public.thread_items i on i.id = k.item_id
+           where i.thread_id = h) = 2,
+    'F-211: y dos claves envueltas: la de k1 (quien escribe) y la de m1';
+  assert (select state from public.threads where id = h) = 'ABIERTO', 'F-211: el hilo nace ABIERTO';
+  raise notice 'OK · 0056 · F-211: Contactar crea el hilo y deja su primer mensaje con sus claves';
+end
+$$;
+
+-- Segunda llamada: busca-o-crea, no duplica el hilo.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  update public.t56_resultado set hilo = public.open_thread('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', repeat('ac', 48), repeat('1b', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001', 'af000001-0000-0000-0000-000000000001'));
+commit;
+
+do $$
+begin
+  assert (select count(*) from public.threads
+           where org_low_id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f')
+             and org_high_id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f')) = 1,
+    'F-211: contactar dos veces no duplica el hilo (threads_pair_uniq)';
+  assert (select hilo from public.t56_resultado) = public.t56_hilo(), 'F-211: la segunda llamada devuelve el mismo hilo';
+  assert (select count(*) from public.thread_items where thread_id = public.t56_hilo() and item_type = 'MENSAJE') = 2,
+    'F-211: y el segundo mensaje queda en el mismo hilo';
+  raise notice 'OK · 0056 · F-211: contactar de nuevo reutiliza el hilo';
+end
+$$;
+drop table public.t56_resultado;
+
+delete from public.threads
+ where org_low_id in ('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', '0a0a0a0a-0a0a-4a0a-8a0a-0a0a0a0a0a0a')
+    or org_high_id in ('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', '0a0a0a0a-0a0a-4a0a-8a0a-0a0a0a0a0a0a');
+delete from public.members where org_id = '0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f';
+delete from auth.users where id = 'af000001-0000-0000-0000-000000000001';
+delete from public.organizations where id in ('0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f', '0a0a0a0a-0a0a-4a0a-8a0a-0a0a0a0a0a0a');
+drop function public.t56_hilo();
 
 delete from public.threads
  where org_low_id in ('0d0d0d0d-0d0d-4d0d-8d0d-0d0d0d0d0d0d', '0e0e0e0e-0e0e-4e0e-8e0e-0e0e0e0e0e0e')

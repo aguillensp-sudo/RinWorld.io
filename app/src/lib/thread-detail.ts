@@ -883,3 +883,72 @@ export async function sendInquiries(lines: InquiryLine[], ownOrgId: string): Pro
 
   return resultados;
 }
+
+/**
+ * `Contactar` sin hilo previo (F-211, `open_thread` de 0056): abre —o reutiliza— el hilo con
+ * otra organización dejando un primer mensaje libre cifrado. Devuelve el id del hilo.
+ *
+ * El orden es el de `sendMessage` y `sendInquiries`: 1) las claves públicas de las dos
+ * organizaciones ANTES de cifrar; 2) sin una sola clave, no se envía (la otra parte vería
+ * `Contenido cifrado` para siempre); 3) una CEK nueva envuelta para cada miembro, incluido
+ * quien escribe; 4) una sola llamada, que crea el hilo y el mensaje con sus claves en la
+ * misma transacción.
+ */
+export async function contactOrganization(
+  otherOrgId: string,
+  ownOrgId: string,
+  text: string,
+): Promise<string> {
+  const cuerpo = text.trim();
+  if (!cuerpo) throw new Error('El mensaje está vacío.');
+
+  const keyPair = currentKeyPair();
+  if (!keyPair) {
+    throw new Error(
+      'Tu clave de cifrado no está lista en esta sesión. Vuelve a entrar antes de escribir.',
+    );
+  }
+
+  const [propias, delOtro] = await Promise.all([
+    fetchOrgRecipients(ownOrgId),
+    fetchOrgRecipients(otherOrgId),
+  ]);
+  const destinatarios = [...propias, ...delOtro];
+
+  const sinClave = destinatarios.filter((d) => d.publicKey === null);
+  if (sinClave.length > 0) {
+    throw new Error(
+      `No se puede cifrar todavía: ${sinClave.length} ${
+        sinClave.length === 1 ? 'destinatario no ha' : 'destinatarios no han'
+      } publicado su clave pública. Tienen que entrar una vez en la aplicación.`,
+    );
+  }
+  if (destinatarios.length === 0) {
+    throw new Error('Esa organización no tiene miembros con los que contactar.');
+  }
+
+  const cek = await generateCek();
+  const { ciphertext, iv } = await encryptContent({ kind: 'MENSAJE', text: cuerpo }, cek);
+
+  const claves = await Promise.all(
+    destinatarios.map(async (d) => {
+      const w = await wrapCekFor(cek, d.publicKey!);
+      return {
+        member_id: d.memberId,
+        wrapped_cek: toHex(w.wrappedCek),
+        wrap_iv: toHex(w.wrapIv),
+        ephemeral_pubkey: toHex(w.ephemeralPublicKey),
+      };
+    }),
+  );
+
+  const { data, error } = await supabase.rpc('open_thread', {
+    p_org_id: otherOrgId,
+    p_ciphertext: toHex(ciphertext),
+    p_iv: toHex(iv),
+    p_keys: claves,
+  });
+  if (error) throw error;
+  if (typeof data !== 'string') throw new Error('La base no devolvió el hilo.');
+  return data;
+}

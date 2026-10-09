@@ -302,3 +302,83 @@
   background: var(--bw-hover-surface);
   border-color: var(--bw-hover-border);
 }
+
+/* F-211: el primer mensaje de un `Contactar` sin hilo previo. */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.composerLabel {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-hint);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-steel-mist);
+}
+
+.composerInput {
+  padding: 10px 12px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 7px;
+  background: white;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  color: var(--bw-deep-steel);
+  resize: vertical;
+  outline: none;
+}
+
+.composerInput:focus {
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.composerError {
+  margin: 0;
+  font-size: 13px;
+  color: var(--bw-error-text);
+}
+
+.composerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.composerCancel,
+.composerSend {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.composerCancel {
+  border: 1px solid var(--bw-line-steel-strong);
+  background: transparent;
+  color: var(--bw-deep-steel);
+}
+
+.composerSend {
+  border: none;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-cold-white);
+}
+
+.composerSend:disabled,
+.composerCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

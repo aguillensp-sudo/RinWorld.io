@@ -23,6 +23,12 @@ import type { MemberProfile } from '../../lib/session';
 
 const fetchOrganizationProfile = vi.fn<(id: string) => Promise<OrganizationProfileData | null>>();
 const fetchThreadWithOrg = vi.fn<(own: string, other: string) => Promise<string | null>>();
+const contactOrganization = vi.fn<(other: string, own: string, text: string) => Promise<string>>();
+
+vi.mock('../../lib/thread-detail', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/thread-detail')>()),
+  contactOrganization: (other: string, own: string, text: string) => contactOrganization(other, own, text),
+}));
 
 vi.mock('../../lib/organization', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/organization')>()),
@@ -86,6 +92,7 @@ function valorDe(tarjeta: HTMLElement, etiqueta: string): HTMLElement {
 beforeEach(() => {
   fetchOrganizationProfile.mockReset();
   fetchThreadWithOrg.mockReset();
+  contactOrganization.mockReset();
   fetchOrganizationProfile.mockResolvedValue(NSK);
   fetchThreadWithOrg.mockResolvedValue(null);
 });
@@ -208,18 +215,57 @@ describe('DIR-02 · OrganizationProfile · Contactar', () => {
     expect(props.onOpenThread).toHaveBeenCalledWith('thread-42');
   });
 
-  it('sin hilo previo está deshabilitado y dice por qué; pulsarlo no abre nada', async () => {
+  it('sin hilo previo está habilitado y abre el cuadro del primer mensaje; todavía no abre ningún hilo (F-211)', async () => {
     fetchThreadWithOrg.mockResolvedValue(null);
     const { props } = mount();
     const boton = await screen.findByRole('button', { name: 'Contactar' });
-    await waitFor(() => expect(fetchThreadWithOrg).toHaveBeenCalled());
-    expect(boton).toBeDisabled();
-    expect(boton).toHaveAttribute(
-      'title',
-      'Todavía no tienes un hilo con esta organización. Iniciar uno sin referencia llega con la mensajería.',
-    );
+    await waitFor(() => expect(boton).toBeEnabled());
+    expect(screen.queryByRole('form', { name: 'Nuevo hilo' })).toBeNull();
     await userEvent.setup().click(boton);
+    expect(screen.getByRole('form', { name: 'Nuevo hilo' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Primer mensaje')).toBeInTheDocument();
     expect(props.onOpenThread).not.toHaveBeenCalled();
+    expect(contactOrganization).not.toHaveBeenCalled();
+  });
+
+  it('enviar el primer mensaje crea el hilo con contactOrganization y lo abre', async () => {
+    fetchThreadWithOrg.mockResolvedValue(null);
+    contactOrganization.mockResolvedValue('hilo-nuevo');
+    const { props } = mount();
+    const user = userEvent.setup();
+    await waitFor(async () => expect(await screen.findByRole('button', { name: 'Contactar' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Contactar' }));
+    const enviar = screen.getByRole('button', { name: 'Enviar y abrir el hilo' });
+    expect(enviar).toBeDisabled();
+    await user.type(screen.getByLabelText('Primer mensaje'), 'Hola, quiero contactar');
+    await user.click(enviar);
+    await waitFor(() => expect(props.onOpenThread).toHaveBeenCalledWith('hilo-nuevo'));
+    expect(contactOrganization).toHaveBeenCalledWith(NSK.id, profile.orgId, 'Hola, quiero contactar');
+  });
+
+  it('si el envío falla se dice con una alerta, se conserva el texto y no se abre ningún hilo', async () => {
+    fetchThreadWithOrg.mockResolvedValue(null);
+    contactOrganization.mockRejectedValue(new Error('No se puede cifrar todavía: 1 destinatario no ha publicado su clave pública.'));
+    const { props } = mount();
+    const user = userEvent.setup();
+    await waitFor(async () => expect(await screen.findByRole('button', { name: 'Contactar' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Contactar' }));
+    await user.type(screen.getByLabelText('Primer mensaje'), 'Hola');
+    await user.click(screen.getByRole('button', { name: 'Enviar y abrir el hilo' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/No se puede cifrar todavía/);
+    expect(screen.getByLabelText('Primer mensaje')).toHaveValue('Hola');
+    expect(props.onOpenThread).not.toHaveBeenCalled();
+  });
+
+  it('Cancelar cierra el cuadro sin enviar nada', async () => {
+    fetchThreadWithOrg.mockResolvedValue(null);
+    mount();
+    const user = userEvent.setup();
+    await waitFor(async () => expect(await screen.findByRole('button', { name: 'Contactar' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Contactar' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('form', { name: 'Nuevo hilo' })).toBeNull();
+    expect(contactOrganization).not.toHaveBeenCalled();
   });
 
   it('mientras se busca el hilo el botón sigue deshabilitado: no se puede pulsar antes de saber si existe', async () => {
@@ -229,12 +275,12 @@ describe('DIR-02 · OrganizationProfile · Contactar', () => {
     expect(boton).toBeDisabled();
   });
 
-  it('si la búsqueda del hilo falla, la ficha se ve igual y Contactar queda deshabilitado', async () => {
+  it('si la búsqueda del hilo falla, la ficha se ve igual y Contactar queda habilitado para escribir (open_thread busca-o-crea)', async () => {
     fetchThreadWithOrg.mockRejectedValue(new Error('sin red'));
     mount();
     expect(await screen.findByRole('heading', { level: 1, name: 'NSK Europe Ltd' })).toBeInTheDocument();
     await waitFor(() => expect(fetchThreadWithOrg).toHaveBeenCalled());
-    expect(screen.getByRole('button', { name: 'Contactar' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Contactar' })).toBeEnabled());
   });
 
   it('en la ficha de la PROPIA organización Contactar está deshabilitado y no busca ningún hilo', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   favoritesLabel,
   fetchOrganizationProfile,
@@ -6,6 +6,7 @@ import {
   telHref,
   type OrganizationProfile as OrganizationProfileData,
 } from '../../lib/organization';
+import { contactOrganization } from '../../lib/thread-detail';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import styles from './OrganizationProfile.module.css';
 
@@ -22,12 +23,12 @@ interface Props {
 /** El botón está deshabilitado porque la ficha es la de la propia organización. */
 const OWN_ORG_TITLE = 'Es tu propia organización.';
 
-/**
- * El botón está deshabilitado por cualquier otro motivo (todavía buscando el hilo,
- * sin hilo, o búsqueda fallida): los tres casos son el mismo para el usuario.
- */
-const NO_THREAD_TITLE =
-  'Todavía no tienes un hilo con esta organización. Iniciar uno sin referencia llega con la mensajería.';
+/** El botón está deshabilitado mientras se busca si ya hay un hilo con esta organización. */
+const CHECKING_THREAD_TITLE = 'Comprobando si ya tienes un hilo con esta organización…';
+
+/** Primer mensaje de un `Contactar` sin hilo previo (F-211). */
+const COMPOSER_LABEL = 'Primer mensaje';
+const COMPOSER_PLACEHOLDER = 'Preséntate y cuéntales por qué quieres contactar…';
 
 /** El diseño pinta un guion donde no hay dato; nunca `null`, nunca vacío. */
 function orDash(value: string): string {
@@ -59,6 +60,12 @@ function orDash(value: string): string {
 export function OrganizationProfile({ profile, organizationId, onBack, onOpenThread }: Props) {
   const [data, setData] = useState<OrganizationProfileData | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  /** La búsqueda del hilo ya terminó (con hilo, sin hilo o con fallo). */
+  const [threadChecked, setThreadChecked] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +76,10 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
     setError(null);
     setData(null);
     setThreadId(null);
+    setThreadChecked(false);
+    setComposing(false);
+    setDraft('');
+    setSendError(null);
 
     fetchOrganizationProfile(organizationId)
       .then((result) => {
@@ -92,11 +103,16 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
     if (organizationId !== profile.orgId) {
       fetchThreadWithOrg(profile.orgId, organizationId)
         .then((id) => {
-          if (!cancelled) setThreadId(id);
+          if (cancelled) return;
+          setThreadId(id);
+          setThreadChecked(true);
         })
         .catch(() => {
-          // Un fallo aquí no es un fallo de la pantalla: es «no hay hilo».
-          if (!cancelled) setThreadId(null);
+          // Un fallo aquí no es un fallo de la pantalla: es «no hay hilo». `open_thread`
+          // busca-o-crea, así que contactar de nuevo es seguro aunque el hilo exista.
+          if (cancelled) return;
+          setThreadId(null);
+          setThreadChecked(true);
         });
     }
 
@@ -140,14 +156,29 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
   }
 
   /**
-   * `Contactar` solo hace algo si HAY hilo: es el único camino que el esquema
-   * permite (crear un hilo libre sin referencia es capacidad de la mensajería,
-   * no de esta pantalla). Sin hilo, el botón se pinta deshabilitado y con el
-   * motivo en el `title`; no se simula un hilo que no existe.
+   * `Contactar` con hilo previo lo abre. Sin hilo (F-211, `open_thread` de 0056) abre el
+   * cuadro del primer mensaje y lo envía cifrado: el hilo se crea con él. Hasta saber cuál
+   * de los dos casos es, y en la ficha de la propia organización, está deshabilitado.
    */
-  const canContact = threadId !== null;
-  const contactTitle =
-    organizationId === profile.orgId ? OWN_ORG_TITLE : NO_THREAD_TITLE;
+  const own = organizationId === profile.orgId;
+  const canContact = !own && (threadId !== null || threadChecked);
+  const contactTitle = own ? OWN_ORG_TITLE : CHECKING_THREAD_TITLE;
+
+  const sendFirstMessage = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (sending || draft.trim() === '') return;
+    setSending(true);
+    setSendError(null);
+    contactOrganization(organizationId, profile.orgId, draft)
+      .then((id) => {
+        setSending(false);
+        onOpenThread(id);
+      })
+      .catch((err: unknown) => {
+        setSending(false);
+        setSendError(errorMessage(err instanceof Error ? err : new Error(String(err))));
+      });
+  };
 
   return (
     <div className={styles.screen}>
@@ -184,12 +215,52 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
           title={canContact ? undefined : contactTitle}
           onClick={() => {
             if (threadId !== null) onOpenThread(threadId);
+            else setComposing(true);
           }}
         >
           <i className="ti ti-message-circle" aria-hidden="true" />
           Contactar
         </button>
       </header>
+
+      {composing && threadId === null && (
+        <form className={styles.composer} onSubmit={sendFirstMessage} aria-label="Nuevo hilo">
+          <label className={styles.composerLabel} htmlFor="first-message">
+            {COMPOSER_LABEL}
+          </label>
+          <textarea
+            id="first-message"
+            className={styles.composerInput}
+            rows={3}
+            maxLength={2000}
+            placeholder={COMPOSER_PLACEHOLDER}
+            value={draft}
+            disabled={sending}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          {sendError && (
+            <p className={styles.composerError} role="alert">
+              {sendError}
+            </p>
+          )}
+          <div className={styles.composerActions}>
+            <button
+              type="button"
+              className={styles.composerCancel}
+              disabled={sending}
+              onClick={() => {
+                setComposing(false);
+                setSendError(null);
+              }}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className={styles.composerSend} disabled={sending || draft.trim() === ''}>
+              {sending ? 'Enviando…' : 'Enviar y abrir el hilo'}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className={styles.cards}>
         <section className={styles.card} aria-label="Información general">

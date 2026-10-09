@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   asOfferCard,
   authorLabel,
+  contactOrganization,
   counterOffer,
   decryptItem,
   itemTypeLabel,
@@ -36,6 +37,8 @@ import type { ThreadRecipient } from './keys';
  */
 const rpcLlamadas: { fn: string; args: unknown }[] = [];
 let rpcError: unknown = null;
+/** Lo que devuelve `rpc` en `data` (p. ej. el id del hilo de `open_thread`). */
+let rpcData: unknown = null;
 /** Errores de un solo uso, en orden: la llamada N-ésima a `rpc` consume el
  *  N-ésimo de la cola antes de caer en `rpcError`. Sirve para probar que un
  *  fallo en una línea de `sendInquiries` no bloquea a las siguientes. */
@@ -52,7 +55,7 @@ vi.mock('./supabase', () => ({
     rpc: (fn: string, args: unknown) => {
       rpcLlamadas.push({ fn, args });
       const error = rpcErrorQueue.length > 0 ? rpcErrorQueue.shift() : rpcError;
-      return Promise.resolve({ error: error ?? null });
+      return Promise.resolve({ data: rpcData, error: error ?? null });
     },
   },
 }));
@@ -615,5 +618,61 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
 
     expect(resultados[0]).toMatchObject({ lineId: 'l-1', ok: false, error: expect.stringContaining('Límite diario') });
     expect(resultados[1]).toMatchObject({ lineId: 'l-2', ok: true });
+  });
+});
+
+describe('contactOrganization · "Contactar" sin hilo previo (F-211)', () => {
+  const MI_ORG = 'org-mia';
+  const OTRA = 'org-otra';
+
+  beforeEach(async () => {
+    rpcLlamadas.length = 0;
+    rpcError = null;
+    rpcErrorQueue = [];
+    rpcData = 'hilo-nuevo';
+    fetchOrgRecipientsMock.mockClear();
+    llavero = await generateKeyPair();
+    const otra = await generateKeyPair();
+    publicasPorOrg = new Map([
+      [MI_ORG, [{ memberId: 'yo', orgId: MI_ORG, publicKey: llavero.publicKey }]],
+      [OTRA, [{ memberId: 'otra-1', orgId: OTRA, publicKey: otra.publicKey }]],
+    ]);
+  });
+
+  it('ANCLA · llama a open_thread una vez, con una CEK por miembro de las dos organizaciones, y devuelve el hilo', async () => {
+    const hilo = await contactOrganization(OTRA, MI_ORG, '  Hola, quiero contactar  ');
+    expect(hilo).toBe('hilo-nuevo');
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledWith(OTRA);
+    expect(fetchOrgRecipientsMock).toHaveBeenCalledWith(MI_ORG);
+    expect(rpcLlamadas).toHaveLength(1);
+    expect(rpcLlamadas[0]!.fn).toBe('open_thread');
+    const args = rpcLlamadas[0]!.args as { p_org_id: string; p_ciphertext: string; p_iv: string; p_keys: { member_id: string }[] };
+    expect(args.p_org_id).toBe(OTRA);
+    expect(args.p_keys.map((k) => k.member_id).sort()).toEqual(['otra-1', 'yo']);
+    expect(args.p_ciphertext).toMatch(/^[0-9a-f]+$/);
+    expect(args.p_iv).toMatch(/^[0-9a-f]+$/);
+  });
+
+  it('un mensaje vacío no cifra ni llama a nada', async () => {
+    await expect(contactOrganization(OTRA, MI_ORG, '   ')).rejects.toThrow(/vacío/);
+    expect(fetchOrgRecipientsMock).not.toHaveBeenCalled();
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('sin llave de sesión no se envía', async () => {
+    llavero = null;
+    await expect(contactOrganization(OTRA, MI_ORG, 'hola')).rejects.toThrow(/clave de cifrado/i);
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('si falta la clave de UN destinatario, no se envía a nadie', async () => {
+    publicasPorOrg.set(OTRA, [{ memberId: 'otra-1', orgId: OTRA, publicKey: null }]);
+    await expect(contactOrganization(OTRA, MI_ORG, 'hola')).rejects.toThrow(/No se puede cifrar todavía/);
+    expect(rpcLlamadas).toHaveLength(0);
+  });
+
+  it('el error de la base sube tal cual', async () => {
+    rpcError = new Error('Esa organización no existe o no está disponible.');
+    await expect(contactOrganization(OTRA, MI_ORG, 'hola')).rejects.toThrow(/no está disponible/);
   });
 });

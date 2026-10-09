@@ -18,7 +18,7 @@ Empieza por §6 y luego §3.
 (`F-234`, 8 políticas), **`0052`** (`F-239`, backup estanco) y **`0053`/`0054`** (`F-242`, sustituir el backup exige la frase anterior). **`INV-04`** tiene plan
 (Amazon SES, `ingest.nortexsys.com`). Detalle en `diario/dia-32.md`.
 **8-oct (día 33), `INV-04` fase 0 hecha en lo que toca al correo:** dominio verificado en SES (eu-west-1), 3 CNAME de DKIM y MX en Arsys. Ver §1, §3.2 y `diario/dia-33.md`.
-**8-oct, microplan de 5 días: D1 (`0055`, `78182f2`) y D2 (`95cc7f8`, `29c1774`) hechos.** D2 = `createOffer`, `markOutOfStock`, «Responder con oferta», «Sin stock» y «Crear oferta». El PO los probó con dos sesiones (casos 1 a 4 OK, lo dijo en el chat); el estado del hilo se leyó de producción por SQL. Falta D3 (`bearingworld-e2e` sin `0040`+). Ver `diario/dia-34.md`.
+**8-oct, microplan de 5 días: D1 (`0055`, `78182f2`) y D2 (`95cc7f8`, `29c1774`) hechos.** D2 = `createOffer`, `markOutOfStock`, «Responder con oferta», «Sin stock» y «Crear oferta». El PO los probó con dos sesiones (casos 1 a 4 OK, lo dijo en el chat); el estado del hilo se leyó de producción por SQL. **9-oct, D3 hecho:** `bearingworld-e2e` en `0055` (catálogo idéntico al de producción, medido). Ver `diario/dia-35.md`.
 
 ---
 
@@ -61,7 +61,7 @@ Empieza por §6 y luego §3.
 4. **`F-234` en las demás tablas:** `0051` envolvió 8; quedan **31** (`forum_*` y `watchers_*` primero). Patrón de `0047`/`0051`, con el banco delante.
 5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede fallar el contrato de la tarea
    (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
-6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-235`; `bearingworld-e2e` en `0054`; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09`, `FRU`.
+6. Deuda sin fecha: `F-170`, `F-172`, `F-213`, `F-227`, `F-235`; `harness-review.csv` sin filas de `DIR-02`, `INVT-01`, `REG-09`, `FRU`.
 
 **Fecha límite:** la siembra de cobros de producción se resembró el 4-oct; Cuscinetti Padana vence a los 10 días (**~14-oct**) y
 cambia de estado. Antes de correr la e2e o revisar `ADMIN-02` después, resembrar (`demo_billing.sql`). `demo_watchers.sql`, resembrada el 6-oct.
@@ -110,7 +110,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
 | 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: fase 0 hecha salvo MFA y presupuesto; sigue la fase 1 (§3.2) | PO + este agente |
 | 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
-| 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: la base `bearingworld-e2e` para el C2 |
+| 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: `bearingworld-e2e` ya tiene el esquema (`0055`); sus Edge Functions no (solo `access-request` v1) |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de más de un ADMIN tiene que llegar a la interfaz | Producto |
@@ -120,7 +120,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
 | 🟡 | **`F-231`** · `1247` o `1.247` (§3.3): decisión del PO, no arreglo; contradice a `F-024` | PO |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
-| 🟡 | **`bearingworld-e2e`** en `0039`, sin `0040` a `0054` ni funciones: en la CI `fetchProfile` falla en silencio y nadie importa | Aplicarlas por el MCP, revisadas |
+| 🟠 | **Despliegue a Vercel roto** desde ≥ 8-oct: `Could not retrieve Project Settings` (`VERCEL_NEWACCOUNT_TOKEN` o proyecto `prj_ybo4…`). Tests y e2e verdes, **nada llega a producción desde `2b66b54`** | PO: revisar el token/proyecto en Vercel |
 | 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
 | 🟡 | **`F-172`** · buscador estándar solo en `DIR-01`/`FORO-02` | Quien toque `INV-01`, `MSG-01` o `SentOffers` |

@@ -56,61 +56,6 @@
   margin-bottom: 14px;
 }
 
-.searchWrap {
-  position: relative;
-  flex: 1;
-  max-width: 400px;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--bw-input-placeholder);
-  pointer-events: none;
-}
-
-/* El mock pinta el campo en blanco puro; no hay token de blanco en §1.4, así
-   que la superficie clara más próxima es --bw-surface-mist (#F8F9FB). */
-.searchInput {
-  width: 100%;
-  height: 36px;
-  padding: 0 12px 0 34px;
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: var(--bw-radius);
-  background: var(--bw-surface-mist);
-  font-family: var(--bw-font-body);
-  font-size: var(--bw-size-input);
-  color: var(--bw-input-text);
-  outline: none;
-  transition: border-color 0.12s;
-}
-
-.searchInput:focus {
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
-}
-
-.searchInput::placeholder {
-  color: var(--bw-input-placeholder);
-}
-
-.searchClear {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--bw-input-placeholder);
-  cursor: pointer;
-  /* 14px no tiene token propio; --bw-size-eyebrow es el tamaño de 14px. */
-  font-size: var(--bw-size-eyebrow);
-  line-height: 1;
-  padding: 2px;
-}
-
 .resultCount {
   font-size: var(--bw-size-label);
   color: var(--bw-input-placeholder);

@@ -246,11 +246,13 @@ describe('las acciones · §5.3 recortada por D-07-02 y por el esquema', () => {
 });
 
 describe('la búsqueda · §4 y CA-VND-02', () => {
-  it('ANCLA · filtra en tiempo real por referencia', async () => {
+  it('ANCLA · filtra por referencia al confirmar con Enter (estándar F-172: teclear no filtra)', async () => {
     const user = userEvent.setup();
     pinta();
     await waitFor(() => expect(filas()).toHaveLength(4));
     await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), '22316');
+    expect(filas()).toHaveLength(4);
+    await user.keyboard('{Enter}');
     await waitFor(() => expect(filas()).toHaveLength(1));
     expect(within(filas()[0]!).getByText(/22316-E/)).toBeInTheDocument();
   });
@@ -259,7 +261,7 @@ describe('la búsqueda · §4 y CA-VND-02', () => {
     const user = userEvent.setup();
     pinta();
     await waitFor(() => expect(filas()).toHaveLength(4));
-    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'Padana');
+    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'Padana{Enter}');
     await waitFor(() => expect(filas()).toHaveLength(1));
   });
 
@@ -267,24 +269,29 @@ describe('la búsqueda · §4 y CA-VND-02', () => {
     const user = userEvent.setup();
     pinta();
     expect(await screen.findByText('4 ofertas')).toBeInTheDocument();
-    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'Padana');
+    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'Padana{Enter}');
     expect(await screen.findByText('1 oferta')).toBeInTheDocument();
   });
 
-  it('el botón de limpiar aparece con texto, restaura la tabla y desaparece', async () => {
+  it('la «x» aparece con texto y solo borra el campo; la tabla se restaura al confirmar', async () => {
     const user = userEvent.setup();
     pinta();
     await waitFor(() => expect(filas()).toHaveLength(4));
 
     // Ancla: sin texto NO está — medido contra el caso en que sí aparece, abajo.
-    expect(screen.queryByRole('button', { name: /limpiar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /borrar búsqueda/i })).not.toBeInTheDocument();
 
-    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'Padana');
-    const limpiar = await screen.findByRole('button', { name: /limpiar/i });
-    await user.click(limpiar);
+    const campo = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+    await user.type(campo, 'Padana{Enter}');
+    await waitFor(() => expect(filas()).toHaveLength(1));
+    await user.click(await screen.findByRole('button', { name: /borrar búsqueda/i }));
 
+    // La «x» solo borra el campo (F-172): la tabla sigue filtrada hasta confirmar.
+    expect(campo).toHaveValue('');
+    expect(filas()).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /borrar búsqueda/i })).not.toBeInTheDocument();
+    await user.type(campo, '{Enter}');
     await waitFor(() => expect(filas()).toHaveLength(4));
-    expect(screen.queryByRole('button', { name: /limpiar/i })).not.toBeInTheDocument();
   });
 });
 
@@ -360,7 +367,7 @@ describe('los dos estados vacíos · §5.5', () => {
     pinta();
     await waitFor(() => expect(filas()).toHaveLength(4));
 
-    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'zzzz-no-existe');
+    await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'zzzz-no-existe{Enter}');
     expect(await screen.findByText(EMPTY_NO_MATCHES)).toBeInTheDocument();
     expect(screen.queryByText(EMPTY_NO_OFFERS)).not.toBeInTheDocument();
   });

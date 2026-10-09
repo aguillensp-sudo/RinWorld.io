@@ -389,58 +389,6 @@
   align-items: center;
 }
 
-.srchWrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-/* En el HTML aprobado la lupa es un `<i>` con onclick. Aquí es un `<button>`: un
-   icono que dispara una búsqueda es un control, y como `<i>` no lo alcanza el
-   teclado ni lo anuncia un lector de pantalla. */
-.srchBtn {
-  position: absolute;
-  left: 5px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--bw-input-placeholder);
-  font-size: 15px;
-  transition: color 0.12s;
-}
-
-.srchBtn:hover {
-  color: var(--bw-ink-steel);
-}
-
-.srchInp {
-  padding: 7px 10px 7px 30px;
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: var(--bw-radius);
-  font-family: var(--bw-font-body);
-  font-size: 13px;
-  color: var(--bw-input-text);
-  background: white;
-  outline: none;
-  width: 200px;
-  transition: border-color 0.15s;
-}
-
-.srchInp:focus {
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
-}
-
-.srchInp::placeholder {
-  color: var(--bw-input-placeholder);
-}
-
 /* Botón primario de la barra. Vive deshabilitado en el MVP: INV-02 está fuera del
    alcance. El estado deshabilitado no está en el HTML aprobado — se construye con
    los neutros de §1.4, no con el azul apagado, porque un azul desvaído sigue

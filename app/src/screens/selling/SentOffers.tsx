@@ -16,6 +16,7 @@ import {
 } from '../../lib/sent-offers';
 import { SentOffersTable } from './SentOffersTable';
 import styles from './SentOffers.module.css';
+import { SearchField } from '../../components/SearchField';
 
 /**
  * VND-01 · Mis Ofertas (vista del vendedor).
@@ -35,6 +36,7 @@ export function SentOffers({
   const [offers, setOffers] = useState<SentOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
+  const [draft, setDraft] = useState('');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState(DEFAULT_SORT);
 
@@ -101,39 +103,14 @@ export function SentOffers({
       {!loading && error == null && (
         <>
           <div className={styles.searchBar}>
-            <div className={styles.searchWrap}>
-              <svg
-                className={styles.searchIcon}
-                aria-hidden="true"
-                width="15"
-                height="15"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              >
-                <circle cx="7" cy="7" r="5" />
-                <path d="M11 11l3.5 3.5" />
-              </svg>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder={SEARCH_PLACEHOLDER}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              {query.length > 0 && (
-                <button
-                  type="button"
-                  className={styles.searchClear}
-                  aria-label="Limpiar búsqueda"
-                  onClick={() => setQuery('')}
-                >
-                  ×
-                </button>
-              )}
-            </div>
+            <SearchField
+              value={draft}
+              onChange={setDraft}
+              onSubmit={() => setQuery(draft.trim())}
+              placeholder={SEARCH_PLACEHOLDER}
+              inputLabel="Buscar en ofertas enviadas"
+              submitLabel="Buscar"
+            />
             <span className={styles.resultCount}>{resultCountLabel(filtered.length)}</span>
           </div>
 

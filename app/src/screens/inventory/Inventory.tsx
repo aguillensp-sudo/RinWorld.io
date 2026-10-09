@@ -20,6 +20,7 @@ import { UPLOAD_ACCEPT, UPLOAD_REJECTED, isAcceptedUpload } from '../../lib/inve
 import { InventoryTable } from './InventoryTable';
 import styles from './Inventory.module.css';
 import { formatCount } from '../../lib/format-count';
+import { SearchField } from '../../components/SearchField';
 
 /**
  * INV-01 · Panel de Inventario. Escrita a mano (Claude Code), no por el arnés.
@@ -387,27 +388,14 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
             ))}
           </div>
           <div className={styles.toolbarRight}>
-            <div className={styles.srchWrap}>
-              <button
-                type="button"
-                className={styles.srchBtn}
-                aria-label="Buscar"
-                onClick={runSearch}
-              >
-                <i className="ti ti-search" aria-hidden="true" />
-              </button>
-              <input
-                className={styles.srchInp}
-                type="search"
-                value={draft}
-                aria-label="Buscar por referencia o marca"
-                placeholder="Buscar por referencia o marca..."
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') runSearch();
-                }}
-              />
-            </div>
+            <SearchField
+              value={draft}
+              onChange={setDraft}
+              onSubmit={runSearch}
+              placeholder="Buscar por referencia o marca..."
+              inputLabel="Buscar por referencia o marca"
+              submitLabel="Buscar"
+            />
             {onOpenVisibility && (
               <button type="button" className={styles.btnVisibility} onClick={onOpenVisibility}>
                 <i className="ti ti-eye" aria-hidden="true" />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import { onThreadsChanged } from '../../lib/realtime';
 import { fetchThreadPage, pageCount } from '../../lib/threads';
@@ -6,6 +6,7 @@ import type { ThreadSummary } from '../../lib/threads';
 import { ThreadList } from './ThreadList';
 import styles from './Messages.module.css';
 import { formatCount } from '../../lib/format-count';
+import { SearchField } from '../../components/SearchField';
 
 /**
  * MSG-01 · Lista de Hilos — pantalla completa del panel de contenido.
@@ -105,8 +106,7 @@ export function Messages({
     onOpenThread?.(id);
   };
 
-  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitSearch = () => {
     setPage(1);
     setSubmittedSearch(search.trim());
   };
@@ -121,17 +121,14 @@ export function Messages({
       </p>
 
       <div className={styles.actionsBar}>
-        <form className={styles.searchWrap} role="search" onSubmit={submitSearch}>
-          <i className="ti ti-search" aria-hidden="true" />
-          <input
-            type="search"
-            className={styles.searchInput}
-            placeholder="Buscar por nombre de organización..."
-            aria-label="Buscar por nombre de organización"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </form>
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          onSubmit={submitSearch}
+          placeholder="Buscar por nombre de organización..."
+          inputLabel="Buscar por nombre de organización"
+          submitLabel="Buscar"
+        />
         <button type="button" className={styles.primaryBtn} disabled>
           <i className="ti ti-address-book" aria-hidden="true" />
           Nuevo contacto

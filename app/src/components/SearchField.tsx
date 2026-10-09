@@ -18,9 +18,8 @@ interface Props {
  * nunca dispara `onSubmit`, porque la búsqueda sigue siendo server-side —
  * teclear (incluida la propia "x") no consulta, Enter o la lupa sí.
  *
- * Toda pantalla NUEVA con buscador usa este componente. Las ya aprobadas se
- * migran una a una (DIR-01 y FORO-02 ya lo usan; INV-01/MSG-01/SentOffers
- * quedan como deuda, F-172), independientemente de lo que diga su
+ * Toda pantalla con buscador usa este componente: DIR-01, FORO-02, INV-01, MSG-01 y
+ * SentOffers (F-172 cerrado el 9-oct-2026), independientemente de lo que diga su
  * spec original sobre el buscador — el estándar manda sobre el ejemplo viejo.
  */
 export function SearchField({

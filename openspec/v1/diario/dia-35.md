@@ -9,3 +9,5 @@ D3 del microplan: `bearingworld-e2e` al día.
 - Hallazgo ajeno a D3: la CI de `20f8357` (MSG-02) estaba roja por su propio test (cursor tras Alt+Enter, `rAF`). Arreglado en `aa4b756` con `useLayoutEffect`. Eso había bloqueado el despliegue de ese commit.
 - Hallazgo ajeno a D3: la CI de `2b66b54` pasó todo salvo «Despliegue continuo · app (Vercel)»: `Could not retrieve Project Settings`. Sin investigar.
 - Vercel: el token había caducado; renovado por el PO y el job `deploy` relanzado en la corrida `37885251380` (verde). Servido en `rin-world-io.vercel.app` (200, `Age: 2`).
+
+- F-237 cerrado: el PO aprobó los textos de error de REG-07 tal cual (opción 1). Sin código.

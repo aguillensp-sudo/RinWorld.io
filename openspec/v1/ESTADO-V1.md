@@ -50,7 +50,7 @@ Empieza por §6 y luego §3.
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
-1. **`F-237`: el PO elige** (1) los textos de error de `REG-07` tal cual, (2) tal cual más «Si se repite, escribe a soporte» tras dos fallos, o (3) otros. **Aún no ha contestado.**
+1. *(libre; `F-237` cerrado el 9-oct. Los números de §3 no se renumeran: otros documentos los citan.)*
 2. **`INV-04`, fase 1 (la base, sin AWS):** tablas `ingest_addresses`/`ingest_senders`/`ingest_events`, RLS solo ADMIN, RPC; la pantalla sin enseñar. **Fase 0 hecha** (8-oct):
    SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a `ingest` rebota hasta la fase 2: esperado).
    **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, se entra con rol federado, no con raíz).
@@ -105,7 +105,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 |---|---|---|
 | 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta; el enlace se entrega a mano (sin proveedor de correo) | PO (§3.3) |
 | 🟡 | **`F-242`** · cerrado; solo la cuenta `CANCELLED` `contact@nortexsys.com` sigue sin verificador (irrelevante: está revocada) | — |
-| 🟠 | **`F-237`** · textos de error de `REG-07` sin aprobar (§3.1) | PO |
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
 | 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
 | 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: fase 0 hecha salvo MFA y presupuesto; sigue la fase 1 (§3.2) | PO + este agente |

@@ -124,3 +124,7 @@ Nueva decisión: una fila arriba del todo, con fecha y quién decidió. Una deci
 | **La demo se hace con dos empresas nuevas dadas de alta por el recorrido real, no con las cuentas de prueba** | 8-oct-2026, PO. Motivo: las claves de las cuentas de prueba se derivan de `VITE_DEMO_KEY_SEED`, que va en el JS de producción (`F-168`); las altas por `REG-07` tienen claves de ADR-001. Es además la primera medición de H3 de punta a punta | `v1/plan-demo-h5.md` §1 |
 | **En la demo, tarjetas en el hilo (HTML de `MSG-02`); las tablas de `MSG-03` v1.2 se hacen después** | 8-oct-2026, PO. `MSG-03` v1.2 sustituye las tarjetas por dos tablas; las dos son diseño aprobado y las tarjetas ya existen | `v1/plan-demo-h5.md` §2 |
 | **`INV-04` queda fuera del sprint de demo; su fase 1, solo si sobra tiempo** | 8-oct-2026, PO. La pantalla no se puede enseñar hasta la fase 2 (SES → S3 → función), unos dos días que saldrían de la negociación | `v1/plan-inv04-ingestion-por-correo.md` |
+| **`F-241`: las cinco desviaciones de `INVT-02`/`ACT-02` se aprueban tal cual** | 9-oct-2026, PO | `mvp/findings/F-241.md` |
+| **Millares con punto desde cuatro cifras (`1.247`) en toda la aplicación; revierte `F-024`** | 9-oct-2026, PO | `mvp/findings/F-231.md`, `app/src/lib/format-count.ts` |
+| **El umbral de zxcvbn para la frase del backup se mantiene en score ≥ 3** | 9-oct-2026, PO | `app/src/lib/passphrase.ts` |
+| **Se borran las líneas importadas por el PO en ALPHA el 6-oct (18 806 filas); la siembra de agosto se queda** | 9-oct-2026, PO | `mvp/findings/F-234.md` |

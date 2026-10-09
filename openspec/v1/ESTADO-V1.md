@@ -55,9 +55,7 @@ Empieza por §6 y luego §3.
    SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a `ingest` rebota hasta la fase 2: esperado).
    **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, se entra con rol federado, no con raíz).
    Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.
-3. **Decidir con el PO:** `F-241` (cinco desviaciones de `INVT-02`/`ACT-02`); `F-231` (`1247` o `1.247`: `F-024` decidió lo primero y las specs de `INV-03` escriben lo segundo, y
-   cuatro tests defienden `1247`); el **umbral de zxcvbn** (score ≥ 3 ≈ 10⁸ intentos): el blob protege con eso y con Argon2id; las 18 303 líneas de ALPHA (`F-234`); `F-230`.
-   Borrar las 500 `DELETED` basura del 6-oct.
+3. *(resuelto el 9-oct: `F-241`, `F-231`, umbral de zxcvbn y datos de ALPHA; ver `DECISIONES-V1.md`. Sin renumerar.)*
 4. **`F-234` en las demás tablas:** `0051` envolvió 8; quedan **31** (`forum_*` y `watchers_*` primero). Patrón de `0047`/`0051`, con el banco delante.
 5. **Lista previa a una corrida, las tres cosas**: `tsc --noEmit`, `vitest` entero y la **suite e2e entera**, con los marcadores; solo puede fallar el contrato de la tarea
    (más lo declarado en `e2e_fuera_de_contrato`). **Repetir sobre el log real el reparto de culpas** (`_repartir_culpas`).
@@ -103,12 +101,10 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **`F-241`** · `INVT-02` y `ACT-02`: cinco desviaciones de la propuesta; el enlace se entrega a mano (sin proveedor de correo) | PO (§3.3) |
 | 🟡 | **`F-242`** · cerrado; solo la cuenta `CANCELLED` `contact@nortexsys.com` sigue sin verificador (irrelevante: está revocada) | — |
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
-| 🟠 | **`F-234` (el dato)** · 18 303 líneas reales en la cuenta de pruebas ALPHA: 3 e2e locales rotos (excusados en `REG-05`) | PO |
 | 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB), plan confirmado: fase 0 hecha salvo MFA y presupuesto; sigue la fase 1 (§3.2) | PO + este agente |
-| 🟠 | **`F-230`** · el e2e local va contra producción y los datos vivos de las altas de prueba lo rompen (excusados en la tarea) | PO: borrarlos, o apuntar el e2e a `bearingworld-e2e` |
+| 🟠 | **`F-230`** · el e2e local va contra producción y las altas de prueba vivas (`JULSA`, `Jose Bearings`: son las de la demo, no se borran) lo rompen | Apuntar el e2e local a `bearingworld-e2e` (ya en `0055`) |
 | 🟠 | **`F-225`** · la suite contra producción sigue con fallos ajenos sueltos (hoy, `ADMIN-02` en el intento 1 de `REG-05`) | PO: `bearingworld-e2e` ya tiene el esquema (`0055`); sus Edge Functions no (solo `access-request` v1) |
 | 🟠 | **`F-211`** · `Contactar` en `DIR-02` sin hilo previo no se puede | Con ADR-002 Q-1 delante |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
@@ -117,7 +113,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-235`** · `--seco` no construye el prompt del Coder: un campo obligatorio que falte revienta ya lanzado | Arnés |
 | 🟡 | **`F-224`** · dos e2e excusados en las tareas mientras exista la cuenta de prueba del PO en Rodamientos Ibéricos | PO |
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
-| 🟡 | **`F-231`** · `1247` o `1.247` (§3.3): decisión del PO, no arreglo; contradice a `F-024` | PO |
 | 🟡 | **`F-227`** · el medidor se para con cada modelo nuevo | Hacerlo tolerante (declarar lo sin valorar) |
 | 🟡 | **`.xls` binario no se lee** (el `.xlsx` sí, sin formatos: una fecha sale como número): va al fallo de `INV-03` | Producto: pedir `.xlsx` |
 | 🟡 | **Una cuenta baneada no se puede reinvitar** con el mismo correo | Al diseñar la reinvitación |
@@ -134,7 +129,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si `INVT-02` y `ACT-02` funcionan con una organización real y con otros navegadores**: el PO las recorrió una vez y las aprobó; medido por partes, sin e2e propia.
 - **Si Argon2id (64 MiB) entra en un móvil modesto**: solo jsdom y el navegador del PO.
 - **Qué ve al entrar `a.guillen.sp@gmail.com`** (EDITOR `REGISTERED` creado por FRU antes de `0050`): `ACT-02` sin el aviso de contraseña provisional. Nadie lo ha visto.
-- **Si el umbral de zxcvbn basta** contra un ataque offline al blob cifrado (Argon2id frena, pero ≥ 3 son ~10⁸ intentos): es juicio.
+- **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: el PO decidió mantenerlo el 9-oct; sigue siendo juicio, no medida.
 - **Cuánto tardó la importación de ~18 000 filas del PO** en el navegador: entró, nadie lo midió.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores**: solo con los de prueba y el del PO.
 - **Si el recorrido entero funciona en un navegador real**: aprobar en `ADMIN-01` → copiar el enlace → `REG-01` → `REG-05`. Medido **por partes**.

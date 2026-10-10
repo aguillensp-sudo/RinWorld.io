@@ -30,3 +30,32 @@ describe('VERA · no inventa la interfaz', () => {
     expect(tools).not.toContain('NO están construidas');
   });
 });
+
+// La GUÍA VERIFICADA del prompt solo vale mientras lo que dice siga en la pantalla. Cada nombre que cita
+// tiene que aparecer, literal, en el código de la pantalla de la que habla: si alguien renombra un
+// botón, este test obliga a actualizar la guía en el mismo cambio (la causa de F-246 fue
+// justo una afirmación sobre la interfaz que dejó de ser cierta).
+describe('VERA · la guía verificada sigue siendo cierta', () => {
+  const fuente = (rel: string) => readFileSync(resolve(process.cwd(), 'src/screens', rel), 'utf8');
+  const inventario = fuente('inventory/Inventory.tsx');
+  const mapeo = fuente('inventory/ImportMapping.tsx');
+
+  it.each([
+    ['Subir nuevo inventario', inventario],
+    ['Arrastra tu archivo aquí', inventario],
+    ['Subida manual', inventario],
+    ['Canal email', inventario],
+    ['Próximamente', inventario],
+    ['Acumulativo', mapeo],
+    ['Reemplazo total', mapeo],
+    ['Confirmar e ', mapeo],
+  ])('"%s" está en la pantalla y en la guía', (nombre, codigo) => {
+    expect(prompt).toContain(nombre);
+    expect(codigo).toContain(nombre);
+  });
+
+  it('no promete añadir una línea a mano ni un botón que no existe', () => {
+    expect(prompt).toContain('Añadir una línea suelta a mano no es posible');
+    expect(inventario).not.toMatch(/Nueva línea|Añadir línea/);
+  });
+});

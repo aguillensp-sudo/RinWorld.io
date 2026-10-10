@@ -32,7 +32,7 @@
 
 .eyebrow {
   font-family: var(--bw-font-title);
-  font-size: var(--bw-size-hint);
+  font-size: var(--bw-size-eyebrow);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -102,7 +102,7 @@
 
 .name {
   font-family: var(--bw-font-title);
-  font-size: 22px;
+  font-size: var(--bw-size-title);
   font-weight: 700;
   letter-spacing: var(--bw-ls-title);
   color: var(--bw-deep-steel);

@@ -41,7 +41,7 @@
 }
 
 .subtitle {
-  font-size: var(--bw-size-body);
+  font-size: var(--bw-size-subtitle);
   line-height: 1.6;
   color: var(--bw-steel-mist);
   margin: 0 0 32px;

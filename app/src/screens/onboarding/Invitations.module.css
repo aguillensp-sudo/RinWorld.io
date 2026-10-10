@@ -25,7 +25,7 @@
   font-family: var(--bw-font-title);
   font-weight: 600;
   /* 11px del HTML aprobado (.pg-eyebrow); el token --bw-size-label son 12px. */
-  font-size: 11px;
+  font-size: var(--bw-size-eyebrow);
   text-transform: uppercase;
   letter-spacing: var(--bw-ls-eyebrow);
   color: var(--bw-brass);
@@ -36,7 +36,7 @@
   font-family: var(--bw-font-title);
   font-weight: 700;
   /* 22px del HTML aprobado (.pg-title); el token --bw-size-title son 28px. */
-  font-size: 22px;
+  font-size: var(--bw-size-title);
   letter-spacing: var(--bw-ls-title);
   line-height: 1.25;
   color: var(--bw-deep-steel);

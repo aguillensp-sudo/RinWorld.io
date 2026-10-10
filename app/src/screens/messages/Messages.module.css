@@ -27,7 +27,7 @@
 
 .eyebrow {
   font-family: var(--bw-font-title);
-  font-size: var(--bw-size-hint);
+  font-size: var(--bw-size-eyebrow);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -44,7 +44,7 @@
 }
 
 .subtitle {
-  font-size: var(--bw-size-body);
+  font-size: var(--bw-size-subtitle);
   color: var(--bw-text-secondary);
   line-height: 1.6;
   margin: 0 0 16px;

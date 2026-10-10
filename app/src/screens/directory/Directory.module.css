@@ -27,7 +27,7 @@
 .eyebrow {
   margin: 0 0 4px;
   font-family: var(--bw-font-title);
-  font-size: 10px;
+  font-size: var(--bw-size-eyebrow);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--bw-ls-eyebrow);

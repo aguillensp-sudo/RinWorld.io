@@ -46,7 +46,7 @@
 
 .sub {
   max-width: 600px;
-  font-size: var(--bw-size-body);
+  font-size: var(--bw-size-subtitle);
   line-height: 1.6;
   color: var(--bw-text-secondary);
   margin-bottom: 16px;

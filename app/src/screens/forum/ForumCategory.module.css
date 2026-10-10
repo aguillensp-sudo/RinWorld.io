@@ -21,7 +21,7 @@
 .eyebrow {
   margin: 0 0 6px;
   font-family: var(--bw-font-title);
-  font-size: var(--bw-size-hint);
+  font-size: var(--bw-size-eyebrow);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -65,7 +65,7 @@
 .title {
   margin: 0 0 3px;
   font-family: var(--bw-font-title);
-  font-size: 20px;
+  font-size: var(--bw-size-title);
   font-weight: 700;
   letter-spacing: var(--bw-ls-title);
   color: var(--bw-deep-steel);

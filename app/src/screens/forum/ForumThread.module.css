@@ -23,7 +23,7 @@
   margin: 0 0 6px;
   font-family: var(--bw-font-title);
   /* La spec del módulo lo pide a 10px; el token más cercano es --bw-size-brand. */
-  font-size: var(--bw-size-brand);
+  font-size: var(--bw-size-eyebrow);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--bw-ls-eyebrow);

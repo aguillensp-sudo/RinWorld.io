@@ -80,7 +80,7 @@
         "pantalla": {
           "type": "string",
           "enum": ["Panel", "Vendiendo", "Comprando", "Hilos", "Inventario"],
-          "description": "Destino. 'Comprando' es la búsqueda en catálogo, 'Vendiendo' son las ofertas enviadas, 'Inventario' es el stock propio, 'Hilos' son las negociaciones. Son las cinco únicas pantallas que existen: Empresas, Foros y Contacto están en el menú pero NO están construidas."
+          "description": "Destino. 'Comprando' es la búsqueda en catálogo, 'Vendiendo' son las ofertas enviadas, 'Inventario' es el stock propio, 'Hilos' son las negociaciones. Son las cinco pantallas a las que puedes llevar al usuario. La aplicación tiene más pantallas (Empresas, Foros…), pero esta herramienta no puede abrirlas."
         }
       },
       "required": ["pantalla"]

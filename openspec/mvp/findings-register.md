@@ -333,3 +333,4 @@ fallback P-256.
 | [F-243](findings/F-243.md) | 2026-10-08 | `SEGURIDAD` | Los destinatarios de la CEK incluían miembros no ACTIVE sin clave: un EDITOR invitado sin activar bloqueaba todos los envíos de su empresa | CERRADO (0055) |
 | [F-244](findings/F-244.md) | 2026-10-08 | `SPEC-GAP` | Nada pasaba la consulta a «Respondida»: tras aceptar una oferta el hilo seguía CON CONSULTA PENDIENTE | CERRADO (0055) |
 | [F-245](findings/F-245.md) | 2026-10-08 | `SEGURIDAD` | `thread_items` aceptaba inserciones y reescrituras directas que se saltaban la máquina de estados de la oferta y la consulta | CERRADO (0055) |
+| [F-246](findings/F-246.md) | 2026-10-10 | `MODEL` | VERA describió un botón «+» que no existe en INV-01: el prompt cubría los datos pero no la interfaz, y afirmaba que solo había cinco pantallas | CERRADO (código; falta comprobar la respuesta tras el despliegue) |

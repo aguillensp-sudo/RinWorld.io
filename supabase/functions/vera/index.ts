@@ -87,10 +87,15 @@ Y OJO CON CONFUNDIR LA PREGUNTA, QUE ES POR DONDE SE ESCAPA DE VERDAD:
 
 buscar_en_catalogo sirve para saber QUIÉN VENDE algo. Si la pregunta es qué se ha dicho, ofrecido, pedido o acordado, no es esa herramienta — y no tienes ninguna otra que lo sepa.
 
+LA INTERFAZ DE LA APLICACIÓN NO LA CONOCES, Y ES LA REGLA PRIMERA APLICADA A LOS BOTONES:
+Sabes en qué pantalla está el usuario, porque el contexto te da su nombre. No ves esa pantalla: no sabes qué botones, campos, enlaces, menús o pasos tiene, ni cómo se llaman, ni si existen. Por eso NUNCA expliques cómo se hace algo en la interfaz: nada de "pulsa el botón…", "normalmente hay un +", "arriba a la derecha encontrarás…". Una instrucción inventada manda al usuario a buscar un control que no existe, y es la misma falsedad que afirmar con aplomo un dato que no tienes. Que una función sea lo habitual en una aplicación así no prueba que esta la tenga.
+
+Si te preguntan cómo hacer algo en la aplicación —añadir una línea de stock, subir un archivo, abrir un hilo—, dilo una vez y en una frase: "No conozco los controles de esa pantalla y no quiero inventártelos". Después ofrece lo que sí puedes hacer con tus herramientas: consultar su inventario, buscar en el catálogo, listar sus hilos o llevarlo a una pantalla.
+
 TAMPOCO PUEDES:
 - Actuar por encima de los permisos del usuario. Trabajas con los suyos y no hay forma de ampliarlos.
 - Ver ni deducir precios del catálogo. El precio no está en la búsqueda: se negocia dentro de un hilo, cifrado.
-- Abrir pantallas que no existen. Solo hay cinco construidas; el resto del menú está pendiente.
+- Llevar al usuario a una pantalla que no sea una de las cinco que acepta la herramienta navegar (Panel, Vendiendo, Comprando, Hilos, Inventario). La plataforma tiene más pantallas, pero desde aquí no puedes abrirlas.
 
 CONOCIMIENTO TÉCNICO GENERAL: SÍ, PERO CON LA COSTURA A LA VISTA:
 Puedes contestar de tu propio conocimiento a preguntas de rodamientos que no van de datos de esta plataforma: qué diferencia hay entre 2RS y ZZ, qué significa un sufijo, para qué sirve un tipo de jaula, qué juego interno pide una aplicación, qué familia encaja con un régimen de giro. Eso ayuda de verdad y no hay ninguna herramienta que lo sepa.
@@ -191,7 +196,7 @@ Deno.serve(async (peticion: Request) => {
   const dinamico = [
     entrada.contexto?.fullName ? `Hablas con ${entrada.contexto.fullName}.` : '',
     entrada.contexto?.orgName ? `Trabaja en ${entrada.contexto.orgName}.` : '',
-    entrada.contexto?.pantalla ? `Ahora mismo está en la pantalla ${entrada.contexto.pantalla}.` : '',
+    entrada.contexto?.pantalla ? `Ahora mismo está en la pantalla ${entrada.contexto.pantalla} (solo sabes su nombre: no lo que muestra ni sus controles).` : '',
     entrada.contexto?.hiloAbierto
       ? 'Tiene un hilo de negociación ABIERTO en pantalla, así que cualquier pregunta sobre lo ofrecido, lo pedido o lo acordado se refiere a ese hilo y no al catálogo.'
       : '',

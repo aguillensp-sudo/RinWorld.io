@@ -23,7 +23,7 @@
   flex-direction: column;
   /* El padding va FUERA del contenedor de 860 px, como `.bwcntb` del HTML aprobado
      (revisión a mano: dentro, el contenido quedaba en 764 px y recortaba los select). */
-  padding: 40px 48px 56px;
+  padding: var(--bw-screen-pad);
   background: var(--bw-cold-white);
 }
 

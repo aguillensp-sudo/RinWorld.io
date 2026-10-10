@@ -22,6 +22,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: var(--bw-screen-pad);
 }
 
 .eyebrow {

@@ -16,6 +16,7 @@
   min-height: 0;
   overflow-y: auto;
   gap: 16px;
+  padding: var(--bw-screen-pad);
 }
 
 /* Sin esto los hijos se ENCOGEN en vez de desplazarse (el boton pasaba de 40 a 20 px al guardar). */

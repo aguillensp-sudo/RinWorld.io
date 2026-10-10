@@ -2,7 +2,7 @@
 
 .body {
   min-height: 100%;
-  padding: var(--bw-pad-panel);
+  padding: var(--bw-screen-pad);
   background: var(--bw-cold-white);
   font-family: var(--bw-font-body);
 }

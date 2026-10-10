@@ -144,6 +144,8 @@
   --bw-radius: 3px;
   --bw-radius-hamburger: 4px;
   --bw-pad-panel: 48px;
+  /* Padding de toda pantalla del shell (decisión del PO, 10-oct-2026): arriba, lados, abajo. */
+  --bw-screen-pad: 24px 28px 40px;
   --bw-pad-input: 10px 12px;
   --bw-pad-radio: 12px 14px;
   --bw-pad-checkbox: 14px;

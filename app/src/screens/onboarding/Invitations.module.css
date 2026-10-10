@@ -16,7 +16,7 @@
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 40px var(--bw-pad-panel) 56px;
+  padding: var(--bw-screen-pad);
   font-family: var(--bw-font-body);
   color: var(--bw-deep-steel);
 }

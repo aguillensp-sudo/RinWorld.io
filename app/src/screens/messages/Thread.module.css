@@ -5,6 +5,10 @@
   min-width: 0;
   height: 100%;
   overflow: hidden;
+  /* Solo el margen superior del estándar de pantalla (--bw-screen-pad): la cabecera, la lista y el
+     compositor llevan su propio padding lateral de 28 px, y el compositor va fijo abajo. */
+  padding-top: 24px;
+  box-sizing: border-box;
   background: var(--bw-cold-white);
 }
 
@@ -17,7 +21,7 @@
 }
 
 .error {
-  margin: 16px 22px 0;
+  margin: 16px 28px 0;
   padding: 10px 14px;
   background: var(--bw-tint-danger);
   border: 1px solid var(--bw-sensitive-text);
@@ -28,7 +32,7 @@
 }
 
 .loading {
-  padding: 40px 22px;
+  padding: 40px 28px;
   color: var(--bw-text-secondary);
   font-size: 13px;
   font-family: var(--bw-font-body);

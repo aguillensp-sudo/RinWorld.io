@@ -1,7 +1,7 @@
 .list {
   list-style: none;
   margin: 0;
-  padding: 16px 22px;
+  padding: 16px 28px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -330,7 +330,7 @@
 
 .empty {
   flex: 1;
-  padding: 40px 22px;
+  padding: 40px 28px;
   color: var(--bw-text-secondary);
   font-size: 13px;
   font-family: var(--bw-font-body);

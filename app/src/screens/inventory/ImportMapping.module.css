@@ -30,7 +30,6 @@
 .inner {
   width: 100%;
   max-width: 860px;
-  margin: 0 auto;
   flex-shrink: 0;
 }
 

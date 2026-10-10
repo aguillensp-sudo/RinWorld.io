@@ -56,6 +56,24 @@ describe('padding de las pantallas del shell · 24 / 28 / 40', () => {
     expect(declaracion(css(rel), clase, 'padding')).toBe('var(--bw-screen-pad)');
   });
 
+  // El contenido arranca a la izquierda, a 28 px del borde, en todas: un `margin: 0 auto` (o un
+  // `align-items: center`) lo centra y, en una ventana ancha, el margen izquierdo deja de ser el mismo.
+  it.each([
+    ['inventory/Inventory', 'inner'],
+    ['inventory/ImportMapping', 'inner'],
+    ['inventory/ImportResult', 'inner'],
+    ['panel/Panel', 'inner'],
+    ['settings/ChangePassphrase', 'column'],
+    ['onboarding/Invitations', 'screen'],
+  ])('%s .%s no se centra con margin auto', (rel, clase) => {
+    expect(declaracion(css(rel), clase, 'margin') ?? '').not.toMatch(/auto/);
+  });
+
+  it('SET-SEC-01 y INVT-01 no centran ni acotan su contenedor con scroll', () => {
+    expect(declaracion(css('settings/ChangePassphrase'), 'screen', 'align-items')).toBe('flex-start');
+    expect(declaracion(css('onboarding/Invitations'), 'screen', 'max-width')).toBeNull();
+  });
+
   // MSG-02 tiene cabecera, lista con scroll y compositor fijo abajo: no admite un padding único.
   // Arriba, el 24 del estándar; a los lados, 28 en cada una de sus piezas.
   it('MSG-02: 24px arriba y 28px a los lados en cabecera, lista y compositor', () => {

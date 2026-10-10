@@ -334,3 +334,5 @@ fallback P-256.
 | [F-244](findings/F-244.md) | 2026-10-08 | `SPEC-GAP` | Nada pasaba la consulta a «Respondida»: tras aceptar una oferta el hilo seguía CON CONSULTA PENDIENTE | CERRADO (0055) |
 | [F-245](findings/F-245.md) | 2026-10-08 | `SEGURIDAD` | `thread_items` aceptaba inserciones y reescrituras directas que se saltaban la máquina de estados de la oferta y la consulta | CERRADO (0055) |
 | [F-246](findings/F-246.md) | 2026-10-10 | `MODEL` | VERA describió un botón «+» que no existe en INV-01: el prompt cubría los datos pero no la interfaz, y afirmaba que solo había cinco pantallas | CERRADO (código; falta comprobar la respuesta tras el despliegue) |
+| [F-247](findings/F-247.md) | 2026-10-10 | `INFRA` | `demo_reanchor_freshness()` anclaba y desplazaba TODA la tabla y contaba líneas no publicadas: con una empresa real no re-anclaba | CERRADO (0059) |
+| [F-248](findings/F-248.md) | 2026-10-10 | `HARNESS` | La CI cancela el e2e entre borrar y reponer el hilo Alpha–Beta y deja `bearingworld-e2e` rota para las corridas siguientes | CERRADO (demo-reset.mjs repone las filas) |

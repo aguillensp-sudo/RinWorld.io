@@ -58,6 +58,7 @@ import {
   type PlatformField,
 } from './lib/inventory-import';
 import { errorMessage } from './lib/session';
+import { fetchThreadWithOrg } from './lib/organization';
 import { importExampleFromHash } from './lib/import-result';
 import type { ImportSummary } from './lib/import-result';
 import { Messages } from './screens/messages/Messages';
@@ -484,12 +485,33 @@ export function App() {
     setInvitationToken(null);
   };
 
-  /** `Contactar` de una fila de búsqueda: la ficha de la empresa (DIR-02) vive en `Empresas`. */
-  const openOrganization = (orgId: string) => {
-    setWatchersOpen(false);
-    setBatchOpen(false);
-    setNav(EMPRESAS_NAV);
-    setOrgProfileId(orgId);
+  /**
+   * La empresa cuya ficha (DIR-02) debe abrirse con el cuadro «Primer mensaje» ya desplegado: la deja
+   * `Contactar` de una fila de búsqueda cuando todavía no hay hilo. Solo vale para esa empresa.
+   */
+  const [composeOrgId, setComposeOrgId] = useState<string | null>(null);
+
+  /**
+   * `Contactar` de una fila de búsqueda (SRCH-01 §6 y §7, `conversational-search`): abre el hilo con esa
+   * empresa. Si ya existe, va directo a MSG-02. Si no, crear un hilo exige un primer mensaje cifrado
+   * (`open_thread`, F-211), así que va a su ficha con el cuadro abierto. Si no se puede saber si hay hilo,
+   * se trata como que no: `open_thread` busca-o-crea, y contactar de más es seguro.
+   */
+  const contactFromSearch = (ownOrgId: string, orgId: string) => {
+    void fetchThreadWithOrg(ownOrgId, orgId)
+      .catch(() => null)
+      .then((threadId) => {
+        setWatchersOpen(false);
+        setBatchOpen(false);
+        if (threadId) {
+          setNav(MESSAGES_NAV);
+          setOpenThreadId(threadId);
+        } else {
+          setNav(EMPRESAS_NAV);
+          setComposeOrgId(orgId);
+          setOrgProfileId(orgId);
+        }
+      });
   };
 
   const navigate = (index: number) => {
@@ -504,6 +526,7 @@ export function App() {
     setImportDraft(null);
     setImportError(null);
     setOrgProfileId(null);
+    setComposeOrgId(null);
     setSettingsOpen(false);
     setSecurityOpen(false);
   };
@@ -935,7 +958,7 @@ export function App() {
         ) : batchOpen ? (
           /* SRCH-02. `now` explícito y construido en el render, mismo criterio
            * que SRCH-01: la columna Antigüedad de sus tablas es relativa al reloj. */
-          <BatchSearch profile={state.profile} now={new Date()} onOpenOrganization={openOrganization} />
+          <BatchSearch profile={state.profile} now={new Date()} onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)} />
         ) : (
           <SearchResults
             profile={state.profile}
@@ -943,7 +966,7 @@ export function App() {
             veraCriteria={veraCriteria}
             onOpenWatchers={() => setWatchersOpen(true)}
             onOpenBatch={() => setBatchOpen(true)}
-            onOpenOrganization={openOrganization}
+            onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)}
           />
         )
       ) : onSelling ? (
@@ -1011,8 +1034,13 @@ export function App() {
           <OrganizationProfile
             profile={state.profile}
             organizationId={orgProfileId}
-            onBack={() => setOrgProfileId(null)}
+            autoCompose={composeOrgId === orgProfileId}
+            onBack={() => {
+              setComposeOrgId(null);
+              setOrgProfileId(null);
+            }}
             onOpenThread={(threadId) => {
+              setComposeOrgId(null);
               setOrgProfileId(null);
               setNav(MESSAGES_NAV);
               setOpenThreadId(threadId);

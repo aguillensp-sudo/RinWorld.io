@@ -19,6 +19,11 @@ interface Props {
   onBack: () => void;
   /** Abre un hilo ya existente con la organización. Lo decide el shell. */
   onOpenThread: (threadId: string) => void;
+  /**
+   * Abre el cuadro «Primer mensaje» en cuanto se sepa que no hay hilo (lo pide `Contactar` de la
+   * búsqueda). Opcional: la ficha abierta desde el directorio no lo usa.
+   */
+  autoCompose?: boolean;
 }
 
 /** El botón está deshabilitado porque la ficha es la de la propia organización. */
@@ -58,7 +63,7 @@ function orDash(value: string): string {
  * de carga con la ficha nueva. Sin ella, la ficha de la organización anterior
  * podría aterrizar encima de la nueva.
  */
-export function OrganizationProfile({ profile, organizationId, onBack, onOpenThread }: Props) {
+export function OrganizationProfile({ profile, organizationId, onBack, onOpenThread, autoCompose = false }: Props) {
   const [data, setData] = useState<OrganizationProfileData | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   /** La persona administradora (0058). `''` hasta que llega, o si no hay. No bloquea la ficha. */
@@ -128,6 +133,12 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
       cancelled = true;
     };
   }, [organizationId, profile.orgId]);
+
+  // Sin hilo y pedido por `Contactar` de la búsqueda: el cuadro ya abierto. Solo reacciona al llegar la
+  // respuesta del hilo, así que «Cancelar» lo cierra y no vuelve a abrirse.
+  useEffect(() => {
+    if (autoCompose && threadChecked && threadId === null) setComposing(true);
+  }, [autoCompose, threadChecked, threadId]);
 
   if (loading) {
     return (

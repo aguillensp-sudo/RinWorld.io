@@ -71,13 +71,33 @@ fila marcada con el checkbox de selección múltiple.
 - THEN el botón "Consultar" aparece deshabilitado con texto explicativo
 - AND la fila se muestra visualmente diferenciada de forma permanente
 
-#### Scenario: contactar distribuidor (hilo libre)
-- GIVEN un miembro en SRCH-01 que pulsa "Contactar" en cualquier fila
-- WHEN ejecuta la acción
-- THEN se abre un hilo de conversación libre con ese distribuidor en
-  messaging-and-negotiation
+#### Scenario: contactar distribuidor con hilo previo
+- GIVEN un miembro en SRCH-01 que ya tiene un hilo con la organización
+  de una fila
+- WHEN pulsa "Contactar" en esa fila
+- THEN se abre directamente ese hilo en messaging-and-negotiation
+  (MSG-02), sin pasar por la ficha de la organización
 - AND la acción está siempre disponible independientemente del estado
   de consulta de la fila
+
+#### Scenario: contactar distribuidor sin hilo previo (hilo libre)
+- GIVEN un miembro en SRCH-01 que no tiene hilo con la organización de
+  una fila
+- WHEN pulsa "Contactar" en esa fila
+- THEN se abre la ficha pública de esa organización (MSG-04) con el
+  cuadro "Primer mensaje" ya desplegado
+- AND al enviar el primer mensaje se crea el hilo libre con ese
+  distribuidor y se abre en MSG-02
+- AND no se requiere cantidad ni referencia
+
+> Enmienda del 10-oct-2026 (decisión del PO, `DECISIONES-V1.md`): el
+> escenario original decía solo "se abre un hilo de conversación libre".
+> Un hilo no existe sin un primer elemento cifrado (F-211), así que sin
+> hilo previo el flujo pasa por el cuadro de primer mensaje de la ficha en
+> lugar de crear un hilo vacío. Con hilo previo no hay paso intermedio.
+> La misma conducta rige en SRCH-02, cuya tabla es idéntica a la de
+> SRCH-01. La spec de pantalla `Rinworld_spec_SRCH-01.md` ("Contactar
+> siempre habilitado") sigue siendo cierta y no se modifica.
 
 #### Scenario: consultar seleccionados en lote
 - GIVEN un miembro en SRCH-01 que ha marcado al menos una fila de uno

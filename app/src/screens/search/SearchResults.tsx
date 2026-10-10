@@ -46,8 +46,8 @@ interface Props {
   onOpenWatchers?: () => void;
   /** Abre SRCH-02 (`Búsqueda por lotes`). Opcional por la misma razón que `onOpenWatchers`. */
   onOpenBatch?: () => void;
-  /** Abre la ficha de la empresa (DIR-02). Opcional: sin él `Contactar` queda apagado. */
-  onOpenOrganization?: (orgId: string) => void;
+  /** Contactar la empresa de la fila. Opcional: sin él `Contactar` queda apagado. */
+  onContactOrganization?: (orgId: string) => void;
 }
 
 /**
@@ -58,7 +58,7 @@ interface Props {
  * un favorito se vuelve a consultar la base (`toggleFavorite` + `fetchResults`).
  * La tabla y los chips son presentacionales y no guardan estado de datos.
  */
-export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOpenBatch, onOpenOrganization }: Props) {
+export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOpenBatch, onContactOrganization }: Props) {
   const [criteria, setCriteria] = useState<SearchCriteria>(EMPTY_CRITERIA);
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -302,7 +302,7 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
                 onToggleFavorite={handleToggleFavorite}
                 onConsult={handleConsult}
                 onContact={handleContact}
-                onOpenOrganization={onOpenOrganization}
+                onContactOrganization={onContactOrganization}
               />
             ) : null}
           </div>

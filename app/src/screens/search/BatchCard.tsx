@@ -15,7 +15,7 @@ interface Props {
   onToggleFavorite: (orgId: string) => void;
   onConsult: (lineId: string) => void;
   onContact: (orgId: string) => void;
-  onOpenOrganization?: ((orgId: string) => void) | undefined;
+  onContactOrganization?: ((orgId: string) => void) | undefined;
 }
 
 /**
@@ -38,7 +38,7 @@ export function BatchCard({
   onToggleFavorite,
   onConsult,
   onContact,
-  onOpenOrganization,
+  onContactOrganization,
 }: Props) {
   const failed = result.page === null;
   const empty = hasNoResults(result);
@@ -95,7 +95,7 @@ export function BatchCard({
             onToggleFavorite={onToggleFavorite}
             onConsult={onConsult}
             onContact={onContact}
-            onOpenOrganization={onOpenOrganization}
+            onContactOrganization={onContactOrganization}
           />
         </div>
       )}

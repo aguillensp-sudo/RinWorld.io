@@ -5,7 +5,7 @@ import type { SearchResultRow } from '../../lib/search';
 import { ResultsTable } from './ResultsTable';
 
 /**
- * `Contactar` de fila lleva a la ficha de la empresa (D3). **Ninguna tarea del corpus lo
+ * `Contactar` de fila contacta a la empresa (hilo o primer mensaje, `App.contactFromSearch`). **Ninguna tarea del corpus lo
  * pide**: va en fichero aparte, como el cableado VERA de SearchResults, para que el
  * contrato de `ResultsTable.test.tsx` siga siendo el que midió al Coder.
  */
@@ -25,7 +25,7 @@ const fila: SearchResultRow = {
   consulted: false,
 };
 
-function pintar(onOpenOrganization?: (orgId: string) => void) {
+function pintar(onContactOrganization?: (orgId: string) => void) {
   render(
     <ResultsTable
       rows={[fila]}
@@ -38,14 +38,14 @@ function pintar(onOpenOrganization?: (orgId: string) => void) {
       onToggleFavorite={vi.fn()}
       onConsult={vi.fn()}
       onContact={vi.fn()}
-      onOpenOrganization={onOpenOrganization}
+      onContactOrganization={onContactOrganization}
     />,
   );
   return within(screen.getAllByRole('row')[1]!).getByRole('button', { name: 'Contactar' });
 }
 
-describe('ResultsTable · Contactar → ficha de la empresa', () => {
-  it('con onOpenOrganization está habilitado y abre la ficha de esa organización', async () => {
+describe('ResultsTable · Contactar → hilo con la empresa', () => {
+  it('con onContactOrganization está habilitado y contacta a esa organización', async () => {
     const abrir = vi.fn<(orgId: string) => void>();
     const boton = pintar(abrir);
     expect(boton).toBeEnabled();
@@ -53,7 +53,7 @@ describe('ResultsTable · Contactar → ficha de la empresa', () => {
     expect(abrir).toHaveBeenCalledWith(fila.orgId);
   });
 
-  it('sin onOpenOrganization sigue apagado y con su motivo', () => {
+  it('sin onContactOrganization sigue apagado y con su motivo', () => {
     const boton = pintar();
     expect(boton).toBeDisabled();
     expect(boton.getAttribute('title') ?? '').not.toHaveLength(0);

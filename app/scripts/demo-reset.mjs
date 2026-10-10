@@ -43,7 +43,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
-import { HILO_IDS, buildSeed } from '../../supabase/seed/demo-content.mjs';
+import { ALPHA_ORG, HILOS, HILO_IDS, buildSeed } from '../../supabase/seed/demo-content.mjs';
 
 /** El de Anadolu, el último de la lista. Es el que hay que devolver a cerrado. */
 const HILO_ANADOLU = HILO_IDS[HILO_IDS.length - 1];
@@ -251,6 +251,31 @@ export async function resetDemo({ url, serviceKey, seed, reanchor = true, log = 
       await db.from('members').update({ public_key: `\\x${p.publicKeyHex}` }).eq('id', p.id),
     );
   }
+
+  /*
+   * Las FILAS de los cinco hilos tienen que existir antes de reponer sus elementos
+   * (`thread_items_thread_id_fkey`). Faltan si una corrida se interrumpió entre «borrar el hilo» y
+   * «reponerlo» —`zz-h5-negociacion.spec.ts` lo hace, y la CI cancela el run en curso al empujar
+   * otro commit (`cancel-in-progress`)—. Sin esto la base de e2e se quedaba rota y TODAS las
+   * corridas siguientes fallaban aquí hasta que alguien repusiera la fila a mano. Solo crea las
+   * que faltan: las que existen no se tocan.
+   */
+  orLanza(
+    'reponiendo las filas de los hilos de demo que falten',
+    await db.from('threads').upsert(
+      HILOS.map((h) => {
+        const [low, high] = ALPHA_ORG < h.orgAlta ? [ALPHA_ORG, h.orgAlta] : [h.orgAlta, ALPHA_ORG];
+        return {
+          id: h.id,
+          org_low_id: low,
+          org_high_id: high,
+          created_by_org_id: ALPHA_ORG,
+          state: h.estado,
+        };
+      }),
+      { onConflict: 'id', ignoreDuplicates: true },
+    ),
+  );
 
   /*
    * ⚠ ACOTADO A LOS CINCO. `HILO_IDS` son UUID fijos de `demo-content.mjs`. Un

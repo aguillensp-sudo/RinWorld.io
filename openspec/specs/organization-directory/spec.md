@@ -107,7 +107,8 @@ cuando una búsqueda por nombre devuelve un resultado único.
 ### Requirement: organization-public-profile
 El sistema SHALL presentar en MSG-04 los datos generales de la
 organización (nombre, país, dirección, código postal, fecha de
-incorporación), sus datos de contacto público, un indicador de
+incorporación), el nombre de la persona administradora de la
+organización, sus datos de contacto público, un indicador de
 favoritos, y un botón "Contactar" que inicia o reutiliza el hilo
 único con esa organización sin requerir cantidad ni referencia.
 [Origen: Módulo 04 v1.5, secciones 8.3 y Inventario de Pantallas v1.1,
@@ -118,8 +119,16 @@ sección 5.5]
 - WHEN la pantalla MSG-04 carga
 - THEN muestra nombre, país, dirección completa, código postal y
   fecha de incorporación
+- AND muestra el nombre de la persona administradora de esa
+  organización (su administrador activo más antiguo; un guion si no
+  hay ninguno)
 - AND muestra email y teléfono de contacto público
 - AND muestra el recuento de favoritos de esa organización
+
+> Enmienda del 10-oct-2026 (decisión del PO, `DECISIONES-V1.md`): el nombre
+> del administrador no estaba en el Módulo 04 v1.5 ni en el HTML aprobado de
+> DIR-02, que no se modifica. Solo se expone ese nombre —no su correo ni
+> ningún otro dato del miembro—, y solo a miembros activos.
 
 #### Scenario: contacto libre desde la ficha
 - GIVEN un miembro en la ficha pública de una organización con la

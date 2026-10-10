@@ -6428,4 +6428,62 @@ delete from public.members where org_id in ('a90b0001-0000-4000-8000-00000000000
 delete from auth.users where id::text like 'a900000%';
 delete from public.organizations where id in ('a90b0001-0000-4000-8000-000000000001', 'a90b0002-0000-4000-8000-000000000002');
 
+-- =============================================================================
+-- 0058 · DIR-02: el nombre del administrador en la ficha
+-- =============================================================================
+insert into auth.users (id, email) values
+  ('a9100001-0000-0000-0000-000000000001', 'adm@q1.test'),
+  ('a9100002-0000-0000-0000-000000000002', 'ed@q1.test'),
+  ('a9100003-0000-0000-0000-000000000003', 'mirón@q2.test'),
+  ('a9100004-0000-0000-0000-000000000004', 'reg@q2.test'),
+  ('a9100005-0000-0000-0000-000000000005', 'adm@q3.test');
+insert into public.organizations (id, name, country, continent, status) values
+  ('a91b0001-0000-4000-8000-000000000001', 'Ficha Q1', 'ES', 'EU', 'APPROVED'),
+  ('a91b0002-0000-4000-8000-000000000002', 'Ficha Q2', 'DE', 'EU', 'APPROVED'),
+  ('a91b0003-0000-4000-8000-000000000003', 'Ficha Q3', 'FR', 'EU', 'PENDING_REVIEW');
+insert into public.members (id, org_id, email, full_name, state) values
+  ('a9100001-0000-0000-0000-000000000001', 'a91b0001-0000-4000-8000-000000000001', 'adm@q1.test', '  Ana Rey  ', 'ACTIVE'),
+  ('a9100002-0000-0000-0000-000000000002', 'a91b0001-0000-4000-8000-000000000001', 'ed@q1.test', 'Edu Editor', 'ACTIVE'),
+  ('a9100003-0000-0000-0000-000000000003', 'a91b0002-0000-4000-8000-000000000002', 'mirón@q2.test', 'Mario Mirón', 'ACTIVE'),
+  ('a9100004-0000-0000-0000-000000000004', 'a91b0002-0000-4000-8000-000000000002', 'reg@q2.test', 'Rita Registrada', 'REGISTERED'),
+  ('a9100005-0000-0000-0000-000000000005', 'a91b0003-0000-4000-8000-000000000003', 'adm@q3.test', 'Pía Pendiente', 'ACTIVE');
+
+do $$
+declare
+  ok boolean := false;
+begin
+  -- Un miembro ACTIVE de otra empresa ve el nombre del ADMIN (recortado), y no el del EDITOR.
+  perform set_config('request.jwt.claim.sub', 'a9100003-0000-0000-0000-000000000003', true);
+  set local role authenticated;
+  assert public.organization_admin_name('a91b0001-0000-4000-8000-000000000001') = 'Ana Rey',
+    'DIR-02: un miembro activo de otra organización ve el nombre del administrador';
+  -- Una organización que no está APPROVED no enseña a nadie.
+  assert public.organization_admin_name('a91b0003-0000-4000-8000-000000000003') is null,
+    'DIR-02: una organización PENDING_REVIEW no enseña su administrador';
+  -- Una que no existe, tampoco.
+  assert public.organization_admin_name('00000000-0000-4000-8000-000000000000') is null,
+    'DIR-02: una organización inexistente devuelve NULL, no un error';
+  reset role;
+
+  -- Un miembro que aún no está ACTIVE no lo ve.
+  perform set_config('request.jwt.claim.sub', 'a9100004-0000-0000-0000-000000000004', true);
+  set local role authenticated;
+  assert public.organization_admin_name('a91b0001-0000-4000-8000-000000000001') is null,
+    'DIR-02: un miembro REGISTERED no ve el nombre';
+  reset role;
+
+  -- anon no ejecuta la función.
+  set local role anon;
+  begin perform public.organization_admin_name('a91b0001-0000-4000-8000-000000000001');
+  exception when insufficient_privilege then ok := true; end;
+  reset role;
+  assert ok, 'DIR-02: anon no puede pedir el nombre del administrador';
+  raise notice 'OK · 0058 · DIR-02: el nombre del administrador, solo a miembros activos y de organizaciones aprobadas';
+end
+$$;
+
+delete from public.members where org_id in ('a91b0001-0000-4000-8000-000000000001', 'a91b0002-0000-4000-8000-000000000002', 'a91b0003-0000-4000-8000-000000000003');
+delete from auth.users where id::text like 'a910000%';
+delete from public.organizations where id in ('a91b0001-0000-4000-8000-000000000001', 'a91b0002-0000-4000-8000-000000000002', 'a91b0003-0000-4000-8000-000000000003');
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

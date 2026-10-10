@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import {
   favoritesLabel,
+  fetchOrganizationAdminName,
   fetchOrganizationProfile,
   fetchThreadWithOrg,
   telHref,
@@ -60,6 +61,8 @@ function orDash(value: string): string {
 export function OrganizationProfile({ profile, organizationId, onBack, onOpenThread }: Props) {
   const [data, setData] = useState<OrganizationProfileData | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  /** La persona administradora (0058). `''` hasta que llega, o si no hay. No bloquea la ficha. */
+  const [adminName, setAdminName] = useState('');
   /** La búsqueda del hilo ya terminó (con hilo, sin hilo o con fallo). */
   const [threadChecked, setThreadChecked] = useState(false);
   const [composing, setComposing] = useState(false);
@@ -76,10 +79,15 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
     setError(null);
     setData(null);
     setThreadId(null);
+    setAdminName('');
     setThreadChecked(false);
     setComposing(false);
     setDraft('');
     setSendError(null);
+
+    fetchOrganizationAdminName(organizationId).then((name) => {
+      if (!cancelled) setAdminName(name);
+    });
 
     fetchOrganizationProfile(organizationId)
       .then((result) => {
@@ -301,6 +309,11 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
         <section className={styles.card} aria-label="Contacto público">
           <h2 className={styles.cardTitle}>Contacto público</h2>
           <dl className={styles.list}>
+            <div className={styles.row}>
+              <dt className={styles.label}>Administrador</dt>
+              <dd className={styles.value}>{orDash(adminName)}</dd>
+            </div>
+
             <div className={styles.row}>
               <dt className={styles.label}>Teléfono</dt>
               <dd className={styles.value}>

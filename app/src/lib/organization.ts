@@ -200,6 +200,20 @@ export async function fetchOrganizationProfile(id: string): Promise<Organization
 }
 
 /**
+ * El nombre de la persona administradora de la organización (0058), o `''` si no hay o no se
+ * pudo leer. **No lanza**: es un dato de adorno de la ficha, y su fallo no es el de la ficha.
+ */
+export async function fetchOrganizationAdminName(organizationId: string): Promise<string> {
+  try {
+    const { data, error } = await supabase.rpc('organization_admin_name', { p_org_id: organizationId });
+    if (error || typeof data !== 'string') return '';
+    return data.trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
  * El hilo que ya existe entre dos organizaciones, o `null`. Hay UNO como mucho por
  * pareja (`threads` guarda la pareja en orden canónico, `org_low_id < org_high_id`),
  * así que el orden en que se pasan las dos no importa: se ordenan aquí. La

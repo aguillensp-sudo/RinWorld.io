@@ -6,6 +6,8 @@ Nueva decisión: una fila arriba del todo, con fecha y quién decidió. Una deci
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **`DIR-01`: el desplegable de países enseña solo los países con organizaciones, no la lista ISO 3166-1 que dice la spec** | 10-oct-2026, PO («DIR-01 como está»). Desvío consciente de `Rinworld_spec_DIR-01.md` §3 (field hint «Lista ISO 3166-1»): ofrecer 249 países que no devuelven filas solo sirve para perderse. La spec aprobada no se edita | `app/src/screens/directory/Directory.tsx` |
+| **`DIR-02`: la ficha enseña el nombre de la persona administradora** | 10-oct-2026, PO. Amplía el contrato: no está en el Módulo 04 v1.5 ni en el HTML aprobado (que no se toca). Solo el nombre, solo a miembros ACTIVE, solo de organizaciones APPROVED, por `organization_admin_name` (`0058`); el correo no se expone. Spec `organization-directory` enmendada | `supabase/migrations/0058_nombre_del_administrador_en_la_ficha.sql`, `openspec/specs/organization-directory/spec.md` |
 | **Las escaladas por defecto del instrumento (`F-174`, `F-183`) NO cuentan para la cifra 2 de la remedición a seis** | 21-sep-2026, PO, sin repetir las corridas. Sin ello la regla de `UMBRAL` §4 diría «No rinde». Lo que `F-166` decidió para `ADMIN-01` era lo contrario | `remedicion-seis-pantallas.md` |
 | **Cifra 3 de la remedición: 1 de 6, «contando como siempre»** | 21-sep-2026, PO. No importa cuál de las dos lecturas: falla en ambas con el umbral proporcional | ídem |
 | **`F-172` cuenta como corrección de C5 en `FORO-02`** | 21-sep-2026, PO. Es lo que hace fallar la cifra 5 | ídem |

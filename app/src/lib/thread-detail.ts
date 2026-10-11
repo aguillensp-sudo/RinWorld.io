@@ -116,6 +116,13 @@ export interface ThreadItem {
   createdAt: string;
   partNumber: string | null;
   brand: string | null;
+  /**
+   * País de la línea de inventario consultada (MSG-03 v1.2, columna `País`). Solo
+   * lo tienen las consultas; baja por el embed de `inventory_lines`, que respeta
+   * su RLS: si la línea ya no se ve (archivada, borrada o fuera de visibilidad),
+   * llega `null` y la tabla pinta `—`. Opcional para no tocar los fixtures.
+   */
+  locationCountry?: string | null;
   offerState: OfferState | null;
   inquiryState: InquiryState | null;
   respondsToItemId: string | null;
@@ -406,6 +413,7 @@ interface ItemRow {
   content_ciphertext: string | null;
   content_iv: string | null;
   thread_item_keys: { wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[] | null;
+  inventory_lines: { location_country: string | null } | null;
 }
 
 /**
@@ -424,7 +432,8 @@ const ITEM_COLUMNS =
   'id, item_type, sender_org_id, created_at, part_number, brand, ' +
   'estado_oferta, estado_consulta, responds_to_item_id, superseded_by_item_id, ' +
   'content_ciphertext, content_iv, ' +
-  'thread_item_keys(wrapped_cek, wrap_iv, ephemeral_pubkey)';
+  'thread_item_keys(wrapped_cek, wrap_iv, ephemeral_pubkey), ' +
+  'inventory_lines(location_country)';
 
 /**
  * El historial completo del hilo, **ascendente** — el más antiguo arriba, como
@@ -468,6 +477,7 @@ export async function fetchThreadItems(threadId: string, orgId: string): Promise
       createdAt: r.created_at,
       partNumber: r.part_number,
       brand: r.brand,
+      locationCountry: r.inventory_lines?.location_country ?? null,
       offerState: r.estado_oferta,
       inquiryState: r.estado_consulta,
       respondsToItemId: r.responds_to_item_id,

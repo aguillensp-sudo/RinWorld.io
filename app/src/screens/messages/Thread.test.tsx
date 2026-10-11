@@ -112,8 +112,10 @@ describe('carga', () => {
     // contraparte DOS veces —en el breadcrumb `Hilos › NSK Europe Ltd` y como
     // enlace de la cabecera—, así que `findByText` encuentra dos y revienta.
     // El artefacto estaba bien; el aserto estaba mal escrito.
-    expect(await screen.findByRole('button', { name: 'NSK Europe Ltd' })).toBeInTheDocument();
-    expect(screen.getByText(ENCRYPTED_NOTICE)).toBeInTheDocument();
+    // MSG-03 v1.2 (11-oct): el nombre sale también en la columna `Organización` de
+    // las tablas, y una cifra sin clave dice «Cifrado» con el aviso largo en `title`.
+    expect((await screen.findAllByRole('button', { name: 'NSK Europe Ltd' }))[0]).toBeInTheDocument();
+    expect(screen.getAllByTitle(ENCRYPTED_NOTICE).length).toBeGreaterThan(0);
   });
 });
 
@@ -206,7 +208,7 @@ describe('decidir una oferta', () => {
   it('aceptar avisa a la base con el id del elemento y mi organización', async () => {
     const user = userEvent.setup();
     pinta();
-    await user.click(await screen.findByRole('button', { name: 'Aceptar oferta' }));
+    await user.click(await screen.findByRole('button', { name: 'Aceptar' }));
     expect(acceptOffer).toHaveBeenCalledWith('of-1', profile.orgId);
     await waitFor(() => expect(fetchThreadItems).toHaveBeenCalledTimes(2));
   });
@@ -230,7 +232,7 @@ describe('decidir una oferta', () => {
     acceptOffer.mockImplementation(() => new Promise<void>((r) => { resolver = () => r(); }));
 
     pinta();
-    const boton = await screen.findByRole('button', { name: 'Aceptar oferta' });
+    const boton = await screen.findByRole('button', { name: 'Aceptar' });
     await user.click(boton);
     await user.click(boton);
 
@@ -245,7 +247,7 @@ describe('decidir una oferta', () => {
     const user = userEvent.setup();
     acceptOffer.mockRejectedValue(new Error('La oferta ya no estaba pendiente, o es tuya.'));
     pinta();
-    await user.click(await screen.findByRole('button', { name: 'Aceptar oferta' }));
+    await user.click(await screen.findByRole('button', { name: 'Aceptar' }));
     expect(await screen.findByText(/ya no estaba pendiente/)).toBeInTheDocument();
   });
 });
@@ -306,6 +308,7 @@ describe('el reloj', () => {
     // `useState` inicial. Los timestamps relativos del hilo son tan sensibles al
     // reloj como la columna Antigüedad de SRCH-01.
     pinta();
-    expect(await screen.findByText(/hace/i)).toBeInTheDocument();
+    // Sale en el historial y en la columna `Fecha` de las tablas (MSG-03 v1.2).
+    expect((await screen.findAllByText(/hace/i)).length).toBeGreaterThan(0);
   });
 });

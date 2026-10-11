@@ -372,3 +372,28 @@ que `access-request` en `REG-00`). Lo que mide el arnés es el formulario de 17 
 Sonnet 5.5 añadida ese mismo día, que el medidor no conocía).
 
 *§8 ampliado el 29-sep-2026, antes de construir nada de `REG-01`.*
+
+---
+
+**Adenda del 11-oct-2026 — vigesimosexta pantalla (`MSG-03`, las dos tablas de la v1.2).**
+Orden del PO del 11-oct («prefiero que las tablas pasen por fábrica»), tras ver que `MSG-03` no se
+había construido nunca como tal: las tarjetas de `MSG-02` eran el diseño v1.0. **Elegida antes de
+construir.** Módulo 04. Lo que mide el arnés son **dos componentes presentacionales**, la tabla de
+consultas y la de ofertas, que pintan filas ya calculadas.
+
+**Precondición a mano, fuera de la tarea** (la regla de `REG-06`: el Coder no decide ni un texto): la
+capa de datos de las filas (`lib/negotiation-tables.ts`: etiquetas de estado, acciones por fila, la
+oferta expirada con `Aceptar igualmente`, cifras formateadas), el país de la línea consultada en
+`fetchThreadItems` y el montaje en `ThreadHistory` (los formularios de oferta y contraoferta siguen
+siendo `OfferCounterForm`). Los otros cuatro huecos de `MSG-03` frente a su spec (formulario de
+consulta, bloqueo por duplicado, `Crear consulta` en el hilo, VERA) **no son de esta tarea**.
+
+**El contrato de `MSG-02` cambia, y se dice:** las tablas sustituyen a las tarjetas (spec `MSG-03`
+v1.2), así que los asertos de tarjeta de `ThreadHistory.test.tsx` pasan a las dos tablas. Se reescriben
+a mano, antes de la corrida y en el commit del contrato; no es tocar un contrato para otra cosa, es
+que el diseño aprobado cambió.
+
+**Lo que NO es: un punto limpio de las cifras 7 y 8.** Comparte sesión con el cierre del sprint de
+demo y con la capa de datos.
+
+*§8 ampliado el 11-oct-2026, antes de construir nada de `MSG-03`.*

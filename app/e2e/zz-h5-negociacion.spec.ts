@@ -132,7 +132,8 @@ test.describe('H5 · negociación de punta a punta', () => {
       await dialogoAlpha.getByLabel('Precio unitario').fill('12,50');
       await dialogoAlpha.getByRole('button', { name: 'Enviar oferta' }).click();
       await expect(dialogoAlpha).toBeHidden();
-      await expect(alpha.getByText('Respondida con oferta')).toBeVisible();
+      // MSG-03 v1.2: el estado es el badge de la tabla de consultas.
+      await expect(alpha.getByTestId('badge').filter({ hasText: 'RESPONDIDA' })).toBeVisible();
 
       // 3 · BETA ve la oferta y contraoferta.
       await topNav(beta).getByRole('button', { name: 'Panel' }).click();
@@ -143,13 +144,14 @@ test.describe('H5 · negociación de punta a punta', () => {
       await dialogoBeta.getByLabel('Precio unitario').fill('11,80');
       await dialogoBeta.getByRole('button', { name: 'Enviar contraoferta' }).click();
       await expect(dialogoBeta).toBeHidden();
-      await expect(beta.getByText('Superada por contraoferta')).toBeVisible();
+      await expect(beta.getByTestId('badge').filter({ hasText: 'SUPERADA' })).toBeVisible();
 
       // 4 · ALPHA acepta la contraoferta; el hilo pasa a ACUERDO ALCANZADO.
       await topNav(alpha).getByRole('button', { name: 'Panel' }).click();
       await abrirHilo(alpha, BETA.org);
-      await expect(alpha.getByRole('button', { name: 'Aceptar oferta' })).toBeVisible();
-      await alpha.getByRole('button', { name: 'Aceptar oferta' }).click();
+      // MSG-03 v1.2: `Aceptar`, como el HTML aprobado.
+      await expect(alpha.getByRole('button', { name: 'Aceptar', exact: true })).toBeVisible();
+      await alpha.getByRole('button', { name: 'Aceptar', exact: true }).click();
       await expect(alpha.getByText('ACUERDO ALCANZADO').first()).toBeVisible();
 
       // 5 · BETA ve el mismo estado desde su lado.

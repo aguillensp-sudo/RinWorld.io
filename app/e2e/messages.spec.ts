@@ -188,7 +188,9 @@ test.describe('MSG-02 · un hilo real', () => {
     // mandé. Un `toHaveCount(0)` global aquí no mide la contraparte: mide el
     // shell. Es la misma forma que los dos asertos sin ámbito de la revisión a
     // mano de hoy (F-059).
-    const enlaceOrg = page.getByRole('button', { name: 'Nordwälz Lager' });
+    // `.first()`: es el de la cabecera. Desde MSG-03 v1.2 (11-oct) las tablas de
+    // consultas y ofertas repiten el nombre en su columna `Organización`, por fila.
+    const enlaceOrg = page.getByRole('button', { name: 'Nordwälz Lager' }).first();
     await expect(enlaceOrg).toBeVisible();
     await expect(enlaceOrg).not.toHaveText(ALPHA.org);
 
@@ -205,7 +207,8 @@ test.describe('MSG-02 · un hilo real', () => {
     // que pasaba hasta el día 7, y por eso este test decía otra cosa.
     // El texto sale del blob cifrado: no existe en ninguna columna en claro.
     await expect(page.getByText('Precio por unidad para el lote completo.')).toBeVisible();
-    await expect(page.getByText(/4,82\s?€\/ud\./)).toBeVisible();
+    // MSG-03 v1.2: el precio sale en la tabla de ofertas, con el ISO detrás.
+    await expect(page.getByText('4,82 EUR').first()).toBeVisible();
 
     const html = await page.content();
     // El blob viaja como cadena hex `\x…` por PostgREST. Que el contenido se lea
@@ -234,7 +237,10 @@ test.describe('MSG-02 · un hilo real', () => {
 
     await fila.getByRole('button', { name: 'Ver lo que ve el servidor' }).click();
 
-    await expect(fila.getByText(/4,82\s?€\/ud\./)).toBeVisible(); // arriba, legible
+    // Arriba, legible: el precio en la tabla de ofertas (MSG-03 v1.2), las notas en la
+    // línea del elemento; abajo, en la misma línea, lo que guarda el servidor.
+    await expect(page.getByText('4,82 EUR').first()).toBeVisible();
+    await expect(fila.getByText('Precio por unidad para el lote completo.')).toBeVisible();
     // Dos coincidencias a propósito: content_ciphertext Y content_iv son hex de
     // 16+ caracteres — .first() basta para probar que al menos uno está, sin
     // fijar cuál.

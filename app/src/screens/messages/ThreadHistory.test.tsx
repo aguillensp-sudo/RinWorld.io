@@ -2,9 +2,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { relativeTime } from '../../lib/threads';
-import { EXPIRED_NOTICE } from '../../lib/offers';
 import { ENCRYPTED_NOTICE, type ItemContent, type ThreadItem } from '../../lib/thread-detail';
+import { NEGOTIATION_TEXTS as T } from '../../lib/negotiation-tables';
 import { ThreadHistory } from './ThreadHistory';
+
+/**
+ * ⚠ REESCRITO EL 11-OCT-2026 PARA MSG-03 v1.2 (`UMBRAL-FABRICA-V1.md` §8, adenda del
+ * 11-oct). Las tarjetas de consulta y oferta se sustituyeron por dos tablas encima del
+ * historial (spec `MSG-03` v1.2). Los asertos de tarjeta pasan a la fila de su tabla
+ * (`tr[data-row-id]`) o a la línea que el elemento conserva en el historial; lo que
+ * cada uno protegía (cifras que no se filtran, quién decide, la oferta caducada que se
+ * acepta igualmente, el transporte no informado) sigue protegido. Los literales que
+ * cambiaron son los del HTML aprobado de MSG-03: `Aceptar` (no `Aceptar oferta`) y
+ * los badges en mayúsculas (`RESPONDIDA`, `SUPERADA`).
+ */
+function filaDe(id: string): HTMLElement {
+  const tr = document.querySelector<HTMLElement>(`tr[data-row-id="${id}"]`);
+  if (!tr) throw new Error(`no hay fila de tabla para ${id}`);
+  return tr;
+}
 
 /**
  * `OfferCounterForm` no se mockea aquí abajo: es el mismo criterio que
@@ -167,19 +183,18 @@ describe('⚠ la frontera de lo cifrado (D-07-05)', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('una tarjeta sin descifrar CONSERVA sus metadatos: no es un bloque en blanco', () => {
+  it('una oferta sin descifrar CONSERVA sus metadatos: no es un bloque en blanco', () => {
     // Lo que separa un hilo sin passphrase de una pantalla rota. `part_number`,
     // `brand`, el tipo y el estado van en claro en `thread_items` desde 0003.
     pinta([ofertaRecibida({ content: null })]);
-    const tarjeta = screen.getByTestId('thread-item');
-    expect(within(tarjeta).getByText('Oferta')).toBeInTheDocument();
-    // ⚠ LA REFERENCIA ENTERA EN UN SOLO ASERTO, y el fallo era MÍO: `/NSK/` a
-    // secas casaba con dos nodos —la referencia `6205-2RS · NSK` y el autor
-    // `NSK Europe Ltd`, que también va dentro del elemento—. Pedir las dos
-    // partes juntas es inequívoco y además no fija el separador, que el
-    // contrato dejó libre a propósito.
-    expect(within(tarjeta).getByText(/6205-2RS.*NSK/)).toBeInTheDocument();
-    expect(within(tarjeta).getByText(/Pendiente/i)).toBeInTheDocument();
+    // En el historial: tipo, referencia y estado en su línea.
+    const linea = screen.getByTestId('thread-item');
+    expect(within(linea).getByText(/Oferta.*6205-2RS.*NSK.*PENDIENTE/)).toBeInTheDocument();
+    // En la tabla: la referencia y el badge, y las cifras dicen «Cifrado».
+    const fila = filaDe('of-1');
+    expect(within(fila).getByText(/6205-2RS.*NSK/)).toBeInTheDocument();
+    expect(within(fila).getByTestId('badge')).toHaveTextContent('PENDIENTE');
+    expect(within(fila).getAllByText(T.encrypted).length).toBeGreaterThan(0);
   });
 
   it('⚠⚠ sin descifrar NO aparece NI UNA CIFRA de la oferta, ni un símbolo de moneda', () => {
@@ -206,22 +221,21 @@ describe('⚠ la frontera de lo cifrado (D-07-05)', () => {
     expect(screen.queryByText(ENCRYPTED_NOTICE)).not.toBeInTheDocument();
   });
 
-  it('el transporte informado sale como línea propia; el no informado no sale', () => {
-    // `offer-card`, dos escenarios: un `0` diría "portes gratis", que es una
+  it('el transporte informado sale en su columna; el no informado es «—», nunca 0', () => {
+    // `offer-card` y MSG-03 §6: un `0` diría "portes gratis", que es una
     // afirmación comercial que nadie hizo.
     const { unmount } = pinta([ofertaRecibida({ content: contenidoOferta })]);
-    expect(screen.getByText(/transporte/i)).toBeInTheDocument();
-    expect(screen.getByText(/45/)).toBeInTheDocument();
+    const columna = T.offerHeaders.indexOf('Transporte');
+    expect(within(filaDe('of-1')).getAllByRole('cell')[columna]).toHaveTextContent('45,00 EUR');
     unmount();
 
     const { container } = pinta([
       ofertaRecibida({ content: { ...contenidoOferta, shippingCost: null } }),
     ]);
-    // Ancla: la tarjeta descifrada sigue pintada —el precio unitario sí está—, y
-    // lo que falta es exactamente la línea de transporte. Sin el ancla, un
-    // componente vacío daría esto por bueno.
-    expect(screen.getByText(/2,10|2\.10/)).toBeInTheDocument();
-    expect(screen.queryByText(/transporte/i)).not.toBeInTheDocument();
+    // Ancla: la fila descifrada sigue pintada —el precio unitario sí está—, y lo
+    // que cambia es exactamente la celda de transporte.
+    expect(within(filaDe('of-1')).getByText('2,10 EUR')).toBeInTheDocument();
+    expect(within(filaDe('of-1')).getAllByRole('cell')[columna]).toHaveTextContent(T.none);
     expect(container.textContent ?? '').not.toMatch(/0,00|0\.00/);
   });
 
@@ -233,12 +247,14 @@ describe('⚠ la frontera de lo cifrado (D-07-05)', () => {
         content: { ...contenidoOferta, validUntil: '2026-07-15T00:00:00Z' },
       }),
     ]);
-    expect(screen.getByText(EXPIRED_NOTICE)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Aceptar oferta' })).not.toBeDisabled();
+    // MSG-03 §6: badge EXPIRADA, aviso accesible y `Aceptar igualmente`.
+    expect(within(filaDe('of-1')).getByTestId('badge')).toHaveTextContent('EXPIRADA');
+    expect(screen.getByRole('img', { name: T.expiredWarning })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: T.acceptAnyway })).not.toBeDisabled();
   });
 });
 
-describe('las tarjetas', () => {
+describe('las filas de consulta y de oferta', () => {
   it('la consulta lleva su badge y su estado', () => {
     pinta([
       item({
@@ -249,16 +265,15 @@ describe('las tarjetas', () => {
         inquiryState: 'Pendiente',
       }),
     ]);
-    const tarjeta = screen.getByTestId('thread-item');
-    expect(within(tarjeta).getByText('Consulta')).toBeInTheDocument();
-    expect(within(tarjeta).getByText(/Pendiente/i)).toBeInTheDocument();
+    expect(within(screen.getByTestId('thread-item')).getByText(/Consulta.*6205-2RS.*FAG.*PENDIENTE/)).toBeInTheDocument();
+    expect(within(filaDe('co-1')).getByTestId('badge')).toHaveTextContent('PENDIENTE');
   });
 
-  it('la consulta respondida lo dice con el literal del esquema', () => {
+  it('la consulta respondida lo dice con el badge del HTML aprobado (RESPONDIDA)', () => {
     pinta([
       item({ id: 'co-2', type: 'CONSULTA', partNumber: '6205-2RS', brand: 'FAG', inquiryState: 'Respondida con oferta' }),
     ]);
-    expect(screen.getByText(/Respondida con oferta/i)).toBeInTheDocument();
+    expect(within(filaDe('co-2')).getByTestId('badge')).toHaveTextContent('RESPONDIDA');
   });
 
   it('una oferta superada por contraoferta sigue en el historial', () => {
@@ -271,7 +286,7 @@ describe('las tarjetas', () => {
       }),
     ]);
     expect(screen.getByTestId('thread-item')).toBeInTheDocument();
-    expect(screen.getByText(/Superada por contraoferta/i)).toBeInTheDocument();
+    expect(within(filaDe('of-vieja')).getByTestId('badge')).toHaveTextContent('SUPERADA');
   });
 });
 
@@ -348,11 +363,11 @@ describe('el panel de vista-servidor (Plan §3, día 11)', () => {
 });
 
 describe('⚠ quién puede decidir una oferta', () => {
-  it('el receptor tiene `Aceptar oferta` y `Rechazar`', async () => {
+  it('el receptor tiene `Aceptar` y `Rechazar`', async () => {
     const user = userEvent.setup();
     pinta([ofertaRecibida()]);
 
-    await user.click(screen.getByRole('button', { name: 'Aceptar oferta' }));
+    await user.click(screen.getByRole('button', { name: T.accept }));
     expect(onAcceptOffer).toHaveBeenCalledWith('of-1');
 
     await user.click(screen.getByRole('button', { name: 'Rechazar' }));
@@ -367,19 +382,24 @@ describe('⚠ quién puede decidir una oferta', () => {
     // Ancla: la tarjeta está pintada y es MÍA. Lo que falta son las acciones, no la
     // tarjeta — una oferta propia se sigue viendo entera.
     expect(screen.getByTestId('thread-item')).toHaveAttribute('data-own', 'true');
-    expect(screen.queryByRole('button', { name: 'Aceptar oferta' })).not.toBeInTheDocument();
+    expect(filaDe('of-1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Aceptar/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Rechazar' })).not.toBeInTheDocument();
   });
 
-  it.each(['Aceptada', 'Rechazada', 'Superada por contraoferta'] as const)(
+  it.each([
+    ['Aceptada', 'ACEPTADA'],
+    ['Rechazada', 'RECHAZADA'],
+    ['Superada por contraoferta', 'SUPERADA'],
+  ] as const)(
     'una oferta %s no ofrece acciones ni al receptor',
-    (estado) => {
+    (estado, badge) => {
       pinta([ofertaRecibida({ offerState: estado })]);
-      // Ancla: la tarjeta sigue en el historial con su estado terminal a la vista.
+      // Ancla: la oferta sigue en el historial y en su tabla con su estado terminal.
       // "sin eliminarse del historial" (`offer-card`) es la otra mitad de esto.
-      expect(within(screen.getByTestId('thread-item')).getByText(new RegExp(estado, 'i')))
-        .toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Aceptar oferta' })).not.toBeInTheDocument();
+      expect(within(screen.getByTestId('thread-item')).getByText(new RegExp(badge))).toBeInTheDocument();
+      expect(within(filaDe('of-1')).getByTestId('badge')).toHaveTextContent(badge);
+      expect(screen.queryByRole('button', { name: /^Aceptar/ })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Rechazar' })).not.toBeInTheDocument();
     },
   );

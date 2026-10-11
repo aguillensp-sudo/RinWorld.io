@@ -106,12 +106,13 @@ describe('MSG-02 · la contraparte abre su ficha (DIR-02) — fuera del contrato
     const onOpenCounterparty = vi.fn();
     render(<Thread profile={profile} threadId={HILO} now={NOW} onOpenCounterparty={onOpenCounterparty} />);
     const esperado = detail();
-    await userEvent.click(await screen.findByRole('button', { name: esperado.counterpartyName }));
+    // El primero es el de la cabecera; las tablas de MSG-03 repiten el nombre por fila.
+    await userEvent.click((await screen.findAllByRole('button', { name: esperado.counterpartyName }))[0]!);
     expect(onOpenCounterparty).toHaveBeenCalledWith(esperado.counterpartyId);
   });
 
   it('sin él, el clic no hace nada ni revienta', async () => {
     render(<Thread profile={profile} threadId={HILO} now={NOW} />);
-    await userEvent.click(await screen.findByRole('button', { name: detail().counterpartyName }));
+    await userEvent.click((await screen.findAllByRole('button', { name: detail().counterpartyName }))[0]!);
   });
 });

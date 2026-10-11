@@ -90,7 +90,8 @@ describe('consulta sin acciones', () => {
 
   it('una ya decidida es terminal y enseña su estado', () => {
     pinta([consulta({ inquiryState: 'Sin stock' })]);
-    expect(screen.getByText('Sin stock')).toBeInTheDocument(); // ancla
+    // MSG-03 v1.2: el estado es el badge de la tabla, en mayúsculas.
+    expect(screen.getByText('SIN STOCK')).toBeInTheDocument(); // ancla
     expect(screen.queryByRole('button', { name: /Responder con oferta|Sin stock/ })).toBeNull();
   });
 });

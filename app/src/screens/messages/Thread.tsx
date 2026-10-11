@@ -256,6 +256,7 @@ export function Thread({
               onCounterOffer={handleCounterOffer}
               onRespondWithOffer={handleRespondWithOffer}
               onOutOfStock={handleOutOfStock}
+              onOpenOrganization={(orgId) => onOpenCounterparty?.(orgId)}
             />
             {/* D-07-01: el pie se monta en los cinco estados del hilo, CERRADO
                 SIN ACUERDO incluido. La reapertura ocurre cuando alguien vuelve

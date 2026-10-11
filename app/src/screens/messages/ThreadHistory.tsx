@@ -1,110 +1,22 @@
 import { useState } from 'react';
 import {
   ENCRYPTED_NOTICE,
-  asOfferCard,
   authorLabel,
   itemTypeLabel,
-  validUntilLabel,
-  type ItemContent,
   type OfferContent,
   type ThreadItem,
 } from '../../lib/thread-detail';
-import { expiryNotice, offerActions, shippingLine } from '../../lib/offers';
+import {
+  inquiryRows,
+  offerRows,
+  type InquiryRow,
+  type OfferRow,
+} from '../../lib/negotiation-tables';
 import { relativeTime } from '../../lib/threads';
+import { InquiriesTable } from './InquiriesTable';
 import { OfferCounterForm } from './OfferCounterForm';
+import { OffersTable } from './OffersTable';
 import styles from './ThreadHistory.module.css';
-
-/**
- * Sin contenido descifrado no hay con qué prerellenar el formulario (D-07-05):
- * `OfferCounterForm` necesita la oferta original para prerellenarse, y
- * proponer una contraoferta a ciegas sobre cifras que no se pueden leer no
- * tiene sentido de producto. No es lo mismo que "fuera del MVP" — el botón
- * VUELVE a activarse solo con recargar la clave de sesión.
- */
-const NO_CONTENT_REASON = 'No se puede leer esta oferta en esta sesión, así que no se puede contraofertar.';
-
-const OFFER_STATE_CLASS: Record<string, string | undefined> = {
-  Pendiente: styles.statePendiente,
-  Aceptada: styles.stateAceptada,
-  Rechazada: styles.stateRechazada,
-  'Superada por contraoferta': styles.stateSuperada,
-};
-
-const INQUIRY_STATE_CLASS: Record<string, string | undefined> = {
-  Pendiente: styles.statePendiente,
-  'Respondida con oferta': styles.stateRespondida,
-  'Sin stock': styles.stateSinStock,
-};
-
-function offerStateClass(state: string): string {
-  return OFFER_STATE_CLASS[state] ?? '';
-}
-
-function inquiryStateClass(state: string): string {
-  return INQUIRY_STATE_CLASS[state] ?? '';
-}
-
-function formatQuantity(quantity: number): string {
-  return `${quantity} ud.`;
-}
-
-function InquiryBody({ content }: { content: Extract<ItemContent, { kind: 'CONSULTA' }> }) {
-  return (
-    <>
-      <div className={styles.cardRow}>
-        <span className={styles.cardLabel}>Cantidad</span>
-        <span className={styles.cardVal}>{formatQuantity(content.quantity)}</span>
-      </div>
-      {content.comment && <p className={styles.cardNote}>{content.comment}</p>}
-    </>
-  );
-}
-
-function OfferBody({ content, now }: { content: Extract<ItemContent, { kind: 'OFERTA' }>; now: Date }) {
-  const shipping = shippingLine(content.shippingCost, content.currency);
-  const expiry = expiryNotice(content.validUntil, now);
-
-  return (
-    <>
-      <div className={styles.cardRow}>
-        <span className={styles.cardLabel}>Precio unitario</span>
-        <span className={styles.cardVal}>
-          {new Intl.NumberFormat('es-ES', { style: 'currency', currency: content.currency }).format(
-            content.unitPrice,
-          )}
-          /ud.
-        </span>
-      </div>
-      <div className={styles.cardRow}>
-        <span className={styles.cardLabel}>Cantidad</span>
-        <span className={styles.cardVal}>{formatQuantity(content.quantity)}</span>
-      </div>
-      {content.leadTimeDays !== null && content.leadTimeDays !== undefined && (
-        <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Plazo de entrega</span>
-          <span className={styles.cardVal}>{content.leadTimeDays} días</span>
-        </div>
-      )}
-      {shipping && (
-        <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Coste transporte</span>
-          <span className={styles.cardVal}>{shipping}</span>
-        </div>
-      )}
-      {content.validUntil && (
-        <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Válida hasta</span>
-          {/* El artefacto pintaba `content.validUntil` en crudo, o sea un ISO
-              entero -"2026-07-15T00:00:00.000Z"- en la cara del usuario. La
-              rama descifrada no se ejercita hoy, así que ningún check lo veía. */}
-          <span className={styles.cardVal}>{validUntilLabel(content.validUntil)}</span>
-        </div>
-      )}
-      {expiry && <p className={styles.cardExpiry}>{expiry}</p>}
-      {content.notes && <p className={styles.cardNote}>{content.notes}</p>}
-    </>
-  );
-}
 
 /**
  * El panel de vista-servidor (`Plan §3`, día 11): lo que Postgres tiene de
@@ -149,160 +61,20 @@ function RawServerView({ raw }: { raw: ThreadItem['raw'] }) {
   );
 }
 
-function Card({
-  item,
-  threadId,
-  viewerOrgId,
-  now,
-  onAcceptOffer,
-  onRejectOffer,
-  onCounterOffer,
-  onRespondWithOffer,
-  onOutOfStock,
-}: {
-  item: ThreadItem;
-  threadId: string;
-  viewerOrgId: string;
-  now: Date;
-  onAcceptOffer: (itemId: string) => void;
-  onRejectOffer: (itemId: string) => void;
-  onCounterOffer: (itemId: string, threadId: string, content: OfferContent) => Promise<boolean>;
-  onRespondWithOffer?: ((inquiryId: string, content: OfferContent) => Promise<boolean>) | undefined;
-  onOutOfStock?: ((inquiryId: string) => void) | undefined;
-}) {
-  const [contraofertando, setContraofertando] = useState(false);
-  const [respondiendo, setRespondiendo] = useState(false);
-  // Una consulta la decide quien la recibe, una sola vez (0055).
-  const puedeDecidirConsulta =
-    item.type === 'CONSULTA' && !item.isOwn && item.inquiryState === 'Pendiente';
-  const isOffer = item.type === 'OFERTA';
-  const card = asOfferCard(item, threadId);
-  // Las acciones solo salen de offerActions: es lo único que sabe que sólo el
-  // receptor decide. Una condición equivalente escrita aquí pondría la regla en
-  // dos sitios (F-056).
-  const actions = card ? offerActions(card, viewerOrgId) : [];
-  const contenidoOferta = item.content && item.content.kind === 'OFERTA' ? item.content : null;
-  const stateLabel = isOffer ? item.offerState : item.inquiryState;
-  const stateClass = stateLabel
-    ? isOffer
-      ? offerStateClass(stateLabel)
-      : inquiryStateClass(stateLabel)
-    : '';
-  const reference = [item.partNumber, item.brand].filter(Boolean).join(' · ');
-
-  return (
-    <article className={`${styles.card} ${item.isOwn ? styles.cardOwn : styles.cardOther}`}>
-      <header
-        className={`${styles.cardHeader} ${isOffer ? styles.cardHeaderOffer : styles.cardHeaderInquiry}`}
-      >
-        <span className={`${styles.typeBadge} ${isOffer ? styles.typeBadgeOffer : styles.typeBadgeInquiry}`}>
-          {itemTypeLabel(item.type)}
-        </span>
-        {reference && <span className={styles.cardRef}>{reference}</span>}
-      </header>
-
-      <div className={styles.cardBody}>
-        {item.content && item.content.kind === 'CONSULTA' && <InquiryBody content={item.content} />}
-        {item.content && item.content.kind === 'OFERTA' && <OfferBody content={item.content} now={now} />}
-        {!item.content && <div className={styles.encrypted}>{ENCRYPTED_NOTICE}</div>}
-      </div>
-
-      <footer className={styles.cardFooter}>
-        {stateLabel && <span className={`${styles.cardState} ${stateClass}`}>{stateLabel}</span>}
-        {actions.length > 0 && (
-          <div className={styles.cardActions}>
-            {actions.includes('aceptar') && (
-              <button
-                type="button"
-                className={styles.acceptButton}
-                onClick={() => onAcceptOffer(item.id)}
-              >
-                Aceptar oferta
-              </button>
-            )}
-            {actions.includes('rechazar') && (
-              <button
-                type="button"
-                className={styles.rejectButton}
-                onClick={() => onRejectOffer(item.id)}
-              >
-                Rechazar
-              </button>
-            )}
-            {actions.includes('contraofertar') &&
-              (contenidoOferta ? (
-                <button
-                  type="button"
-                  className={styles.counterButton}
-                  onClick={() => setContraofertando(true)}
-                >
-                  Contra-ofertar
-                </button>
-              ) : (
-                <span className={styles.counterWrap}>
-                  <button type="button" className={styles.counterButton} disabled>
-                    Contra-ofertar
-                  </button>
-                  <span className={styles.reason}>{NO_CONTENT_REASON}</span>
-                </span>
-              ))}
-          </div>
-        )}
-        {puedeDecidirConsulta && (onRespondWithOffer || onOutOfStock) && (
-          <div className={styles.cardActions}>
-            {onRespondWithOffer && (
-              <button type="button" className={styles.acceptButton} onClick={() => setRespondiendo(true)}>
-                Responder con oferta
-              </button>
-            )}
-            {onOutOfStock && (
-              <button type="button" className={styles.rejectButton} onClick={() => onOutOfStock(item.id)}>
-                Sin stock
-              </button>
-            )}
-          </div>
-        )}
-      </footer>
-
-      {respondiendo && onRespondWithOffer && (
-        <OfferCounterForm
-          partNumber={item.partNumber ?? ''}
-          brand={item.brand ?? ''}
-          title="Responder con oferta"
-          hint="Tu oferta responde a esta consulta y la marca como respondida."
-          submitLabel="Enviar oferta"
-          initialQuantity={item.content?.kind === 'CONSULTA' ? item.content.quantity : undefined}
-          onCancel={() => setRespondiendo(false)}
-          onSubmit={async (content) => {
-            const ok = await onRespondWithOffer(item.id, content);
-            if (ok) setRespondiendo(false);
-            return ok;
-          }}
-        />
-      )}
-
-      {contraofertando && contenidoOferta && (
-        <OfferCounterForm
-          partNumber={item.partNumber ?? ''}
-          brand={item.brand ?? ''}
-          original={contenidoOferta}
-          onCancel={() => setContraofertando(false)}
-          onSubmit={async (content) => {
-            const ok = await onCounterOffer(item.id, threadId, content);
-            if (ok) setContraofertando(false);
-            return ok;
-          }}
-        />
-      )}
-    </article>
-  );
-}
-
 /**
- * Historial de MSG-02, puramente presentacional.
+ * Historial de MSG-02, con las dos tablas de MSG-03 v1.2 encima.
  *
- * Recibe los elementos ya ordenados ascendentemente por la capa de datos y no
- * carga nada. El estado vacío vive aquí, no en la pantalla.
+ * MSG-03 v1.2 sustituye las tarjetas de consulta y oferta por **dos tablas** (spec
+ * `MSG-03` §3 y §4). Las filas las calcula `lib/negotiation-tables.ts` y las pintan
+ * `InquiriesTable` y `OffersTable`; aquí solo se monta: qué callback recibe cada
+ * botón y qué formulario se abre. Los formularios siguen siendo `OfferCounterForm`.
+ *
+ * El historial cronológico se queda, con los mensajes y **una línea por cada
+ * consulta u oferta**: es donde vive «Ver lo que ve el servidor» de cada elemento
+ * (`Plan §3`, día 11), que la spec de las tablas no menciona y la demo enseña.
+ *
+ * Puramente presentacional: recibe los elementos ya ordenados ascendentemente por la
+ * capa de datos y no carga nada. El estado vacío vive aquí, no en la pantalla.
  */
 export function ThreadHistory({
   items,
@@ -316,6 +88,7 @@ export function ThreadHistory({
   onCounterOffer,
   onRespondWithOffer,
   onOutOfStock,
+  onOpenOrganization,
 }: {
   items: ThreadItem[];
   threadId: string;
@@ -328,55 +101,128 @@ export function ThreadHistory({
   onCounterOffer: (itemId: string, threadId: string, content: OfferContent) => Promise<boolean>;
   onRespondWithOffer?: ((inquiryId: string, content: OfferContent) => Promise<boolean>) | undefined;
   onOutOfStock?: ((inquiryId: string) => void) | undefined;
+  onOpenOrganization?: ((orgId: string) => void) | undefined;
 }) {
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [counteringId, setCounteringId] = useState<string | null>(null);
+
   if (items.length === 0) {
     return <div className={styles.empty}>Este hilo no tiene elementos todavía.</div>;
   }
 
-  // El reloj se resuelve UNA vez y baja ya concreto. El artefacto propagaba
-  // `now?: Date` a los subcomponentes y `exactOptionalPropertyTypes` lo rechaza:
-  // `Date | undefined` no es asignable a una prop opcional. Dos errores de C1 que
-  // el modelo tuvo delante en el feedback de los intentos 2 y 3 sin resolverlos.
+  // El reloj se resuelve UNA vez y baja ya concreto (`exactOptionalPropertyTypes`).
   const clock = now ?? new Date();
+  const ctx = { viewerOrgId, ownOrgName, counterpartyName, now: clock };
+
+  // Un botón sin callback fallaría al pulsarlo: si quien monta no pasa el de una
+  // acción, la acción no se pinta.
+  const inquiries: InquiryRow[] = inquiryRows(items, ctx).map((row) => ({
+    ...row,
+    actions: row.actions.filter((a) => (a === 'responder' ? !!onRespondWithOffer : !!onOutOfStock)),
+  }));
+  const offers: OfferRow[] = offerRows(items, ctx);
+  const badgeOf = new Map<string, string>([
+    ...inquiries.map((r) => [r.id, r.badge.label] as const),
+    ...offers.map((r) => [r.id, r.badge.label] as const),
+  ]);
+
+  const responding = respondingId ? items.find((i) => i.id === respondingId) : undefined;
+  const countering = counteringId ? items.find((i) => i.id === counteringId) : undefined;
+  const counterContent = countering?.content?.kind === 'OFERTA' ? countering.content : null;
 
   return (
-    <ul className={styles.list}>
-      {items.map((item) => {
-        const author = authorLabel(item, { ownOrgName, counterpartyName });
-        return (
-          <li
-            key={item.id}
-            className={`${styles.item} ${item.isOwn ? styles.itemOwn : styles.itemOther}`}
-            data-testid="thread-item"
-            data-item-id={item.id}
-            data-own={String(item.isOwn)}
-            aria-label={item.isOwn ? `Elemento enviado por ${author}` : `Elemento de ${author}`}
-          >
-            {item.type === 'MENSAJE' ? (
-              <div className={`${styles.bubble} ${item.isOwn ? styles.bubbleOwn : styles.bubbleOther}`}>
-                {item.content && item.content.kind === 'MENSAJE' ? item.content.text : ENCRYPTED_NOTICE}
+    <>
+      {(inquiries.length > 0 || offers.length > 0) && (
+        <div className={styles.tables}>
+          {inquiries.length > 0 && (
+            <InquiriesTable
+              rows={inquiries}
+              onRespond={(id) => setRespondingId(id)}
+              onOutOfStock={(id) => onOutOfStock?.(id)}
+              onOpenOrganization={(orgId) => onOpenOrganization?.(orgId)}
+            />
+          )}
+          {offers.length > 0 && (
+            <OffersTable
+              rows={offers}
+              onAccept={onAcceptOffer}
+              onReject={onRejectOffer}
+              onCounter={(id) => setCounteringId(id)}
+              onOpenOrganization={(orgId) => onOpenOrganization?.(orgId)}
+            />
+          )}
+        </div>
+      )}
+
+      <ul className={styles.list}>
+        {items.map((item) => {
+          const author = authorLabel(item, { ownOrgName, counterpartyName });
+          const reference = [item.partNumber, item.brand].filter(Boolean).join(' · ');
+          return (
+            <li
+              key={item.id}
+              className={`${styles.item} ${item.isOwn ? styles.itemOwn : styles.itemOther}`}
+              data-testid="thread-item"
+              data-item-id={item.id}
+              data-own={String(item.isOwn)}
+              aria-label={item.isOwn ? `Elemento enviado por ${author}` : `Elemento de ${author}`}
+            >
+              {item.type === 'MENSAJE' ? (
+                <div className={`${styles.bubble} ${item.isOwn ? styles.bubbleOwn : styles.bubbleOther}`}>
+                  {item.content && item.content.kind === 'MENSAJE' ? item.content.text : ENCRYPTED_NOTICE}
+                </div>
+              ) : (
+                <div className={styles.itemLine}>
+                  {[itemTypeLabel(item.type), reference, badgeOf.get(item.id)].filter(Boolean).join(' · ')}
+                  {/* La tabla de ofertas de la spec no tiene columna de notas (§4.1), y
+                      las notas de una oferta llevan incoterm y forma de pago (§4.2):
+                      sin esto no se verían en ningún sitio. Las de la consulta ya
+                      tienen su columna. */}
+                  {item.content?.kind === 'OFERTA' && item.content.notes && (
+                    <p className={styles.itemNote}>{item.content.notes}</p>
+                  )}
+                </div>
+              )}
+              <div className={styles.meta}>
+                <span className={styles.author}>{author}</span>
+                <span className={styles.timestamp}>{relativeTime(item.createdAt, clock)}</span>
               </div>
-            ) : (
-              <Card
-                item={item}
-                threadId={threadId}
-                viewerOrgId={viewerOrgId}
-                now={clock}
-                onAcceptOffer={onAcceptOffer}
-                onRejectOffer={onRejectOffer}
-                onCounterOffer={onCounterOffer}
-                onRespondWithOffer={onRespondWithOffer}
-                onOutOfStock={onOutOfStock}
-              />
-            )}
-            <div className={styles.meta}>
-              <span className={styles.author}>{author}</span>
-              <span className={styles.timestamp}>{relativeTime(item.createdAt, clock)}</span>
-            </div>
-            <RawServerView raw={item.raw} />
-          </li>
-        );
-      })}
-    </ul>
+              <RawServerView raw={item.raw} />
+            </li>
+          );
+        })}
+      </ul>
+
+      {responding && onRespondWithOffer && (
+        <OfferCounterForm
+          partNumber={responding.partNumber ?? ''}
+          brand={responding.brand ?? ''}
+          title="Responder con oferta"
+          hint="Tu oferta responde a esta consulta y la marca como respondida."
+          submitLabel="Enviar oferta"
+          initialQuantity={responding.content?.kind === 'CONSULTA' ? responding.content.quantity : undefined}
+          onCancel={() => setRespondingId(null)}
+          onSubmit={async (content) => {
+            const ok = await onRespondWithOffer(responding.id, content);
+            if (ok) setRespondingId(null);
+            return ok;
+          }}
+        />
+      )}
+
+      {countering && counterContent && (
+        <OfferCounterForm
+          partNumber={countering.partNumber ?? ''}
+          brand={countering.brand ?? ''}
+          original={counterContent}
+          onCancel={() => setCounteringId(null)}
+          onSubmit={async (content) => {
+            const ok = await onCounterOffer(countering.id, threadId, content);
+            if (ok) setCounteringId(null);
+            return ok;
+          }}
+        />
+      )}
+    </>
   );
 }

@@ -1,4 +1,196 @@
-/* MSG-03 · InquiriesTable — marcador; lo sustituye su corrida del arnés. */
-.placeholder {
-  display: block;
+/* MSG-03 v1.2 · Tabla de Consultas.
+   Todos los colores salen de `tokens.css`. Ni un hex, ni un rgb(), ni un nombre
+   de color: un literal aquí es lo mismo que un hex, solo más difícil de
+   encontrar cuando cambie el token base (design-system §6.1). */
+
+.section {
+  margin-bottom: 28px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-family: var(--bw-font-title);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bw-steel-mist);
+}
+
+.title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bw-line-steel);
+}
+
+/* Único scroll que gestiona el componente: el horizontal. El vertical lo lleva
+   el historial de MSG-02. */
+.wrap {
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+}
+
+.th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 14px;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bw-steel-mist);
+  background: var(--bw-surface-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
+}
+
+.td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--bw-ink-steel);
+  border-bottom: 1px solid var(--bw-divider-mist);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child .td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover .td {
+  background: var(--bw-surface-mist);
+}
+
+.ref {
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+}
+
+.org {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--bw-calibration-blue);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.org:hover {
+  opacity: 0.72;
+}
+
+.org:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 2px;
+  border-radius: var(--bw-radius);
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--bw-input-placeholder);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.tonePendiente {
+  background: var(--bw-badge-warning-bg);
+  border: 1px solid var(--bw-badge-warning-border);
+  color: var(--bw-warning);
+}
+
+.toneRespondida {
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  color: var(--bw-signal-green);
+}
+
+.toneSinStock {
+  background: var(--bw-badge-neutral-bg);
+  border: 1px solid var(--bw-badge-neutral-border);
+  color: var(--bw-steel-mist);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.primary {
+  height: 26px;
+  padding: 0 11px;
+  border: none;
+  border-radius: 4px;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-warm-cream);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.primary:hover {
+  opacity: 0.87;
+}
+
+.secondary {
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 4px;
+  background: none;
+  color: var(--bw-steel-mist);
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.12s,
+    border-color 0.12s;
+}
+
+.secondary:hover {
+  border-color: var(--bw-hover-border);
+  color: var(--bw-ink-steel);
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }

@@ -46,7 +46,7 @@ function BuildingIcon() {
  */
 function ExpiredWarning() {
   return (
-    <span role="img" aria-label={T.expiredWarning} className={styles.warning}>
+    <span role="img" aria-label={T.expiredWarning} title={T.expiredWarning} className={styles.warning}>
       <svg
         aria-hidden="true"
         width="11"

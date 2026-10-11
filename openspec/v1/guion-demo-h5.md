@@ -1,5 +1,11 @@
 # Guion · Demo H5 — dos empresas negociando de punta a punta
 
+> **Ensayo 2 hecho el 11-oct-2026, sin incidencias (PO).** Se hizo entre **Fulano S.A** (BB, alta real del
+> 10-oct) y **Rey Transmisiones**, no con Nakishita: el hilo acabó en `ACUERDO ALCANZADO` a las 08:37 UTC
+> (consulta → oferta → contraoferta → aceptada; `thread_items` en producción). **Sin fecha de demo: la
+> congelación de §5 no rige** y los datos del ensayo se quedan (`DECISIONES-V1.md`, 11-oct). Si se fija
+> fecha, este guion vale con la pareja que se elija; la referencia `6204` SKF sigue siendo solo de Rey.
+
 > Entregable de **D5** de `plan-demo-h5.md` §4. Escrito el 11-oct-2026. Los nombres de los botones
 > están copiados de `app/e2e/zz-h5-negociacion.spec.ts`, que los recorre en la CI; el estado de las
 > dos empresas, de una consulta a producción del mismo 11-oct (§1). **No se cambia nada del código

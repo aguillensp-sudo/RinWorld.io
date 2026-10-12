@@ -1,0 +1,65 @@
+# INV-04 · Políticas de AWS para la fase 2
+
+Preparado el 12-oct-2026. **Nada de esto está aplicado ni comprobado contra AWS**: las políticas son texto; las crea el PO en la consola.
+Cuenta `2263-9540-1132`, región `eu-west-1`. Nombre del bucket propuesto: `nortexsys-ingest-mail-eu` (los nombres de S3 son globales; si está cogido, cambiarlo en las tres políticas).
+Prefijo de los correos: `inbox/`.
+
+## 1 · Política del bucket (deja a SES escribir, y a nadie más)
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SesPutInbox",
+      "Effect": "Allow",
+      "Principal": { "Service": "ses.amazonaws.com" },
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::nortexsys-ingest-mail-eu/inbox/*",
+      "Condition": {
+        "StringEquals": { "aws:SourceAccount": "226395401132" },
+        "StringLike": { "aws:SourceArn": "arn:aws:ses:eu-west-1:226395401132:receipt-rule-set/*" }
+      }
+    }
+  ]
+}
+```
+
+## 2 · Política IAM del usuario de la función (solo leer objetos de `inbox/`)
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadInboxObjectsOnly",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::nortexsys-ingest-mail-eu/inbox/*"
+    }
+  ]
+}
+```
+
+Sin `ListBucket` (la clave del objeto llega en el aviso de SNS), sin `PutObject`, sin `DeleteObject` (la purga la hace el ciclo de vida del bucket).
+
+## 3 · Ciclo de vida del bucket
+
+Regla `purga-30-dias`: prefijo `inbox/`, expirar objetos a los **30 días**, y abortar subidas multiparte incompletas a los 1 día.
+
+## Qué pulsar (consola de AWS, región Irlanda `eu-west-1`)
+
+1. **S3 → Create bucket.** Nombre `nortexsys-ingest-mail-eu`, región `eu-west-1`. Deja marcado **Block all public access**. Cifrado: **SSE-S3** (el predeterminado; no KMS, complica la política de SES).
+2. Dentro del bucket → **Permissions → Bucket policy → Edit** → pega la política 1 → Save.
+3. Dentro del bucket → **Management → Create lifecycle rule** → política 3 (prefijo `inbox/`, Expire current versions 30 días, además "Delete expired object delete markers or incomplete multipart uploads" a 1 día).
+4. **IAM → Policies → Create policy → JSON** → pega la política 2 → nombre `bearingworld-ingest-read-inbox`.
+5. **IAM → Users → Create user** → nombre `bearingworld-ingest-fn`, **sin** acceso a la consola → Attach policies directly → `bearingworld-ingest-read-inbox`.
+6. En ese usuario → **Security credentials → Create access key** → caso de uso "Application running outside AWS" → crea la clave. **No me la pegues en el chat ni la guardes en ningún fichero.** Pásala a los secretos de la función con:
+   `supabase secrets set AWS_INGEST_ACCESS_KEY_ID=... AWS_INGEST_SECRET_ACCESS_KEY=...` (o en el panel de Supabase → Edge Functions → Secrets del proyecto `troxminloxkjwihwfevs`). Recuerda que la CLI está en otra cuenta (F-073): usa el panel.
+7. Avísame cuando esté. Yo compruebo que la función lee un objeto de prueba, y que la clave **no** puede listar, escribir ni leer fuera de `inbox/`.
+
+## Posibles tropiezos
+
+- La cuenta es miembro de una organización con rol federado: una política de la organización (SCP) puede impedir crear usuarios IAM o claves de acceso. Si el paso 5 o 6 falla con "explicit deny", me dices el texto del error.
+- Si pone que el nombre del bucket ya existe, elige otro y lo cambio en las políticas 1 y 2.
+- Una clave de acceso de larga duración es el punto débil de este diseño: anótala con fecha para rotarla (cada 90 días) y bórrala si sospechas de filtración.

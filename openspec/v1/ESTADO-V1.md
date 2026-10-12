@@ -13,23 +13,21 @@ las reglas en `CLAUDE.md`. La versión larga anterior sigue en `git show d2df8d4
 Empieza por §6 y luego §3.
 ---
 
-**Día 37 de V1 · 11-oct-2026 · Estado: CERRADO (11:08 UTC; reabierto tras el cierre de las 08:56 para MSG-03).** **Microplan de demo terminado: D1 a D5 hechos** (ensayo 2 sin
-incidencias, Fulano S.A ↔ Rey). **Sin fecha de demo: no hay congelación.** Después, **`MSG-03` v1.2 (las dos tablas) por la fábrica: VERDE en 2 intentos, 0,074 USD,
-1 línea a mano** (`F-249`). **Falta la C5 del PO.** Detalle en `diario/dia-37.md`.
+**Día 38 de V1 · 12-oct-2026 · Estado: CERRADO (08:30 UTC).** **`F-249` (`MSG-03`) cerrado entero**: duplicado (`0060`), formulario de consulta por la fábrica
+(VERDE en 2 intentos, 0,060 USD, 0 líneas a mano), `Crear consulta` en el hilo y VERA preparando consultas y ofertas (precio siempre manual). **Falta la C5 del PO de todo
+`MSG-03`.** Sin fecha de demo. Detalle en `diario/dia-38.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| Ensayo 2: ciclo completo entre dos empresas de alta real | `thread_items` en producción, 11-oct | Fulano S.A ↔ Rey Transmisiones: consulta respondida con oferta → superada por contraoferta → aceptada; `ACUERDO ALCANZADO` 08:37 UTC |
-| Las empresas nuevas | `organizations`/`members`/`inventory_lines` en producción | Nakishita (JP), Rey (CU), Fulano (BB): `APPROVED`, un ADMIN `ACTIVE` con clave cada una. Nakishita y Rey con un EDITOR `REGISTERED` sin clave. Rey: 29 `PUBLISHED` |
-| Un hilo con acuerdo admite otra consulta | `app.derive_thread_state` en `pg_proc` | Sí: el estado se deriva, nada lo bloquea |
-| Pruebas del PO | Lo dijo en el chat | Ensayo 2 «perfecto». **Ni cronometrado ni grabado: no consta** |
-| `MSG-03`: contrato en rojo contra los marcadores | `vitest` (30 de 30 rojos) y la suite e2e entera contra `bearingworld-e2e` (fallan solo los 3 del contrato; 5 ajenos pasan al repetirlos) | Contrato válido. Comprobado antes contra una referencia desechable: 178 verdes |
-| `MSG-03`: corrida 01 del arnés | `harness/metrics/MSG-03/` y `harness-metrics.csv` (2 filas) | Intento 1 rojo (C1 `TS6133`, C2 sin `role=img`); intento 2 verde C1–C4 |
-| Tras la revisión a mano | `tsc` limpio; `vitest run` entero: 2145 verdes, 23 omitidas | Verde. **El render no lo ha visto nadie**: lo verá el PO en la C5 |
-| Cobros de `bearingworld-e2e` | `billing_org_status` tras `demo_billing.sql` | Resembrados: Cuscinetti `ACTIVE` 10 d. Caducan otra vez el 21-oct y ADMIN-02 cae en el e2e |
+| `0060` (duplicado solo si pendiente) | catálogo de **producción** y de `bearingworld-e2e`, 12-oct | Índice parcial `thread_items_one_pending_inquiry_per_line_uniq`; `app.org_has_pending_inquiry` existe, `org_already_inquired` no |
+| Banco de esquema con `0060` | `supabase/tests/run.sh` | Verde, con dos bloques nuevos (volver a consultar tras `Sin stock`; tercera consulta bloqueada con el literal de la spec) |
+| Formulario de consulta por la fábrica | `harness/metrics/MSG-03-FORM/` y `harness-metrics.csv` (2 filas) | Intento 1 rojo en C2 (un e2e, `F-250`); intento 2 verde C1–C4. 0,060 USD. 0 líneas a mano |
+| Suite e2e entera con la cola de formularios | `npm run e2e:e2e-project` | 162 verdes y 5 rojos por carga (mis `vitest` en paralelo); repetidos en solitario: 24 verdes. `zz-h5-negociacion` verde con el paso 6 |
+| `vitest` entero y CI | local y `gh run` de `e371d3c` | 2320 verdes, 23 omitidas; CI y despliegues (VERA y Vercel) en verde, Vercel comprobado por contenido |
+| VERA preparando consultas y ofertas | `vera.preparar.ensayo.test.ts` contra la función **desplegada** | 8 de 8: el ejemplo de la spec deja 500 / 14 días / EUR con el precio vacío; sin cantidad, aproximada, sin hilo o contraoferta no prepara y lo dice; ninguna cifra de precio propia |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -37,9 +35,8 @@ incidencias, Fulano S.A ↔ Rey). **Sin fecha de demo: no hay congelación.** De
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. Ya se tocó `vera/index.ts` (prompt, `F-246`); el cambio de proveedor sigue sin hacerse.
-- **Corriente B · Fábrica — EN MARCHA** (sale el 11-oct de la pausa del sprint de demo). **26 pantallas construidas y 25 aceptadas**: `MSG-03` (las dos tablas) espera su C5. `REC-01`, `SET-SEC-01`, `INVT-02` y `ACT-02`, **a mano**, sin
-  filas en `harness-metrics.csv`. **Queda por construir** `INV-04` (plan en `v1/plan-inv04-ingestion-por-correo.md`) y el resto de `MSG-03` (`F-249`: formulario de consulta,
-  duplicado, `Crear consulta`, VERA). Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
+- **Corriente B · Fábrica — EN MARCHA.** **27 pantallas construidas y 26 aceptadas**: `MSG-03` (tablas) y `MSG-03-FORM` (formulario) esperan su C5. `REC-01`, `SET-SEC-01`, `INVT-02` y `ACT-02`, **a mano**, sin
+  filas en `harness-metrics.csv`. **Queda por construir** `INV-04` (plan en `v1/plan-inv04-ingestion-por-correo.md`). Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
@@ -47,17 +44,18 @@ incidencias, Fulano S.A ↔ Rey). **Sin fecha de demo: no hay congelación.** De
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
-1. **C5 de `MSG-03` por el PO**: abrir un hilo con consultas y ofertas (`Hilos`) y mirar las dos tablas encima del historial. Cambian dos literales visibles: `Aceptar`
-   (antes `Aceptar oferta`) y los estados en mayúsculas. Su veredicto va a la `nota` de la fila de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
+1. **C5 de `MSG-03` por el PO**, todo lo nuevo, **en producción y sin pulsar nada que escriba** salvo decisión suya: las dos tablas (`Hilos`), el formulario por fila en `Comprando`
+   (`Consultar`), `Crear consulta` en un hilo (selector + formulario) y VERA preparando (en un hilo: «consúltale si tiene 300 unidades de 6205-2RS», «ofrécele 500 piezas con entrega en dos semanas»).
+   Cambian literales (`Aceptar`, estados en mayúsculas). Su veredicto va a la `nota` de las filas de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
 2. **`INV-04`, fase 2 (recepción)** — la fase 1 está hecha (`0057`). SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a
    `ingest` rebota hasta la fase 2: esperado). **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, rol federado).
    Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.
    El sprint de demo ya no lo frena.
-3. **VERA: ampliar la guía verificada** (`index.ts`, sección «GUÍA VERIFICADA»): hoy solo la subida de inventario. Siguientes, por orden: `Visibilidad` (`INV-07`) y el resto de `INV-01`,
-   Comprando, Hilos, Vendiendo. Cada entrada con su nombre en el test de `vera-prompt.test.ts`. Antes de tocar `vera/index.ts`, `vera-vertex-eu-migracion.md`.
+3. **VERA: ampliar la guía verificada** (`index.ts`, sección «GUÍA VERIFICADA»): ya saben la subida de inventario, `Visibilidad`, los filtros y acciones de `Inventario`, `Crear consulta`/`Crear oferta` y
+   `Consultar`. Siguientes: Vendiendo, el resto de Comprando y Hilos. Cada entrada con su nombre en el test de `vera-prompt.test.ts`. Antes de tocar `vera/index.ts`, `vera-vertex-eu-migracion.md`.
 4. **`F-234` en las demás tablas:** `0051` envolvió 8; quedan **31** (`forum_*` y `watchers_*` primero). Patrón de `0047`/`0051`, con el banco delante. Las tres tablas `ingest_*` nacen ya envueltas.
-5. **Lista previa a empujar, las cuatro cosas**: `tsc --noEmit`, `vitest` entero, **el banco de esquema (`supabase/tests/run.sh`) si se tocó `supabase/`** y, si se tocó un e2e o el arnés, la suite
-   e2e contra `bearingworld-e2e` (`F-230`). El 10-oct se empujaron dos commits sin el banco y uno dejó la CI roja.
+5. **Lista previa a empujar, las cinco cosas**: `tsc --noEmit`, `vitest` entero, **el banco de esquema (`supabase/tests/run.sh`) si se tocó `supabase/`**, la suite e2e contra `bearingworld-e2e`
+   si se tocó un e2e o el arnés (`F-230`) y **`py -m harness.tests.test_checks` si se tocó el contrato de una tarea** (`F-251`). **Mira la CI del push anterior antes de empujar otro.** Nunca `vitest` con un e2e en marcha.
 6. Deuda sin fecha: `F-213`.
 
 **Fecha a tener en cuenta:** Cuscinetti Padana deja de estar `ACTIVE` el **20-oct** (cobros resembrados el 10-oct). Solo importa si hay demo o se enseña `ADMIN-02`. `demo_watchers.sql`, resembrada el 6-oct.
@@ -94,7 +92,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **La CD despliega dos funciones sin JWT**: `access-request` y `register-organization`. Su único permiso es el token (la segunda) o el límite por hora (la primera).
 - **El enlace de acceso se ve una sola vez** (solo se guarda el hash); perderlo obliga a generar otro y revoca el anterior.
 - **Una tarea con un defecto para la corrida y se repite entera** (regla 4); una corrida que escala por causas ajenas no cuenta para la cifra 2 (regla 3).
-- **El contrato de una tarea no se toca para otra cosa**: `Login.test.tsx` es de `LOGIN-01`. **Un artefacto verde del arnés no lleva `[skip ci]`** (`CLAUDE.md` §1.6).
+- **El contrato de una tarea no se toca para otra cosa**: `Login.test.tsx` es de `LOGIN-01`; lo que no es de la tarea va a `*.fuera-de-contrato.test.tsx` (`F-251`). **Un artefacto verde del arnés no lleva `[skip ci]`** (`CLAUDE.md` §1.6).
+- **Consulta duplicada: solo se bloquea mientras la anterior está `Pendiente`** (`0060`, PO 12-oct), y `Consultar` abre **un formulario por fila, en cola** (se aparta de la capability cerrada, que decía «sin formulario»).
+- **VERA prepara, no envía, y el precio es siempre manual** (PO 12-oct): `preparar_consulta`/`preparar_oferta` no tienen campo de precio, solo con hilo abierto, una cifra mal entendida se rechaza. No prepara contraofertas.
 
 ## 5 · Bloqueos y deuda abierta
 
@@ -106,7 +106,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de más de un ADMIN tiene que llegar a la interfaz | Producto |
 | 🟠 | **Cifras 7 y 8** · solo `SRCH-03` tiene medida limpia (`F-205`) | Una sesión propia por pantalla |
-| 🟠 | **`F-249`** · `MSG-03`: tablas hechas; faltan el formulario de consulta (cantidad y notas), el bloqueo por duplicado (guardia en `create_inquiry`), `Crear consulta` en el hilo y VERA | PO decide orden |
+| 🟠 | **`F-251` / `F-250`** · la lista previa a empujar incluye ya las pruebas del arnés (§3.5). `F-250`: otras pantallas del arnés con el mismo patrón de `load` sin guardia, sin revisar | Este agente |
+| 🟡 | **VERA no prepara contraofertas ni la respuesta a una consulta concreta, ni nada desde `Comprando`**: solo consulta nueva y oferta directa, con un hilo abierto | Producto |
 | 🟡 | **VERA solo conoce la subida de inventario**: en el resto de pantallas dice «no conozco los controles» (§3.3) | Este agente |
 | 🟡 | **`F-224`** · dos e2e excusados en las tareas por la cuenta de prueba del PO en Rodamientos Ibéricos; el e2e aislado no la tiene (`F-230`) | Releer y cerrar |
 | 🟡 | **Riesgo aceptado `F-192`** · privilegios por defecto anchos. **Se reabre antes de datos reales o de abrir el registro a terceros** | PO (25-sep) |
@@ -122,7 +123,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Cómo se ve nada en un navegador desde este agente**: las cabeceras, el padding y la alineación los vio el PO ("todo correcto"); los tests leen CSS, no miden render.
 - **Qué contesta VERA fuera de la subida de inventario**: el prompt exige no inventar controles, pero solo se ha probado una pregunta (Inventario).
 - **El registro de migraciones de producción para `0059`** guarda una primera versión (sin el filtro `PUBLISHED`); la función viva es la del `.sql`. Un `db push` futuro no la corregiría.
-- **Cómo se ven las tablas de `MSG-03` en un navegador**, con 30–40 filas o en un panel estrecho: los tests leen DOM y CSS, no miden el render.
+- **Cómo se ve nada de `MSG-03` en un navegador**: las dos tablas (con 30–40 filas o en un panel estrecho), el formulario por fila, el selector de `Crear consulta` y VERA abriendo formularios. Los tests leen DOM y CSS, no miden render.
+- **Cómo habla VERA con el prompt nuevo fuera de las 8 preguntas del ensayo**: se probó con el ejemplo de la spec y siete trampas, una vez cada una.
+- **Si otras pantallas del arnés tienen `load` sin guardia contra respuestas viejas** (`F-250`).
 - **Cuánto dura el ciclo de negociación** entre dos empresas: el ensayo 2 no se cronometró, y no consta que se grabara.
 - **Qué ve al entrar el EDITOR `REGISTERED` de cada empresa nueva** (Nakishita y Rey): `ACT-02` con una organización real. Nadie lo ha recorrido.
 - **Cuánto tardó la importación de las 29 líneas de Rey**: nadie lo midió. Que su catálogo se encuentra y se negocia desde otra empresa, sí (ensayo 2).
@@ -137,4 +140,4 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ---
 
-*Cierre del Día 37 · 11-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 38 · 12-oct-2026 · Dirección Técnica, Nortex Systems*

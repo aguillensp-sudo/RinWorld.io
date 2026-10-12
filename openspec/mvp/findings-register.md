@@ -337,3 +337,5 @@ fallback P-256.
 | [F-247](findings/F-247.md) | 2026-10-10 | `INFRA` | `demo_reanchor_freshness()` anclaba y desplazaba TODA la tabla y contaba líneas no publicadas: con una empresa real no re-anclaba | CERRADO (0059) |
 | [F-248](findings/F-248.md) | 2026-10-10 | `HARNESS` | La CI cancela el e2e entre borrar y reponer el hilo Alpha–Beta y deja `bearingworld-e2e` rota para las corridas siguientes | CERRADO (demo-reset.mjs repone las filas) |
 | [F-249](findings/F-249.md) | 2026-10-11 | `SPEC-GAP` | `MSG-03` (v1.2, dos tablas) no se había construido nunca: «vive en `MSG-02`» describía dónde se pinta, no si estaba hecha | ABIERTO (tablas por la fábrica; formulario de consulta, duplicado, `Crear consulta` y VERA sin fecha) |
+| [F-250](findings/F-250.md) | 2026-10-12 | `MODEL` | `SearchResults.load` no descartaba respuestas viejas: el chip `Ref 32007` sobre los 183 resultados sin filtrar |
+| [F-251](findings/F-251.md) | 2026-10-12 | `HARNESS` | Reescribir el contrato de SRCH-01 hizo saltar el guardia del arnés; la CI roja dejó dos despliegues saltados |

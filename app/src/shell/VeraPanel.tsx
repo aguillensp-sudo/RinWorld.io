@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './VeraPanel.module.css';
 import { ask, type ProxyCall } from '../lib/vera';
-import type { Screen } from '../lib/vera-tools';
+import type { DraftRequest, Screen } from '../lib/vera-tools';
 import type { SearchCriteria } from '../lib/search';
 import { errorMessage, type MemberProfile } from '../lib/session';
 
@@ -44,6 +44,10 @@ export interface VeraAgent {
   profile: MemberProfile;
   navigate: (screen: Screen) => void;
   setCriteria: (criteria: SearchCriteria) => void;
+  /** Hay un hilo abierto en pantalla (sin él VERA no puede preparar consultas ni ofertas). */
+  threadOpen: boolean;
+  /** Abre en el hilo el formulario con lo que VERA ha preparado; lo revisa y lo envía el usuario. */
+  prepareDraft: (draft: DraftRequest) => void;
   call: ProxyCall;
 }
 
@@ -139,7 +143,13 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
     try {
       const r = await ask(
         text,
-        { profile: agent.profile, navigate: agent.navigate, setCriteria: agent.setCriteria },
+        {
+          profile: agent.profile,
+          navigate: agent.navigate,
+          setCriteria: agent.setCriteria,
+          threadOpen: agent.threadOpen,
+          prepareDraft: agent.prepareDraft,
+        },
         agent.call,
       );
       responde(r.text || SIN_RESPUESTA);

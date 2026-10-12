@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SearchField } from '../../components/SearchField';
 import { INQUIRY_PICKER_TEXTS as T } from '../../lib/inquiry-form';
 import { ORG_LINES_LIMIT, countryName, fetchOrgLines, quantityLabel, type OrgLine } from '../../lib/search';
@@ -19,16 +19,25 @@ export function InquiryLinePicker({
   ownOrgId,
   onPick,
   onCancel,
+  initialTerm = '',
+  autoPick,
 }: {
   counterpartyId: string;
   counterpartyName: string;
   ownOrgId: string;
   onPick: (line: OrgLine) => void;
   onCancel: () => void;
+  /** Búsqueda con la que arranca (VERA la rellena con la referencia que dijo el usuario, F-249). */
+  initialTerm?: string;
+  /**
+   * Si está, y tras la PRIMERA carga hay exactamente una línea elegible (sin consulta pendiente y, si se
+   * dijo marca, de esa marca), se elige sola. Con cero o varias no se elige nada: lo decide el usuario.
+   */
+  autoPick?: { brand: string };
 }) {
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(initialTerm);
   /** Lo que se ha buscado de verdad (Intro o lupa), no lo que hay escrito. */
-  const [term, setTerm] = useState('');
+  const [term, setTerm] = useState(initialTerm);
   const [lines, setLines] = useState<OrgLine[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +56,15 @@ export function InquiryLinePicker({
       vigente = false;
     };
   }, [counterpartyId, ownOrgId, term]);
+
+  const autoPicked = useRef(false);
+  useEffect(() => {
+    if (!autoPick || lines === null || autoPicked.current) return;
+    autoPicked.current = true;
+    const marca = autoPick.brand.trim().toLowerCase();
+    const elegibles = lines.filter((l) => !l.consulted && (marca === '' || l.brand.toLowerCase() === marca));
+    if (elegibles.length === 1 && elegibles[0]) onPick(elegibles[0]);
+  }, [autoPick, lines, onPick]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

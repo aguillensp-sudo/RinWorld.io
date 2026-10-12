@@ -9,6 +9,7 @@ import {
   criteriaFromInput,
   leaksCiphertext,
   runTool,
+  type DraftRequest,
   type Screen,
   type ToolContext,
 } from './vera-tools';
@@ -59,18 +60,24 @@ vi.mock('./threads', async (importOriginal) => ({
 
 let navegadoA: Screen[] = [];
 let criteriosEscritos: SearchCriteria[] = [];
+let hiloAbierto = false;
+let borradores: DraftRequest[] = [];
 
 function contexto(): ToolContext {
   return {
     profile: PERFIL,
     navigate: (s) => navegadoA.push(s),
     setCriteria: (c) => criteriosEscritos.push(c),
+    threadOpen: hiloAbierto,
+    prepareDraft: (d) => borradores.push(d),
   };
 }
 
 beforeEach(() => {
   navegadoA = [];
   criteriosEscritos = [];
+  hiloAbierto = false;
+  borradores = [];
   fetchResults.mockReset();
   fetchPage.mockReset();
   fetchThreadPage.mockReset();

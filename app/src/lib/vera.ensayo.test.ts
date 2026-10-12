@@ -91,6 +91,8 @@ async function preguntar(
     profile: perfil,
     navigate: (s) => navegoA.push(s),
     setCriteria: (c) => criterios.push(c),
+    threadOpen: opciones.hiloAbierto ?? false,
+    prepareDraft: () => {},
   };
 
   /*

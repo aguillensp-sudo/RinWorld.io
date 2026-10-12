@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
-import type { Screen } from './lib/vera-tools';
+import type { DraftRequest, Screen, VeraDraft } from './lib/vera-tools';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, navIndexOf } from './shell/AppShell';
@@ -174,6 +174,10 @@ export function App() {
    * hace media hora en vez de a la lista, con el estado del hilo ya rancio.
    */
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
+  // Un borrador de VERA es de UN hilo: al cambiar o cerrar el hilo no puede quedar esperando en el siguiente.
+  useEffect(() => {
+    setVeraDraft(null);
+  }, [openThreadId]);
 
   /**
    * La categoría del foro abierta en FORO-02, o `null` en FORO-01. Mismo criterio
@@ -196,6 +200,14 @@ export function App() {
    * estando el usuario en otra pantalla — y entonces hay que llevarle a ella.
    */
   const [veraCriteria, setVeraCriteria] = useState<SearchCriteria | null>(null);
+
+  /**
+   * Lo que VERA ha pedido preparar en el hilo abierto (MSG-03 §5, F-249): un formulario de consulta o de
+   * oferta relleno, que el pie del hilo abre y consume. Es un empujón, no un dato: la pantalla sigue
+   * siendo la dueña del formulario y el envío es siempre del usuario.
+   */
+  const [veraDraft, setVeraDraft] = useState<VeraDraft | null>(null);
+  const veraDraftSeq = useRef(0);
 
   /**
    * SRCH-03 (`Mis watchers`) abierta. Comparte ítem de nav con SRCH-01 --las dos
@@ -655,6 +667,13 @@ export function App() {
 
     navigate: (pantalla: Screen) => navigate(navIndexOf(pantalla)),
 
+    threadOpen: openThreadId !== null,
+
+    prepareDraft: (draft: DraftRequest) => {
+      veraDraftSeq.current += 1;
+      setVeraDraft({ ...draft, nonce: veraDraftSeq.current });
+    },
+
     /*
      * Escribir criterios LLEVA a Comprando, además de escribirlos.
      *
@@ -918,6 +937,8 @@ export function App() {
             threadId={openThreadId}
             now={new Date()}
             onBack={() => setOpenThreadId(null)}
+            veraDraft={veraDraft}
+            onVeraDraftHandled={() => setVeraDraft(null)}
             onOpenCounterparty={(orgId) => {
               /* DIR-02 vive en `Empresas`: cambia el ítem de nav además de la pantalla. */
               setOpenThreadId(null);

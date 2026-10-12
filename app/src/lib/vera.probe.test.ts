@@ -83,6 +83,8 @@ describe.skipIf(!ACTIVA)('SONDA v5 contra Sonnet desplegado', () => {
       profile,
       navigate: (s) => navegadoA.push(s),
       setCriteria: (c) => criteriosEscritos.push(c),
+      threadOpen: false,
+      prepareDraft: () => {},
     };
 
     /*

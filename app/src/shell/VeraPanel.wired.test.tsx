@@ -32,7 +32,7 @@ function turno(p: Partial<ProxyTurn>): ProxyTurn {
 }
 
 function agente(call: ProxyCall) {
-  return { profile: PERFIL, navigate: vi.fn(), setCriteria: vi.fn(), call };
+  return { profile: PERFIL, navigate: vi.fn(), setCriteria: vi.fn(), threadOpen: false, prepareDraft: vi.fn(), call };
 }
 
 async function preguntar(texto: string) {

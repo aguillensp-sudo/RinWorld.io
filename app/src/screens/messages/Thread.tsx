@@ -26,6 +26,7 @@ import {
 import { onThreadChanged } from '../../lib/realtime';
 import type { InquiryDraft } from '../../lib/inquiry-form';
 import type { OrgLine } from '../../lib/search';
+import type { VeraDraft } from '../../lib/vera-tools';
 import { ThreadHeader } from './ThreadHeader';
 import { ThreadHistory } from './ThreadHistory';
 import { ThreadComposer } from './ThreadComposer';
@@ -48,6 +49,8 @@ export function Thread({
   now,
   onBack,
   onOpenCounterparty,
+  veraDraft,
+  onVeraDraftHandled,
 }: {
   profile: MemberProfile;
   threadId: string;
@@ -59,6 +62,9 @@ export function Thread({
   /** El nombre de la contraparte abre su ficha pública (DIR-02). **Opcional**: sin él el
    *  clic no hace nada, que es lo que ve el contrato de aceptación de MSG-02. */
   onOpenCounterparty?: (orgId: string) => void;
+  /** Lo que VERA ha pedido preparar en este hilo (consulta u oferta); se lo pasa al pie y se consume una vez. Opcional. */
+  veraDraft?: VeraDraft | null;
+  onVeraDraftHandled?: () => void;
 }) {
   const [detail, setDetail] = useState<ThreadDetail | null>(null);
   const [items, setItems] = useState<ThreadItem[]>([]);
@@ -296,6 +302,8 @@ export function Thread({
             <ThreadComposer
               onSend={handleSend}
               onCreateOffer={handleCreateOffer}
+              {...(veraDraft !== undefined ? { veraDraft } : {})}
+              {...(onVeraDraftHandled ? { onVeraDraftHandled } : {})}
               inquiry={{
                 counterpartyId: detail.counterpartyId,
                 counterpartyName: detail.counterpartyName,

@@ -19,7 +19,7 @@ import styles from './OfferCounterForm.module.css';
  * sería mentira: parecería que cambia algo que no cambia.
  */
 
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'PLN'] as const;
+export const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'PLN'] as const;
 
 export interface OfferDraft {
   unitPrice: string;
@@ -138,6 +138,7 @@ export function OfferCounterForm({
   hint = 'Datos de la oferta original, pre-rellenados. Modifícalos y envía tu contraoferta.',
   submitLabel = 'Enviar contraoferta',
   initialQuantity,
+  initialDraft,
 }: {
   partNumber: string;
   brand: string;
@@ -153,11 +154,20 @@ export function OfferCounterForm({
   submitLabel?: string;
   /** Cantidad de la consulta que se responde, si se conoce. */
   initialQuantity?: number | undefined;
+  /**
+   * Campos con los que arranca una oferta nueva (VERA los rellena, F-249; el usuario los revisa antes de
+   * enviar). Pisa a `initialQuantity`. El precio unitario NO viaja por aquí desde VERA: es siempre manual.
+   */
+  initialDraft?: Partial<OfferDraft>;
 }) {
   const [draft, setDraft] = useState<OfferDraft>(() =>
     original
       ? draftFromOffer(original)
-      : { ...emptyDraft(), quantity: initialQuantity !== undefined ? String(initialQuantity) : '' },
+      : {
+          ...emptyDraft(),
+          quantity: initialQuantity !== undefined ? String(initialQuantity) : '',
+          ...initialDraft,
+        },
   );
   const [ref, setRef] = useState({ partNumber, brand });
   const [tocado, setTocado] = useState(false);

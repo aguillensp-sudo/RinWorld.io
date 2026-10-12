@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { INQUIRY_FORM_TEXTS, INQUIRY_PICKER_TEXTS, type InquiryDraft } from '../../lib/inquiry-form';
 import { countryName, type OrgLine } from '../../lib/search';
 import type { OfferContent } from '../../lib/thread-detail';
+import type { VeraDraft } from '../../lib/vera-tools';
 import { InquiryFormModal } from './InquiryFormModal';
 import { InquiryLinePicker } from './InquiryLinePicker';
-import { OfferCounterForm } from './OfferCounterForm';
+import { OfferCounterForm, type OfferDraft } from './OfferCounterForm';
 import styles from './ThreadComposer.module.css';
 
 /**
@@ -48,9 +49,17 @@ export function ThreadComposer({
   onSend,
   onCreateOffer,
   inquiry,
+  veraDraft,
+  onVeraDraftHandled,
 }: {
   /** `Crear consulta` (MSG-03 §3.2, F-249). Sin esta prop el botón no se pinta. */
   inquiry?: InquiryCreation;
+  /**
+   * Lo que VERA ha pedido preparar (MSG-03 §5, F-249): abre el formulario de consulta o de oferta con lo que
+   * dijo el usuario ya escrito. NO envía: lo revisa y lo envía el usuario. Se consume una sola vez.
+   */
+  veraDraft?: VeraDraft | null;
+  onVeraDraftHandled?: () => void;
   /** Oferta directa en el hilo (0055). Sin esta prop el botón no se pinta. */
   onCreateOffer?: (reference: { partNumber: string; brand: string }, content: OfferContent) => Promise<boolean>;
   /** Devuelve si el envío salió bien. El campo solo se vacía cuando sí: perder
@@ -74,11 +83,50 @@ export function ThreadComposer({
   const [consultaBusy, setConsultaBusy] = useState(false);
   /** Fallo del último envío; el aviso de duplicado de la spec §6 tiene su propio sitio en el formulario. */
   const [consultaError, setConsultaError] = useState<string | null>(null);
+  /** Lo que VERA dejó escrito para la consulta: arranca el selector y el formulario. */
+  const [consultaVera, setConsultaVera] = useState<{ reference: string; brand: string; quantity: string; notes: string } | null>(null);
+  /** Idem para la oferta directa. `nonce` remonta el formulario si VERA vuelve a pedir otra. */
+  const [ofertaVera, setOfertaVera] = useState<{ nonce: number; reference: string; brand: string; draft: Partial<OfferDraft> } | null>(null);
 
   const cerrarConsulta = () => {
     setConsulta(null);
     setConsultaError(null);
+    setConsultaVera(null);
   };
+
+  useEffect(() => {
+    if (!veraDraft) return;
+    if (veraDraft.kind === 'consulta') {
+      if (inquiry) {
+        setOfertando(false);
+        setOfertaVera(null);
+        setConsultaError(null);
+        setConsultaVera({
+          reference: veraDraft.reference,
+          brand: veraDraft.brand,
+          quantity: String(veraDraft.quantity),
+          notes: veraDraft.notes ?? '',
+        });
+        setConsulta('elegir');
+      }
+    } else if (onCreateOffer) {
+      cerrarConsulta();
+      const draft: Partial<OfferDraft> = {};
+      if (veraDraft.quantity !== null) draft.quantity = String(veraDraft.quantity);
+      if (veraDraft.leadTimeDays !== null) draft.leadTimeDays = String(veraDraft.leadTimeDays);
+      if (veraDraft.currency !== null) {
+        draft.currency = veraDraft.currency;
+        draft.shippingCostCurrency = veraDraft.currency;
+      }
+      if (veraDraft.notes !== null) draft.notes = veraDraft.notes;
+      // El precio unitario NO se rellena nunca desde VERA (MSG-03 §4.2 y §7): queda vacío.
+      setOfertaVera({ nonce: veraDraft.nonce, reference: veraDraft.reference, brand: veraDraft.brand, draft });
+      setOfertando(true);
+    }
+    onVeraDraftHandled?.();
+    // Solo cuando llega una petición nueva: el resto de dependencias se leen frescas dentro.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [veraDraft?.nonce]);
 
   const enviarConsulta = async (line: OrgLine, draft: InquiryDraft) => {
     if (!inquiry || consultaBusy) return;
@@ -168,6 +216,9 @@ export function ThreadComposer({
           ownOrgId={inquiry.ownOrgId}
           onPick={(l) => setConsulta(l)}
           onCancel={cerrarConsulta}
+          {...(consultaVera
+            ? { initialTerm: consultaVera.reference, autoPick: { brand: consultaVera.brand } }
+            : {})}
         />
       )}
       {inquiry && consulta !== null && consulta !== 'elegir' && (
@@ -183,20 +234,29 @@ export function ThreadComposer({
           error={consultaError === INQUIRY_FORM_TEXTS.duplicateWarning ? null : consultaError}
           onSubmit={(draft) => void enviarConsulta(consulta, draft)}
           onCancel={cerrarConsulta}
+          {...(consultaVera ? { initialQuantity: consultaVera.quantity, initialNotes: consultaVera.notes } : {})}
         />
       )}
       {ofertando && onCreateOffer && (
         <OfferCounterForm
-          partNumber=""
-          brand=""
+          key={ofertaVera?.nonce ?? 0}
+          partNumber={ofertaVera?.reference ?? ''}
+          brand={ofertaVera?.brand ?? ''}
+          {...(ofertaVera ? { initialDraft: ofertaVera.draft } : {})}
           referenceEditable
           title="Crear oferta"
           hint="Oferta directa en este hilo. Indica la referencia y las condiciones."
           submitLabel="Enviar oferta"
-          onCancel={() => setOfertando(false)}
+          onCancel={() => {
+            setOfertando(false);
+            setOfertaVera(null);
+          }}
           onSubmit={async (content, reference) => {
             const ok = await onCreateOffer(reference, content);
-            if (ok) setOfertando(false);
+            if (ok) {
+              setOfertando(false);
+              setOfertaVera(null);
+            }
             return ok;
           }}
         />

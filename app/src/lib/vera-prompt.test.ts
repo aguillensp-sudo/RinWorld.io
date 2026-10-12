@@ -111,3 +111,73 @@ describe('VERA · la guía verificada sigue siendo cierta', () => {
     expect(inventario).not.toMatch(/Nueva línea|Añadir línea/);
   });
 });
+
+// VERA prepara consultas y ofertas (MSG-03 §5, F-249). Dos cosas se vigilan aquí: que lo que la guía
+// dice de los formularios siga siendo cierto, y que las TRES reglas que impiden inventar una cifra de
+// dinero sigan escritas en el prompt. El texto exacto de la regla del precio es lo que, si alguien lo
+// «mejora» sin mirar, abre el riesgo #1 con dinero de por medio.
+describe('VERA · prepara consultas y ofertas sin inventar', () => {
+  const src = (rel: string) => readFileSync(resolve(process.cwd(), 'src/screens', rel), 'utf8');
+  const pie = src('messages/ThreadComposer.tsx');
+  const selector = src('messages/InquiryLinePicker.tsx');
+  const oferta = src('messages/OfferCounterForm.tsx');
+  const resultados = src('search/SearchResults.tsx');
+  const tabla = src('search/ResultsTable.tsx');
+  const textosForm = readFileSync(resolve(process.cwd(), 'src/lib/inquiry-form.ts'), 'utf8');
+
+  it.each([
+    ['Crear consulta', textosForm],
+    ['Buscar por referencia o marca', textosForm],
+    ['Consulta pendiente', textosForm],
+    ['Nueva tarjeta de consulta', textosForm],
+    ['Cantidad solicitada', textosForm],
+    ['Notas adicionales', textosForm],
+    ['Enviar consulta', textosForm],
+    ['Cancelar', textosForm],
+    ['Crear oferta', pie],
+    ['Precio unitario', oferta],
+    ['Divisa', oferta],
+    ['Plazo de entrega (días)', oferta],
+    ['Coste de transporte', oferta],
+    ['Válida hasta', oferta],
+    ['Enviar oferta', pie],
+    ['Consultar seleccionados', resultados],
+    ['Consultar', tabla],
+  ])('"%s" está en la pantalla y en la guía', (nombre, codigo) => {
+    expect(prompt).toContain(nombre);
+    expect(codigo).toContain(nombre);
+  });
+
+  it('el selector y el formulario hacen lo que la guía dice (buscar con Intro, máximo 300, cola de formularios)', () => {
+    expect(selector).toContain('SearchField');
+    expect(textosForm).toContain('Máx 300 caracteres');
+    expect(prompt).toContain('máximo 300 caracteres');
+    expect(prompt).toContain('abre un formulario por cada fila marcada, uno detrás de otro');
+  });
+
+  it('las tres reglas siguen escritas: solo cifras del usuario, el precio nunca, y nunca «enviado»', () => {
+    expect(prompt).toContain('PREPARAR CONSULTAS Y OFERTAS: TÚ PREPARAS, EL USUARIO REVISA Y ENVÍA');
+    expect(prompt).toContain('Solo las cifras que el usuario ha escrito en esta conversación');
+    expect(prompt).toContain('no pongas una tuya ni la que haya en stock');
+    expect(prompt).toContain('EL PRECIO NO SE RELLENA NUNCA');
+    expect(prompt).toContain('repítelo en tu respuesta para que lo teclee él');
+    expect(prompt).toContain('Nunca digas que has enviado algo');
+    expect(prompt).toContain('no lo afirmes');
+  });
+
+  it('dice que solo prepara, que no envía, y que sin hilo abierto no las llame', () => {
+    expect(prompt).toContain('NO ENVÍAN NADA');
+    expect(prompt).toContain('- Enviar nada: ni consultas, ni ofertas, ni mensajes.');
+    expect(prompt).toContain('Sin hilo abierto no las llames');
+  });
+
+  it('el contexto del hilo abierto recuerda las dos herramientas y que las envía el usuario', () => {
+    expect(prompt).toContain('preparar_consulta y preparar_oferta; las envía el usuario');
+  });
+
+  it('las dos herramientas están declaradas y la de oferta repite la regla del precio en su descripción', () => {
+    expect(tools).toContain('"name": "preparar_consulta"');
+    expect(tools).toContain('"name": "preparar_oferta"');
+    expect(tools).toContain('EL PRECIO NO SE RELLENA NUNCA');
+  });
+});

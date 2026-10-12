@@ -96,3 +96,30 @@ describe('Thread · Crear consulta', () => {
     expect(screen.getByRole('dialog', { name: 'Nueva tarjeta de consulta' })).toBeInTheDocument();
   });
 });
+
+describe('Thread · VERA prepara una consulta (F-249)', () => {
+  it('el borrador de VERA llega al pie, abre el formulario relleno y se consume una vez', async () => {
+    const onVeraDraftHandled = vi.fn();
+    render(
+      <Thread
+        profile={profile}
+        threadId={HILO}
+        now={NOW}
+        veraDraft={{ kind: 'consulta', reference: '6205-2RS', brand: '', quantity: 300, notes: null, nonce: 1 }}
+        onVeraDraftHandled={onVeraDraftHandled}
+      />,
+    );
+
+    const formulario = await screen.findByRole('dialog', { name: 'Nueva tarjeta de consulta' });
+    expect(within(formulario).getByLabelText(/Cantidad solicitada/i)).toHaveValue(300);
+    expect(fetchOrgLines).toHaveBeenCalledWith(SUYA, profile.orgId, '6205-2RS');
+    // Preparado, no enviado.
+    expect(sendInquiries).not.toHaveBeenCalled();
+    expect(onVeraDraftHandled).toHaveBeenCalledTimes(1);
+
+    // Y al enviarlo el usuario, sale con la cantidad preparada.
+    await userEvent.click(within(formulario).getByRole('button', { name: 'Enviar consulta' }));
+    await waitFor(() => expect(sendInquiries).toHaveBeenCalledTimes(1));
+    expect(sendInquiries.mock.calls[0]![0]).toEqual([{ lineId: 'l-1', distributorOrgId: SUYA, quantity: 300, notes: null }]);
+  });
+});

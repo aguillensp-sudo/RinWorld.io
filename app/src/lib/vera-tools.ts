@@ -19,6 +19,7 @@ import {
   type Filter,
 } from './inventory';
 import { fetchThreadPage } from './threads';
+import { NOTES_MAX } from './inquiry-form';
 
 /**
  * Las cuatro herramientas de VERA · lado cliente (D-09-01, D-09-05).
@@ -40,6 +41,8 @@ export const TOOL_NAMES = [
   'consultar_mi_inventario',
   'listar_mis_hilos',
   'navegar',
+  'preparar_consulta',
+  'preparar_oferta',
 ] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
 
@@ -53,11 +56,40 @@ export type ToolName = (typeof TOOL_NAMES)[number];
 export const SCREENS = ['Panel', 'Vendiendo', 'Comprando', 'Hilos', 'Inventario'] as const;
 export type Screen = (typeof SCREENS)[number];
 
+/**
+ * Lo que VERA deja preparado en el hilo abierto (MSG-03 §5, F-249). Es un BORRADOR: el formulario se abre
+ * relleno y lo revisa y lo envía el usuario. Ninguno de los dos lleva precio, y no es un descuido: el
+ * precio unitario no se pre-rellena nunca desde VERA (§4.2 y §7; decisión del PO, 12-oct-2026).
+ */
+export type DraftRequest =
+  | { kind: 'consulta'; reference: string; brand: string; quantity: number; notes: string | null }
+  | {
+      kind: 'oferta';
+      reference: string;
+      brand: string;
+      quantity: number | null;
+      leadTimeDays: number | null;
+      currency: string | null;
+      notes: string | null;
+    };
+
 export interface ToolContext {
   profile: MemberProfile;
   navigate: (screen: Screen) => void;
   setCriteria: (criteria: SearchCriteria) => void;
+  /** Hay un hilo abierto en pantalla: sin él no hay formulario donde preparar nada. */
+  threadOpen: boolean;
+  prepareDraft: (draft: DraftRequest) => void;
 }
+
+/** Un borrador ya pedido, con un número que cambia en cada petición: la misma petición dos veces tiene que reabrir el formulario. */
+export type VeraDraft = DraftRequest & { nonce: number };
+
+/** Las divisas del formulario de oferta (`OfferCounterForm`); un test las compara con las de allí. */
+export const OFFER_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'PLN'] as const;
+const NOTES_OFFER_MAX = 500;
+/** Diez años: por encima, casi seguro un año o unos días mal leídos. */
+const LEAD_TIME_MAX_DAYS = 3650;
 
 export interface ToolResult {
   content: string;
@@ -354,6 +386,130 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
   };
 }
 
+/**
+ * Un entero positivo EXACTO, o `null`. A diferencia de `entero`, no trunca: «2,5» o 300.5 son un dato
+ * que el modelo ha entendido mal, y redondearlo a 2 o a 300 es escribir una cifra que nadie dijo.
+ */
+function enteroPositivo(input: unknown, clave: string): number | null {
+  const v = campo(input, clave);
+  if (typeof v === 'number' && Number.isInteger(v) && v > 0) return v;
+  if (typeof v === 'string' && /^\d+$/.test(v.trim()) && Number(v.trim()) > 0) return Number(v.trim());
+  return null;
+}
+
+/** ¿Vino el campo con algo? (para distinguir «no lo dijo» de «lo dijo mal»). */
+function presente(input: unknown, clave: string): boolean {
+  const v = campo(input, clave);
+  return v !== undefined && v !== null && !(typeof v === 'string' && v.trim() === '');
+}
+
+const SIN_HILO: ToolResult = {
+  content:
+    'No hay ningún hilo abierto en pantalla, así que no hay formulario donde preparar nada. No inventes ' +
+    'a qué empresa se refiere: dile que abra el hilo con ella (puedes llevarle a Hilos con la herramienta navegar).',
+  isError: true,
+};
+
+function prepararConsulta(input: unknown, ctx: ToolContext): ToolResult {
+  if (!ctx.threadOpen) return SIN_HILO;
+
+  const referencia = texto(input, 'referencia');
+  if (!referencia) {
+    return { content: 'Falta la referencia. Pregúntale al usuario sobre cuál quiere consultar; no la supongas.', isError: true };
+  }
+  const cantidad = enteroPositivo(input, 'cantidad');
+  if (cantidad === null) {
+    return {
+      content:
+        'Falta la cantidad, o no es un entero positivo. Es obligatoria y tiene que ser la que dijo el usuario: ' +
+        'pregúntasela. No la supongas ni propongas una (tampoco la de stock).',
+      isError: true,
+    };
+  }
+  const notas = texto(input, 'notas');
+  if (notas.length > NOTES_MAX) {
+    return { content: `Las notas pasan de ${NOTES_MAX} caracteres. Acórtalas o déjalas fuera.`, isError: true };
+  }
+  const marca = texto(input, 'marca');
+
+  ctx.prepareDraft({ kind: 'consulta', reference: referencia, brand: marca, quantity: cantidad, notes: notas || null });
+  return {
+    content: [
+      `Formulario de consulta abierto en el hilo con: referencia ${referencia}${marca ? ` (${marca})` : ''}, cantidad ${cantidad}${notas ? ', y notas' : ''}.`,
+      'NO está enviada: el usuario tiene que revisarla y pulsar «Enviar consulta».',
+      'Si la referencia no coincide con una sola línea publicada de esa empresa, antes verá un selector para elegirla: no sabes cuál de los dos casos ha ocurrido, así que no lo afirmes.',
+      'Díselo en una o dos frases —qué has rellenado— y pídele que lo revise antes de enviar. No digas que la has enviado.',
+    ].join('\n'),
+    isError: false,
+  };
+}
+
+function prepararOferta(input: unknown, ctx: ToolContext): ToolResult {
+  if (!ctx.threadOpen) return SIN_HILO;
+
+  const referencia = texto(input, 'referencia');
+  const marca = texto(input, 'marca');
+
+  let cantidad: number | null = null;
+  if (presente(input, 'cantidad')) {
+    cantidad = enteroPositivo(input, 'cantidad');
+    if (cantidad === null) {
+      return { content: 'La cantidad no es un entero positivo. Pregúntale al usuario cuántas unidades ofrece; no la redondees.', isError: true };
+    }
+  }
+
+  let plazo: number | null = null;
+  if (presente(input, 'plazo_dias')) {
+    plazo = enteroPositivo(input, 'plazo_dias');
+    if (plazo === null || plazo > LEAD_TIME_MAX_DAYS) {
+      return { content: 'El plazo no es un número de días entero y razonable. Pregúntale al usuario el plazo en días.', isError: true };
+    }
+  }
+
+  let divisa: string | null = null;
+  if (presente(input, 'divisa')) {
+    const d = texto(input, 'divisa').toUpperCase();
+    if (!(OFFER_CURRENCIES as readonly string[]).includes(d)) {
+      return { content: `Divisa no admitida: ${OFFER_CURRENCIES.join(', ')}. Pregúntale al usuario en cuál ofrece.`, isError: true };
+    }
+    divisa = d;
+  }
+
+  const notas = texto(input, 'notas');
+  if (notas.length > NOTES_OFFER_MAX) {
+    return { content: `Las notas pasan de ${NOTES_OFFER_MAX} caracteres. Acórtalas o déjalas fuera.`, isError: true };
+  }
+
+  ctx.prepareDraft({
+    kind: 'oferta',
+    reference: referencia,
+    brand: marca,
+    quantity: cantidad,
+    leadTimeDays: plazo,
+    currency: divisa,
+    notes: notas || null,
+  });
+
+  const rellenado = [
+    referencia ? `referencia ${referencia}${marca ? ` (${marca})` : ''}` : null,
+    cantidad !== null ? `cantidad ${cantidad}` : null,
+    plazo !== null ? `plazo ${plazo} días` : null,
+    divisa ? `divisa ${divisa}` : null,
+    notas ? 'notas' : null,
+  ].filter((x): x is string => x !== null);
+
+  return {
+    content: [
+      `Formulario de oferta abierto en el hilo${rellenado.length ? ` con: ${rellenado.join(', ')}` : ', sin ningún campo rellenado'}.`,
+      'NO está enviada: el usuario tiene que revisarla y pulsar «Enviar oferta».',
+      'EL PRECIO UNITARIO ESTÁ VACÍO A PROPÓSITO y lo escribe siempre el usuario: no se rellena desde aquí. ' +
+        'Si te lo dijo, repítelo en tu respuesta para que lo teclee; no propongas, sugieras, calcules ni completes ninguna cifra de precio.',
+      'Díselo en una o dos frases —qué has rellenado y que falta el precio— y pídele que lo revise antes de enviar. No digas que la has enviado.',
+    ].join('\n'),
+    isError: false,
+  };
+}
+
 function navegar(input: unknown, ctx: ToolContext): ToolResult {
   const destino = texto(input, 'pantalla');
   if (!destino) {
@@ -395,6 +551,10 @@ export async function runTool(
         return await listarMisHilos(input, ctx);
       case 'navegar':
         return navegar(input, ctx);
+      case 'preparar_consulta':
+        return prepararConsulta(input, ctx);
+      case 'preparar_oferta':
+        return prepararOferta(input, ctx);
       default:
         /*
          * Un nombre que no existe se dice tal cual. La tentación es responder

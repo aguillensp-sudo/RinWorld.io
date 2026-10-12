@@ -85,5 +85,78 @@
       },
       "required": ["pantalla"]
     }
+  },
+  {
+    "name": "preparar_consulta",
+    "description": "Abre en pantalla el formulario de CONSULTA del hilo que el usuario tiene abierto, con lo que él ha dicho ya rellenado, para que lo revise y lo envíe él. Llámala cuando pida preguntarle a la empresa de ese hilo por una referencia ('consúltale si tiene 300 unidades de 6205-2RS', 'pregúntale por el 22316-E'). NO ENVÍA NADA: solo prepara el formulario, y enviarlo es siempre decisión del usuario, así que no pide confirmación. Solo funciona con un hilo abierto en pantalla (el contexto te lo dice); si no lo hay, no la llames: ofrece llevarle a Hilos con navegar. La cantidad y la referencia son OBLIGATORIAS y las tiene que haber escrito el usuario: si falta alguna, pregúntasela en lugar de suponerla o de proponer una tú.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "referencia": {
+          "type": "string",
+          "description": "Referencia del rodamiento tal como la dijo el usuario. Ej: '6205-2RS'. Se usa para encontrar la línea de esa empresa."
+        },
+        "marca": {
+          "type": "string",
+          "description": "Marca, solo si el usuario la dijo. Si no la dijo, no la pongas."
+        },
+        "cantidad": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Unidades que pide el usuario. Solo la cifra que él haya dicho: nunca una cantidad tuya ni la que haya en stock."
+        },
+        "notas": {
+          "type": "string",
+          "description": "Notas para la empresa (condiciones, plazos, preguntas), solo si el usuario las pidió. Máximo 300 caracteres."
+        }
+      },
+      "required": [
+        "referencia",
+        "cantidad"
+      ]
+    }
+  },
+  {
+    "name": "preparar_oferta",
+    "description": "Abre en pantalla el formulario de OFERTA DIRECTA del hilo que el usuario tiene abierto, con lo que él ha dicho ya rellenado, para que lo revise y lo envíe él ('ofrécele 500 piezas con entrega en dos semanas'). NO ENVÍA NADA y no pide confirmación. Solo funciona con un hilo abierto en pantalla; si no lo hay, no la llames. ⚠ EL PRECIO NO SE RELLENA NUNCA: esta herramienta no tiene campo de precio a propósito. El usuario lo escribe él en el formulario, siempre. Si te lo ha dicho, repítelo en tu respuesta para que lo teclee, pero no lo propongas, no lo sugieras, no lo calcules y no lo completes. Todo lo demás —referencia, cantidad, plazo, divisa, notas— es OPCIONAL y solo si lo dijo el usuario: lo que no dijo, se deja sin rellenar.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "referencia": {
+          "type": "string",
+          "description": "Referencia, solo si el usuario la dijo."
+        },
+        "marca": {
+          "type": "string",
+          "description": "Marca, solo si el usuario la dijo."
+        },
+        "cantidad": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Unidades que ofrece el usuario. Solo la cifra que él haya dicho."
+        },
+        "plazo_dias": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Plazo de entrega en días, solo si el usuario lo dijo ('dos semanas' = 14, 'una semana' = 7)."
+        },
+        "divisa": {
+          "type": "string",
+          "enum": [
+            "EUR",
+            "USD",
+            "GBP",
+            "CHF",
+            "PLN"
+          ],
+          "description": "Divisa de la oferta, solo si el usuario la dijo o se deduce sin duda de un símbolo ('€' = EUR). Es la divisa, no el precio."
+        },
+        "notas": {
+          "type": "string",
+          "description": "Notas de la oferta (incoterm, forma de pago, condiciones), solo si el usuario las dijo. Máximo 500 caracteres."
+        }
+      },
+      "required": []
+    }
   }
 ]

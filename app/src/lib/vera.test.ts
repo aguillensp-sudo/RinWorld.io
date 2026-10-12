@@ -29,6 +29,8 @@ function contexto(): ToolContext {
     profile: PERFIL,
     navigate: (s) => navegadoA.push(s),
     setCriteria: () => {},
+    threadOpen: false,
+    prepareDraft: () => {},
   };
 }
 

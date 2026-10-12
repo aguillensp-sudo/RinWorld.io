@@ -35,7 +35,7 @@ const profile: MemberProfile = {
 
 beforeEach(() => {
   fetchPage.mockReset().mockResolvedValue({ lines: [], total: 0 } as unknown as Page);
-  fetchStats.mockReset().mockResolvedValue({ published: 0, stale: 0, lastUploadAt: null, visits: null });
+  fetchStats.mockReset().mockResolvedValue({ published: 0, stale: 0, lastUploadAt: null, visits: null, visibilityMode: 'VISIBLE_TODOS' });
 });
 
 function renderWith(onPickFile = vi.fn()) {

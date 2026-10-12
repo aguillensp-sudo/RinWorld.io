@@ -17,6 +17,7 @@ import {
   type Stats,
 } from '../../lib/inventory';
 import { UPLOAD_ACCEPT, UPLOAD_REJECTED, isAcceptedUpload } from '../../lib/inventory-import';
+import type { VisibilityMode } from '../../lib/visibility';
 import { InventoryTable } from './InventoryTable';
 import styles from './Inventory.module.css';
 import { formatCount } from '../../lib/format-count';
@@ -103,6 +104,17 @@ const EMAIL_OUT_OF_SCOPE_NOTE =
  *  email es un texto de otra época. Dice lo que pasa de verdad: aún no está. */
 const EMAIL_SOON = 'Próximamente';
 const MANUAL_AVAILABLE = 'Siempre disponible';
+
+/**
+ * La fila «Visibilidad del inventario» dice el modo GUARDADO de la organización. Era un literal
+ * («Visible para todos…») que seguía ahí con el modo restringido: la pantalla afirmaba lo contrario
+ * de lo que la base aplicaba. El texto abierto es el del HTML aprobado; sin dato, guion.
+ */
+const VISIBILITY_ROW: Record<VisibilityMode | 'desconocido', string> = {
+  VISIBLE_TODOS: 'Visible para todos los miembros verificados',
+  RESTRINGIDA: 'Visibilidad restringida',
+  desconocido: '—',
+};
 
 interface Props {
   profile: MemberProfile;
@@ -368,7 +380,7 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
             <i className={`ti ti-eye ${styles.visIcon}`} aria-hidden="true" />
             <span className={styles.visLbl}>Visibilidad del inventario:</span>
             <span className={styles.visVal} data-testid="visibility">
-              Visible para todos los miembros verificados
+              {stats ? VISIBILITY_ROW[stats.visibilityMode ?? 'desconocido'] : '—'}
             </span>
           </div>
         </section>

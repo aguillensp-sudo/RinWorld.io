@@ -54,6 +54,35 @@ describe('VERA · la guía verificada sigue siendo cierta', () => {
     expect(codigo).toContain(nombre);
   });
 
+  // Visibilidad (INV-07). Los textos de los modos viven en lib/visibility.ts, no en la pantalla.
+  const visibilidad = fuente('inventory/Visibility.tsx');
+  const panel = fuente('inventory/ExclusionPanel.tsx');
+  const libVisibilidad = readFileSync(resolve(process.cwd(), 'src/lib/visibility.ts'), 'utf8');
+
+  it.each([
+    ['Visibilidad', inventario],
+    ['Visibilidad del inventario', visibilidad],
+    ['Guardar configuración', visibilidad],
+    ['Lista de exclusión', visibilidad],
+    ['Visible para todos los miembros', libVisibilidad],
+    ['Visibilidad restringida', libVisibilidad],
+    ['Buscar organización por nombre', panel],
+    ['Excluir por continente', panel],
+    ['Refinar por país', panel],
+    ['Añadir exclusión geográfica', panel],
+  ])('Visibilidad: "%s" está en la pantalla y en la guía', (nombre, codigo) => {
+    expect(prompt).toContain(nombre);
+    expect(codigo).toContain(nombre);
+  });
+
+  // El resto de lo que la guía afirma de Visibilidad lo fija Visibility.test.tsx: el modo solo se guarda
+  // con «Guardar configuración», las exclusiones se escriben al momento, la lista se conserva en modo
+  // abierto y un EDITOR solo lee. Aquí solo se comprueba que la regla de permisos sigue siendo «ADMIN».
+  it('Visibilidad: solo el administrador gestiona, como dice la guía', () => {
+    expect(libVisibilidad).toMatch(/role === 'ADMIN'/);
+    expect(prompt).toContain('Solo un administrador de la organización puede cambiar esto');
+  });
+
   it('no promete añadir una línea a mano ni un botón que no existe', () => {
     expect(prompt).toContain('Añadir una línea suelta a mano no es posible');
     expect(inventario).not.toMatch(/Nueva línea|Añadir línea/);

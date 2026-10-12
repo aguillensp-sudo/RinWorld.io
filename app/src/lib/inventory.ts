@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { VisibilityMode } from './visibility';
 
 /**
  * Capa de datos de INV-01 · Panel de Inventario.
@@ -225,6 +226,8 @@ export interface Stats {
   lastUploadAt: string | null;
   /** Sin instrumentar. Ver el comentario de `fetchStats`. */
   visits: null;
+  /** El modo guardado de la organización, para la fila «Visibilidad del inventario». `null` = no se pudo leer. */
+  visibilityMode: VisibilityMode | null;
 }
 
 /**
@@ -239,7 +242,7 @@ export interface Stats {
 export async function fetchStats(orgId: string, now: Date = new Date()): Promise<Stats> {
   const base = () => supabase.from('inventory_lines').select('id', { count: 'exact', head: true }).eq('org_id', orgId);
 
-  const [pub, stale, last] = await Promise.all([
+  const [pub, stale, last, org] = await Promise.all([
     base().eq('status', 'PUBLISHED'),
     base().eq('status', 'PUBLISHED').lte('last_upload_at', staleCutoff(now)),
     supabase
@@ -250,15 +253,20 @@ export async function fetchStats(orgId: string, now: Date = new Date()): Promise
       .order('last_upload_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from('organizations').select('inventory_visibility_mode').eq('id', orgId).maybeSingle(),
   ]);
 
-  for (const r of [pub, stale, last]) if (r.error) throw r.error;
+  for (const r of [pub, stale, last, org]) if (r.error) throw r.error;
+
+  // Un valor que no sea uno de los dos modos no se traduce a «abierto»: se queda en `null`.
+  const mode = (org.data as { inventory_visibility_mode: string } | null)?.inventory_visibility_mode;
 
   return {
     published: pub.count ?? 0,
     stale: stale.count ?? 0,
     lastUploadAt: (last.data as { last_upload_at: string } | null)?.last_upload_at ?? null,
     visits: null,
+    visibilityMode: mode === 'RESTRINGIDA' || mode === 'VISIBLE_TODOS' ? mode : null,
   };
 }
 

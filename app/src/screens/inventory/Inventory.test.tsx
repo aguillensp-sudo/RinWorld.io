@@ -57,6 +57,7 @@ const STATS: Stats = {
   stale: 3,
   lastUploadAt: new Date(NOW.getTime() - 2 * 86_400_000).toISOString(),
   visits: null,
+  visibilityMode: 'VISIBLE_TODOS',
 };
 
 beforeEach(() => {
@@ -105,6 +106,17 @@ describe('INV-01 · cabecera y resumen', () => {
     expect(await screen.findByTestId('stat-visits')).toHaveTextContent('—');
     expect(screen.queryByText('892')).not.toBeInTheDocument();
     expect(screen.getByText('sin instrumentar en el MVP')).toBeInTheDocument();
+  });
+
+  // La fila «Visibilidad del inventario» fue un literal que no cambiaba con el modo guardado.
+  it.each([
+    ['VISIBLE_TODOS', 'Visible para todos los miembros verificados'],
+    ['RESTRINGIDA', 'Visibilidad restringida'],
+    [null, '—'],
+  ] as const)('la fila de visibilidad refleja el modo guardado (%s)', async (visibilityMode, texto) => {
+    fetchStats.mockResolvedValue({ ...STATS, visibilityMode });
+    renderScreen();
+    await waitFor(() => expect(screen.getByTestId('visibility')).toHaveTextContent(texto));
   });
 
   it('las desactualizadas van en naranja solo si son más de cero', async () => {

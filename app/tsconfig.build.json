@@ -17,5 +17,8 @@
   // build. Lo único que cambia es que el build deja de opinar sobre código de
   // prueba que no empaqueta.
   "extends": "./tsconfig.json",
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts"],
+  // Los tests de `ingest-email` importan de `../../supabase/functions/`, que el despliegue de la app
+  // no sube (mismo caso que el e2e de arriba, F-072). Los comprueba `npm run typecheck`.
+  "exclude": ["src/**/ingest-email.*.test.ts"]
 }

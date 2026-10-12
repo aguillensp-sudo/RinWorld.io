@@ -88,3 +88,10 @@ verify_jwt = false
 # es el token, que la función comprueba antes de hacer nada; el paso de CI la
 # despliega además con `--no-verify-jwt`.
 verify_jwt = false
+
+[functions.ingest-email]
+# INV-04 fase 2 (12-oct-2026): la tercera función que atiende a quien NO tiene sesión, y la
+# primera que recibe datos de terceros. La autenticación no es un JWT sino la FIRMA DE SNS sobre
+# NUESTRO tema (`sns.ts`), que la función comprueba antes de hacer nada; el paso de CI la
+# despliega además con `--no-verify-jwt`.
+verify_jwt = false

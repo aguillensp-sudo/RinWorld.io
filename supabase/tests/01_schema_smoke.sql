@@ -6537,4 +6537,108 @@ delete from public.members where org_id in ('a91b0001-0000-4000-8000-00000000000
 delete from auth.users where id::text like 'a910000%';
 delete from public.organizations where id in ('a91b0001-0000-4000-8000-000000000001', 'a91b0002-0000-4000-8000-000000000002', 'a91b0003-0000-4000-8000-000000000003');
 
+-- =============================================================================
+-- 0061 · INV-04 fase 2: ingest_resolve e import_inventory_for_org (solo service_role)
+-- =============================================================================
+insert into auth.users (id, email) values ('a9200001-0000-0000-0000-000000000001', 'admin@ing61.test');
+insert into public.organizations (id, name, country, continent, status) values
+  ('a92b0001-0000-4000-8000-000000000001', 'Ingesta 61 A', 'ES', 'EU', 'APPROVED'),
+  ('a92b0002-0000-4000-8000-000000000002', 'Ingesta 61 B', 'DE', 'EU', 'SUSPENDED');
+insert into public.members (id, org_id, email, state) values
+  ('a9200001-0000-0000-0000-000000000001', 'a92b0001-0000-4000-8000-000000000001', 'admin@ing61.test', 'ACTIVE');
+
+do $$
+declare
+  tok text; r jsonb;
+begin
+  -- Privilegios: nadie salvo service_role.
+  assert has_function_privilege('service_role', 'public.ingest_resolve(text)', 'execute'), '0061: service_role ejecuta ingest_resolve';
+  assert has_function_privilege('service_role', 'public.import_inventory_for_org(uuid,jsonb)', 'execute'), '0061: service_role ejecuta import_inventory_for_org';
+  assert not has_function_privilege('anon', 'public.ingest_resolve(text)', 'execute'), '0061: anon NO ejecuta ingest_resolve';
+  assert not has_function_privilege('authenticated', 'public.ingest_resolve(text)', 'execute'), '0061: authenticated NO ejecuta ingest_resolve';
+  assert not has_function_privilege('anon', 'public.import_inventory_for_org(uuid,jsonb)', 'execute'), '0061: anon NO ejecuta import_inventory_for_org';
+  assert not has_function_privilege('authenticated', 'public.import_inventory_for_org(uuid,jsonb)', 'execute'), '0061: authenticated NO ejecuta import_inventory_for_org';
+
+  -- Un canal abierto se resuelve con sus remitentes y el país de la organización.
+  perform set_config('request.jwt.claim.sub', 'a9200001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  tok := public.ensure_ingest_channel();
+  reset role;
+  insert into public.inventory_import_profiles (org_id, name, header_signature, mapping)
+    values ('a92b0001-0000-4000-8000-000000000001', 'Perfil ERP', 'referencia|marca|cantidad', '["part_number","brand","quantity"]');
+  r := public.ingest_resolve(tok);
+  assert r->>'org_id' = 'a92b0001-0000-4000-8000-000000000001', '0061: ingest_resolve devuelve la organización';
+  assert r->>'org_country' = 'ES', '0061: ingest_resolve devuelve el país de la organización';
+  assert r->'senders' = '["admin@ing61.test"]'::jsonb, '0061: ingest_resolve devuelve los remitentes';
+  assert jsonb_array_length(r->'profiles') = 1 and r->'profiles'->0->>'header_signature' = 'referencia|marca|cantidad',
+    '0061: ingest_resolve devuelve los perfiles';
+
+  -- Token inexistente, mal formado o nulo: null, no error.
+  assert public.ingest_resolve('zzzzzzzzzzzz') is null, '0061: token inexistente → null';
+  assert public.ingest_resolve('corto') is null, '0061: token mal formado → null';
+  assert public.ingest_resolve(null) is null, '0061: token nulo → null';
+
+  -- Una dirección rotada deja de resolverse en el mismo instante.
+  perform set_config('request.jwt.claim.sub', 'a9200001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  perform public.rotate_ingest_address();
+  reset role;
+  assert public.ingest_resolve(tok) is null, '0061: la dirección rotada ya no se resuelve';
+
+  -- Una organización que no está APPROVED no recibe correo.
+  insert into public.ingest_addresses (org_id, token) values ('a92b0002-0000-4000-8000-000000000002', 'b4c5d6e7f8g9');
+  assert public.ingest_resolve('b4c5d6e7f8g9') is null, '0061: organización SUSPENDED → null';
+
+  raise notice 'OK · 0061 · INV-04: ingest_resolve, solo service_role y solo direcciones vivas de organizaciones aprobadas';
+end
+$$;
+
+do $$
+declare
+  org constant uuid := 'a92b0001-0000-4000-8000-000000000001';
+  r jsonb; ok boolean := false;
+begin
+  -- Existente (se actualiza) + nueva (se inserta).
+  insert into public.inventory_lines (org_id, part_number, brand, quantity, location_country, product_family, status)
+    values (org, '6205-2RS', 'SKF', 5, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED'),
+           (org, 'ANTIGUA', 'SKF', 9, 'ES', 'Rodamiento rigido de bolas', 'PUBLISHED');
+  r := public.import_inventory_for_org(org,
+    '[{"part_number":"6205-2RS","brand":"skf","quantity":120,"location_country":"es","product_family":null,"lead_time_days":7,"notes":null},
+      {"part_number":"NU 210","brand":"FAG","quantity":40,"location_country":"ES","product_family":"Rodamiento de rodillos cilindricos","lead_time_days":null,"notes":null}]');
+  assert (r->>'published')::int = 2 and (r->>'inserted')::int = 1 and (r->>'updated')::int = 1, '0061: cuenta una nueva y una actualizada';
+  assert (select quantity from public.inventory_lines where org_id = org and part_number = '6205-2RS') = 120, '0061: actualiza la cantidad de la existente';
+  assert (select product_family from public.inventory_lines where org_id = org and part_number = '6205-2RS') = 'Rodamiento rigido de bolas',
+    '0061: una línea sin familia conserva la que tenía';
+  -- NUNCA borra: lo que no viene en el correo sigue publicado.
+  assert (select status from public.inventory_lines where org_id = org and part_number = 'ANTIGUA') = 'PUBLISHED',
+    '0061: un correo no pasa a DELETED lo que no trae (decisión 3 del plan)';
+
+  -- Validaciones: la función no se fía de quien la llama.
+  begin perform public.import_inventory_for_org(org, '[]'); exception when sqlstate '22023' then ok := true; end;
+  assert ok, '0061: lote vacío rechazado'; ok := false;
+  begin perform public.import_inventory_for_org(org, '[{"part_number":"X","brand":"B","quantity":-1,"location_country":"ES"}]');
+  exception when sqlstate '22023' then ok := true; end;
+  assert ok, '0061: cantidad negativa rechazada'; ok := false;
+  begin perform public.import_inventory_for_org(org, '[{"part_number":"X","brand":"B","quantity":1,"location_country":"ES"},{"part_number":"x","brand":"b","quantity":2,"location_country":"ES"}]');
+  exception when sqlstate '22023' then ok := true; end;
+  assert ok, '0061: líneas repetidas rechazadas'; ok := false;
+  begin perform public.import_inventory_for_org('a92b0002-0000-4000-8000-000000000002', '[{"part_number":"X","brand":"B","quantity":1,"location_country":"ES"}]');
+  exception when sqlstate '42501' then ok := true; end;
+  assert ok, '0061: organización no aprobada rechazada'; ok := false;
+  begin perform public.import_inventory_for_org(null, '[{"part_number":"X","brand":"B","quantity":1,"location_country":"ES"}]');
+  exception when sqlstate '42501' then ok := true; end;
+  assert ok, '0061: organización nula rechazada';
+
+  raise notice 'OK · 0061 · INV-04: import_inventory_for_org es acumulativa, valida y no borra nunca';
+end
+$$;
+
+delete from public.inventory_lines where org_id in ('a92b0001-0000-4000-8000-000000000001', 'a92b0002-0000-4000-8000-000000000002');
+delete from public.inventory_import_profiles where org_id = 'a92b0001-0000-4000-8000-000000000001';
+delete from public.ingest_senders where org_id in ('a92b0001-0000-4000-8000-000000000001', 'a92b0002-0000-4000-8000-000000000002');
+delete from public.ingest_addresses where org_id in ('a92b0001-0000-4000-8000-000000000001', 'a92b0002-0000-4000-8000-000000000002');
+delete from public.members where org_id = 'a92b0001-0000-4000-8000-000000000001';
+delete from auth.users where id = 'a9200001-0000-0000-0000-000000000001';
+delete from public.organizations where id in ('a92b0001-0000-4000-8000-000000000001', 'a92b0002-0000-4000-8000-000000000002');
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

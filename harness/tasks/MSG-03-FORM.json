@@ -1,0 +1,66 @@
+{
+  "task_id": "MSG-03-FORM",
+  "screen": "MSG-03",
+  "goal": "El formulario de consulta de MSG-03 (spec §3.2), que se abre al pulsar `Consultar` en SRCH-01 o `Crear consulta` dentro del hilo. Un componente PRESENTACIONAL: `InquiryForm`. Recibe la referencia, la marca y el pais ya heredados, si hay una consulta duplicada pendiente, si hay un envio en curso y el ultimo error, y pinta tres campos de solo lectura, la cantidad solicitada, las notas, el aviso de duplicado, el error de envio y los botones `Enviar consulta` y `Cancelar`. No decide cuando se puede enviar ni que se entrega: eso lo calcula `lib/inquiry-form.ts`. Vigesimoseptima pantalla de la fabrica. Sin migracion.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll en `constraints` (F-198).",
+  "_nota_umbral": "UMBRAL-FABRICA-V1.md §8: tarea de la fabrica decidida por el PO el 12-oct-2026 (F-249, punto 2) tras cerrar las dos tablas de MSG-03. Un solo componente y mecanico, con HTML aprobado de referencia. Comparte sesion con el resto del dia 38: sus cifras 7 y 8 no son limpias.",
+  "_nota_spec": "La spec es `Rinworld_spec_MSG-03.md` v1.2 §3.2 y §6 (consulta duplicada). El HTML aprobado `MSG-03 · MSG v1.0.html` dibuja el formulario en la seccion `Formularios de Creacion` (card con `form-card-hdr consulta-hdr`, `form-body`, `form-footer`): es la referencia visual. Cuando HTML y spec discrepan, MANDA EL HTML en lo visual (F-170). Todos los textos estan ya en `INQUIRY_FORM_TEXTS`: el Coder no escribe ni un literal que el usuario vea. La pestana de oferta del HTML, el boton `Simular duplicado` y los datos de ejemplo (`6205-2RS`, `FAG`, `Alemania`) NO son de esta tarea.",
+  "_nota_wiring": "PRECONDICION y POSTERIOR, a mano, fuera de esta tarea: `lib/inquiry-form.ts` ya esta escrito (textos, `inquiryFormView`, `inquiryDraft`; 23 pruebas). El montaje del formulario en SRCH-01 (uno por fila), en el hilo (`Crear consulta`), el cifrado y el envio con la cantidad y las notas elegidas, y la deteccion del duplicado los escribe Claude Code DESPUES de la corrida, en commits aparte. `InquiryForm.tsx` y `InquiryForm.module.css` existen hoy como MARCADORES: esta tarea sustituye esos dos ficheros ENTEROS.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_MSG-03.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/MSG-03 · MSG v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": [
+      "§1.1",
+      "§1.4",
+      "§1.5",
+      "§3",
+      "§6.4"
+    ],
+    "style_reference": "app/src/screens/messages/OfferCounterForm.module.css",
+    "_nota_style_reference": "`OfferCounterForm.module.css` es el formulario hermano (contraoferta): MISMAS etiquetas en mayusculas pequenas (`.label`), mismos campos (`.input`, `.textarea`, `:focus`), mismo boton de enviar (`.submitButton`, `:disabled`) y de cancelar (`.cancelButton`). Copia sus valores. Lo que el no tiene y el HTML aprobado si: la cabecera con filo izquierdo azul (`.form-card-hdr.consulta-hdr`), el campo de solo lectura apagado (`.form-input[readonly]`), el aviso ambar (`.blocked-banner`) y el pie con la nota de cifrado (`.encrypt-hint`).",
+    "data_layer": "app/src/lib/inquiry-form.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder importa de ahi `INQUIRY_FORM_TEXTS` (sea `T`), `NOTES_MAX`, `inquiryFormView`, `inquiryDraft` y el tipo `InquiryDraft`. NO reimplementa nada: ni cuando una cantidad es valida, ni cuantos caracteres admiten las notas, ni cuando se puede enviar, ni que se entrega (cantidad como numero y notas recortadas o `null`)."
+  },
+  "outputs": [
+    "app/src/screens/messages/InquiryForm.tsx",
+    "app/src/screens/messages/InquiryForm.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE sale de `INQUIRY_FORM_TEXTS` (sea `T`) o de las props. No se escribe ni un texto a mano: ni titulos, ni etiquetas, ni ayudas, ni botones, ni el asterisco de obligatorio si lo pintas fuera de un `<span aria-hidden=\"true\">`.",
+    "_nota_accesibilidad": "El formulario es un `<form>` con `aria-labelledby` apuntando a su `<h2>` (usa `useId()` de React para los ids). Cada campo tiene su `<label htmlFor=...>` y su `id` (el nombre accesible de la etiqueta incluye el texto de `T`; si pintas un asterisco de obligatorio, va en un `<span aria-hidden=\"true\">`). Todos los botones son `<button type=\"button\">` salvo el de enviar, que es `type=\"submit\"`. Todo `<svg>` lleva `aria-hidden=\"true\"`. El aviso de duplicado y el error de envio son elementos con `role=\"alert\"`; el error de la cantidad NO lo es (es un texto normal).",
+    "_nota_css_modules": "LAS CLASES DE UN MODULO CSS SON `string | undefined`, NUNCA `string` A SECAS (F-143): con `noUncheckedIndexedAccess`, un `Record<..., string>` con valores `styles.x` NO COMPILA. Si compones clases, usa plantillas (`${styles.input} ${styles.readonly}`) y no diccionarios tipados `string`.",
+    "_nota_props_opcionales": "`exactOptionalPropertyTypes` esta activo: no se pasa `aria-describedby={undefined}` a un elemento; o se pasa siempre una cadena o se esparce un objeto condicional.",
+    "app/src/screens/messages/InquiryForm.tsx": "export function InquiryForm({ reference, brand, country, duplicate, busy, error, onSubmit, onCancel }: { reference: string; brand: string; country: string; duplicate: boolean; busy: boolean; error: string | null; onSubmit: (draft: InquiryDraft) => void; onCancel: () => void }). Sea `T = INQUIRY_FORM_TEXTS`. ESTADO PROPIO: solo DOS cadenas con `useState`: el texto de la cantidad y el texto de las notas (ambas arrancan vacias). Con ellas se calcula `const view = inquiryFormView(cantidadTexto, notasTexto, { duplicate, busy })`. RAIZ: `<form className={styles.form} aria-labelledby={titleId} noValidate onSubmit={...}>`. El `onSubmit` hace `e.preventDefault()`, calcula `const draft = inquiryDraft(cantidadTexto, notasTexto)` y SOLO si `view.canSubmit` y `draft !== null` llama a `onSubmit(draft)` (si no, no hace nada: Intro con el boton deshabilitado no envia). De arriba abajo: (1) CABECERA `<div className={styles.header}>` con `<h2 id={titleId} className={styles.title}>{T.title}</h2>` y `<p className={styles.subtitle}>{T.subtitle}</p>`. (2) CUERPO `<div className={styles.body}>`: (2a) una fila de dos columnas `<div className={styles.row}>` con los campos `reference` y `brand`; (2b) una fila `<div className={`${styles.row} ${styles.rowFull}`}>` con el pais; (2c) una fila `rowFull` con la CANTIDAD; (2d) una fila `rowFull` con las NOTAS. CAMPOS DE SOLO LECTURA (referencia, marca, pais): `<div className={styles.group}>` con `<label htmlFor className={styles.label}>` (`T.referenceLabel`, `T.brandLabel`, `T.countryLabel`, y a continuacion el asterisco de obligatorio en un `<span aria-hidden=\"true\" className={styles.required}>`), un `<input type=\"text\" readOnly className={`${styles.input} ${styles.readonly}`} value={...}>` con el valor de la prop, y `<span className={styles.hint}>` con `T.inheritedHint` (referencia y marca) o `T.countryHint` (pais). CANTIDAD: label con `T.quantityLabel` y asterisco; `<input type=\"number\" inputMode=\"numeric\" step={1} className={styles.input} value={cantidadTexto} onChange=...>` con `aria-invalid={view.quantityError !== null}`; debajo `<span className={styles.hint}>{T.quantityHint}</span>` y, SOLO si `view.quantityError` no es null, `<span className={styles.fieldError}>{view.quantityError}</span>` (sin `role`). NOTAS: label con `T.notesLabel` (sin asterisco); `<textarea className={styles.textarea} maxLength={NOTES_MAX} placeholder={T.notesPlaceholder} value={notasTexto} onChange=...>`. (3) AVISOS, dentro del cuerpo, al final: SI `duplicate`, `<div role=\"alert\" className={styles.banner}>` con un svg de alerta (`aria-hidden`) y `T.duplicateWarning`; SI `error !== null`, `<div role=\"alert\" className={styles.error}>{error}</div>`. (4) PIE `<div className={styles.footer}>`: `<button type=\"submit\" className={styles.submit} disabled={!view.canSubmit}>` con `T.sending` si `busy` y `T.submit` si no; `<button type=\"button\" className={styles.cancel} onClick={onCancel}>{T.cancel}</button>`; y `<span className={styles.encrypt}>` con un svg de candado (`aria-hidden`) y `T.encryptHint`. Nada mas: ni red, ni `useEffect`, ni mas estado, ni logica de validacion propia.",
+    "app/src/screens/messages/InquiryForm.module.css": "Estilos con TOKENS de `tokens.css` (nada de valores literales de color). Clases minimas: `form`, `header`, `title`, `subtitle`, `body`, `row`, `rowFull`, `group`, `label`, `required`, `input`, `readonly`, `hint`, `fieldError`, `textarea`, `banner`, `error`, `footer`, `submit`, `cancel`, `encrypt`. OBLIGATORIO, porque el contrato lo mide: `.banner` declara `color: var(--bw-warning)`; `.readonly` declara `background: var(--bw-surface-mist)` y `cursor: not-allowed`; existe una regla cuyo selector es EXACTAMENTE `.submit:disabled` (sola, sin coma ni otros selectores) con `opacity: .35` y `cursor: not-allowed`; `.fieldError` declara `color: var(--bw-danger)`. Fiel al HTML aprobado (`.form-card`, `.form-card-hdr.consulta-hdr`, `.form-body`, `.form-row`, `.form-group`, `.form-label`, `.form-input`, `.form-textarea`, `.form-hint`, `.blocked-banner`, `.form-footer`, `.btn-primary-form`, `.btn-text`, `.encrypt-hint`) y a `OfferCounterForm.module.css`: tarjeta con borde `var(--bw-line-steel)` y radio, cabecera con filo izquierdo de 3 px en `var(--bw-calibration-blue)`, etiquetas en mayusculas pequenas, campos de 36 px de alto con foco azul, `.rowFull` a una columna y `.row` a dos, aviso ambar con fondo suave (`--bw-badge-warning-bg` / `--bw-badge-warning-border`), boton de enviar azul y el de cancelar como texto. A <= 480 px de ancho, `.row` pasa a una sola columna (media query)."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/messages/InquiryForm.test.tsx",
+      "app/src/screens/messages/InquiryFormCss.test.ts"
+    ],
+    "e2e": [],
+    "_nota": "Los escribe Claude Code ANTES de que el Coder vea la tarea. El Coder no los ve. `InquiryForm.test.tsx` (20) e `InquiryFormCss.test.ts` (4) son el contrato nuevo, en ROJO TOTAL contra los marcadores (24 de 24). Comprobado contra una implementacion de referencia desechable (no comiteada, borrada): 24 de 24 verdes. La capa de datos tiene su propio test, en verde (`lib/inquiry-form.test.ts`, 23).",
+    "_nota_e2e": "El formulario no esta montado en ninguna pantalla hasta que lo cablee Claude Code, asi que no hay e2e de contrato. C2 corre la suite e2e ENTERA contra `bearingworld-e2e` (F-230) y no debe cambiar: nada la usa todavia."
+  },
+  "out_of_scope": [
+    "Calcular si se puede enviar, validar la cantidad, recortar las notas o decidir que se entrega: lo hace `lib/inquiry-form.ts`, escrito a mano.",
+    "Montar el formulario en SRCH-01 (uno por fila seleccionada), en el hilo (`Crear consulta`) o en un modal, y elegir la linea de inventario cuando se crea desde el hilo.",
+    "Cifrar y enviar (`sendInquiries`, `create_inquiry`) y detectar si hay una consulta pendiente: es del wiring, a mano.",
+    "El formulario de oferta y de contraoferta (`OfferCounterForm`), que ya existe.",
+    "El boton `Simular duplicado` y los datos de ejemplo del HTML aprobado (`6205-2RS`, `FAG`, `Alemania`): son andamiaje del prototipo.",
+    "El panel VERA de la spec §5."
+  ],
+  "constraints": [
+    "SCROLL: el formulario vive dentro de un panel o modal que ya gestiona su scroll. NO declares `height`, `max-height` ni `overflow-y` en la raiz (`.form`).",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb().",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json. Los iconos (alerta, candado) son `<svg>` en linea escritos a mano, no una libreria ni la fuente de iconos `ti` del HTML aprobado.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`, y sin `console.*`.",
+    "Ni red, ni `localStorage`, ni `useEffect`: es un componente presentacional con dos cadenas de estado.",
+    "No tocar nada fuera de los dos ficheros de `outputs`: ni `lib/inquiry-form.ts`, ni `OfferCounterForm.tsx`, ni `ThreadHistory.tsx`, ni nada de `app/src/lib/`.",
+    "No reimplementar nada de `app/src/lib/inquiry-form.ts` (ver `_nota_data_layer`).",
+    "UN solo `<h2>` y NINGUN `<h1>`: el `<h1>` es de la pantalla.",
+    "La marca en el texto es `Bearingworld.io`, nunca `Rinworld` (CLAUDE.md §1.2)."
+  ]
+}

@@ -54,6 +54,29 @@ describe('VERA · la guía verificada sigue siendo cierta', () => {
     expect(codigo).toContain(nombre);
   });
 
+  // Filtros, búsqueda y acciones de fila de INV-01. Las etiquetas de los chips viven en lib/inventory.ts.
+  const libInventario = readFileSync(resolve(process.cwd(), 'src/lib/inventory.ts'), 'utf8');
+  const tabla = fuente('inventory/InventoryTable.tsx');
+
+  it.each([
+    ['Todos', libInventario],
+    ['Publicados', libInventario],
+    ['Desactualizados', libInventario],
+    ['Archivados', libInventario],
+    ['Buscar por referencia o marca', inventario],
+    ['ti-archive', tabla],
+    ['ti-trash', tabla],
+  ])('Inventario: "%s" está en la pantalla y en la guía', (nombre, codigo) => {
+    if (!nombre.startsWith('ti-')) expect(prompt).toContain(nombre);
+    expect(codigo).toContain(nombre);
+  });
+
+  it('Inventario: archivar y eliminar no piden confirmación y la guía no lo disimula', () => {
+    expect(prompt).toContain('Ninguno de los dos pide confirmación');
+    expect(inventario).not.toMatch(/confirm\(|window\.confirm|role="dialog"/);
+    expect(tabla).not.toMatch(/confirm\(|window\.confirm|role="dialog"/);
+  });
+
   // Visibilidad (INV-07). Los textos de los modos viven en lib/visibility.ts, no en la pantalla.
   const visibilidad = fuente('inventory/Visibility.tsx');
   const panel = fuente('inventory/ExclusionPanel.tsx');

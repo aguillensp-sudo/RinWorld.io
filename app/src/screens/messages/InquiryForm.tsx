@@ -20,6 +20,8 @@ export function InquiryForm({
   error,
   onSubmit,
   onCancel,
+  initialQuantity = '',
+  initialNotes = '',
 }: {
   reference: string;
   brand: string;
@@ -29,9 +31,12 @@ export function InquiryForm({
   error: string | null;
   onSubmit: (draft: InquiryDraft) => void;
   onCancel: () => void;
+  /** Valores con los que arranca el formulario (VERA los rellena, F-249; el usuario los revisa). */
+  initialQuantity?: string;
+  initialNotes?: string;
 }) {
-  const [quantityText, setQuantityText] = useState('');
-  const [notesText, setNotesText] = useState('');
+  const [quantityText, setQuantityText] = useState(initialQuantity);
+  const [notesText, setNotesText] = useState(initialNotes);
 
   const uid = useId();
   const titleId = `${uid}-title`;

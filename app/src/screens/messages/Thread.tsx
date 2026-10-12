@@ -6,6 +6,7 @@ import {
   markOutOfStock,
   fetchThreadDetail,
   fetchThreadItems,
+  sendInquiries,
   sendMessage,
   type OfferContent,
   type ThreadDetail,
@@ -23,6 +24,8 @@ import {
   revertAgreement,
 } from '../../lib/offers';
 import { onThreadChanged } from '../../lib/realtime';
+import type { InquiryDraft } from '../../lib/inquiry-form';
+import type { OrgLine } from '../../lib/search';
 import { ThreadHeader } from './ThreadHeader';
 import { ThreadHistory } from './ThreadHistory';
 import { ThreadComposer } from './ThreadComposer';
@@ -188,6 +191,34 @@ export function Thread({
     [threadId, write],
   );
 
+  /**
+   * `Crear consulta` desde el pie del hilo (MSG-03 §3.2, F-249): una consulta nueva sobre una línea de la
+   * contraparte, con la cantidad y las notas del formulario. Mismo cerrojo de reentrada que `write`, pero
+   * devuelve el motivo del fallo en vez de pintarlo en el banner del hilo: el formulario está abierto
+   * encima y es ahí donde el comprador tiene que verlo, conservando lo que escribió.
+   */
+  const handleCreateInquiry = useCallback(
+    async (line: OrgLine, draft: InquiryDraft): Promise<string | null> => {
+      if (!detail) return 'El hilo no está cargado.';
+      if (writing.current) return 'Hay otra operación en curso. Inténtalo de nuevo.';
+      writing.current = true;
+      try {
+        const [resultado] = await sendInquiries(
+          [{ lineId: line.id, distributorOrgId: detail.counterpartyId, quantity: draft.quantity, notes: draft.notes }],
+          profile.orgId,
+        );
+        if (!resultado?.ok) return resultado?.error ?? 'No se pudo enviar la consulta.';
+        await reload();
+        return null;
+      } catch (err) {
+        return errorMessage(err);
+      } finally {
+        writing.current = false;
+      }
+    },
+    [detail, profile.orgId, reload],
+  );
+
   const handleOutOfStock = useCallback(
     (inquiryId: string) => {
       void write(() => markOutOfStock(inquiryId, profile.orgId));
@@ -262,7 +293,16 @@ export function Thread({
                 SIN ACUERDO incluido. La reapertura ocurre cuando alguien vuelve
                 a escribir (0009), así que el campo no puede desaparecer — y
                 desde hoy (D-08-02) ese "volver a escribir" es real. */}
-            <ThreadComposer onSend={handleSend} onCreateOffer={handleCreateOffer} />
+            <ThreadComposer
+              onSend={handleSend}
+              onCreateOffer={handleCreateOffer}
+              inquiry={{
+                counterpartyId: detail.counterpartyId,
+                counterpartyName: detail.counterpartyName,
+                ownOrgId: profile.orgId,
+                onSubmit: handleCreateInquiry,
+              }}
+            />
           </>
         )}
       </div>

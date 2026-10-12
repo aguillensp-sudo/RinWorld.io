@@ -543,6 +543,66 @@ export async function fetchConsultedLineIds(orgId: string, lineIds: string[]): P
   );
 }
 
+/** Una línea publicada de una organización concreta, para elegir sobre cuál abrir una consulta. */
+export interface OrgLine {
+  id: string;
+  partNumber: string;
+  brand: string;
+  quantity: number;
+  /** ISO de 2 letras: dónde está el stock. */
+  country: string;
+  /** Mi organización ya tiene una consulta PENDIENTE sobre ella (F-249). */
+  consulted: boolean;
+}
+
+/** Cuántas líneas enseña el selector de `Crear consulta`: hay que afinar la búsqueda, no paginar. */
+export const ORG_LINES_LIMIT = 30;
+
+/**
+ * Las líneas PUBLICADAS de UNA organización (la contraparte de un hilo), para `Crear consulta` dentro
+ * del hilo (MSG-03 §3.2, F-249). Lo que se ve lo decide la RLS de `inventory_lines`: si el
+ * distribuidor me excluyó de su inventario, no sale nada —y el selector lo dice, no inventa—.
+ *
+ * `term` busca por referencia o marca, con el mismo saneado que `fetchResults` (quita las comas y los
+ * paréntesis que romperían el `.or`). Búsqueda al pulsar Intro, no en vivo: es el estándar del proyecto.
+ */
+export async function fetchOrgLines(orgId: string, ownOrgId: string, term: string): Promise<OrgLine[]> {
+  let q = supabase
+    .from('inventory_lines')
+    .select('id, part_number, brand, quantity, location_country')
+    .eq('org_id', orgId)
+    .eq('status', 'PUBLISHED');
+
+  const t = sanitizeSearch(term);
+  if (t) q = q.or(`part_number.ilike.%${t}%,brand.ilike.%${t}%`);
+
+  const { data, error } = await q
+    .order('part_number', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(ORG_LINES_LIMIT);
+  if (error) throw error;
+
+  const rows = (data ?? []) as {
+    id: string;
+    part_number: string;
+    brand: string;
+    quantity: number;
+    location_country: string;
+  }[];
+  const pendientes = await fetchConsultedLineIds(
+    ownOrgId,
+    rows.map((r) => r.id),
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    partNumber: r.part_number,
+    brand: r.brand,
+    quantity: r.quantity,
+    country: r.location_country,
+    consulted: pendientes.has(r.id),
+  }));
+}
+
 /**
  * Marcar o desmarcar favorita a una distribuidora.
  *

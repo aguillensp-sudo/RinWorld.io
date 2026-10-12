@@ -1,5 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import { INQUIRY_FORM_TEXTS, INQUIRY_PICKER_TEXTS, type InquiryDraft } from '../../lib/inquiry-form';
+import { countryName, type OrgLine } from '../../lib/search';
 import type { OfferContent } from '../../lib/thread-detail';
+import { InquiryFormModal } from './InquiryFormModal';
+import { InquiryLinePicker } from './InquiryLinePicker';
 import { OfferCounterForm } from './OfferCounterForm';
 import styles from './ThreadComposer.module.css';
 
@@ -31,10 +35,22 @@ import styles from './ThreadComposer.module.css';
  * explica su propio botón gris, y un cartel permanente diciendo "escribe algo"
  * sería ruido en los cinco estados del hilo.
  */
+/** Lo que `Crear consulta` necesita del hilo: a quién se pregunta y cómo se envía. */
+export interface InquiryCreation {
+  counterpartyId: string;
+  counterpartyName: string;
+  ownOrgId: string;
+  /** Cifra y envía. Devuelve el motivo del fallo o `null` si salió bien (el formulario lo enseña dentro). */
+  onSubmit: (line: OrgLine, draft: InquiryDraft) => Promise<string | null>;
+}
+
 export function ThreadComposer({
   onSend,
   onCreateOffer,
+  inquiry,
 }: {
+  /** `Crear consulta` (MSG-03 §3.2, F-249). Sin esta prop el botón no se pinta. */
+  inquiry?: InquiryCreation;
   /** Oferta directa en el hilo (0055). Sin esta prop el botón no se pinta. */
   onCreateOffer?: (reference: { partNumber: string; brand: string }, content: OfferContent) => Promise<boolean>;
   /** Devuelve si el envío salió bien. El campo solo se vacía cuando sí: perder
@@ -53,6 +69,29 @@ export function ThreadComposer({
     cursorTrasSalto.current = null;
   }, [texto]);
   const [ofertando, setOfertando] = useState(false);
+  /** Paso de `Crear consulta`: `'elegir'` la línea, o la línea elegida con su formulario abierto. */
+  const [consulta, setConsulta] = useState<'elegir' | OrgLine | null>(null);
+  const [consultaBusy, setConsultaBusy] = useState(false);
+  /** Fallo del último envío; el aviso de duplicado de la spec §6 tiene su propio sitio en el formulario. */
+  const [consultaError, setConsultaError] = useState<string | null>(null);
+
+  const cerrarConsulta = () => {
+    setConsulta(null);
+    setConsultaError(null);
+  };
+
+  const enviarConsulta = async (line: OrgLine, draft: InquiryDraft) => {
+    if (!inquiry || consultaBusy) return;
+    setConsultaBusy(true);
+    setConsultaError(null);
+    try {
+      const fallo = await inquiry.onSubmit(line, draft);
+      if (fallo === null) cerrarConsulta();
+      else setConsultaError(fallo);
+    } finally {
+      setConsultaBusy(false);
+    }
+  };
 
   const vacio = texto.trim().length === 0;
 
@@ -110,6 +149,11 @@ export function ThreadComposer({
         </button>
       </div>
       <div className={styles.subRow}>
+        {inquiry && (
+          <button type="button" className={styles.offerButton} onClick={() => setConsulta('elegir')}>
+            {INQUIRY_PICKER_TEXTS.button}
+          </button>
+        )}
         {onCreateOffer && (
           <button type="button" className={styles.offerButton} onClick={() => setOfertando(true)}>
             Crear oferta
@@ -117,6 +161,30 @@ export function ThreadComposer({
         )}
         <span className={styles.encryptHint}>Cifrado E2EE antes del envío</span>
       </div>
+      {inquiry && consulta === 'elegir' && (
+        <InquiryLinePicker
+          counterpartyId={inquiry.counterpartyId}
+          counterpartyName={inquiry.counterpartyName}
+          ownOrgId={inquiry.ownOrgId}
+          onPick={(l) => setConsulta(l)}
+          onCancel={cerrarConsulta}
+        />
+      )}
+      {inquiry && consulta !== null && consulta !== 'elegir' && (
+        <InquiryFormModal
+          key={consulta.id}
+          index={0}
+          total={1}
+          reference={consulta.partNumber}
+          brand={consulta.brand}
+          country={countryName(consulta.country)}
+          duplicate={consultaError === INQUIRY_FORM_TEXTS.duplicateWarning}
+          busy={consultaBusy}
+          error={consultaError === INQUIRY_FORM_TEXTS.duplicateWarning ? null : consultaError}
+          onSubmit={(draft) => void enviarConsulta(consulta, draft)}
+          onCancel={cerrarConsulta}
+        />
+      )}
       {ofertando && onCreateOffer && (
         <OfferCounterForm
           partNumber=""

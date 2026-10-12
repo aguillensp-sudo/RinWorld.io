@@ -121,6 +121,11 @@ test.describe('H5 · negociación de punta a punta', () => {
       await expect(fila).toHaveCount(1);
       await fila.getByRole('checkbox').check();
       await fila.getByRole('button', { name: 'Consultar' }).click();
+      // MSG-03 §3.2 (F-249): `Consultar` abre el formulario; la cantidad la pone el comprador.
+      const formularioConsulta = beta.getByRole('dialog');
+      await formularioConsulta.getByLabel(/Cantidad solicitada/).fill('100');
+      await formularioConsulta.getByRole('button', { name: 'Enviar consulta' }).click();
+      await expect(formularioConsulta).toBeHidden();
       await expect(beta.getByRole('status').filter({ hasText: /consulta/i }).first()).toBeVisible();
 
       // 2 · ALPHA ve la consulta y responde con una oferta.
@@ -158,6 +163,34 @@ test.describe('H5 · negociación de punta a punta', () => {
       await topNav(beta).getByRole('button', { name: 'Panel' }).click();
       await abrirHilo(beta, ALPHA.org);
       await expect(beta.getByText('ACUERDO ALCANZADO').first()).toBeVisible();
+
+      // 6 · F-249 (0060): la consulta de 32007 ya está respondida, no pendiente, así que BETA puede
+      // volver a consultar esa MISMA línea desde el hilo con `Crear consulta` (MSG-03 §3.2). Con la
+      // nueva pendiente, esa línea sale apagada en el selector.
+      const elegirLinea = async () => {
+        await beta.getByRole('button', { name: 'Crear consulta' }).click();
+        const selector = beta.getByRole('dialog', { name: 'Crear consulta' });
+        const buscador = selector.getByRole('searchbox', { name: 'Buscar por referencia o marca' });
+        await buscador.fill(REFERENCIA);
+        await buscador.press('Enter');
+        return { selector, linea: selector.getByRole('button', { name: new RegExp(REFERENCIA) }) };
+      };
+
+      const primera = await elegirLinea();
+      await expect(primera.linea).toBeEnabled();
+      await primera.linea.click();
+      const formularioNuevo = beta.getByRole('dialog', { name: 'Nueva tarjeta de consulta' });
+      await expect(formularioNuevo.getByLabel(/Referencia/)).toHaveValue(REFERENCIA);
+      await formularioNuevo.getByLabel(/Cantidad solicitada/).fill('50');
+      await formularioNuevo.getByLabel('Notas adicionales').fill('Segunda consulta, tras la oferta aceptada');
+      await formularioNuevo.getByRole('button', { name: 'Enviar consulta' }).click();
+      await expect(formularioNuevo).toBeHidden();
+      await expect(beta.getByTestId('inquiry-row').filter({ hasText: 'PENDIENTE' })).toHaveCount(1);
+
+      const segunda = await elegirLinea();
+      await expect(segunda.linea).toBeDisabled();
+      await segunda.selector.getByRole('button', { name: 'Cancelar' }).click();
+      await expect(segunda.selector).toBeHidden();
     } finally {
       await ctxBeta.close();
       await ctxAlpha.close();

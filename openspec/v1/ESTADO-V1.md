@@ -44,9 +44,7 @@ Empieza por §6 y luego §3.
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
-1. **C5 de `MSG-03` por el PO**, todo lo nuevo, **en producción y sin pulsar nada que escriba** salvo decisión suya: las dos tablas (`Hilos`), el formulario por fila en `Comprando`
-   (`Consultar`), `Crear consulta` en un hilo (selector + formulario) y VERA preparando (en un hilo: «consúltale si tiene 300 unidades de 6205-2RS», «ofrécele 500 piezas con entrega en dos semanas»).
-   Cambian literales (`Aceptar`, estados en mayúsculas). Su veredicto va a la `nota` de las filas de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
+1. ~~C5 de `MSG-03`~~ **aprobada por el PO el 12-oct-2026** (tablas, formulario por fila, `Crear consulta`, VERA preparando); veredicto en la `nota` de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
 2. **`INV-04`, fase 2 (recepción)** — la fase 1 está hecha (`0057`). SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a
    `ingest` rebota hasta la fase 2: esperado). **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, rol federado).
    Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.

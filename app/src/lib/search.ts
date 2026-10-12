@@ -516,7 +516,10 @@ export async function fetchFavoriteOrgIds(memberId: string): Promise<Set<string>
 }
 
 /**
- * Qué líneas de las que se ven ya ha consultado mi organización.
+ * Qué líneas de las que se ven tienen una consulta MÍA todavía PENDIENTE.
+ *
+ * Desde 0060 (F-249, decisión del PO del 12-oct) solo cuenta la pendiente: tras una respuesta o un
+ * «Sin stock» la línea vuelve a poder consultarse, igual que en la base (`create_inquiry`).
  *
  * Sostiene el "Estado de fila ya consultada" de la spec §3. `sender_org_id` es
  * mío porque la consulta la envié yo: una consulta que me enviaron a mí sobre mi
@@ -529,6 +532,7 @@ export async function fetchConsultedLineIds(orgId: string, lineIds: string[]): P
     .from('thread_items')
     .select('inventory_line_id')
     .eq('item_type', 'CONSULTA')
+    .eq('estado_consulta', 'Pendiente')
     .eq('sender_org_id', orgId)
     .in('inventory_line_id', lineIds);
   if (error) throw error;

@@ -1939,7 +1939,7 @@ begin
             and inventory_line_id = 'e1000000-0000-0000-0000-000000000003'
             and sender_org_id = '11111111-1111-1111-1111-111111111111') = 1,
     'F-156: sigue habiendo UNA sola CONSULTA de Alpha a Beta sobre esta linea -- ninguna duplicada se creo';
-  raise notice 'OK · F-156: app.org_already_inquired ve la consulta previa aunque el llamador no tenga clave en ella';
+  raise notice 'OK · F-156: app.org_has_pending_inquiry (antes org_already_inquired) ve la consulta previa aunque el llamador no tenga clave en ella';
 end
 $$;
 
@@ -3998,7 +3998,7 @@ drop function public.f146_canaria();
 -- Por qué cada una de las siete está permitida:
 --   · `create_inquiry`, `create_thread_item`, `counter_offer` — auditadas línea
 --     a línea el Día 13; sus lecturas sensibles ya van por ayudantes
---     `security definer` (`app.thread_counterpart`, `app.org_already_inquired`,
+--     `security definer` (`app.thread_counterpart`, `app.org_has_pending_inquiry`,
 --     `app.resolve_thread`). Lo que les queda bajo RLS son escrituras, que
 --     fallan con error en vez de decidir en silencio.
 --   · `create_offer` (0055, F-099) — el mismo patrón que `counter_offer`: la
@@ -4869,7 +4869,7 @@ $$;
 -- Que un ayudante `security definer` no vea RLS no es un axioma: depende de dos
 -- cosas que hoy se cumplen y que una migración futura puede romper sin tocar
 -- ninguna función. Si alguna de las dos cae, `app.can_access_thread`,
--- `app.thread_counterpart` y `app.org_already_inquired` vuelven a filtrar por
+-- `app.thread_counterpart` y `app.org_has_pending_inquiry` vuelven a filtrar por
 -- RLS y F-148 renace entero, en silencio y en todas partes a la vez.
 do $$
 declare
@@ -5971,6 +5971,57 @@ begin
            where inventory_line_id = 'f5500000-0000-0000-0000-000000000002') = 'Sin stock',
     'F-245: la consulta queda Sin stock';
   raise notice 'OK · 0055 · F-245: el estado de la consulta lo decide quien la recibe, una vez';
+end
+$$;
+
+-- 8bis · 0060 · F-249 · la segunda consulta sobre la misma linea se bloquea SOLO si la primera sigue
+-- pendiente. La del §8 acaba de quedar «Sin stock»: Kilo puede volver a preguntar por la linea, y
+-- entonces ya hay una Pendiente y una tercera se bloquea con el mensaje de la spec MSG-03.
+-- En una transaccion que se deshace: lo que viene despues cuenta con UNA consulta en la linea 002.
+begin;
+  select set_config('request.jwt.claim.sub', 'ad000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  select * from public.create_inquiry('f5500000-0000-0000-0000-000000000002',
+      repeat('ac', 48), repeat('1c', 12),
+      public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                        'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+      25);
+  do $$
+  declare mensaje text;
+  begin
+    assert (select count(*) from public.thread_items
+             where item_type = 'CONSULTA' and inventory_line_id = 'f5500000-0000-0000-0000-000000000002') = 2,
+      'F-249: tras un Sin stock se puede volver a consultar la linea: ahora hay dos consultas';
+    begin
+      perform public.create_inquiry('f5500000-0000-0000-0000-000000000002',
+        repeat('ad', 48), repeat('1d', 12),
+        public.t55_claves('ad000001-0000-0000-0000-000000000001',
+                          'ae000001-0000-0000-0000-000000000001', 'ae000002-0000-0000-0000-000000000002'),
+        10);
+    exception when others then
+      mensaje := sqlerrm;
+    end;
+    assert mensaje = 'Ya tienes una consulta pendiente para esta referencia con este distribuidor.',
+      'F-249: con una consulta Pendiente, la tercera se bloquea con el literal de la spec; mensaje: ' || coalesce(mensaje, '(sin error)');
+    raise notice 'OK · 0060 · F-249: el duplicado se bloquea solo mientras la consulta anterior esta pendiente';
+  end
+  $$;
+rollback;
+
+-- Y la guardia de verdad es el indice, no el aviso: dos consultas Pendientes de la misma organizacion
+-- sobre la misma linea no caben aunque alguien se salte create_inquiry.
+do $$
+begin
+  assert (select count(*) from pg_indexes
+           where schemaname = 'public' and indexname = 'thread_items_one_pending_inquiry_per_line_uniq'
+             and indexdef like '%estado_consulta%Pendiente%') = 1,
+    'F-249: el indice unico es parcial sobre las consultas Pendientes';
+  assert (select count(*) from pg_indexes
+           where schemaname = 'public' and indexname = 'thread_items_one_inquiry_per_line_uniq') = 0,
+    'F-249: el indice incondicional de 0003 ya no existe';
+  assert to_regprocedure('app.org_already_inquired(uuid,uuid)') is null,
+    'F-249: el helper viejo se retiro; el vivo es app.org_has_pending_inquiry';
+  raise notice 'OK · 0060 · F-249: el indice unico es parcial y el helper viejo no esta';
 end
 $$;
 

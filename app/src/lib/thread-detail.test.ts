@@ -548,6 +548,30 @@ describe('sendInquiries · "Consultar Seleccionados" (GAP-004, Plan §3 día 10)
     expect(contenido).toEqual({ kind: 'CONSULTA', quantity: 250, comment: null });
   });
 
+  it('las notas del formulario (MSG-03 §3.2) viajan DENTRO del contenido cifrado, no en claro', async () => {
+    await enviar([linea({ lineId: 'l-1', quantity: 40, notes: 'Entrega en dos semanas' })]);
+    const args = rpcLlamadas[0]!.args as {
+      p_ciphertext: string;
+      p_iv: string;
+      p_quantity: number;
+      p_keys: { member_id: string; wrapped_cek: string; wrap_iv: string; ephemeral_pubkey: string }[];
+    };
+    const propia = args.p_keys.find((k) => k.member_id === 'yo')!;
+    const cek = await unwrapCek(
+      {
+        wrappedCek: fromBytea(propia.wrapped_cek),
+        wrapIv: fromBytea(propia.wrap_iv),
+        ephemeralPublicKey: fromBytea(propia.ephemeral_pubkey),
+      },
+      llavero!,
+    );
+    const contenido = await decryptContent(fromBytea(args.p_ciphertext), fromBytea(args.p_iv), cek);
+    expect(contenido).toEqual({ kind: 'CONSULTA', quantity: 40, comment: 'Entrega en dos semanas' });
+    // Lo único en claro es la cantidad (ADR-002 D-3): el texto de las notas no aparece en los argumentos.
+    expect(JSON.stringify(args)).not.toContain('Entrega en dos semanas');
+    expect(args.p_quantity).toBe(40);
+  });
+
   it('dos líneas del MISMO distribuidor piden sus públicas y las propias UNA sola vez cada una', async () => {
     await enviar([
       linea({ lineId: 'l-1', distributorOrgId: NORDWALZ }),

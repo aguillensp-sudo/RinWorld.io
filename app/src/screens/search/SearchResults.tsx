@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { MemberProfile } from '../../lib/session';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   EMPTY_CRITERIA,
   consultSummary,
+  countryName,
   fetchResults,
   meetsMinQuantity,
   metaCounterLabel,
@@ -11,10 +12,13 @@ import {
   toggleFavorite,
   type SearchCriteria,
   type SearchPage,
+  type SearchResultRow,
   type Sort,
   type SortColumn,
 } from '../../lib/search';
-import { sendInquiries, type InquiryLine } from '../../lib/thread-detail';
+import { INQUIRY_FORM_TEXTS, type InquiryDraft } from '../../lib/inquiry-form';
+import { sendInquiries, type InquiryOutcome } from '../../lib/thread-detail';
+import { InquiryFormModal } from '../messages/InquiryFormModal';
 import { FilterChips } from './FilterChips';
 import { ResultsTable } from './ResultsTable';
 import styles from './SearchResults.module.css';
@@ -50,6 +54,14 @@ interface Props {
   onContactOrganization?: (orgId: string) => void;
 }
 
+interface ConsultQueue {
+  rows: SearchResultRow[];
+  index: number;
+  /** Filas de la selección que ya tenían una consulta pendiente y no entran en la cola (F-087). */
+  omitidas: number;
+  outcomes: InquiryOutcome[];
+}
+
 /**
  * Pantalla SRCH-01 · Panel de Resultados de Búsqueda.
  *
@@ -68,20 +80,39 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
   /** El resultado de la última tanda de "Consultar seleccionados" (GAP-004).
    *  `null` = no se ha lanzado ninguna todavía en esta pantalla. */
   const [consultBanner, setConsultBanner] = useState<string | null>(null);
+  /** Hay un envío en curso (el de la consulta que el formulario tiene delante). */
   const [consulting, setConsulting] = useState(false);
+  /**
+   * La cola de formularios de consulta (MSG-03 §3.2, F-249): uno por fila, en el orden de la tabla.
+   * `outcomes` es lo ya resuelto —enviado o fallado— y alimenta el resumen final.
+   */
+  const [queue, setQueue] = useState<ConsultQueue | null>(null);
+  /** El fallo del último intento sobre la fila actual; `null` si no ha habido o ya se resolvió. */
+  const [failed, setFailed] = useState<InquiryOutcome | null>(null);
+
+  /**
+   * Número de la última carga lanzada. Dos cargas pueden estar en vuelo a la vez (la inicial y la de un
+   * filtro que se añade nada más entrar), y la red no garantiza que lleguen en orden: si la vieja
+   * llegaba la última, PISABA a la nueva y la pantalla enseñaba el chip `Ref 32007` sobre los 183
+   * resultados sin filtrar. Solo la última carga lanzada puede escribir resultado, error o fin de carga.
+   */
+  const lastLoad = useRef(0);
 
   const load = useCallback(
     async (c: SearchCriteria) => {
+      const mia = ++lastLoad.current;
       setLoading(true);
       setError(false);
       try {
         const p = await fetchResults({ orgId: profile.orgId, memberId: profile.id, criteria: c });
+        if (mia !== lastLoad.current) return;
         setPage(p);
       } catch {
+        if (mia !== lastLoad.current) return;
         setError(true);
         setPage(null);
       } finally {
-        setLoading(false);
+        if (mia === lastLoad.current) setLoading(false);
       }
     },
     [profile.orgId, profile.id],
@@ -139,64 +170,119 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
   const handleContact = useCallback((_orgId: string) => {}, []);
 
   /**
-   * "Consultar Seleccionados" (GAP-004, `Plan §3` día 10).
+   * "Consultar" de una fila y "Consultar seleccionados" (GAP-004, `Plan §3` día 10; F-249).
    *
-   * El boundary de GAP-004 es literal: *"la selección y el disparo de la
-   * acción pertenecen a conversational-search; la gestión del hilo, tarjeta de
-   * consulta y cifrado E2EE pertenecen a messaging-and-negotiation"*. Esta
-   * pantalla decide QUÉ se envía —las filas marcadas, sin las ya consultadas—
-   * y `sendInquiries` (thread-detail.ts) hace el resto; SearchResults no toca
-   * `threads` ni `thread_items` ni sabe si el hilo existía.
+   * El boundary de GAP-004 sigue siendo literal: *"la selección y el disparo de la acción
+   * pertenecen a conversational-search; la gestión del hilo, tarjeta de consulta y cifrado E2EE
+   * pertenecen a messaging-and-negotiation"*. Esta pantalla decide QUÉ se pregunta —las filas
+   * marcadas, sin las que ya tienen una consulta pendiente— y `sendInquiries` hace el resto.
    *
-   * `results-row-actions · consultar seleccionados en lote` no abre ningún
-   * formulario ni redirige: *"el sistema envía... sin abrir ningún hilo en
-   * pantalla"* y *"el usuario permanece en SRCH-01"*. Por eso esto no navega a
-   * ningún sitio — solo recarga la tabla (que es de dónde sale de verdad el
-   * estado "ya consultada", nunca de una marca puesta a mano en cliente) y
-   * enseña el resultado.
+   * **Cambio del 12-oct-2026 (decisión del PO, F-249).** `results-row-actions · consultar
+   * seleccionados en lote` decía que no se abría ningún formulario y que se consultaba por la cantidad
+   * publicada. `MSG-03` §3.2 dice lo contrario: `Consultar` abre el formulario, con la cantidad
+   * solicitada obligatoria y las notas. El PO eligió el de `MSG-03`, **uno por fila y en cola**: cada
+   * fila marcada abre su formulario en el orden de la tabla y se envía sola, con lo que el comprador
+   * teclee. La capability cerrada no se toca. El usuario sigue en SRCH-01 y la tabla se relee al final
+   * (de ahí sale de verdad "ya consultada", nunca de una marca puesta a mano en cliente).
    */
-  const consultRows = useCallback(async (ids: Set<string>) => {
-    if (!page || consulting) return;
+  const consultRows = useCallback(
+    (ids: Set<string>) => {
+      if (!page || consulting || queue) return;
 
-    // Defensivo, no solo cosmético: una fila ya consultada seguiría marcable
-    // vía "Seleccionar todos", y create_inquiry la rechazaría con el aviso de
-    // inquiry-card. Filtrar aquí evita mandar una llamada que se sabe inútil.
-    const filas = page.rows.filter((r) => ids.has(r.id) && !r.consulted);
-    /* F-087: lo que se descarta también se cuenta. La selección mixta —unas
-     * filas nuevas y otras ya consultadas— es el caso NORMAL con "Seleccionar
-     * todos", y hasta hoy el sistema se lo callaba: el banner solo hablaba de lo
-     * que sí se enviaba y la única pista de lo demás era el sombreado de la
-     * fila. Se cuenta aquí, que es donde se sabe, y lo dice `consultSummary`. */
-    const omitidas = page.rows.filter((r) => ids.has(r.id) && r.consulted).length;
-    if (filas.length === 0) {
-      setConsultBanner('Las filas seleccionadas ya estaban consultadas.');
-      return;
-    }
+      // Defensivo, no solo cosmético: una fila con consulta pendiente seguiría marcable vía
+      // "Seleccionar todos", y create_inquiry la rechazaría. No se abre un formulario que se sabe inútil.
+      const filas = page.rows.filter((r) => ids.has(r.id) && !r.consulted);
+      /* F-087: lo que se descarta también se cuenta, y lo dice `consultSummary` al final. */
+      const omitidas = page.rows.filter((r) => ids.has(r.id) && r.consulted).length;
+      if (filas.length === 0) {
+        setConsultBanner('Las filas seleccionadas ya estaban consultadas.');
+        return;
+      }
 
-    setConsulting(true);
-    try {
-      const lineas: InquiryLine[] = filas.map((r) => ({
-        lineId: r.id,
-        distributorOrgId: r.orgId,
-        quantity: r.quantity,
-      }));
-      const resultados = await sendInquiries(lineas, profile.orgId);
-      setConsultBanner(consultSummary(resultados, omitidas));
+      setConsultBanner(null);
+      setFailed(null);
+      setQueue({ rows: filas, index: 0, omitidas, outcomes: [] });
+    },
+    [page, consulting, queue],
+  );
+
+  /** Cierra la cola: resumen de lo resuelto, deselecciona lo enviado y relee la tabla. */
+  const finishQueue = useCallback(
+    async (q: ConsultQueue, outcomes: InquiryOutcome[]) => {
+      setQueue(null);
+      setFailed(null);
+      if (outcomes.length === 0) return;
+      setConsultBanner(consultSummary(outcomes, q.omitidas));
+      const enviadas = new Set(outcomes.filter((o) => o.ok).map((o) => o.lineId));
+      if (enviadas.size === 0) return;
       setSelected((prev) => {
         const resto = new Set(prev);
-        for (const id of ids) resto.delete(id);
+        for (const id of enviadas) resto.delete(id);
         return resto;
       });
       await load(criteria);
-    } finally {
-      setConsulting(false);
-    }
-  }, [page, consulting, criteria, load]);
+    },
+    [criteria, load],
+  );
+
+  /** Pasa a la fila siguiente o, si era la última, cierra la cola. */
+  const advance = useCallback(
+    async (q: ConsultQueue, outcomes: InquiryOutcome[]) => {
+      setFailed(null);
+      if (q.index + 1 >= q.rows.length) {
+        await finishQueue(q, outcomes);
+        return;
+      }
+      setQueue({ ...q, index: q.index + 1, outcomes });
+    },
+    [finishQueue],
+  );
+
+  /** `Enviar consulta` del formulario de la fila actual: cifra y envía solo esa fila. */
+  const submitCurrent = useCallback(
+    async (draft: InquiryDraft) => {
+      if (!queue || consulting) return;
+      const fila = queue.rows[queue.index];
+      if (!fila) return;
+
+      setConsulting(true);
+      let resultado: InquiryOutcome;
+      try {
+        const [r] = await sendInquiries(
+          [{ lineId: fila.id, distributorOrgId: fila.orgId, quantity: draft.quantity, notes: draft.notes }],
+          profile.orgId,
+        );
+        resultado = r ?? { lineId: fila.id, distributorOrgId: fila.orgId, ok: false, error: 'No hubo respuesta del envío.' };
+      } catch (err) {
+        resultado = { lineId: fila.id, distributorOrgId: fila.orgId, ok: false, error: errorMessage(err) };
+      } finally {
+        setConsulting(false);
+      }
+
+      if (resultado.ok) await advance(queue, [...queue.outcomes, resultado]);
+      else setFailed(resultado);
+    },
+    [queue, consulting, profile.orgId, advance],
+  );
+
+  /**
+   * `Cancelar`: descarta SOLO esta fila y sigue con la siguiente. Si ya había fallado, el fallo
+   * queda en el resumen (no se esconde); si no se había intentado, no consta: el usuario decidió no
+   * preguntar.
+   */
+  const cancelCurrent = useCallback(() => {
+    if (!queue || consulting) return;
+    void advance(queue, failed ? [...queue.outcomes, failed] : queue.outcomes);
+  }, [queue, consulting, failed, advance]);
 
   const handleConsultSelected = useCallback(() => consultRows(selected), [consultRows, selected]);
 
-  /** «Consultar» de una fila: solo se habilita con la fila marcada, y envía solo esa. */
-  const handleConsult = useCallback((lineId: string) => void consultRows(new Set([lineId])), [consultRows]);
+  /** «Consultar» de una fila: solo se habilita con la fila marcada, y abre solo su formulario. */
+  const handleConsult = useCallback((lineId: string) => consultRows(new Set([lineId])), [consultRows]);
+
+  const filaActual = queue ? (queue.rows[queue.index] ?? null) : null;
+  /** El servidor dice que ya hay una consulta pendiente: se pinta el aviso de la spec §6 y se bloquea. */
+  const duplicada = failed?.error === INQUIRY_FORM_TEXTS.duplicateWarning;
 
   const allSelected = page !== null && page.rows.length > 0 && page.rows.every((r) => selected.has(r.id));
 
@@ -246,7 +332,7 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
             <button
               type="button"
               className={styles.consultSelected}
-              disabled={selected.size < 1 || consulting}
+              disabled={selected.size < 1 || consulting || queue !== null}
               onClick={() => {
                 void handleConsultSelected();
               }}
@@ -313,6 +399,23 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
             </div>
           )}
         </>
+      )}
+
+      {/* Un formulario por fila marcada, en cola (MSG-03 §3.2, F-249). La clave por fila hace que cada uno arranque vacío. */}
+      {queue && filaActual && (
+        <InquiryFormModal
+          key={filaActual.id}
+          index={queue.index}
+          total={queue.rows.length}
+          reference={filaActual.partNumber}
+          brand={filaActual.brand}
+          country={countryName(filaActual.country)}
+          duplicate={duplicada}
+          busy={consulting}
+          error={duplicada ? null : (failed?.error ?? null)}
+          onSubmit={(draft) => void submitCurrent(draft)}
+          onCancel={cancelCurrent}
+        />
       )}
     </div>
   );

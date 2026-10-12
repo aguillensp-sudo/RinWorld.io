@@ -34,6 +34,31 @@ export const INQUIRY_FORM_TEXTS = {
   encryptHint: 'Cifrado E2EE antes del envío',
 } as const;
 
+/** `Crear consulta` dentro del hilo: el paso previo, elegir la línea sobre la que se pregunta (MSG-03 §3.2). */
+export const INQUIRY_PICKER_TEXTS = {
+  button: 'Crear consulta',
+  title: 'Crear consulta',
+  hint: (counterparty: string) => `Elige la referencia de ${counterparty} sobre la que quieres preguntar.`,
+  searchPlaceholder: 'Buscar por referencia o marca...',
+  searchLabel: 'Buscar por referencia o marca',
+  searchSubmit: 'Buscar',
+  loading: 'Cargando referencias…',
+  empty: 'No hay referencias publicadas que puedas ver.',
+  noMatches: 'Ninguna referencia coincide con la búsqueda.',
+  pending: 'Consulta pendiente',
+  pendingWhy: 'Ya tienes una consulta pendiente sobre esta referencia.',
+  cancel: 'Cancelar',
+  limit: (n: number) => `Se muestran las ${n} primeras. Afina la búsqueda para ver otras.`,
+} as const;
+
+/**
+ * «Consulta 2 de 5» cuando hay una cola de formularios (uno por fila de SRCH-01, F-249); `null` con
+ * una sola, que no necesita contador.
+ */
+export function inquiryProgress(index: number, total: number): string | null {
+  return total > 1 ? `Consulta ${index + 1} de ${total}` : null;
+}
+
 /**
  * La cantidad escrita como número, o `null` si no es un entero positivo que quepa en la base.
  * Se rechaza lo que `Number()` aceptaría de más: `1e3`, `0x10`, `2.5`, `-3`, `' '`.

@@ -1,0 +1,26 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bw-sidebar-overlay);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* El scroll vertical es de este contenedor, no del formulario (constraint de la tarea). */
+.dialog {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: var(--bw-radius);
+}
+
+.progress {
+  margin: 0 0 8px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-on-dark-brand);
+}

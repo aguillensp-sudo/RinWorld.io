@@ -760,13 +760,13 @@ export interface InquiryLine {
   lineId: string;
   distributorOrgId: string;
   /**
-   * `results-row-actions · consultar seleccionados en lote` no abre ningún
-   * formulario — a diferencia de `Consultar` en una sola fila (FL-MSG-01), que
-   * sí lo hace y queda fuera de hoy. Sin ese paso no hay de dónde sacar una
-   * cantidad que el comprador haya tecleado, así que se consulta por la
-   * cantidad publicada de la línea: es "quiero saber de esto", no un pedido.
+   * La cantidad que el comprador pide. Desde F-249 (12-oct-2026, decisión del PO) sale del
+   * formulario de consulta de MSG-03 §3.2, uno por fila; antes `Consultar seleccionados` no abría
+   * ningún formulario y se consultaba por la cantidad publicada de la línea.
    */
   quantity: number;
+  /** Notas del formulario (MSG-03 §3.2, máx. 300), ya recortadas; `null`/ausentes = sin notas. */
+  notes?: string | null;
 }
 
 export interface InquiryOutcome {
@@ -856,7 +856,7 @@ export async function sendInquiries(lines: InquiryLine[], ownOrgId: string): Pro
       }
 
       const cek = await generateCek();
-      const content: InquiryContent = { kind: 'CONSULTA', quantity: linea.quantity, comment: null };
+      const content: InquiryContent = { kind: 'CONSULTA', quantity: linea.quantity, comment: linea.notes ?? null };
       const { ciphertext, iv } = await encryptContent(content, cek);
 
       const claves = await Promise.all(

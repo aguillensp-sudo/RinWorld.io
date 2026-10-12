@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { INQUIRY_FORM_TEXTS as T, NOTES_MAX, inquiryDraft, inquiryFormView, parseQuantity } from './inquiry-form';
+import {
+  INQUIRY_FORM_TEXTS as T,
+  NOTES_MAX,
+  inquiryDraft,
+  inquiryFormView,
+  inquiryProgress,
+  parseQuantity,
+} from './inquiry-form';
 
 describe('inquiry-form · parseQuantity', () => {
   it.each([
@@ -44,6 +51,14 @@ describe('inquiry-form · inquiryFormView', () => {
     expect(NOTES_MAX).toBe(300);
     expect(inquiryFormView('5', 'x'.repeat(300), libre)).toMatchObject({ canSubmit: true, notesLeft: 0 });
     expect(inquiryFormView('5', 'x'.repeat(301), libre)).toMatchObject({ canSubmit: false, notesLeft: -1 });
+  });
+});
+
+describe('inquiry-form · inquiryProgress', () => {
+  it('cuenta desde 1 y solo habla si hay cola', () => {
+    expect(inquiryProgress(0, 1)).toBeNull();
+    expect(inquiryProgress(0, 3)).toBe('Consulta 1 de 3');
+    expect(inquiryProgress(2, 3)).toBe('Consulta 3 de 3');
   });
 });
 

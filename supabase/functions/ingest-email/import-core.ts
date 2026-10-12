@@ -135,7 +135,7 @@ export function fromRows(name: string, all: string[][]): ParsedFile | null {
 
 /** Texto de un archivo → `ParsedFile`. `null` si no hay cabecera con al menos una celda. */
 export function parseImportText(name: string, raw: string): ParsedFile | null {
-  const text = raw.replace(/^﻿/, '');
+  const text = raw.replace(/^\uFEFF/, '');
   const firstLine = text.split(/\r?\n/, 1)[0] ?? '';
   return fromRows(name, parseDelimited(text, detectDelimiter(firstLine)));
 }
@@ -156,7 +156,7 @@ export function decodeText(bytes: ArrayBuffer): string {
 export function normalizeHeader(header: string): string {
   return header
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 }

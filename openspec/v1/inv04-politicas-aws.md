@@ -1,7 +1,7 @@
 # INV-04 · Políticas de AWS para la fase 2
 
 Preparado el 12-oct-2026. **Nada de esto está aplicado ni comprobado contra AWS**: las políticas son texto; las crea el PO en la consola.
-Cuenta `2263-9540-1132`, región `eu-west-1`. Nombre del bucket propuesto: `nortexsys-ingest-mail-eu` (los nombres de S3 son globales; si está cogido, cambiarlo en las tres políticas).
+Cuenta `2263-9540-1132`, región `eu-west-1`. Bucket creado por el PO el 12-oct-2026: `nortexsys-ingest-mail-eu-226395401132-eu-west-1-an` (nombre con espacio de nombres de cuenta y región que AWS asigna por defecto; la función lo lee del aviso de SES, no lo lleva en el código).
 Prefijo de los correos: `inbox/`.
 
 ## 1 · Política del bucket (deja a SES escribir, y a nadie más)
@@ -15,7 +15,7 @@ Prefijo de los correos: `inbox/`.
       "Effect": "Allow",
       "Principal": { "Service": "ses.amazonaws.com" },
       "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::nortexsys-ingest-mail-eu/inbox/*",
+      "Resource": "arn:aws:s3:::nortexsys-ingest-mail-eu-226395401132-eu-west-1-an/inbox/*",
       "Condition": {
         "StringEquals": { "aws:SourceAccount": "226395401132" },
         "StringLike": { "aws:SourceArn": "arn:aws:ses:eu-west-1:226395401132:receipt-rule-set/*" }
@@ -35,7 +35,7 @@ Prefijo de los correos: `inbox/`.
       "Sid": "ReadInboxObjectsOnly",
       "Effect": "Allow",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::nortexsys-ingest-mail-eu/inbox/*"
+      "Resource": "arn:aws:s3:::nortexsys-ingest-mail-eu-226395401132-eu-west-1-an/inbox/*"
     }
   ]
 }
@@ -49,7 +49,7 @@ Regla `purga-30-dias`: prefijo `inbox/`, expirar objetos a los **30 días**, y a
 
 ## Qué pulsar (consola de AWS, región Irlanda `eu-west-1`)
 
-1. **S3 → Create bucket.** Nombre `nortexsys-ingest-mail-eu`, región `eu-west-1`. Deja marcado **Block all public access**. Cifrado: **SSE-S3** (el predeterminado; no KMS, complica la política de SES).
+1. **S3 → Create bucket.** Nombre `nortexsys-ingest-mail-eu-226395401132-eu-west-1-an`, región `eu-west-1`. Deja marcado **Block all public access**. Cifrado: **SSE-S3** (el predeterminado; no KMS, complica la política de SES).
 2. Dentro del bucket → **Permissions → Bucket policy → Edit** → pega la política 1 → Save.
 3. Dentro del bucket → **Management → Create lifecycle rule** → política 3 (prefijo `inbox/`, Expire current versions 30 días, además "Delete expired object delete markers or incomplete multipart uploads" a 1 día).
 4. **IAM → Policies → Create policy → JSON** → pega la política 2 → nombre `bearingworld-ingest-read-inbox`.
@@ -63,3 +63,15 @@ Regla `purga-30-dias`: prefijo `inbox/`, expirar objetos a los **30 días**, y a
 - La cuenta es miembro de una organización con rol federado: una política de la organización (SCP) puede impedir crear usuarios IAM o claves de acceso. Si el paso 5 o 6 falla con "explicit deny", me dices el texto del error.
 - Si pone que el nombre del bucket ya existe, elige otro y lo cambio en las políticas 1 y 2.
 - Una clave de acceso de larga duración es el punto débil de este diseño: anótala con fecha para rotarla (cada 90 días) y bórrala si sospechas de filtración.
+
+## Secretos de la función `ingest-email` (los cinco que exige `index.ts`; sin cualquiera de ellos responde 500)
+
+| Secreto | Valor |
+|---|---|
+| `INGEST_SNS_TOPIC_ARN` | el ARN del tema de SNS que escribe a la función (la función rechaza cualquier otro) |
+| `INGEST_DOMAIN` | `ingest.nortexsys.com` |
+| `AWS_INGEST_ACCESS_KEY_ID` | clave de solo lectura (política 2) |
+| `AWS_INGEST_SECRET_ACCESS_KEY` | su secreto |
+| `AWS_INGEST_REGION` | opcional; `eu-west-1` por defecto |
+
+`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase.

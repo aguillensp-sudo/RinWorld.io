@@ -1,0 +1,1 @@
+{"Version":"2012-10-17","Statement":[{"Sid":"AllowSESPublish","Effect":"Allow","Principal":{"Service":"ses.amazonaws.com"},"Action":"sns:Publish","Resource":"arn:aws:sns:eu-west-1:226395401132:bearingworld-ingest","Condition":{"StringEquals":{"AWS:SourceAccount":"226395401132"},"StringLike":{"AWS:SourceArn":"arn:aws:ses:eu-west-1:226395401132:*"}}}]}

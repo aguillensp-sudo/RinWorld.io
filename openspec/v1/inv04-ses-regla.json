@@ -1,0 +1,19 @@
+{
+  "RuleSetName": "bearingworld-ingest",
+  "Rule": {
+    "Name": "ingest-inventario",
+    "Enabled": true,
+    "TlsPolicy": "Optional",
+    "Recipients": ["ingest.nortexsys.com"],
+    "Actions": [
+      {
+        "S3Action": {
+          "TopicArn": "arn:aws:sns:eu-west-1:226395401132:bearingworld-ingest",
+          "BucketName": "nortexsys-ingest-mail-eu-226395401132-eu-west-1-an",
+          "ObjectKeyPrefix": "inbox/"
+        }
+      }
+    ],
+    "ScanEnabled": true
+  }
+}

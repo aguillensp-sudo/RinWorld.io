@@ -61,3 +61,19 @@ La pantalla `INV-04` (formulario, lista, historial) se puede hacer por el arnés
 1. **El dominio** (y confirmar que el subdominio `ingest` está libre).
 2. **Una cuenta de AWS** con MFA en el usuario raíz y una alarma de presupuesto.
 3. **Confirmar las seis decisiones de arriba**, sobre todo la 2 y la 3.
+
+## Límites leídos el 12-oct-2026 (antes de la fase 2)
+
+Fuentes: <https://supabase.com/docs/guides/functions/limits> y <https://docs.aws.amazon.com/ses/latest/dg/receiving-email-action-sns.html>. Son los que dicen las páginas hoy; no se han medido en el proyecto.
+
+| Límite | Valor | Consecuencia |
+|---|---|---|
+| Función de borde, **CPU por petición** | **2 s** (la E/S asíncrona no cuenta) | Es el límite que manda: parsear un `.xlsx` (zip + XML) o un CSV grande en memoria puede no caber |
+| Función de borde, memoria | 256 MB | Un adjunto de 40 MB en MIME/base64 y su decodificación no caben cómodos |
+| Función de borde, reloj | 150 s (Free) · 400 s (Pro) | No es el cuello; la CPU llega antes |
+| Función de borde, tamaño del paquete | 20 MB (CLI) · 5 MB (Dashboard/API) | Desplegar siempre por CLI/CI |
+| Cuerpo de la petición a la función | no consta en la página | No importa si la función recibe solo la notificación |
+| SES → **SNS**, tamaño del correo | **150 KB** con cabeceras; más grande rebota | **La acción SNS no sirve para recibir adjuntos**: el correo va a S3 y SNS lleva solo el aviso |
+| SES → S3 | hasta 40 MB (decisión del plan) | Sin cambios |
+
+**Efecto en el plan:** la función `ingest-email` recibe del SNS solo el aviso (remitente, veredictos SPF/DKIM/virus, clave del objeto en S3) y lee el MIME de S3 por flujo. Con 2 s de CPU, la fase 2 queda en **CSV/TSV/TXT leídos en flujo y con tope de filas por correo**; `.xlsx` y ficheros grandes siguen en la fase 3, probablemente en un trabajador fuera de la función. El tope de filas se fija midiendo, no de memoria.

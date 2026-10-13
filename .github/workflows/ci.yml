@@ -325,3 +325,8 @@ jobs:
             exit 1
           fi
           echo "producción sirve la app: $js ($(wc -c < bundle-produccion.js) bytes)"
+
+      - name: Desplegar la función ingest-email (INV-04, sin sesión; la firma de SNS es su autenticación)
+        run: npx supabase functions deploy ingest-email --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}

@@ -105,7 +105,14 @@ export async function processNotification(n: SesNotification, deps: Deps): Promi
     ctx = { org_id: address.org_id, address_id: address.address_id };
 
     if (!isVirusFree(n)) return await done('RECHAZADO', 'VIRUS', null);
-    if (!isAuthenticated(n)) return await done('RECHAZADO', 'AUTENTICACION', null);
+    if (!isAuthenticated(n)) {
+      const r = n.receipt;
+      console.warn(
+        `ingest-email: AUTENTICACION spf=${r?.spfVerdict?.status} dkim=${r?.dkimVerdict?.status} ` +
+          `dmarc=${r?.dmarcVerdict?.status} envelope=${(n.mail?.source ?? '').split('@')[1] ?? '?'}`,
+      );
+      return await done('RECHAZADO', 'AUTENTICACION', null);
+    }
     if (senderOf(n) === null || !address.senders.includes(sender)) {
       return await done('RECHAZADO', 'REMITENTE_NO_AUTORIZADO', null);
     }

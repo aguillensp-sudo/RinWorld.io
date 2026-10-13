@@ -22,8 +22,15 @@ export type Reason =
   | 'SIN_FILAS_VALIDAS'
   | 'ERROR_INTERNO';
 
-/** Tope por correo (decisión del PO: 40 MB; SES recibe hasta 40). */
-export const MAX_MAIL_BYTES = 40 * 1024 * 1024;
+/**
+ * Tope por correo en la fase 2: 5 MB (medido el 13-oct-2026, no de memoria). La spec y el PO dicen
+ * 40 MB, que SES sí recibe, pero la función de borde tiene 256 MB y 2 s de CPU por petición y el
+ * MIME se descodifica entero en memoria: un correo de 37 MB con un CSV de 500.000 filas ocupó
+ * ~670 MB tras `PostalMime` y ~4 s de CPU; uno de 1,4 MB con las 20.000 filas del tope de la spec,
+ * ~0,3 s y ~70 MB sobre la base. 5 MB deja margen de sobra para 20.000 filas (~1 MB de CSV) y para
+ * un archivo con notas largas. Los 40 MB vuelven con la fase 3, fuera de la función de borde.
+ */
+export const MAX_MAIL_BYTES = 5 * 1024 * 1024;
 
 /**
  * Extensiones que la fase 2 lee. `.xlsx` queda fuera hasta la fase 3 (límite de 2 s de CPU de

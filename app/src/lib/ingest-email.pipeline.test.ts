@@ -160,10 +160,15 @@ describe('rechazos, cada uno con su motivo y sin tocar nada más', () => {
     }
   });
 
-  it('correo mayor de 40 MB: se rechaza sin descargarlo', async () => {
-    const b = banco({ objectSize: async () => 41 * 1024 * 1024 });
+  it('correo mayor de 5 MB (tope medido de la fase 2): se rechaza sin descargarlo', async () => {
+    const b = banco({ objectSize: async () => 5 * 1024 * 1024 + 1 });
     expect((await processNotification(aviso(), b.deps)).reason).toBe('TAMANO');
     expect(b.descargas()).toBe(0);
+  });
+
+  it('correo de exactamente 5 MB: no se rechaza por tamaño', async () => {
+    const b = banco({ objectSize: async () => 5 * 1024 * 1024 });
+    expect((await processNotification(aviso(), b.deps)).reason).not.toBe('TAMANO');
   });
 
   it('adjunto con extensión no admitida (.xls, .xlsx, .pdf): EXTENSION, con el nombre en el historial', async () => {

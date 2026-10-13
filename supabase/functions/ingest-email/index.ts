@@ -29,8 +29,8 @@
  *
  * Límites de la plataforma que mandan aquí (leídos el 12-oct-2026, plan §«Límites leídos»):
  * 2 s de CPU y 256 MB por petición. Por eso la fase 2 lee solo CSV/TSV/TXT, con un tope de
- * 20.000 líneas. **No se ha medido cuánto tarda un archivo de 20.000 líneas ni cuánta memoria
- * ocupa un correo de 40 MB**; hasta medirlo, esos topes son los de la spec, no los de esta función.
+ * 20.000 líneas y de 5 MB por correo. Medido el 13-oct-2026 (`openspec/v1/inv04-medidas-funcion.md`):
+ * 20.000 líneas son ~0,3 s de CPU; un correo de 37 MB desborda la memoria, de ahí el tope de 5 MB.
  * =============================================================================
  */
 import { createClient } from 'npm:@supabase/supabase-js@2';

@@ -13,21 +13,19 @@ las reglas en `CLAUDE.md`. La versión larga anterior sigue en `git show d2df8d4
 Empieza por §6 y luego §3.
 ---
 
-**Día 38 de V1 · 12-oct-2026 · Estado: CERRADO (08:30 UTC).** **`F-249` (`MSG-03`) cerrado entero**: duplicado (`0060`), formulario de consulta por la fábrica
-(VERDE en 2 intentos, 0,060 USD, 0 líneas a mano), `Crear consulta` en el hilo y VERA preparando consultas y ofertas (precio siempre manual). **Falta la C5 del PO de todo
-`MSG-03`.** Sin fecha de demo. Detalle en `diario/dia-38.md`.
+**Día 39 de V1 · 13-oct-2026 · Estado: CERRADO (CI y despliegues de `7af9bc0` en verde; Vercel comprobado por contenido).** **`INV-04` fase 2 probada de punta a punta** (un CSV por Gmail → 3 líneas) y **pantalla del canal construida a mano**. Falta: `_dmarc` de `julsaindustrial.com`,
+comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Sin fecha de demo. Detalle en `diario/dia-39.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| `0060` (duplicado solo si pendiente) | catálogo de **producción** y de `bearingworld-e2e`, 12-oct | Índice parcial `thread_items_one_pending_inquiry_per_line_uniq`; `app.org_has_pending_inquiry` existe, `org_already_inquired` no |
-| Banco de esquema con `0060` | `supabase/tests/run.sh` | Verde, con dos bloques nuevos (volver a consultar tras `Sin stock`; tercera consulta bloqueada con el literal de la spec) |
-| Formulario de consulta por la fábrica | `harness/metrics/MSG-03-FORM/` y `harness-metrics.csv` (2 filas) | Intento 1 rojo en C2 (un e2e, `F-250`); intento 2 verde C1–C4. 0,060 USD. 0 líneas a mano |
-| Suite e2e entera con la cola de formularios | `npm run e2e:e2e-project` | 162 verdes y 5 rojos por carga (mis `vitest` en paralelo); repetidos en solitario: 24 verdes. `zz-h5-negociacion` verde con el paso 6 |
-| `vitest` entero y CI | local y `gh run` de `e371d3c` | 2320 verdes, 23 omitidas; CI y despliegues (VERA y Vercel) en verde, Vercel comprobado por contenido |
-| VERA preparando consultas y ofertas | `vera.preparar.ensayo.test.ts` contra la función **desplegada** | 8 de 8: el ejemplo de la spec deja 500 / 14 días / EUR con el precio vacío; sin cantidad, aproximada, sin hilo o contraoferta no prepara y lo dice; ninguna cifra de precio propia |
+| `ingest-email` v6 y `0061` en producción | `list_edge_functions`, `list_migrations`, `has_function_privilege` | v6 `verify_jwt=false`; `ingest_resolve` e `import_inventory_for_org` solo `service_role` |
+| Correo de punta a punta | `ingest_events` e `inventory_lines` de JULSA, 13-oct 08:02 UTC | `PROCESADO`, 3 filas nuevas `PUBLISHED` (Gmail, con perfil guardado). Sin perfil: `FORMATO_NO_RECONOCIDO`. Desde `julsaindustrial.com`: `AUTENTICACION` (`F-252`) |
+| Medidas de la función | `inv04-medidas-funcion.md` (Node, no Supabase) | 20.000 filas ≈ 0,3 s; 37 MB ≈ 1 GB: tope a 5 MB |
+| Pantalla del canal contra la base | `e2e/ingest-channel.spec.ts` en `bearingworld-e2e` | 4 de 4: abrir idempotente, remitente protegido, añadir/quitar, rotar con confirmación |
+| `vitest`, `tsc`, e2e de inventario | local | 2396 verdes; `tsc` limpio; `inventory.spec.ts` 16 de 16 |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -35,8 +33,8 @@ Empieza por §6 y luego §3.
 - **Fundación V1.** Entregables 1 a 4 hechos. El 5 (índice de búsqueda), a medias: falta que
   el PO diga a qué índice se refiere el plan. **El 6 (residencia UE de VERA) está bloqueado**
   en la aprobación de Anthropic en Model Garden (`429`), sin fecha. Ya se tocó `vera/index.ts` (prompt, `F-246`); el cambio de proveedor sigue sin hacerse.
-- **Corriente B · Fábrica — EN MARCHA.** **27 pantallas construidas y 26 aceptadas**: `MSG-03` (tablas) y `MSG-03-FORM` (formulario) esperan su C5. `REC-01`, `SET-SEC-01`, `INVT-02` y `ACT-02`, **a mano**, sin
-  filas en `harness-metrics.csv`. **Queda por construir** `INV-04` (plan en `v1/plan-inv04-ingestion-por-correo.md`). Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
+- **Corriente B · Fábrica — EN MARCHA.** **27 pantallas construidas y aceptadas** (la C5 de `MSG-03` la aprobó el PO el 12-oct). `REC-01`, `SET-SEC-01`, `INVT-02` y `ACT-02`, **a mano**, sin
+  filas en `harness-metrics.csv`. `INV-04` se construyó **a mano** (PO, 13-oct), sin pasar por el arnés. Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
 ## 3 · Qué toca, en este orden
@@ -45,10 +43,10 @@ Empieza por §6 y luego §3.
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
 1. ~~C5 de `MSG-03`~~ **aprobada por el PO el 12-oct-2026** (tablas, formulario por fila, `Crear consulta`, VERA preparando); veredicto en la `nota` de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
-2. **`INV-04`, fase 2 (recepción)** — la fase 1 está hecha (`0057`). SES eu-west-1, `ingest.nortexsys.com` verificado, MX `10 inbound-smtp.eu-west-1.amazonaws.com` en Arsys (el correo a
-   `ingest` rebota hasta la fase 2: esperado). **Sin hacer ni comprobar de la fase 0: MFA y presupuesto de 5 USD** (la cuenta `2263-9540-1132` es miembro de una organización, rol federado).
-   Antes de la fase 2: **leer los límites vigentes de las funciones de borde**. **No usar el conector `AWS MCP`** salvo que el PO lo pida, y con un rol de mínimo privilegio.
-   El sprint de demo ya no lo frena.
+2. **`INV-04`, lo que queda** (plan: `v1/plan-inv04-ingestion-por-correo.md`): (a) el PO confirma el **tope de 5 MB** (`DECISIONES-V1.md`); (b) el PO corre el guion de CloudShell
+   (`inv04-comprobar-clave-aws.md`: solo `GetObject` en `inbox/` debe salir `allowed`) y anota la fecha de la clave para rotarla a los 90 días; (c) `_dmarc` de `julsaindustrial.com` en Arsys
+   (`v=DMARC1; p=none`; `F-252`); (d) MFA y presupuesto de 5 USD en la cuenta de AWS, sin hacer; (e) fase 3: `.xlsx`, 40 MB y límites por hora, fuera de la función de borde.
+   **No usar el conector `AWS MCP`** salvo que el PO lo pida (esta sesión pedía autenticación).
 3. **VERA: ampliar la guía verificada** (`index.ts`, sección «GUÍA VERIFICADA»): ya saben la subida de inventario, `Visibilidad`, los filtros y acciones de `Inventario`, `Crear consulta`/`Crear oferta` y
    `Consultar`. Siguientes: Vendiendo, el resto de Comprando y Hilos. Cada entrada con su nombre en el test de `vera-prompt.test.ts`. Antes de tocar `vera/index.ts`, `vera-vertex-eu-migracion.md`.
 4. **`F-234` en las demás tablas:** `0051` envolvió 8; quedan **31** (`forum_*` y `watchers_*` primero). Patrón de `0047`/`0051`, con el banco delante. Las tres tablas `ingest_*` nacen ya envueltas.
@@ -99,7 +97,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
-| 🟠 | **`F-233`** · `INV-04` con `ingest.nortexsys.com` y Amazon SES (40 MB): fase 0 hecha salvo MFA y presupuesto; fase 1 hecha; sigue la fase 2 (§3.2) | PO + este agente |
+| 🟠 | **`F-233`** · `INV-04`: fases 0–2 hechas salvo MFA y presupuesto de AWS; clave de AWS sin comprobar; fases 3 y 4 sin hacer (§3.2) | PO + este agente |
+| 🟠 | **`F-252`** · un remitente cuyo dominio no publica DMARC ni DKIM no entra por correo: `julsaindustrial.com` (Arsys) solo tiene SPF | PO (DNS) y producto (avisar al cliente) |
 | 🟠 | **`F-225`** · el e2e del arnés ya no va contra producción (`F-230`); falta releer el hallazgo y cerrarlo · Edge Functions de `bearingworld-e2e` sin desplegar (solo `access-request` v1) | Este agente |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de más de un ADMIN tiene que llegar a la interfaz | Producto |
@@ -134,7 +133,10 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Qué hace `app.watchers_evaluate_expirations()` en producción**: no está enganchada a ningún job.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
-- **Qué permisos tiene el conector `AWS MCP` del PO**, qué límites tienen las funciones de borde hoy y si MFA y alarma de gasto están en la organización: sin mirar.
+- **Qué permisos tiene la clave de AWS de `ingest-email`**: el guion para comprobarlo está escrito, no ejecutado.
+- **Cuánta CPU gasta la función dentro de Supabase** con 20.000 filas: se midió en Node; el primer correo grande real lo dirá en los registros.
+- **Si un cliente real puede enviar desde su dominio**: solo Gmail ha entrado; `julsaindustrial.com` no (`F-252`).
+- **Cómo se ve `INV-04` en un navegador**: los tests leen DOM y CSS y el e2e comprueba los datos; nadie la ha mirado.
 
 ---
 

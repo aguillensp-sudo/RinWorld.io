@@ -187,19 +187,20 @@ test.describe('INV-01 · inventario real', () => {
   });
 
   /**
-   * Desde el 2-oct (INV-02 construida) la subida manual funciona y solo el canal email
-   * sigue fuera: sin dominio propio ni proveedor, una dirección de ingestión sería una a la
-   * que alguien puede mandar su inventario.
+   * Desde el 13-oct (INV-04 fase 2 en producción) los dos canales funcionan. La tarjeta del canal
+   * email ya no dice «Próximamente» y lleva a la pantalla donde el ADMIN ve su dirección; en INV-01
+   * no se pinta ninguna dirección. **No se pulsa «Gestionar canal email»**: abrir esa pantalla
+   * ejecuta `ensure_ingest_channel`, que escribe una dirección en la base.
    */
-  test('la subida manual está disponible y solo el canal email sigue fuera del MVP', async ({ page }) => {
-    await expect(page.getByTestId('channels-scope')).toContainText('El canal email (INV-04) todavía no está disponible');
+  test('los dos canales están disponibles y el email lleva a INV-04 sin pintar una dirección', async ({ page }) => {
+    await expect(page.getByTestId('channels-scope')).toContainText('El canal email (INV-04) está disponible');
     await expect(page.getByText('Siempre disponible')).toHaveCount(1);
-    await expect(page.getByText('Próximamente')).toHaveCount(1);
+    await expect(page.getByText('Disponible', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('Próximamente')).toHaveCount(0);
     await expect(page.getByText('Fuera del MVP')).toHaveCount(0);
-    // El HTML aprobado promete un canal email "Activo" y una dirección de ingestión.
-    // Ninguna de las dos existe, y la pantalla no finge que sí.
     await expect(page.getByText('Activo', { exact: true })).toHaveCount(0);
-    await expect(page.getByTestId('ingest-addr')).toHaveText('—');
+    await expect(page.getByTestId('ingest-addr')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Gestionar canal email' })).toBeVisible();
   });
 
   /** Era «deshabilitado, no ausente» (PO, 7-ago) mientras INV-02 no existía. */

@@ -39,13 +39,18 @@ describe('VERA · la guía verificada sigue siendo cierta', () => {
   const fuente = (rel: string) => readFileSync(resolve(process.cwd(), 'src/screens', rel), 'utf8');
   const inventario = fuente('inventory/Inventory.tsx');
   const mapeo = fuente('inventory/ImportMapping.tsx');
+  const ingesta = fuente('inventory/IngestChannel.tsx');
 
   it.each([
     ['Subir nuevo inventario', inventario],
     ['Arrastra tu archivo aquí', inventario],
     ['Subida manual', inventario],
     ['Canal email', inventario],
-    ['Próximamente', inventario],
+    ['Gestionar canal email', inventario],
+    ['Rotar dirección', ingesta],
+    ['+ Añadir remitente', ingesta],
+    ['Canal de ingestión por email', ingesta],
+    ['Copiar', ingesta],
     ['Acumulativo', mapeo],
     ['Reemplazo total', mapeo],
     ['Confirmar e ', mapeo],

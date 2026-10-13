@@ -104,6 +104,15 @@ const EMAIL_OUT_OF_SCOPE_NOTE =
  *  email es un texto de otra época. Dice lo que pasa de verdad: aún no está. */
 const EMAIL_SOON = 'Próximamente';
 const MANUAL_AVAILABLE = 'Siempre disponible';
+/**
+ * Con `onOpenIngest` (desde el 13-oct, INV-04 fase 2 en producción) el canal email recibe correos
+ * de verdad: el badge deja de decir «Próximamente» y la tarjeta lleva al botón que abre INV-04,
+ * donde está la dirección. Aquí no se pinta ninguna dirección: la abre y la rota el ADMIN.
+ */
+const EMAIL_AVAILABLE_NOTE =
+  'El canal email (INV-04) está disponible: el administrador de tu organización gestiona la dirección única y los remitentes autorizados. La subida manual también funciona.';
+const EMAIL_AVAILABLE = 'Disponible';
+const EMAIL_MANAGE = 'Gestionar canal email';
 
 /**
  * La fila «Visibilidad del inventario» dice el modo GUARDADO de la organización. Era un literal
@@ -133,9 +142,14 @@ interface Props {
    * dropzone admite (`isAcceptedUpload`); si no, se pinta su error y no se llama.
    */
   onPickFile?: (file: File) => void;
+  /**
+   * Abre INV-04 (`Canal de ingestión por email`). **Opcional a propósito**, como los otros dos: sin
+   * él la tarjeta del canal email dice lo que decía antes (`Próximamente`, sin dirección).
+   */
+  onOpenIngest?: () => void;
 }
 
-export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props) {
+export function Inventory({ profile, now, onOpenVisibility, onPickFile, onOpenIngest }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [dzError, setDzError] = useState(false);
   const [dzDrag, setDzDrag] = useState(false);
@@ -280,7 +294,7 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
             Canales de actualización
           </h2>
           <p className={styles.channelsNote} data-testid="channels-scope">
-            {onPickFile ? EMAIL_OUT_OF_SCOPE_NOTE : OUT_OF_SCOPE_NOTE}
+            {onOpenIngest ? EMAIL_AVAILABLE_NOTE : onPickFile ? EMAIL_OUT_OF_SCOPE_NOTE : OUT_OF_SCOPE_NOTE}
           </p>
 
           <div className={styles.channelsRow}>
@@ -359,20 +373,31 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile }: Props)
                 </div>
                 <div>
                   <div className={styles.chName}>{CHANNELS.emailName}</div>
-                  <span className={styles.chBadge}>{onPickFile ? EMAIL_SOON : OUT_OF_SCOPE}</span>
+                  {onOpenIngest ? (
+                    <span className={`${styles.chBadge} ${styles.chBadgeOk}`}>{EMAIL_AVAILABLE}</span>
+                  ) : (
+                    <span className={styles.chBadge}>{onPickFile ? EMAIL_SOON : OUT_OF_SCOPE}</span>
+                  )}
                 </div>
               </div>
               <p className={styles.chDesc}>{CHANNELS.emailDesc}</p>
-              <div>
-                <div className={styles.ingestLbl}>{CHANNELS.ingestLabel}</div>
-                <div className={styles.ingestAddr}>
-                  {/* Sin dirección inventada. Una dirección de ingestión falsa es
-                      una a la que alguien puede mandar su inventario de verdad. */}
-                  <span className={styles.ingestVal} data-testid="ingest-addr">
-                    —
-                  </span>
+              {onOpenIngest ? (
+                <button type="button" className={styles.btnVisibility} onClick={onOpenIngest}>
+                  <i className="ti ti-mail" aria-hidden="true" />
+                  {EMAIL_MANAGE}
+                </button>
+              ) : (
+                <div>
+                  <div className={styles.ingestLbl}>{CHANNELS.ingestLabel}</div>
+                  <div className={styles.ingestAddr}>
+                    {/* Sin dirección inventada. Una dirección de ingestión falsa es
+                        una a la que alguien puede mandar su inventario de verdad. */}
+                    <span className={styles.ingestVal} data-testid="ingest-addr">
+                      —
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

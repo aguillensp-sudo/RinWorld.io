@@ -19,6 +19,7 @@ const RAICES: [string, string][] = [
   ['forum/ForumThread', 'page'],
   ['inventory/ImportMapping', 'screen'],
   ['inventory/ImportResult', 'screen'],
+  ['inventory/IngestChannel', 'screen'],
   ['inventory/Visibility', 'screen'],
   ['inventory/Inventory', 'body'],
   ['onboarding/Invitations', 'screen'],

@@ -11,6 +11,8 @@ interface ImportMetaEnv {
    * las privadas de la demo: no es ADR-001 y no debe existir en V1.
    */
   readonly VITE_DEMO_KEY_SEED?: string;
+  /** Dominio de las direcciones de ingestión (INV-04). Ausente: `ingest.nortexsys.com`. */
+  readonly VITE_INGEST_DOMAIN?: string;
 }
 
 interface ImportMeta {

@@ -40,6 +40,7 @@ import { ForumCategory } from './screens/forum/ForumCategory';
 import { ForumThread } from './screens/forum/ForumThread';
 import { Inventory } from './screens/inventory/Inventory';
 import { Visibility } from './screens/inventory/Visibility';
+import { IngestChannel } from './screens/inventory/IngestChannel';
 import { ImportResult } from './screens/inventory/ImportResult';
 import { ImportMapping } from './screens/inventory/ImportMapping';
 import {
@@ -231,6 +232,9 @@ export function App() {
    * SRCH-01/03. Se limpia al cambiar de ítem de nav.
    */
   const [visibilityOpen, setVisibilityOpen] = useState(false);
+
+  /** INV-04 (`Canal de ingestión por email`) abierta. Mismo ítem de nav que INV-01, igual que `visibilityOpen`. */
+  const [ingestOpen, setIngestOpen] = useState(false);
 
   /**
    * INV-03 (`Resultado de la Importación`) abierta, con el resumen que enseña. Comparte ítem de
@@ -534,6 +538,7 @@ export function App() {
     setWatchersOpen(false);
     setBatchOpen(false);
     setVisibilityOpen(false);
+    setIngestOpen(false);
     setImportSummary(null);
     setImportDraft(null);
     setImportError(null);
@@ -1035,10 +1040,14 @@ export function App() {
         ) : visibilityOpen ? (
           /* INV-07. Sin `now`: nada de su pantalla es relativo al reloj. */
           <Visibility profile={state.profile} />
+        ) : ingestOpen ? (
+          /* INV-04. Solo el ADMIN gestiona el canal; un EDITOR ve el aviso. */
+          <IngestChannel profile={state.profile} />
         ) : (
           <Inventory
             profile={state.profile}
             onOpenVisibility={() => setVisibilityOpen(true)}
+            onOpenIngest={() => setIngestOpen(true)}
             onPickFile={(f) => void openImport(f)}
           />
         )

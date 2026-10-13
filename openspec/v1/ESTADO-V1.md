@@ -13,7 +13,7 @@ las reglas en `CLAUDE.md`. La versión larga anterior sigue en `git show d2df8d4
 Empieza por §6 y luego §3.
 ---
 
-**Día 39 de V1 · 13-oct-2026 · Estado: CERRADO (CI y despliegues de `7af9bc0` en verde; Vercel comprobado por contenido).** **`INV-04` fase 2 probada de punta a punta** (un CSV por Gmail → 3 líneas) y **pantalla del canal construida a mano**. Falta: `_dmarc` de `julsaindustrial.com`,
+**Día 39 de V1 · 13-oct-2026 · Estado: CERRADO (CI y despliegues de `7af9bc0` en verde; Vercel comprobado por contenido).** **`INV-04` fase 2 probada de punta a punta** (un CSV por Gmail → 3 líneas) y **pantalla del canal construida a mano**. También entra desde `julsaindustrial.com` (publicado su `_dmarc`). Falta:
 comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Sin fecha de demo. Detalle en `diario/dia-39.md`.
 ---
 
@@ -22,7 +22,7 @@ comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Si
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
 | `ingest-email` v6 y `0061` en producción | `list_edge_functions`, `list_migrations`, `has_function_privilege` | v6 `verify_jwt=false`; `ingest_resolve` e `import_inventory_for_org` solo `service_role` |
-| Correo de punta a punta | `ingest_events` e `inventory_lines` de JULSA, 13-oct 08:02 UTC | `PROCESADO`, 3 filas nuevas `PUBLISHED` (Gmail, con perfil guardado). Sin perfil: `FORMATO_NO_RECONOCIDO`. Desde `julsaindustrial.com`: `AUTENTICACION` (`F-252`) |
+| Correo de punta a punta | `ingest_events` de JULSA, 13-oct 08:02 y 09:48 UTC; DNS de `_dmarc` | `PROCESADO`, 3 filas, desde Gmail y desde `julsaindustrial.com` (tras publicar `_dmarc`, `F-252`). Sin perfil: `FORMATO_NO_RECONOCIDO` |
 | Medidas de la función | `inv04-medidas-funcion.md` (Node, no Supabase) | 20.000 filas ≈ 0,3 s; 37 MB ≈ 1 GB: tope a 5 MB |
 | Pantalla del canal contra la base | `e2e/ingest-channel.spec.ts` en `bearingworld-e2e` | 4 de 4: abrir idempotente, remitente protegido, añadir/quitar, rotar con confirmación |
 | `vitest`, `tsc`, e2e de inventario | local | 2396 verdes; `tsc` limpio; `inventory.spec.ts` 16 de 16 |
@@ -44,8 +44,7 @@ comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Si
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
 1. ~~C5 de `MSG-03`~~ **aprobada por el PO el 12-oct-2026** (tablas, formulario por fila, `Crear consulta`, VERA preparando); veredicto en la `nota` de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
 2. **`INV-04`, lo que queda** (plan: `v1/plan-inv04-ingestion-por-correo.md`): (a) el PO confirma el **tope de 5 MB** (`DECISIONES-V1.md`); (b) el PO corre el guion de CloudShell
-   (`inv04-comprobar-clave-aws.md`: solo `GetObject` en `inbox/` debe salir `allowed`) y anota la fecha de la clave para rotarla a los 90 días; (c) `_dmarc` de `julsaindustrial.com` en Arsys
-   (`v=DMARC1; p=none`; `F-252`); (d) MFA y presupuesto de 5 USD en la cuenta de AWS, sin hacer; (e) fase 3: `.xlsx`, 40 MB y límites por hora, fuera de la función de borde.
+   (`inv04-comprobar-clave-aws.md`: solo `GetObject` en `inbox/` debe salir `allowed`) y anota la fecha de la clave para rotarla a los 90 días; (c) avisar en la pantalla de que el dominio del remitente necesita DMARC o DKIM (`F-252`); (d) MFA y presupuesto de 5 USD en la cuenta de AWS, sin hacer; (e) fase 3: `.xlsx`, 40 MB y límites por hora, fuera de la función de borde.
    **No usar el conector `AWS MCP`** salvo que el PO lo pida (esta sesión pedía autenticación).
 3. **VERA: ampliar la guía verificada** (`index.ts`, sección «GUÍA VERIFICADA»): ya saben la subida de inventario, `Visibilidad`, los filtros y acciones de `Inventario`, `Crear consulta`/`Crear oferta` y
    `Consultar`. Siguientes: Vendiendo, el resto de Comprando y Hilos. Cada entrada con su nombre en el test de `vera-prompt.test.ts`. Antes de tocar `vera/index.ts`, `vera-vertex-eu-migracion.md`.
@@ -98,7 +97,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 |---|---|---|
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
 | 🟠 | **`F-233`** · `INV-04`: fases 0–2 hechas salvo MFA y presupuesto de AWS; clave de AWS sin comprobar; fases 3 y 4 sin hacer (§3.2) | PO + este agente |
-| 🟠 | **`F-252`** · un remitente cuyo dominio no publica DMARC ni DKIM no entra por correo: `julsaindustrial.com` (Arsys) solo tiene SPF | PO (DNS) y producto (avisar al cliente) |
+| 🟠 | **`F-252`** · un remitente cuyo dominio no publica DMARC ni DKIM no entra por correo. JULSA resuelto; falta avisarlo a otros clientes | Producto |
 | 🟠 | **`F-225`** · el e2e del arnés ya no va contra producción (`F-230`); falta releer el hallazgo y cerrarlo · Edge Functions de `bearingworld-e2e` sin desplegar (solo `access-request` v1) | Este agente |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |
 | 🟠 | **Riesgo de salida abrupta del ADMIN** (Q-1): la recomendación de más de un ADMIN tiene que llegar a la interfaz | Producto |
@@ -135,7 +134,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **25 hallazgos de la revisión adversarial del arnés sin comprobar** (7 de 32 verificados).
 - **Qué permisos tiene la clave de AWS de `ingest-email`**: el guion para comprobarlo está escrito, no ejecutado.
 - **Cuánta CPU gasta la función dentro de Supabase** con 20.000 filas: se midió en Node; el primer correo grande real lo dirá en los registros.
-- **Si un cliente real puede enviar desde su dominio**: solo Gmail ha entrado; `julsaindustrial.com` no (`F-252`).
+- **Si un cliente real puede enviar desde su dominio**: entran Gmail y `julsaindustrial.com` (con `_dmarc`); otro dominio sin DMARC ni DKIM no (`F-252`).
 - **Cómo se ve `INV-04` en un navegador**: los tests leen DOM y CSS y el e2e comprueba los datos; nadie la ha mirado.
 
 ---

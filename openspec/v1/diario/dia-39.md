@@ -4,7 +4,7 @@
 
 ## La prueba real (`F-252`)
 - La función ya estaba desplegada (v5) y `0061` aplicada; las tablas `ingest_*` estaban vacías. El primer correo rebotó por `DIRECCION_INEXISTENTE`: el alta del canal (`ensure_ingest_channel`) no tenía pantalla, así que se hizo por SQL para JULSA con la misma lógica (token del servidor, remitente protegido).
-- Desde `julsaindustrial.com`: `AUTENTICACION`. Se añadió a la función el registro de los veredictos de SES (v6, desplegada por la CI; el paso de CI de `ingest-email` no existía) y salió `spf=PASS dkim=GRAY dmarc=GRAY`. Arsys (DNS y correo) estaba caído, así que no se pudo publicar el `_dmarc`.
+- Desde `julsaindustrial.com`: `AUTENTICACION`. Se añadió a la función el registro de los veredictos de SES (v6, desplegada por la CI; el paso de CI de `ingest-email` no existía) y salió `spf=PASS dkim=GRAY dmarc=GRAY`. Arsys (DNS y correo) estaba caído; al recuperarse el PO publicó `_dmarc.julsaindustrial.com` (el panel exige el nombre completo) y el reenvío desde su cuenta corporativa salió `PROCESADO` (09:48 UTC, 3 filas).
 - Desde Gmail (remitente `a.guillen.sp@gmail.com` autorizado): `FORMATO_NO_RECONOCIDO` hasta que el PO subió el CSV a mano y guardó el mapeo (el canal solo admite perfiles conocidos, decisión 2). Después: `PROCESADO`, 3 líneas `PUBLISHED` nuevas.
 
 ## Medidas y tope (decisión pendiente del PO)

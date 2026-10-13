@@ -171,8 +171,8 @@ describe('rechazos, cada uno con su motivo y sin tocar nada más', () => {
     expect((await processNotification(aviso(), b.deps)).reason).not.toBe('TAMANO');
   });
 
-  it('adjunto con extensión no admitida (.xls, .xlsx, .pdf): EXTENSION, con el nombre en el historial', async () => {
-    for (const nombre of ['inventario.xls', 'inventario.xlsx', 'catalogo.pdf']) {
+  it('adjunto con extensión no admitida (.xls, .pdf): EXTENSION, con el nombre en el historial', async () => {
+    for (const nombre of ['inventario.xls', 'catalogo.pdf']) {
       const b = banco({ attachmentsOf: async () => [{ filename: nombre, content: new Uint8Array([1]) }] });
       expect((await processNotification(aviso(), b.deps)).reason).toBe('EXTENSION');
       expect(b.eventos[0]?.file_name).toBe(nombre);

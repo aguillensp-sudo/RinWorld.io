@@ -33,10 +33,19 @@ export type Reason =
 export const MAX_MAIL_BYTES = 5 * 1024 * 1024;
 
 /**
- * Extensiones que la fase 2 lee. `.xlsx` queda fuera hasta la fase 3 (límite de 2 s de CPU de
- * la función de borde); `.xls` binario, fuera siempre.
+ * Extensiones que se leen. `.xlsx` entra en la fase 3 con su propio lector sin DOM
+ * (`xlsx-rows.ts`, medido en `openspec/v1/inv04-medidas-xlsx.md`); `.xls` binario, fuera siempre.
  */
-export const ACCEPTED_EXTENSIONS: readonly string[] = ['csv', 'tsv', 'txt'];
+export const ACCEPTED_EXTENSIONS: readonly string[] = ['csv', 'tsv', 'txt', 'xlsx'];
+
+/**
+ * Filas de datos por correo en un `.xlsx`. El CSV sigue en 20.000 (`MAX_LINES_PER_UPLOAD`): se lee
+ * entero en memoria y 500.000 filas llegaron a 1 GB. El `.xlsx` de 100.001 filas del PO
+ * (`Rodamientos_100000_Ficticio.xlsx`, 3 MB) costó 0,6 s de CPU y 173 MB hasta tener las líneas
+ * listas; 120.000 deja ~20 % de holgura sobre ese archivo y sigue dentro de los 256 MB. Medido en
+ * Node, no en Supabase: el primer correo grande real lo confirmará en los registros.
+ */
+export const MAX_XLSX_ROWS = 120_000;
 
 /** Lo que SES manda en la notificación de la acción S3 (solo los campos que usamos). */
 export interface SesNotification {

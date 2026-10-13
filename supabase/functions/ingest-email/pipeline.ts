@@ -26,11 +26,15 @@ import {
   headerSignature,
   missingRequired,
   parseImportText,
+  fromRows,
   MAX_LINES_PER_UPLOAD,
+  type ParsedFile,
   type ImportLinePayload,
 } from './import-core.ts';
 import {
   MAX_MAIL_BYTES,
+  MAX_XLSX_ROWS,
+  extensionOf,
   chooseAttachment,
   isAuthenticated,
   isVirusFree,
@@ -41,6 +45,7 @@ import {
   type Reason,
   type SesNotification,
 } from './mail-rules.ts';
+import { XlsxTooLarge, readXlsxRows } from './xlsx-rows.ts';
 
 export interface ResolvedAddress {
   address_id: string;
@@ -134,7 +139,18 @@ export async function processNotification(n: SesNotification, deps: Deps): Promi
     }
     fileName = safeFileName(chosen.attachment.filename);
 
-    const file = parseImportText(fileName ?? 'adjunto', decodeText(toArrayBuffer(chosen.attachment.content)));
+    const isXlsx = extensionOf(chosen.attachment.filename) === 'xlsx';
+    let file: ParsedFile | null;
+    if (isXlsx) {
+      try {
+        file = fromRows(fileName ?? 'adjunto', await readXlsxRows(chosen.attachment.content, { maxRows: MAX_XLSX_ROWS }));
+      } catch (e) {
+        // Un tope superado es TAMANO; cualquier otra cosa (zip dañado, cifrado, sin hojas) es formato.
+        return await done('RECHAZADO', e instanceof XlsxTooLarge ? 'TAMANO' : 'FORMATO_NO_RECONOCIDO', null);
+      }
+    } else {
+      file = parseImportText(fileName ?? 'adjunto', decodeText(toArrayBuffer(chosen.attachment.content)));
+    }
     if (file === null) return await done('RECHAZADO', 'FORMATO_NO_RECONOCIDO', null);
 
     // Solo perfiles conocidos (decisión 2): un correo no puede preguntar «¿qué es esta columna?».
@@ -145,11 +161,17 @@ export async function processNotification(n: SesNotification, deps: Deps): Promi
       return await done('RECHAZADO', 'FORMATO_NO_RECONOCIDO', null);
     }
 
-    if (file.rows.length > MAX_LINES_PER_UPLOAD) return await done('RECHAZADO', 'TAMANO', null);
+    if (file.rows.length > (isXlsx ? MAX_XLSX_ROWS : MAX_LINES_PER_UPLOAD)) return await done('RECHAZADO', 'TAMANO', null);
     const { lines } = buildLines(file, mapping, address.org_country);
     if (lines.length === 0) return await done('RECHAZADO', 'SIN_FILAS_VALIDAS', null);
 
-    const published = await deps.importLines(address.org_id, lines);
+    // La base admite 20.000 líneas por llamada (`import_inventory_for_org`); un `.xlsx` puede traer más.
+    // Es acumulativa y por clave (referencia, marca, país): si un lote falla, lo ya importado no se
+    // deshace, el historial dice ERROR y repetir el correo vuelve a dejar el mismo resultado.
+    let published = 0;
+    for (let i = 0; i < lines.length; i += MAX_LINES_PER_UPLOAD) {
+      published += await deps.importLines(address.org_id, lines.slice(i, i + MAX_LINES_PER_UPLOAD));
+    }
     return await done('PROCESADO', null, published);
   } catch {
     // Nada de lo que falle se cuenta: ni el mensaje del error (puede llevar contenido del

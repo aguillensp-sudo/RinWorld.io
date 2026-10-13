@@ -33,6 +33,7 @@ import {
 } from './import-core.ts';
 import {
   MAX_MAIL_BYTES,
+  MAX_MAILS_PER_HOUR,
   MAX_XLSX_ROWS,
   extensionOf,
   chooseAttachment,
@@ -79,6 +80,8 @@ export interface Deps {
   attachmentsOf: (raw: Uint8Array) => Promise<Attachment[]>;
   /** `import_inventory_for_org` (0061): acumulativo. Devuelve cuántas líneas quedaron publicadas. */
   importLines: (orgId: string, lines: ImportLinePayload[]) => Promise<number>;
+  /** Correos de la organización en la última hora que cuentan para el límite (`HOURLY_COUNTED_REASONS`). */
+  mailsLastHour: (orgId: string) => Promise<number>;
   /** ¿Ya hay un evento con este `message_id`? SNS reintenta. */
   alreadyHandled: (messageId: string) => Promise<boolean>;
   record: (event: IngestEvent) => Promise<void>;
@@ -120,6 +123,11 @@ export async function processNotification(n: SesNotification, deps: Deps): Promi
     }
     if (senderOf(n) === null || !address.senders.includes(sender)) {
       return await done('RECHAZADO', 'REMITENTE_NO_AUTORIZADO', null);
+    }
+
+    // Después de la lista de remitentes y antes de tocar S3: un abuso no cuesta una descarga.
+    if ((await deps.mailsLastHour(address.org_id)) >= MAX_MAILS_PER_HOUR) {
+      return await done('RECHAZADO', 'LIMITE_HORARIO', null);
     }
 
     const action = n.receipt?.action;

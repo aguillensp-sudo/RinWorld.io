@@ -84,6 +84,7 @@ function banco(over: Partial<Deps> = {}) {
       importadas.push({ org, n: lines.length });
       return lines.length;
     },
+    mailsLastHour: async () => 0,
     alreadyHandled: async () => false,
     record: async (e) => {
       eventos.push(e);
@@ -204,6 +205,46 @@ describe('rechazos, cada uno con su motivo y sin tocar nada más', () => {
     const grande = 'Referencia;Marca;Cantidad\n' + Array.from({ length: 20001 }, (_, i) => `R${i};SKF;1`).join('\n');
     const b = banco({ attachmentsOf: csvAdjunto(grande) });
     expect((await processNotification(aviso(), b.deps)).reason).toBe('TAMANO');
+  });
+});
+
+describe('límite de correos por hora', () => {
+  it('con 20 en la última hora: LIMITE_HORARIO, con su fila, sin bajar el objeto ni importar', async () => {
+    const b = banco({ mailsLastHour: async () => 20 });
+    const r = await processNotification(aviso(), b.deps);
+    expect(r).toEqual({ result: 'RECHAZADO', reason: 'LIMITE_HORARIO', rows: null });
+    expect(b.eventos).toHaveLength(1);
+    expect(b.eventos[0]).toMatchObject({ org_id: ORG, result: 'RECHAZADO', reason: 'LIMITE_HORARIO' });
+    expect(b.descargas()).toBe(0);
+    expect(b.importadas).toEqual([]);
+  });
+
+  it('con 19 todavía entra', async () => {
+    const b = banco({ mailsLastHour: async () => 19 });
+    expect((await processNotification(aviso(), b.deps)).result).toBe('PROCESADO');
+  });
+
+  it('no se consulta antes de saber quién envía: un correo falsificado no gasta ni mira la cuota', async () => {
+    let consultas = 0;
+    const contar = async () => {
+      consultas++;
+      return 99;
+    };
+    for (const c of [{ virus: 'FAIL' }, { dmarc: 'FAIL', spf: 'FAIL' }, { from: 'otro@x.es', source: 'otro@x.es' }]) {
+      const b = banco({ mailsLastHour: contar });
+      expect((await processNotification(aviso(c), b.deps)).reason).not.toBe('LIMITE_HORARIO');
+    }
+    expect(consultas).toBe(0);
+  });
+
+  it('si no se puede contar, ERROR_INTERNO y no se deja pasar sin límite', async () => {
+    const b = banco({
+      mailsLastHour: async () => {
+        throw new Error('limit');
+      },
+    });
+    expect((await processNotification(aviso(), b.deps)).reason).toBe('ERROR_INTERNO');
+    expect(b.importadas).toEqual([]);
   });
 });
 

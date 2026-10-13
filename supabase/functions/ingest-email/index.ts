@@ -146,6 +146,18 @@ Deno.serve(async (req: Request) => {
       if (error) throw new Error('import');
       return Number((data as { published?: number } | null)?.published ?? lines.length);
     },
+    mailsLastHour: async (orgId) => {
+      const since = new Date(Date.now() - 3_600_000).toISOString();
+      const counted = ['TAMANO', 'EXTENSION', 'FORMATO_NO_RECONOCIDO', 'SIN_FILAS_VALIDAS', 'ERROR_INTERNO'];
+      const { count, error } = await db
+        .from('ingest_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .gte('received_at', since)
+        .or(`reason.is.null,reason.in.(${counted.join(',')})`);
+      if (error) throw new Error('limit');
+      return count ?? 0;
+    },
     alreadyHandled: async (messageId) => {
       const { data, error } = await db.from('ingest_events').select('id').eq('message_id', messageId).limit(1);
       if (error) throw new Error('dedupe');

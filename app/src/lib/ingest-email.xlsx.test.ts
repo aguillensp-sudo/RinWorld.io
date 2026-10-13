@@ -203,6 +203,7 @@ describe('un .xlsx por el pipeline', () => {
         lotes.push(lines.length);
         return lines.length;
       },
+      mailsLastHour: async () => 0,
       alreadyHandled: async () => false,
       record: async (e) => {
         eventos.push(e);

@@ -62,9 +62,10 @@ export const REASON_LABELS: Record<string, string> = {
   VIRUS: 'El correo no pasó el análisis antivirus',
   REMITENTE_NO_AUTORIZADO: 'El remitente no está en la lista',
   TAMANO: 'Supera el tamaño máximo',
-  EXTENSION: 'Sin adjunto CSV, TSV o TXT',
+  EXTENSION: 'Sin adjunto CSV, TSV, TXT o XLSX',
   FORMATO_NO_RECONOCIDO: 'Formato de columnas no reconocido: súbelo a mano una vez',
   SIN_FILAS_VALIDAS: 'Ninguna fila válida',
+  LIMITE_HORARIO: 'Demasiados correos en la última hora: espera y vuelve a enviarlo',
   ERROR_INTERNO: 'Error interno',
 };
 

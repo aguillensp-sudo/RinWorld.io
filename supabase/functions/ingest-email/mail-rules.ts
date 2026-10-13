@@ -20,6 +20,7 @@ export type Reason =
   | 'EXTENSION'
   | 'FORMATO_NO_RECONOCIDO'
   | 'SIN_FILAS_VALIDAS'
+  | 'LIMITE_HORARIO'
   | 'ERROR_INTERNO';
 
 /**
@@ -46,6 +47,21 @@ export const ACCEPTED_EXTENSIONS: readonly string[] = ['csv', 'tsv', 'txt', 'xls
  * Node, no en Supabase: el primer correo grande real lo confirmará en los registros.
  */
 export const MAX_XLSX_ROWS = 120_000;
+
+/**
+ * Correos por hora y organización (INV-04, fase 4). Un ERP bien configurado manda uno por hora o
+ * menos; 20 deja holgura para reenvíos a mano y corta un bucle o un abuso de un remitente
+ * autorizado. Es un número elegido, no medido: se cambia aquí y se despliega.
+ */
+export const MAX_MAILS_PER_HOUR = 20;
+
+/**
+ * Qué cuenta para ese límite: los correos de remitentes autenticados y autorizados, procesados o
+ * rechazados por su contenido. NO cuentan los rechazos anteriores a la lista de remitentes
+ * (dirección, virus, autenticación, remitente) ni el propio `LIMITE_HORARIO`: si contaran, cualquiera
+ * que conociera la dirección podría agotar la cuota de la organización con correo falsificado.
+ */
+export const HOURLY_COUNTED_REASONS: readonly Reason[] = ['TAMANO', 'EXTENSION', 'FORMATO_NO_RECONOCIDO', 'SIN_FILAS_VALIDAS', 'ERROR_INTERNO'];
 
 /** Lo que SES manda en la notificación de la acción S3 (solo los campos que usamos). */
 export interface SesNotification {

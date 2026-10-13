@@ -23,6 +23,8 @@ No comprobada: el conector de AWS pedía autenticación y la CLI no tiene creden
 - El archivo de prueba tiene 76.251 filas duplicadas por `Codigo`+`Marca` (23.750 únicas): `buildLines` descarta las repetidas, como en la subida manual.
 - CI y despliegue de `6a3d68c` en verde; la función desplegada (versión 8) lleva el lector, comprobado en el código que sirve Supabase.
 
+- Límite por hora (`b937057`): 20 correos/hora/organización, comprobado tras la lista de remitentes y antes de bajar el objeto; el contador excluye los rechazos previos a la lista y el propio `LIMITE_HORARIO`. Sin migración. CI y despliegue en verde (versión 9).
+
 ## Lecciones
 - Un heredoc con comillas y tildes rompió el shell: los ficheros con regex o comillas van con el editor (`F-199`).
 - Una afirmación de la guía de VERA («todavía no funciona») caducó al desplegar la fase 2; el test de la guía solo cubría que el nombre siguiera en la pantalla.

@@ -14,7 +14,7 @@ Empieza por §6 y luego §3.
 ---
 
 **Día 39 de V1 · 13-oct-2026 · Estado: CERRADO (CI y despliegues de `7af9bc0` en verde; Vercel comprobado por contenido).** **`INV-04` fase 2 probada de punta a punta** (un CSV por Gmail → 3 líneas) y **pantalla del canal construida a mano**. También entra desde `julsaindustrial.com` (publicado su `_dmarc`). Falta:
-comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Sin fecha de demo. Detalle en `diario/dia-39.md`.
+comprobar la clave de AWS (guion listo) la prueba real del `.xlsx` por correo (`6a3d68c`, desplegado) y los límites por hora. Sin fecha de demo. Detalle en `diario/dia-39.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -24,6 +24,7 @@ comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Si
 | `ingest-email` v6 y `0061` en producción | `list_edge_functions`, `list_migrations`, `has_function_privilege` | v6 `verify_jwt=false`; `ingest_resolve` e `import_inventory_for_org` solo `service_role` |
 | Correo de punta a punta | `ingest_events` de JULSA, 13-oct 08:02 y 09:48 UTC; DNS de `_dmarc` | `PROCESADO`, 3 filas, desde Gmail y desde `julsaindustrial.com` (tras publicar `_dmarc`, `F-252`). Sin perfil: `FORMATO_NO_RECONOCIDO` |
 | Medidas de la función | `inv04-medidas-funcion.md` (Node, no Supabase) | 20.000 filas ≈ 0,3 s; 37 MB ≈ 1 GB: tope a 5 MB |
+| Medidas del `.xlsx` | `inv04-medidas-xlsx.md` (Node, no Supabase) | 100.001 filas reales del PO ≈ 0,6 s y 173 MB hasta tener las líneas; tope 120.000 filas |
 | Pantalla del canal contra la base | `e2e/ingest-channel.spec.ts` en `bearingworld-e2e` | 4 de 4: abrir idempotente, remitente protegido, añadir/quitar, rotar con confirmación |
 | `vitest`, `tsc`, e2e de inventario | local | 2396 verdes; `tsc` limpio; `inventory.spec.ts` 16 de 16 |
 
@@ -43,8 +44,8 @@ comprobar la clave de AWS (guion listo) y que el PO confirme el tope de 5 MB. Si
    nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min,
    acertar no reinicia, `0052`): el PO se bloqueó una vez probando y se le reinició el contador a mano.
 1. ~~C5 de `MSG-03`~~ **aprobada por el PO el 12-oct-2026** (tablas, formulario por fila, `Crear consulta`, VERA preparando); veredicto en la `nota` de `harness-review.csv`. Sin fecha de demo; si se fija, `guion-demo-h5.md`.
-2. **`INV-04`, lo que queda** (plan: `v1/plan-inv04-ingestion-por-correo.md`): (a) el PO confirma el **tope de 5 MB** (`DECISIONES-V1.md`); (b) el PO corre el guion de CloudShell
-   (`inv04-comprobar-clave-aws.md`: solo `GetObject` en `inbox/` debe salir `allowed`) y anota la fecha de la clave para rotarla a los 90 días; (c) avisar en la pantalla de que el dominio del remitente necesita DMARC o DKIM (`F-252`); (d) AWS: presupuesto `bearingworld-mensual-20usd` creado el 13-oct (20 USD/mes, avisos al 80 y 100 % a `alvaro.guillen@nortexsys.com`; verificado con `describe-budgets`, cuenta de gestión `226395401132`, cubre el gasto de toda la organización). **MFA del usuario raíz de la cuenta de gestión: hecho el 13-oct** (`iam get-account-summary` → `AccountMFAEnabled=1`). **Pendiente del PO: MFA del usuario SSO**, que se gestiona desde `Identity Delegated Admin` (`814774916668`). Las cuentas miembro no tienen raíz (acceso raíz centralizado). El PO decidió dejar la clave de AWS como está; (e) fase 3: `.xlsx`, 40 MB y límites por hora, fuera de la función de borde.
+2. **`INV-04`, lo que queda** (plan: `v1/plan-inv04-ingestion-por-correo.md`): (a) ~~tope de 5 MB~~ confirmado por el PO el 13-oct (`DECISIONES-V1.md`); (b) el PO corre el guion de CloudShell
+   (`inv04-comprobar-clave-aws.md`: solo `GetObject` en `inbox/` debe salir `allowed`) y anota la fecha de la clave para rotarla a los 90 días; (c) avisar en la pantalla de que el dominio del remitente necesita DMARC o DKIM (`F-252`); (d) AWS: presupuesto `bearingworld-mensual-20usd` creado el 13-oct (20 USD/mes, avisos al 80 y 100 % a `alvaro.guillen@nortexsys.com`; verificado con `describe-budgets`, cuenta de gestión `226395401132`, cubre el gasto de toda la organización). **MFA del usuario raíz de la cuenta de gestión: hecho el 13-oct** (`iam get-account-summary` → `AccountMFAEnabled=1`). **Pendiente del PO: MFA del usuario SSO**, que se gestiona desde `Identity Delegated Admin` (`814774916668`). Las cuentas miembro no tienen raíz (acceso raíz centralizado). El PO decidió dejar la clave de AWS como está; (e) fase 3 **hecha en lo del `.xlsx`** (`6a3d68c`, CI y despliegue en verde; la función desplegada lleva `xlsx-rows.ts` y `MAX_XLSX_ROWS = 120_000`, comprobado en el código que sirve Supabase): lector sin DOM, 120.000 filas, lotes de 20.000. **Falta la prueba real**: guardar un perfil `Sec,Codigo,Cantidad,Marca,FAMILIA` (subiendo `Rodamientos_100000_Ficticio.xlsx` a mano) y mandarlo por correo; mirar en los registros de la función la CPU y la memoria reales y si SNS reintenta por pasar de 15 s. Los 40 MB se descartaron (PO). Quedan los límites por hora (fase 4).
    **No usar el conector `AWS MCP`** salvo que el PO lo pida (esta sesión pedía autenticación).
 3. **VERA: ampliar la guía verificada** (`index.ts`, sección «GUÍA VERIFICADA»): ya saben la subida de inventario, `Visibilidad`, los filtros y acciones de `Inventario`, `Crear consulta`/`Crear oferta` y
    `Consultar`. Siguientes: Vendiendo, el resto de Comprando y Hilos. Cada entrada con su nombre en el test de `vera-prompt.test.ts`. Antes de tocar `vera/index.ts`, `vera-vertex-eu-migracion.md`.
@@ -96,7 +97,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟡 | **`F-226`** · `REG-01` aceptada por el PO el 7-oct; sigue sin logo, sin Google y sin VERA (sin sesión, `F-223`) | Cuando haya proveedor y almacenamiento |
-| 🟠 | **`F-233`** · `INV-04`: fases 0–2 hechas salvo MFA del usuario SSO de AWS; clave de AWS sin comprobar por decisión del PO (13-oct); fases 3 y 4 sin hacer (§3.2) | PO + este agente |
+| 🟠 | **`F-233`** · `INV-04`: fases 0–2 hechas salvo MFA del usuario SSO de AWS; clave de AWS sin comprobar por decisión del PO (13-oct); fase 3 hecha sin la prueba real del `.xlsx`, fase 4 sin hacer (§3.2) | PO + este agente |
 | 🟠 | **`F-252`** · un remitente cuyo dominio no publica DMARC ni DKIM no entra por correo. JULSA resuelto; falta avisarlo a otros clientes | Producto |
 | 🟠 | **`F-225`** · el e2e del arnés ya no va contra producción (`F-230`); falta releer el hallazgo y cerrarlo · Edge Functions de `bearingworld-e2e` sin desplegar (solo `access-request` v1) | Este agente |
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex pendiente | Anthropic |

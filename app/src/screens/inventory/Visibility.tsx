@@ -88,6 +88,8 @@ export function Visibility({ profile }: Props) {
    */
   const modeTouched = useRef(false);
   const listTouched = useRef(false);
+  /** Número de la última elección de continente (F-250); ver `handleContinentChange`. */
+  const lastContinent = useRef(0);
 
   /*
    * Una sola vez al montar: el modo y la lista, más el directorio del
@@ -154,19 +156,28 @@ export function Visibility({ profile }: Props) {
    * que tiene sentido excluir). Con el continente vacío no hay segunda llamada.
    */
   async function handleContinentChange(code: Zone | ''): Promise<void> {
+    // F-250: el selector no se desactiva con `busy`, así que se puede cambiar de A a B con la
+    // petición de A en vuelo. Solo la última elección escribe países, error o fin de carga.
+    const mia = ++lastContinent.current;
     setContinent(code);
     setCountry('');
     setCountries([]);
-    if (code === '') return;
+    if (code === '') {
+      setBusy(false);
+      return;
+    }
 
     setBusy(true);
     setError(null);
     try {
-      setCountries(await fetchContinentCountries(code));
+      const found = await fetchContinentCountries(code);
+      if (mia !== lastContinent.current) return;
+      setCountries(found);
     } catch (e: unknown) {
+      if (mia !== lastContinent.current) return;
       setError(errorMessage(e));
     } finally {
-      setBusy(false);
+      if (mia === lastContinent.current) setBusy(false);
     }
   }
 

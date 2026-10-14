@@ -190,7 +190,15 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile, onOpenIn
 
   const orgId = profile.orgId;
 
+  /**
+   * Número de la última carga lanzada (F-250). Cada cambio de filtro, búsqueda o página lanza otra, y
+   * la red no garantiza que lleguen en orden: si la de la página 2 llegaba después de la de la 3, la
+   * pisaba. Solo la última lanzada escribe líneas, error o fin de carga.
+   */
+  const lastLoad = useRef(0);
+
   const load = useCallback(async () => {
+    const mia = ++lastLoad.current;
     setLoading(true);
     setError(null);
     try {
@@ -198,13 +206,15 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile, onOpenIn
         fetchPage({ orgId, filter, search, page }),
         fetchStats(orgId),
       ]);
+      if (mia !== lastLoad.current) return;
       setLines(p.lines);
       setTotal(p.total);
       setStats(s);
     } catch (e) {
+      if (mia !== lastLoad.current) return;
       setError(errorMessage(e));
     } finally {
-      setLoading(false);
+      if (mia === lastLoad.current) setLoading(false);
     }
   }, [orgId, filter, search, page]);
 

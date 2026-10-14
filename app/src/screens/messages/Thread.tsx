@@ -87,7 +87,15 @@ export function Thread({
    */
   const writing = useRef(false);
 
+  /**
+   * Número de la última relectura lanzada (F-250). Tras cada escritura hay una relectura propia y el
+   * evento de Realtime que esa misma escritura provoca lanza otra: dos solapadas por diseño, y la más
+   * lenta pisaba a la más nueva. Solo la última lanzada escribe detalle, elementos, error o fin de carga.
+   */
+  const lastReload = useRef(0);
+
   const reload = useCallback(async () => {
+    const mia = ++lastReload.current;
     setLoading(true);
     setError(null);
     try {
@@ -95,12 +103,14 @@ export function Thread({
         fetchThreadDetail(threadId, profile.orgId),
         fetchThreadItems(threadId, profile.orgId),
       ]);
+      if (mia !== lastReload.current) return;
       setDetail(nextDetail);
       setItems(nextItems);
     } catch (err) {
+      if (mia !== lastReload.current) return;
       setError(errorMessage(err));
     } finally {
-      setLoading(false);
+      if (mia === lastReload.current) setLoading(false);
     }
   }, [threadId, profile.orgId]);
 

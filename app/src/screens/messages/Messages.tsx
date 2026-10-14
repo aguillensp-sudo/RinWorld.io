@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import { onThreadsChanged } from '../../lib/realtime';
 import { fetchThreadPage, pageCount } from '../../lib/threads';
@@ -52,6 +52,9 @@ export function Messages({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /** Número de la última carga lanzada (F-250); ver `cargar`. */
+  const ultimaCarga = useRef(0);
+
   /**
    * La consulta de la página. Sale del `useEffect` a un `useCallback` porque
    * ahora la llaman **dos**: el montaje y el canal de Realtime.
@@ -63,17 +66,21 @@ export function Messages({
    */
   const cargar = useCallback(() => {
     const vivo = { si: true };
+    // F-250: `vivo` solo lo apaga el cleanup del efecto, y `onThreadsChanged(cargar)` descarta
+    // ese cleanup: una relectura de Realtime lanzada con la página 2 nunca se invalidaba. El
+    // contador sí: solo la última carga lanzada, venga de donde venga, escribe.
+    const mia = ++ultimaCarga.current;
     setLoading(true);
     setError(null);
     fetchThreadPage({ orgId: profile.orgId, search: submittedSearch, page })
       .then((result) => {
-        if (!vivo.si) return;
+        if (!vivo.si || mia !== ultimaCarga.current) return;
         setThreads(result.threads);
         setTotal(result.total);
         setLoading(false);
       })
       .catch((err: unknown) => {
-        if (!vivo.si) return;
+        if (!vivo.si || mia !== ultimaCarga.current) return;
         // `instanceof Error ? … : <texto generico>` es exactamente F-020: los
         // errores de PostgREST son objetos planos, así que un `PGRST201` —el que
         // devuelve `threads` si un embed va sin la clave ajena nombrada— se

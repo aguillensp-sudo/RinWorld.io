@@ -32,9 +32,22 @@ del PO: avanzar sin tocar nada de VERA, decidiendo sola porque él no iba a esta
 
   En el banco: sin la migración, 182 incumplimientos; con ella, `run.sh` entero en verde. El riesgo sigue
   aceptado y el disparador es el mismo.
-- **Corriente B, cifras 7 y 8: no se midió aquí, a propósito.** Exigen sesión propia y cronómetro, y esta ya
-  estaba mezclada (sería repetir `F-205`). Las 27 pantallas aprobadas están construidas, así que la medida es
-  una reconstrucción en una rama `exp/`. Queda propuesta como sesión aparte.
+- **Corriente B, cifras 7 y 8: medidas aquí, por orden del PO (`F-261`).** Propuse una sesión aparte, y el PO
+  pidió hacerlo en esta. Las 27 pantallas aprobadas están construidas, así que se reconstruyó `INV-04` (hecha a
+  mano, sin tarea del arnés) en `exp/inv-04-fabrica`, que no se fusiona. La elección y sus salvedades se
+  escribieron en `DECISIONES-V1.md` antes de la corrida, pero se commitearon después de medir: la hora la prueba
+  la transcripción, no git. Fallo mío; lo cazó `git-ops`.
+  - Verde en 2 intentos, con 0,065 $ de generador.
+  - La revisión cambió 13 líneas de 1.020.
+  - Reloj: 27 min.
+  - Orquestación: 16,81 $ en bruto, ~10,05 $ sin la relectura del contexto que arrastraba esta sesión.
+
+  La revisión encontró algo serio: el historial decía «ningún correo» sin haberlo consultado.
+- **`F-262`: mi corrida del arnés tumbó la CI de la sesión de VERA.** Su e2e y el C2 de mi corrida coincidieron
+  contra `bearingworld-e2e`, y el `fixture`/`restore` de cada una repone los mismos hilos. Nadie avisó antes de
+  lanzar. Desde entonces se avisa entre sesiones.
+- **`F-263`: las `_nota_*` de una tarea no llegan al Coder.** Por eso el botón de quitar salió con el email
+  visible.
 
 ## Para el relevo (quien cierre el día 40 o abra el 41)
 
@@ -44,7 +57,13 @@ Lo que hay que cambiar en `ESTADO-V1.md`, que esta sesión no ha tocado para no 
   - F-259: verificado contra los `edge_logs` y la traza del run `38601905364`.
   - F-260: verificado con las capturas y las métricas de Playwright.
   - F-192: verificado con `probar.sh`.
-- **§3:** mirar que la CI del push de esta sesión no tiene fallos de `expect` por infraestructura (F-259).
+- **§3:**
+  - Mirar que la CI del push de esta sesión no tiene fallos de `expect` por infraestructura (F-259); la de
+    `bd0a6fe` salió verde entera.
+  - **Del PO:** C5 de `INV-04` en `exp/inv-04-fabrica` y decidir si el punto de `F-261` cuenta para la serie de
+    las cifras 7 y 8.
+  - Antes de lanzar e2e o el arnés contra `bearingworld-e2e`, avisar a las otras sesiones (F-262).
+- **§2, Corriente B:** cifras 7 y 8 con dos puntos: `SRCH-03` limpio e `INV-04` con salvedades (F-261).
 - **§5:** la fila de F-192 añade «propuesta lista en `supabase/propuestas/F-192/`». Entra F-260 (VERA a
   375 px y tablas anchas).
 - **§6:**

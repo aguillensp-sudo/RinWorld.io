@@ -85,6 +85,7 @@ interface Anotacion {
   pantalla: string;
   hiloAbierto: boolean;
   filtros: string | null;
+  cambiosAMano: string | null;
   omitidos: number;
   pregunta: string;
   respuesta: string;
@@ -249,6 +250,7 @@ async function correr(caso: Caso, repeticion: number) {
       pantalla,
       hiloAbierto,
       filtros,
+      cambiosAMano,
       omitidos,
       pregunta: t.pregunta,
       respuesta,
@@ -272,6 +274,7 @@ function anotar(caso: Caso, repeticion: number, i: number, e: Estado, pregunta: 
     pantalla: veraScreenName({ ...BASE, ...e.sub, nav: e.nav }),
     hiloAbierto: false,
     filtros: null,
+    cambiosAMano: null,
     omitidos: 0,
     pregunta,
     respuesta: '',
@@ -454,6 +457,7 @@ function escribirRegistro() {
       '',
       `**«${a.pregunta}»**`,
       ...(a.filtros ? ['', `Filtros vivos enviados: \`${a.filtros}\``] : []),
+      ...(a.cambiosAMano ? ['', `Cambios a mano enviados: \`${a.cambiosAMano}\``] : []),
       ...(a.omitidos ? ['', `Intercambios omitidos avisados: ${a.omitidos}`] : []),
       '',
       '```',

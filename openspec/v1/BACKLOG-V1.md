@@ -6,7 +6,7 @@ Cada fila dice **qué es**, **qué la activa** (el disparador) y **dónde está 
 
 | Qué | Disparador | Detalle |
 |---|---|---|
-| **Riesgo aceptado: privilegios por defecto anchos** (`anon`, `authenticated` y `service_role` reciben `ALL` sobre cada tabla nueva de `public`) | **Se reabre antes de datos reales o de abrir el registro a terceros** | `F-192` (PO, 25-sep) |
+| **Riesgo aceptado: privilegios por defecto anchos** (`anon`, `authenticated` y `service_role` reciben `ALL` sobre cada tabla nueva de `public`) | **Se reabre antes de datos reales o de abrir el registro a terceros** | `F-192` (PO, 25-sep). **Propuesta lista y probada en el banco, sin aplicar** (14-oct): `supabase/propuestas/F-192/README.md` |
 | **Riesgo aceptado: `VITE_DEMO_KEY_SEED` va en el JS de producción** (comprobado el 14-oct): quien lo descargue deriva las privadas de las cuentas de prueba (`ALPHA`, `BETA`, `EDITOR`…) y lee sus hilos. No afecta a miembros con ADR-001 | **Se reabre antes de datos reales o de abrir el registro a terceros**; salida: quitar la variable del entorno de Vercel de producción (inutiliza esas cuentas allí) | `F-067`, `DECISIONES-V1.md` (8-oct) |
 | **Salida abrupta del ADMIN**: la recomendación de tener más de un ADMIN no llega a la interfaz | Producto lo prioriza; antes de abrir el registro a terceros | `docs/ADR-002_Ambito_de_visibilidad_por_usuario.md` §10 (Q-1) |
 | **VERA no prepara contraofertas ni la respuesta a una consulta concreta, ni nada desde `Comprando`**: solo consulta nueva y oferta directa, con un hilo abierto | Producto lo pide | `DECISIONES-V1.md` (VERA prepara, no envía), `F-249` |

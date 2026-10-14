@@ -1,7 +1,7 @@
 [
   {
     "name": "buscar_en_catalogo",
-    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores, precios de mercado o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco rodamientos SKF en Europa', 'necesito 500 unidades'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Devuelve filas con referencia, marca, cantidad, plazo, país, organización, DE CUÁNDO ES EL DATO (y si eso lo hace poco fiable) y si tu organización YA le ha consultado esa línea a ese proveedor. NO devuelve precios: el precio va cifrado y se negocia en un hilo. NO LA USES para preguntas sobre lo que se ha dicho, ofrecido, pedido o acordado en una negociación ('¿qué precio me han ofrecido?', '¿qué condiciones piden?', 'resume este hilo'): eso es contenido cifrado de un hilo, no lo lee ninguna herramienta, y llamarla aquí además SACA AL USUARIO de la pantalla en la que está.",
+    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores, precios de mercado o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco rodamientos SKF en Europa', 'necesito 500 unidades'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Devuelve filas con referencia, marca, cantidad, plazo, país, organización, DE CUÁNDO ES EL DATO (y si eso lo hace poco fiable) y si tu organización YA le ha consultado esa línea a ese proveedor. NO devuelve precios: el precio va cifrado y se negocia en un hilo. NO LA USES para preguntas sobre lo que se ha dicho, ofrecido, pedido o acordado en una negociación ('¿qué precio me han ofrecido?', '¿qué condiciones piden?', 'resume este hilo'): eso es contenido cifrado de un hilo, no lo lee ninguna herramienta, y llamarla aquí además SACA AL USUARIO de la pantalla en la que está. Cada llamada SUSTITUYE todos los filtros de Comprando: para afinar una búsqueda ('ahora solo en Europa'), manda todos los que deben quedar puestos, no solo el nuevo.",
     "input_schema": {
       "type": "object",
       "properties": {
@@ -48,6 +48,10 @@
           "type": "string",
           "enum": ["todos", "publicados", "desactualizados", "archivados"],
           "description": "Estado de las líneas. 'desactualizados' son las que llevan más de 7 días sin actualizar. Por defecto 'todos'."
+        },
+        "mostrar_en_pantalla": {
+          "type": "boolean",
+          "description": "true si lo que te piden es una LISTA de líneas ('¿qué tengo desactualizado?', 'enséñame las archivadas'): lleva al usuario a la pantalla Inventario con este filtro y esta búsqueda puestos, y tú contestas en una línea. false (por defecto) si basta un número o un sí o un no ('¿cuántas 6204 tengo publicadas?'): la pantalla no se mueve, porque el usuario puede estar en un hilo."
         }
       },
       "required": []

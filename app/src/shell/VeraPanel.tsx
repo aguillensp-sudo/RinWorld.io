@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './VeraPanel.module.css';
-import { ask, type ProxyCall } from '../lib/vera';
-import type { DraftRequest, Screen } from '../lib/vera-tools';
+import { ask, historyExpired, type Exchange, type ProxyCall } from '../lib/vera';
+import type { DraftRequest, InventoryView, Screen } from '../lib/vera-tools';
 import type { SearchCriteria } from '../lib/search';
 import { errorMessage, type MemberProfile } from '../lib/session';
 
@@ -48,6 +48,13 @@ export interface VeraAgent {
   threadOpen: boolean;
   /** Abre en el hilo el formulario con lo que VERA ha preparado; lo revisa y lo envía el usuario. */
   prepareDraft: (draft: DraftRequest) => void;
+  /** Lleva a Inventario con un filtro puesto, cuando VERA contesta con una lista de líneas. */
+  showInventory?: (view: InventoryView) => void;
+  /**
+   * Cuándo empezó la sesión (ms), para purgar la memoria a las 24 h (`session-context-layer`). Un getter
+   * y no un valor: se mira en cada pregunta. Sin él, la memoria solo se pierde al cerrar sesión o recargar.
+   */
+  sessionStartedAt?: () => Promise<number | null>;
   call: ProxyCall;
 }
 
@@ -78,6 +85,12 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
   const [messages, setMessages] = useState<Message[]>([
     { id: 0, from: 'vera', text: GREETING, at: hhmm(new Date()) },
   ]);
+  /*
+   * La memoria que ve el modelo (`F-101`), aparte de lo pintado: el saludo, los fallos y el «no he podido
+   * terminar» se pintan pero no son respuestas de VERA, y reenviarlos le haría tomar por suyo lo que no dijo.
+   * Vive solo aquí: el panel se desmonta al cerrar sesión y no hay copia en ningún otro sitio.
+   */
+  const [exchanges, setExchanges] = useState<Exchange[]>([]);
 
   const panelRef = useRef<HTMLElement | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
@@ -126,10 +139,8 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
     // (historial, herramientas a medio ejecutar) y dos a la vez lo entrelazan.
     if (!text || pensando) return;
 
-    setMessages((prev) => [
-      ...prev,
-      { id: prev.length, from: 'user', text, at: hhmm(new Date()) },
-    ]);
+    const enviada = hhmm(new Date());
+    setMessages((prev) => [...prev, { id: prev.length, from: 'user', text, at: enviada }]);
     setDraft('');
     const ta = textareaRef.current;
     if (ta) ta.style.height = 'auto';
@@ -141,6 +152,21 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
 
     setPensando(true);
     try {
+      /*
+       * Pasadas las 24 h desde el inicio de sesión, la conversación se purga entera —lo pintado y la
+       * memoria— antes de preguntar (`session-context-layer`): no queda nada que recuperar.
+       */
+      let previo = exchanges;
+      const inicio = agent.sessionStartedAt ? await agent.sessionStartedAt() : null;
+      if (historyExpired(inicio, Date.now())) {
+        previo = [];
+        setExchanges([]);
+        setMessages([
+          { id: 0, from: 'vera', text: GREETING, at: enviada },
+          { id: 1, from: 'user', text, at: enviada },
+        ]);
+      }
+
       const r = await ask(
         text,
         {
@@ -149,9 +175,12 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
           setCriteria: agent.setCriteria,
           threadOpen: agent.threadOpen,
           prepareDraft: agent.prepareDraft,
+          ...(agent.showInventory ? { showInventory: agent.showInventory } : {}),
         },
         agent.call,
+        previo,
       );
+      if (r.text) setExchanges([...previo, { question: text, answer: r.text }]);
       responde(r.text || SIN_RESPUESTA);
     } catch (e) {
       /*
@@ -164,7 +193,7 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
     } finally {
       setPensando(false);
     }
-  }, [draft, pensando, agent, responde]);
+  }, [draft, pensando, agent, responde, exchanges]);
 
   const cls = [styles.bwvera, collapsed ? styles.col : '', dragging ? styles.dragging : '']
     .filter(Boolean)

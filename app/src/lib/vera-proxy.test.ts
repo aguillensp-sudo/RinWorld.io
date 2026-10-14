@@ -126,8 +126,10 @@ describe('el system prompt distingue el contenido de un hilo de una búsqueda (F
   it('el bloque DINÁMICO recibe la pantalla y si hay hilo abierto', () => {
     // Va en el dinámico y no en el estático a propósito: el estático tiene que
     // ser byte a byte idéntico o se pierde la caché (`CLAUDE.md` §5).
-    expect(fuente).toContain('entrada.contexto?.pantalla');
-    expect(fuente).toContain('entrada.contexto?.hiloAbierto');
+    // Desde el 14-oct (F-101) el contexto se lee como `c` y los textos pasan por `corto`, que los recorta.
+    expect(fuente).toContain('const c: NonNullable<Entrada[\'contexto\']> = entrada.contexto ?? {};');
+    expect(fuente).toContain('corto(c.pantalla)');
+    expect(fuente).toContain('c.hiloAbierto');
   });
 
   it('lo variable NO se ha colado en el bloque cacheado', () => {

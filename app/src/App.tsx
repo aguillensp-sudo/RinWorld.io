@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
-import type { DraftRequest, Screen, VeraDraft } from './lib/vera-tools';
+import { describeCriteria, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
+import { veraScreenName } from './lib/vera-screen';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
-import { AppShell, navIndexOf } from './shell/AppShell';
+import { AppShell, NAV_ITEMS, navIndexOf } from './shell/AppShell';
 import { OPERATOR_NAV_ITEMS, OperatorShell, operatorNavIndexOf } from './shell/OperatorShell';
 import { Login } from './screens/Login';
 import { Panel } from './screens/panel/Panel';
@@ -104,22 +105,6 @@ const FOROS_NAV = navIndexOf('Foros');
 /** El ítem `Contacto` del menú aprobado no tiene pantalla: dice que no está disponible. */
 const CONTACTO_NAV = navIndexOf('Contacto');
 
-/**
- * De índice de nav al nombre de pantalla que entiende VERA (F-090).
- *
- * Es el inverso de `navIndexOf` y se escribe a mano, no se deriva de
- * `NAV_ITEMS`: los ítems del menú aprobado son ocho y las pantallas construidas
- * cinco (`vera-tools.ts` SCREENS). Derivarlo borraría esa diferencia, que es
- * justo la que hace que VERA no prometa pantallas que no existen.
- */
-const NAV_SCREEN: Record<number, Screen> = {
-  [HOME_NAV]: 'Panel',
-  [INVENTORY_NAV]: 'Inventario',
-  [MESSAGES_NAV]: 'Hilos',
-  [SEARCH_NAV]: 'Comprando',
-  [SELLING_NAV]: 'Vendiendo',
-};
-
 /** INV-01 §5: "Subtítulo del panel: `Agente de inventario`". Ver F-025. */
 const INVENTORY_VERA_SUBTITLE = 'Agente de inventario';
 
@@ -202,6 +187,20 @@ export function App() {
    * estando el usuario en otra pantalla — y entonces hay que llevarle a ella.
    */
   const [veraCriteria, setVeraCriteria] = useState<SearchCriteria | null>(null);
+
+  /**
+   * Los criterios que SRCH-01 tiene puestos de verdad, incluidos los que el usuario cambió a mano
+   * (`F-101`). Van a VERA en cada pregunta hecha desde Resultados de búsqueda: si quitó un chip, lo que
+   * el modelo recuerda de la conversación ya no es lo que hay en pantalla, y manda la pantalla.
+   */
+  const [liveCriteria, setLiveCriteria] = useState<SearchCriteria | null>(null);
+
+  /**
+   * Lo que VERA deja puesto en INV-01 cuando contesta con una lista de líneas (decisión del PO,
+   * 14-oct-2026). Mismo criterio que `veraCriteria`: un empujón que la pantalla adopta y que sigue
+   * siendo suya. Se limpia al navegar, para que volver a Inventario no reponga un filtro de hace rato.
+   */
+  const [veraInventoryView, setVeraInventoryView] = useState<InventoryView | null>(null);
 
   /**
    * Lo que VERA ha pedido preparar en el hilo abierto (MSG-03 §5, F-249): un formulario de consulta o de
@@ -547,6 +546,7 @@ export function App() {
     setComposeOrgId(null);
     setSettingsOpen(false);
     setSecurityOpen(false);
+    setVeraInventoryView(null);
   };
 
   if (state.status === 'loading') {
@@ -675,6 +675,25 @@ export function App() {
 
     threadOpen: openThreadId !== null,
 
+    /*
+     * Primero navegar —que limpia `veraInventoryView` con todo lo demás— y después escribir la vista: las dos
+     * actualizaciones van en el mismo lote de React y gana la última.
+     */
+    showInventory: (view: InventoryView) => {
+      navigate(INVENTORY_NAV);
+      setVeraInventoryView(view);
+    },
+
+    /*
+     * La memoria de VERA caduca a las 24 h del inicio de sesión (`session-context-layer`). `last_sign_in_at`
+     * es la hora del último inicio de sesión de verdad: renovar el token no la mueve.
+     */
+    sessionStartedAt: async () => {
+      const { data } = await supabase.auth.getSession();
+      const t = Date.parse(data.session?.user?.last_sign_in_at ?? '');
+      return Number.isFinite(t) ? t : null;
+    },
+
     prepareDraft: (draft: DraftRequest) => {
       veraDraftSeq.current += 1;
       setVeraDraft({ ...draft, nonce: veraDraftSeq.current });
@@ -714,8 +733,24 @@ export function App() {
       {
         orgName: state.profile.orgName,
         fullName: state.profile.fullName,
-        pantalla: NAV_SCREEN[nav] ?? 'Panel',
+        pantalla: veraScreenName({
+          nav: NAV_ITEMS[nav]?.label ?? 'Panel',
+          securityOpen: securityOpen && hasBackup,
+          settingsOpen: settingsOpen && state.profile.role === 'ADMIN',
+          threadOpen: openThreadId !== null,
+          watchersOpen,
+          batchOpen,
+          importSummary: importSummary !== null,
+          importDraft: importDraft !== null,
+          visibilityOpen,
+          ingestOpen,
+          orgProfileOpen: orgProfileId !== null,
+          forumCategoryOpen: forumCategorySlug !== null,
+          forumThreadOpen: forumThreadId !== null,
+        }),
         hiloAbierto: openThreadId !== null,
+        // Solo desde Resultados de búsqueda: fuera de ella, `liveCriteria` es lo último que se vio, no lo que hay.
+        ...(onSearch && !watchersOpen && !batchOpen && liveCriteria ? { filtros: describeCriteria(liveCriteria) } : {}),
       },
     ),
   };
@@ -991,6 +1026,7 @@ export function App() {
             profile={state.profile}
             now={new Date()}
             veraCriteria={veraCriteria}
+            onCriteriaChange={setLiveCriteria}
             onOpenWatchers={() => setWatchersOpen(true)}
             onOpenBatch={() => setBatchOpen(true)}
             onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)}
@@ -1050,6 +1086,7 @@ export function App() {
             onOpenVisibility={() => setVisibilityOpen(true)}
             onOpenIngest={() => setIngestOpen(true)}
             onPickFile={(f) => void openImport(f)}
+            veraView={veraInventoryView}
           />
         )
       ) : onEmpresas ? (

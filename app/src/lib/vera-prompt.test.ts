@@ -241,6 +241,8 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['Zona', libBusqueda],
     ['Lead time máx', libBusqueda],
     ['Filtro', chips],
+    // F-229 (14-oct): al elegir Zona en «Filtro» sale además el país, y con solo país el chip se llama País.
+    ['País (opcional)', chips],
     ['Añadir', chips],
     ['Seleccionar todos', resultados],
     ['Deseleccionar todos', resultados],
@@ -657,5 +659,75 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     expect(seguridad).toContain('Mínimo 12 caracteres');
     expect(seguridad).toContain('El backup anterior se sobrescribe: no hay histórico.');
     expect(seguridad).toContain('Demasiados intentos.');
+  });
+});
+
+describe('VERA · la guía del chip de país (F-229) sigue siendo cierta', () => {
+  const libBusqueda = readFileSync(resolve(process.cwd(), 'src/lib/search.ts'), 'utf8');
+  const chips = readFileSync(resolve(process.cwd(), 'src/screens/search/FilterChips.tsx'), 'utf8');
+
+  it('con solo país, el chip se llama País; y se puede añadir sin zona', () => {
+    expect(prompt).toContain('que se llama "País" cuando solo hay país');
+    expect(libBusqueda).toContain("c.zone ? CHIP_LABELS.zone : 'País'");
+    expect(prompt).toContain('se puede poner solo el país');
+    expect(chips).toContain("!(field === 'zone' && country)");
+  });
+});
+
+// F-101 (14-oct-2026, decisión del PO): VERA recibe la conversación. Lo que esto prueba es que las reglas
+// siguen escritas; si el modelo las cumple solo lo dice una llamada real (plan de pruebas de VERA).
+describe('VERA · memoria de la conversación (F-101)', () => {
+  it('la regla vieja de «cada pregunta te llega sola» ya no está: hoy sería falsa', () => {
+    expect(prompt).toContain('LA CONVERSACIÓN TE LLEGA; LOS DATOS, NO');
+    expect(prompt).not.toContain('CADA PREGUNTA TE LLEGA SOLA');
+    expect(prompt).not.toContain('No recibes la pregunta anterior');
+  });
+
+  it('lo que contestó antes no es un dato: se vuelve a consultar', () => {
+    expect(prompt).toContain('lo que contestaste antes NO es un dato');
+    expect(prompt).toContain('sale de una herramienta llamada para ESTA pregunta');
+  });
+
+  it('afinar es mandar todos los filtros, y la pantalla manda sobre lo recordado', () => {
+    expect(prompt).toContain('le mandas TODOS los filtros que deben quedar puestos');
+    expect(prompt).toContain('el usuario puede haberlos cambiado a mano');
+  });
+
+  it('sin búsqueda previa, una continuación se pregunta y no se busca (F-101 de agosto, sigue)', () => {
+    expect(prompt).toContain('no hay ninguna búsqueda ni en la conversación ni en Comprando, NO LO BUSQUES');
+  });
+
+  it('el bloque dinámico lleva los filtros y el aviso de lo omitido, sin marca de caché', () => {
+    expect(prompt).toContain('los filtros puestos en Comprando eran');
+    expect(prompt).toContain('intercambios más antiguos no te llegan');
+    // El estático es el único con cache_control: lo que cambia por petición va detrás.
+    expect(prompt.match(/cache_control/g)).toHaveLength(1);
+  });
+
+  it('el proxy pone tope al tamaño de la petición', () => {
+    expect(prompt).toContain('const MAX_MENSAJES = 60;');
+    expect(prompt).toContain('const MAX_CARACTERES = 150_000;');
+    expect(prompt).toMatch(/entrada\.messages\.length > MAX_MENSAJES/);
+    expect(prompt).toContain('413');
+  });
+});
+
+// Decisión del PO del 14-oct-2026: cuando la pantalla ya enseña la respuesta, VERA no la repite.
+describe('VERA · no repite lo que la pantalla ya enseña', () => {
+  it('tras buscar en el catálogo, una línea; y solo dos cosas sin que se las pidan', () => {
+    expect(prompt).toContain('CUANDO LA PANTALLA YA ENSEÑA LA RESPUESTA, NO LA REPITAS');
+    expect(prompt).toContain('No repitas las filas');
+    expect(prompt).toContain('contesta esa pregunta en una o dos frases, y nada más');
+    expect(prompt).toContain('que no hay ningún resultado —y entonces propones qué filtro quitar');
+  });
+
+  it('el inventario solo mueve la pantalla cuando la respuesta es una lista', () => {
+    expect(prompt).toContain('llámala con mostrar_en_pantalla a true');
+    expect(prompt).toContain('no muevas la pantalla —puede estar en un hilo—');
+    expect(tools).toContain('"mostrar_en_pantalla"');
+  });
+
+  it('en Hilos el texto sí es la respuesta, breve', () => {
+    expect(prompt).toContain('listar_mis_hilos no mueve la pantalla');
   });
 });

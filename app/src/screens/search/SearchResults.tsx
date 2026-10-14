@@ -52,6 +52,11 @@ interface Props {
   onOpenBatch?: () => void;
   /** Contactar la empresa de la fila. Opcional: sin él `Contactar` queda apagado. */
   onContactOrganization?: (orgId: string) => void;
+  /**
+   * Avisa de los criterios puestos cada vez que cambian, también los que cambia el usuario a mano: VERA los
+   * recibe en la pregunta siguiente para afinar desde lo que hay en pantalla (`F-101`). Opcional, como el resto.
+   */
+  onCriteriaChange?: (criteria: SearchCriteria) => void;
 }
 
 interface ConsultQueue {
@@ -70,7 +75,7 @@ interface ConsultQueue {
  * un favorito se vuelve a consultar la base (`toggleFavorite` + `fetchResults`).
  * La tabla y los chips son presentacionales y no guardan estado de datos.
  */
-export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOpenBatch, onContactOrganization }: Props) {
+export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOpenBatch, onContactOrganization, onCriteriaChange }: Props) {
   const [criteria, setCriteria] = useState<SearchCriteria>(EMPTY_CRITERIA);
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -130,6 +135,10 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
   useEffect(() => {
     if (veraCriteria) setCriteria(veraCriteria);
   }, [veraCriteria]);
+
+  useEffect(() => {
+    onCriteriaChange?.(criteria);
+  }, [criteria, onCriteriaChange]);
 
   useEffect(() => {
     void load(criteria);

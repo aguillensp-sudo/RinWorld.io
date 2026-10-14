@@ -469,7 +469,8 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
   describe('buscar_en_catalogo · «¿ese stock está actualizado?»', () => {
     it('toda fila dice de cuándo es el dato y si eso es un aviso', async () => {
       const r = await runTool('buscar_en_catalogo', { referencia: '6205-2RS' }, contexto());
-      const filas = r.content.split('\n').filter((l) => l.includes('6205-2RS'));
+      // La última línea repite los filtros aplicados («referencia=6205-2RS», 14-oct): no es una fila.
+      const filas = r.content.split('\n').filter((l) => l.includes('6205-2RS') && !l.startsWith('Esta búsqueda'));
       expect(filas.length).toBeGreaterThan(0);
       for (const fila of filas) {
         expect(fila).toMatch(/actualizada /);
@@ -556,7 +557,8 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
 
     it('toda línea propia dice de cuándo es, que es lo que se pregunta al mirarlo', async () => {
       const r = await runTool('consultar_mi_inventario', {}, contexto());
-      const filas = r.content.split('\n').filter((l) => l.includes('6205-2RS'));
+      // La última línea repite los filtros aplicados («referencia=6205-2RS», 14-oct): no es una fila.
+      const filas = r.content.split('\n').filter((l) => l.includes('6205-2RS') && !l.startsWith('Esta búsqueda'));
       expect(filas.length).toBeGreaterThan(0);
       for (const fila of filas) expect(fila).toMatch(/actualizada .*(al día|desactualizada)/);
     });

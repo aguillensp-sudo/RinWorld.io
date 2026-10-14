@@ -1,6 +1,7 @@
 import type { MemberProfile } from './session';
 import {
   EMPTY_CRITERIA,
+  MAX_RESULTS,
   ZONES,
   countryName,
   fetchResults,
@@ -73,6 +74,12 @@ export type DraftRequest =
       notes: string | null;
     };
 
+/** Lo que VERA deja puesto en Inventario cuando la respuesta es una lista de líneas (decisión del PO, 14-oct-2026). */
+export interface InventoryView {
+  filter: Filter;
+  search: string;
+}
+
 export interface ToolContext {
   profile: MemberProfile;
   navigate: (screen: Screen) => void;
@@ -80,6 +87,11 @@ export interface ToolContext {
   /** Hay un hilo abierto en pantalla: sin él no hay formulario donde preparar nada. */
   threadOpen: boolean;
   prepareDraft: (draft: DraftRequest) => void;
+  /**
+   * Lleva a Inventario con ese filtro y esa búsqueda puestos. Opcional: sin él, la herramienta lo dice
+   * y contesta en texto, en vez de prometer una pantalla que no se ha movido.
+   */
+  showInventory?: (view: InventoryView) => void;
 }
 
 /** Un borrador ya pedido, con un número que cambia en cada petición: la misma petición dos veces tiene que reabrir el formulario. */
@@ -171,6 +183,23 @@ export function criteriaFromInput(input: unknown): SearchCriteria {
     country: texto(input, 'pais').toUpperCase(),
     maxLeadTimeDays: entero(input, 'plazo_maximo_dias'),
   };
+}
+
+/**
+ * Los filtros de Comprando dichos al modelo con los nombres de los parámetros de `buscar_en_catalogo`
+ * (`F-101`). Con los nombres de los chips tendría que traducir «Europa · España» de vuelta a `EU` y
+ * `ES` para afinar la búsqueda; así los copia tal cual. Y no depende de cómo se pinten los chips.
+ */
+export function describeCriteria(c: SearchCriteria): string {
+  const partes = [
+    c.partNumber ? `referencia=${c.partNumber}` : '',
+    c.brand ? `marca=${c.brand}` : '',
+    c.minQuantity !== null ? `cantidad_minima=${c.minQuantity}` : '',
+    c.zone ? `zona=${c.zone}` : '',
+    c.country ? `pais=${c.country}` : '',
+    c.maxLeadTimeDays !== null ? `plazo_maximo_dias=${c.maxLeadTimeDays}` : '',
+  ].filter(Boolean);
+  return partes.length ? partes.join(' · ') : 'ninguno';
 }
 
 /**
@@ -266,10 +295,20 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
       'Ninguna de estas filas incluye condiciones económicas: eso se negocia cifrado dentro de un hilo.',
       'Las filas que no llevan «YA CONSULTADA» son las que tu organización todavía no ha consultado.',
       'Este orden no es un ranking de idoneidad. Si eliges unas cuantas para recomendar, di cuántas había y con qué criterio has elegido.',
-      // Cuarto hueco de la misma revisión: la herramienta MUEVE al usuario
-      // (`App.tsx:157` navega a Comprando al escribir criterios) y no lo decía.
-      // El usuario cambia de pantalla mientras lee una respuesta que no lo menciona.
-      'Esta búsqueda ha llevado al usuario a la pantalla Comprando con estos filtros ya puestos: dilo en tu respuesta, porque acaba de cambiar de pantalla.',
+      // El tope de SRCH-01 (`MAX_RESULTS`): la pantalla lo avisa, y la línea de VERA no puede dar
+      // un recuento que parezca el de la tabla.
+      ...(page.capped
+        ? [`La pantalla Comprando solo enseña los ${MAX_RESULTS} primeros de estos ${page.total}: si das el recuento, dilo.`]
+        : []),
+      /*
+       * La herramienta MUEVE al usuario (`App.tsx`, `setCriteria` navega a Comprando) y él ya está viendo
+       * la tabla. Hasta el 14-oct se le pedía que lo dijera; desde ese día, además, que no repita lo que
+       * la pantalla enseña: gastaba salida y duplicaba en dos sitios lo que puede discrepar (`F-075`,
+       * `F-105`). Decisión del PO, `DECISIONES-V1.md`.
+       */
+      `Esta búsqueda ha llevado al usuario a la pantalla Comprando con estos filtros puestos: ${describeCriteria(criteria)}. ` +
+        'Él ya ve la tabla, los filtros y el recuento: NO repitas las filas. Si solo pidió la búsqueda, contesta en una línea con los filtros y el recuento; ' +
+        'si además preguntó algo, contesta solo eso. Añade algo más únicamente si una parte de lo que pidió no se ha podido poner como filtro, o si no hay resultados (entonces propón qué filtro quitar).',
     ].join('\n'),
     isError: false,
   };
@@ -286,6 +325,17 @@ async function consultarMiInventario(input: unknown, ctx: ToolContext): Promise<
   const filter = (filtroCrudo || 'todos') as Filter;
 
   const busqueda = texto(input, 'referencia');
+
+  /*
+   * Decisión del PO del 14-oct-2026: si la respuesta es una LISTA de líneas, se enseña en Inventario
+   * con el mismo filtro y la misma búsqueda (la pantalla tiene exactamente los mismos), y VERA contesta
+   * en una línea. Si es un número o un sí/no, no se mueve la pantalla: el usuario puede estar en un hilo.
+   * Lo decide el modelo con `mostrar_en_pantalla`; por defecto, no se mueve.
+   */
+  const mostrar = campo(input, 'mostrar_en_pantalla') === true;
+  const enPantalla = mostrar && ctx.showInventory !== undefined;
+  if (enPantalla) ctx.showInventory!({ filter, search: busqueda });
+
   const page = await fetchPage({
     orgId: ctx.profile.orgId,
     filter,
@@ -321,6 +371,12 @@ async function consultarMiInventario(input: unknown, ctx: ToolContext): Promise<
       `Esto es tu propio inventario, filtro «${filter}»${busqueda ? ` y búsqueda «${busqueda}»` : ''}. El recuento de abajo es SOLO de lo que cumple ese filtro.`,
       recorte(filas.length, page.total, 'línea', 'líneas'),
       ...filas,
+      enPantalla
+        ? 'Esto ha llevado al usuario a la pantalla Inventario con ese filtro y esa búsqueda puestos: ya ve las líneas. ' +
+          'NO las repitas: contesta en una línea con el recuento, o con lo que te haya preguntado.'
+        : mostrar
+          ? 'No se ha podido abrir Inventario desde aquí: la pantalla no se ha movido, así que tu respuesta es lo único que verá. Sé breve.'
+          : 'La pantalla no se ha movido: tu respuesta es lo único que el usuario verá de esto. Contesta lo que te ha preguntado, sin listar más de lo necesario.',
     ].join('\n'),
     isError: false,
   };
@@ -381,6 +437,9 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
         'que hay una consulta esperando respuesta, la enviara quien la enviara. Quién tiene que ' +
         'responder se deduce SOLO de quién envió el último elemento, que va dicho en cada fila.',
       'Solo metadatos: el contenido de estos hilos va cifrado y no se puede leer desde aquí.',
+      // La lista de Hilos no filtra por referencia ni por turno: no hay pantalla que enseñe esto, así
+      // que aquí el texto SÍ es la respuesta (decisión del PO, 14-oct-2026). Breve, no un volcado.
+      'La pantalla no se ha movido y la lista de Hilos no puede enseñar esto filtrado: tu respuesta es lo único que verá. Contesta solo lo que te ha preguntado, una línea por hilo como mucho.',
     ].join('\n'),
     isError: false,
   };

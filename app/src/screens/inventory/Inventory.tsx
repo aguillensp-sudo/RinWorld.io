@@ -147,9 +147,16 @@ interface Props {
    * él la tarjeta del canal email dice lo que decía antes (`Próximamente`, sin dirección).
    */
   onOpenIngest?: () => void;
+  /**
+   * El filtro y la búsqueda que deja VERA cuando contesta con una lista de líneas (decisión del PO,
+   * 14-oct-2026). Es un empujón, como `veraCriteria` en SRCH-01: se adopta y la pantalla sigue siendo la
+   * dueña, así que el usuario puede cambiarlos después. Depende de la IDENTIDAD del objeto: la misma
+   * petición dos veces vuelve a aplicarse. `null` no borra nada.
+   */
+  veraView?: { filter: Filter; search: string } | null;
 }
 
-export function Inventory({ profile, now, onOpenVisibility, onPickFile, onOpenIngest }: Props) {
+export function Inventory({ profile, now, onOpenVisibility, onPickFile, onOpenIngest, veraView }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [dzError, setDzError] = useState(false);
   const [dzDrag, setDzDrag] = useState(false);
@@ -172,14 +179,22 @@ export function Inventory({ profile, now, onOpenVisibility, onPickFile, onOpenIn
     pickFile(e.dataTransfer.files[0]);
   };
 
-  const [filter, setFilter] = useState<Filter>('todos');
+  const [filter, setFilter] = useState<Filter>(veraView?.filter ?? 'todos');
   const [page, setPage] = useState(1);
   /** Lo que hay escrito en la caja. */
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(veraView?.search ?? '');
   /** Lo que se ha buscado de verdad. Spec §3: la búsqueda es server-side y se
    *  ejecuta al pulsar Enter o la lupa — **no es live search**, porque el
    *  inventario puede llegar a 500.000 líneas. */
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(veraView?.search ?? '');
+
+  useEffect(() => {
+    if (!veraView) return;
+    setPage(1);
+    setFilter(veraView.filter);
+    setDraft(veraView.search);
+    setSearch(veraView.search);
+  }, [veraView]);
 
   const [lines, setLines] = useState<InventoryLine[]>([]);
   const [total, setTotal] = useState(0);

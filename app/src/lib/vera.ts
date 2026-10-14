@@ -15,6 +15,48 @@ import { runTool, type ToolContext } from './vera-tools';
  */
 export const MAX_STEPS = 4;
 
+/**
+ * La memoria de la conversación (`F-101`, decisión del PO del 14-oct-2026, `DECISIONES-V1.md`).
+ *
+ * Al modelo le llega el TEXTO de los últimos `HISTORY_WINDOW` intercambios —la pregunta y la
+ * respuesta final—, nunca sus `tool_use`/`tool_result`: un resultado de hace tres preguntas es un
+ * dato caducado, y reenviarlo sería invitarle a contestar con él en vez de volver a consultar
+ * (`realtime-platform-state-layer`). Lo que queda fuera de la ventana se le dice, para que no lo dé
+ * por sabido. El panel sigue enseñando la conversación entera: el límite es solo lo que ve el modelo.
+ *
+ * 20 es un parámetro y no una medida: se ajusta con lo que se mida contra Sonnet.
+ */
+export const HISTORY_WINDOW = 20;
+
+/**
+ * La memoria vive solo en memoria de la sesión y caduca a las 24 h del inicio de sesión
+ * (`session-context-layer`). Al cerrar sesión o recargar se pierde sola: no se guarda en ningún sitio.
+ */
+export const HISTORY_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Una pregunta del usuario y lo que VERA contestó. Solo se guardan las que tuvieron respuesta. */
+export interface Exchange {
+  question: string;
+  answer: string;
+}
+
+/** ¿Ha pasado el plazo de 24 h desde que empezó la sesión? Sin dato de inicio, no caduca. */
+export function historyExpired(sessionStartedAt: number | null, now: number): boolean {
+  return sessionStartedAt !== null && now - sessionStartedAt >= HISTORY_TTL_MS;
+}
+
+/** Los mensajes que ve el modelo de la conversación previa, y cuántos intercambios se han quedado fuera. */
+export function historyMessages(history: readonly Exchange[]): { messages: unknown[]; omitted: number } {
+  const ventana = history.slice(-HISTORY_WINDOW);
+  return {
+    messages: ventana.flatMap((x) => [
+      { role: 'user', content: x.question },
+      { role: 'assistant', content: x.answer },
+    ]),
+    omitted: history.length - ventana.length,
+  };
+}
+
 export interface ProxyToolUse {
   id: string;
   name: string;
@@ -31,6 +73,8 @@ export interface ProxyTurn {
 
 export interface ProxyRequest {
   messages: unknown[];
+  /** Intercambios anteriores que no caben en la ventana: el bloque dinámico se lo dice al modelo. */
+  omittedExchanges?: number;
 }
 
 /** El cliente LLM, inyectable: `CLAUDE.md` §5 obliga a mockearlo en unidad. */
@@ -53,13 +97,18 @@ export function proxyUrl(): string {
  *
  * `call` se inyecta: en producción es `createProxyCall`, en los tests es un
  * doble. Aquí no se importa nada de red a propósito.
+ *
+ * `history` son los intercambios anteriores de esta sesión (`F-101`); se recortan a la ventana aquí,
+ * y no en quien llama, para que ningún camino pueda mandar la conversación entera.
  */
 export async function ask(
   question: string,
   ctx: ToolContext,
   call: ProxyCall,
+  history: readonly Exchange[] = [],
 ): Promise<VeraAnswer> {
-  const messages: unknown[] = [{ role: 'user', content: question }];
+  const previo = historyMessages(history);
+  const messages: unknown[] = [...previo.messages, { role: 'user', content: question }];
   const toolsUsed: string[] = [];
   let steps = 0;
   let text = '';
@@ -67,7 +116,10 @@ export async function ask(
   while (steps < MAX_STEPS) {
     // Copia, no referencia: quien llama no debe ver mutar por debajo lo que ya
     // le mandamos, ni poder mutarnos el historial.
-    const turn = await call({ messages: [...messages] });
+    const turn = await call({
+      messages: [...messages],
+      ...(previo.omitted > 0 ? { omittedExchanges: previo.omitted } : {}),
+    });
     steps += 1;
     text = turn.text;
 
@@ -142,9 +194,20 @@ export function createProxyCall(
    * estático no puede cambiar entre peticiones o se pierde la caché
    * (`CLAUDE.md` §5).
    */
-  contexto: { orgName: string; fullName: string | null; pantalla?: string; hiloAbierto?: boolean },
+  /*
+   * `filtros` entra con `F-101`: los filtros puestos en Comprando cuando se escribió la pregunta. El
+   * usuario puede quitar un chip a mano entre una pregunta y otra, y entonces la pantalla y lo que el
+   * modelo recuerda de la conversación dicen cosas distintas: manda la pantalla.
+   */
+  contexto: {
+    orgName: string;
+    fullName: string | null;
+    pantalla?: string;
+    hiloAbierto?: boolean;
+    filtros?: string;
+  },
 ): ProxyCall {
-  return async ({ messages }) => {
+  return async ({ messages, omittedExchanges }) => {
     const accessToken = await getToken();
     if (!accessToken) {
       throw new Error('Tu sesión ha caducado. Vuelve a entrar para seguir hablando con VERA.');
@@ -156,7 +219,10 @@ export function createProxyCall(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ messages, contexto }),
+      body: JSON.stringify({
+        messages,
+        contexto: omittedExchanges ? { ...contexto, intercambiosOmitidos: omittedExchanges } : contexto,
+      }),
     });
 
     if (!r.ok) {

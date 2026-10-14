@@ -186,3 +186,289 @@ describe('VERA · prepara consultas y ofertas sin inventar', () => {
     expect(tools).toContain('EL PRECIO NO SE RELLENA NUNCA');
   });
 });
+
+// La guía de Vendiendo, el resto de Comprando e Hilos (12-oct-2026). Mismo mecanismo que arriba: cada
+// nombre que la guía cita ENTRE COMILLAS tiene que estar, literal, en el código de la pantalla de la que
+// habla. Aquí además se comprueba el entrecomillado en el prompt (un nombre suelto dentro de una frase no
+// prueba que VERA lo cite tal cual), y las afirmaciones de estructura (qué botón depende de qué estado,
+// qué acción no pide confirmación, qué botón está apagado) se atan al código que las decide. Si alguien
+// cambia una de ellas, este test obliga a actualizar la guía en el mismo cambio.
+describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta', () => {
+  const screen = (rel: string) => readFileSync(resolve(process.cwd(), 'src/screens', rel), 'utf8');
+  const lib = (rel: string) => readFileSync(resolve(process.cwd(), 'src/lib', rel), 'utf8');
+
+  const ofertasEnviadas = screen('selling/SentOffers.tsx') + screen('selling/SentOffersTable.tsx');
+  const libOfertasEnviadas = lib('sent-offers.ts');
+  const resultados = screen('search/SearchResults.tsx');
+  const tablaResultados = screen('search/ResultsTable.tsx');
+  const chips = screen('search/FilterChips.tsx');
+  const libBusqueda = lib('search.ts');
+  const lotes = screen('search/BatchSearch.tsx');
+  const tarjetaLote = screen('search/BatchCard.tsx');
+  const libLotes = lib('batch.ts');
+  const watchers = screen('search/Watchers.tsx');
+  const tarjetaWatcher = screen('search/WatcherCard.tsx');
+  const formWatcher = screen('search/WatcherEditForm.tsx');
+  const borrarWatcher = screen('search/DeleteWatcherModal.tsx');
+  const libWatchers = lib('watchers.ts');
+  const lista = screen('messages/Messages.tsx');
+  const hilo = screen('messages/Thread.tsx');
+  const cabecera = screen('messages/ThreadHeader.tsx');
+  const historial = screen('messages/ThreadHistory.tsx');
+  const pie = screen('messages/ThreadComposer.tsx');
+  const formOferta = screen('messages/OfferCounterForm.tsx');
+  const tablas = lib('negotiation-tables.ts');
+  const libOfertas = lib('offers.ts');
+  const libHilo = lib('thread-detail.ts');
+  const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+
+  it.each([
+    // Vendiendo
+    ['Mis ofertas', libOfertasEnviadas],
+    ['Referencia', ofertasEnviadas],
+    ['Organización', ofertasEnviadas],
+    ['Estado', ofertasEnviadas],
+    ['Fecha', ofertasEnviadas],
+    ['Acciones', ofertasEnviadas],
+    ['Buscar por referencia u organización…', libOfertasEnviadas],
+    ['Ver acuerdo', libOfertasEnviadas],
+    ['Ver hilo', libOfertasEnviadas],
+    // Comprando: resultados
+    ['Resultados de búsqueda', resultados],
+    ['Ref', libBusqueda],
+    ['Marca', libBusqueda],
+    ['Qty mín', libBusqueda],
+    ['Zona', libBusqueda],
+    ['Lead time máx', libBusqueda],
+    ['Filtro', chips],
+    ['Añadir', chips],
+    ['Seleccionar todos', resultados],
+    ['Deseleccionar todos', resultados],
+    ['Cantidad', tablaResultados],
+    ['Plazo', tablaResultados],
+    ['Empresa', tablaResultados],
+    ['País', tablaResultados],
+    ['Antigüedad', tablaResultados],
+    ['Favoritos', tablaResultados],
+    ['Contactar', tablaResultados],
+    ['Búsqueda por lotes', resultados],
+    ['Mis watchers', resultados],
+    // Comprando: búsqueda por lotes
+    ['Búsqueda por lotes', lotes],
+    ['Lista de referencias', lotes],
+    ['Buscar', lotes],
+    ['Continuar con las primeras 50', lotes],
+    ['Dividir en tandas', lotes],
+    ['Procesar la siguiente tanda', lotes],
+    ['Exportar resumen', lotes],
+    ['Sin resultados', libLotes],
+    ['No se pudo consultar', libLotes],
+    // Comprando: watchers
+    ['Mis watchers', watchers],
+    ['Todos', libWatchers],
+    ['Activos', libWatchers],
+    ['Pausados', libWatchers],
+    ['Disparados', libWatchers],
+    ['Pendientes de renovación', libWatchers],
+    ['Expirados', libWatchers],
+    ['In-app', tarjetaWatcher],
+    ['Email', tarjetaWatcher],
+    ['Pausar', tarjetaWatcher],
+    ['Reactivar', tarjetaWatcher],
+    ['Editar', tarjetaWatcher],
+    ['Eliminar', tarjetaWatcher],
+    ['Ver resultados', tarjetaWatcher],
+    ['Mantener activo 30 días más', tarjetaWatcher],
+    ['Dejar que expire', tarjetaWatcher],
+    ['Cantidad mínima', formWatcher],
+    ['País', formWatcher],
+    ['Canal email', formWatcher],
+    ['Guardar cambios', formWatcher],
+    ['Crear watcher con estos criterios', resultados],
+    ['Crear watchers para referencias sin stock', lotes],
+    ['Crear watcher', tarjetaLote],
+    // Hilos: la lista
+    ['Buscar por nombre de organización...', lista],
+    ['Nuevo contacto', lista],
+    ['Limpiar búsqueda', lista],
+    ['Página anterior', lista],
+    ['Página siguiente', lista],
+    // Hilos: un hilo abierto
+    ['Hilos', cabecera],
+    ['Acciones del hilo', cabecera],
+    ['Marcar acuerdo alcanzado', cabecera],
+    ['Cerrar sin acuerdo', cabecera],
+    ['Revertir a abierto', cabecera],
+    ['El acuerdo se alcanza aceptando una oferta.', libHilo],
+    ['¿Cerrar sin acuerdo?', hilo],
+    ['Cancelar', hilo],
+    ['Confirmar', hilo],
+    ['Ver lo que ve el servidor', historial],
+    ['Consultas', tablas],
+    ['Ofertas', tablas],
+    ['Cifrado', tablas],
+    ['—', tablas],
+    ['Responder con oferta', tablas],
+    ['Sin stock', tablas],
+    ['Aceptar', tablas],
+    ['Aceptar igualmente', tablas],
+    ['Contra-ofertar', tablas],
+    ['Rechazar', tablas],
+    ['Enviar oferta', historial],
+    ['Contra-oferta', formOferta],
+    ['Enviar contraoferta', formOferta],
+    ['Escribe un mensaje...', pie],
+    ['Enviar mensaje', pie],
+    ['Cifrado E2EE antes del envío', pie],
+  ])('"%s" está en la pantalla y entrecomillado en la guía', (nombre, codigo) => {
+    expect(prompt).toContain(`"${nombre}"`);
+    expect(codigo).toContain(nombre);
+  });
+
+  // Estados citados sin comillas, tal como los pinta cada pantalla.
+  it.each([
+    ['Pendiente', ofertasEnviadas],
+    ['Aceptada', ofertasEnviadas],
+    ['Rechazada', ofertasEnviadas],
+    ['Superada por contraoferta', ofertasEnviadas],
+    ['ACTIVE', libWatchers],
+    ['PAUSED', libWatchers],
+    ['TRIGGERED', libWatchers],
+    ['PENDIENTE RENOVACIÓN', libWatchers],
+    ['EXPIRED', libWatchers],
+    ['PENDIENTE', tablas],
+    ['RESPONDIDA', tablas],
+    ['SIN STOCK', tablas],
+    ['ACEPTADA', tablas],
+    ['RECHAZADA', tablas],
+    ['SUPERADA', tablas],
+    ['EXPIRADA', tablas],
+    ['CERRADO SIN ACUERDO', libOfertas],
+    ['ACUERDO ALCANZADO', libOfertas],
+  ])('el estado %s está en la pantalla y en la guía', (nombre, codigo) => {
+    expect(prompt).toContain(nombre);
+    expect(codigo).toContain(nombre);
+  });
+
+  // Textos que la guía cita con un número o un recuento en medio: el patrón vive en una función, no en un literal.
+  it('los textos con cifras de la guía salen de las plantillas de la pantalla', () => {
+    expect(prompt).toContain('"N / 50 referencias"');
+    expect(libLotes).toContain('/ ${MAX_BATCH} referencias');
+    expect(libLotes).toMatch(/MAX_BATCH = 50/);
+    expect(prompt).toContain('"Quedan N referencias por procesar."');
+    expect(lotes).toContain("'Quedan ' + pending.length + ' referencias por procesar.'");
+    expect(prompt).toContain('"Distribuidores: N · Máx: X u (marca, país)"');
+    expect(libLotes).toContain('Distribuidores: ${s.distributors} · Máx: ${quantityLabel(s.maxQuantity)} u (${s.maxBrand}, ${s.maxCountry})');
+    expect(prompt).toContain('"N referencias · X con stock · Y sin resultados"');
+    expect(libLotes).toContain('con stock · ${sin} sin resultados');
+    expect(prompt).toContain('"N / 50 watchers activos"');
+    expect(libWatchers).toMatch(/WATCHER_LIMIT = 50/);
+    expect(libWatchers).toContain('${activeWatcherCount(rows)} / ${WATCHER_LIMIT} watchers activos');
+    expect(libBusqueda).toContain('con stock ≥');
+    expect(resultados).toContain('Mostrando los primeros 200 resultados');
+    expect(libBusqueda).toMatch(/MAX_RESULTS = 200/);
+  });
+
+  // Vendiendo: una sola acción por fila, y ninguna de las que la guía dice que no existen.
+  it('Vendiendo: "Ver acuerdo" solo con la oferta Aceptada, y no hay retirar, renovar ni editar', () => {
+    expect(libOfertasEnviadas).toMatch(/state === 'Aceptada' \? 'Ver acuerdo' : 'Ver hilo'/);
+    expect(ofertasEnviadas).not.toMatch(/Retirar|Renovar|Editar/);
+    expect(ofertasEnviadas).not.toMatch(/content_ciphertext|decryptItem/);
+  });
+
+  it('Vendiendo, Comprando y Hilos: los botones llevan a donde la guía dice', () => {
+    expect(app).toMatch(/<SentOffers[\s\S]{0,200}setNav\(MESSAGES_NAV\);[\s\S]{0,60}setOpenThreadId\(threadId\)/);
+    expect(app).toMatch(/onOpenDirectory=\{\(\) => \{[\s\S]{0,120}setNav\(EMPRESAS_NAV\)/);
+    expect(app).toMatch(/const contactFromSearch[\s\S]{0,700}setNav\(MESSAGES_NAV\)[\s\S]{0,300}setNav\(EMPRESAS_NAV\)/);
+    expect(app).toMatch(/onViewResults=\{\(criteria\) => \{[\s\S]{0,80}setVeraCriteria\(criteria\)/);
+  });
+
+  // Comprando: lo que ordena, y lo que la guía dice que no hace nada.
+  it('Comprando: las seis cabeceras que ordenan son las que la guía nombra', () => {
+    for (const [etiqueta, clave] of [
+      ['Marca', 'brand'],
+      ['Cantidad', 'quantity'],
+      ['Plazo', 'leadTime'],
+      ['País', 'country'],
+      ['Antigüedad', 'age'],
+      ['Favoritos', 'favorites'],
+    ]) {
+      expect(tablaResultados).toContain(`{ label: '${etiqueta}', key: '${clave}', sortable: true }`);
+    }
+    for (const etiqueta of ['Referencia', 'Empresa']) {
+      expect(tablaResultados).toContain(`{ label: '${etiqueta}', sortable: false }`);
+    }
+  });
+
+  it('Lotes: no hay "Consultar seleccionados" y "Consultar" de las filas no abre nada, "Buscar" se apaga al pasar de 50', () => {
+    expect(lotes).toMatch(/const handleConsult = useCallback\(\(_lineId: string\) => \{\}, \[\]\);/);
+    expect(lotes).not.toMatch(/>\s*Consultar seleccionados\s*</);
+    expect(lotes).toMatch(/disabled=\{refs\.length === 0 \|\| overLimit \|\| loading\}/);
+    expect(lotes).toMatch(/const handleFirstFifty[\s\S]{0,160}runSearch\(primeras, \[\]\)/);
+    expect(lotes).toMatch(/const handleSplit[\s\S]{0,160}runSearch\(primeras, rest\)/);
+    expect(libLotes).toMatch(/split\(\/\[\\r\\n,;\\t\]\+\/\)/);
+    expect(lotes).toContain("type: 'text/csv'");
+  });
+
+  // Watchers: qué botón sale en qué estado, y que crear uno no se puede desde la interfaz.
+  it('Watchers: los botones de cada tarjeta dependen del estado como dice la guía', () => {
+    expect(tarjetaWatcher).toMatch(/\{isTriggered && \(\s*<button[\s\S]*?Ver resultados/);
+    expect(tarjetaWatcher).toMatch(/\{isRenewal && \(\s*<>[\s\S]*?Mantener activo 30 días más[\s\S]*?Dejar que expire/);
+    expect(tarjetaWatcher).toMatch(/\{isActive && \(\s*<button[\s\S]*?Pausar/);
+    expect(tarjetaWatcher).toMatch(/\{isPaused && \(\s*<button[\s\S]*?Reactivar/);
+    expect(tarjetaWatcher).toMatch(/\{\(isActive \|\| isPaused\) && \(\s*<button[\s\S]*?Editar/);
+    // Eliminar es el único botón fuera de toda condición, y EXPIRED no tiene ninguna condición propia.
+    expect(tarjetaWatcher).not.toMatch(/isExpired|state === 'EXPIRED'/);
+    expect(tarjetaWatcher).toMatch(/\)\}\s*<button[^>]*\s*type="button"[\s\S]{0,200}onClick=\{\(\) => onDelete\(row\)\}/);
+    expect(formWatcher).toContain('Referencia');
+    expect(formWatcher).toContain('Marca');
+    expect(borrarWatcher).toContain('Esta acción no se puede deshacer');
+    expect(watchers).toContain('<DeleteWatcherModal');
+  });
+
+  it('Watchers: crear uno no es posible desde la interfaz, como dice la guía', () => {
+    expect(resultados).toMatch(/disabled[\s\S]{0,400}Crear watcher con estos criterios/);
+    expect(lotes).toMatch(/disabled\s*title="[^"]*"\s*>\s*Crear watchers para referencias sin stock/);
+    expect(tarjetaLote).toMatch(/disabled[\s\S]{0,400}Crear watcher\s*<\/button>/);
+    expect(libWatchers).not.toMatch(/createWatcher|\.insert\(/);
+  });
+
+  // Hilos: la cabecera, el cierre, la reversión y las acciones sobre consultas y ofertas.
+  it('Hilos: "Marcar acuerdo alcanzado" siempre apagado; cerrar y revertir dependen del estado', () => {
+    expect(cabecera).toMatch(/<button type="button" className=\{styles\.actionButton\} disabled>\s*Marcar acuerdo alcanzado/);
+    expect(libOfertas).toMatch(/canCloseThread\(state: ThreadState\): boolean \{\s*return state !== 'CERRADO SIN ACUERDO';/);
+    expect(libOfertas).toMatch(/canRevertAgreement\(state: ThreadState\): boolean \{\s*return state === 'ACUERDO ALCANZADO';/);
+  });
+
+  it('Hilos: cerrar pide confirmación; revertir, aceptar, rechazar y "Sin stock" actúan al pulsar', () => {
+    expect(hilo).toMatch(/const handleClose = useCallback\(\(\) => \{\s*setConfirmOpen\(true\);/);
+    const bloque = (nombre: string) => hilo.match(new RegExp(`const ${nombre} = useCallback\\([\\s\\S]*?\\],?\\s*\\);`))?.[0] ?? '';
+    for (const [nombre, escritura] of [
+      ['handleRevert', 'revertAgreement'],
+      ['handleAcceptOffer', 'acceptOffer'],
+      ['handleRejectOffer', 'rejectOffer'],
+      ['handleOutOfStock', 'markOutOfStock'],
+    ]) {
+      const cuerpo = bloque(nombre as string);
+      expect(cuerpo).toContain(escritura);
+      expect(cuerpo).not.toContain('setConfirmOpen');
+    }
+  });
+
+  it('Hilos: quién ve qué botón en las tablas (solo el receptor, solo Pendiente; expirada cambia Aceptar)', () => {
+    expect(libOfertas).toMatch(/if \(offer\.state !== 'Pendiente'\) return \[\];\s*if \(offer\.senderOrgId === viewerOrgId\) return \[\];\s*return \['aceptar', 'rechazar', 'contraofertar'\];/);
+    expect(tablas).toMatch(/const decide = !item\.isOwn && state === 'Pendiente';/);
+    expect(tablas).toContain("actions: decide ? ['responder', 'sin-stock'] : [],");
+    expect(tablas).toContain("actions.push(expired ? 'aceptar-igualmente' : 'aceptar')");
+    expect(tablas).toMatch(/base\.includes\('contraofertar'\) && !expired/);
+    expect(tablas).toContain('counterDisabledReason');
+    expect(historial).toContain('title="Responder con oferta"');
+    expect(formOferta).toContain("title = 'Contra-oferta'");
+    expect(formOferta).toContain('Datos de la oferta original, pre-rellenados.');
+  });
+
+  it('Hilos: el campo de mensaje envía con Intro y salta de línea con Alt o Mayús', () => {
+    expect(pie).toMatch(/if \(e\.key !== 'Enter' \|\| e\.nativeEvent\.isComposing\) return;/);
+    expect(pie).toMatch(/if \(e\.altKey \|\| e\.shiftKey\)/);
+  });
+});

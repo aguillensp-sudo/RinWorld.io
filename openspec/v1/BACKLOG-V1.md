@@ -15,6 +15,10 @@ Cada fila dice **qué es**, **qué la activa** (el disparador) y **dónde está 
 | **RPC `search_catalog` para la búsqueda cruzada** (entregable 5 de Fundación). `0064` ya bajó la búsqueda de 3,1 s a 45 ms con el catálogo de hoy; con 1M de líneas la política sigue recorriendo la tabla (0,5–2,2 s) y la RPC con índice parcial la dejaría en 50–200 ms. Cambia el cliente y el total pasa a «más de 10.000» | Un catálogo real que pase de ~100.000 líneas, o una prueba de carga | `findings/F-253.md` |
 | **Cifras 7 y 8 del umbral de fábrica**: solo `SRCH-03` tiene medida limpia | Una sesión propia por pantalla | `F-205`, `UMBRAL-FABRICA-V1.md` |
 | **Vercel en plan gratuito** | Antes de tráfico real o de una demo con cliente | — |
+| **VERA sin límite de preguntas por usuario y hora, y sin registro de `usage` por pregunta** (el tope de tamaño por petición sí está) | Antes de abrir el registro a terceros | `F-256` |
+| **VERA sin registro de auditoría de sus acciones** (`action-audit-logging`) | Antes de la primera herramienta de VERA que escriba en la base | `F-257` |
+| **VERA sin preferencias persistentes** (`profile-context-layer`, «Ajustes → Asistente VERA») | Producto lo prioriza | `F-257` |
+| **`navegar` solo lleva a cinco pantallas**: ampliarlo a Empresas y Foros está propuesto (enum de `tools.json`, `SCREENS`, el mensaje de error y la frase del prompt) | El PO decide | `F-255` |
 
 ## Decididas y cerradas el 14-oct-2026 (no hay nada que hacer)
 

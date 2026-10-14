@@ -48,13 +48,21 @@ export const TOOL_NAMES = [
 export type ToolName = (typeof TOOL_NAMES)[number];
 
 /**
- * Las cinco pantallas construidas, de los ocho ítems de `NAV_ITEMS`.
+ * Las pantallas a las que `navegar` puede llevar: siete de los ocho ítems de `NAV_ITEMS`.
  *
  * ⚠ La lista se repite aquí a propósito en vez de derivarse de `NAV_ITEMS`:
  * `NAV_ITEMS` son los ítems del menú aprobado —ocho— y estas son las que
- * existen —cinco—. Derivarla borraría justo la diferencia que hay que vigilar.
+ * existen —siete—. Derivarla borraría justo la diferencia que hay que vigilar:
+ * `Contacto` está en el menú y pinta `NotAvailable`.
+ *
+ * Empresas y Foros entran el 14-oct-2026 (decisión del PO): estaban construidas
+ * desde agosto y la lista seguía siendo la del MVP. Se llega a su entrada —el
+ * Directorio, la lista de categorías—, porque `navigate()` de `App.tsx` limpia la
+ * ficha, la categoría y el hilo del foro al cambiar de ítem.
+ *
+ * Y NO es la lista de dónde está el usuario: esa es `veraScreenName` (`F-255`).
  */
-export const SCREENS = ['Panel', 'Vendiendo', 'Comprando', 'Hilos', 'Inventario'] as const;
+export const SCREENS = ['Panel', 'Vendiendo', 'Comprando', 'Hilos', 'Inventario', 'Empresas', 'Foros'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 /**
@@ -577,12 +585,16 @@ function navegar(input: unknown, ctx: ToolContext): ToolResult {
   if (!(SCREENS as readonly string[]).includes(destino)) {
     /*
      * `navIndexOf` devuelve 0 —Panel— para cualquier etiqueta que no encuentre,
-     * y `Empresas`, `Foros` y `Contacto` SÍ están en el menú. Sin este corte,
-     * "llévame a Empresas" aterrizaría en Panel y VERA diría que ya está: un
-     * recorte silencioso contado con aplomo.
+     * y `Contacto` SÍ está en el menú. Sin este corte, "llévame a Contacto"
+     * aterrizaría en Panel y VERA diría que ya está: un recorte silencioso
+     * contado con aplomo. El mensaje distingue Contacto (existe en el menú, no
+     * está construida) de un nombre que no es ninguna pantalla.
      */
     return {
-      content: `«${destino}» está en el menú pero no está construida en el MVP. Las que existen: ${SCREENS.join(', ')}.`,
+      content:
+        destino === 'Contacto'
+          ? `«Contacto» está en el menú pero todavía no está construida. A las que puedes llevar: ${SCREENS.join(', ')}.`
+          : `«${destino}» no es una pantalla a la que puedas llevar al usuario. Las que hay: ${SCREENS.join(', ')}.`,
       isError: true,
     };
   }

@@ -83,8 +83,8 @@
       "properties": {
         "pantalla": {
           "type": "string",
-          "enum": ["Panel", "Vendiendo", "Comprando", "Hilos", "Inventario"],
-          "description": "Destino. 'Comprando' es la búsqueda en catálogo, 'Vendiendo' son las ofertas enviadas, 'Inventario' es el stock propio, 'Hilos' son las negociaciones. Son las cinco pantallas a las que puedes llevar al usuario. La aplicación tiene más pantallas (Empresas, Foros…), pero esta herramienta no puede abrirlas."
+          "enum": ["Panel", "Vendiendo", "Comprando", "Hilos", "Inventario", "Empresas", "Foros"],
+          "description": "Destino. 'Comprando' es la búsqueda en catálogo, 'Vendiendo' son las ofertas enviadas, 'Inventario' es el stock propio, 'Hilos' son las negociaciones, 'Empresas' es el Directorio de Organizaciones y 'Foros' es el foro de la comunidad. Lleva a la entrada de cada una —el Directorio, la lista de categorías—, no a una ficha, una categoría o un hilo concretos. 'Contacto' está en el menú pero todavía no existe."
         }
       },
       "required": ["pantalla"]

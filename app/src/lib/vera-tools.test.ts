@@ -4,7 +4,9 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MemberProfile } from './session';
 import type { SearchCriteria } from './search';
+import { NAV_ITEMS } from '../shell/AppShell';
 import {
+  SCREENS,
   TOOL_NAMES,
   criteriaFromInput,
   leaksCiphertext,
@@ -429,15 +431,46 @@ describe('navegar', () => {
 
   /**
    * `navIndexOf` devuelve 0 (Panel) para cualquier etiqueta que no encuentre, y
-   * `Empresas` SÍ está en `NAV_ITEMS` pero no tiene pantalla en el MVP. Sin este
-   * corte, "llévame a Empresas" aterrizaría en Panel sin decir nada: el patrón
-   * de recorte silencioso de F-023, que es el riesgo #1 con otra cara.
+   * `Contacto` SÍ está en `NAV_ITEMS` pero no tiene pantalla. Sin este corte,
+   * "llévame a Contacto" aterrizaría en Panel sin decir nada: el patrón de
+   * recorte silencioso de F-023, que es el riesgo #1 con otra cara. Hasta el
+   * 14-oct-2026 este caso era Empresas; desde ese día Empresas y Foros sí se abren.
    */
   it('una pantalla del nav que no está construida se rechaza, no aterriza en Panel', async () => {
-    const r = await runTool('navegar', { pantalla: 'Empresas' }, contexto());
+    const r = await runTool('navegar', { pantalla: 'Contacto' }, contexto());
     expect(r.isError).toBe(true);
-    expect(r.content).toContain('Empresas');
+    expect(r.content).toContain('«Contacto» está en el menú pero todavía no está construida');
     expect(navegadoA).toEqual([]);
+  });
+
+  it('Empresas y Foros se abren (14-oct-2026, decisión del PO)', async () => {
+    for (const pantalla of ['Empresas', 'Foros'] as const) {
+      const r = await runTool('navegar', { pantalla }, contexto());
+      expect(r.isError).toBe(false);
+      expect(r.content).toBe(`Abierta la pantalla ${pantalla}.`);
+    }
+    expect(navegadoA).toEqual(['Empresas', 'Foros']);
+  });
+
+  it('un nombre que no es ninguna pantalla se rechaza sin decir que está en el menú', async () => {
+    const r = await runTool('navegar', { pantalla: 'Ajustes' }, contexto());
+    expect(r.isError).toBe(true);
+    expect(r.content).toContain('no es una pantalla a la que puedas llevar');
+    expect(r.content).not.toContain('está en el menú');
+    expect(navegadoA).toEqual([]);
+  });
+
+  it('el enum de tools.json y SCREENS dicen lo mismo, en el mismo orden', () => {
+    const navegar = (JSON.parse(readFileSync(TOOLS_JSON, 'utf8')) as {
+      name: string;
+      input_schema: { properties: { pantalla?: { enum: string[] } } };
+    }[]).find((t) => t.name === 'navegar')!;
+    expect(navegar.input_schema.properties.pantalla!.enum).toEqual([...SCREENS]);
+  });
+
+  it('cada destino de navegar es un ítem real del menú (si no, navIndexOf lo llevaría al Panel)', () => {
+    const etiquetas = NAV_ITEMS.map((n) => n.label as string);
+    for (const s of SCREENS) expect(etiquetas).toContain(s);
   });
 
   it('sin pantalla no navega a ninguna parte', async () => {

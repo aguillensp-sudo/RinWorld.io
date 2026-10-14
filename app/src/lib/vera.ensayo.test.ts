@@ -440,8 +440,15 @@ describe.skipIf(!ACTIVA)('ENSAYO GENERAL · guion-sesion-2 §4 contra la v5 desp
     sinMarkdown(a.respuesta);
   }, TIMEOUT);
 
-  it('B5 · Panel · «llévame a Empresas» — la pantalla que no existe', async () => {
+  // Desde el 14-oct-2026 (decisión del PO) Empresas y Foros SÍ se abren: lo que era la trampa pasa a ser el caso bueno.
+  it('B5 · Panel · «llévame a Empresas» — se abre el Directorio', async () => {
     const a = await preguntar('B5', 'Panel', 'Llévame al listado de Empresas');
+    expect(a.navegoA).toEqual(['Empresas']);
+    sinMarkdown(a.respuesta);
+  }, TIMEOUT);
+
+  it('B6 · Panel · «llévame a Contacto» — la pantalla que no existe', async () => {
+    const a = await preguntar('B6', 'Panel', 'Llévame a Contacto');
     /*
      * ⛔ `navIndexOf` devuelve 0 para cualquier etiqueta que no encuentre, así
      * que una llamada a `navegar` dejaría al usuario en el Panel COMO SI

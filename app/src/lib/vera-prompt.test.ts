@@ -29,6 +29,15 @@ describe('VERA · no inventa la interfaz', () => {
     expect(tools).not.toContain('únicas pantallas que existen');
     expect(tools).not.toContain('NO están construidas');
   });
+
+  // 14-oct-2026, decisión del PO: navegar lleva también a Empresas y Foros.
+  it('el prompt y tools.json dicen que navegar abre siete pantallas, a su entrada, y que Contacto no existe', () => {
+    expect(prompt).toContain('una de las siete que acepta la herramienta navegar (Panel, Vendiendo, Comprando, Hilos, Inventario, Empresas, Foros)');
+    expect(prompt).toContain('el Directorio en Empresas y la lista de categorías en Foros');
+    expect(prompt).not.toContain('una de las cinco que acepta la herramienta navegar');
+    expect(tools).not.toContain('esta herramienta no puede abrirlas');
+    expect(tools).toContain("'Contacto' está en el menú pero todavía no existe");
+  });
 });
 
 // La GUÍA VERIFICADA del prompt solo vale mientras lo que dice siga en la pantalla. Cada nombre que cita

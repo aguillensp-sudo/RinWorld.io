@@ -24,6 +24,15 @@ export default defineConfig({
   // con varios workers, tests ajenos se pisaban filas y fallaban a ratos.
   workers: 1,
   reporter,
+  // 15 s por aserción, no los 5 s por defecto (F-259). `bearingworld-e2e` es una
+  // instancia compartida que se para 4-13 s varias veces por hora de uso, auth
+  // incluida: medido en sus edge_logs el 14-oct, 22 peticiones de más de 4 s en
+  // la hora de la corrida que falló en `keys-intro` y `messages` — hasta una
+  // lectura de `members` por clave primaria. Una aserción que se cumple vuelve en
+  // cuanto se cumple, así que esto solo alarga lo que ya iba a fallar. El test
+  // sube a 60 s para que tres esperas largas seguidas quepan.
+  expect: { timeout: 15_000 },
+  timeout: 60_000,
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',

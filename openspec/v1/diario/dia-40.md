@@ -42,6 +42,7 @@ con él, decisión a decisión (`DECISIONES-V1.md`, cuatro filas del 14-oct):
   preguntado a Sonnet**: el plan está escrito (`vera-plan-pruebas-sonnet.md`, ~120 preguntas, 4–10 $, tope
   propuesto 15 $) y espera el visto bueno.
 - **`navegar` a Empresas y Foros:** propuesto con su alcance y aprobado por el PO al final de la tarde («adelante»); hecho en un empuje aparte. La trampa de la sonda `B5` («llévame a Empresas») pasa a ser el caso bueno, y el aterrizaje silencioso en el Panel se vigila ahora con Contacto (`B6`).
+- **Sonnet 5.** El PO preguntó por qué el plan decía 4.6. Lo que corría era 4.6 (código del MVP) y lo decidido para V1 es Sonnet 5 vía Vertex. Se separan los dos cambios: el modelo ahora, por la API directa, y el proveedor cuando haya cupo. Así se mide VERA una sola vez. `MAX_TOKENS` sube a 3072 por el tokenizador nuevo; el plan se rehace (3–8 $, tope 10 $) con un bloque para lo propio de Sonnet 5.
 
 ## Otros frentes de la tarde (sesión de relevo)
 

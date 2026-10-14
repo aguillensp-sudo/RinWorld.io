@@ -1,4 +1,4 @@
-# VERA contra Sonnet real · plan de pruebas (14-oct-2026, SIN EJECUTAR)
+# VERA contra Sonnet 5 real · plan de pruebas (14-oct-2026, SIN EJECUTAR)
 
 **Estado: redactado, no ejecutado.** Ninguna llamada de este plan se hace sin el visto bueno explícito del PO
 (cuestan, y los tests de integración no corren en CI: `CLAUDE.md` §5). Lo que hoy prueba la suite —`vera-prompt.test.ts`,
@@ -9,16 +9,22 @@ Cubre lo que entró el 14-oct: las ocho entradas nuevas de la guía (`5dc1624`),
 memoria (`F-101`), el contexto de pantalla corregido (`F-255`) y la regla de no repetir lo que la pantalla enseña
 (`DECISIONES-V1.md`, 14-oct).
 
+**Contra Sonnet 5 (`claude-sonnet-5`), no contra 4.6** (PO, 14-oct-2026): es el modelo de V1 y el que va a
+quedarse; se cambió el modelo antes que el proveedor para medir una sola vez. Por eso **esta es la primera
+línea base de Sonnet 5**: lo medido en agosto (sondas `vera.probe`, `vera.ensayo`) era Sonnet 4.6 y no se compara
+número a número. El paso a Vertex UE cambiará solo el proveedor y bastará una comprobación corta (§9).
+
 ## 1 · Antes de empezar
 
 1. **El despliegue, comprobado por contenido**, no por HTTP 200 (`F-168`): `get_edge_function` de `vera` contiene
-   `LA CONVERSACIÓN TE LLEGA; LOS DATOS, NO` y `MAX_MENSAJES = 60`; el bundle de `rin-world-io.vercel.app` contiene
+   `const MODELO = 'claude-sonnet-5';`, `LA CONVERSACIÓN TE LLEGA; LOS DATOS, NO` y `MAX_MENSAJES = 60`; el bundle de `rin-world-io.vercel.app` contiene
    `mostrar_en_pantalla`.
 2. **Los datos, tal como están.** No se resiembra nada para esto. **Cuscinetti Padana no se toca** (deja de estar
    `ACTIVE` el 20-oct): ni resiembra ni reactivación. Si una pregunta depende de su estado, se anota y se sigue.
 3. **Cuentas** (`app/.env`, `CLAUDE.md` §10.1): `E2E_ALPHA` (ADMIN compradora) para casi todo; `E2E_EDITOR` (EDITOR)
    para Configuración; `E2E_BETA` (vendedora) para las preguntas de Vendiendo. Las contraseñas no se imprimen.
-4. **La primera llamada reescribe la caché** del prefijo (~13.000 tokens estimados: prompt estático + herramientas).
+4. **La primera llamada reescribe la caché** del prefijo (~17.000 tokens estimados con el tokenizador de Sonnet 5,
+   que cuenta ~30 % más que el de 4.6: prompt estático + herramientas; el mínimo cacheable sigue en 1024).
    Se anota su `cache_creation_input_tokens` y, desde la segunda, que `cache_read_input_tokens` sea igual. Si la
    lectura sale en cero, se para: hay un invalidador y el coste se dispara.
 
@@ -119,27 +125,47 @@ cualquier dato (nunca lo copia de una respuesta anterior) y manda a `buscar_en_c
 - Inventario en número, **desde un hilo abierto** («¿cuántas 6204 tengo?»): **no** mueve la pantalla.
 - Hilos («¿qué hilos tengo con CON OFERTA PENDIENTE?»): texto breve, una línea por hilo.
 
-## 7 · Coste estimado
+## 7 · Bloque E · lo propio de Sonnet 5 (se mira en todo lo anterior, no son preguntas aparte)
 
-Tarifa de Sonnet 4.6 (referencia de la API, consultada el 14-oct-2026): entrada 3 $/M, salida 15 $/M, escritura en
-caché ×1,25 de la entrada, lectura ×0,1 (0,30 $/M); el razonamiento adaptativo se factura como salida.
+El prompt se escribió y se afinó con Sonnet 4.6. Según la guía de migración de la API, Sonnet 5 cambia en cuatro
+cosas que tocan a VERA, y el registro tiene que dejar ver cada una:
+
+- **Sigue las instrucciones de forma más literal.** El prompt tiene muchas órdenes en mayúsculas («NO LO BUSQUES»,
+  «NUNCA expliques…»). Riesgo: que las aplique de más —negarse a dar criterio general, repreguntar cuando sí hay
+  búsqueda previa, una línea donde hacía falta contestar una pregunta—. Se anota cada respuesta **demasiado
+  restrictiva** como fallo, igual que una inventada.
+- **Usa más herramientas por iniciativa propia.** Riesgo: más vueltas y llegar al tope `MAX_STEPS = 4` («No he
+  podido terminar de responder»). Se cuentan las vueltas por pregunta y cada vez que se agota el tope.
+- **Tokenizador nuevo (~30 % más tokens).** `MAX_TOKENS` subió de 2048 a 3072 por esto. Se cuenta cada
+  `stop_reason: max_tokens`; si aparece, se sube el tope antes que tocar el prompt.
+- **`effort: medium` en Sonnet 5 equivale más o menos a `high` en 4.6.** Si razona poco antes de afirmar, la
+  palanca es subir el effort, no añadir prompt. El runner registra también `stop_reason: refusal` (salvaguardas
+  del modelo; con rodamientos no se espera, pero un rechazo hoy acaba en «No he podido terminar» sin más).
+
+## 8 · Coste estimado
+
+Tarifa de Sonnet 5 (referencia de la API, consultada el 14-oct-2026): entrada 2 $/M, salida 10 $/M, escritura en
+caché ×1,25 de la entrada (2,50 $/M), lectura ×0,1 (0,20 $/M); el razonamiento adaptativo se factura como salida.
+Los tokens, con el tokenizador de Sonnet 5 (~30 % más que en 4.6 por el mismo texto).
 
 | Por llamada al modelo (estimado) | Tokens | Coste |
 |---|---|---|
-| Prefijo leído de caché | ~13.000 | ~0,004 $ |
-| Entrada sin caché (contexto, pregunta, retornos; con historial largo, más) | 1.000 – 8.000 | 0,003 – 0,024 $ |
-| Salida (respuesta + razonamiento con `effort: medium`) | 300 – 1.000 | 0,005 – 0,015 $ |
+| Prefijo leído de caché | ~17.000 | ~0,003 $ |
+| Entrada sin caché (contexto, pregunta, retornos; con historial largo, más) | 1.300 – 10.000 | 0,003 – 0,020 $ |
+| Salida (respuesta + razonamiento con `effort: medium`) | 400 – 1.300 | 0,004 – 0,013 $ |
 
-Una pregunta son una o dos llamadas: **~0,03 – 0,08 $ por pregunta**. Con ~120 preguntas, **~4 – 10 $ la pasada
-completa**; repetir tres veces las trampas del bloque C (lo que más varía de una vez a otra) suma ~3 $. **Tope que
-propongo pedir al PO: 15 $.** Cada escritura de caché (la primera llamada, y cada vez que pasen más de 5 minutos sin
-preguntar) añade ~0,05 $. Las cifras de tokens son estimaciones por caracteres; las reales salen del `usage` de la
+Una pregunta son una o dos llamadas: **~0,02 – 0,07 $ por pregunta**, algo menos que con 4.6 (más tokens, pero a
+menor precio). Con ~120 preguntas, **~3 – 8 $ la pasada completa**; repetir tres veces las trampas del bloque C (lo
+que más varía de una vez a otra) suma ~2 $. **Tope que propongo pedir al PO: 10 $.** Cada escritura de caché (la
+primera llamada, y cada vez que pasen más de 5 minutos sin preguntar) añade ~0,04 $. Las cifras de tokens son estimaciones por caracteres; las reales salen del `usage` de la
 primera pasada, y si se alejan más de un 50 % se para y se recalcula antes de seguir.
 
-## 8 · Qué sale de aquí
+## 9 · Qué sale de aquí
 
 - El registro, con el veredicto de cada caso y el `usage` total (coste real y aciertos de caché declarados,
   `CLAUDE.md` §6).
 - Un hallazgo por fallo nuevo (`findings/F-NNN.md`), y el cierre o no de `F-101` y `F-255` según lo medido.
 - La fila de `ESTADO-V1.md` §6 «Qué contesta VERA» deja de ser una incógnita.
-- El número de la ventana (20) y el `effort`, ajustados con lo medido si hace falta (son parámetros).
+- El número de la ventana (20), el `effort` y `MAX_TOKENS`, ajustados con lo medido si hace falta (son parámetros).
+- **Para el paso a Vertex UE** (entregable 6): con esta línea base hecha, basta repetir una muestra —una pregunta por
+  bloque y las trampas del C, ~20 preguntas, ~1 $— contra el proveedor nuevo y comprobar que contesta igual.

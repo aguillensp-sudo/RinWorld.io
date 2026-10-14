@@ -130,6 +130,11 @@ describe('INV-04 · IngestChannel', () => {
     expect(screen.getByText('EMAILS QUE NO ESTÁN EN LA LISTA SE RECHAZAN SILENCIOSAMENTE POR NUESTRO SISTEMA')).toBeInTheDocument();
   });
 
+  it('avisa de que el dominio del remitente necesita DMARC o DKIM (F-252)', async () => {
+    await montar();
+    expect(screen.getByText(/dominio de cada remitente tiene que publicar DMARC o DKIM/)).toBeInTheDocument();
+  });
+
   it('rotar pide confirmación y NO rota hasta confirmar', async () => {
     await montar();
     await userEvent.click(screen.getByRole('button', { name: 'Rotar dirección' }));

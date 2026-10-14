@@ -289,6 +289,14 @@
   color: var(--bw-input-placeholder);
 }
 
+/* F-252: aviso en frase normal (no en mayúsculas) justo debajo del hint de la spec. */
+.domainHint {
+  margin: 8px 0 0;
+  font-size: var(--bw-size-hint);
+  line-height: 1.5;
+  color: var(--bw-input-placeholder);
+}
+
 /* ── Historial ─────────────────────────────────────────────────────────── */
 
 .empty {

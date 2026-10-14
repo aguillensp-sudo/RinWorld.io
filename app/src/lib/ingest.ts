@@ -38,6 +38,13 @@ export const ACCEPTED_FORMATS_NOTICE =
 
 export const READ_ONLY_NOTICE = 'Solo un administrador de tu organización gestiona el canal de ingestión por email.';
 export const REJECTED_SILENTLY_HINT = 'EMAILS QUE NO ESTÁN EN LA LISTA SE RECHAZAN SILENCIOSAMENTE POR NUESTRO SISTEMA';
+/**
+ * F-252: la puerta de SES acepta un correo si el dominio del remitente publica DMARC, o SPF y DKIM alineados.
+ * Un dominio que no publica ninguno se rechaza (`AUTENTICACION`) aunque el remitente esté en la lista, y el
+ * remitente no ve nada. Texto añadido a mano: no está en el HTML aprobado.
+ */
+export const SENDER_DOMAIN_AUTH_HINT =
+  'Además, el dominio de cada remitente tiene que publicar DMARC o DKIM. Si no lo hace, su correo se rechaza aunque esté en la lista; quien gestiona ese dominio puede publicarlo.';
 export const ROTATED_MESSAGE = 'Dirección rotada. La anterior ya no es válida — actualiza cualquier sistema que la estuviera usando.';
 
 /** Hasta aquí llega la lista de remitentes (`add_ingest_sender`). */

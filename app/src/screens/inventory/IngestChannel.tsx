@@ -12,6 +12,7 @@ import {
   READ_ONLY_NOTICE,
   reasonLabel,
   REJECTED_SILENTLY_HINT,
+  SENDER_DOMAIN_AUTH_HINT,
   removeIngestSender,
   RESULT_LABELS,
   rotateIngestAddress,
@@ -287,6 +288,7 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
               </button>
             )}
             <p className={styles.hint}>{REJECTED_SILENTLY_HINT}</p>
+            <p className={styles.domainHint}>{SENDER_DOMAIN_AUTH_HINT}</p>
           </section>
 
           <section className={styles.card} aria-labelledby="ingest-history-title">

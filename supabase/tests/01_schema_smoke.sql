@@ -6669,4 +6669,69 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- 0064 · F-253 · la visibilidad calculada una vez da lo MISMO que la funcion por fila
+-- -----------------------------------------------------------------------------
+-- Cinco organizaciones que cubren las ramas: abierta (VISIBLE_TODOS), restringida sin exclusiones,
+-- restringida con exclusion por organizacion, por pais y por continente. Para cada espectador (uno por
+-- organizacion, y uno sin organizacion) el conjunto de propietarios visibles de
+-- `app.visible_inventory_owner_ids()` tiene que ser igual al de `app.can_view_inventory_of(id)`.
+insert into public.organizations (id, name, country, continent, status, inventory_visibility_mode) values
+  ('b6400001-0000-4000-8000-000000000001', 'Vis 64 abierta',        'ES', 'EU', 'APPROVED', 'VISIBLE_TODOS'),
+  ('b6400002-0000-4000-8000-000000000002', 'Vis 64 restringida',    'FR', 'EU', 'APPROVED', 'RESTRINGIDA'),
+  ('b6400003-0000-4000-8000-000000000003', 'Vis 64 sin ES',         'US', 'NA', 'APPROVED', 'RESTRINGIDA'),
+  ('b6400004-0000-4000-8000-000000000004', 'Vis 64 sin Europa',     'DE', 'EU', 'APPROVED', 'RESTRINGIDA'),
+  ('b6400005-0000-4000-8000-000000000005', 'Vis 64 sin esa org',    'BR', 'SA', 'APPROVED', 'RESTRINGIDA');
+insert into auth.users (id, email) values
+  ('b6400101-0000-0000-0000-000000000001', 'v1@vis64.test'), ('b6400102-0000-0000-0000-000000000002', 'v2@vis64.test'),
+  ('b6400103-0000-0000-0000-000000000003', 'v3@vis64.test'), ('b6400104-0000-0000-0000-000000000004', 'v4@vis64.test'),
+  ('b6400105-0000-0000-0000-000000000005', 'v5@vis64.test');
+insert into public.members (id, org_id, email, state) values
+  ('b6400101-0000-0000-0000-000000000001', 'b6400001-0000-4000-8000-000000000001', 'v1@vis64.test', 'ACTIVE'),
+  ('b6400102-0000-0000-0000-000000000002', 'b6400002-0000-4000-8000-000000000002', 'v2@vis64.test', 'ACTIVE'),
+  ('b6400103-0000-0000-0000-000000000003', 'b6400003-0000-4000-8000-000000000003', 'v3@vis64.test', 'ACTIVE'),
+  ('b6400104-0000-0000-0000-000000000004', 'b6400004-0000-4000-8000-000000000004', 'v4@vis64.test', 'ACTIVE'),
+  ('b6400105-0000-0000-0000-000000000005', 'b6400005-0000-4000-8000-000000000005', 'v5@vis64.test', 'ACTIVE');
+insert into public.inventory_exclusions (owner_org_id, excluded_org_id)  values ('b6400005-0000-4000-8000-000000000005', 'b6400002-0000-4000-8000-000000000002');
+insert into public.inventory_exclusions (owner_org_id, excluded_country) values ('b6400003-0000-4000-8000-000000000003', 'ES');
+insert into public.inventory_exclusions (owner_org_id, excluded_continent) values ('b6400004-0000-4000-8000-000000000004', 'EU');
+-- Una exclusion sobre una organizacion ABIERTA no cuenta (VISIBLE_TODOS gana): la ultima rama.
+insert into public.inventory_exclusions (owner_org_id, excluded_country) values ('b6400001-0000-4000-8000-000000000001', 'US');
+
+do $$
+declare
+  v record;
+  por_fila uuid[];
+  por_conjunto uuid[];
+  n int := 0;
+begin
+  for v in
+    select id from public.members where id::text like 'b64001%'
+    union all select '00000000-0000-0000-0000-0000000000f0'::uuid
+  loop
+    perform set_config('request.jwt.claim.sub', v.id::text, true);
+    select coalesce(array_agg(o.id order by o.id), '{}') into por_fila
+      from public.organizations o where app.can_view_inventory_of(o.id);
+    select coalesce(array_agg(x order by x), '{}') into por_conjunto
+      from app.visible_inventory_owner_ids() x;
+    assert por_fila = por_conjunto,
+      '0064: el espectador ' || v.id || ' ve distinto: por fila ' || por_fila::text || ' / por conjunto ' || por_conjunto::text;
+    n := n + 1;
+  end loop;
+  assert n = 6, '0064: se comprobaron 6 espectadores, hay ' || n;
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f0', true);
+  assert (select count(*) from app.visible_inventory_owner_ids()) = 0, '0064: sin organizacion no se ve ninguna';
+  perform set_config('request.jwt.claim.sub', 'b6400102-0000-0000-0000-000000000002', true);
+  assert exists (select 1 from app.visible_inventory_owner_ids() x where x = 'b6400001-0000-4000-8000-000000000001'), '0064: ve la abierta';
+  perform set_config('request.jwt.claim.sub', 'b6400105-0000-0000-0000-000000000005', true);
+  assert exists (select 1 from app.visible_inventory_owner_ids() x where x = 'b6400001-0000-4000-8000-000000000001'), '0064: el de Brasil ve la abierta';
+  assert not has_function_privilege('anon', 'app.visible_inventory_owner_ids()', 'execute'), '0064: anon no ejecuta la funcion';
+  assert has_function_privilege('authenticated', 'app.visible_inventory_owner_ids()', 'execute'), '0064: authenticated SI';
+  raise notice 'OK · 0064: la visibilidad por conjunto coincide con la de por fila en % espectadores', n;
+end
+$$;
+delete from public.members where org_id::text like 'b64000%';
+delete from auth.users where id::text like 'b64001%';
+delete from public.organizations where id::text like 'b64000%';
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

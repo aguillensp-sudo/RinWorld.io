@@ -116,6 +116,7 @@ veredicto como propio — `F-121` otra vez, y otra vez sin dar un solo error.
 5. **La revisión adversarial del cambio del arnés quedó a medias**: 32 hallazgos, 7
    verificados (2 refutados) antes de agotarse el límite de uso. Los arreglados están en
    `2afa04c`; los que quedan vivos, en §7.
+   **14-oct-2026: los 25 sin comprobar se descartan** (decisión del PO). El experimento está cerrado desde el 20-sep y el arnés ha cambiado mucho desde entonces; si un fallo de esa lista sigue vivo, volverá a aparecer en una corrida y entrará como hallazgo nuevo con su medida.
 
 ## 6 · Cómo se lanza
 

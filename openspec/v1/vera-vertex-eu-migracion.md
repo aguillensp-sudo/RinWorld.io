@@ -184,3 +184,25 @@ el PO: el §4 (orden de corte) exige probar el diff contra una llamada real que 
 antes de tocar producción, y a fecha 10-sep esa llamada sigue en `429`. Próximo paso: repetir
 la llamada de prueba cuando llegue confirmación de Anthropic, o periódicamente si no llega
 ninguna.
+
+**14-oct-2026 · reclamación (decisión del PO).** Han pasado más de cinco semanas desde el envío
+del formulario (8 a 10-sep) sin respuesta, y no hay plazo publicado. Se reclama por escrito. El
+canal es el soporte de Google Cloud del proyecto (el cupo es de Vertex) con copia al contacto de
+Anthropic que haya en la cuenta. Texto propuesto, para pegar rellenando lo que va entre `<>`:
+
+> Subject: Pending access request — Claude Sonnet 5 on Vertex AI (EU multi-region), quota is 0
+>
+> We submitted the Anthropic access request for Claude Sonnet 5 in Vertex AI Model Garden on
+> <fecha exacta del envío, 8–10 Sep 2026> for project `<PROJECT_ID>` (billing account upgraded
+> to paid, purchase confirmed in the console). Five weeks later, a real `rawPredict` call to the
+> `eu` endpoint still returns `429 RESOURCE_EXHAUSTED` on
+> `aiplatform.googleapis.com/eu_multi_region_online_prediction_requests_per_base_model` with base
+> model `anthropic-claude-sonnet`; the three quota rows show `Adjustable: No`.
+> Use case: B2B conversational search for industrial bearing distributors, no consumer-facing
+> chatbot, no legal/medical/financial advice. EU data residency is a contractual requirement for us.
+> Could you tell us the status of the request, or what is missing for it to be approved?
+>
+> Thanks, Álvaro Guillén — Nortex Systems
+
+Cuando conteste (o a los 7 días), repetir la llamada de prueba de arriba. Si sigue en `429` y no hay
+respuesta, se decide entonces si se escala o se sigue con `api.anthropic.com`.

@@ -27,6 +27,7 @@ Empieza por §6 y luego §3.
 | Canal de ingestión | `npm run ingest:salud` | 10 eventos en 7 días; último 13-oct 14:10 UTC `PROCESADO` |
 | `bearingworld-e2e` sin funciones | `list_edge_functions` | Solo `access-request` v1; los e2e mockean el resto con `page.route` |
 | Guía de VERA ampliada (8 entradas) | `vera-prompt.test.ts` contra el código de cada pantalla | 177 verdes. **No se ha preguntado a VERA** |
+| CI y despliegues de `346dfe9` | `gh run`; `get_edge_function`; el bundle de `rin-world-io.vercel.app` | Los seis jobs verdes. `vera` v32 lleva la guía nueva; el bundle lleva el aviso de DMARC y `Mantener activo 30 días más` |
 | Banco de esquema, `vitest`, `tsc` | `supabase/tests/run.sh` (Docker), local | Verde con `0062`–`0064`; 2539 verdes, 31 saltados; `tsc` limpio |
 
 ## 2 · Dónde estamos, por corriente

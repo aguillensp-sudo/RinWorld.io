@@ -43,6 +43,13 @@ con él, decisión a decisión (`DECISIONES-V1.md`, cuatro filas del 14-oct):
   propuesto 15 $) y espera el visto bueno.
 - **`navegar` a Empresas y Foros:** propuesto con su alcance y aprobado por el PO al final de la tarde («adelante»); hecho en un empuje aparte. La trampa de la sonda `B5` («llévame a Empresas») pasa a ser el caso bueno, y el aterrizaje silencioso en el Panel se vigila ahora con Contacto (`B6`).
 - **Sonnet 5.** El PO preguntó por qué el plan decía 4.6. Lo que corría era 4.6 (código del MVP) y lo decidido para V1 es Sonnet 5 vía Vertex. Se separan los dos cambios: el modelo ahora, por la API directa, y el proveedor cuando haya cupo. Así se mide VERA una sola vez. `MAX_TOKENS` sube a 3072 por el tokenizador nuevo; el plan se rehace (3–8 $, tope 10 $) con un bloque para lo propio de Sonnet 5.
+- **La prueba contra Sonnet 5, ejecutada** con el visto bueno del PO (`F-258`). Primera pasada: 134 turnos y 1,06 $ (se
+  estimaban 3–8 $: la caché se lee entera y la regla de una línea deja ~94 tokens de salida). Memoria, contexto de
+  pantalla y trampas, bien. Fallos: un control inventado en el Directorio, el rol que VERA no conocía, «se muestran
+  25», reponer un filtro quitado a mano y un recuento. Arreglado todo menos los dos últimos y repetido contra Sonnet 5:
+  B2 falla 4 de 4 aunque el aviso le llegue (está en el registro). Queda para el PO, con `F-254`.
+- **Con la otra sesión:** se renumeraron sus hallazgos tras un choque con `F-258`, se corrigió la guía de `INV-04` que
+  señaló (`F-260`) y su arnés contra `bearingworld-e2e` tumbó un Playwright de esta sesión (`F-262`, verde al repetir).
 
 ## Otros frentes de la tarde (sesión de relevo)
 

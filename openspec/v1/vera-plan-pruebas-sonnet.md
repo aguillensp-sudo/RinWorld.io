@@ -1,6 +1,6 @@
-# VERA contra Sonnet 5 real · plan de pruebas (14-oct-2026, SIN EJECUTAR)
+# VERA contra Sonnet 5 real · plan de pruebas (14-oct-2026, EJECUTADO el mismo día: resultado en `F-258`)
 
-**Estado: redactado, no ejecutado.** Ninguna llamada de este plan se hace sin el visto bueno explícito del PO
+**Estado: ejecutado el 14-oct-2026 con el visto bueno del PO** (`app/src/lib/vera.real.test.ts`; resultado y fallos en `F-258`). Ninguna llamada de este plan se hace sin el visto bueno explícito del PO
 (cuestan, y los tests de integración no corren en CI: `CLAUDE.md` §5). Lo que hoy prueba la suite —`vera-prompt.test.ts`,
 `vera.memoria.test.ts`, `vera-tools.pantalla.test.ts`— es que las reglas están escritas y que el cliente manda lo
 que debe, con el modelo mockeado. **Qué contesta Sonnet con todo eso no lo ha visto nadie**: es lo que mide esto.

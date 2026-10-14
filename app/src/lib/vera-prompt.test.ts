@@ -748,6 +748,20 @@ describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', ()
   it('B2: un filtro que ya no está en pantalla lo quitó el usuario y no se vuelve a poner', () => {
     expect(prompt).toContain('Si un filtro que pusiste antes ya no está entre ellos, es que lo quitó él');
     expect(prompt).toContain('lo quitó el usuario y no lo vuelves a poner salvo que te lo pida');
+    // La frase sola no bastó en la repetición: ahora se le dice qué cambió, como hecho.
+    expect(prompt).toContain('cambiosAMano?: string;');
+    expect(prompt).toContain('el usuario los ha cambiado A MANO en Comprando');
+  });
+
+  // Lo señaló la sesión «desarrollo sin VERA» (F-260, punto 5): la guía decía que el XLSX no llega por correo, y llega desde INV-04 fase 3.
+  it('INV-04: lo que la guía dice del correo es lo que acepta mail-rules.ts', () => {
+    const reglas = readFileSync(resolve(process.cwd(), '../supabase/functions/ingest-email/mail-rules.ts'), 'utf8');
+    expect(reglas).toContain("ACCEPTED_EXTENSIONS: readonly string[] = ['csv', 'tsv', 'txt', 'xlsx']");
+    expect(reglas).toContain('MAX_XLSX_ROWS = 120_000');
+    expect(reglas).toContain('MAX_MAIL_BYTES = 5 * 1024 * 1024');
+    expect(prompt).toContain('Por correo se aceptan archivos CSV, TSV, TXT y XLSX de hasta 5 MB');
+    expect(prompt).toContain('hasta 120.000 filas en XLSX. El XLS antiguo no se lee.');
+    expect(prompt).not.toContain('XLSX y XLS no llegan por correo');
   });
 
   it('C03: una cifra ya dicha se vuelve a consultar o se presenta como la de antes', () => {

@@ -27,7 +27,7 @@ import { dirname } from 'node:path';
 import { ask, createProxyCall, type Exchange, type ProxyCall, type ProxyUsage } from './vera';
 import type { SearchCriteria } from './search';
 import type { MemberProfile } from './session';
-import { describeCriteria, type DraftRequest, type InventoryView, type Screen, type ToolContext } from './vera-tools';
+import { describeCriteria, describeManualChanges, type DraftRequest, type InventoryView, type Screen, type ToolContext } from './vera-tools';
 import { veraScreenName, type NavLabel, type ScreenState } from './vera-screen';
 import { cargarEnv, entrarComo, tokenVigente } from './vera.sonda';
 
@@ -49,6 +49,8 @@ interface Estado {
   nav: NavLabel;
   sub: Partial<ScreenState>;
   vivos: SearchCriteria | null;
+  /** Los últimos filtros que puso VERA (`veraCriteria` de App), para calcular lo cambiado a mano. */
+  vera: SearchCriteria | null;
 }
 
 interface Turno {
@@ -147,7 +149,7 @@ async function asegurarCuenta(c: Cuenta) {
 /** Un caso entero: una conversación de uno o varios turnos, con su memoria y su estado de pantalla. */
 async function correr(caso: Caso, repeticion: number) {
   await asegurarCuenta(caso.cuenta);
-  const estado: Estado = { nav: 'Panel', sub: {}, vivos: null };
+  const estado: Estado = { nav: 'Panel', sub: {}, vivos: null, vera: null };
   let memoria: Exchange[] = [];
 
   for (const [i, t] of caso.turnos.entries()) {
@@ -164,6 +166,7 @@ async function correr(caso: Caso, repeticion: number) {
     const pantalla = veraScreenName({ ...BASE, ...estado.sub, nav: estado.nav });
     const hiloAbierto = estado.nav === 'Hilos' && estado.sub.threadOpen === true;
     const filtros = enResultados(estado) && estado.vivos ? describeCriteria(estado.vivos) : null;
+    const cambiosAMano = enResultados(estado) ? describeManualChanges(estado.vera, estado.vivos) : null;
 
     const efectos: string[] = [];
     const vueltas: Vuelta[] = [];
@@ -176,6 +179,7 @@ async function correr(caso: Caso, repeticion: number) {
       pantalla,
       ...(hiloAbierto ? { hiloAbierto: true } : {}),
       ...(filtros ? { filtros } : {}),
+      ...(cambiosAMano ? { cambiosAMano } : {}),
     });
     const espia: ProxyCall = async (body) => {
       for (const m of body.messages as { role?: string; content?: unknown }[]) {
@@ -210,6 +214,7 @@ async function correr(caso: Caso, repeticion: number) {
       setCriteria: (c: SearchCriteria) => {
         efectos.push(`filtros → ${describeCriteria(c)} (y lleva a Comprando)`);
         estado.vivos = c;
+        estado.vera = c;
         estado.nav = 'Comprando';
         estado.sub = {};
       },
@@ -331,7 +336,7 @@ const A: Caso[] = [
   ['A23', EN.lotes, '¿Cuántas referencias puedo pegar a la vez?', '50 por tanda'],
   ['A24', EN.inventario, '¿Cómo subo mi inventario?', '«Subir nuevo inventario» o la zona de arrastre; CSV/TSV/TXT/XLSX'],
   ['A25', EN.visibilidad, '¿Cómo excluyo a las empresas de Asia?', '«Visibilidad restringida», «Excluir por continente», «Añadir exclusión geográfica»'],
-  ['A26', EN.canal, '¿Puedo mandar un Excel por correo?', 'no: CSV, TSV y TXT; XLSX y XLS no llegan por correo'],
+  ['A26', EN.canal, '¿Puedo mandar un Excel por correo?', 'sí: XLSX hasta 120.000 filas (CSV, TSV y TXT hasta 20.000 líneas), 5 MB por correo; el XLS antiguo no (corregido el 14-oct, F-260)'],
   ['A27', EN.hilos, '¿Cómo empiezo una conversación con una empresa nueva?', '«Nuevo contacto» → Empresas'],
   ['A28', EN.hilo, '¿Cómo cierro este hilo sin acuerdo?', '«Acciones del hilo» → «Cerrar sin acuerdo», con confirmación'],
   ['A30', EN.foros, '¿En qué pantalla estoy?', 'Foros, nunca Panel (F-255)'],

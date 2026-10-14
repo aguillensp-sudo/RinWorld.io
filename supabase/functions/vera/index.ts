@@ -123,7 +123,7 @@ Si te preguntan cómo hacer algo en la aplicación y NO está en la GUÍA VERIFI
 
 GUÍA VERIFICADA DE LA INTERFAZ: lo único que sí puedes explicar de cómo se usa la aplicación. Está comprobada contra la pantalla real; usa estos nombres tal cual y no añadas pasos que no estén aquí.
 
-Subir inventario nuevo, en la pantalla Inventario. Hay dos sitios: el botón "Subir nuevo inventario" de la barra de herramientas, o la zona "Arrastra tu archivo aquí" de la tarjeta "Subida manual", donde se suelta el archivo o se hace clic para elegirlo. Se aceptan CSV, TSV, TXT y XLSX; el XLS antiguo no se lee. Hasta 20.000 filas por subida. El precio no se importa. Después aparece una pantalla para emparejar las columnas del archivo y elegir entre "Acumulativo", que añade o actualiza líneas sin borrar las existentes, y "Reemplazo total"; se termina con "Confirmar e importar". Añadir una línea suelta a mano no es posible: el inventario se sube por archivo. Además de subir el archivo a mano, la tarjeta "Canal email" tiene el botón "Gestionar canal email", que abre la pantalla "Canal de ingestión por email": ahí el administrador de la organización ve su dirección única de ingestión y la copia con "Copiar", la cambia con "Rotar dirección" (anula la anterior al instante y pide confirmación), añade remitentes autorizados con "+ Añadir remitente" y revisa el historial de los últimos correos recibidos, con el motivo de cada rechazo. Solo el administrador puede gestionarlo; un editor ve un aviso. Por correo se aceptan archivos CSV, TSV y TXT de hasta 5 MB, y solo si las columnas coinciden con un formato que ya se subió a mano y se guardó: la primera vez hay que subirlo a mano. XLSX y XLS no llegan por correo todavía.
+Subir inventario nuevo, en la pantalla Inventario. Hay dos sitios: el botón "Subir nuevo inventario" de la barra de herramientas, o la zona "Arrastra tu archivo aquí" de la tarjeta "Subida manual", donde se suelta el archivo o se hace clic para elegirlo. Se aceptan CSV, TSV, TXT y XLSX; el XLS antiguo no se lee. Hasta 20.000 filas por subida. El precio no se importa. Después aparece una pantalla para emparejar las columnas del archivo y elegir entre "Acumulativo", que añade o actualiza líneas sin borrar las existentes, y "Reemplazo total"; se termina con "Confirmar e importar". Añadir una línea suelta a mano no es posible: el inventario se sube por archivo. Además de subir el archivo a mano, la tarjeta "Canal email" tiene el botón "Gestionar canal email", que abre la pantalla "Canal de ingestión por email": ahí el administrador de la organización ve su dirección única de ingestión y la copia con "Copiar", la cambia con "Rotar dirección" (anula la anterior al instante y pide confirmación), añade remitentes autorizados con "+ Añadir remitente" y revisa el historial de los últimos correos recibidos, con el motivo de cada rechazo. Solo el administrador puede gestionarlo; un editor ve un aviso. Por correo se aceptan archivos CSV, TSV, TXT y XLSX de hasta 5 MB por correo: hasta 20.000 líneas en CSV, TSV o TXT y hasta 120.000 filas en XLSX. El XLS antiguo no se lee. Y solo si las columnas coinciden con un formato que ya se subió a mano y se guardó: la primera vez hay que subirlo a mano.
 
 Elegir quién puede ver su inventario, en la pantalla Inventario: el botón "Visibilidad" de la barra de herramientas abre la pantalla "Visibilidad del inventario". Hay dos modos: "Visible para todos los miembros" y "Visibilidad restringida", y el cambio de modo solo se aplica al pulsar "Guardar configuración". La "Lista de exclusión" aparece con el modo restringido, o si ya hay una lista guardada. Se excluye por organización, escribiendo en "Buscar organización por nombre" y eligiendo una de las que salen, o por geografía, con "Excluir por continente", "Refinar por país" si se quiere acotar, y el botón "Añadir exclusión geográfica". Añadir o quitar una exclusión (la × de su etiqueta) surte efecto al momento, sin "Guardar configuración". Si se vuelve a "Visible para todos los miembros", la lista se conserva y se reactiva al volver al modo restringido. Solo un administrador de la organización puede cambiar esto; un editor ve la pantalla pero no puede modificarla. En la pantalla Inventario, la línea "Visibilidad del inventario:" muestra el modo que está guardado.
 
@@ -240,6 +240,11 @@ interface Entrada {
     /** `F-101`: intercambios anteriores que no caben en la ventana del cliente. */
     intercambiosOmitidos?: number;
     /**
+     * `F-258` (B2): lo que el usuario cambió a mano en Comprando desde los últimos filtros puestos
+     * («quitó zona=EU»). Con solo los filtros vivos, Sonnet 5 reponía la zona desde la conversación.
+     */
+    cambiosAMano?: string;
+    /**
      * El rol del usuario en su organización. Entra el 14-oct-2026 por la prueba contra Sonnet 5 (`F-258`, C12):
      * sin él, VERA le explicaba a un EDITOR cómo cambiar la visibilidad, que solo puede un ADMIN.
      */
@@ -340,6 +345,9 @@ Deno.serve(async (peticion: Request) => {
     // F-101: lo que hay en la pantalla manda sobre lo que el modelo recuerde de la conversación.
     corto(c.filtros)
       ? `Cuando escribió esta pregunta, los filtros puestos en Comprando eran: ${corto(c.filtros)}. Son los que hay en pantalla: si un filtro que pusiste antes no está aquí, lo quitó el usuario y no lo vuelves a poner salvo que te lo pida. Para afinar la búsqueda, parte de estos.`
+      : '',
+    corto(c.cambiosAMano)
+      ? `Después de los últimos filtros que se pusieron, el usuario los ha cambiado A MANO en Comprando: ${corto(c.cambiosAMano)}. Eso manda sobre lo que se dijo en la conversación: lo que quitó no lo vuelvas a poner, y lo que cambió se queda como lo dejó, salvo que ahora te pida otra cosa.`
       : '',
     omitidos
       ? `La conversación es más larga de lo que ves: los ${omitidos} intercambios más antiguos no te llegan.`

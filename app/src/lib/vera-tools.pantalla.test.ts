@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MemberProfile } from './session';
 import { EMPTY_CRITERIA, MAX_RESULTS } from './search';
-import { describeCriteria, runTool, type InventoryView, type ToolContext } from './vera-tools';
+import { describeCriteria, describeManualChanges, runTool, type InventoryView, type ToolContext } from './vera-tools';
 
 /**
  * Cuando la pantalla ya enseña la respuesta, VERA no la repite (decisiones del PO del 14-oct-2026,
@@ -117,6 +117,22 @@ describe('describeCriteria · los filtros de Comprando dichos con los nombres de
     for (const p of ['referencia', 'marca', 'cantidad_minima', 'zona', 'pais', 'plazo_maximo_dias']) {
       expect(props).toContain(p);
     }
+  });
+});
+
+describe('describeManualChanges · lo que el usuario tocó a mano (F-258, B2)', () => {
+  const vera = { ...EMPTY_CRITERIA, partNumber: '6204', zone: 'EU' as const, brand: 'SKF' };
+
+  it('sin cambios, o sin una de las dos, no dice nada', () => {
+    expect(describeManualChanges(vera, { ...vera })).toBeNull();
+    expect(describeManualChanges(null, vera)).toBeNull();
+    expect(describeManualChanges(vera, null)).toBeNull();
+  });
+
+  it('distingue quitado, añadido y cambiado, con los nombres y en el orden de los parámetros', () => {
+    expect(describeManualChanges(vera, { ...vera, zone: null, brand: 'FAG', minQuantity: 500 })).toBe(
+      'cambió marca=SKF por marca=FAG; añadió cantidad_minima=500; quitó zona=EU',
+    );
   });
 });
 

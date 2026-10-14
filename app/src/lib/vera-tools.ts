@@ -211,6 +211,31 @@ export function describeCriteria(c: SearchCriteria): string {
 }
 
 /**
+ * Lo que el usuario cambió A MANO en Comprando desde la última búsqueda de VERA, o `null` si nada.
+ *
+ * Entra el 14-oct-2026 por `F-258` (B2): con solo la lista de filtros vivos, Sonnet 5 volvió a poner dos
+ * veces una zona que el usuario había quitado con la ×, porque la conversación decía «6204 en Europa».
+ * La diferencia, dicha como un hecho («quitó zona=EU»), no se puede leer de otra manera.
+ */
+export function describeManualChanges(vera: SearchCriteria | null, vivos: SearchCriteria | null): string | null {
+  if (!vera || !vivos) return null;
+  const campos: [string, string, string][] = [
+    ['referencia', vera.partNumber, vivos.partNumber],
+    ['marca', vera.brand, vivos.brand],
+    ['cantidad_minima', vera.minQuantity === null ? '' : String(vera.minQuantity), vivos.minQuantity === null ? '' : String(vivos.minQuantity)],
+    ['zona', vera.zone ?? '', vivos.zone ?? ''],
+    ['pais', vera.country, vivos.country],
+    ['plazo_maximo_dias', vera.maxLeadTimeDays === null ? '' : String(vera.maxLeadTimeDays), vivos.maxLeadTimeDays === null ? '' : String(vivos.maxLeadTimeDays)],
+  ];
+  const cambios = campos
+    .filter(([, antes, ahora]) => antes !== ahora)
+    .map(([nombre, antes, ahora]) =>
+      !ahora ? `quitó ${nombre}=${antes}` : !antes ? `añadió ${nombre}=${ahora}` : `cambió ${nombre}=${antes} por ${nombre}=${ahora}`,
+    );
+  return cambios.length ? cambios.join('; ') : null;
+}
+
+/**
  * La cabecera del retorno.
  *
  * Cuando hay más filas que las mostradas **se lo dice y le prohíbe suponer**.

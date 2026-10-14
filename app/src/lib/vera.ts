@@ -215,6 +215,8 @@ export function createProxyCall(
     pantalla?: string;
     hiloAbierto?: boolean;
     filtros?: string;
+    /** Lo que el usuario cambió a mano desde la última búsqueda de VERA (`F-258`, B2): `describeManualChanges`. */
+    cambiosAMano?: string;
     /** El rol del usuario (`F-258`): sin él, VERA no sabía que un EDITOR no puede cambiar la visibilidad. */
     rol?: 'ADMIN' | 'EDITOR';
   },

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
-import { describeCriteria, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
+import { describeCriteria, describeManualChanges, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
 import { veraScreenName } from './lib/vera-screen';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
@@ -752,6 +752,11 @@ export function App() {
         hiloAbierto: openThreadId !== null,
         // Solo desde Resultados de búsqueda: fuera de ella, `liveCriteria` es lo último que se vio, no lo que hay.
         ...(onSearch && !watchersOpen && !batchOpen && liveCriteria ? { filtros: describeCriteria(liveCriteria) } : {}),
+        // F-258 (B2): lo que el usuario tocó a mano desde la última búsqueda de VERA, dicho como hecho.
+        ...(() => {
+          const cambios = onSearch && !watchersOpen && !batchOpen ? describeManualChanges(veraCriteria, liveCriteria) : null;
+          return cambios ? { cambiosAMano: cambios } : {};
+        })(),
       },
     ),
   };

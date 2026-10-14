@@ -31,7 +31,7 @@ Empieza por §6 y luego §3.
 
 ## 2 · Dónde estamos, por corriente
 
-- **Corriente A · Núcleo — EN CURSO.** Sin piezas abiertas propias.
+- **Corriente A · Núcleo — CERRADA el 14-oct** (decisión del PO, `DECISIONES-V1.md`). Único cabo suelto: `F-192`, riesgo aceptado con disparador en `BACKLOG-V1.md`.
 - **Fundación V1.** Entregables 1 a 5 hechos (el 5 se midió y se dio por cumplido, `F-253`). **El 6 (residencia UE de VERA) sigue bloqueado** en el cupo de Anthropic en Vertex (`429`); se reclama por escrito, texto en `vera-vertex-eu-migracion.md` §7.
 - **Corriente B · Fábrica — EN MARCHA.** 27 pantallas construidas y aceptadas. `REC-01`, `SET-SEC-01`, `INVT-02`, `ACT-02` e `INV-04` fueron **a mano**, sin filas en `harness-metrics.csv`. Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**

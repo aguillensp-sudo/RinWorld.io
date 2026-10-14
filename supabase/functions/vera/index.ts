@@ -21,17 +21,29 @@ import HERRAMIENTAS from './tools.json' with { type: 'json' };
  */
 
 /**
- * Fijo por contrato (QA-A00-06). **No sale del cuerpo de la petición y no puede
- * salir de ahí**: un cliente que eligiera modelo elegiría también el coste y el
- * comportamiento del agente que habla en nombre de la plataforma.
+ * **No sale del cuerpo de la petición y no puede salir de ahí**: un cliente que
+ * eligiera modelo elegiría también el coste y el comportamiento del agente que
+ * habla en nombre de la plataforma.
+ *
+ * Sonnet 5 desde el 14-oct-2026 (PO): es el modelo de V1 (`DECISIONES-V1.md`,
+ * «VERA en producción»), que sustituye al Sonnet 4.6 del MVP (QA-A00-06). Se
+ * cambia el MODELO antes que el PROVEEDOR —sigue siendo `api.anthropic.com`
+ * hasta que Vertex UE tenga cupo— para medir VERA una sola vez contra el modelo
+ * que va a quedarse. La llamada no cambia: adaptativo, `effort` explícito y sin
+ * parámetros de muestreo, que Sonnet 5 rechazaría.
  */
-const MODELO = 'claude-sonnet-4-6';
+const MODELO = 'claude-sonnet-5';
 
 /**
  * Corto a propósito. Esto responde en un panel lateral, no redacta documentos, y
  * un tope bajo es la diferencia entre una respuesta y una espera en la demo.
+ *
+ * Era 2048 con Sonnet 4.6. Sonnet 5 trae un tokenizador que cuenta ~30 % más
+ * tokens por el mismo texto, y el tope incluye el razonamiento: con 2048, una
+ * respuesta que antes cabía podía cortarse (`stop_reason: max_tokens`). 3072
+ * deja el mismo margen; la longitud real la sigue marcando el prompt.
  */
-const MAX_TOKENS = 2048;
+const MAX_TOKENS = 3072;
 
 /**
  * El bloque ESTÁTICO del system prompt: byte a byte idéntico en cada petición,
@@ -40,7 +52,9 @@ const MAX_TOKENS = 2048;
  *
  * Medido en la primera corrida real (v1): **2119 tokens de escritura de caché en
  * la primera llamada y 2119 de lectura en la segunda** — por encima del mínimo de
- * 1024 de Sonnet 4.6, que es el que falla en silencio si no se llega.
+ * 1024 de Sonnet 4.6, que es el que falla en silencio si no se llega. Sonnet 5
+ * tiene el mismo mínimo (1024) y un tokenizador que cuenta ~30 % más: estas
+ * cifras dejan de ser las vigentes y se vuelven a medir con `usage`.
  *
  * **v5 (17-ago) crece este bloque** con las cinco reglas de la sesión 2: F-101
  * (cada pregunta llega sola), F-105 (descartar filas en silencio), B3
@@ -328,10 +342,11 @@ Deno.serve(async (peticion: Request) => {
     const respuesta = await anthropic.messages.create({
       model: MODELO,
       max_tokens: MAX_TOKENS,
-      // Adaptativo y no un presupuesto fijo de tokens: `budget_tokens` está
-      // obsoleto en 4.6. `medium` es el punto documentado para carga con
-      // herramientas — se paga algo de latencia y se compra que llame a la
-      // herramienta en vez de contestar de memoria, que es el riesgo #1.
+      // Adaptativo y no un presupuesto fijo de tokens: `budget_tokens` da 400 en
+      // Sonnet 5. `medium` se mantiene: en Sonnet 5 rinde como `high` en 4.6, y
+      // para respuestas de una línea con herramientas no hace falta más. Si las
+      // pruebas muestran que razona poco antes de afirmar, se sube el effort, no
+      // se compensa con prompt (`vera-plan-pruebas-sonnet.md`).
       thinking: { type: 'adaptive' },
       output_config: { effort: 'medium' },
       system: [

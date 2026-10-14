@@ -31,7 +31,7 @@ through a conversational agent and negotiate prices over end-to-end encrypted th
 | --- | --- |
 | Aplicación | React + TypeScript (Vite), tokens de diseño propios |
 | Datos y autenticación | Supabase: Postgres con RLS, Realtime, Edge Functions |
-| VERA | Claude Sonnet 4.6 detrás de una Edge Function proxy; la clave nunca llega al navegador |
+| VERA | Claude Sonnet 5 detrás de una Edge Function proxy; la clave nunca llega al navegador |
 | Despliegue | Vercel (app) y Supabase (función), automático desde la CI |
 | Pruebas | Vitest, Playwright y un banco de pruebas de esquema SQL |
 

@@ -50,9 +50,19 @@ describe('la clave de VERA no llega al navegador', () => {
   });
 });
 
-describe('el modelo está fijo por contrato (QA-A00-06)', () => {
-  it('es Sonnet 4.6, con el identificador exacto', () => {
-    expect(fuente).toContain('claude-sonnet-4-6');
+// QA-A00-06 fijaba Sonnet 4.6 en el MVP; la decisión de V1 es Sonnet 5, aplicada el 14-oct-2026 (PO).
+describe('el modelo está fijo en la función', () => {
+  it('es Sonnet 5, con el identificador exacto, y ya no Sonnet 4.6', () => {
+    expect(fuente).toContain("const MODELO = 'claude-sonnet-5';");
+    expect(fuente).not.toContain("'claude-sonnet-4-6'");
+  });
+
+  it('nada de lo que Sonnet 5 rechaza con un 400: ni budget_tokens ni parámetros de muestreo', () => {
+    // Ancla positiva: la llamada usa adaptativo y effort explícito.
+    expect(fuente).toContain("thinking: { type: 'adaptive' }");
+    expect(fuente).toContain("output_config: { effort: 'medium' }");
+    expect(fuente).not.toMatch(/budget_tokens:\s*\d/);
+    expect(fuente).not.toMatch(/\b(temperature|top_p|top_k):/);
   });
 
   it('el cliente no puede elegir modelo', () => {

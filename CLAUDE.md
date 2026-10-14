@@ -1,7 +1,7 @@
 # Bearingworld.io — Reglas de proyecto (V1)
 
 Plataforma B2B de distribución de rodamientos industriales. Búsqueda conversacional
-(**VERA**, Claude Sonnet 4.6) sobre arquitectura **zero-knowledge** E2EE para precio,
+(**VERA**, Claude Sonnet 5) sobre arquitectura **zero-knowledge** E2EE para precio,
 cantidad y negociación entre organizaciones. Metodología: SDD con OpenSpec.
 
 Este fichero es el contrato de trabajo del proyecto y se carga en cada sesión. El MVP se
@@ -103,8 +103,10 @@ Se reparte por **coste del fallo**, no por dificultad.
   (HTML aprobado → React, GIVEN/WHEN/THEN → Playwright, siembra de catálogo). Sustituye a
   GLM-5.2/DeepInfra del plan original (cambio por coste, decidido en SP-1 el 5-ago-2026;
   ver `openspec/mvp/findings-register.md` F-001).
-- **VERA en producción** → **Claude Sonnet 4.6, fijo por contrato (QA-A00-06)**. No se
-  cambia por decisiones de testing/caching.
+- **VERA en producción** → **Claude Sonnet 5** (`claude-sonnet-5`, desde el 14-oct-2026, PO).
+  Es la decisión de V1 (`DECISIONES-V1.md`, «VERA en producción») y sustituye al Sonnet 4.6
+  del MVP (QA-A00-06). Hoy por `api.anthropic.com`; el paso a Vertex UE (entregable 6) cambia
+  el proveedor, no el modelo. No se cambia por decisiones de testing/caching.
 
 **Regla de integridad, innegociable:** **el Coder nunca escribe los tests que lo evalúan.**
 El test es el contrato entre Planner y Coder; si el mismo modelo escribe prueba y código,
@@ -117,7 +119,7 @@ la prueba deja de verificar.
 - Los campos comerciales (precio, cantidad, plazo, transporte) van **cifrados**; el
   estado de la oferta y los timestamps son metadatos en claro (RNG-VND-01). Ninguna vista
   agregada muestra campos E2EE fuera del hilo cifrado.
-- La clave de VERA (Sonnet 4.6) **nunca** llega al navegador: se usa vía Edge Function
+- La clave de VERA (Sonnet 5) **nunca** llega al navegador: se usa vía Edge Function
   proxy en Supabase. Punto no negociable, no es un detalle de MVP.
 - En el MVP las claves E2EE viven en memoria de sesión y se pierden al recargar: **sin
   backup, recuperación, passphrase ni rotación**. Es correcto para el MVP y **no debe
@@ -154,7 +156,7 @@ la prueba deja de verificar.
 
 ## 7. Riesgo #1 — VERA inventando datos
 
-Sonnet 4.6 responde con fluidez impecable tenga o no la herramienta para saberlo. El
+Sonnet responde con fluidez impecable tenga o no la herramienta para saberlo. El
 fallo grave no es el silencio, es afirmar con aplomo un dato falso delante del socio.
 Defensa única: **VERA responde exclusivamente desde el retorno de sus herramientas** y
 dice "no tengo ese dato" en cuanto sale de ahí.

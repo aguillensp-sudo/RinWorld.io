@@ -20,8 +20,36 @@ Purga con `pg_cron` diaria; monitorización como consulta que se mira; descartar
 ## AWS: una tarde perdida
 Para comprobar por CLI la regla de S3 hubo que abrir sesión. La sesión de SSO había caducado; el usuario SSO es un AWS Builder ID y el login dio «Acceso denegado»; el MFA del raíz dejó de dejar entrar (la app Authenticator del Samsung S22, entrada «Nortex Root»). Se recuperó el raíz y la regla se miró en la consola de S3: `expire-inbox-mail`, activa, `inbox/`, 30 días. El nombre real difería del de la guía (`purga-30-dias`); corregida.
 
+## VERA, de la tarde: memoria, contexto de pantalla y plan contra Sonnet
+
+Encargo del PO: poner VERA en condiciones de probarse como la usaría un usuario real. Se hizo en conversación
+con él, decisión a decisión (`DECISIONES-V1.md`, cuatro filas del 14-oct):
+
+- **Diagnóstico.** Confirmado contra el código y el catálogo: no hay `profile-context-layer` ni
+  `action-audit-logging` (`F-257`), y el proxy aceptaba peticiones de cualquier tamaño sin límite por usuario
+  (`F-256`). Apareció un fallo que nadie había visto: en Empresas y Foros a VERA se le decía «Panel» (`F-255`),
+  justo donde vivían cinco de las ocho entradas de guía de la mañana.
+- **Casado de referencias.** El PO paró el diseño de la memoria para preguntar por «6204»: la búsqueda casa por
+  «contiene» y trae 15 designaciones que no se sustituyen entre sí. Explicó por qué no es trivial (sufijos por
+  fabricante; FAG `E` y `E1` son el mismo producto) y lo deja hasta analizar al competidor (`F-254`).
+- **Memoria (`F-101`).** El PO preguntó qué pasa con el mensaje 11 si la ventana es de 10; la respuesta —el
+  límite es de lo que ve el modelo, no del panel, y los filtros vivos viajan aparte— le llevó a aprobar 20.
+- **No repetir lo que la pantalla enseña.** Lo planteó el PO: VERA gastaba salida copiando la tabla. Se afinó en
+  tres vueltas: fuera «más de 200» como excepción (la pantalla ya lo avisa) y fuera «con quién tienes hilo» (el
+  hilo es por pareja de empresas: con uso diario es ruido). Inventario solo mueve la pantalla si la respuesta es
+  una lista; Hilos se queda en texto porque su lista no puede enseñar lo que la herramienta sabe.
+- **Construido** en `da5b1fa`, con el chip País de otro agente (`0357340`, `F-229`) ya en la guía. **No se ha
+  preguntado a Sonnet**: el plan está escrito (`vera-plan-pruebas-sonnet.md`, ~120 preguntas, 4–10 $, tope
+  propuesto 15 $) y espera el visto bueno.
+- **Sin decidir:** ampliar `navegar` a Empresas y Foros (en el backlog, propuesto con su alcance).
+
 ## Lecciones
 - **Basta un commit con `[skip ci]` dentro de un empuje para que no corra la CI de ninguno de sus commits**, aunque el último no lo lleve. Pasó tres veces el 14-oct, la tercera por escribir la cadena en el asunto del commit que explicaba la regla: el empuje de la mañana (corrección de carreras, aviso de DMARC) y el de la tarde (`0063`, `0064`, guía de VERA) no corrieron CI ni despliegue. Se resolvió con un empuje posterior de un solo commit sin `[skip ci]`. Regla: el código se empuja primero; la documentación `[skip ci]`, en otro empuje.
 - Dije «el mensaje de rechazo ya lo dice» de `.xls` sin mirarlo, y era falso: un `.xls` cae en el fallo de `INV-03` sin explicación. Afirmado sin comprobar; corregido en el backlog.
 - Los scripts con comillas y regex van con el editor, no con un heredoc (`F-199`); volvió a romper un comando.
 - El PO no sabía qué MFA tenía registrado en el raíz. Un solo dispositivo es una dependencia con un solo punto de fallo.
+- **Una lista cerrada a propósito se reutilizó para otra cosa** (`F-255`): la de destinos de `navegar` acabó
+  diciendo dónde estaba el usuario. Las dos parecían la misma lista y no lo eran; el fallo era silencioso porque
+  el valor por defecto («Panel») es una pantalla real.
+- El PO desmontó dos ejemplos míos que sonaban útiles (avisar de los 200, decir con quién hay hilo). Antes de
+  proponer que VERA añada algo, preguntarse si la pantalla ya lo dice o si con uso real es ruido.

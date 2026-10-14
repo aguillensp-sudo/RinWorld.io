@@ -45,7 +45,7 @@ Sin `ListBucket` (la clave del objeto llega en el aviso de SNS), sin `PutObject`
 
 ## 3 · Ciclo de vida del bucket
 
-Regla `purga-30-dias`: prefijo `inbox/`, expirar objetos a los **30 días**, y abortar subidas multiparte incompletas a los 1 día.
+Regla `expire-inbox-mail` (en la guía original se llamaba `purga-30-dias`; el nombre real en AWS es este): prefijo `inbox/`, expirar objetos a los **30 días**, y abortar subidas multiparte incompletas a los 1 día.
 
 ## Qué pulsar (consola de AWS, región Irlanda `eu-west-1`)
 
@@ -75,3 +75,5 @@ Regla `purga-30-dias`: prefijo `inbox/`, expirar objetos a los **30 días**, y a
 | `AWS_INGEST_REGION` | opcional; `eu-west-1` por defecto |
 
 `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase.
+
+**Comprobado el 14-oct-2026 en la consola de S3** (bucket `nortexsys-ingest-mail-eu-226395401132-eu-west-1-an`, `eu-west-1`): la regla `expire-inbox-mail` está `Enabled`, con filtro de prefijo `inbox/`, caducidad de la versión actual a los 30 días y eliminación de subidas multiparte incompletas. Lo vio el PO a mano; no hay comprobación por CLI (la sesión de SSO no pudo abrirse ese día). Que el borrado ocurre de verdad solo se verá cuando el primer objeto cumpla 30 días (los primeros correos son del 12 y 13-oct, así que hacia el 12-nov): ese día conviene mirar que `inbox/` ya no los tiene.

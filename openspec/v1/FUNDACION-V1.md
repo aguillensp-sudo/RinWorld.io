@@ -162,3 +162,5 @@ El plan pide tres cosas de ADR-002. El ADR mismo, en su §5, las desglosa en sie
 *Comprobado el 30-ago-2026 contra `mvp/bootstrap` a la altura de `2c55b93`. Cada fila de
 las dos tablas lleva su fichero y su línea: si alguna deja de ser cierta, se ve abriendo
 el fichero, no discutiendo el documento.*
+
+**Actualización 14-oct-2026 · entregable 5 («índice de búsqueda»).** El PO pidió medirlo. Con 1 millón de líneas en local, los índices trigrama sirven (5–20 ms sin RLS); lo que no aguantaba era la política de visibilidad de `inventory_lines`, por fila y sin inlinar (~115 s por búsqueda; en producción, 3,1 s con las 24.000 líneas de hoy). Arreglado con `0064` (45 ms). Una RPC de búsqueda queda en `BACKLOG-V1.md` con su disparador. Detalle: `F-253`. El entregable 5 se da por cumplido para V1.

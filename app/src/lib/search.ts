@@ -164,7 +164,8 @@ export function activeChips(c: SearchCriteria): Chip[] {
   }
   if (c.zone || c.country) {
     const partes = [c.zone ? ZONE_LABELS[c.zone] : '', c.country ? countryName(c.country) : ''].filter(Boolean);
-    out.push({ key: 'zone', label: CHIP_LABELS.zone, value: partes.join(' · ') });
+    // Solo país: "Zona España" mentiría, porque el país filtra por dónde está el stock.
+    out.push({ key: 'zone', label: c.zone ? CHIP_LABELS.zone : 'País', value: partes.join(' · ') });
   }
   if (c.maxLeadTimeDays !== null) {
     out.push({ key: 'maxLeadTimeDays', label: CHIP_LABELS.maxLeadTimeDays, value: leadTimeLabel(c.maxLeadTimeDays) });

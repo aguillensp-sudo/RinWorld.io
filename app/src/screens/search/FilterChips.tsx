@@ -9,6 +9,7 @@ import {
   type SearchCriteria,
   type Zone,
 } from '../../lib/search';
+import { WATCHER_COUNTRY_OPTIONS } from '../../lib/watchers';
 import styles from './FilterChips.module.css';
 
 interface Props {
@@ -33,11 +34,14 @@ export function FilterChips({ criteria, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [field, setField] = useState<ChipKey>('partNumber');
   const [value, setValue] = useState('');
+  const [country, setCountry] = useState('');
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = value.trim();
-    if (!trimmed) return;
+    // El chip de zona admite además un país (spec: «Zona / País», «Europa · España»), con o sin
+    // zona; los demás campos siguen necesitando su valor.
+    if (!trimmed && !(field === 'zone' && country)) return;
 
     const next: SearchCriteria = { ...criteria };
     switch (field) {
@@ -54,9 +58,12 @@ export function FilterChips({ criteria, onChange }: Props) {
         break;
       }
       case 'zone': {
-        const z = trimmed as Zone;
-        if (!ZONES.includes(z)) return;
-        next.zone = z;
+        if (trimmed) {
+          const z = trimmed as Zone;
+          if (!ZONES.includes(z)) return;
+          next.zone = z;
+        }
+        if (country) next.country = country;
         break;
       }
       case 'maxLeadTimeDays': {
@@ -71,6 +78,7 @@ export function FilterChips({ criteria, onChange }: Props) {
     setOpen(false);
     setField('partNumber');
     setValue('');
+    setCountry('');
   };
 
   return (
@@ -100,7 +108,11 @@ export function FilterChips({ criteria, onChange }: Props) {
             className={styles.fieldSelect}
             aria-label="Campo"
             value={field}
-            onChange={(e) => setField(e.target.value as ChipKey)}
+            onChange={(e) => {
+              setField(e.target.value as ChipKey);
+              setValue('');
+              setCountry('');
+            }}
           >
             {FIELD_OPTIONS.map((k) => (
               <option key={k} value={k}>
@@ -110,19 +122,35 @@ export function FilterChips({ criteria, onChange }: Props) {
           </select>
 
           {field === 'zone' ? (
-            <select
-              className={styles.fieldSelect}
-              aria-label="Valor"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-            >
-              <option value="">Selecciona zona...</option>
-              {ZONES.map((z) => (
-                <option key={z} value={z}>
-                  {ZONE_LABELS[z]}
-                </option>
-              ))}
-            </select>
+            <>
+              <select
+                className={styles.fieldSelect}
+                aria-label="Valor"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              >
+                <option value="">Selecciona zona...</option>
+                {ZONES.map((z) => (
+                  <option key={z} value={z}>
+                    {ZONE_LABELS[z]}
+                  </option>
+                ))}
+              </select>
+              {/* El país filtra por DÓNDE ESTÁ EL STOCK (`location_country`), no por la sede. */}
+              <select
+                className={styles.fieldSelect}
+                aria-label="País"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="">País (opcional)</option>
+                {WATCHER_COUNTRY_OPTIONS.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </>
           ) : (
             <input
               className={styles.valueInput}

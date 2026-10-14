@@ -6641,4 +6641,32 @@ delete from public.members where org_id = 'a92b0001-0000-4000-8000-000000000001'
 delete from auth.users where id = 'a9200001-0000-0000-0000-000000000001';
 delete from public.organizations where id in ('a92b0001-0000-4000-8000-000000000001', 'a92b0002-0000-4000-8000-000000000002');
 
+-- -----------------------------------------------------------------------------
+-- 0062 · F-234 cerrado: NINGUNA politica de `public` llama a una funcion de sesion a pelo
+-- -----------------------------------------------------------------------------
+-- Generaliza el chequeo de 0051 a todo el esquema, y por eso vigila tambien las politicas
+-- futuras: una funcion sin argumentos de `app` o `auth` va envuelta en `(select ...)`, o el
+-- banco rechaza la migracion. Las que llevan argumentos (`app.can_access_thread(thread_id)`)
+-- dependen de la fila y se quedan fuera: el patron solo casa `f()` sin argumentos.
+do $$
+declare
+  r record;
+  e text;
+  n int := 0;
+begin
+  for r in
+    select tablename, policyname, coalesce(qual, '') || ' ' || coalesce(with_check, '') as expr
+      from pg_policies
+     where schemaname = 'public'
+  loop
+    n := n + 1;
+    e := regexp_replace(r.expr, '\(\s*SELECT\s+((app|auth)\.[a-z_]+\(\))\s+AS\s+[a-z_]+\)', '', 'gi');
+    assert e !~* '(app|auth)\.[a-z_]+\(\)',
+      '0062: ' || r.tablename || '.' || r.policyname || ' tiene una funcion de sesion a pelo: ' || e;
+  end loop;
+  assert n >= 40, '0062: se esperaban al menos 40 politicas en public, hay ' || n;
+  raise notice 'OK · 0062: las % politicas de public evaluan sus funciones de sesion una vez', n;
+end
+$$;
+
 select 'TODOS LOS ASSERTS PASAN' as resultado;

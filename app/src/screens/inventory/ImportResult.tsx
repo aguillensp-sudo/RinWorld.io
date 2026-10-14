@@ -211,6 +211,11 @@ export function ImportResult({ summary, onBackToInventory, onUploadCorrections, 
         {isFail && (
           <div className={styles.failBlock} role="alert">
             <div className={styles.failTitle}>{FAIL_TITLE}</div>
+            {summary.failReason !== undefined && (
+              <div className={styles.failDesc} data-testid="fail-reason">
+                {summary.failReason}
+              </div>
+            )}
             <div className={styles.failDesc}>{FAIL_DESC}</div>
           </div>
         )}

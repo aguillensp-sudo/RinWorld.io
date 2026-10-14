@@ -50,6 +50,11 @@ export interface ImportSummary {
    */
   created?: number | undefined;
   updated?: number | undefined;
+  /**
+   * Solo en un archivo ilegible: POR QUÉ no se pudo leer (formato, tamaño, vacío). Opcional: la
+   * spec de INV-03 solo pide el texto genérico, y sin motivo la pantalla se ve exactamente igual.
+   */
+  failReason?: string | undefined;
   /** Las líneas importadas, en orden de archivo. La pantalla enseña SIEMPRE solo las 10 primeras. */
   sample: ImportSampleLine[];
   /** Todas las líneas fallidas, en orden de archivo. */

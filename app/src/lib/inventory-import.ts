@@ -592,8 +592,25 @@ export function buildLines(file: ParsedFile, mapping: PlatformField[], defaultCo
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Un archivo que no se ha podido leer (formato, vacío, tamaño): INV-03 en estado de fallo. */
-export function unreadableSummary(): ImportSummary {
-  return { processed: 0, published: 0, failed: 0, removed: null, seconds: null, sample: [], errors: [] };
+export function unreadableSummary(reason?: string): ImportSummary {
+  const base: ImportSummary = { processed: 0, published: 0, failed: 0, removed: null, seconds: null, sample: [], errors: [] };
+  return reason === undefined ? base : { ...base, failReason: reason };
+}
+
+/** El motivo concreto de un archivo que `readImportFile` no ha podido leer; `null` si sí se leyó. */
+export function unreadableReason(read: ReadResult): string | null {
+  switch (read.kind) {
+    case 'ok':
+      return null;
+    case 'too_big':
+      return `«${read.name}» pesa más de ${MAX_FILE_BYTES / (1024 * 1024)} MB.`;
+    case 'empty':
+      return `«${read.name}» está vacío, dañado, protegido con contraseña o no tiene filas de datos.`;
+    case 'unsupported':
+      return fileExtension(read.name) === 'xls'
+        ? `«${read.name}» es un Excel antiguo (.xls) y no se puede leer. Ábrelo en Excel y guárdalo como .xlsx o como CSV.`
+        : `«${read.name}» no tiene un formato admitido. Sube un CSV, TSV, TXT o XLSX.`;
+  }
 }
 
 export function sampleOf(lines: ImportLinePayload[]): ImportSampleLine[] {

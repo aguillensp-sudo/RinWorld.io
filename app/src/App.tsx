@@ -52,6 +52,7 @@ import {
   proposeMapping,
   readImportFile,
   runImport,
+  unreadableReason,
   unreadableSummary,
   type ColumnProposal,
   type ImportChoice,
@@ -267,7 +268,7 @@ export function App() {
     setImportError(null);
     const read = await readImportFile(picked);
     if (read.kind !== 'ok') {
-      setImportSummary(unreadableSummary());
+      setImportSummary(unreadableSummary(unreadableReason(read) ?? undefined));
       return;
     }
     const columns = columnsOf(read.file);

@@ -45,7 +45,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-036](findings/F-036.md) | 2026-08-10 | `MODEL` | El dato del día sobre el Coder, y no es el que se esperaba medir. | Abierto |
 | [F-037](findings/F-037.md) | 2026-08-10 | `INFRA` | Por qué la CI llevaba roja desde el día 2, y no era nada de lo que se sospechaba. | Cerrado |
 | [F-038](findings/F-038.md) | 2026-08-10 | `INFRA` | La contraseña de la cuenta de pruebas ha estado descargable en texto plano desde un repositorio público. | Cerrado |
-| [F-039](findings/F-039.md) | 2026-08-10 | `SPEC-GAP` | Dos specs cerradas dicen cosas distintas sobre cuándo se habilita "Consultar seleccionados", y no es un matiz de redacción. | Abierto |
+| [F-039](findings/F-039.md) | 2026-08-10 | `SPEC-GAP` | Dos specs cerradas dicen cosas distintas sobre cuándo se habilita "Consultar seleccionados", y no es un matiz de redacción. | CERRADO 14-oct: la capability y la spec de pantalla coinciden en ≥ 1 fila, y el código también |
 | [F-040](findings/F-040.md) | 2026-08-10 | `SPEC-GAP` | Una advertencia del fichero de relevo no sobrevivió a comprobarla, y es justo para eso que existe la regla. | Cerrado |
 | [F-041](findings/F-041.md) | 2026-08-10 | `DESIGN` | El HTML aprobado de SRCH-01 titula la pantalla "Mis consultas"; su spec la titula "Resultados de búsqueda". | Cerrado |
 | [F-042](findings/F-042.md) | 2026-08-10 | `HARNESS` | La corrida en seco ignora la tarea que se le pasa. | Cerrado |
@@ -105,7 +105,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-096](findings/F-096.md) | 2026-08-16 | `HARNESS` | La suite e2e repone la siembra de demo al ARRANCAR y no al terminar, así que se va dejando la base rota — y la rotura concreta es que MSG-0... | Cerrado |
 | [F-097](findings/F-097.md) | 2026-08-16 | `SPEC-GAP` | conteste bien y sea mentira | Cerrado |
 | [F-098](findings/F-098.md) | 2026-08-16 | `INFRA` | El entorno de demo se queda sin aislar: demo y pruebas siguen compartiendo `troxminloxkjwihwfevs`. | Abierto |
-| [F-099](findings/F-099.md) | 2026-08-16 | `SPEC-GAP` | La aplicación no tiene ninguna forma de ORIGINAR una oferta. Solo existe la contraoferta, que exige una oferta anterior — así que un vended... | Abierto |
+| [F-099](findings/F-099.md) | 2026-08-16 | `SPEC-GAP` | La aplicación no tiene ninguna forma de ORIGINAR una oferta. Solo existe la contraoferta, que exige una oferta anterior — así que un vended... | CERRADO 14-oct: `create_offer` (0055) y «Crear oferta» / «Responder con oferta» existen |
 | [F-100](findings/F-100.md) | 2026-08-16 | `DESIGN` | Los botones `Consultar` y `Contactar` de cada fila de SRCH-01 están habilitados y no hacen NADA — clic y silencio— y como el botón masivo e... | Cerrado |
 | [F-101](findings/F-101.md) | 2026-08-16 | `SPEC-GAP` | VERA es de un solo turno: nunca recibe la pregunta anterior, así que cualquier refinamiento se ejecuta como búsqueda nueva y devuelve el ca... | Mitigado |
 | [F-102](findings/F-102.md) | 2026-08-16 | `SPEC-GAP` | `listar_mis_hilos` no dice QUIÉN envió el último elemento, y VERA rellena el hueco: afirma que el usuario tiene que responder una consulta ... | Cerrado |

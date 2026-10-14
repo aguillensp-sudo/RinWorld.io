@@ -31,9 +31,14 @@ export function canManageIngest(role: 'ADMIN' | 'EDITOR'): boolean {
   return role === 'ADMIN';
 }
 
-/** Lo que dice la spec (§3) y lo que el canal admite de verdad en la fase 2. */
+/**
+ * Lo que el canal admite de verdad, no lo que dice la spec (§3, «XLSX/XLS, 50 MB»): `.xlsx`
+ * desde la fase 3 (`ACCEPTED_EXTENSIONS` y `MAX_XLSX_ROWS` de `ingest-email/mail-rules.ts`),
+ * el `.xls` binario antiguo no, y 5 MB por correo medidos (`inv04-medidas-funcion.md`).
+ */
 export const ACCEPTED_FORMATS_NOTICE =
-  'Esta dirección acepta archivos CSV, TSV y TXT adjuntos. Tamaño máximo 5 MB por correo (hasta 20.000 líneas). ' +
+  'Esta dirección acepta archivos CSV, TSV, TXT y XLSX adjuntos (no el XLS antiguo). Tamaño máximo 5 MB por correo: ' +
+  'hasta 20.000 líneas en CSV, TSV o TXT y hasta 120.000 filas en XLSX. ' +
   'El formato debe coincidir con uno que ya hayas subido a mano y guardado como perfil de columnas.';
 
 export const READ_ONLY_NOTICE = 'Solo un administrador de tu organización gestiona el canal de ingestión por email.';

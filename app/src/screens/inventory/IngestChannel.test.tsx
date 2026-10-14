@@ -75,12 +75,16 @@ describe('INV-04 · IngestChannel', () => {
     expect(screen.getByTestId('ingest-address')).toHaveValue('ingest-5ahwrsg5e7xx@ingest.nortexsys.com');
   });
 
-  it('dice lo que el canal admite de verdad: CSV/TSV/TXT, 5 MB, perfil guardado', async () => {
+  it('dice lo que el canal admite de verdad: CSV/TSV/TXT/XLSX (no XLS), 5 MB, perfil guardado', async () => {
     await montar();
-    expect(screen.getByText(/CSV, TSV y TXT/)).toBeInTheDocument();
+    // `.xlsx` entra en la fase 3 (`ACCEPTED_EXTENSIONS` de ingest-email/mail-rules.ts);
+    // el aviso se había quedado en la fase 2 y decía que no (repaso visual del 14-oct).
+    expect(screen.getByText(/CSV, TSV, TXT y XLSX/)).toBeInTheDocument();
+    expect(screen.getByText(/no el XLS antiguo/)).toBeInTheDocument();
+    expect(screen.getByText(/120\.000 filas en XLSX/)).toBeInTheDocument();
     expect(screen.getByText(/5 MB/)).toBeInTheDocument();
     expect(screen.getByText(/perfil de columnas/)).toBeInTheDocument();
-    expect(screen.queryByText(/XLSX|50 MB/)).toBeNull();
+    expect(screen.queryByText(/50 MB/)).toBeNull();
   });
 
   it('la lista de remitentes enseña la etiqueta del administrador y no deja eliminarlo', async () => {

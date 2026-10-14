@@ -1,7 +1,12 @@
 /* PANEL-01 · Mi Panel. Solo colores vía tokens: ningún literal de color. */
 
+/* `flex: 1; min-height: 0; overflow-y: auto` en vez de `min-height: 100%`: `.bwcnt`
+   es `overflow: hidden` y con la ventana baja las tarjetas de abajo quedaban fuera
+   sin barra (14-oct, mismo fallo que F-186/F-189/F-190; ver PanelScroll.test.ts). */
 .body {
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--bw-screen-pad);
   background: var(--bw-cold-white);
   font-family: var(--bw-font-body);

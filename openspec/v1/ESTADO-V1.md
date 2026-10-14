@@ -33,7 +33,7 @@ Empieza por §6 y luego §3.
 ## 2 · Dónde estamos, por corriente
 
 - **Corriente A · Núcleo — CERRADA el 14-oct** (decisión del PO, `DECISIONES-V1.md`). Único cabo suelto: `F-192`, riesgo aceptado con disparador en `BACKLOG-V1.md`.
-- **Fundación V1.** Entregables 1 a 5 hechos (el 5 se midió y se dio por cumplido, `F-253`). **El 6 (residencia UE de VERA) sigue bloqueado** en el cupo de Anthropic en Vertex (`429`); se reclama por escrito, texto en `vera-vertex-eu-migracion.md` §7.
+- **Fundación V1.** Entregables 1 a 5 hechos (el 5 se midió y se dio por cumplido, `F-253`). **El 6 (residencia UE de VERA) sigue bloqueado** por cupo en cero en Vertex (`429`). El acceso al modelo ya estaba concedido; el envío de septiembre no consta. El 14-oct se pidieron 3 cupos por `gcloud` (`vera-eu-sonnet-requests`, `-input-tokens`, `-output-tokens`), sin aprobar aún (`vera-vertex-eu-migracion.md` §7).
 - **Corriente B · Fábrica — EN MARCHA.** 27 pantallas construidas y aceptadas. `REC-01`, `SET-SEC-01`, `INVT-02`, `ACT-02` e `INV-04` fueron **a mano**, sin filas en `harness-metrics.csv`. Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
@@ -41,7 +41,7 @@ Empieza por §6 y luego §3.
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta** (borra su backup). Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por ventana de 30 min, acertar no reinicia, `0052`).
 1. **Del PO:**
-   - **Enviar la reclamación de Vertex** y repetir la llamada de prueba a los 7 días.
+   - **Vertex:** mirar `gcloud beta quotas preferences list --project=bearingworld-vera-eu` y repetir la llamada de prueba (`grantedValue` ≠ 0). **No enviar la reclamación vieja** (§7 la da por superada). Si en unos días no cambia, caso de soporte de Google citando los 3 identificadores.
    - **AWS: acceso administrativo.** El 14-oct se perdió el MFA del raíz y se recuperó. Falta **añadir un segundo dispositivo MFA al raíz** (el actual es una app en el Samsung S22). El **usuario SSO es un AWS Builder ID** (portal `ssoins-722356743f2a19e8`, `us-east-1`) y el login dio «Acceso denegado»: probable que ese Builder ID no esté dado de alta en la instancia; mirar IAM Identity Center → Usuarios. Su MFA se gestiona en `profile.aws.amazon.com`, **no** en `Identity Delegated Admin` (a confirmar).
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct** (cobros resembrados el 10-oct). Solo importa si hay demo o se enseña `ADMIN-02`.
 2. **VERA: ampliar la guía verificada** (`index.ts`, «GUÍA VERIFICADA»). Ya sabe: subida de inventario, `Visibilidad`, `Inventario`, `Crear consulta`/`Crear oferta`/`Consultar`, `Vendiendo`, resultados de `Comprando`, búsqueda por lotes, `Mis watchers` e `Hilos`. **Faltan: Empresas (Directorio y ficha), Foro, Panel y Configuración.** Cada entrada con su nombre en `vera-prompt.test.ts`; antes de tocar `vera/index.ts`, `vera-vertex-eu-migracion.md`. El prompt estático creció ~1.700 tokens: la primera llamada tras desplegar reescribe la caché.
@@ -70,7 +70,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; cupo de Vertex en `429` desde el 10-sep | PO (reclamar) + Anthropic |
+| 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; 3 cupos pedidos el 14-oct, sin aprobar; `429` | Google (aprobar) + PO |
 | 🟠 | **Acceso administrativo a AWS** · MFA del raíz con un solo dispositivo; el usuario SSO no entra (§3.1). El correo de entrada sigue funcionando | PO |
 | 🟡 | **VERA solo conoce parte de la aplicación**: faltan Empresas, Foro, Panel y Configuración (§3.2) | Este agente |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse (§3.3) | Mirar ~12-nov |

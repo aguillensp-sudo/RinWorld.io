@@ -185,7 +185,40 @@ antes de tocar producción, y a fecha 10-sep esa llamada sigue en `429`. Próxim
 la llamada de prueba cuando llegue confirmación de Anthropic, o periódicamente si no llega
 ninguna.
 
-**14-oct-2026 · reclamación (decisión del PO).** Han pasado más de cinco semanas desde el envío
+**14-oct-2026 · corrección: lo de arriba sobre el formulario y la reclamación de abajo quedan superados.**
+Comprobado hoy, con el PO, contra la consola y llamadas reales:
+
+- **El envío de septiembre no consta.** En Facturación → Pedidos solo aparece `Transfer Appliance API`
+  (no es de Anthropic); no hay pedido de Claude Sonnet 5, y no hay correo de confirmación guardado.
+  El «Se compró Claude Sonnet 5» de arriba salió de la consola en su día, pero hoy no hay rastro.
+- **Pero el acceso al modelo ya no es el problema.** La ficha de Claude Sonnet 5 en Model Garden dice
+  «Casos de uso estándar: este modelo está listo para usarse en tu proyecto». No hay formulario que
+  rehacer; el programa de verificación cibernética de la misma ficha es para usos de alto riesgo y no
+  es el nuestro. El único bloqueo es el **cupo**.
+- **Cupo en cero en todas partes.** `rawPredict` con el proyecto `bearingworld-vera-eu`: `eu`,
+  `global` → `429` (cupo de peticiones, base model `anthropic-claude-sonnet`); `europe-west1` y
+  `europe-west4` → `429` (tokens por minuto, base model `anthropic-claude-sonnet-5`); `europe-west9` →
+  `404` (el modelo no está ahí).
+- **El cupo SÍ es ajustable**, al contrario de lo anotado el 8-sep: la API de cuotas marca
+  `isEligible: True` y aceptó la solicitud. (`claude-sonnet-5` aún no tiene fila propia en la API de
+  cuotas; la consola puede mostrarla.)
+
+**Solicitudes de cupo creadas el 14-oct-2026 a las 15:20 UTC** (por `gcloud beta quotas preferences create`,
+multi-región UE, `base_model=anthropic-claude-sonnet`, correo de contacto del PO). Las tres con
+`grantedValue: 0` y `reconciling: true` en el momento de crearse; **no consta que estén aprobadas**:
+
+| Identificador | Cupo | Pedido |
+|---|---|---|
+| `vera-eu-sonnet-requests` | `EuOnlinePredictionRequestsPerMinPerProjectPerBaseModel` | 60 por minuto |
+| `vera-eu-sonnet-input-tokens` | `EuOnlinePredictionInputTokensPerMinutePerBaseModel` | 200.000 por minuto |
+| `vera-eu-sonnet-output-tokens` | `EuOnlinePredictionOutputTokensPerMinutePerBaseModel` | 50.000 por minuto |
+
+Estado: `gcloud beta quotas preferences list --project=bearingworld-vera-eu`. Cuando `grantedValue`
+cambie, repetir la llamada de prueba de arriba; si pasa, seguir el §4. Si en unos días no cambia, abrir
+un caso de soporte de Google Cloud citando estos tres identificadores (no el «envío de septiembre»).
+
+**14-oct-2026 · reclamación (decisión del PO) — SUPERADA por lo anterior; no enviar tal cual.** Se
+basaba en un formulario de septiembre que no consta. Texto histórico: han pasado más de cinco semanas desde el envío
 del formulario (8 a 10-sep) sin respuesta, y no hay plazo publicado. Se reclama por escrito. El
 canal es el soporte de Google Cloud del proyecto (el cupo es de Vertex) con copia al contacto de
 Anthropic que haya en la cuenta. Texto propuesto, para pegar rellenando lo que va entre `<>`:

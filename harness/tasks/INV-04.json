@@ -1,0 +1,60 @@
+{
+  "task_id": "INV-04",
+  "screen": "INV-04",
+  "goal": "Panel de contenido de INV-04 (Canal de ingestion por email, Modulo 02): cabecera, aviso de solo lectura para el EDITOR, tarjeta de la direccion unica de ingestion (campo de solo lectura, Copiar, Rotar direccion con dialogo de confirmacion), tarjeta de remitentes autorizados (lista, remitente protegido no eliminable, alta con validacion, baja) y tarjeta del historial de ingestiones (tabla de cinco columnas con el motivo de cada rechazo, o un texto si esta vacio). Solo el ADMIN gestiona el canal.",
+  "_nota_formato": "Formato congelado el dia 4 (Dia-04_decisiones_arnes.md §5) con las desviaciones de los dias 5 y 6 (component_api, literales verbatim, estado accesible) y la restriccion de scroll propio en `constraints` (F-198).",
+  "_nota_umbral": "RECONSTRUCCION para medir las cifras 7 y 8 (`DECISIONES-V1.md`, 14-oct-2026). INV-04 se construyo a mano el 13-oct; esta tarea la regenera por el arnes en la rama `exp/inv-04-fabrica`, que NO se fusiona. La capa de datos (`app/src/lib/ingest.ts`) es precondicion ya entregada. Los tests de aceptacion existian antes de esta tarea y el Coder no los ve.",
+  "_nota_shell": "PRECONDICION ya hecha a mano, fuera de esta tarea: `App.tsx` monta `<IngestChannel profile />` cuando `Inventario` esta activo y el usuario pulso `Gestionar canal email` en INV-01. Esta tarea solo escribe la pantalla.",
+  "inputs": {
+    "spec": "openspec/design-gui/specs y html aprobados/specs/Rinworld_spec_INV-04.md",
+    "approved_html": "openspec/design-gui/specs y html aprobados/INV-04 · INV v1.0.html",
+    "tokens": "app/src/styles/tokens.css",
+    "design_system": ["§1.1", "§1.4", "§1.5", "§6.4"],
+    "style_reference": "app/src/screens/inventory/Visibility.tsx",
+    "_nota_style_reference": "Para la cabecera de pantalla, las tarjetas, los avisos y el scroll propio ya resuelto: `Visibility.tsx`/`Visibility.module.css` (INV-07), del mismo modulo.",
+    "data_layer": "app/src/lib/ingest.ts",
+    "_nota_data_layer": "ENTREGADA, no solo declarada. El Coder la importa, no la reescribe: `ACCEPTED_FORMATS_NOTICE`, `READ_ONLY_NOTICE`, `REJECTED_SILENTLY_HINT`, `SENDER_DOMAIN_AUTH_HINT`, `ROTATED_MESSAGE`, `MAX_INGEST_SENDERS`, `RESULT_LABELS`, `reasonLabel`, `canManageIngest`, `ingestAddress`, `isValidSenderEmail`, `ensureIngestChannel`, `rotateIngestAddress`, `fetchIngestSenders`, `addIngestSender`, `removeIngestSender`, `fetchIngestEvents` y los tipos `IngestSender` e `IngestEventRow`. `errorMessage` y el tipo `MemberProfile` vienen de '../../lib/session'.",
+    "_nota_spec_vs_realidad": "Donde la spec o el HTML aprobado dicen otra cosa que la capa de datos, MANDA LA CAPA DE DATOS: el aviso de formatos es `ACCEPTED_FORMATS_NOTICE` (no 'XLSX/XLS, 50 MB'), el dominio sale de `ingestAddress(token)` y el historial tiene CINCO columnas (no hay columna de rol)."
+  },
+  "outputs": [
+    "app/src/screens/inventory/IngestChannel.tsx",
+    "app/src/screens/inventory/IngestChannel.module.css"
+  ],
+  "component_api": {
+    "_nota_literales": "REGLA DEL DIA 6 (F-048): TODO LITERAL QUE EL USUARIO VE se escribe VERBATIM, con sus acentos, entre comillas simples. El separador ' · ' es el punto medio U+00B7 con un espacio a cada lado; el guion largo ' — ' es U+2014 con un espacio a cada lado.",
+    "_nota_accesibilidad": "Todo lo accionable es `<button type=\"button\">` (o `type=\"submit\"` dentro del formulario de alta), nunca un `<div onClick>`. El boton de quitar un remitente lleva `aria-label` = 'Eliminar ' + su email ('Eliminar erp@empresa.com'). El dialogo de rotar es `role=\"dialog\"` con `aria-modal=\"true\"` y nombre accesible = su titulo (via `aria-labelledby`). Los errores van en `<p role=\"alert\">` y el aviso de direccion rotada en `<p role=\"status\">`.",
+    "_nota_nombres_ejemplo": "Nombres accesibles, EJEMPLOS VERBATIM: boton 'Copiar' (y 'Copiado' durante 2 s tras copiar), boton 'Rotar dirección', dialogo '¿Seguro que quieres rotar la dirección?' con botones 'Cancelar' y 'Sí, rotar', boton '+ Añadir remitente', campo con `<label>` 'Email del remitente', botones 'Añadir' y 'Cancelar' del formulario de alta, boton 'Eliminar admin@empresa.com'. Etiqueta del remitente protegido: 'Administrador — no eliminable'.",
+    "_nota_estado_de_la_verdad": "El Coder NO valida emails, NO traduce motivos ni resultados y NO compone la direccion por su cuenta: `isValidSenderEmail`, `reasonLabel`, `RESULT_LABELS` e `ingestAddress` de `lib/ingest.ts` estan escritas y probadas. Se IMPORTAN.",
+    "app/src/screens/inventory/IngestChannel.tsx": "export function IngestChannel({ profile, formatDate }: { profile: MemberProfile; formatDate?: (iso: string) => string }). `formatDate` es opcional; por defecto, `new Date(iso).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })` y cadena vacia si la fecha no es valida. ES LA PANTALLA: posee todo el estado. CABECERA: eyebrow 'Módulo 02 · Gestión de Inventario'; `<h1>` 'Canal de ingestión por email'; subtitulo 'Envía tu archivo de inventario directamente por email a tu dirección única de ingestión. El sistema lo procesará automáticamente.'. PERMISO: `canManageIngest(profile.role)`. Si es FALSE (EDITOR): pinta la cabecera y `READ_ONLY_NOTICE`, y NADA MAS — no llama a NINGUNA funcion de red, no hay direccion ni botones. Si es TRUE (ADMIN): al montar, UNA vez, `await ensureIngestChannel()` (devuelve el token) y despues `fetchIngestSenders()` y `fetchIngestEvents()` en paralelo; si algo falla, `<p role=\"alert\">` con `errorMessage(err)` y NINGUNA direccion. Descarta la respuesta si el componente se desmonto. TARJETA DIRECCION (solo con token): titulo 'Dirección de ingestión'; `<input type=\"text\" readOnly>` con `value={ingestAddress(token)}`, `aria-label=\"Dirección de ingestión\"` y `data-testid=\"ingest-address\"`, que se selecciona entero al enfocarlo; boton 'Copiar' que escribe la direccion con `navigator.clipboard.writeText` y pasa a 'Copiado' 2 s (si el portapapeles falla, no hace nada); boton 'Rotar dirección' que abre el dialogo; debajo, `ACCEPTED_FORMATS_NOTICE` en un bloque destacado. DIALOGO ROTAR: titulo '¿Seguro que quieres rotar la dirección?', texto 'La dirección actual quedará anulada de forma inmediata. Cualquier sistema que la use deberá actualizarse.', botones 'Cancelar' (cierra sin llamar a la red) y 'Sí, rotar' (llama a `rotateIngestAddress()`, pone el token nuevo, cierra el dialogo y pinta `ROTATED_MESSAGE` en `<p role=\"status\">`). Un error al rotar se pinta DENTRO del dialogo en `<p role=\"alert\">` y el dialogo no se cierra. TARJETA REMITENTES: titulo 'Remitentes autorizados'; una fila por remitente con su email y, si `isProtected`, la etiqueta 'Administrador — no eliminable'; boton 'Eliminar <email>' deshabilitado si `isProtected` o si hay una operacion en curso; eliminar llama a `removeIngestSender(id)` y vuelve a pedir `fetchIngestSenders()`. ALTA: boton '+ Añadir remitente' (deshabilitado si hay `MAX_INGEST_SENDERS` o mas) que muestra un `<form>` con `<label>` 'Email del remitente' + `<input type=\"email\" placeholder=\"email@empresa.com\">`, boton submit 'Añadir' y boton 'Cancelar' (cierra y vacia). Al enviar: si `!isValidSenderEmail(valor)`, `<p role=\"alert\">` 'El email del remitente no es válido.' y NO llama a la red; si es valido, `addIngestSender(valor.trim())`, vuelve a pedir `fetchIngestSenders()`, vacia y cierra el formulario. Un error de la base se pinta tal cual (`errorMessage(err)`) en `<p role=\"alert\">`. Bajo la lista, `REJECTED_SILENTLY_HINT` y `SENDER_DOMAIN_AUTH_HINT`. TARJETA HISTORIAL: titulo 'Historial de ingestiones'. Sin eventos: el texto 'Todavía no se ha recibido ningún correo en esta dirección.' y NINGUNA tabla. Con eventos: `<table>` con cabeceras `<th scope=\"col\">` 'Fecha y hora', 'Remitente', 'Archivo', 'Resultado', 'Filas importadas'; una fila por evento: `formatDate(receivedAt)`, `senderEmail`, `fileName` o '—', una etiqueta con `RESULT_LABELS[result]` (verde PROCESADO, roja ERROR, neutra RECHAZADO) seguida de `reasonLabel(reason)` si no es null, y `rowsImported.toLocaleString('es-ES')` o '—' si es null."
+  },
+  "acceptance": {
+    "unit": [
+      "app/src/screens/inventory/IngestChannel.test.tsx",
+      "app/src/screens/inventory/IngestChannelScroll.test.ts",
+      "app/src/screens/fondo.test.ts",
+      "app/src/screens/cabeceras.test.ts",
+      "app/src/screens/padding.test.ts"
+    ],
+    "e2e": [
+      "app/e2e/ingest-channel.spec.ts"
+    ],
+    "_nota": "Escritos por Claude Code a mano el 13-oct, junto con la pantalla hecha a mano; el Coder no los ve. `cabeceras.test.ts` exige las clases `.eyebrow`, `.title` y `.subtitle` en el CSS; `padding.test.ts` y `fondo.test.ts` miran la clase `.screen`. El e2e va contra `bearingworld-e2e` con ALPHA (ADMIN de Rodamientos Ibericos); añade y quita un remitente y no rota la direccion."
+  },
+  "constraints": [
+    "SCROLL PROPIO (F-186/F-189/F-190/F-198): la raiz de la pantalla es hija DIRECTA de `.bwcnt`, que es `overflow: hidden`. La clase `.screen` de `IngestChannel.module.css` DEBE declarar `flex: 1; min-height: 0; overflow-y: auto;` (mas `display: flex; flex-direction: column`), `padding: var(--bw-screen-pad);` y `background: var(--bw-cold-white);`. Mira `Visibility.module.css` (`.screen`) para el patron.",
+    "La cabecera usa las clases `.eyebrow`, `.title` y `.subtitle` en `IngestChannel.module.css`, con los mismos tokens que `Visibility.module.css`.",
+    "Ni un color literal: todo `var(--bw-...)`. Ningun hex, ningun rgb().",
+    "Sin dependencias nuevas: solo lo que ya esta en app/package.json.",
+    "Sin `dangerouslySetInnerHTML` y sin el tipo `any`.",
+    "Sin `window.prompt`, `window.alert` ni `window.confirm`: la confirmacion de rotar es un dialogo propio.",
+    "No tocar `app/src/shell/**`, `App.tsx`, `Inventory.tsx` ni `app/src/lib/ingest.ts`.",
+    "No reimplementar nada de `app/src/lib/ingest.ts` (ver `_nota_estado_de_la_verdad`)."
+  ],
+  "out_of_scope": [
+    "Lo que la spec y el HTML dicen del canal y NO es verdad hoy: 'XLSX/XLS, 50 MB', un dominio de ingestion fijo y una columna de rol en el historial. El aviso de formatos es EXACTAMENTE `ACCEPTED_FORMATS_NOTICE` (importado, no reescrito), la direccion sale de `ingestAddress(token)` y el historial tiene las CINCO columnas de la API de arriba. En esto la capa de datos manda sobre la spec.",
+    "VERA: el shell la monta y esta pantalla no la toca.",
+    "El wiring en `App.tsx` y el boton `Gestionar canal email` de INV-01: ya hechos a mano.",
+    "Que un correo real llegue y se importe: lo hace la Edge Function `ingest-email` y no pasa por esta pantalla.",
+    "Los permisos del canal en la base (solo el ADMIN): los imponen las funciones SQL y la RLS, probadas en el banco de esquema."
+  ]
+}

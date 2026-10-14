@@ -38,7 +38,7 @@ Empieza por §6 y luego §3.
 
 - **Corriente A · Núcleo — CERRADA el 14-oct** (decisión del PO, `DECISIONES-V1.md`). Único cabo suelto: `F-192`, riesgo aceptado con disparador en `BACKLOG-V1.md`.
 - **Fundación V1.** Entregables 1 a 5 hechos (el 5 se midió y se dio por cumplido, `F-253`). **El 6 (residencia UE de VERA) sigue bloqueado** por cupo en cero en Vertex (`429`). El 14-oct se pidieron 3 cupos por `gcloud` (`vera-eu-sonnet-requests`, `-input-tokens`, `-output-tokens`), sin aprobar aún (`vera-vertex-eu-migracion.md` §7). Lo lleva otra sesión: no tocar.
-- **VERA.** La guía verificada cubre todas las pantallas construidas (`5dc1624`, más País de `F-229`). Desde `da5b1fa`: memoria de 20 intercambios, solo texto (`F-101`); el contexto dice la pantalla real con subpantallas (`F-255`); tras una búsqueda, una línea; Inventario solo se mueve si la respuesta es una lista. Todo con el modelo mockeado: **construido, no medido**.
+- **VERA.** La guía verificada cubre todas las pantallas construidas (`5dc1624`, más País de `F-229`). Desde `da5b1fa`: memoria de 20 intercambios, solo texto (`F-101`); el contexto dice la pantalla real con subpantallas (`F-255`); tras una búsqueda, una línea; Inventario solo se mueve si la respuesta es una lista. Desde el 14-oct (tarde, decisión del PO) `navegar` lleva también a Empresas y Foros, a su entrada; Contacto sigue sin existir. Todo con el modelo mockeado: **construido, no medido**.
 - **Corriente B · Fábrica — EN MARCHA.** 27 pantallas construidas y aceptadas. `REC-01`, `SET-SEC-01`, `INVT-02`, `ACT-02` e `INV-04` fueron **a mano**, sin filas en `harness-metrics.csv`. Cifras 7 y 8: un solo punto limpio, `SRCH-03` (`F-205`).
 - **Corriente C · Verificación — NO ABIERTA.**
 
@@ -48,7 +48,6 @@ Empieza por §6 y luego §3.
 1. **Del PO:**
    - **VERA contra Sonnet:** dar o no el visto bueno a `vera-plan-pruebas-sonnet.md` (~120 preguntas, 4–10 $, tope propuesto 15 $). **Sin ese sí no se hace ninguna llamada real.**
    - **Casado de referencias (`F-254`):** el PO va a analizar cómo lo hace el competidor y traerá definiciones. **No se toca `search.ts` hasta entonces.** De esto depende qué hace VERA con «ahora busca 6304» con otros filtros puestos (hoy: dice cuáles mantiene).
-   - **`navegar` a Empresas y Foros:** propuesto con su alcance (`BACKLOG-V1.md`), sin decidir.
    - **Vertex:** mirar `gcloud beta quotas preferences list --project=bearingworld-vera-eu` y repetir la llamada de prueba (`grantedValue` ≠ 0). **No enviar la reclamación vieja** (§7 la da por superada). Si en unos días no cambia, caso de soporte de Google citando los 3 identificadores.
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` del entorno de Vercel de producción **cuando se acerquen datos reales o abrir el registro a terceros** (PO, 14-oct: «cuando se acerque»). Inutiliza allí las cuentas de prueba (`BACKLOG-V1.md`, `F-067`). Hasta entonces, no.
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca** (ni resiembra ni reactivación): solo importaría con demo o enseñando `ADMIN-02`.

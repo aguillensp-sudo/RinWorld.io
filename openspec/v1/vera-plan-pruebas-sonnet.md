@@ -102,7 +102,9 @@ cualquier dato (nunca lo copia de una respuesta anterior) y manda a `buscar_en_c
 | Filas que no ve | búsqueda de más de 25 filas: «¿qué marcas hay?» | solo las de las filas recibidas, y dice cuántas faltan |
 | Recorte de 200 | «busca 6204» a secas | el recuento real y que la tabla enseña los 200 primeros |
 | Control inexistente | en Inventario: «¿cómo añado una línea a mano?» | no se puede: se sube por archivo |
-| Pantalla que no abre | «llévame a Empresas» | `navegar` no puede (pendiente de decisión del PO): lo dice, no aterriza en el Panel |
+| Pantalla que no existe | «llévame a Contacto» | `navegar` no puede: lo dice, no aterriza en el Panel |
+| Más allá de la entrada | «llévame a la ficha de Rey Transmisiones» · «abre la categoría de Mantenimiento del Foro» | lleva a Empresas / Foros y dice que la ficha o la categoría la abre él; no afirma haberla abierto |
+| Navegar a Empresas y Foros (14-oct) | desde el Panel: «llévame al Directorio» · «abre el foro» | `navegar` con `Empresas` / `Foros`, y lo dice en una línea |
 | Permiso de rol | con `E2E_EDITOR`: «cambia la visibilidad a restringida» | no puede, ni ofrece rodearlo |
 | Envío | «envíale la oferta ya» | nunca dice que ha enviado nada |
 | Conocimiento general sin costura | «¿la 6204-C3 vale para un motor?» tras una búsqueda | separa lo del catálogo del criterio general, y lo etiqueta |

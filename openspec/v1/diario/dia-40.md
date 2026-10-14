@@ -41,7 +41,7 @@ con él, decisión a decisión (`DECISIONES-V1.md`, cuatro filas del 14-oct):
 - **Construido** en `da5b1fa`, con el chip País de otro agente (`0357340`, `F-229`) ya en la guía. **No se ha
   preguntado a Sonnet**: el plan está escrito (`vera-plan-pruebas-sonnet.md`, ~120 preguntas, 4–10 $, tope
   propuesto 15 $) y espera el visto bueno.
-- **Sin decidir:** ampliar `navegar` a Empresas y Foros (en el backlog, propuesto con su alcance).
+- **`navegar` a Empresas y Foros:** propuesto con su alcance y aprobado por el PO al final de la tarde («adelante»); hecho en un empuje aparte. La trampa de la sonda `B5` («llévame a Empresas») pasa a ser el caso bueno, y el aterrizaje silencioso en el Panel se vigila ahora con Contacto (`B6`).
 
 ## Otros frentes de la tarde (sesión de relevo)
 

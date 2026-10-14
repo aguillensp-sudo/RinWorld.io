@@ -19,7 +19,6 @@ Cada fila dice **qué es**, **qué la activa** (el disparador) y **dónde está 
 | **VERA sin límite de preguntas por usuario y hora, y sin registro de `usage` por pregunta** (el tope de tamaño por petición sí está) | Antes de abrir el registro a terceros | `F-256` |
 | **VERA sin registro de auditoría de sus acciones** (`action-audit-logging`) | Antes de la primera herramienta de VERA que escriba en la base | `F-257` |
 | **VERA sin preferencias persistentes** (`profile-context-layer`, «Ajustes → Asistente VERA») | Producto lo prioriza | `F-257` |
-| **`navegar` solo lleva a cinco pantallas**: ampliarlo a Empresas y Foros está propuesto (enum de `tools.json`, `SCREENS`, el mensaje de error y la frase del prompt) | El PO decide | `F-255` |
 
 ## Decididas y cerradas el 14-oct-2026 (no hay nada que hacer)
 

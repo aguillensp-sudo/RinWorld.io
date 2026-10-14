@@ -17,6 +17,7 @@
   overflow-y: auto;
   gap: 16px;
   padding: var(--bw-screen-pad);
+  background: var(--bw-cold-white);
 }
 
 .screen > * {

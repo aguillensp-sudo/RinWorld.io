@@ -94,6 +94,13 @@ export function RequestsTable({ rows, now, selectedId, onSelect }: Props) {
                 <tr
                   key={row.id}
                   className={row.id === selectedId ? `${styles.row} ${styles.rowSelected}` : styles.row}
+                  // Spec: el detalle se abre «al hacer clic en una fila». El botón del
+                  // nombre sigue siendo el control de teclado; esto es para el ratón, y
+                  // no salta si el clic ya era de un enlace o de un botón de la fila.
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest('a, button')) return;
+                    onSelect(row);
+                  }}
                 >
                   <td className={styles.td}>
                     <button type="button" className={styles.orgButton} onClick={() => onSelect(row)}>

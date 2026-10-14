@@ -2,8 +2,8 @@
    DIR-01 · Directorio de Organizaciones — pantalla
    =============================================================================
    Solo tokens de `:root` (design-system.md §1): ningún hex, ningún rgb().
-   El fondo del panel de contenido lo pone el shell (`--bw-cold-white`), así que
-   aquí no se repite.
+   El fondo del panel de contenido (`--bw-cold-white`) lo pone `.page`: el
+   `.bwcnt` del shell React no pone ninguno (ver `screens/fondo.test.ts`).
 
    Nota de tokens: el mock usa `white` para la superficie de tarjeta, de campo y
    de botón. No existe un token de blanco puro en §1; se usa `--bw-warm-cream`
@@ -21,6 +21,7 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--bw-screen-pad);
+  background: var(--bw-cold-white);
 }
 
 /* ── Cabecera de la pantalla ─────────────────────────────────────────────── */

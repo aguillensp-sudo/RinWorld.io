@@ -40,6 +40,7 @@
 
 .row {
   transition: background-color 0.1s;
+  cursor: pointer; /* toda la fila abre el detalle (spec ADMIN-01) */
 }
 
 .row:hover .td {

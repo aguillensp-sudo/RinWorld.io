@@ -16,6 +16,7 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--bw-screen-pad);
+  background: var(--bw-cold-white);
 }
 
 .eyebrow {

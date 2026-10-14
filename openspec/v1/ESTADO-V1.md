@@ -12,7 +12,7 @@ sobrescribe al cierre de cada día con el ritual de `CLAUDE.md` §11. Historia e
 Empieza por §6 y luego §3.
 ---
 
-**Día 40 de V1 · 14-oct-2026 · Estado: CERRADO.** Mañana: limpieza del relevo y deuda técnica (`F-224`, `F-225`, `F-233`, `F-234`, `F-250`–`F-253`). Tarde: VERA lista para probarse como la usaría un usuario real —memoria de conversación (`F-101`), contexto de pantalla real (`F-255`), tope de tamaño en el proxy (`F-256`), respuestas que no repiten la pantalla— **sin preguntar todavía a Sonnet**. Otras sesiones cerraron `F-229` (chip País), `F-171`, `F-099`, `F-039` y `F-098`, y **agravaron `F-067`** (la semilla de demo está en el JS de producción: ver el hallazgo, no comprobado aquí). Sin fecha de demo. Detalle en `diario/dia-40.md`.
+**Día 40 de V1 · 14-oct-2026 · Estado: CERRADO.** Mañana: limpieza del relevo y deuda técnica (`F-224`, `F-225`, `F-233`, `F-234`, `F-250`–`F-253`). Tarde: VERA lista para probarse como la usaría un usuario real —memoria de conversación (`F-101`), contexto de pantalla real (`F-255`), tope de tamaño en el proxy (`F-256`), respuestas que no repiten la pantalla— **sin preguntar todavía a Sonnet**. Otras sesiones cerraron `F-229` (chip País), `F-171`, `F-099`, `F-039` y `F-098`, y dieron a `INV-03` el motivo de un archivo ilegible (`.xls`, tamaño, vacío); `F-067` quedó agravado: la semilla de demo está en el JS de producción. Sin fecha de demo. Detalle en `diario/dia-40.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -26,9 +26,12 @@ Empieza por §6 y luego §3.
 | Canal de ingestión | `npm run ingest:salud` | 10 eventos en 7 días; último 13-oct 14:10 UTC `PROCESADO` |
 | VERA no tiene tablas de uso, cuota, preferencias ni auditoría | `pg_class` de producción, fuera de los esquemas del sistema | Solo `auth.audit_log_entries` (la de Supabase): `F-256`, `F-257` |
 | «6204» casa con 15 designaciones distintas | `inventory_lines` `PUBLISHED`, `part_number ilike '%6204%'` | 74 líneas, de `6204` a `S-6204-2RS`: `F-254` |
-| CI de `0357340` (País) y `5a4c243` (`F-171`), de otras sesiones | `gh run list` | Verdes |
+| CI de `de0e67a` (motivo en `INV-03`), `0357340` (País) y `5a4c243` (`F-171`) | `gh run list` | Verdes. `0357340` falló la primera vez en dos e2e sin relación (`keys-intro`, `messages`, timeout de 5 s) y pasó al repetir los jobs fallidos |
+| `F-171`: producción sirve el commit desplegado | `curl` al bundle de `rin-world-io.vercel.app` | Contiene `dataset.build=` con el SHA completo de `5a4c243`; el paso de CI nuevo pasó en el run `38605908970` |
+| `VITE_DEMO_KEY_SEED` en el JS de producción (`F-067`) | La semilla local (43 caracteres, sin imprimirla) buscada en el bundle servido | **Está.** Quien lo descargue deriva las privadas de las cuentas de prueba; no afecta a los miembros con ADR-001 |
+| Segundo dispositivo MFA del raíz de AWS y acceso del usuario SSO | Lo dijo el PO el 14-oct | HECHO, **no verificado por este agente** |
 | `vitest` y `tsc` con la memoria de VERA | Local, sobre el árbol fusionado con `origin` | 2676 verdes, 31 saltados (las sondas reales); `tsc` y `tsc -p tsconfig.build.json` limpios |
-| CI y despliegue de `e9447b1` (memoria de VERA) | `gh run` 38608195562; `get_edge_function`; el bundle de `rin-world-io.vercel.app` | Los seis jobs verdes. `vera` v35 lleva la memoria, los topes y `mostrar_en_pantalla`; el bundle sirve `e9447b1` y ya no tiene `NAV_SCREEN` |
+| CI y despliegue de `e9447b1` (memoria de VERA) | Run `38608195562`; `get_edge_function` de `vera` en producción, buscando tres cadenas | Los seis jobs verdes; `vera` **v35** ACTIVE lleva la guía nueva («Encontrar una empresa…», «Cambiar la frase de backup») y la memoria («LA CONVERSACIÓN TE LLEGA; LOS DATOS, NO:») |
 | Qué contesta VERA con todo lo de hoy | — | **No se ha preguntado a Sonnet**: plan en `vera-plan-pruebas-sonnet.md` |
 
 ## 2 · Dónde estamos, por corriente
@@ -47,9 +50,9 @@ Empieza por §6 y luego §3.
    - **Casado de referencias (`F-254`):** el PO va a analizar cómo lo hace el competidor y traerá definiciones. **No se toca `search.ts` hasta entonces.** De esto depende qué hace VERA con «ahora busca 6304» con otros filtros puestos (hoy: dice cuáles mantiene).
    - **`navegar` a Empresas y Foros:** propuesto con su alcance (`BACKLOG-V1.md`), sin decidir.
    - **Vertex:** mirar `gcloud beta quotas preferences list --project=bearingworld-vera-eu` y repetir la llamada de prueba (`grantedValue` ≠ 0). **No enviar la reclamación vieja** (§7 la da por superada). Si en unos días no cambia, caso de soporte de Google citando los 3 identificadores.
-   - **AWS: acceso administrativo.** Falta **añadir un segundo dispositivo MFA al raíz** (el actual es una app en el Samsung S22). El **usuario SSO es un AWS Builder ID** (portal `ssoins-722356743f2a19e8`, `us-east-1`) y el login dio «Acceso denegado»: probable que no esté dado de alta en la instancia; mirar IAM Identity Center → Usuarios.
+   - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` del entorno de Vercel de producción **cuando se acerquen datos reales o abrir el registro a terceros** (PO, 14-oct: «cuando se acerque»). Inutiliza allí las cuentas de prueba (`BACKLOG-V1.md`, `F-067`). Hasta entonces, no.
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca** (ni resiembra ni reactivación): solo importaría con demo o enseñando `ADMIN-02`.
-2. **VERA, si el PO da el sí:** escribir `app/src/lib/vera.real.test.ts` (`VERA_REAL=1`, patrón de `vera.ensayo`), con captura de `usage` y de los retornos de herramienta (hoy `createProxyCall` tira `usage`), y ejecutar el plan. Antes, comprobar el despliegue por contenido. La primera llamada reescribe la caché (~13.000 tokens estimados).
+2. **VERA, si el PO da el sí:** escribir `app/src/lib/vera.real.test.ts` (`VERA_REAL=1`, patrón de `vera.ensayo`), con captura de `usage` y de los retornos de herramienta (hoy `createProxyCall` tira `usage`), y ejecutar el plan. El despliegue ya está comprobado por contenido (v35). La primera llamada reescribe la caché (~13.000 tokens estimados).
 3. **`INV-04`:** sin código pendiente. Mirar `npm run ingest:salud` al abrir sesión. **~12-nov: comprobar que `inbox/` ya no conserva los primeros correos**. No usar el conector `AWS MCP` salvo que el PO lo pida.
 4. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero, **el banco (`supabase/tests/run.sh`, Docker) si se tocó `supabase/`** más allá de una función, la suite e2e contra `bearingworld-e2e` si se tocó un e2e o el arnés (`F-230`) y `py -m harness.tests.test_checks` si se tocó el contrato de una tarea (`F-251`). **Mira la CI del push anterior antes de empujar otro. Basta UN commit con `[skip ci]` dentro de un empuje para que GitHub salte la CI de TODOS sus commits** (basta con ESCRIBIR la cadena en el mensaje): los `[skip ci]` van en un empuje aparte, o primero el código y después la documentación. Nunca `vitest` con un e2e en marcha.
 5. Deuda sin fecha y sus disparadores: `BACKLOG-V1.md` (incluye el límite por hora de VERA, `F-256`, y su auditoría, `F-257`).
@@ -77,8 +80,8 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **Entregable 6** · VERA sigue llamando a `api.anthropic.com`; 3 cupos pedidos el 14-oct, sin aprobar; `429` | Google (aprobar) + PO |
-| 🟠 | **Acceso administrativo a AWS** · MFA del raíz con un solo dispositivo; el usuario SSO no entra. El correo de entrada sigue funcionando | PO |
 | 🟠 | **VERA sin medir contra Sonnet** desde la guía nueva y la memoria (`F-101`, `F-255`): plan escrito, sin ejecutar | PO (visto bueno) |
+| 🟡 | **`F-067` · `VITE_DEMO_KEY_SEED` va en el JS de producción**: las privadas de las cuentas de prueba son derivables. Datos inventados hoy | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-254` · la búsqueda casa por «contiene»**; los sufijos de fabricante no se reconocen | PO (definiciones) |
 | 🟡 | **VERA sin límite por usuario y hora ni registro de `usage`** (`F-256`; el tope de tamaño sí está) | Backlog, antes de terceros |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse (§3.3) | Mirar ~12-nov |
@@ -90,6 +93,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Qué contesta VERA con lo de hoy**: la memoria, el contexto de pantalla corregido, la regla de una línea y las ocho entradas nuevas de la guía están probados con el modelo mockeado, **no preguntados a Sonnet**. Antes de hoy se probó con 8 preguntas del ensayo, el ejemplo de la spec y siete trampas, una vez cada una.
 - **Si con memoria VERA reutiliza datos de sus respuestas anteriores** en vez de volver a consultar: el prompt lo prohíbe; solo una llamada real lo dice.
 - **Cuánto cuesta VERA por pregunta en uso real**: `usage` se devuelve y el cliente lo tira; lo del plan (~0,03–0,08 $) es una estimación por caracteres.
+- **Si los e2e de `bearingworld-e2e` son estables**: falló una vez por timeout de 5 s en dos specs sin relación (14-oct) y no se ha investigado la causa; un `npm run e2e` local a secas toca el proyecto de la demo (`F-098`).
 - **Cómo se ve nada en un navegador desde este agente**: cabeceras, padding, `MSG-03`, `INV-04`, y que Inventario adopte bien el filtro que deja VERA. Los tests leen DOM y CSS, no miden render.
 - **Qué ve al entrar el EDITOR `REGISTERED` de cada empresa nueva** (Nakishita y Rey): nadie lo ha recorrido.
 - **Cuánto se gana con `0047`/`0051`/`0062`**: sin medir con volumen. La de `0064` sí está medida (`F-253`).

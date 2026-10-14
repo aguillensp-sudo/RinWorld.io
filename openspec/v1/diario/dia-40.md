@@ -43,6 +43,14 @@ con él, decisión a decisión (`DECISIONES-V1.md`, cuatro filas del 14-oct):
   propuesto 15 $) y espera el visto bueno.
 - **Sin decidir:** ampliar `navegar` a Empresas y Foros (en el backlog, propuesto con su alcance).
 
+## Otros frentes de la tarde (sesión de relevo)
+
+- **`INV-03`** dice por qué no pudo leer el archivo (`.xls`, más de 50 MB, vacío); sale de `BACKLOG-V1.md` la fila que lo esperaba a un cliente (`de0e67a`).
+- **`F-229`**: el chip de zona admite país (`0357340`). La CI falló la primera vez en dos e2e sin relación y pasó al repetir.
+- **`F-171`**: el despliegue mete el SHA del commit en el bundle y el paso de CI espera a verlo servido (`5a4c243`); comprobado en una corrida real y con `curl`.
+- Auditoría de hallazgos de agosto contra el código: cerrados `F-099` (`create_offer`, 0055) y `F-039` (la capability ya dice ≥ 1 fila) y `F-098` (la CI usa `bearingworld-e2e`). `F-067` sigue abierto y peor: la semilla de demo está en el bundle de producción.
+- Lo de AWS (MFA del raíz y SSO) lo da el PO por hecho; este agente no lo comprobó.
+
 ## Lecciones
 - **Basta un commit con `[skip ci]` dentro de un empuje para que no corra la CI de ninguno de sus commits**, aunque el último no lo lleve. Pasó tres veces el 14-oct, la tercera por escribir la cadena en el asunto del commit que explicaba la regla: el empuje de la mañana (corrección de carreras, aviso de DMARC) y el de la tarde (`0063`, `0064`, guía de VERA) no corrieron CI ni despliegue. Se resolvió con un empuje posterior de un solo commit sin `[skip ci]`. Regla: el código se empuja primero; la documentación `[skip ci]`, en otro empuje.
 - Dije «el mensaje de rechazo ya lo dice» de `.xls` sin mirarlo, y era falso: un `.xls` cae en el fallo de `INV-03` sin explicación. Afirmado sin comprobar; corregido en el backlog.
@@ -53,3 +61,5 @@ con él, decisión a decisión (`DECISIONES-V1.md`, cuatro filas del 14-oct):
   el valor por defecto («Panel») es una pantalla real.
 - El PO desmontó dos ejemplos míos que sonaban útiles (avisar de los 200, decir con quién hay hilo). Antes de
   proponer que VERA añada algo, preguntarse si la pantalla ya lo dice o si con uso real es ruido.
+- Un hallazgo marcado «Abierto» puede llevar semanas cerrado en la práctica (`F-099`, `F-039`, `F-098`). Antes de trabajar uno, comprobarlo contra el código; y antes de cerrarlo, también.
+- **Un secreto de «solo demo» que viaja en el JS de producción no es un secreto** (`F-067`): se comprobó buscando su valor en el bundle, sin imprimirlo.

@@ -73,7 +73,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-064](findings/F-064.md) | 2026-08-11 | `HARNESS` | ⚠ EL REINTENTO DEL ARNÉS NO LE ENSEÑA AL CODER EL CÓDIGO QUE ESCRIBIÓ, y eso invalida tres días de conclusiones sobre el modelo. | CERRADO el 12-ago-2026 a las 10:12 en `e |
 | [F-065](findings/F-065.md) | 2026-08-12 | `SPEC-GAP` | ⚠ `Dia-08_decisiones_e2ee.md` AFIRMABA CON LA PALABRA "COMPROBADO" ALGO QUE NO ERA CIERTO, y detrás de esa afirmación iba una migración inn... | Cerrado el 12-ago: 0012 escrita sin colu |
 | [F-066](findings/F-066.md) | 2026-08-12 | `HARNESS` | Un aserto negativo del e2e que NUNCA pudo casar, y llevaba un día en verde diciendo que medía la frontera del cifrado. | Cerrado el 12-ago |
-| [F-067](findings/F-067.md) | 2026-08-12 | `SPEC-GAP` | Divergencia deliberada de ADR-001, registrada y no escondida: | Abierto |
+| [F-067](findings/F-067.md) | 2026-08-12 | `SPEC-GAP` | Divergencia deliberada de ADR-001, registrada y no escondida: | ABIERTO, agravado 14-oct: la semilla está en el JS de producción; ver el hallazgo y `BACKLOG-V1.md` |
 | [F-068](findings/F-068.md) | 2026-08-12 | `HARNESS` | ⚠ EL ARNÉS LE MANDA AL CODER LOS CÓDIGOS DE COLOR DE LA TERMINAL COMO TEXTO, y el intento 3 pegó dos dentro de un `import`. | Cerrado |
 | [F-069](findings/F-069.md) | 2026-08-12 | `HARNESS` | El único defecto real del intento 1 lo causó mi tarea: le di el `style_reference` equivocado. | Cerrado |
 | [F-070](findings/F-070.md) | 2026-08-12 | `HARNESS` | ⚠ LOS CUATRO CHECKS DEL ARNÉS NO VEN EL E2E, así que un artefacto puede salir 4/4 VERDE y romper la suite entera. | Cerrado |
@@ -104,7 +104,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-095](findings/F-095.md) | 2026-08-14 | `HARNESS` | `ESTADO.md` volvió a describir un estado de la base que la base no tiene —tercera vez (F-012, F-089)— pero esta vez la causa es mecánica y ... | Cerrado |
 | [F-096](findings/F-096.md) | 2026-08-16 | `HARNESS` | La suite e2e repone la siembra de demo al ARRANCAR y no al terminar, así que se va dejando la base rota — y la rotura concreta es que MSG-0... | Cerrado |
 | [F-097](findings/F-097.md) | 2026-08-16 | `SPEC-GAP` | conteste bien y sea mentira | Cerrado |
-| [F-098](findings/F-098.md) | 2026-08-16 | `INFRA` | El entorno de demo se queda sin aislar: demo y pruebas siguen compartiendo `troxminloxkjwihwfevs`. | Abierto |
+| [F-098](findings/F-098.md) | 2026-08-16 | `INFRA` | El entorno de demo se queda sin aislar: demo y pruebas siguen compartiendo `troxminloxkjwihwfevs`. | CERRADO 14-oct: la CI corre contra `bearingworld-e2e`; residuo: `npm run e2e` local a secas toca el compartido |
 | [F-099](findings/F-099.md) | 2026-08-16 | `SPEC-GAP` | La aplicación no tiene ninguna forma de ORIGINAR una oferta. Solo existe la contraoferta, que exige una oferta anterior — así que un vended... | CERRADO 14-oct: `create_offer` (0055) y «Crear oferta» / «Responder con oferta» existen |
 | [F-100](findings/F-100.md) | 2026-08-16 | `DESIGN` | Los botones `Consultar` y `Contactar` de cada fila de SRCH-01 están habilitados y no hacen NADA — clic y silencio— y como el botón masivo e... | Cerrado |
 | [F-101](findings/F-101.md) | 2026-08-16 | `SPEC-GAP` | VERA es de un solo turno: nunca recibe la pregunta anterior, así que cualquier refinamiento se ejecuta como búsqueda nueva y devuelve el ca... | Construido 14-oct-2026 (memoria de 20 intercambios); sin medir contra Sonnet |

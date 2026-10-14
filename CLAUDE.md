@@ -38,6 +38,10 @@ cómo se lee y cómo se escribe).
    el entorno desplegado (Vercel) o en su localhost; un cambio sin pushear es invisible
    para él. **Se empuja a `mvp/bootstrap`** (rama por defecto y la única que despliega);
    `main` está congelada en `43bb222` y solo sirve los prototipos de GitHub Pages.
+   **El commit, el push y los PRs los ejecuta el subagente `git-ops` (Haiku,
+   `.claude/agents/git-ops.md`), no el hilo principal**; un hook de `PreToolUse` bloquea
+   `git commit`/`git push`/`gh pr create` fuera de él. El hilo principal le pasa ficheros,
+   mensaje y trailer de autoría (§1.6).
 
 5. **Repo correcto.** Este repo (`BearingWorld.io`, remoto `github.com/aguillensp-sudo/RinWorld.io`)
    es propio e independiente. `C:\Users\admin` es otro repo git mal configurado que se

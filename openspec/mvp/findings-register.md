@@ -177,7 +177,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-168](findings/F-168.md) | 2026-09-17 | `INFRA` | La app de producción (`rin-world-io.vercel.app`) no arranca, y lleva así desde el 8-sep. | Cerrado el 17-sep |
 | [F-169](findings/F-169.md) | 2026-09-17 | `PROCESO` | La revisión C5 de `ADMIN-01` dejó descuadrada la siembra de la base de producción, y el e2e local lo cazó como 3 de 4 en rojo. | Cerrado el 17-sep |
 | [F-170](findings/F-170.md) | 2026-09-17 | `SPEC-GAP` | `F-158` no era un caso aislado: once contradicciones más de la misma clase | Cerrado el 17-sep, las once: `INVT-01` |
-| [F-171](findings/F-171.md) | 2026-09-17 | `INFRA` | El paso «Producción sirve la app» puede dar verde contra el despliegue ANTERIOR. | Arreglo escrito 14-oct (SHA del commit en el bundle; el paso espera a verlo), por comprobar en una corrida real |
+| [F-171](findings/F-171.md) | 2026-09-17 | `INFRA` | El paso «Producción sirve la app» puede dar verde contra el despliegue ANTERIOR. | CERRADO 14-oct: el paso espera a ver el SHA del commit en el bundle; comprobado en el run 38605908970 |
 | [F-172](findings/F-172.md) | 2026-09-18 | `DESIGN` | ningún | Cerrado |
 | [F-173](findings/F-173.md) | 2026-09-18 | `HARNESS` | el límite no limitaba a nadie | Cerrado el mismo día, antes de aplicar a |
 | [F-174](findings/F-174.md) | 2026-09-18 | `HARNESS` | `ForumThread. | Cerrado el mismo día |

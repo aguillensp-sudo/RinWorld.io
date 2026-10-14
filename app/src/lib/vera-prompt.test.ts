@@ -472,3 +472,190 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     expect(pie).toMatch(/if \(e\.altKey \|\| e\.shiftKey\)/);
   });
 });
+
+describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siendo cierta', () => {
+  const screen = (rel: string) => readFileSync(resolve(process.cwd(), 'src/screens', rel), 'utf8');
+  const lib = (rel: string) => readFileSync(resolve(process.cwd(), 'src/lib', rel), 'utf8');
+  const shell = readFileSync(resolve(process.cwd(), 'src/shell/AppShell.tsx'), 'utf8');
+  const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+
+  const directorio = screen('directory/Directory.tsx');
+  const tablaDirectorio = screen('directory/DirectoryTable.tsx');
+  const ficha = screen('directory/OrganizationProfile.tsx');
+  const foro = screen('forum/Forum.tsx');
+  const categoria = screen('forum/ForumCategory.tsx');
+  const hiloForo = screen('forum/ForumThread.tsx');
+  const libForo = lib('forum.ts');
+  const panel = screen('panel/Panel.tsx');
+  const invitaciones = screen('onboarding/Invitations.tsx');
+  const tablasInvitaciones = screen('onboarding/InvitationTables.tsx');
+  const enlace = screen('onboarding/InvitationLinkDialog.tsx');
+  const quitar = screen('onboarding/RemoveMemberDialog.tsx');
+  const seguridad = screen('settings/ChangePassphrase.tsx') + lib('key-recovery.ts');
+
+  /** [lo que dice la guía, lo que dice el código, dónde]. Casi siempre es la misma cadena. */
+  const mismo = (texto: string, fuente: string): [string, string, string] => [texto, texto, fuente];
+
+  it.each([
+    // Empresas: Directorio
+    mismo('Todos los países', directorio),
+    mismo('Buscar organización por nombre', directorio),
+    mismo('Limpiar filtros', directorio),
+    mismo('Página anterior', directorio),
+    mismo('Página siguiente', directorio),
+    ['Nombre', "label: 'Nombre'", tablaDirectorio],
+    ['País', "label: 'País'", tablaDirectorio],
+    ['Teléfono', "label: 'Teléfono'", tablaDirectorio],
+    ['Email', "label: 'Email'", tablaDirectorio],
+    ['Favoritos', "label: 'Favoritos'", tablaDirectorio],
+    // Empresas: ficha
+    mismo('Contactar', ficha),
+    mismo('Información general', ficha),
+    mismo('Contacto público', ficha),
+    mismo('Código postal', ficha),
+    mismo('Miembro desde', ficha),
+    mismo('Administrador', ficha),
+    mismo('Primer mensaje', ficha),
+    mismo('Enviar y abrir el hilo', ficha),
+    ['2000 caracteres', 'maxLength={2000}', ficha],
+    // Foro
+    ['sin garantía de confidencialidad', 'Nada de lo escrito aquí tiene ninguna garantía de confidencialidad.', foro],
+    mismo('Actividad reciente', foro),
+    mismo('Categorías', foro),
+    mismo('Última actividad', foro),
+    mismo('Buscar en esta categoría...', categoria),
+    mismo('Limpiar búsqueda', categoria),
+    mismo('Crear hilo', categoria),
+    mismo('Foros', categoria),
+    mismo('Foros', hiloForo),
+    mismo('Escribe tu respuesta...', hiloForo),
+    mismo('Publicar respuesta', hiloForo),
+    ['10 veces por hora', '10 publicaciones por hora', hiloForo],
+    // Panel
+    mismo('Mi Panel', panel),
+    mismo('pendientes de respuesta', panel),
+    mismo('sin respuesta', panel),
+    mismo('con mensajes sin leer', panel),
+    mismo('Resumen mes', panel),
+    mismo('Ofertas Aceptadas', panel),
+    mismo('Ofertas Realizadas', panel),
+    mismo('Consultas Realizadas', panel),
+    mismo('Favoritos recibidos', panel),
+    mismo('organizaciones te añadieron a favoritos este mes', panel),
+    ['visitas de 30 días', 'visitas (30d)', panel],
+    // Configuración y Seguridad
+    mismo('Configuración', shell),
+    mismo('Seguridad', shell),
+    mismo('Gestión de invitaciones', invitaciones),
+    mismo('Invitar nuevo usuario', invitaciones),
+    mismo('Email del nuevo usuario', invitaciones),
+    mismo('Enviar invitación', invitaciones),
+    ['ya tiene cuenta', 'Este email ya tiene cuenta en Bearingworld.io.', invitaciones],
+    ['el límite es de 5 usuarios por organización', 'Límite: 5 usuarios por organización', invitaciones],
+    mismo('Usuario activo', invitaciones),
+    mismo('Invitación pendiente', invitaciones),
+    mismo('Plaza libre', invitaciones),
+    mismo('Enlace de invitación', enlace),
+    mismo('Copiar enlace', enlace),
+    mismo('Cópialo ahora: no se vuelve a mostrar', enlace),
+    mismo('Invitaciones enviadas', tablasInvitaciones),
+    mismo('Usuarios activos', tablasInvitaciones),
+    mismo('Nuevo enlace', tablasInvitaciones),
+    mismo('Anular', tablasInvitaciones),
+    mismo('Reenviar', tablasInvitaciones),
+    mismo('Eliminar usuario', quitar),
+    mismo('Cambiar backup passphrase', seguridad),
+    mismo('Passphrase actual', seguridad),
+    mismo('Nueva passphrase', seguridad),
+    mismo('Repetir nueva passphrase', seguridad),
+    mismo('Guardar cambios', seguridad),
+    ['sin histórico', 'no hay histórico', seguridad],
+  ])('«%s» (guía) existe en la pantalla: %s', (enGuia, enCodigo, fuente) => {
+    expect(fuente).toContain(enCodigo);
+    expect(prompt).toContain(enGuia);
+  });
+
+  it('Directorio: busca con Intro o lupa, solo tres cabeceras ordenan y el nombre abre la ficha', () => {
+    expect(directorio).toMatch(/onSubmit=\{runSearch\}/);
+    expect(directorio).toMatch(/function handleCountryChange[\s\S]*?setFilters/);
+    expect(directorio).toMatch(/hasActiveFilters\(filters\) && \(/);
+    expect(tablaDirectorio).toMatch(/\{ label: 'Nombre', field: 'name' \}/);
+    expect(tablaDirectorio).toMatch(/\{ label: 'País', field: 'country' \}/);
+    expect(tablaDirectorio).toMatch(/\{ label: 'Teléfono' \}/);
+    expect(tablaDirectorio).toMatch(/\{ label: 'Email' \}/);
+    expect(tablaDirectorio).toMatch(/\{ label: 'Favoritos', field: 'favorite_count' \}/);
+    expect(tablaDirectorio).toContain("row.phone === '' ? '—'");
+    expect(tablaDirectorio).toContain("row.email === '' ? '—'");
+    expect(tablaDirectorio).toMatch(/onClick=\{\(\) => onOpenOrganization\(row\.id\)\}/);
+  });
+
+  it('Ficha: Contactar abre el hilo existente o el primer mensaje, apagado en la propia organización; sin botón de favorito', () => {
+    expect(ficha).toMatch(/if \(threadId !== null\) onOpenThread\(threadId\);\s*else setComposing\(true\);/);
+    expect(ficha).toContain('const canContact = !own &&');
+    expect(ficha).toMatch(/disabled=\{!canContact\}/);
+    expect(ficha).toContain('orDash(');
+    expect(ficha).not.toMatch(/Añadir a favoritos|Marcar como favorita|toggleFavorite/);
+    expect(ficha).toMatch(/onClick=\{onBack\}/);
+  });
+
+  it('Foro: «Actividad reciente» no abre nada, la categoría sí, y «Crear hilo» está apagado', () => {
+    expect(foro).toMatch(/className=\{styles\.recentItem\}[\s\S]{0,200}\bdisabled\b/);
+    expect(foro).toMatch(/threads\.length > 0 && \(/);
+    expect(foro).toMatch(/onClick=\{onOpenCategory \? \(\) => onOpenCategory\(category\.slug\) : undefined\}/);
+    expect(foro).toContain('lastActivityAt !== null');
+    expect(categoria).toMatch(/className=\{styles\.createButton\}\s*disabled/);
+    expect(categoria).toMatch(/onClick=\{\(\) => onOpenThread\(row\.id\)\}/);
+    expect(categoria).toContain('pageCount > 1 &&');
+    expect(categoria).toMatch(/onSubmit=\{runSearch\}/);
+  });
+
+  it('Foro: el hilo alterna la reacción, Editar y Eliminar siempre apagados, y el límite apaga «Publicar respuesta»', () => {
+    expect(hiloForo).toMatch(/if \(post\.reactedByMe\) \{\s*await unreactToPost\(post\.id\);\s*\} else \{\s*await reactToPost\(post\.id\);/);
+    expect(hiloForo).toMatch(/post\.authorOrgId === profile\.orgId && \(/);
+    expect(hiloForo).toMatch(/disabled\s*title="Editar todavía no está disponible/);
+    expect(hiloForo).toMatch(/disabled\s*title="Eliminar todavía no está disponible/);
+    expect(hiloForo).toContain("disabled={draft.trim() === '' || rateLimitReached(rateStatus) || submitting}");
+    expect(libForo).toContain('`👍 ${n}`');
+  });
+
+  it('Panel: cada tarjeta lleva a la pantalla que la guía dice, y «Favoritos recibidos» no lleva a ninguna', () => {
+    const tarjeta = (testid: string) => {
+      const i = panel.indexOf(`data-testid="${testid}"`);
+      return panel.slice(Math.max(0, i - 120), i + 120);
+    };
+    expect(tarjeta('card-ofertas')).toContain("onNavigate('Vendiendo')");
+    expect(tarjeta('card-consultas')).toContain("onNavigate('Comprando')");
+    expect(tarjeta('card-inventario')).toContain("onNavigate('Inventario')");
+    expect(tarjeta('card-hilos')).toContain("onNavigate('Hilos')");
+    expect(tarjeta('card-resumen-mes')).toContain("onNavigate('Vendiendo')");
+    expect(tarjeta('card-favoritos')).not.toContain('onNavigate');
+    expect(lib('panel.ts')).toContain("n === null ? '—' : String(n)");
+  });
+
+  it('Configuración: solo es botón para el ADMIN y abre las invitaciones; Seguridad solo con backup de clave', () => {
+    expect(app).toMatch(/state\.profile\.role === 'ADMIN'\s*\?\s*\{\s*onOpenSettings:/);
+    expect(app).toMatch(/settingsOpen && state\.profile\.role === 'ADMIN' \? \(\s*\/\*[\s\S]*?\*\/\s*<Invitations/);
+    expect(app).toMatch(/hasBackup\s*\?\s*\{\s*onOpenSecurity:/);
+    expect(app).toMatch(/securityOpen && hasBackup \? \([\s\S]*?<ChangePassphrase/);
+    expect(shell).toMatch(/onOpenSettings \? \(\s*<button/);
+    expect(shell).toMatch(/onOpenSecurity \? \(\s*<button/);
+  });
+
+  it('Invitaciones: tope de 5, rol Editor, acciones por estado y Eliminar solo a Editores con confirmación', () => {
+    expect(lib('invitations.ts')).toContain('export const MAX_USERS = 5;');
+    expect(invitaciones).toContain('rol <strong>Editor</strong>');
+    expect(invitaciones).toContain('disabled={atLimit || sending}');
+    expect(tablasInvitaciones).toMatch(/invitation\.status === 'Expirada' \|\| invitation\.status === 'Anulada'[\s\S]*?Reenviar/);
+    expect(tablasInvitaciones).toMatch(/invitation\.status === 'Pendiente' && \(onNewLink \|\| onRevoke\)[\s\S]*?Nuevo enlace[\s\S]*?Anular/);
+    expect(tablasInvitaciones).toContain('canRemove(member, selfId)');
+    expect(tablasInvitaciones).toContain('Solo se pueden eliminar usuarios con rol Editor');
+    expect(invitaciones).toContain('<RemoveMemberDialog');
+    expect(quitar).toContain('Cancelar');
+  });
+
+  it('Seguridad: la passphrase nueva pide 12 caracteres y el backup anterior se sobrescribe', () => {
+    expect(seguridad).toContain('Mínimo 12 caracteres');
+    expect(seguridad).toContain('El backup anterior se sobrescribe: no hay histórico.');
+    expect(seguridad).toContain('Demasiados intentos.');
+  });
+});

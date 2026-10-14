@@ -721,6 +721,40 @@ describe('VERA · memoria de la conversación (F-101)', () => {
   });
 });
 
+// F-258: lo que la prueba contra Sonnet 5 (14-oct-2026) encontró, cada regla con su caso.
+describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', () => {
+  const fuente = (rel: string) => readFileSync(resolve(process.cwd(), 'src', rel), 'utf8');
+
+  it('A05: en el Directorio la estrella solo cuenta; la favorita se marca en Comprando', () => {
+    expect(prompt).toContain('desde el Directorio no se marca ni se quita ninguna');
+    expect(prompt).toContain('se marca con la estrella de Resultados de búsqueda, en Comprando');
+    expect(fuente('screens/directory/DirectoryTable.tsx')).toContain('La estrella es decorativa');
+    expect(fuente('screens/directory/DirectoryTable.tsx')).not.toContain('onToggleFavorite');
+    expect(fuente('screens/search/ResultsTable.tsx')).toContain('onToggleFavorite');
+  });
+
+  it('A18: el rol no se cambia desde la interfaz, y el código no tiene con qué', () => {
+    expect(prompt).toContain('Desde la interfaz no se puede cambiar el rol de ningún usuario.');
+    expect(fuente('lib/invitations.ts')).not.toMatch(/\.update\(\{[^}]*role/);
+    expect(fuente('screens/onboarding/Invitations.tsx')).not.toMatch(/Cambiar rol/i);
+  });
+
+  it('C12: el bloque dinámico dice el rol, y a un EDITOR no le explica lo que no puede hacer', () => {
+    expect(prompt).toContain("rol?: 'ADMIN' | 'EDITOR';");
+    expect(prompt).toContain('Es EDITOR de su organización, no administrador');
+    expect(prompt).toContain('no le expliques los pasos como si pudiera');
+  });
+
+  it('B2: un filtro que ya no está en pantalla lo quitó el usuario y no se vuelve a poner', () => {
+    expect(prompt).toContain('Si un filtro que pusiste antes ya no está entre ellos, es que lo quitó él');
+    expect(prompt).toContain('lo quitó el usuario y no lo vuelves a poner salvo que te lo pida');
+  });
+
+  it('C03: una cifra ya dicha se vuelve a consultar o se presenta como la de antes', () => {
+    expect(prompt).toContain('nunca como un dato de ahora');
+  });
+});
+
 // Decisión del PO del 14-oct-2026: cuando la pantalla ya enseña la respuesta, VERA no la repite.
 describe('VERA · no repite lo que la pantalla ya enseña', () => {
   it('tras buscar en el catálogo, una línea; y solo dos cosas sin que se las pidan', () => {

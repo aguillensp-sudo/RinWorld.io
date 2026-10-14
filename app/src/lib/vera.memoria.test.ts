@@ -155,6 +155,15 @@ describe('VERA · lo que llega al proxy', () => {
     expect(cuerpos[0]!.contexto.intercambiosOmitidos).toBeUndefined();
   });
 
+  it('el rol del usuario viaja en el contexto (F-258)', async () => {
+    const cuerpos = capturarFetch();
+    const call = createProxyCall(async () => 'token', { orgName: 'Alpha', fullName: null, rol: 'EDITOR' });
+
+    await call({ messages: [{ role: 'user', content: 'cambia la visibilidad' }] });
+
+    expect(cuerpos[0]!.contexto.rol).toBe('EDITOR');
+  });
+
   it('los intercambios omitidos se dicen en el contexto, no en los mensajes', async () => {
     const cuerpos = capturarFetch();
     const call = createProxyCall(async () => 'token', { orgName: 'Alpha', fullName: null });

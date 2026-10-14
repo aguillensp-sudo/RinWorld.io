@@ -303,6 +303,14 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
       'Ninguna de estas filas incluye condiciones económicas: eso se negocia cifrado dentro de un hilo.',
       'Las filas que no llevan «YA CONSULTADA» son las que tu organización todavía no ha consultado.',
       'Este orden no es un ranking de idoneidad. Si eliges unas cuantas para recomendar, di cuántas había y con qué criterio has elegido.',
+      /*
+       * El límite de 25 (`MAX_FILAS`) es de lo que ve el MODELO, no de la pantalla. En la prueba contra
+       * Sonnet 5 (`F-258`) contestó seis veces «91 resultados, se muestran 25»: falso, la tabla enseña
+       * todas hasta el tope de 200. Se le dice aquí, que es donde ve el 25.
+       */
+      ...(page.total > filas.length
+        ? [`La tabla de Comprando le enseña al usuario TODAS estas coincidencias${page.capped ? ` hasta las ${MAX_RESULTS} primeras` : ''}: el límite de ${MAX_FILAS} es solo lo que ves TÚ. No le digas que en pantalla se muestran ${MAX_FILAS}.`]
+        : []),
       // El tope de SRCH-01 (`MAX_RESULTS`): la pantalla lo avisa, y la línea de VERA no puede dar
       // un recuento que parezca el de la tabla.
       ...(page.capped

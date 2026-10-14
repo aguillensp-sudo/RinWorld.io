@@ -50,14 +50,23 @@ export async function cargarEnv(): Promise<void> {
  * se leen mejor y no se rompen si la FK se renombra.
  */
 export async function entrarComoAlpha(): Promise<MemberProfile> {
-  const email = process.env.E2E_ALPHA_EMAIL;
-  const password = process.env.E2E_ALPHA_PASSWORD;
+  return entrarComo('ALPHA');
+}
+
+/**
+ * Entra con una de las cuentas de prueba de `app/.env` (`CLAUDE.md` §10.1) y devuelve su perfil. La
+ * contraseña se lee del entorno y va directa a Supabase: no se imprime ni se guarda en ningún sitio.
+ * Entrar con otra sustituye la sesión del cliente.
+ */
+export async function entrarComo(cuenta: 'ALPHA' | 'BETA' | 'EDITOR'): Promise<MemberProfile> {
+  const email = process.env[`E2E_${cuenta}_EMAIL`];
+  const password = process.env[`E2E_${cuenta}_PASSWORD`];
   if (!email || !password) {
-    throw new Error('Faltan E2E_ALPHA_EMAIL / E2E_ALPHA_PASSWORD en app/.env.');
+    throw new Error(`Faltan E2E_${cuenta}_EMAIL / E2E_${cuenta}_PASSWORD en app/.env.`);
   }
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(`No se ha podido entrar como alpha@: ${error.message}`);
+  if (error) throw new Error(`No se ha podido entrar con la cuenta ${cuenta}: ${error.message}`);
 
   const { data: m, error: eM } = await supabase
     .from('members')

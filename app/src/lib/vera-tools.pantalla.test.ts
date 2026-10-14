@@ -142,6 +142,20 @@ describe('buscar_en_catalogo · la pantalla es la respuesta', () => {
     expect(r.content).toContain(`solo enseña los ${MAX_RESULTS} primeros de estos 640`);
   });
 
+  // F-258: contestó seis veces «91 resultados, se muestran 25», y la tabla los enseña todos.
+  it('con más filas de las que ve el modelo, le dice que la tabla las enseña todas', async () => {
+    fetchResults.mockResolvedValueOnce({ rows: Array.from({ length: 30 }, (_, i) => ({ ...FILA, id: `l${i}` })), total: 91, capped: false });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6205' }, contexto());
+    expect(r.content).toContain('La tabla de Comprando le enseña al usuario TODAS estas coincidencias');
+    expect(r.content).toContain('No le digas que en pantalla se muestran 25');
+  });
+
+  it('si ve todas las filas, no añade esa aclaración', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
+    expect(r.content).toContain('ha llevado al usuario');
+    expect(r.content).not.toContain('le enseña al usuario TODAS');
+  });
+
   it('sin recorte, no lo menciona', async () => {
     const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
     // Ancla positiva en el mismo `it` (F-074).

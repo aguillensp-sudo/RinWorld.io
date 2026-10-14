@@ -63,12 +63,22 @@ export interface ProxyToolUse {
   input: unknown;
 }
 
+/** Lo que la función devuelve de `usage` (`index.ts`): sin esto no se sabe ni qué cuesta ni si la caché funciona. */
+export interface ProxyUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
+}
+
 export interface ProxyTurn {
   stopReason: string;
   text: string;
   toolUses: ProxyToolUse[];
   /** Los bloques `content` crudos, para reenviarlos sin tocarlos. */
   raw: unknown;
+  /** El `usage` de esta vuelta, si la función lo trae (`F-256`: hasta el 14-oct se tiraba aquí). */
+  usage?: ProxyUsage;
 }
 
 export interface ProxyRequest {
@@ -205,6 +215,8 @@ export function createProxyCall(
     pantalla?: string;
     hiloAbierto?: boolean;
     filtros?: string;
+    /** El rol del usuario (`F-258`): sin él, VERA no sabía que un EDITOR no puede cambiar la visibilidad. */
+    rol?: 'ADMIN' | 'EDITOR';
   },
 ): ProxyCall {
   return async ({ messages, omittedExchanges }) => {
@@ -230,10 +242,11 @@ export function createProxyCall(
       throw new Error(cuerpo.error ?? `El proxy de VERA respondió ${r.status}.`);
     }
 
-    const datos = (await r.json()) as { stop_reason?: string; content?: Bloque[] };
+    const datos = (await r.json()) as { stop_reason?: string; content?: Bloque[]; usage?: ProxyUsage };
     const bloques = datos.content ?? [];
 
     return {
+      ...(datos.usage ? { usage: datos.usage } : {}),
       stopReason: datos.stop_reason ?? 'end_turn',
       text: bloques
         .filter((b): b is BloqueTexto => b.type === 'text')

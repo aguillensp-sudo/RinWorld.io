@@ -733,6 +733,7 @@ export function App() {
       {
         orgName: state.profile.orgName,
         fullName: state.profile.fullName,
+        rol: state.profile.role,
         pantalla: veraScreenName({
           nav: NAV_ITEMS[nav]?.label ?? 'Panel',
           securityOpen: securityOpen && hasBackup,

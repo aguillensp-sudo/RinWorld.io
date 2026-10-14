@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_DEMO_KEY_SEED?: string;
   /** Dominio de las direcciones de ingestión (INV-04). Ausente: `ingest.nortexsys.com`. */
   readonly VITE_INGEST_DOMAIN?: string;
+  /** SHA del commit desplegado (F-171). Solo lo pone el job de despliegue de CI. */
+  readonly VITE_BUILD_SHA?: string;
 }
 
 interface ImportMeta {

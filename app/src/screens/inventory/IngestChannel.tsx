@@ -314,7 +314,10 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
         </section>
       )}
 
-      {/* ── Remitentes autorizados. ── */}
+      {/* ── Remitentes autorizados. ── Solo con el canal cargado: antes, o si la carga
+           falló, una lista vacía y un historial «sin correos» afirmarían algo que no se
+           ha consultado (revisión a mano, CLAUDE.md §7). */}
+      {token !== null && (
       <section className={styles.card}>
         <h2 className={styles.cardTitle}>{SENDERS_TITLE}</h2>
 
@@ -330,8 +333,9 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
                 className={styles.remove}
                 disabled={sender.isProtected || busy}
                 onClick={() => handleRemoveSender(sender)}
+                aria-label={`Eliminar ${sender.email}`}
               >
-                {`Eliminar ${sender.email}`}
+                Eliminar
               </button>
             </li>
           ))}
@@ -383,8 +387,10 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
         {/* F-252: la puerta de SES. Va en prosa y no en mono porque es una frase larga. */}
         <p className={styles.hintProse}>{SENDER_DOMAIN_AUTH_HINT}</p>
       </section>
+      )}
 
       {/* ── Historial: cinco columnas, el motivo del rechazo dentro del resultado. ── */}
+      {token !== null && (
       <section className={styles.card}>
         <h2 className={styles.cardTitle}>{HISTORY_TITLE}</h2>
 
@@ -427,6 +433,7 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
           </table>
         )}
       </section>
+      )}
 
       {/* ── Diálogo de rotación: no es `window.confirm`, y el error se queda dentro. ── */}
       {rotateOpen && (
@@ -450,7 +457,7 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
               <button type="button" className={styles.cancelButton} onClick={cancelRotate}>
                 {CANCEL_LABEL}
               </button>
-              <button type="button" className={styles.confirmRotate} onClick={handleRotate}>
+              <button type="button" className={styles.confirmRotate} onClick={handleRotate} disabled={busy}>
                 {CONFIRM_ROTATE_LABEL}
               </button>
             </div>

@@ -24,7 +24,7 @@ Empieza por §6 y luego §3.
 | VERA no tiene tablas de uso, cuota, preferencias ni auditoría | `pg_class` de producción | Solo `auth.audit_log_entries`: `F-256`, `F-257` |
 | «6204» casa con 15 designaciones | `inventory_lines` `PUBLISHED`, `ilike '%6204%'` | 74 líneas: `F-254` |
 | VERA desplegada: Sonnet 5 y los arreglos de `F-258` | `get_edge_function` (v39) y el bundle de `rin-world-io.vercel.app` | `MODELO = 'claude-sonnet-5'`, `cambiosAMano`, guía de `INV-04` con XLSX; el bundle sirve `8076668` |
-| **Qué contesta VERA (Sonnet 5)** | `vera.real.test.ts` contra la v37–v39, cuentas ALPHA, EDITOR y BETA, sin escribir nada | 134 turnos (1,06 $) + 45 de repetición (0,65 $): memoria y contexto de pantalla funcionan; abiertos B2 y B7 (`F-258`) |
+| **Qué contesta VERA (Sonnet 5)** | `vera.real.test.ts` contra la v37–v40, cuentas ALPHA, EDITOR y BETA, sin escribir nada | 134 turnos (1,06 $) + repeticiones (0,95 $): memoria, contexto de pantalla y filtro quitado a mano (B2, 15-oct) funcionan; abierto B7 (`F-258`) |
 | Caché del prompt con Sonnet 5 | `usage` de cada llamada | 18.709–18.991 tokens escritos al desplegar y leídos enteros después |
 | CI de `8076668` | Run `38631715177` | Falló en MSG-01/MSG-02 por la colisión de `F-262`; el reintento de los jobs fallidos, verde entero |
 | `F-259` (paradas de `bearingworld-e2e`), `F-260` (repaso visual), `F-192` (propuesta) | `edge_logs` y traza del run `38601905364`; capturas y métricas de Playwright; `probar.sh` — **por la otra sesión** | Ver cada hallazgo |
@@ -35,7 +35,7 @@ Empieza por §6 y luego §3.
 
 - **Corriente A · Núcleo — CERRADA el 14-oct.** Único cabo suelto: `F-192`, ahora con propuesta lista en `supabase/propuestas/F-192/`.
 - **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado** por cupo en cero en Vertex (`429`); 3 cupos pedidos el 14-oct (`vera-vertex-eu-migracion.md` §7). El runbook aún dice que el cambio es de modelo y proveedor: **el modelo ya está cambiado**, solo queda el proveedor.
-- **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. **Medida contra Sonnet 5** (`F-258`): bien en guía, trampas, memoria y pantalla; **falla en reponer un filtro que el usuario quitó a mano (B2)** y en un recuento (B7).
+- **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. **Medida contra Sonnet 5** (`F-258`): bien en guía, trampas, memoria y pantalla. Desde el 15-oct, un filtro quitado a mano no se repone sin que el usuario lo pida (control en la herramienta, v40). Falla un recuento (B7).
 - **Corriente B · Fábrica — EN MARCHA.** Segundo punto de las cifras 7 y 8: `INV-04` reconstruida por el arnés en `exp/inv-04-fabrica`, que no se fusiona (`F-261`). `F-263`: las `_nota_*` de las tareas no llegan al Coder; lo decide quien abra la siguiente serie.
 - **Corriente C · Verificación — NO ABIERTA.**
 
@@ -44,13 +44,13 @@ Empieza por §6 y luego §3.
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de lanzar Playwright o el arnés contra `bearingworld-e2e`:** avisar a las demás sesiones vivas y mirar que no haya un job en marcha (`gh run list --branch mvp/bootstrap --status in_progress`). Dos corridas a la vez se pisan el fixture (`F-262`); no hay cerrojo entre sesiones.
 2. **Del PO:**
-   - **VERA, B2 (`F-258`):** si el usuario quita un chip a mano y luego habla con VERA, VERA repone el filtro, 4 de 4, aun con el aviso explícito en el contexto. Siguiente paso propuesto: que `buscar_en_catalogo` lo detecte y se lo diga en el retorno. Va con la semántica de refinamientos (`F-254`).
+   - **Pruebas a mano de VERA:** el PO empieza el 15-oct, en producción (`troxminloxkjwihwfevs`) con las cuentas de prueba. Lo que falle se convierte en caso del runner.
    - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor. **No se toca `search.ts` hasta entonces.**
    - **`CLAUDE.md` §10.1:** según la otra sesión, la frase «cuando exista el e2e de ADMIN-01» ya no es cierta. Pendiente de que el PO la corrija o lo pida.
    - **Vertex:** mirar `gcloud beta quotas preferences list --project=bearingworld-vera-eu` y repetir la llamada (`grantedValue` ≠ 0). **No enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción **cuando se acerquen datos reales o terceros** (`F-067`).
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca.**
-3. **VERA, para la próxima pasada:** el runner (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, freno en `VERA_REAL_TOPE_USD`) está listo. Toda llamada real, con el visto bueno del PO. Lo pendiente: B2, B7, y A24 (contesta en doce líneas).
+3. **VERA, para la próxima pasada:** el runner (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, freno en `VERA_REAL_TOPE_USD`) está listo. Toda llamada real, con el visto bueno del PO. Lo pendiente: B7 y A24 (contesta en doce líneas).
 4. **`F-260` sin arreglar:** VERA a 375 px tapa un tercio y las tablas anchas. Lo que sigue sin verse en navegador: `SET-SEC-01`, `INV-03` y que Inventario adopte el filtro que deja VERA.
 5. **`INV-04`:** sin código pendiente. **~12-nov: comprobar que `inbox/` ya no conserva los primeros correos.**
 6. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero (con otra sesión corriendo tests, `--maxWorkers=50%`), el banco si se tocó `supabase/` más allá de una función, la suite e2e si se tocó un e2e o el arnés (`F-230`) y `py -m harness.tests.test_checks` si se tocó el contrato de una tarea (`F-251`). **Mira la CI del push anterior antes de empujar otro. Un solo commit con `[skip ci]` salta la CI de todo su empuje**: va en un empuje aparte. Nunca `vitest` con un e2e en marcha.
@@ -80,7 +80,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; 3 cupos pedidos, sin aprobar; `429` | Google + PO |
-| 🟠 | **`F-258` · B2**: VERA repone un filtro que el usuario quitó a mano, aun avisada | PO (semántica, con `F-254`) |
 | 🟡 | **`F-262`** · dos corridas e2e contra `bearingworld-e2e` se pisan; solo hay regla de proceso | Quien añada un cerrojo |
 | 🟡 | **`F-260`** · VERA a 375 px y tablas anchas | Sin dueño |
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
@@ -92,7 +91,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 ## 6 · Lo que este fichero NO sabe
 
 - **Si VERA contesta igual de bien con usuarios reales**: la prueba fue con preguntas escritas por el plan y una vez (tres en las trampas). No se sabe cómo pregunta un comprador de verdad, ni con frases mal escritas.
-- **Cómo resolver B2 sin que VERA ignore lo que dijo el usuario**: la regla de producto no está decidida, y decírselo en el contexto no bastó.
+- **Si el control de B2 acierta con frases reales**: probado con «ahora de FAG» y «vuelve a ponerme Europa»; no con peticiones ambiguas («y en Europa también»).
 - **Cuánto cuesta VERA por pregunta en uso real**: en la prueba, ~0,008 $ con la caché caliente; nadie registra `usage` en producción (`F-256`).
 - **Si 15 s por aserción bastan siempre en `bearingworld-e2e`**: el máximo visto fue 13,5 s (`F-259`).
 - **Qué ve el EDITOR `REGISTERED` al entrar**: REG-09 «Activa tu cuenta» dentro del shell (`F-260`); sin comprobar si el menú le deja salir de ahí.

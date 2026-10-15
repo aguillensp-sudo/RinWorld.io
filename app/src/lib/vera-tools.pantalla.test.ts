@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MemberProfile } from './session';
-import { EMPTY_CRITERIA, MAX_RESULTS } from './search';
-import { describeCriteria, describeManualChanges, runTool, type InventoryView, type ToolContext } from './vera-tools';
+import { EMPTY_CRITERIA, MAX_RESULTS, type SearchCriteria } from './search';
+import { describeCriteria, describeManualChanges, removedFilters, runTool, type InventoryView, type ToolContext } from './vera-tools';
 
 /**
  * Cuando la pantalla ya enseña la respuesta, VERA no la repite (decisiones del PO del 14-oct-2026,
@@ -133,6 +133,66 @@ describe('describeManualChanges · lo que el usuario tocó a mano (F-258, B2)', 
     expect(describeManualChanges(vera, { ...vera, zone: null, brand: 'FAG', minQuantity: 500 })).toBe(
       'cambió marca=SKF por marca=FAG; añadió cantidad_minima=500; quitó zona=EU',
     );
+  });
+});
+
+describe('buscar_en_catalogo · no repone un filtro que el usuario quitó a mano (F-258, B2; PO, 15-oct)', () => {
+  const vera: SearchCriteria = { ...EMPTY_CRITERIA, partNumber: '6204', zone: 'EU', brand: 'SKF' };
+  const conQuitados = (vivos: SearchCriteria): ToolContext => {
+    const criterios: unknown[] = [];
+    return { ...contexto(), setCriteria: (c) => criterios.push(c), removedFilters: removedFilters(vera, vivos), _criterios: criterios } as ToolContext;
+  };
+
+  it('removedFilters: lo quitado y lo sustituido, con el valor que ya no quiere; lo añadido no', () => {
+    expect(removedFilters(vera, { ...vera, zone: null, brand: 'FAG', minQuantity: 500 })).toEqual([
+      { param: 'marca', value: 'SKF' },
+      { param: 'zona', value: 'EU' },
+    ]);
+    expect(removedFilters(vera, vera)).toEqual([]);
+    expect(removedFilters(null, vera)).toEqual([]);
+  });
+
+  it('si vuelve a poner la zona quitada, NO busca ni mueve la pantalla, y dice qué hacer', async () => {
+    const ctx = conQuitados({ ...vera, zone: null });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', marca: 'FAG' }, ctx);
+    expect(r.isError).toBe(true);
+    expect(r.content).toContain('NO se ha buscado: vuelves a poner zona=EU');
+    expect(r.content).toContain('confirmar_filtros_quitados: true');
+    expect((ctx as unknown as { _criterios: unknown[] })._criterios).toEqual([]);
+    expect(fetchResults).not.toHaveBeenCalled();
+  });
+
+  it('sin ese filtro, busca con normalidad', async () => {
+    const ctx = conQuitados({ ...vera, zone: null });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', marca: 'FAG' }, ctx);
+    expect(r.isError).toBe(false);
+    expect(fetchResults).toHaveBeenCalledTimes(1);
+  });
+
+  it('con confirmar_filtros_quitados (el usuario lo pidió), lo repone', async () => {
+    const ctx = conQuitados({ ...vera, zone: null });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', confirmar_filtros_quitados: true }, ctx);
+    expect(r.isError).toBe(false);
+    expect(r.content).toContain('filtros puestos: referencia=6204 · zona=EU');
+  });
+
+  it('otra zona distinta de la quitada no es reponer: busca', async () => {
+    const ctx = conQuitados({ ...vera, zone: null });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'AS' }, ctx);
+    expect(r.isError).toBe(false);
+  });
+
+  it('una marca sustituida a mano tampoco se repone sin confirmar, aunque cambie la mayúscula', async () => {
+    const ctx = conQuitados({ ...vera, brand: 'FAG' });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', marca: 'skf' }, ctx);
+    expect(r.isError).toBe(true);
+    expect(r.content).toContain('marca=SKF');
+  });
+
+  it('tools.json declara el parámetro y lo limita a una petición del último mensaje', () => {
+    const p = tools.find((t) => t.name === 'buscar_en_catalogo')!.input_schema.properties.confirmar_filtros_quitados!;
+    expect(p.type).toBe('boolean');
+    expect(p.description).toContain('EN SU ÚLTIMO MENSAJE');
   });
 });
 

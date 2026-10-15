@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
-import { describeCriteria, describeManualChanges, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
+import { describeCriteria, describeManualChanges, removedFilters, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
 import { veraScreenName } from './lib/vera-screen';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
@@ -674,6 +674,9 @@ export function App() {
     navigate: (pantalla: Screen) => navigate(navIndexOf(pantalla)),
 
     threadOpen: openThreadId !== null,
+
+    // F-258 (B2): lo que el usuario quitó a mano en Resultados de búsqueda; fuera de ella, al volver se reponen los de VERA.
+    removedFilters: onSearch && !watchersOpen && !batchOpen ? removedFilters(veraCriteria, liveCriteria) : [],
 
     /*
      * Primero navegar —que limpia `veraInventoryView` con todo lo demás— y después escribir la vista: las dos

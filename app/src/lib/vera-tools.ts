@@ -100,6 +100,11 @@ export interface ToolContext {
    * y contesta en texto, en vez de prometer una pantalla que no se ha movido.
    */
   showInventory?: (view: InventoryView) => void;
+  /**
+   * Lo que el usuario quitó o cambió a mano en Comprando desde los últimos filtros puestos (`removedFilters`),
+   * calculado al enviar la pregunta. `buscar_en_catalogo` no los repone sin confirmación (`F-258`, B2).
+   */
+  removedFilters?: readonly RemovedFilter[];
 }
 
 /** Un borrador ya pedido, con un número que cambia en cada petición: la misma petición dos veces tiene que reabrir el formulario. */
@@ -217,23 +222,50 @@ export function describeCriteria(c: SearchCriteria): string {
  * veces una zona que el usuario había quitado con la ×, porque la conversación decía «6204 en Europa».
  * La diferencia, dicha como un hecho («quitó zona=EU»), no se puede leer de otra manera.
  */
+/** Los criterios con los nombres de los parámetros de `buscar_en_catalogo`, en su orden; vacío si no hay. */
+const PARAMETROS = ['referencia', 'marca', 'cantidad_minima', 'zona', 'pais', 'plazo_maximo_dias'] as const;
+type Parametro = (typeof PARAMETROS)[number];
+
+function comoParametros(c: SearchCriteria): Record<Parametro, string> {
+  return {
+    referencia: c.partNumber,
+    marca: c.brand,
+    cantidad_minima: c.minQuantity === null ? '' : String(c.minQuantity),
+    zona: c.zone ?? '',
+    pais: c.country,
+    plazo_maximo_dias: c.maxLeadTimeDays === null ? '' : String(c.maxLeadTimeDays),
+  };
+}
+
 export function describeManualChanges(vera: SearchCriteria | null, vivos: SearchCriteria | null): string | null {
   if (!vera || !vivos) return null;
-  const campos: [string, string, string][] = [
-    ['referencia', vera.partNumber, vivos.partNumber],
-    ['marca', vera.brand, vivos.brand],
-    ['cantidad_minima', vera.minQuantity === null ? '' : String(vera.minQuantity), vivos.minQuantity === null ? '' : String(vivos.minQuantity)],
-    ['zona', vera.zone ?? '', vivos.zone ?? ''],
-    ['pais', vera.country, vivos.country],
-    ['plazo_maximo_dias', vera.maxLeadTimeDays === null ? '' : String(vera.maxLeadTimeDays), vivos.maxLeadTimeDays === null ? '' : String(vivos.maxLeadTimeDays)],
-  ];
-  const cambios = campos
-    .filter(([, antes, ahora]) => antes !== ahora)
-    .map(([nombre, antes, ahora]) =>
-      !ahora ? `quitó ${nombre}=${antes}` : !antes ? `añadió ${nombre}=${ahora}` : `cambió ${nombre}=${antes} por ${nombre}=${ahora}`,
-    );
+  const antes = comoParametros(vera);
+  const ahora = comoParametros(vivos);
+  const cambios = PARAMETROS.filter((p) => antes[p] !== ahora[p]).map((p) =>
+    !ahora[p] ? `quitó ${p}=${antes[p]}` : !antes[p] ? `añadió ${p}=${ahora[p]}` : `cambió ${p}=${antes[p]} por ${p}=${ahora[p]}`,
+  );
   return cambios.length ? cambios.join('; ') : null;
 }
+
+/** Un filtro que estaba puesto y el usuario quitó o sustituyó a mano: el valor que ya no quiere. */
+export interface RemovedFilter {
+  param: Parametro;
+  value: string;
+}
+
+/**
+ * Los filtros que el usuario quitó o cambió a mano desde los últimos que se pusieron (`F-258`, B2).
+ * Es la versión estructurada de `describeManualChanges`, para que `buscar_en_catalogo` pueda comprobar,
+ * sin interpretar nada, si el modelo intenta volver a ponerlos.
+ */
+export function removedFilters(vera: SearchCriteria | null, vivos: SearchCriteria | null): RemovedFilter[] {
+  if (!vera || !vivos) return [];
+  const antes = comoParametros(vera);
+  const ahora = comoParametros(vivos);
+  return PARAMETROS.filter((p) => antes[p] !== '' && antes[p] !== ahora[p]).map((p) => ({ param: p, value: antes[p] }));
+}
+
+const igual = (a: string, b: string) => a.trim().toUpperCase() === b.trim().toUpperCase();
 
 /**
  * La cabecera del retorno.
@@ -289,6 +321,26 @@ function frescura(iso: string): string {
 
 async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const criteria = criteriaFromInput(input);
+
+  /*
+   * ⚠ EL FILTRO QUE EL USUARIO QUITÓ A MANO NO SE REPONE SIN QUE LO DIGA (`F-258`, B2; PO, 15-oct-2026).
+   * Con el aviso en el contexto, Sonnet 5 lo reponía 4 de 4: entre lo que el usuario dijo («6204 en Europa»)
+   * y lo que hizo con la ×, se quedaba con lo dicho. Aquí se comprueba sin interpretar nada: si la llamada
+   * vuelve a poner un valor que el usuario quitó o sustituyó, no se aplica —ni pantalla ni criterios— y se le
+   * pide que decida. Reponerlo exige `confirmar_filtros_quitados`, que solo vale si lo ha pedido ahora.
+   */
+  const pedidos = comoParametros(criteria);
+  const repuestos = (ctx.removedFilters ?? []).filter((r) => pedidos[r.param] !== '' && igual(pedidos[r.param], r.value));
+  if (repuestos.length > 0 && campo(input, 'confirmar_filtros_quitados') !== true) {
+    const lista = repuestos.map((r) => `${r.param}=${r.value}`).join(', ');
+    return {
+      content:
+        `NO se ha buscado: vuelves a poner ${lista}, y el usuario lo quitó A MANO en Comprando después de tu última búsqueda. ` +
+        'Si en su último mensaje no te ha pedido expresamente volver a ponerlo, repite la búsqueda sin ese filtro. ' +
+        'Si te lo ha pedido, repítela con confirmar_filtros_quitados: true. No lo deduzcas de mensajes anteriores: lo que hizo a mano es posterior.',
+      isError: true,
+    };
+  }
 
   /*
    * Escribe CRITERIOS, no chips. `search.ts:154` lo dejó dicho el día 6: los

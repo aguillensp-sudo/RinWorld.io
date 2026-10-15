@@ -27,7 +27,7 @@ import { dirname } from 'node:path';
 import { ask, createProxyCall, type Exchange, type ProxyCall, type ProxyUsage } from './vera';
 import type { SearchCriteria } from './search';
 import type { MemberProfile } from './session';
-import { describeCriteria, describeManualChanges, type DraftRequest, type InventoryView, type Screen, type ToolContext } from './vera-tools';
+import { describeCriteria, describeManualChanges, removedFilters, type DraftRequest, type InventoryView, type Screen, type ToolContext } from './vera-tools';
 import { veraScreenName, type NavLabel, type ScreenState } from './vera-screen';
 import { cargarEnv, entrarComo, tokenVigente } from './vera.sonda';
 
@@ -207,6 +207,7 @@ async function correr(caso: Caso, repeticion: number) {
     const ctx: ToolContext = {
       profile: perfil,
       threadOpen: hiloAbierto,
+      removedFilters: enResultados(estado) ? removedFilters(estado.vera, estado.vivos) : [],
       navigate: (s: Screen) => {
         efectos.push(`navegar → ${s}`);
         estado.nav = SCREEN_A_NAV[s];
@@ -363,6 +364,8 @@ const B: Caso[] = [
     turnos: [P('busca 6204-2RS', EN.panel), P('solo en Europa'), P('de SKF'), P('más de 500 unidades'), P('quítame la marca')] },
   { id: 'B2', bloque: 'B', cuenta: 'ALPHA', criterio: 'Tras quitar Zona a mano, parte de referencia=6204 SIN zona.',
     turnos: [P('busca 6204 en Europa', EN.panel), { pregunta: 'ahora de FAG', tocarFiltros: (c) => ({ ...c, zone: null }) }] },
+  { id: 'B9', bloque: 'B', cuenta: 'ALPHA', criterio: 'El opuesto de B2 (15-oct): quitada la Zona a mano, el usuario PIDE recuperarla; repone zona=EU con confirmar_filtros_quitados y añade FAG.',
+    turnos: [P('busca 6204 en Europa', EN.panel), { pregunta: 'vuelve a ponerme Europa y añade FAG', tocarFiltros: (c) => ({ ...c, zone: null }) }] },
   { id: 'B3', bloque: 'B', cuenta: 'ALPHA', criterio: 'Sin regla de producto (F-254): pasa si DICE qué filtros ha mantenido. Se anota qué hace.',
     turnos: [P('busca 6204-2RS en Europa con más de 500 unidades', EN.panel), P('ahora busca 6304')] },
   { id: 'B4', bloque: 'B', cuenta: 'ALPHA', criterio: 'Vuelve a llamar a la herramienta en el segundo turno (no copia la cifra). Sin cambio de datos: solo se mira la llamada.',

@@ -13,6 +13,10 @@
           "type": "string",
           "description": "Marca o fabricante, total o parcial. Ej: 'SKF', 'FAG'."
         },
+        "confirmar_filtros_quitados": {
+          "type": "boolean",
+          "description": "Solo true si el usuario te pide EN SU ÚLTIMO MENSAJE volver a poner un filtro que había quitado a mano en Comprando ('vuelve a ponerme Europa'). Si la herramienta te dice que estás reponiendo un filtro quitado y el usuario no lo ha pedido ahora, repite la búsqueda sin ese filtro; no uses esto para saltarte el aviso."
+        },
         "cantidad_minima": {
           "type": "integer",
           "description": "Unidades mínimas que necesita el usuario. Solo si lo dice."

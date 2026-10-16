@@ -266,7 +266,7 @@ export function IngestChannel({ profile, formatDate = defaultFormatDate }: Props
                 </button>
                 <button
                   type="button"
-                  className={styles.linkBtn}
+                  className={styles.addCancel}
                   disabled={busy}
                   onClick={() => {
                     setAdding(false);

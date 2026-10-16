@@ -208,6 +208,32 @@
   cursor: not-allowed;
 }
 
+/* «Cancelar» del alta de remitente: el secundario con borde del aprobado (`.btn-add-cancel`),
+   no un enlace azul como «+ Añadir remitente» (C5 del PO, 16-oct). Alto de 40 px, el de
+   «Añadir» (`.primary`) a su lado, para que la fila quede alineada; el aprobado tiene los
+   dos a 34. */
+.addCancel {
+  height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 4px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.12s, color 0.12s;
+}
+.addCancel:hover:not(:disabled) {
+  border-color: var(--bw-input-placeholder);
+  color: var(--bw-ink-steel);
+}
+.addCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Remitentes ────────────────────────────────────────────────────────── */
 
 .senderList {

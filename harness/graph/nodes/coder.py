@@ -111,6 +111,19 @@ estas funciones es un fallo del intento**, aunque el resultado parezca equivalen
         f"  - `{ruta}`\n    {firma}"
         for ruta, firma in (task.get("component_api") or {}).items()
         if not ruta.startswith("_"))
+    # F-263: las `_nota_*` de `component_api` SON reglas para el Coder (literales
+    # verbatim, aria-label, nombres accesibles, "no reimplementes"), y se descartaban
+    # con las firmas. Las notas de nivel de tarea y las de `inputs` son de procedencia
+    # (para quien lee la tarea) y siguen sin llegarle.
+    reglas = "\n".join(
+        f"  - {nota}"
+        for clave, nota in (task.get("component_api") or {}).items()
+        if clave.startswith("_nota"))
+    reglas = f"""Reglas que acompanan a la API (tan obligatorias como las firmas):
+
+{reglas}
+
+""" if reglas else ""
     api = f"""## API PUBLICA DE CADA COMPONENTE — CONTRATO, NO SUGERENCIA
 
 Los tests que te evaluan los escribe otro y **no los vas a ver**. Por eso las firmas
@@ -119,7 +132,7 @@ haga lo correcto con otro nombre de prop no pasa.
 
 {api}
 
-""" if api else ""
+{reglas}""" if api else ""
 
     fuera = "\n".join(f"  - {x}" for x in task.get("out_of_scope", []))
     prohibiciones = "\n".join(f"  - {x}" for x in task.get("constraints", []))

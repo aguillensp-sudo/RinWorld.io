@@ -214,11 +214,17 @@ def validar_tarea(task: dict) -> list:
     if not problemas:
         try:
             from ..graph.nodes import coder
-            coder.build_system(task)
+            prompt = coder.build_system(task)
         except Exception as e:  # noqa: BLE001 -- cualquier fallo es un problema de la tarea
             falta = f"inputs.{e.args[0]}" if isinstance(e, KeyError) and e.args else type(e).__name__
             problemas.append(
                 f"el prompt del Coder no se puede construir ({falta}): {type(e).__name__}: {e}")
+        else:
+            # F-263: toda `_nota*` de `component_api` es regla para el Coder y tiene
+            # que estar en su prompt, no solo en el JSON.
+            for clave, nota in (task.get("component_api") or {}).items():
+                if clave.startswith("_nota") and str(nota) not in prompt:
+                    problemas.append(f"component_api.{clave}: la nota no llega al prompt del Coder")
 
     outputs = task.get("outputs") or []
     if not outputs:

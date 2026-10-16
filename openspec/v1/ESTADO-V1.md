@@ -12,7 +12,7 @@ sobrescribe al cierre de cada día con el ritual de `CLAUDE.md` §11. Historia e
 Empieza por §6 y luego §3.
 ---
 
-**Día 42 de V1 · 16-oct-2026 · Estado: CERRADO (07:20 UTC), reabierto y vuelto a cerrar por la sesión «sin VERA» tras la C5 a mano del PO.** C5: producción aprobada salvo el «Cancelar» del alta en INV-04 (arreglado, `4bf324b`); la INV-04 del arnés, rechazada (`F-261`); el móvil y las tablas anchas, al backlog (`F-260`). Detalle en `diario/dia-42.md`, última sección. Días 41–42, por lo demás, solo la sesión de VERA. 15-oct: un filtro quitado a mano ya no se repone sin que el usuario lo pida (control en `buscar_en_catalogo`, `F-258`); `F-101` cerrado. 16-oct, tras la prueba a mano del PO («todo ha funcionado»): Resultados de búsqueda ordena por defecto lo más reciente arriba (decisión del PO) y VERA contesta en el idioma del usuario (`F-264`). Lo del día 40 (las tres sesiones) sigue en `diario/dia-40.md` y `dia-40-sin-vera.md`; lo de hoy, en `diario/dia-41.md` y `dia-42.md`.
+**Día 42 de V1 · 16-oct-2026 · Estado: CERRADO (07:20 UTC), reabierto y vuelto a cerrar (08:02 UTC) por la sesión «sin VERA» tras la C5 a mano del PO.** `F-262` se queda en regla de avisar (PO). C5: producción aprobada salvo el «Cancelar» del alta en INV-04 (arreglado, `4bf324b`); la INV-04 del arnés, rechazada (`F-261`); el móvil y las tablas anchas, al backlog (`F-260`). Detalle en `diario/dia-42.md`, última sección. Días 41–42, por lo demás, solo la sesión de VERA. 15-oct: un filtro quitado a mano ya no se repone sin que el usuario lo pida (control en `buscar_en_catalogo`, `F-258`); `F-101` cerrado. 16-oct, tras la prueba a mano del PO («todo ha funcionado»): Resultados de búsqueda ordena por defecto lo más reciente arriba (decisión del PO) y VERA contesta en el idioma del usuario (`F-264`). Lo del día 40 (las tres sesiones) sigue en `diario/dia-40.md` y `dia-40-sin-vera.md`; lo de hoy, en `diario/dia-41.md` y `dia-42.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -32,7 +32,8 @@ Empieza por §6 y luego §3.
 | CI de `8076668` | Run `38631715177` | Falló en MSG-01/MSG-02 por la colisión de `F-262`; el reintento de los jobs fallidos, verde entero |
 | `F-259` (paradas de `bearingworld-e2e`), `F-260` (repaso visual), `F-192` (propuesta) | `edge_logs` y traza del run `38601905364`; capturas y métricas de Playwright; `probar.sh` — **por la otra sesión** | Ver cada hallazgo |
 | **C5 a mano del PO** (16-oct), plan de `diario/dia-40-sin-vera.md` | El PO en producción y en `localhost:5174` | Panel, fondos, aviso XLSX, fila de ADMIN-01, VERA sobre XLSX, `SET-SEC-01` e `INV-03`: aprobados. INV-04 a mano: aprobada salvo un «Cancelar», ya arreglado. INV-04 del arnés: **C5 NO** (`F-261`) |
-| XLSX real por correo | `ingest_events` de producción, 16-oct 07:45 UTC | **No consta ningún correo nuevo desde el 13-oct** (el último `.xlsx`, 23.750 filas, ese día) |
+| XLSX real por correo | `ingest_events` de producción, 16-oct 07:45 UTC | Ningún correo nuevo desde el 13-oct: el PO no lo envió en esta prueba («ya sé que funciona»). El último `.xlsx`, 23.750 filas, `PROCESADO` el 13-oct |
+| «Cancelar» del alta en INV-04 desplegado | Run `38869210641` y el bundle de `rin-world-io.vercel.app` | CI verde entera; producción sirve `4bf324b` con la clase `addCancel` en su CSS |
 | `VITE_DEMO_KEY_SEED` en el JS de producción (`F-067`) | La semilla buscada en el bundle, sin imprimirla — otra sesión | **Está** |
 | `vitest` y `tsc` del último empuje | Local, árbol fusionado | 2703 verdes; con la suite entera en paralelo a otra sesión fallan tests al azar por el tope de 5 s |
 
@@ -57,12 +58,9 @@ Empieza por §6 y luego §3.
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción **cuando se acerquen datos reales o terceros** (`F-067`).
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca.**
 3. **VERA, para la próxima pasada:** el runner (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, freno en `VERA_REAL_TOPE_USD`) está listo. Toda llamada real, con el visto bueno del PO. Lo pendiente: B7, A24 (contesta en doce líneas) y L6 (cambio de idioma a mitad, `F-264`).
-4. **Del PO, tras su C5 del 16-oct:**
-   - Detallar las diferencias que vio en la INV-04 del arnés, si se quiere aprender algo para la tarea o el arnés (`F-261`).
-   - Decidir sobre `F-262`: cerrojo compartido o plan de pago de `bearingworld-e2e`. Se le explicó el alcance el 16-oct.
-   - Confirmar si mandó un XLSX por correo en el Bloque 4: en la base no consta ninguno.
-
-   El móvil (tratamiento aparte) y las tablas anchas ya están en `BACKLOG-V1.md` (`F-260`).
+4. **Frontend:** el PO prepara más cambios por su cuenta.
+   - **El plan móvil NO se propone hasta que él lo pida**, con el frontend cerrado (`BACKLOG-V1.md`).
+   - INV-04 se queda con la versión hecha a mano; `exp/inv-04-fabrica` es solo evidencia (`F-261`).
 5. **`INV-04`:** sin código pendiente. **~12-nov: comprobar que `inbox/` ya no conserva los primeros correos.**
 6. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero (con otra sesión corriendo tests, `--maxWorkers=50%`), el banco si se tocó `supabase/` más allá de una función, la suite e2e si se tocó un e2e o el arnés (`F-230`) y `py -m harness.tests.test_checks` si se tocó el contrato de una tarea (`F-251`). **Mira la CI del push anterior antes de empujar otro. Un solo commit con `[skip ci]` salta la CI de todo su empuje**: va en un empuje aparte. Nunca `vitest` con un e2e en marcha.
 7. Deuda sin fecha y sus disparadores: `BACKLOG-V1.md` (límite por hora de VERA `F-256`, auditoría `F-257`).
@@ -91,7 +89,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; 3 cupos pedidos, sin aprobar; `429` | Google + PO |
-| 🟡 | **`F-262`** · dos corridas e2e contra `bearingworld-e2e` se pisan; solo hay regla de proceso | Quien añada un cerrojo |
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
 | 🟡 | **`F-256`** · VERA sin límite por usuario y hora ni registro de `usage` (el tope de tamaño sí está) | Backlog, antes de terceros |
@@ -107,7 +104,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si 15 s por aserción bastan siempre en `bearingworld-e2e`**: el máximo visto fue 13,5 s (`F-259`).
 - **Qué ve el EDITOR `REGISTERED` al entrar**: REG-09 «Activa tu cuenta» dentro del shell (`F-260`); sin comprobar si el menú le deja salir de ahí.
 - **Si Inventario adopta bien el filtro que deja VERA**: nadie lo ha mirado en un navegador.
-- **Qué diferencias de diseño vio el PO en la INV-04 del arnés**: dijo que eran sutiles e inaceptables, sin detallarlas (`F-261`). Sin eso no se sabe qué cambiar en la tarea ni en el arnés.
+- **Por qué una pantalla del arnés con C1–C4 en verde no pasa C5**: el PO vio «variadas diferencias» en la INV-04 del arnés y decidió no detallarlas (`F-261`). No se sabe qué cambiar en la tarea ni en el arnés para que no se repita.
 - **Cuánto se gana con `0047`/`0051`/`0062`**: sin medir con volumen.
 - **Si Argon2id (64 MiB) entra en un móvil modesto**: solo jsdom y el navegador del PO.
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.

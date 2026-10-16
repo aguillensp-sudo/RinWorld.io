@@ -59,3 +59,10 @@ El PO siguió el plan de pruebas que le dejó la sesión «sin VERA» (`dia-40-s
   C5 sigue siendo humano.
 - **«Abre localhost» no dice qué carpeta sirve.** Antes de pedirle al PO una C5 en local, se monta y se
   comprueba por contenido qué versión responde en ese puerto.
+
+**Cierre (08:02 UTC), decisiones del PO:**
+- INV-04 se queda con la versión hecha a mano («estaba casi perfecta salvo por el Cancelar»).
+- `F-262` se queda en la regla de avisar.
+- El XLSX por correo no lo envió («ya sé que funciona»).
+- El plan móvil lo pedirá él cuando el frontend esté cerrado; mientras, prepara cambios de frontend por su
+  cuenta.

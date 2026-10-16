@@ -786,6 +786,14 @@ describe('VERA · lo que salió de las pruebas a mano del PO (16-oct)', () => {
     expect(prompt.indexOf('IDIOMA, ANTES QUE NADA')).toBeLessThan(prompt.indexOf('REGLA PRIMERA'));
     expect(prompt).not.toContain('si te preguntan en español respondes en español');
   });
+
+  // La primera pasada (16-oct): francés e inglés respondidos en español copiando las frases literales del
+  // prompt, y en alemán la guía del Foro perdida («no conozco los controles»).
+  it('las frases entre comillas se traducen, la guía vale en cualquier idioma y el dinámico lo recuerda', () => {
+    expect(prompt).toContain('son el SENTIDO, no el texto: tradúcelas al idioma del usuario');
+    expect(prompt).toContain('la GUÍA VERIFICADA vale igual en cualquier idioma');
+    expect(prompt).toContain("'Contesta en el idioma del último mensaje del usuario, sea cual sea el de todo lo demás.'");
+  });
 });
 
 // Decisión del PO del 14-oct-2026: cuando la pantalla ya enseña la respuesta, VERA no la repite.

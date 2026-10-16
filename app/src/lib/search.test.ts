@@ -202,12 +202,14 @@ describe('nextSort · el toggle de tres clics de la spec §3', () => {
     });
   });
 
-  it('el tercer clic sobre Cantidad devuelve null, no DEFAULT_SORT', () => {
-    // El orden resultante coincide con el de por defecto, pero la cabecera tiene
-    // que poder perder su indicador ↑/↓. Son dos cosas distintas.
+  it('el tercer clic sobre Cantidad devuelve null, que es «vuelta al orden por defecto»', () => {
     const desc = { column: 'quantity', direction: 'desc' } as const;
     expect(nextSort(desc, 'quantity')).toBeNull();
-    expect(DEFAULT_SORT).toEqual(desc);
+  });
+
+  // PO, 16-oct-2026: por defecto, lo más reciente arriba (sustituye a la spec §3, cantidad descendente).
+  it('el orden por defecto es antigüedad ascendente: lo más reciente primero', () => {
+    expect(DEFAULT_SORT).toEqual({ column: 'age', direction: 'asc' });
   });
 
   it('son seis columnas ordenables, ni una más', () => {
@@ -217,9 +219,12 @@ describe('nextSort · el toggle de tres clics de la spec §3', () => {
 });
 
 describe('sortRows', () => {
-  it('sin orden explícito, cantidad descendente', () => {
-    const rows = [row({ id: 'a', quantity: 200 }), row({ id: 'b', quantity: 1200 })];
-    expect(sortRows(rows, null).map((r) => r.quantity)).toEqual([1200, 200]);
+  it('sin orden explícito, lo más reciente primero aunque tenga menos stock (16-oct)', () => {
+    const rows = [
+      row({ id: 'a', quantity: 1200, lastUploadAt: '2026-09-01T10:00:00Z' }),
+      row({ id: 'b', quantity: 200, lastUploadAt: '2026-10-15T10:00:00Z' }),
+    ];
+    expect(sortRows(rows, null).map((r) => r.id)).toEqual(['b', 'a']);
   });
 
   it('no muta el array de entrada', () => {

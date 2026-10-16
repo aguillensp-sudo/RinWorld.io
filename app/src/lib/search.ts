@@ -206,8 +206,15 @@ export interface Sort {
   direction: 'asc' | 'desc';
 }
 
-/** Spec §3: *"Por defecto: cantidad disponible descendente"*. */
-export const DEFAULT_SORT: Sort = { column: 'quantity', direction: 'desc' };
+/**
+ * Por defecto, **antigüedad ascendente: lo más reciente arriba** (PO, 16-oct-2026, `DECISIONES-V1.md`).
+ *
+ * Sustituye a la spec §3 (*"Por defecto: cantidad disponible descendente"*), que no se edita: el propio HTML
+ * aprobado ya traía las dos cosas (`sortState` con antigüedad «más reciente primero» y, debajo, el init por
+ * cantidad citando esa spec), y se construyó con la segunda. Para un comprador, un stock de hace 40 días
+ * delante de uno de ayer es el orden equivocado aunque tenga más unidades.
+ */
+export const DEFAULT_SORT: Sort = { column: 'age', direction: 'asc' };
 
 /**
  * El toggle de tres clics de la spec §3: *"primer clic → ascendente, segundo clic
@@ -411,6 +418,13 @@ export interface SearchQuery {
   /** Mi miembro: los favoritos son suyos, no de la organización. */
   memberId: string;
   criteria: SearchCriteria;
+  /**
+   * Qué filas se quedan cuando hay más de `MAX_RESULTS`. Por defecto `reciente`, el mismo orden con que las
+   * pinta la pantalla (`DEFAULT_SORT`): si la base cortara por cantidad y la pantalla ordenara por antigüedad,
+   * «lo más reciente» sería lo más reciente de entre lo de más stock. `cantidad` es para quien busca el
+   * máximo —el resumen de Búsqueda por lotes y VERA—, donde cortar por antigüedad podría dejarlo fuera.
+   */
+  orden?: 'reciente' | 'cantidad';
 }
 
 /**
@@ -438,7 +452,7 @@ export interface SearchQuery {
  * chip "Europa" la corte (`guion-demo-y-siembra.md` §3), mientras que
  * `location_country` dice dónde está la mercancía, que puede no ser la sede.
  */
-export async function fetchResults({ orgId, memberId, criteria }: SearchQuery): Promise<SearchPage> {
+export async function fetchResults({ orgId, memberId, criteria, orden = 'reciente' }: SearchQuery): Promise<SearchPage> {
   let q = supabase
     .from('inventory_lines')
     .select(COLUMNS, { count: 'exact' })
@@ -456,8 +470,10 @@ export async function fetchResults({ orgId, memberId, criteria }: SearchQuery): 
   if (criteria.country) q = q.eq('location_country', criteria.country.toUpperCase());
   if (criteria.zone) q = q.eq('organizations.continent', criteria.zone);
 
-  const { data, error, count } = await q
-    .order('quantity', { ascending: false })
+  const { data, error, count } = await (orden === 'cantidad'
+    ? q.order('quantity', { ascending: false })
+    : q.order('last_upload_at', { ascending: false })
+  )
     .order('id', { ascending: true })
     .range(0, MAX_RESULTS - 1);
 

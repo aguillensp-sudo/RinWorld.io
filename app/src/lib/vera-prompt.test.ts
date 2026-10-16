@@ -769,6 +769,25 @@ describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', ()
   });
 });
 
+// Comentarios del PO tras probar VERA a mano (16-oct-2026).
+describe('VERA · lo que salió de las pruebas a mano del PO (16-oct)', () => {
+  const libBusqueda = readFileSync(resolve(process.cwd(), 'src/lib/search.ts'), 'utf8');
+
+  it('la guía dice el orden por defecto de Resultados de búsqueda, y es el del código', () => {
+    expect(prompt).toContain('Por defecto salen ordenados por antigüedad, los más recientes arriba');
+    expect(libBusqueda).toContain("export const DEFAULT_SORT: Sort = { column: 'age', direction: 'asc' };");
+  });
+
+  it('contesta en el idioma del último mensaje, aunque todo lo demás esté en español', () => {
+    expect(prompt).toContain('IDIOMA, ANTES QUE NADA');
+    expect(prompt).toContain('Contestas SIEMPRE en el idioma del último mensaje del usuario');
+    expect(prompt).toContain('Que las herramientas te hablen en español no cambia el idioma del usuario');
+    // Ancla: va antes que la regla primera, y la frase vieja (más débil) ya no está.
+    expect(prompt.indexOf('IDIOMA, ANTES QUE NADA')).toBeLessThan(prompt.indexOf('REGLA PRIMERA'));
+    expect(prompt).not.toContain('si te preguntan en español respondes en español');
+  });
+});
+
 // Decisión del PO del 14-oct-2026: cuando la pantalla ya enseña la respuesta, VERA no la repite.
 describe('VERA · no repite lo que la pantalla ya enseña', () => {
   it('tras buscar en el catálogo, una línea; y solo dos cosas sin que se las pidan', () => {

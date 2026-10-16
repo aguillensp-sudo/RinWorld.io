@@ -206,6 +206,14 @@ describe('buscar_en_catalogo · la pantalla es la respuesta', () => {
     expect(r.content).toContain('NSK Europe Ltd');
   });
 
+  // 16-oct-2026: la pantalla ordena por antigüedad; VERA sigue pidiendo por cantidad y se le dice.
+  it('pide las filas por cantidad y le avisa de que la tabla del usuario va por antigüedad', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
+    expect(fetchResults).toHaveBeenCalledWith(expect.objectContaining({ orden: 'cantidad' }));
+    expect(r.content).toContain('Estas filas te llegan ordenadas por cantidad');
+    expect(r.content).toContain('La tabla del usuario las ordena por antigüedad');
+  });
+
   it('ya no le pide que cuente la búsqueda (la regla vieja, sustituida el 14-oct)', async () => {
     const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
     expect(r.content).toContain('ha llevado al usuario a la pantalla Comprando');

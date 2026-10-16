@@ -80,8 +80,8 @@ export interface ReferenceSummary {
 
 /**
  * Lo que resume la cabecera de una tarjeta: distribuidores con stock, cantidad
- * máxima y de quién es. En un empate de cantidad gana la primera fila (la base ya
- * las entrega por cantidad descendente).
+ * máxima y de quién es. En un empate de cantidad gana la primera fila (para esto la base
+ * las entrega por cantidad descendente: `orden: 'cantidad'`).
  */
 export function summarizeRows(rows: SearchResultRow[]): ReferenceSummary {
   if (rows.length === 0) return { distributors: 0, maxQuantity: null, maxBrand: null, maxCountry: null };
@@ -186,7 +186,8 @@ export async function fetchBatchResults(
       const i = next++;
       const reference = refs[i]!;
       try {
-        const page = await fetchResults({ ...ctx, criteria: { ...EMPTY_CRITERIA, partNumber: reference } });
+        // Por cantidad: el «Máx» de la tarjeta tiene que estar entre las filas que llegan aunque haya más de 200.
+        const page = await fetchResults({ ...ctx, criteria: { ...EMPTY_CRITERIA, partNumber: reference }, orden: 'cantidad' });
         out[i] = { reference, page, error: null };
       } catch (e) {
         out[i] = { reference, page: null, error: (e as { message?: string })?.message ?? String(e) };

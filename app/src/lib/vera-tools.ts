@@ -349,10 +349,16 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
    */
   ctx.setCriteria(criteria);
 
+  /*
+   * Por cantidad, como se midió contra Sonnet 5 (`F-258`): con más de 25 filas, «¿quién tiene más stock?»
+   * solo se contesta bien si las de más stock están entre las que ve. La pantalla del usuario ordena por
+   * antigüedad (`DEFAULT_SORT`, 16-oct), y eso se le dice en el retorno.
+   */
   const page = await fetchResults({
     orgId: ctx.profile.orgId,
     memberId: ctx.profile.id,
     criteria,
+    orden: 'cantidad',
   });
 
   const filas = page.rows.slice(0, MAX_FILAS).map((r) =>
@@ -380,6 +386,8 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
       'Ninguna de estas filas incluye condiciones económicas: eso se negocia cifrado dentro de un hilo.',
       'Las filas que no llevan «YA CONSULTADA» son las que tu organización todavía no ha consultado.',
       'Este orden no es un ranking de idoneidad. Si eliges unas cuantas para recomendar, di cuántas había y con qué criterio has elegido.',
+      // 16-oct-2026: la tabla del usuario ordena por antigüedad por defecto; estas filas, por cantidad.
+      'Estas filas te llegan ordenadas por cantidad, de más a menos. La tabla del usuario las ordena por antigüedad, las más recientes arriba: no le hables de «la primera» o «la de arriba» como si vierais el mismo orden.',
       /*
        * El límite de 25 (`MAX_FILAS`) es de lo que ve el MODELO, no de la pantalla. En la prueba contra
        * Sonnet 5 (`F-258`) contestó seis veces «91 resultados, se muestran 25»: falso, la tabla enseña

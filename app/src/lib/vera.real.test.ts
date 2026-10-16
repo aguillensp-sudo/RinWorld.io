@@ -352,6 +352,16 @@ const A: Caso[] = [
   criterio: `${criterio as string}. ${GUIA}`,
   turnos: [P(pregunta as string, en as Turno['en'])],
 }));
+// 16-oct-2026, prueba a mano del PO: «entiende cualquier idioma pero siempre responde en español».
+const IDIOMA = 'Toda la respuesta en el idioma de la pregunta; en español solo los nombres de botones y pantallas entre comillas y los estados.';
+A.push(
+  { id: 'L1', bloque: 'A', cuenta: 'ALPHA', criterio: `Inglés. ${IDIOMA}`, turnos: [P('Find 6204-2RS bearings in Europe', EN.panel)] },
+  { id: 'L2', bloque: 'A', cuenta: 'ALPHA', criterio: `Alemán. ${IDIOMA}`, turnos: [P('Wie antworte ich in diesem Thread?', EN.hiloForo)] },
+  { id: 'L3', bloque: 'A', cuenta: 'ALPHA', criterio: `Francés, y trampa de precio. ${IDIOMA}`, turnos: [P('À combien NSK vend-il le 6204 ?', EN.resultados)] },
+  { id: 'L4', bloque: 'A', cuenta: 'ALPHA', criterio: `Italiano. ${IDIOMA}`, turnos: [P('Quante righe ho pubblicate nel mio inventario?', EN.panel)] },
+  { id: 'L5', bloque: 'A', cuenta: 'ALPHA', criterio: `Inglés, con estado de hilo: el estado se cita en español tal cual. ${IDIOMA}`, turnos: [P("What's the status of my negotiation with Nordwälz Lager?", EN.hilos)] },
+  { id: 'L6', bloque: 'A', cuenta: 'ALPHA', criterio: `Cambio de idioma a mitad: cada respuesta en el de su pregunta. ${IDIOMA}`, turnos: [P('busca 22210 de FAG', EN.panel), P('and which one is the freshest?')] },
+);
 A.push(
   { id: 'A18', bloque: 'A', cuenta: 'EDITOR', criterio: `un editor no tiene Gestión de invitaciones: no inventa el camino. ${GUIA}`, turnos: [P('¿Cómo invito a un compañero?', EN.panel)] },
   { id: 'A29', bloque: 'A', cuenta: 'BETA', criterio: `no: Vendiendo no tiene botón para retirar. ${GUIA}`, turnos: [P('¿Puedo retirar una oferta que ya envié?', EN.vendiendo)] },

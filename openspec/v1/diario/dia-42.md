@@ -31,3 +31,31 @@ prueba: una importación hecha durante las pruebas a mano. VERA lo contó bien.
   literal lo concreto (frases entrecomilladas que copiar) antes que lo general (contesta en su idioma).
 - **Un HTML aprobado que se contradice a sí mismo se construye con una de sus dos mitades sin que nadie lo vea.**
   Lo encontró el PO usando la pantalla, no un test.
+
+## C5 a mano del PO sobre lo de la sesión «sin VERA» (después del cierre de las 07:20)
+
+El PO siguió el plan de pruebas que le dejó la sesión «sin VERA» (`dia-40-sin-vera.md`) y lo aprobó casi entero:
+
+- **Bloque 1, producción:** aprobado entero. Scroll de Panel, fondo gris en seis pantallas, aviso de XLSX en
+  INV-04, clic en la fila de ADMIN-01 y la respuesta de VERA sobre XLSX por correo.
+- **Bloque 2, INV-04:** la versión hecha a mano (producción) está aprobada salvo el «Cancelar» del alta de
+  remitente. Era un enlace azul y el aprobado lo quiere como botón con borde. Arreglado a mano con test
+  (`4bf324b`). La versión del arnés (`exp/inv-04-fabrica`, en `localhost:5174`) tiene **C5 NO**: «sutiles
+  diferencias pero no son aceptables» (`F-261`).
+  - Un tropiezo por el camino: la primera vez el PO miró `localhost:5173`, que servía la versión hecha a mano
+    desde la carpeta raíz, porque el worktree del experimento no se había montado. Se vio pidiéndole a cada
+    servidor el fichero que servía, y se repitió con la del Coder en el 5174.
+- **Bloque 3:**
+  - El móvil merece un tratamiento aparte.
+  - El botón de ADMIN-02 y las tablas anchas van al backlog.
+  - `F-262` lo pidió explicado (se le explicó).
+- **Bloque 4:** aprobado. Pero en `ingest_events` no consta ningún correo nuevo desde el 13-oct, así que el
+  XLSX real por correo no está confirmado por la base; se le preguntó.
+
+## Lecciones (sesión «sin VERA»)
+
+- **C1–C4 en verde y 13 líneas de revisión no hacen una pantalla aceptable.** El PO vio en un minuto
+  diferencias que ningún check ni la revisión de código vieron. La fábrica mide lo que se puede comprobar, y
+  C5 sigue siendo humano.
+- **«Abre localhost» no dice qué carpeta sirve.** Antes de pedirle al PO una C5 en local, se monta y se
+  comprueba por contenido qué versión responde en ese puerto.

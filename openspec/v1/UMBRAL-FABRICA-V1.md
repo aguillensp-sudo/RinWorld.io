@@ -397,3 +397,20 @@ que el diseño aprobado cambió.
 demo y con la capa de datos.
 
 *§8 ampliado el 11-oct-2026, antes de construir nada de `MSG-03`.*
+
+---
+
+**Adenda del 17-oct-2026 — cierre de las cifras 7 y 8.**
+Decidido por el PO: `INV-04` por el arnés se da por **intento fallido** (C5 NO, `F-261`) y las cifras 7 y 8 se
+cierran con lo medido. No se escribe ningún umbral nuevo ni se reabre ninguno.
+
+- **Cifra 7 (orquestación) y cifra 8 (reloj):** un único punto limpio, `SRCH-03`. El de `INV-04` (27 min, ~10–17 $) es
+  el coste de un intento que no llegó a pantalla aceptada, no el de una pantalla; no entra en la mediana. Con un solo
+  punto no hay mediana, así que **estas dos cifras quedan sin veredicto por mediana** y se dice así, sin extrapolar.
+- **Cifra 1 (pantallas aceptadas):** `INV-04` suma un rechazo (§2: C5 no se deduce de C1–C4).
+- **No se repite `INV-04`** con el prompt nuevo de `F-263`: ese prompt cambia las 28 tareas, así que cualquier serie
+  futura parte de ahí y no es comparable con estas medidas (`F-225`). Si el PO abre una serie, se pre-declara antes.
+- **Lo que queda de esta medida:** dos deudas de instrumento (tarifa de `claude-haiku-5-5` en
+  `orchestration_pricing.py` y que `orchestration_metrics.py` cuente los subagentes), en `F-261`.
+
+*Cierre escrito el 17-oct-2026, después de medir; no cambia ningún umbral de §3.*

@@ -81,7 +81,7 @@
   },
   {
     "name": "navegar",
-    "description": "Lleva al usuario a una pantalla de la aplicación. Llámala cuando lo pida explícitamente ('llévame a mi inventario', 'abre los hilos') y también después de una búsqueda, para que vea los resultados en la tabla. No pide confirmación: navegar es reversible.",
+    "description": "Lleva al usuario a una pantalla de la aplicación. Llámala cuando lo pida explícitamente ('llévame a mi inventario', 'abre los hilos') y también después de una búsqueda, para que vea los resultados en la tabla. No pide confirmación: navegar es reversible. Con 'Empresas' puedes pasar además 'pais' (código ISO de dos letras: PL, DE, ES…) para dejar el Directorio filtrado por ese país cuando el usuario pida las organizaciones de un país; si dudas del código del país, no lo inventes: pregunta.",
     "input_schema": {
       "type": "object",
       "properties": {
@@ -89,6 +89,10 @@
           "type": "string",
           "enum": ["Panel", "Vendiendo", "Comprando", "Hilos", "Inventario", "Empresas", "Foros"],
           "description": "Destino. 'Comprando' es la búsqueda en catálogo, 'Vendiendo' son las ofertas enviadas, 'Inventario' es el stock propio, 'Hilos' son las negociaciones, 'Empresas' es el Directorio de Organizaciones y 'Foros' es el foro de la comunidad. Lleva a la entrada de cada una —el Directorio, la lista de categorías—, no a una ficha, una categoría o un hilo concretos. 'Contacto' está en el menú pero todavía no existe."
+        },
+        "pais": {
+          "type": "string",
+          "description": "Solo con pantalla 'Empresas': código ISO 3166-1 de dos letras del país por el que filtrar el Directorio (por ejemplo PL para Polonia). Si el país no tiene organizaciones, la herramienta lo dice y la pantalla no se mueve."
         }
       },
       "required": ["pantalla"]

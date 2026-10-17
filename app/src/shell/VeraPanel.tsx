@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './VeraPanel.module.css';
 import { ask, historyExpired, type Exchange, type ProxyCall } from '../lib/vera';
-import type { DraftRequest, InventoryView, RemovedFilter, Screen } from '../lib/vera-tools';
+import type { DirectoryView, DraftRequest, InventoryView, RemovedFilter, Screen } from '../lib/vera-tools';
 import type { SearchCriteria } from '../lib/search';
 import { errorMessage, type MemberProfile } from '../lib/session';
 
@@ -50,6 +50,8 @@ export interface VeraAgent {
   prepareDraft: (draft: DraftRequest) => void;
   /** Lleva a Inventario con un filtro puesto, cuando VERA contesta con una lista de líneas. */
   showInventory?: (view: InventoryView) => void;
+  /** Lleva al Directorio con un país puesto en el filtro. */
+  showDirectory?: (view: DirectoryView) => void;
   /** Lo que el usuario quitó a mano en Comprando (`F-258`, B2): la búsqueda no lo repone sin confirmación. */
   removedFilters?: readonly RemovedFilter[];
   /**
@@ -178,6 +180,7 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
           threadOpen: agent.threadOpen,
           prepareDraft: agent.prepareDraft,
           ...(agent.showInventory ? { showInventory: agent.showInventory } : {}),
+          ...(agent.showDirectory ? { showDirectory: agent.showDirectory } : {}),
           ...(agent.removedFilters ? { removedFilters: agent.removedFilters } : {}),
         },
         agent.call,

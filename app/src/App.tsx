@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
-import { describeCriteria, describeManualChanges, removedFilters, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
+import { describeCriteria, describeManualChanges, removedFilters, type DirectoryView, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
 import { veraScreenName } from './lib/vera-screen';
 import type { SearchCriteria } from './lib/search';
 import type { VeraAgent } from './shell/VeraPanel';
@@ -201,6 +201,9 @@ export function App() {
    * siendo suya. Se limpia al navegar, para que volver a Inventario no reponga un filtro de hace rato.
    */
   const [veraInventoryView, setVeraInventoryView] = useState<InventoryView | null>(null);
+
+  /** El país que VERA ha dejado puesto en el Directorio (`directory-access-from-vera`). Se limpia al navegar, como el de Inventario. */
+  const [veraDirectoryView, setVeraDirectoryView] = useState<DirectoryView | null>(null);
 
   /**
    * Lo que VERA ha pedido preparar en el hilo abierto (MSG-03 §5, F-249): un formulario de consulta o de
@@ -547,6 +550,7 @@ export function App() {
     setSettingsOpen(false);
     setSecurityOpen(false);
     setVeraInventoryView(null);
+    setVeraDirectoryView(null);
   };
 
   if (state.status === 'loading') {
@@ -685,6 +689,12 @@ export function App() {
     showInventory: (view: InventoryView) => {
       navigate(INVENTORY_NAV);
       setVeraInventoryView(view);
+    },
+
+    // Igual que arriba: primero navegar (limpia las vistas de VERA) y después escribir la del Directorio.
+    showDirectory: (view: DirectoryView) => {
+      navigate(navIndexOf('Empresas'));
+      setVeraDirectoryView(view);
     },
 
     /*
@@ -1124,7 +1134,7 @@ export function App() {
             }}
           />
         ) : (
-          <Directory profile={state.profile} onOpenOrganization={setOrgProfileId} />
+          <Directory profile={state.profile} onOpenOrganization={setOrgProfileId} veraView={veraDirectoryView} />
         )
       ) : onForos ? (
         /* FORO-01. `now` explícito y construido EN EL RENDER, mismo criterio

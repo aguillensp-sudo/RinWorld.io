@@ -21,6 +21,12 @@ interface Props {
   profile: MemberProfile;
   /** Abre la ficha pública de una organización (DIR-02). */
   onOpenOrganization?: (id: string) => void;
+  /**
+   * Lo que VERA deja puesto cuando el usuario pide "las organizaciones de Polonia" (`directory-access-from-vera`).
+   * Un empujón que la pantalla adopta y que sigue siendo suya: el usuario puede cambiar el país después. Es un
+   * objeto nuevo en cada petición, así que pedir lo mismo dos veces vuelve a aplicarse. `null` no borra nada.
+   */
+  veraView?: { country: string } | null;
 }
 
 /**
@@ -40,8 +46,10 @@ interface Props {
  * - El **orden**, la **página** y la **respuesta** son del servidor: aquí solo
  *   se guardan los últimos valores que devolvió.
  */
-export function Directory({ profile, onOpenOrganization }: Props) {
-  const [filters, setFilters] = useState<DirectoryFilters>(EMPTY_FILTERS);
+export function Directory({ profile, onOpenOrganization, veraView }: Props) {
+  const [filters, setFilters] = useState<DirectoryFilters>(
+    veraView ? { ...EMPTY_FILTERS, country: veraView.country } : EMPTY_FILTERS,
+  );
   const [draft, setDraft] = useState('');
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [sort, setSort] = useState<DirectorySort>(DEFAULT_SORT);
@@ -51,6 +59,12 @@ export function Directory({ profile, onOpenOrganization }: Props) {
   const [pageCount, setPageCount] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!veraView) return;
+    setPage(1);
+    setFilters((prev) => ({ ...prev, country: veraView.country }));
+  }, [veraView]);
 
   /**
    * El miembro de sesión no decide ninguna de las cinco columnas de DIR-01:

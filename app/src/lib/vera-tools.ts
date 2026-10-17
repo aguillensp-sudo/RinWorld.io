@@ -20,6 +20,7 @@ import {
   type Filter,
 } from './inventory';
 import { fetchThreadPage } from './threads';
+import { fetchDirectoryCountries } from './directory';
 import { NOTES_MAX } from './inquiry-form';
 
 /**
@@ -88,6 +89,11 @@ export interface InventoryView {
   search: string;
 }
 
+/** Lo que VERA deja puesto en el Directorio de Empresas: el país por el que filtrar (código ISO de dos letras, en mayúsculas). */
+export interface DirectoryView {
+  country: string;
+}
+
 export interface ToolContext {
   profile: MemberProfile;
   navigate: (screen: Screen) => void;
@@ -100,6 +106,11 @@ export interface ToolContext {
    * y contesta en texto, en vez de prometer una pantalla que no se ha movido.
    */
   showInventory?: (view: InventoryView) => void;
+  /**
+   * Lleva al Directorio con ese país puesto en el filtro (`directory-access-from-vera`). Opcional: sin él, la
+   * herramienta lo dice en vez de prometer un filtro que no se ha aplicado.
+   */
+  showDirectory?: (view: DirectoryView) => void;
   /**
    * Lo que el usuario quitó o cambió a mano en Comprando desde los últimos filtros puestos (`removedFilters`),
    * calculado al enviar la pregunta. `buscar_en_catalogo` no los repone sin confirmación (`F-258`, B2).
@@ -670,8 +681,9 @@ function prepararOferta(input: unknown, ctx: ToolContext): ToolResult {
   };
 }
 
-function navegar(input: unknown, ctx: ToolContext): ToolResult {
+async function navegar(input: unknown, ctx: ToolContext): Promise<ToolResult> {
   const destino = texto(input, 'pantalla');
+  const pais = texto(input, 'pais');
   if (!destino) {
     return { content: 'Falta la pantalla de destino.', isError: true };
   }
@@ -689,6 +701,46 @@ function navegar(input: unknown, ctx: ToolContext): ToolResult {
           ? `«Contacto» está en el menú pero todavía no está construida. A las que puedes llevar: ${SCREENS.join(', ')}.`
           : `«${destino}» no es una pantalla a la que puedas llevar al usuario. Las que hay: ${SCREENS.join(', ')}.`,
       isError: true,
+    };
+  }
+  if (pais) {
+    // `directory-access-from-vera`: "las organizaciones de Polonia" -> el Directorio con el país puesto.
+    if (destino !== 'Empresas') {
+      return {
+        content: 'El filtro de país solo vale con la pantalla Empresas (el Directorio). La pantalla no se ha movido.',
+        isError: true,
+      };
+    }
+    const code = pais.toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) {
+      return {
+        content: `«${pais}» no es un código de país: pasa el código ISO de dos letras (PL para Polonia, DE para Alemania). La pantalla no se ha movido.`,
+        isError: true,
+      };
+    }
+    // Solo se filtra por un país que tenga organizaciones: otro dejaría una tabla vacía que VERA no vería
+    // y que contaría como "no hay" sin saberlo. Los países salen de la base, igual que el desplegable.
+    const disponibles = await fetchDirectoryCountries();
+    const encontrado = disponibles.find((c) => c.code === code);
+    if (!encontrado) {
+      return {
+        content:
+          `En el Directorio no hay ninguna organización de ${code}. La pantalla no se ha movido. ` +
+          `Países con organizaciones: ${disponibles.map((c) => `${c.label} (${c.code})`).join(', ') || 'ninguno'}.`,
+        isError: false,
+      };
+    }
+    if (!ctx.showDirectory) {
+      ctx.navigate('Empresas');
+      return {
+        content: `Abierta la pantalla Empresas, pero NO se ha podido dejar filtrada por ${encontrado.label}: el usuario verá el Directorio entero. Díselo y que use el desplegable de país.`,
+        isError: false,
+      };
+    }
+    ctx.showDirectory({ country: code });
+    return {
+      content: `Abierta la pantalla Empresas con el filtro de país ${encontrado.label} (${code}) puesto: el usuario ya ve la tabla filtrada. No cuentes ni nombres organizaciones: no las has visto.`,
+      isError: false,
     };
   }
   // NAVEGACIÓN va sin confirmación (`spec.md:205`): es reversible.
@@ -714,7 +766,7 @@ export async function runTool(
       case 'listar_mis_hilos':
         return await listarMisHilos(input, ctx);
       case 'navegar':
-        return navegar(input, ctx);
+        return await navegar(input, ctx);
       case 'preparar_consulta':
         return prepararConsulta(input, ctx);
       case 'preparar_oferta':

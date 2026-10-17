@@ -6,6 +6,7 @@ Nueva decisión: una fila arriba del todo, con fecha y quién decidió. Una deci
 
 | # | Decisión | Dónde |
 |---|---|---|
+| **El inventario de ALPHA («Rodamientos Ibéricos», 10.642 líneas publicadas el 16-oct) se queda** | 17-oct-2026, PO. Cambia lo que VERA y las búsquedas cuentan para esa cuenta; es lo esperado | `ESTADO-V1.md` §1 |
 | **Las cifras 7 y 8 del umbral de fábrica se cierran con lo medido: `SRCH-03` es el único punto limpio e `INV-04` por el arnés es un intento fallido** | 17-oct-2026, PO («dala por intento fallido y cierra la cifra»). Sin mediana de un solo punto, las dos cifras quedan sin veredicto; no se repite `INV-04` ni se extrapola | `UMBRAL-FABRICA-V1.md` (adenda del 17-oct), `F-261` |
 | **El entregable 5 de Fundación («índice de búsqueda dedicado») se mide y se divide: lo urgente es `0064`, la RPC de búsqueda espera a un disparador** | 14-oct-2026, PO («medir ahora con carga sintética»). Con 1M de líneas la búsqueda cruzada tardaba ~115 s por la política, no por falta de índice. La RPC `search_catalog` (milisegundos) cambia el cliente y el total de resultados: se hace cuando un catálogo real pase de ~100.000 líneas | `findings/F-253.md`, `BACKLOG-V1.md` |
 | **El historial de `INV-04` se purga cada noche (03:17 UTC, 90 días) con `pg_cron`** | 14-oct-2026, PO. `purge_ingest_events(90)` existía desde `0057` sin nadie que la ejecutara. El correo crudo en S3 lo borra la regla del bucket a los 30 días, no esta función | `0063_purga_diaria_del_historial_de_ingestion.sql` |

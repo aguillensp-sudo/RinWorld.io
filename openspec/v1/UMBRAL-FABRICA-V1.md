@@ -410,7 +410,6 @@ cierran con lo medido. No se escribe ningún umbral nuevo ni se reabre ninguno.
 - **Cifra 1 (pantallas aceptadas):** `INV-04` suma un rechazo (§2: C5 no se deduce de C1–C4).
 - **No se repite `INV-04`** con el prompt nuevo de `F-263`: ese prompt cambia las 28 tareas, así que cualquier serie
   futura parte de ahí y no es comparable con estas medidas (`F-225`). Si el PO abre una serie, se pre-declara antes.
-- **Lo que queda de esta medida:** dos deudas de instrumento (tarifa de `claude-haiku-5-5` en
-  `orchestration_pricing.py` y que `orchestration_metrics.py` cuente los subagentes), en `F-261`.
+- **Instrumento:** las dos deudas de `F-261` (tarifa de `claude-haiku-5-5` y subagentes en el medidor) se saldaron el 17-oct.
 
 *Cierre escrito el 17-oct-2026, después de medir; no cambia ningún umbral de §3.*

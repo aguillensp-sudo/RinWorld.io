@@ -51,9 +51,7 @@ Empieza por §6 y luego §3.
 1. **Antes de lanzar Playwright o el arnés contra `bearingworld-e2e`:** avisar a las demás sesiones vivas y mirar que no haya un job en marcha (`gh run list --branch mvp/bootstrap --status in_progress`). Dos corridas a la vez se pisan el fixture (`F-262`); no hay cerrojo entre sesiones.
 2. **Del PO:**
    - **Pruebas a mano de VERA:** el PO las hizo el 15–16-oct en producción (`troxminloxkjwihwfevs`); salieron dos comentarios, ya arreglados. Lo que falle en adelante se convierte en caso del runner.
-   - **Inventario de ALPHA:** 10.642 líneas publicadas desde el 16-oct (antes, 1). Si fue una prueba, decidir si se quedan: cambian lo que VERA y las búsquedas cuentan para esa cuenta.
    - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor. **No se toca `search.ts` hasta entonces.**
-   - **`CLAUDE.md` §10.1:** según la otra sesión, la frase «cuando exista el e2e de ADMIN-01» ya no es cierta. Pendiente de que el PO la corrija o lo pida.
    - **Vertex:** mirar `gcloud beta quotas preferences list --project=bearingworld-vera-eu` y repetir la llamada (`grantedValue` ≠ 0). **No enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción **cuando se acerquen datos reales o terceros** (`F-067`).
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca.**

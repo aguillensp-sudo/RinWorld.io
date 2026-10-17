@@ -162,7 +162,7 @@ describe('AdminRequests', () => {
     await user.click(await screen.findByRole('button', { name: 'Distribuciones Álvarez SL' }));
     await user.click(await screen.findByRole('button', { name: 'Rechazar' }));
 
-    const textarea = screen.getByPlaceholderText('Explica el motivo del rechazo — se enviará al solicitante');
+    const textarea = screen.getByPlaceholderText('Explica el motivo del rechazo — lo verá el solicitante');
     await user.type(textarea, 'Sin actividad comprobable en el sector.');
     await user.click(screen.getByRole('button', { name: 'Confirmar rechazo' }));
 

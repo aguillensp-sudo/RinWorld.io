@@ -116,7 +116,7 @@ describe('RequestDetailPanel', () => {
   it('el formulario de rechazo, abierto: el textarea es controlado y "Confirmar rechazo" nace deshabilitado', () => {
     render(<RequestDetailPanel {...base()} rejecting={true} rejectReason="" />);
     expect(
-      screen.getByPlaceholderText('Explica el motivo del rechazo — se enviará al solicitante'),
+      screen.getByPlaceholderText('Explica el motivo del rechazo — lo verá el solicitante'),
     ).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Confirmar rechazo' })).toBeDisabled();
     // F-162: `getByRole` lanza si no encuentra el elemento, asi que la
@@ -129,7 +129,7 @@ describe('RequestDetailPanel', () => {
     const props = { ...base(), rejecting: true };
     render(<RequestDetailPanel {...props} />);
     await user.type(
-      screen.getByPlaceholderText('Explica el motivo del rechazo — se enviará al solicitante'),
+      screen.getByPlaceholderText('Explica el motivo del rechazo — lo verá el solicitante'),
       'x',
     );
     expect(props.onRejectReasonChange).toHaveBeenCalledWith('x');

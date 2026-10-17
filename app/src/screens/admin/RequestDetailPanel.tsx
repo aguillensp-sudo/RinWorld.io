@@ -196,13 +196,13 @@ export function RequestDetailPanel({
           <div className={styles.rejectForm}>
             <textarea
               className={styles.textarea}
-              placeholder="Explica el motivo del rechazo — se enviará al solicitante"
+              placeholder="Explica el motivo del rechazo — lo verá el solicitante"
               maxLength={500}
               value={rejectReason}
               onChange={(e) => onRejectReasonChange(e.target.value)}
             />
             <p className={styles.hint}>
-              Este texto se incluirá en el email de rechazo (EML-08) · Mín 10 / máx 500 caracteres
+              El solicitante verá este motivo al consultar el estado de su solicitud · Mín 10 / máx 500 caracteres
             </p>
             <div className={styles.rejectButtons}>
               <button

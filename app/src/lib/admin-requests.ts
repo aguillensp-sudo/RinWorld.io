@@ -305,7 +305,7 @@ export function approveRequest(id: string): Promise<RequestRow> {
   return decidir(id, { state: 'INVITED_APPROVED' });
 }
 
-/** `Rechazar`, con el motivo que va al correo EML-08 y al historial. */
+/** `Rechazar`, con el motivo que queda en el historial y que el solicitante ve en la espera (EML-08 no sale: F-212). */
 export function rejectRequest(id: string, reason: string): Promise<RequestRow> {
   const limpio = reason.trim();
   if (!isValidRejectionReason(limpio)) {

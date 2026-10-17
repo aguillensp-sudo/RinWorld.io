@@ -1496,6 +1496,28 @@ def test_el_medidor_cuenta_subagentes_y_tarifa_haiku_por_tramos():
               - (1000 / 1e6 * 2.0 + 1000 / 1e6 * 10.0 + 200000 / 1e6 * 0.20)) < 1e-9)
 
 
+def test_la_matriz_de_trazabilidad_cubre_cada_escenario():
+    """Corriente C, nivel 1. Cada escenario de `openspec/specs` tiene una fila en
+    `openspec/v1/trazabilidad.csv`, y toda prueba citada existe de verdad."""
+    print("\nC-1 · matriz de trazabilidad escenario -> prueba")
+    from ..core import trazabilidad as tz
+
+    esc = tz.extraer()
+    filas = tz.leer_csv()
+    pr = tz.problemas(esc, filas)
+    check("⚠ la matriz real es consistente con las specs y con las pruebas que cita",
+          not pr, "; ".join(pr[:3]))
+
+    falsas = [{"id": e["id"], "capability": e["capability"], "estado": "SIN_PRUEBA"}
+              for e in esc[:-1]]
+    check("⚠ un escenario sin fila se detecta",
+          any("sin fila" in x for x in tz.problemas(esc, falsas)))
+    inventada = [dict(f, estado="CUBIERTO", nivel="unit", prueba="app/no/existe.test.ts::x")
+                 if i == 0 else f for i, f in enumerate(filas)]
+    check("⚠ una prueba citada que no existe se detecta (la evidencia no se inventa)",
+          any("no existe" in x for x in tz.problemas(esc, inventada)))
+
+
 def test_el_csv_de_orquestacion_no_pierde_historia():
     """F-157 · una pasada normal del medidor borraba la historia que ya no esta en disco.
 
@@ -2053,6 +2075,7 @@ def main() -> int:
     test_seco_construye_el_prompt_del_coder()
     test_el_medidor_no_se_para_con_un_modelo_sin_tarifa()
     test_el_medidor_cuenta_subagentes_y_tarifa_haiku_por_tramos()
+    test_la_matriz_de_trazabilidad_cubre_cada_escenario()
     test_segundo_proveedor_no_toca_el_primero()
     test_el_e2e_no_se_cruza_entre_arboles()
     test_la_muerte_por_infraestructura_no_tira_lo_pagado()

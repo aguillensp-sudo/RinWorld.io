@@ -7,6 +7,7 @@ import {
   deriveWrappingKey,
   keyVerifierOf,
   openPrivateKey,
+  passphraseBytes,
   protectPrivateKey,
   runArgon2,
 } from './key-backup';
@@ -279,5 +280,53 @@ describe('discardKeyBackup', () => {
   it('si falla, lanza y no suelta nada', async () => {
     otherError = { message: 'no' };
     await expect(discardKeyBackup()).rejects.toThrow();
+  });
+});
+
+/**
+ * Corriente C · nivel 2 (F-265, `server-blind-storage#1` y `passphrase-rotation#1`).
+ * La frase no sale del navegador en NINGUNA de las tres operaciones que hablan con el
+ * servidor —abrir, recuperar y rotar—, ni en claro ni en bytes (hex y bytea), ni la
+ * clave de envoltura derivada de ella. Y una rotación estrena sal e IV.
+ */
+describe('la frase no sale del navegador · abrir, recuperar y rotar', () => {
+  const formas = (frase: string) => {
+    const bytes = passphraseBytes(frase);
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    return [frase, hex, toBytea(bytes), btoa(String.fromCharCode(...bytes))];
+  };
+  const sinFrase = (frases: string[]) => {
+    expect(rpcCalls.length).toBeGreaterThan(0); // sin llamadas, «no aparece» no mediría nada
+    const wire = JSON.stringify(rpcCalls);
+    for (const f of frases) for (const forma of formas(f)) expect(wire).not.toContain(forma);
+  };
+
+  it('openOwnBackup: la petición lleva el id y nada derivado de la frase', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    await openOwnBackup(PASSPHRASE, MEMBER, fast);
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['begin_key_recovery']);
+    sinFrase([PASSPHRASE]);
+  });
+
+  it('recoverKey: ni la frase ni su forma en bytes llegan al servidor', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    await recoverKey(PASSPHRASE, MEMBER, fast);
+    sinFrase([PASSPHRASE]);
+  });
+
+  it('changeBackupPassphrase: ni la vieja ni la nueva, en ninguna forma', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    sinFrase([PASSPHRASE, NEW_PASSPHRASE]);
+  });
+
+  it('una rotación estrena sal e IV (no reutiliza los del backup anterior)', async () => {
+    const row = await backupRow();
+    beginResponse = { data: [row], error: null };
+    await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')?.args as Record<string, string>;
+    expect(replace.p_argon2_salt).not.toBe(row.argon2_salt);
+    expect(replace.p_key_iv).not.toBe(row.key_iv);
+    expect(replace.p_encrypted_key_blob).not.toBe(row.encrypted_key_blob);
   });
 });

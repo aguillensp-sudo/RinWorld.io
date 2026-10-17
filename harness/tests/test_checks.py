@@ -1452,6 +1452,50 @@ def test_el_medidor_no_se_para_con_un_modelo_sin_tarifa():
     check("sin nada que apartar no declara nada", orchestration_metrics.declarar_sin_tarifa({}) is None)
 
 
+def test_el_medidor_cuenta_subagentes_y_tarifa_haiku_por_tramos():
+    """F-261. Los subagentes viven en `<sesion>/subagents/*.jsonl` y su gasto es de
+    la sesion que los lanzo; y Haiku 5.5 tiene dos tarifas segun el largo del prompt."""
+    print("\nF-261 · subagentes dentro de su sesion; Haiku 5.5 por tramos")
+    from ..core import orchestration_pricing as op
+
+    def linea(modelo, usage):
+        return json.dumps({"timestamp": "2026-10-17T10:00:00Z",
+                           "message": {"model": modelo, "usage": usage}})
+
+    corto = {"input_tokens": 1000, "output_tokens": 1000}
+    largo = {"input_tokens": 1000, "output_tokens": 1000, "cache_read_input_tokens": 200000}
+    with tempfile.TemporaryDirectory() as tmp:
+        tdir = pathlib.Path(tmp)
+        (tdir / "s1.jsonl").write_text(linea("claude-opus-5", corto) + "\n", encoding="utf-8")
+        sub = tdir / "s1" / "subagents"
+        sub.mkdir(parents=True)
+        (sub / "agent-a.jsonl").write_text(
+            linea("claude-haiku-5-5", corto) + "\n" + linea("claude-haiku-5-5", largo) + "\n",
+            encoding="utf-8")
+        original = orchestration_metrics.transcript_dirs
+        orchestration_metrics.transcript_dirs = lambda repo: {tdir: "/tmp/wt"}
+        try:
+            filas = orchestration_metrics.scan(pathlib.Path(tmp), {})
+        finally:
+            orchestration_metrics.transcript_dirs = original
+
+    por_modelo = {f["modelo"]: f for f in filas}
+    check("⚠ el subagente entra en la sesion que lo lanzo (misma `sesion`)",
+          sorted((f["sesion"], f["modelo"]) for f in filas)
+          == [("s1", "claude-haiku-5-5"), ("s1", "claude-opus-5")],
+          str(sorted((f["sesion"], f["modelo"]) for f in filas)))
+    h = por_modelo.get("claude-haiku-5-5", {})
+    check("sus dos turnos de Haiku se cuentan", h.get("turnos") == 2, str(h))
+    esperado = (1000 / 1e6 * 0.10 + 1000 / 1e6 * 0.50) + (
+        1000 / 1e6 * 0.50 + 1000 / 1e6 * 2.50 + 200000 / 1e6 * 0.05)
+    check("⚠ el turno corto va a tarifa base y el largo (>100k) a la de tramo largo",
+          abs(h.get("coste_usd_sombra", -1) - esperado) < 1e-6,
+          f"{h.get('coste_usd_sombra')} vs {esperado}")
+    check("un modelo sin tramo no cambia de tarifa por el largo",
+          abs(op.cost_usd("claude-sonnet-5", largo)
+              - (1000 / 1e6 * 2.0 + 1000 / 1e6 * 10.0 + 200000 / 1e6 * 0.20)) < 1e-9)
+
+
 def test_el_csv_de_orquestacion_no_pierde_historia():
     """F-157 · una pasada normal del medidor borraba la historia que ya no esta en disco.
 
@@ -2008,6 +2052,7 @@ def main() -> int:
     test_el_csv_de_orquestacion_no_pierde_historia()
     test_seco_construye_el_prompt_del_coder()
     test_el_medidor_no_se_para_con_un_modelo_sin_tarifa()
+    test_el_medidor_cuenta_subagentes_y_tarifa_haiku_por_tramos()
     test_segundo_proveedor_no_toca_el_primero()
     test_el_e2e_no_se_cruza_entre_arboles()
     test_la_muerte_por_infraestructura_no_tira_lo_pagado()

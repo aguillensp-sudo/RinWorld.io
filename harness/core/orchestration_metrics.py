@@ -116,7 +116,12 @@ def scan(repo_path: pathlib.Path, sin_tarifa: dict | None = None) -> list:
                 "cache_write_1h": 0, "cache_read": 0, "coste": 0.0,
                 "turnos": 0, "fecha_min": None, "sin_tarifa": False,
             })
-            for model, usage, ts in iter_session_usage(jf):
+            # F-261: los subagentes (git-ops, Explore...) escriben en
+            # `<sesion>/subagents/*.jsonl`, no al nivel de la sesion. Su gasto es
+            # de la sesion que los lanzo y entra en su fila.
+            fuentes = [jf] + sorted((tdir / jf.stem / "subagents").glob("*.jsonl"))
+            usos = (u for fuente in fuentes for u in iter_session_usage(fuente))
+            for model, usage, ts in usos:
                 acc = por_modelo[model]
                 cache = usage.get("cache_creation") or {}
                 acc["tokens_in"] += usage.get("input_tokens", 0)

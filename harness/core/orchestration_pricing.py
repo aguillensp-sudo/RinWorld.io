@@ -24,7 +24,7 @@ pueda desviar de ella con el tiempo.
 import datetime
 import sys
 
-PRICE_TABLE_DATE = "2026-09-29"
+PRICE_TABLE_DATE = "2026-10-17"
 STALE_AFTER_DAYS = 90
 
 PRICES = {
@@ -75,7 +75,27 @@ PRICES = {
         "input": 2.0, "cache_write_5m": 2.50, "cache_write_1h": 4.0,
         "cache_read": 0.20, "output": 10.0,
     },
+    # 17-oct-2026 (F-261): git-ops corre en Haiku 5.5 y no tenia fila. La pagina de
+    # precios, comprobada hoy, da DOS tramos segun el largo del prompt: hasta 100.000
+    # tokens $0.10 input / $0.125 escritura 5m / $0.20 escritura 1h / $0.01 lectura /
+    # $0.50 output; por encima, $0.50 / $0.625 / $1 / $0.05 / $2.50. El tramo se elige
+    # por turno en `_tarifa` (ver `PROMPT_LARGO_TOKENS`). Sin fast mode.
+    "claude-haiku-5-5": {
+        "input": 0.10, "cache_write_5m": 0.125, "cache_write_1h": 0.20,
+        "cache_read": 0.01, "output": 0.50,
+    },
+    "claude-haiku-5-5:largo": {
+        "input": 0.50, "cache_write_5m": 0.625, "cache_write_1h": 1.0,
+        "cache_read": 0.05, "output": 2.50,
+    },
 }
+
+# Haiku 5.5 cobra mas por encima de este largo de prompt. Se mide como lo que el
+# turno mando al modelo: input + escrituras de cache + lecturas de cache. (Esa
+# definicion es la lectura de la pagina de precios, no esta comprobada contra una
+# factura: con Haiku tan barato, cualquier error de tramo es de centimos.)
+PROMPT_LARGO_TOKENS = 100_000
+MODELOS_CON_TRAMO = {"claude-haiku-5-5"}
 
 # Mensajes sinteticos que aparecen en las transcripciones sin representar una
 # llamada facturable -- limite de sesion alcanzado, "no response requested".
@@ -98,8 +118,18 @@ class PriceTableError(RuntimeError):
     """Version orquestacion de F-010. Se lanza en vez de registrar un coste falso."""
 
 
-def _tarifa(model: str, speed: str | None) -> dict:
+def _prompt_tokens(usage: dict) -> int:
+    cache = usage.get("cache_creation") or {}
+    return (usage.get("input_tokens", 0) + usage.get("cache_read_input_tokens", 0)
+            + cache.get("ephemeral_5m_input_tokens", 0)
+            + cache.get("ephemeral_1h_input_tokens", 0))
+
+
+def _tarifa(model: str, speed: str | None, usage: dict | None = None) -> dict:
     key = f"{model}:fast" if speed == "fast" else model
+    if (model in MODELOS_CON_TRAMO and usage is not None
+            and _prompt_tokens(usage) > PROMPT_LARGO_TOKENS):
+        key = f"{model}:largo"
     if key not in PRICES:
         raise PriceTableError(
             f"Modelo sin tarifa conocida: {model!r} (speed={speed!r}). Anade su "
@@ -117,7 +147,7 @@ def cost_usd(model: str, usage: dict) -> float:
     if model in MODELOS_NO_FACTURABLES:
         return 0.0
 
-    tarifa = _tarifa(model, usage.get("speed"))
+    tarifa = _tarifa(model, usage.get("speed"), usage)
     cache = usage.get("cache_creation") or {}
     coste = (
         usage.get("input_tokens", 0) / 1e6 * tarifa["input"]

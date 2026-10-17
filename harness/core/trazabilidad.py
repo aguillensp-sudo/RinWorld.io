@@ -17,6 +17,10 @@ Estados del CSV (`estado`):
              cuenta aqui: es PARCIAL (CLAUDE.md §5).
   PARCIAL    una prueba cubre parte (la rama feliz, o solo un AND); `nota` dice cual.
   SIN_PRUEBA no se ha encontrado prueba. Es un estado honesto, no un fallo.
+  NO_IMPLEMENTADO  la spec lo pide y el codigo no lo tiene (no hay nada que probar:
+             es un hueco entre contrato y producto, no de pruebas); `nota` dice que falta.
+  DIVERGE    la funcion existe pero hace algo distinto de lo que dice el escenario;
+             `nota` dice en que (es un hallazgo, no una prueba pendiente).
   FUERA      el escenario no es verificable por una prueba automatica (depende de un
              tercero, de un humano o de un servicio externo); `nota` dice por que.
 
@@ -31,7 +35,7 @@ SPECS = ROOT / "openspec" / "specs"
 CSV_PATH = ROOT / "openspec" / "v1" / "trazabilidad.csv"
 
 COLUMNS = ["id", "capability", "requirement", "escenario", "estado", "nivel", "prueba", "nota"]
-ESTADOS = {"CUBIERTO", "PARCIAL", "SIN_PRUEBA", "FUERA"}
+ESTADOS = {"CUBIERTO", "PARCIAL", "SIN_PRUEBA", "FUERA", "NO_IMPLEMENTADO", "DIVERGE"}
 NIVELES = {"unit", "e2e", "sql", ""}
 
 _REQ = re.compile(r"^###\s+Requirement:\s*(.+?)\s*$")
@@ -120,8 +124,8 @@ def problemas(escenarios: list, filas: list, raiz: pathlib.Path = ROOT) -> list:
                     p.append(f"{i}: {nombre!r} no aparece en {ruta}")
             if est == "PARCIAL" and not f.get("nota"):
                 p.append(f"{i}: PARCIAL sin `nota` que diga que falta")
-        if est == "FUERA" and not f.get("nota"):
-            p.append(f"{i}: FUERA sin `nota` que diga por que")
+        if est in ("FUERA", "NO_IMPLEMENTADO", "DIVERGE") and not f.get("nota"):
+            p.append(f"{i}: {est} sin `nota` que diga por que")
     return p
 
 

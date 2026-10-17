@@ -40,7 +40,7 @@ Empieza por §6 y luego §3.
 ## 2 · Dónde estamos, por corriente
 
 - **Corriente A · Núcleo — CERRADA el 14-oct.** Único cabo suelto: `F-192`, ahora con propuesta lista en `supabase/propuestas/F-192/`.
-- **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado** por cupo en cero en Vertex (`429`); 3 cupos pedidos el 14-oct (`vera-vertex-eu-migracion.md` §7). El runbook aún dice que el cambio es de modelo y proveedor: **el modelo ya está cambiado**, solo queda el proveedor.
+- **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado.** Vertex: los 3 cupos pedidos el 14-oct fueron **denegados** el 16-oct (`vera-vertex-eu-migracion.md` §7). Alternativa: Bedrock UE, con Sonnet 4.6 funcionando y Sonnet 5 **sin acceso ni cupo** (`vera-bedrock-eu-plan.md`). El runbook aún dice que el cambio es de modelo y proveedor: **el modelo ya está cambiado**, solo queda el proveedor.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. **Medida contra Sonnet 5** (`F-258`): bien en guía, trampas, memoria y pantalla. Desde el 15-oct, un filtro quitado a mano no se repone sin que el usuario lo pida (control en la herramienta, v40). Falla un recuento (B7, intermitente). Contesta en el idioma del usuario (`F-264`). **Resultados de búsqueda ordena por defecto lo más reciente arriba** (PO, 16-oct); VERA sigue viendo sus 25 filas por cantidad.
 - **Corriente B · Fábrica — EN MARCHA.** `INV-04` reconstruida por el arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4 y con 13 líneas de corrección a mano, pero **C5 NO del PO** por diferencias de diseño, así que no cuenta como pantalla aceptada. Las cifras 7 y 8 **cerradas el 17-oct** (PO): `SRCH-03` único punto limpio, `INV-04` intento fallido, sin veredicto por mediana (`F-261`). Los checks no ven lo que el PO ve a simple vista. `F-263` cerrado (16-oct): las `_nota*` de `component_api` ya llegan al Coder; la próxima serie parte de ese prompt y no es comparable con las cifras 7 y 8.
 - **Corriente C · Verificación — ABIERTA el 17-oct.** Nivel 1: `openspec/v1/trazabilidad.csv`, **54 de 185 escenarios con prueba que los ejerce y corre en CI**, 80 parciales, 48 sin prueba (`F-265`). Siguiente: huecos de cifrado (vectores públicos, IV no repetido), luego los `SIN_PRUEBA` por un agente distinto del que implementó. Niveles 4 y 5 aparcados.
@@ -52,7 +52,7 @@ Empieza por §6 y luego §3.
 2. **Del PO:**
    - **Pruebas a mano de VERA:** el PO las hizo el 15–16-oct en producción (`troxminloxkjwihwfevs`); salieron dos comentarios, ya arreglados. Lo que falle en adelante se convierte en caso del runner.
    - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor. **No se toca `search.ts` hasta entonces.**
-   - **Vertex:** mirar `gcloud beta quotas preferences list --project=bearingworld-vera-eu` y repetir la llamada (`grantedValue` ≠ 0). **No enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
+   - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 en `eu.anthropic.claude-sonnet-5` (cuenta y facturación, gratis). Vertex: solo un caso de soporte de pago lo desbloquearía; **no enviar la reclamación vieja.** Al llegar el cupo (Bedrock o Vertex), cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción **cuando se acerquen datos reales o terceros** (`F-067`).
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca.**
 3. **VERA, para la próxima pasada:** el runner (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, freno en `VERA_REAL_TOPE_USD`) está listo. Toda llamada real, con el visto bueno del PO. Lo pendiente: B7, A24 (contesta en doce líneas) y L6 (cambio de idioma a mitad, `F-264`).
@@ -86,7 +86,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; 3 cupos pedidos, sin aprobar; `429` | Google + PO |
+| 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; Vertex denegado (16-oct); Bedrock UE: 4.6 sí, Sonnet 5 sin acceso | AWS + PO |
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
 | 🟡 | **`F-256`** · VERA sin límite por usuario y hora ni registro de `usage` (el tope de tamaño sí está) | Backlog, antes de terceros |

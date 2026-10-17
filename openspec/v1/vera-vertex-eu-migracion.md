@@ -213,6 +213,8 @@ multi-región UE, `base_model=anthropic-claude-sonnet`, correo de contacto del P
 | `vera-eu-sonnet-input-tokens` | `EuOnlinePredictionInputTokensPerMinutePerBaseModel` | 200.000 por minuto |
 | `vera-eu-sonnet-output-tokens` | `EuOnlinePredictionOutputTokensPerMinutePerBaseModel` | 50.000 por minuto |
 
+**Actualización 17-oct-2026: las tres solicitudes fueron DENEGADAS** (`stateDetail: Quota request denied`, 16-oct 09:37 UTC, `traceId` `98e52217-a5d9-4111-b7d7-61768ca3959c`, `faf68cc5-e578-4a29-9212-8d5d13159510`, `ce93c634-0564-492f-ab75-67e01429a137`). La causa de que no se procesaran antes era `cloudquotas.googleapis.com` desactivada (activada el 16-oct); al activarla se evaluaron y se denegaron de forma automática. Solo un caso de soporte de Google de pago podría revisarlas. Alternativa en estudio: `vera-bedrock-eu-plan.md`.
+
 Estado: `gcloud beta quotas preferences list --project=bearingworld-vera-eu`. Cuando `grantedValue`
 cambie, repetir la llamada de prueba de arriba; si pasa, seguir el §4. Si en unos días no cambia, abrir
 un caso de soporte de Google Cloud citando estos tres identificadores (no el «envío de septiembre»).

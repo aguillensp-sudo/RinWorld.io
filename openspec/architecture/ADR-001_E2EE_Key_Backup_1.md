@@ -174,4 +174,18 @@ These four columns must be present from the first migration. Adding them later r
 * Argon2id parameter review: recommended parameters are based on June 2026 device performance benchmarks. Revisit after 12 months or when hardware landscape changes.
 * Key rotation: what happens when a member wants to change their backup passphrase? The private key must be re-encrypted with a new wrapping key and the new blob uploaded. Design this flow in Sprint 3.
 
+# **11. Adenda (2026-10-18): verificador de la frase**
+
+Esta adenda recoge el diseño de `F-242` (`0053`, `0054`), decidido por el PO el 7-oct-2026 y aceptado como contrato el 18-oct-2026 tras `F-268`. Los apartados 1 a 10 no se tocan. El contrato exacto está en `openspec/changes/amend-e2ee-key-verifier/`.
+
+**Qué son la prueba y el verificador.** De la misma salida de Argon2id que da la wrapping key, el navegador deriva una *prueba* de la passphrase: 32 bytes con HKDF-SHA-256, salt vacío e info `bearingworld.io/key-backup/proof/v1`. El *verificador* es el SHA-256 de esa prueba. El verificador viaja en todo backup (`key_verifier`) y el servidor lo guarda. La prueba solo viaja al rotar la passphrase (`p_old_proof`), para que el servidor compruebe que quien rota conoce la frase actual; el servidor no la guarda. Sin esto, quien tuviera solo la sesión de un miembro podía sustituir su backup por uno propio y dejarle sin recuperación.
+
+**Qué amplía.** El §7.1, paso 6, dice que el navegador envía `{ encrypted_key_blob, key_iv, argon2_salt, kdf_params }`. Queda ampliado: el payload lleva además `key_verifier` y `public_key`. En la generación, `public_key` es la del par recién creado, que la llamada registra; al rotar la frase, el servidor exige que coincida con la ya registrada.
+
+**Qué se sigue cumpliendo.** El §8 se cumple: la passphrase, la salida de Argon2id y la wrapping key no salen del navegador, y la privada tampoco. Los dos valores derivados que sí salen están acotados por un criterio: nada de lo que el servidor recibe o guarda permite comprobar una passphrase candidata con menos coste que una derivación Argon2id con los `kdf_params` guardados. El blob ya permite ese mismo ataque fuera de línea, así que el verificador no lo abarata. La entropía de la prueba es la de la frase; la defensa sigue siendo la fortaleza de la frase (zxcvbn) y el coste de Argon2id.
+
+**Auditoría.** El verificador y la prueba entran en el alcance de la auditoría criptográfica independiente previa a GA (§9).
+
+**Abierto.** La rotación no limita intentos en el servidor, la recuperación entrega el blob sin pedir la prueba y los backups anteriores a `0053` sustituyen una vez sin prueba. Ver el hallazgo que abre esta decisión; no está resuelto aquí.
+
 ADR-001 · BearingNet Competitor Platform · June 2026 · Confidential

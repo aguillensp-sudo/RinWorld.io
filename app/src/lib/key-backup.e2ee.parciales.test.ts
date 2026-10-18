@@ -16,7 +16,9 @@ import {
   type Argon2Runner,
   KDF_PARAMS,
   createKeyPair,
+  deriveBackupKeys,
   deriveWrappingKey,
+  keyVerifierOf,
   openPrivateKey,
   passphraseBytes,
   protectPrivateKey,
@@ -482,5 +484,134 @@ describe('e2ee-key-management/schema-desde-dia-uno', () => {
       expect(linea!).toMatch(new RegExp(`^\\s*${col}\\s+${tipo}\\s*,?\\s*(--.*)?$`));
       expect(linea!.toLowerCase()).not.toContain('not null');
     }
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Contrato modificado: openspec/changes/amend-e2ee-key-verifier (F-242, F-268)
+// -----------------------------------------------------------------------------
+
+/** SHA-256 y HKDF recalculados aquí con WebCrypto, sin pasar por el código que se prueba. */
+async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
+  const copia = new Uint8Array(bytes.byteLength);
+  copia.set(bytes);
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', copia));
+}
+
+async function pruebaDe(materia: Uint8Array): Promise<Uint8Array> {
+  const copia = new Uint8Array(materia.byteLength);
+  copia.set(materia);
+  const ikm = await crypto.subtle.importKey('raw', copia, 'HKDF', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(0),
+      info: new TextEncoder().encode('bearingworld.io/key-backup/proof/v1'),
+    },
+    ikm,
+    256,
+  );
+  return new Uint8Array(bits);
+}
+
+describe('e2ee-key-management · contrato modificado (amend-e2ee-key-verifier)', () => {
+  /*
+   * key-wrapping, escenario «cifrado de backup correcto» (texto modificado):
+   * el payload contiene únicamente {encrypted_key_blob, key_iv, argon2_salt, kdf_params, key_verifier, public_key};
+   * public_key es la del par recién generado, que la llamada registra.
+   */
+  it('key-wrapping#1 (modificado) · store_key_backup recibe exactamente las seis claves y public_key es la del par recien generado', async () => {
+    const generated = await createKeyPair();
+    const generada = generated.keyPair.publicKey.slice();
+    const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, generated, marcado);
+    await uploadKeyBackup(payload);
+
+    expect(rpcCalls).toHaveLength(1);
+    expect(rpcCalls[0]!.fn).toBe('store_key_backup');
+    expect(Object.keys(rpcCalls[0]!.args!).sort()).toEqual(
+      ['p_argon2_salt', 'p_encrypted_key_blob', 'p_key_iv', 'p_key_verifier', 'p_kdf_params', 'p_public_key'].sort(),
+    );
+    expect(rpcCalls[0]!.args!.p_public_key).toBe(toBytea(generada));
+  });
+
+  it('key-wrapping#1 (modificado) · al rotar, replace_key_backup lleva la publica ya registrada, la misma que devolvio begin_key_recovery', async () => {
+    const { row } = await backupRow(fast);
+    beginResponse = { data: [row], error: null };
+    expect(await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast)).toEqual({ kind: 'changed' });
+
+    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')!;
+    expect(replace.args!.p_public_key).toBe(row.public_key);
+  });
+
+  it('key-wrapping#1 (modificado) · key_verifier = sha256(prueba); la prueba es HKDF de la salida de Argon2id y es distinta de ella y del verificador', async () => {
+    const generated = await createKeyPair();
+    const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, generated, marcado);
+    await uploadKeyBackup(payload);
+
+    const prueba = await pruebaDe(MARK); // la materia de Argon2id es MARK (ejecutor marcado)
+    const verificador = await sha256(prueba);
+    expect(rpcCalls[0]!.args!.p_key_verifier).toBe(toBytea(verificador));
+    expect(toHex(prueba)).not.toBe(toHex(MARK));
+    expect(toHex(prueba)).not.toBe(toHex(verificador));
+    expect(toHex(verificador)).not.toBe(toHex(MARK));
+    // y lo que sale es el verificador, nunca la prueba ni la salida de Argon2id
+    nadaDe(prueba);
+    nadaDe(MARK);
+  });
+
+  /*
+   * server-blind-storage, escenario «invariante del servidor ciego» (texto modificado):
+   * la prueba solo viaja cuando el servidor tiene que comprobar la passphrase actual.
+   */
+  it('server-blind-storage#1 (modificado) · p_old_proof solo aparece en replace_key_backup y es la prueba de la frase ACTUAL, no la de la nueva', async () => {
+    // Generacion y recuperacion: ninguna lleva p_old_proof.
+    const generated = await createKeyPair();
+    const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, generated, fast);
+    await uploadKeyBackup(payload);
+    const { row } = await backupRow(fast);
+    beginResponse = { data: [row], error: null };
+    expect(await recoverKey(PASSPHRASE, MEMBER, fast)).toEqual({ kind: 'recovered' });
+    for (const c of rpcCalls) expect(c.args ?? {}).not.toHaveProperty('p_old_proof');
+
+    // Rotacion.
+    rpcCalls.length = 0;
+    beginResponse = { data: [row], error: null };
+    expect(await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast)).toEqual({ kind: 'changed' });
+    const conPrueba = rpcCalls.filter((c) => c.args && 'p_old_proof' in c.args);
+    expect(conPrueba.map((c) => c.fn)).toEqual(['replace_key_backup']);
+    const replace = conPrueba[0]!;
+
+    // La prueba que viaja es la de la frase ACTUAL con la sal del backup que se sustituye...
+    const actual = await deriveBackupKeys(PASSPHRASE, fromBytea(row.argon2_salt), KDF_PARAMS, fast);
+    expect(replace.args!.p_old_proof).toBe(toBytea(actual.proof));
+    // ...y el verificador que se sube es el de la frase NUEVA, con la sal nueva, no el mismo.
+    const nueva = await deriveBackupKeys(NEW_PASSPHRASE, fromBytea(replace.args!.p_argon2_salt as string), KDF_PARAMS, fast);
+    expect(replace.args!.p_key_verifier).toBe(toBytea(await keyVerifierOf(nueva.proof)));
+    expect(replace.args!.p_key_verifier).not.toBe(toBytea(await keyVerifierOf(actual.proof)));
+    // La prueba de la frase nueva no sale en ninguna llamada.
+    nadaDe(nueva.proof);
+  });
+
+  it('server-blind-storage#1 (modificado) · la salida de Argon2id no aparece en hex, bytea ni base64 en generacion, recuperacion ni rotacion', async () => {
+    const generated = await createKeyPair();
+    const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, generated, marcado);
+    await uploadKeyBackup(payload);
+    nadaDe(MARK);
+
+    rpcCalls.length = 0;
+    const { row } = await backupRow(marcado);
+    beginResponse = { data: [row], error: null };
+    expect(await recoverKey(PASSPHRASE, MEMBER, marcado)).toEqual({ kind: 'recovered' });
+    nadaDe(MARK);
+
+    // En la rotacion viaja la prueba (HKDF de MARK), pero MARK no.
+    rpcCalls.length = 0;
+    const otro = await backupRow(marcado);
+    beginResponse = { data: [otro.row], error: null };
+    expect(await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, marcado)).toEqual({ kind: 'changed' });
+    nadaDe(MARK);
+    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')!;
+    expect(replace.args!.p_old_proof).toBe(toBytea(await pruebaDe(MARK)));
   });
 });

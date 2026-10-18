@@ -12,7 +12,7 @@ sobrescribe al cierre de cada día con el ritual de `CLAUDE.md` §11. Historia e
 Empieza por §6 y luego §3.
 ---
 
-**Día 42 de V1 · 16-oct-2026 · Estado: CERRADO (07:20 UTC), reabierto y vuelto a cerrar (08:02 UTC) por la sesión «sin VERA» tras la C5 a mano del PO.** `F-262` se queda en regla de avisar (PO). C5: producción aprobada salvo el «Cancelar» del alta en INV-04 (arreglado, `4bf324b`); la INV-04 del arnés, rechazada (`F-261`); el móvil y las tablas anchas, al backlog (`F-260`). Detalle en `diario/dia-42.md`, última sección. Días 41–42, por lo demás, solo la sesión de VERA. 15-oct: un filtro quitado a mano ya no se repone sin que el usuario lo pida (control en `buscar_en_catalogo`, `F-258`); `F-101` cerrado. 16-oct, tras la prueba a mano del PO («todo ha funcionado»): Resultados de búsqueda ordena por defecto lo más reciente arriba (decisión del PO) y VERA contesta en el idioma del usuario (`F-264`). Lo del día 40 (las tres sesiones) sigue en `diario/dia-40.md` y `dia-40-sin-vera.md`; lo de hoy, en `diario/dia-41.md` y `dia-42.md`.
+**Día 43 de V1 · 17-oct-2026, cierre el 18-oct a las 05:42 UTC · Estado: CERRADO.** Una sola sesión, la de la corriente C: nivel 2 (cifrado), pasos 3 y 4 de la matriz, filtro de país de VERA, decisión del PO sobre el verificador de la frase (`F-242`, `F-269`) y corrección del texto de rechazo de `ADMIN-01`. Detalle en `diario/dia-43.md`. Lo del 16-oct (C5, `F-261`, `F-264`) sigue en `diario/dia-42.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -35,7 +35,11 @@ Empieza por §6 y luego §3.
 | XLSX real por correo | `ingest_events` de producción, 16-oct 07:45 UTC | Ningún correo nuevo desde el 13-oct: el PO no lo envió en esta prueba («ya sé que funciona»). El último `.xlsx`, 23.750 filas, `PROCESADO` el 13-oct |
 | «Cancelar» del alta en INV-04 desplegado | Run `38869210641` y el bundle de `rin-world-io.vercel.app` | CI verde entera; producción sirve `4bf324b` con la clase `addCancel` en su CSS |
 | `VITE_DEMO_KEY_SEED` en el JS de producción (`F-067`) | La semilla buscada en el bundle, sin imprimirla — otra sesión | **Está** |
-| `vitest` y `tsc` del último empuje | Local, árbol fusionado | 2703 verdes; con la suite entera en paralelo a otra sesión fallan tests al azar por el tope de 5 s |
+| **Matriz de trazabilidad** (18-oct) | `cut -d';' -f5 openspec/v1/trazabilidad.csv \| sort \| uniq -c` y `py -m harness.tests.test_checks` (C-1: toda prueba citada existe) | 82 CUBIERTO, 21 DIVERGE, 40 NO_IMPLEMENTADO, 35 PARCIAL, 4 SIN_PRUEBA, 3 FUERA = 185 |
+| **Filtro de país de VERA, con el modelo real** (18-oct) | Script ad hoc contra `api.anthropic.com` con el prompt y `tools.json` del repo, `claude-sonnet-5`, una vez por frase, sin base de datos | «organizaciones de Polonia» → `navegar{Empresas, PL}`; «empresas alemanas» → `DE`; «Islandia» → `IS` (la herramienta contesta que no hay); «las del sur» → pregunta qué país. **No** se probó el segundo turno con el retorno de la herramienta |
+| **Verificador de la frase vs el código** (18-oct) | `key-backup.ts:140-310`, `key-recovery.ts:195-250`, `0053:36-160` | El texto del change cuadra, salvo `public_key`: al generar es la del par nuevo, que `store_key_backup` registra (`0053:75`); solo `replace_key_backup` exige la ya registrada (`0053:137`). Corregido en el change |
+| CI de `7f39507` y `03a2f0c` | `gh run list`: runs `39031821914` y `39061985069` | Verdes. **`2e5d17f` (run `39101154327`) seguía en curso al cerrar: sin resultado** |
+| `vitest` y `tsc` del último empuje (18-oct) | Local, árbol limpio, antes de `2e5d17f` | 2826 verdes y `tsc` limpio. En la suite entera fallaron 4 y luego 2 tests por el tope de 5 s con la máquina cargada; `crypto.nivel2` y `search.escenarios` pasan solos. No anoté cuáles fueron los otros dos de la primera corrida |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -43,13 +47,16 @@ Empieza por §6 y luego §3.
 - **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado.** Vertex: los 3 cupos pedidos el 14-oct fueron **denegados** el 16-oct (`vera-vertex-eu-migracion.md` §7). Alternativa: Bedrock UE, con Sonnet 4.6 funcionando y Sonnet 5 **sin acceso ni cupo** (`vera-bedrock-eu-plan.md`). El runbook aún dice que el cambio es de modelo y proveedor: **el modelo ya está cambiado**, solo queda el proveedor.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. **Medida contra Sonnet 5** (`F-258`): bien en guía, trampas, memoria y pantalla. Desde el 15-oct, un filtro quitado a mano no se repone sin que el usuario lo pida (control en la herramienta, v40). Falla un recuento (B7, intermitente). Contesta en el idioma del usuario (`F-264`). **Resultados de búsqueda ordena por defecto lo más reciente arriba** (PO, 16-oct); VERA sigue viendo sus 25 filas por cantidad.
 - **Corriente B · Fábrica — EN MARCHA.** `INV-04` reconstruida por el arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4 y con 13 líneas de corrección a mano, pero **C5 NO del PO** por diferencias de diseño, así que no cuenta como pantalla aceptada. Las cifras 7 y 8 **cerradas el 17-oct** (PO): `SRCH-03` único punto limpio, `INV-04` intento fallido, sin veredicto por mediana (`F-261`). Los checks no ven lo que el PO ve a simple vista. `F-263` cerrado (16-oct): las `_nota*` de `component_api` ya llegan al Coder; la próxima serie parte de ese prompt y no es comparable con las cifras 7 y 8.
-- **Corriente C · Verificación — ABIERTA el 17-oct.** Nivel 1: `openspec/v1/trazabilidad.csv`, **80 de 185 escenarios con prueba que los ejerce y corre en CI**, 35 parciales (solo SQL, modelo real o e2e), 40 NO implementados, 23 divergen de la spec, 4 sin prueba (`F-265`, `F-267`, `F-268`). Nivel 2 hecho (`F-266`: vectores RFC 7748 y NIST, IV no repetido, la frase no sale en recuperar/rotar; decididos por el PO: sin Wycheproof y sin tope duro). Pasos 3 y 4 hechos (`F-267`, `F-268`): decide el PO qué `NO_IMPLEMENTADO` y qué `DIVERGE` se corrigen; la suspensión, la última. **VERA filtra el Directorio por país** (`navegar` con `pais`, PO 17-oct); falta una muestra con el modelo real (visto bueno del PO). Siguiente: los 20 «solo SQL». Niveles 4 y 5 aparcados.
+- **Corriente C · Verificación — ABIERTA el 17-oct.** Nivel 1 (`openspec/v1/trazabilidad.csv`): **82 de 185 escenarios con prueba que los ejerce y corre en CI**, 35 parciales (20 «solo SQL», 9 «solo modelo real», 6 «solo e2e»), 40 NO implementados, 21 divergen de la spec, 4 sin prueba, 3 fuera (`F-265`, `F-267`, `F-268`). Nivel 2 hecho (`F-266`). **Decididas por el PO el 18-oct:** el verificador y la prueba de la frase son contrato (change `amend-e2ee-key-verifier`, sin archivar; adenda §11 en `ADR-001`; `openspec/specs/` no se edita) y el texto de rechazo de `ADMIN-01` ya no promete un email. **Quedan 21 divergencias sin decidir**, y la suspensión, la última. **VERA filtra el Directorio por país** (`navegar` con `pais`, PO 17-oct), probado con el modelo real. Siguiente: los 20 «solo SQL». Niveles 4 y 5 aparcados.
 
 ## 3 · Qué toca, en este orden
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de lanzar Playwright o el arnés contra `bearingworld-e2e`:** avisar a las demás sesiones vivas y mirar que no haya un job en marcha (`gh run list --branch mvp/bootstrap --status in_progress`). Dos corridas a la vez se pisan el fixture (`F-262`); no hay cerrojo entre sesiones.
+   **Mira la CI de `2e5d17f` (run `39101154327`) antes de empujar otro commit**: al cerrar la sesión no tenía resultado.
 2. **Del PO:**
+   - **Corriente C:** decidir las 21 divergencias que quedan en la matriz (`F-268`; el orden de búsqueda ya está decidido) y los 20 parciales «solo SQL», que piden una base.
+   - **`F-269` (cripto, a mano, decisión suya):** `replace_key_backup` sin contador de intentos; `begin_key_recovery` sin pedir la prueba; cerrar la vía «sin prueba, una vez» (propuesta en el hallazgo: contar, migrar o descartar los backups sin verificador, luego migración que la quite).
    - **Pruebas a mano de VERA:** el PO las hizo el 15–16-oct en producción (`troxminloxkjwihwfevs`); salieron dos comentarios, ya arreglados. Lo que falle en adelante se convierte en caso del runner.
    - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor. **No se toca `search.ts` hasta entonces.**
    - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 en `eu.anthropic.claude-sonnet-5` (cuenta y facturación, gratis). Vertex: solo un caso de soporte de pago lo desbloquearía; **no enviar la reclamación vieja.** Al llegar el cupo (Bedrock o Vertex), cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
@@ -92,6 +99,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-256`** · VERA sin límite por usuario y hora ni registro de `usage` (el tope de tamaño sí está) | Backlog, antes de terceros |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta lista en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
+| 🟡 | **`F-269`** · tres huecos del servidor tras aceptar el verificador (intentos de `replace_key_backup`, `begin_key_recovery` sin prueba, vía «sin prueba, una vez» de `0053`) | PO; cripto, a mano |
 
 ## 6 · Lo que este fichero NO sabe
 
@@ -104,6 +112,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si Inventario adopta bien el filtro que deja VERA**: nadie lo ha mirado en un navegador.
 - **Por qué una pantalla del arnés con C1–C4 en verde no pasa C5**: el PO vio «variadas diferencias» en la INV-04 del arnés y decidió no detallarlas (`F-261`). No se sabe qué cambiar en la tarea ni en el arnés para que no se repita.
 - **Cuánto se gana con `0047`/`0051`/`0062`**: sin medir con volumen.
+- **Si el filtro de país de VERA aguanta frases reales**: una muestra de cuatro frases, una vez cada una, y sin el segundo turno con el retorno de la herramienta (Islandia, país sin organizaciones).
+- **Cuántos backups sin verificador quedan**: «1 de 6, en `CANCELLED`» es un dato del 17-oct citado por el PO; hoy no lo recompré con SQL. Tampoco recomprobé hoy en `pg_proc` que `replace_key_backup` no cuenta intentos (es la afirmación del PO en `F-269`).
+- **Qué hace falta para cerrar `F-269` sin romper `REC-01`**: la propuesta del hallazgo supone que el recuento llega a cero; no está comprobado que los dueños puedan abrir su backup.
 - **Si Argon2id (64 MiB) entra en un móvil modesto**: solo jsdom y el navegador del PO.
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores.**

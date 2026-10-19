@@ -58,7 +58,7 @@ Empieza por §6 y luego §3.
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de lanzar Playwright o el arnés contra `bearingworld-e2e`:** avisar a las demás sesiones vivas y mirar que no haya un job en marcha (`gh run list --branch mvp/bootstrap --status in_progress`). Dos corridas a la vez se pisan el fixture (`F-262`); no hay cerrojo entre sesiones.
-   La CI de `67cb2b5` está verde (19-oct); mira siempre la del último empuje antes de otro. **Si `watchers.spec.ts` vuelve a caer por «falta el estado …», es `F-270`:** resembrar con `supabase/seed/demo_watchers.sql` por el MCP sobre `ogdhyzgjjbbikjbkhxmu`.
+   La CI de `67cb2b5` está verde (19-oct); mira siempre la del último empuje antes de otro. `F-270` cerrado el 19-oct: `demo-reset.mjs` repone los watchers en cada corrida; si `watchers.spec.ts` cae por «falta el estado …», mira primero si corrió `fixture.setup.ts`.
 2. **Del PO:**
    - **Corriente C:** los 20 parciales «solo SQL», que piden una base.
    - **`F-269` (cripto, a mano, decisión suya; borrador en `supabase/propuestas/F-269/`, sin aplicar):** `replace_key_backup` sin contador de intentos; `begin_key_recovery` sin pedir la prueba; cerrar la vía «sin prueba, una vez» (propuesta en el hallazgo: contar, migrar o descartar los backups sin verificador, luego migración que la quite).
@@ -105,7 +105,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta lista en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
 | 🟡 | **`F-269`** · tres huecos del servidor tras aceptar el verificador (intentos de `replace_key_backup`, `begin_key_recovery` sin prueba, vía «sin prueba, una vez» de `0053`) | PO; cripto, a mano |
-| 🟡 | **`F-270`** · la siembra de watchers de `bearingworld-e2e` caduca con el calendario y rompe la CI; hoy resembrada a mano | Que `fixture.setup.ts` la reponga en cada corrida (e2e: suite entera antes de empujar) |
 
 ## 6 · Lo que este fichero NO sabe
 

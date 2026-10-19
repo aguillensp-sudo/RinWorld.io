@@ -210,6 +210,64 @@ async function reponerInvitaciones(db, log) {
 }
 
 /**
+ * SRCH-03 · los siete watchers de `supabase/seed/demo_watchers.sql` (F-270).
+ *
+ * Las fechas de esa siembra son relativas a hoy y caducan solas: 22316-E solo es
+ * PENDIENTE RENOVACION tres días y 7210-BECBP deja de ser PAUSED si nadie
+ * resiembra, así que `watchers.spec.ts` caía por el calendario y no por código.
+ * Se repone en cada corrida, con las mismas filas y los mismos desfases que el SQL
+ * (si cambias uno, cambia el otro). Borra TODOS los watchers de las dos
+ * organizaciones, también los que un test haya dejado (Pausar, Crear…).
+ */
+const ORG_ALPHA_W = 'a1000000-0000-4000-8000-000000000001';
+const ORG_BETA_W = 'b2000000-0000-4000-8000-000000000002';
+
+async function reponerWatchers(db, log) {
+  const ahora = Date.now();
+  const dia = 86_400_000;
+  const hora = 3_600_000;
+  const iso = (ms) => new Date(ahora + ms).toISOString();
+  const base = {
+    brand: null,
+    zone: null,
+    country: null,
+    email_channel: false,
+    triggered_at: null,
+    triggered_distributor: null,
+    triggered_quantity: null,
+    triggered_country: null,
+  };
+
+  orLanza(
+    'borrando los watchers de demo',
+    await db.from('watchers').delete().in('org_id', [ORG_ALPHA_W, ORG_BETA_W]),
+  );
+  orLanza(
+    'sembrando los watchers de demo',
+    await db.from('watchers').insert([
+      { ...base, id: 'd1350000-0000-4000-8000-000000000001', org_id: ORG_ALPHA_W, part_number: '6308-ZZ', min_quantity: 100,
+        zone: 'EU', email_channel: true, status: 'ACTIVE', created_at: iso(-3 * dia), expires_at: iso(27 * dia) },
+      { ...base, id: 'd1350000-0000-4000-8000-000000000002', org_id: ORG_ALPHA_W, part_number: 'NU2210-E-TVP2', min_quantity: 50,
+        brand: 'FAG', status: 'TRIGGERED', created_at: iso(-10 * dia), expires_at: iso(20 * dia),
+        triggered_at: iso(-2 * hora), triggered_distributor: 'Schaeffler Iberia SL', triggered_quantity: 120,
+        triggered_country: 'ES' },
+      { ...base, id: 'd1350000-0000-4000-8000-000000000003', org_id: ORG_ALPHA_W, part_number: '22316-E', min_quantity: 20,
+        status: 'PENDIENTE RENOVACION', created_at: iso(-31 * dia), expires_at: iso(-1 * dia) },
+      { ...base, id: 'd1350000-0000-4000-8000-000000000004', org_id: ORG_ALPHA_W, part_number: '7210-BECBP', min_quantity: 10,
+        brand: 'SKF', country: 'ES', status: 'PAUSED', created_at: iso(-18 * dia), expires_at: iso(12 * dia) },
+      { ...base, id: 'd1350000-0000-4000-8000-000000000005', org_id: ORG_ALPHA_W, part_number: '6205-2RS', min_quantity: 200,
+        status: 'EXPIRED', created_at: iso(-40 * dia), expires_at: iso(-10 * dia) },
+      { ...base, id: 'd2350000-0000-4000-8000-000000000001', org_id: ORG_BETA_W, part_number: 'NJ2310-E', min_quantity: 30,
+        country: 'DE', status: 'ACTIVE', created_at: iso(-5 * dia), expires_at: iso(25 * dia) },
+      { ...base, id: 'd2350000-0000-4000-8000-000000000002', org_id: ORG_BETA_W, part_number: '32008-X', min_quantity: 15,
+        brand: 'TIMKEN', zone: 'EU', email_channel: true, status: 'ACTIVE', created_at: iso(-1 * dia),
+        expires_at: iso(29 * dia) },
+    ]),
+  );
+  log('· siete watchers de SRCH-03 · ALPHA con cinco estados, BETA con dos ACTIVE');
+}
+
+/**
  * Repone la siembra congelada y devuelve el estado **consultado**, no el supuesto.
  *
  * @param {object}   o
@@ -334,6 +392,7 @@ export async function resetDemo({ url, serviceKey, seed, reanchor = true, log = 
   await reponerSolicitudes(db, log);
   await reponerInvitaciones(db, log);
   await reponerReaccionesForo(db, log);
+  await reponerWatchers(db, log);
 
   if (reanchor) {
     const { data, error } = await db.rpc('demo_reanchor_freshness');

@@ -600,22 +600,40 @@ begin
            or has_table_privilege('authenticated', 'public.billing_accounts', 'update')
            or has_table_privilege('authenticated', 'public.billing_accounts', 'delete')),
     'automatic-suspension#4: authenticated no escribe billing_payments ni billing_accounts';
-  -- ⚠ F-273 · DIVERGENCIA CONOCIDA. `created_at` es el inicio de la prueba de 90 días (`billing_org_status`,
-  -- `app.billing_evaluate_expirations`) y `app.guard_organization_columns` (0002) no lo protege: un ADMIN lo mueve con RLS.
-  -- La spec dice «ausencia absoluta de extensión manual». Se aserta lo que hace la base HOY; el día que F-273 se cierre,
-  -- este bloque falla a propósito y se invierte (el update tiene que ser rechazado o no surtir efecto).
+  -- F-273 (cerrado con 0067): `created_at` es el inicio de la prueba de 90 días (`billing_org_status`,
+  -- `app.billing_evaluate_expirations`). Un ADMIN con RLS no puede moverlo, ni hacia el futuro (prorrogar) ni hacia el pasado
+  -- (suspenderse a sí mismo): el guardia de `organizations` lo rechaza y la fecha queda como estaba.
   declare antes timestamptz := (select created_at from public.organizations where id = public.t7_org(60));
+          msg text;
   begin
     perform public.t7_como(60);
     begin
       update public.organizations set created_at = now() + interval '5 years' where id = public.t7_org(60);
+      msg := 'NO LO RECHAZÓ';
     exception when others then
-      null;
+      msg := sqlerrm;
     end;
     reset role;
-    assert (select created_at from public.organizations where id = public.t7_org(60)) > antes + interval '4 years',
-      'automatic-suspension#4 (F-273): se esperaba que HOY un ADMIN pueda mover organizations.created_at; si ya no puede, F-273 está cerrado: invierte este aserto';
-    update public.organizations set created_at = antes where id = public.t7_org(60);
+    assert msg like 'Desde el cliente solo se cambia inventory_visibility_mode%',
+      'automatic-suspension#4 (F-273): el guardia debe rechazar mover created_at hacia el futuro, dijo: ' || msg;
+    perform public.t7_como(60);
+    begin
+      update public.organizations set created_at = now() - interval '5 years' where id = public.t7_org(60);
+      msg := 'NO LO RECHAZÓ';
+    exception when others then
+      msg := sqlerrm;
+    end;
+    reset role;
+    assert msg like 'Desde el cliente solo se cambia inventory_visibility_mode%',
+      'automatic-suspension#4 (F-273): ni hacia el pasado, dijo: ' || msg;
+    assert (select created_at from public.organizations where id = public.t7_org(60)) = antes,
+      'automatic-suspension#4 (F-273): la fecha de alta queda como estaba';
+    -- Lo legítimo sigue funcionando: el ADMIN cambia el modo de visibilidad de su inventario.
+    perform public.t7_como(60);
+    update public.organizations set inventory_visibility_mode = 'RESTRINGIDA' where id = public.t7_org(60);
+    reset role;
+    assert (select inventory_visibility_mode from public.organizations where id = public.t7_org(60)) = 'RESTRINGIDA',
+      'automatic-suspension#4 (F-273): el guardia no bloquea lo que el cliente sí puede cambiar';
   end;
   assert not exists (select 1 from pg_policies where schemaname = 'public' and tablename in ('billing_payments', 'billing_accounts', 'billing_status_events')
                         and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')),
@@ -627,7 +645,7 @@ begin
      and (p.prosrc ~* 'insert\s+into\s+public\.billing_payments' or p.prosrc ~* 'update\s+public\.billing_accounts');
   assert escritoras = array['app.billing_evaluate_expirations', 'public.billing_confirm_payment', 'public.billing_suspend_organization'],
     'automatic-suspension#4: solo estas tres funciones escriben cobro, y hay: ' || coalesce(escritoras::text, 'ninguna');
-  raise notice 'OK · automatic-suspension#4: sin función, política ni privilegio de prórroga manual; abierto F-273 (created_at movible por un ADMIN)';
+  raise notice 'OK · automatic-suspension#4: sin función, política, privilegio ni guardia que deje prorrogar a mano (F-273 cerrado con 0067)';
 end
 $$;
 

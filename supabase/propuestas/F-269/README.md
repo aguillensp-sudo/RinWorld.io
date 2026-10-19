@@ -33,3 +33,28 @@ hizo `0053` con `begin_key_recovery`) y toca `key-recovery.ts` y `ChangePassphra
 - Pruebas desde la spec en `01_schema_smoke.sql` (5 fallos → `locked` el sexto, un acierto no reinicia, la ventana vence a los 30 min) y en `key-recovery` del cliente.
 - Cambia el tipo de retorno: migración aditiva primero no es posible con la misma firma. Hay que desplegar migración y cliente juntos, o
   dejar una función nueva con otro nombre un día. El `localhost` del PO ejecuta la carpeta de trabajo contra producción.
+
+## El cliente (qué cambia al aplicar)
+
+Un solo llamador: `app/src/lib/key-recovery.ts`, `rewrapBackup` (`supabase.rpc('replace_key_backup', …)`, ~l.228), que hoy
+trata cualquier `error` como «No se pudo guardar la nueva frase». Con el borrador, la RPC devuelve una fila
+`{status, seconds_left, attempts_left}` y:
+
+- `ok` → igual que hoy.
+- `wrong_proof` → «La passphrase actual no es correcta» (el texto aprobado de `SET-SEC-01`) con los intentos que quedan.
+- `locked` → el mensaje de bloqueo con los minutos, el mismo que ya usa `REC-01`.
+
+**No hay doble cuenta en el camino legítimo:** `openOwnBackup` ya cuenta una petición en `begin_key_recovery`, y
+`replace_key_backup` solo cuenta los fallos. Un cambio de frase normal gasta 1 de las 5, como hoy.
+
+## Pruebas por escribir (desde la spec `passphrase-rotation#2`, no desde el código)
+
+SQL, en `supabase/tests/01_schema_smoke.sql` junto al bloque de `0049/0053`:
+1. Prueba mala → `wrong_proof` con `attempts_left = 4`, y la fila de `key_recovery_attempts` sube a 1 (el intento sobrevive).
+2. Cinco malas → la quinta devuelve `locked`; la sexta, aunque lleve la prueba buena, devuelve `locked` y el backup no cambia.
+3. Prueba buena tras 2 malas → `ok` y el contador **no** se reinicia.
+4. Ventana vencida (`window_started_at` a hace 31 min) → el contador vuelve a empezar.
+5. Miembro con `key_verifier is null` → excepción; no es posible sustituir sin prueba.
+6. Privilegios contra el catálogo (`has_function_privilege`): `authenticated` sí, `anon` no (`F-146`).
+
+Cliente (Vitest, `key-recovery`): los tres `status` mapeados a sus mensajes; ninguna rama borra `privateBytes` dos veces.

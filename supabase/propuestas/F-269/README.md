@@ -36,11 +36,12 @@ hizo `0053` con `begin_key_recovery`) y toca `key-recovery.ts` y `ChangePassphra
 
 ## El cliente (qué cambia al aplicar)
 
-Un solo llamador: `app/src/lib/key-recovery.ts`, `rewrapBackup` (`supabase.rpc('replace_key_backup', …)`, ~l.228), que hoy
+Un solo punto de llamada, `rewrapBackup` (`app/src/lib/key-recovery.ts`, `supabase.rpc('replace_key_backup', …)`, ~l.228), con **dos llamadores**: `changeBackupPassphrase` (~l.254, el cambio de frase) y `recoverKey` (~l.166, la subida del verificador de un backup anterior a 0053, con `oldProof = null`). Esta última rama queda **muerta** con el borrador (la función rechaza un backup sin verificador): se borra del cliente al aplicar. `rewrapBackup` hoy
 trata cualquier `error` como «No se pudo guardar la nueva frase». Con el borrador, la RPC devuelve una fila
 `{status, seconds_left, attempts_left}` y:
 
 - `ok` → igual que hoy.
+- (`recoverKey`: quitar la rama `toUpgrade` y su `rewrapBackup(..., null, ...)`.)
 - `wrong_proof` → «La passphrase actual no es correcta» (el texto aprobado de `SET-SEC-01`) con los intentos que quedan.
 - `locked` → el mensaje de bloqueo con los minutos, el mismo que ya usa `REC-01`.
 
@@ -51,10 +52,17 @@ trata cualquier `error` como «No se pudo guardar la nueva frase». Con el borra
 
 SQL, en `supabase/tests/01_schema_smoke.sql` junto al bloque de `0049/0053`:
 1. Prueba mala → `wrong_proof` con `attempts_left = 4`, y la fila de `key_recovery_attempts` sube a 1 (el intento sobrevive).
-2. Cinco malas → la quinta devuelve `locked`; la sexta, aunque lleve la prueba buena, devuelve `locked` y el backup no cambia.
+2. Cinco malas → la quinta devuelve `wrong_proof` con `seconds_left > 0` y `attempts_left = 0` (como `begin_key_recovery`, que bloquea al contar el quinto); la sexta, aunque lleve la prueba buena, devuelve `locked` y el backup no cambia.
 3. Prueba buena tras 2 malas → `ok` y el contador **no** se reinicia.
 4. Ventana vencida (`window_started_at` a hace 31 min) → el contador vuelve a empezar.
 5. Miembro con `key_verifier is null` → excepción; no es posible sustituir sin prueba.
 6. Privilegios contra el catálogo (`has_function_privilege`): `authenticated` sí, `anon` no (`F-146`).
 
 Cliente (Vitest, `key-recovery`): los tres `status` mapeados a sus mensajes; ninguna rama borra `privateBytes` dos veces.
+
+## Revisión del 19-oct (sin aplicar)
+
+- Corregido en el borrador: el `ok` con la ventana vencida informaba de intentos antiguos; ahora dice 5.
+- Corregido en el README: la quinta mala devuelve `wrong_proof` (con el bloqueo ya puesto), no `locked`.
+- **No incluye el `CHECK` «blob ⇒ verificador»** del paso (c) del hallazgo. Va en una migración aparte, después de aplicar esta y con el recuento en cero.
+- El cliente ya deriva y descifra con la frase actual **antes** de llamar a la RPC, así que una frase mal escrita falla en local y no gasta intentos del servidor: el contador de `replace_key_backup` solo protege frente a quien tenga la sesión y pruebe `p_old_proof` a mano.

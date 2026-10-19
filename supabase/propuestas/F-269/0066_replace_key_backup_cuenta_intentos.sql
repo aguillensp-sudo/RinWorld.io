@@ -92,8 +92,11 @@ begin
          kdf_params         = p_kdf_params,
          key_verifier       = p_key_verifier
    where id = m.id;
-  -- Un acierto NO reinicia el contador (0052): solo vence la ventana.
-  return query select 'ok'::text, 0, greatest(v_max - a.attempts, 0);
+  -- Un acierto NO reinicia el contador (0052): solo vence la ventana. Con la ventana vencida los
+  -- intentos guardados ya no cuentan, así que se informa de los 5 completos.
+  return query select 'ok'::text, 0,
+                      case when a.window_started_at is null or a.window_started_at <= now() - v_lock
+                           then v_max else greatest(v_max - a.attempts, 0) end;
 end;
 $$;
 

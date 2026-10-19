@@ -60,10 +60,10 @@ Empieza por §6 y luego §3.
 1. **Antes de lanzar Playwright o el arnés contra `bearingworld-e2e`:** avisar a las demás sesiones vivas y mirar que no haya un job en marcha (`gh run list --branch mvp/bootstrap --status in_progress`). Dos corridas a la vez se pisan el fixture (`F-262`); no hay cerrojo entre sesiones.
    La CI de `67cb2b5` está verde (19-oct); mira siempre la del último empuje antes de otro. `F-270` cerrado el 19-oct: `demo-reset.mjs` repone los watchers en cada corrida; si `watchers.spec.ts` cae por «falta el estado …», mira primero si corrió `fixture.setup.ts`.
 2. **Del PO:**
-   - **Corriente C:** los 20 parciales «solo SQL», que piden una base.
-   - **`F-269`: aplicada `0066` el 19-oct** (contador en `replace_key_backup`, vía «sin prueba» cerrada, cliente al mismo tiempo). **Queda el §2** del hallazgo: `begin_key_recovery` sin pedir la prueba, que cambia el protocolo de `REC-01` y necesita diseño del PO.
+   - **Corriente C:** los 20 parciales «solo SQL» no necesitan una base nueva: son bloques por añadir a `01_schema_smoke.sql`, que corre en el Postgres desechable de `run.sh` (Docker). Alcance en la conversación del 19-oct; sin tocar producción.
+   - **`F-269`: aplicada `0066` el 19-oct** (contador en `replace_key_backup`, vía «sin prueba» cerrada, cliente al mismo tiempo). **El §2** (`begin_key_recovery` sin pedir la prueba) **no se diseña ahora: decisión del PO para después del arranque** (`BACKLOG-V1.md`).
    - **Pruebas a mano de VERA:** el PO las hizo el 15–16-oct en producción (`troxminloxkjwihwfevs`); salieron dos comentarios, ya arreglados. Lo que falle en adelante se convierte en caso del runner.
-   - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor. **No se toca `search.ts` hasta entonces.**
+   - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor y avisa él. **No se toca `search.ts` hasta entonces.**
    - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 en `eu.anthropic.claude-sonnet-5` (cuenta y facturación, gratis). Vertex: solo un caso de soporte de pago lo desbloquearía; **no enviar la reclamación vieja.** Al llegar el cupo (Bedrock o Vertex), cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción **cuando se acerquen datos reales o terceros** (`F-067`).
    - Cuscinetti Padana deja de estar `ACTIVE` el **20-oct**. **No se toca.**
@@ -104,7 +104,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-256`** · VERA sin límite por usuario y hora ni registro de `usage` (el tope de tamaño sí está) | Backlog, antes de terceros |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta lista en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
-| 🟡 | **`F-269`** · queda `begin_key_recovery` entregando el blob sin pedir la prueba (`0066` cerró el contador y la vía «sin prueba») | PO; diseño de `REC-01` |
 
 ## 6 · Lo que este fichero NO sabe
 

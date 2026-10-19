@@ -38,7 +38,9 @@ Empieza por §6 y luego §3.
 | **Matriz de trazabilidad** (18-oct) | `cut -d';' -f5 openspec/v1/trazabilidad.csv \| sort \| uniq -c` y `py -m harness.tests.test_checks` (C-1: toda prueba citada existe) | 82 CUBIERTO, 21 DIVERGE, 40 NO_IMPLEMENTADO, 35 PARCIAL, 4 SIN_PRUEBA, 3 FUERA = 185 |
 | **Filtro de país de VERA, con el modelo real** (18-oct) | Script ad hoc contra `api.anthropic.com` con el prompt y `tools.json` del repo, `claude-sonnet-5`, una vez por frase, sin base de datos | «organizaciones de Polonia» → `navegar{Empresas, PL}`; «empresas alemanas» → `DE`; «Islandia» → `IS` (la herramienta contesta que no hay); «las del sur» → pregunta qué país. **No** se probó el segundo turno con el retorno de la herramienta |
 | **Verificador de la frase vs el código** (18-oct) | `key-backup.ts:140-310`, `key-recovery.ts:195-250`, `0053:36-160` | El texto del change cuadra, salvo `public_key`: al generar es la del par nuevo, que `store_key_backup` registra (`0053:75`); solo `replace_key_backup` exige la ya registrada (`0053:137`). Corregido en el change |
-| CI de `7f39507` y `03a2f0c` | `gh run list`: runs `39031821914` y `39061985069` | Verdes. **`2e5d17f` (run `39101154327`) seguía en curso al cerrar: sin resultado** |
+| CI de `7f39507` y `03a2f0c` | `gh run list`: runs `39031821914` y `39061985069` | Verdes. `2e5d17f` seguía en curso al cerrar; ver fila siguiente |
+| **Backups sin verificador y `replace_key_backup`** (19-oct) | SQL en producción: `members` con blob por `state` y `key_verifier is null`; `prosrc` de `replace_key_backup` | 5 `ACTIVE` con verificador y 1 `CANCELLED` sin él; el cuerpo de la función no cuenta intentos (cuerpo leído entero en `0053`) |
+| CI de `2e5d17f` y `1584750` (19-oct) | `gh run list` | `2e5d17f` (run `39101154327`) cancelada, sustituida; `1584750` (run `39101490312`) **verde** |
 | `vitest` y `tsc` del último empuje (18-oct) | Local, árbol limpio, antes de `2e5d17f` | 2826 verdes y `tsc` limpio. En la suite entera fallaron 4 y luego 2 tests por el tope de 5 s con la máquina cargada; `crypto.nivel2` y `search.escenarios` pasan solos. No anoté cuáles fueron los otros dos de la primera corrida |
 
 ## 2 · Dónde estamos, por corriente
@@ -53,7 +55,7 @@ Empieza por §6 y luego §3.
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de lanzar Playwright o el arnés contra `bearingworld-e2e`:** avisar a las demás sesiones vivas y mirar que no haya un job en marcha (`gh run list --branch mvp/bootstrap --status in_progress`). Dos corridas a la vez se pisan el fixture (`F-262`); no hay cerrojo entre sesiones.
-   **Mira la CI de `2e5d17f` (run `39101154327`) antes de empujar otro commit**: al cerrar la sesión no tenía resultado.
+   La CI de `1584750` está verde (19-oct); mira siempre la del último empuje antes de otro.
 2. **Del PO:**
    - **Corriente C:** decidir las 21 divergencias que quedan en la matriz (`F-268`; el orden de búsqueda ya está decidido) y los 20 parciales «solo SQL», que piden una base.
    - **`F-269` (cripto, a mano, decisión suya):** `replace_key_backup` sin contador de intentos; `begin_key_recovery` sin pedir la prueba; cerrar la vía «sin prueba, una vez» (propuesta en el hallazgo: contar, migrar o descartar los backups sin verificador, luego migración que la quite).
@@ -113,8 +115,9 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Por qué una pantalla del arnés con C1–C4 en verde no pasa C5**: el PO vio «variadas diferencias» en la INV-04 del arnés y decidió no detallarlas (`F-261`). No se sabe qué cambiar en la tarea ni en el arnés para que no se repita.
 - **Cuánto se gana con `0047`/`0051`/`0062`**: sin medir con volumen.
 - **Si el filtro de país de VERA aguanta frases reales**: una muestra de cuatro frases, una vez cada una, y sin el segundo turno con el retorno de la herramienta (Islandia, país sin organizaciones).
-- **Cuántos backups sin verificador quedan**: «1 de 6, en `CANCELLED`» es un dato del 17-oct citado por el PO; hoy no lo recompré con SQL. Tampoco recomprobé hoy en `pg_proc` que `replace_key_backup` no cuenta intentos (es la afirmación del PO en `F-269`).
+- **Si `replace_key_backup` cuenta intentos en alguna capa que no sea su cuerpo** (p. ej. un trigger): solo se leyó el cuerpo; borrador de la migración en `supabase/propuestas/F-269/` (sin aplicar).
 - **Qué hace falta para cerrar `F-269` sin romper `REC-01`**: la propuesta del hallazgo supone que el recuento llega a cero; no está comprobado que los dueños puedan abrir su backup.
+- **Qué decide el PO en las 21 divergencias**: propuesta lista en `propuestas/F-268-divergencias.md` (15 aceptar, 4 corregir código, 2 esperan correo).
 - **Si Argon2id (64 MiB) entra en un móvil modesto**: solo jsdom y el navegador del PO.
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.
 - **Si la propuesta por sinónimos acierta con archivos reales de distribuidores.**

@@ -57,6 +57,7 @@ const rpcCalls: { fn: string; args: Record<string, unknown> | undefined }[] = []
 let beginQueue: { data: unknown; error: unknown }[] = [];
 let beginResponse: { data: unknown; error: unknown } = { data: null, error: null };
 let otherError: unknown = null;
+const replaceOk = { data: [{ status: 'ok', seconds_left: 0, attempts_left: 4 }], error: null };
 const signOut = vi.fn();
 
 vi.mock('./supabase', () => ({
@@ -67,6 +68,7 @@ vi.mock('./supabase', () => ({
       if (fn === 'begin_key_recovery') {
         return Promise.resolve(beginQueue.length > 0 ? beginQueue.shift()! : beginResponse);
       }
+      if (fn === 'replace_key_backup' && !otherError) return Promise.resolve(replaceOk);
       return Promise.resolve({ data: null, error: otherError });
     },
   },

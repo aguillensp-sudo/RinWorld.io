@@ -5599,74 +5599,104 @@ begin
 end
 $$;
 
--- SET-SEC-01: sustituir el backup exige la prueba de la frase anterior.
+-- SET-SEC-01 (0066, F-269): sustituir el backup exige la prueba de la frase anterior, y el intento fallido SE CUENTA.
+-- La funcion devuelve (status, seconds_left, attempts_left) en vez de lanzar: un raise revertiria el contador.
 do $$
 declare
   kdf text := '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}';
+  r record;
 begin
   perform set_config('request.jwt.claim.sub', 'a1000001-0000-0000-0000-000000000001', true);
-  -- Sin prueba, con una prueba de otra frase, o con una de longitud mala: no.
-  begin
-    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
-      decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')));
-    raise exception 'DEBIA FALLAR';
-  exception when others then
-    assert sqlerrm like 'La frase actual no es correcta%', '0053: sin la prueba de la frase anterior no se sustituye, dijo: ' || sqlerrm;
-  end;
-  begin
-    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
-      decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ee', 32), 'hex'));
-    raise exception 'DEBIA FALLAR';
-  exception when others then
-    assert sqlerrm like 'La frase actual no es correcta%', '0053: con la prueba de otra frase tampoco, dijo: ' || sqlerrm;
-  end;
-  begin
-    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
-      decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ab', 31), 'hex'));
-    raise exception 'DEBIA FALLAR';
-  exception when others then
-    assert sqlerrm like 'La frase actual no es correcta%', '0053: ni con una prueba de 31 bytes, dijo: ' || sqlerrm;
-  end;
+  delete from public.key_recovery_attempts where member_id = 'a1000001-0000-0000-0000-000000000001';
+  -- Sin prueba, con una prueba de otra frase, o con una de longitud mala: no, y cada una cuenta.
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+    decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')));
+  assert r.status = 'wrong_proof' and r.attempts_left = 4, '0066: sin la prueba de la frase anterior no se sustituye y cuenta 1, dijo: ' || r.status || '/' || r.attempts_left;
+  assert (select attempts from public.key_recovery_attempts where member_id = 'a1000001-0000-0000-0000-000000000001') = 1,
+    '0066: el intento fallido sobrevive (la fila del contador sube a 1)';
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+    decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ee', 32), 'hex'));
+  assert r.status = 'wrong_proof' and r.attempts_left = 3, '0066: con la prueba de otra frase tampoco, dijo: ' || r.status || '/' || r.attempts_left;
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+    decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ab', 31), 'hex'));
+  assert r.status = 'wrong_proof' and r.attempts_left = 2, '0066: ni con una prueba de 31 bytes, dijo: ' || r.status || '/' || r.attempts_left;
   assert (select encrypted_key_blob from public.members where id = 'a1000001-0000-0000-0000-000000000001') = decode(repeat('11', 48), 'hex'),
     '0053: y el backup sigue siendo el de antes';
 
-  -- Con la prueba buena, entra; y entonces la prueba vieja ya no vale y la nueva si.
-  perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
+  -- Con la prueba buena, entra; el acierto NO reinicia el contador (0052); la prueba vieja ya no vale y la nueva si.
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e1', 48), 'hex'), decode(repeat('e1', 12), 'hex'),
     decode(repeat('e1', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('cd', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
+  assert r.status = 'ok' and r.attempts_left = 2, '0066: con la prueba buena entra y dice los intentos que quedan, dijo: ' || r.status || '/' || r.attempts_left;
+  assert (select attempts from public.key_recovery_attempts where member_id = 'a1000001-0000-0000-0000-000000000001') = 3,
+    '0066: un acierto NO reinicia el contador';
   assert (select encrypted_key_blob from public.members where id = 'a1000001-0000-0000-0000-000000000001') = decode(repeat('e1', 48), 'hex')
      and (select key_verifier from public.members where id = 'a1000001-0000-0000-0000-000000000001') = sha256(decode(repeat('cd', 32), 'hex')),
     '0053: con la prueba buena se sustituye y se guarda el verificador nuevo';
-  begin
-    perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e2', 48), 'hex'), decode(repeat('e2', 12), 'hex'),
-      decode(repeat('e2', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
-    raise exception 'DEBIA FALLAR';
-  exception when others then
-    assert sqlerrm like 'La frase actual no es correcta%', '0053: la prueba de la frase anterior ya no vale, dijo: ' || sqlerrm;
-  end;
-  perform public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e2', 48), 'hex'), decode(repeat('e2', 12), 'hex'),
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e2', 48), 'hex'), decode(repeat('e2', 12), 'hex'),
+    decode(repeat('e2', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
+  assert r.status = 'wrong_proof', '0053: la prueba de la frase anterior ya no vale, dijo: ' || r.status;
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e2', 48), 'hex'), decode(repeat('e2', 12), 'hex'),
     decode(repeat('e2', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('cd', 32), 'hex'));
-  raise notice 'OK · 0053: replace_key_backup exige la prueba de la frase anterior';
+  assert r.status = 'ok', '0053: la prueba nueva si vale, dijo: ' || r.status;
+  raise notice 'OK · 0066: replace_key_backup exige la prueba de la frase anterior y cuenta los fallos';
 end
 $$;
 
--- Un backup ANTERIOR a 0053 (sin verificador) se sustituye una vez sin prueba y el nuevo ya lo lleva.
+-- (El verificador vigente aqui es sha256(ab): la prueba buena es ab.)
+-- 0066 · el limite de 5 intentos por 30 min: la quinta mala bloquea, la sexta (aunque lleve la prueba buena) no
+-- mira la prueba, y la ventana vencida empieza de cero.
+do $$
+declare
+  kdf text := '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}';
+  r record;
+  i integer;
+begin
+  perform set_config('request.jwt.claim.sub', 'a1000001-0000-0000-0000-000000000001', true);
+  delete from public.key_recovery_attempts where member_id = 'a1000001-0000-0000-0000-000000000001';
+  for i in 1..5 loop
+    select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e5', 48), 'hex'), decode(repeat('e5', 12), 'hex'),
+      decode(repeat('e5', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ee', 32), 'hex'));
+    assert r.status = 'wrong_proof' and r.attempts_left = 5 - i, '0066: fallo ' || i || ' dijo ' || r.status || '/' || r.attempts_left;
+  end loop;
+  assert r.seconds_left > 0, '0066: la quinta mala deja el bloqueo puesto';
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e5', 48), 'hex'), decode(repeat('e5', 12), 'hex'),
+    decode(repeat('e5', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
+  assert r.status = 'locked' and r.seconds_left > 0 and r.attempts_left = 0, '0066: bloqueado ni mira la prueba buena, dijo: ' || r.status;
+  assert (select encrypted_key_blob from public.members where id = 'a1000001-0000-0000-0000-000000000001') = decode(repeat('e2', 48), 'hex'),
+    '0066: y el backup no cambia estando bloqueado';
+  -- El bloqueo vence: la prueba buena entra, y con el contador viejo ya fuera de la ventana informa de 5.
+  update public.key_recovery_attempts set locked_until = now() - interval '1 second', window_started_at = now() - interval '31 minutes'
+   where member_id = 'a1000001-0000-0000-0000-000000000001';
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e5', 48), 'hex'), decode(repeat('e5', 12), 'hex'),
+    decode(repeat('e5', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ab', 32), 'hex'));
+  assert r.status = 'ok' and r.attempts_left = 5, '0066: con el bloqueo vencido entra, dijo: ' || r.status || '/' || r.attempts_left;
+  -- Ventana vencida sin bloqueo: la mala siguiente cuenta como la primera.
+  update public.key_recovery_attempts set attempts = 4, locked_until = null, window_started_at = now() - interval '31 minutes'
+   where member_id = 'a1000001-0000-0000-0000-000000000001';
+  select * into r from public.replace_key_backup(decode(repeat('11', 32), 'hex'), decode(repeat('e6', 48), 'hex'), decode(repeat('e6', 12), 'hex'),
+    decode(repeat('e6', 32), 'hex'), kdf::jsonb, sha256(decode(repeat('ab', 32), 'hex')), decode(repeat('ee', 32), 'hex'));
+  assert r.status = 'wrong_proof' and r.attempts_left = 4, '0066: la ventana vencida empieza de cero, dijo: ' || r.status || '/' || r.attempts_left;
+  raise notice 'OK · 0066: cinco fallos bloquean 30 min y la ventana vencida reinicia';
+end
+$$;
+
+-- 0066 · un backup ANTERIOR a 0053 (sin verificador) ya no se sustituye sin prueba (cierra «sin prueba, una vez»).
 do $$
 declare
   kdf jsonb := '{"algo":"argon2id","m":65536,"t":3,"p":4,"v":19}';
 begin
   perform set_config('request.jwt.claim.sub', 'a1000002-0000-0000-0000-000000000002', true);
-  perform public.replace_key_backup(decode(repeat('22', 32), 'hex'), decode(repeat('e3', 48), 'hex'), decode(repeat('e3', 12), 'hex'),
-    decode(repeat('e3', 32), 'hex'), kdf, sha256(decode(repeat('ab', 32), 'hex')));
-  assert (select key_verifier from public.members where id = 'a1000002-0000-0000-0000-000000000002') = sha256(decode(repeat('ab', 32), 'hex')),
-    '0053: el backup anterior sube su verificador al primer cambio';
   begin
-    perform public.replace_key_backup(decode(repeat('22', 32), 'hex'), decode(repeat('e4', 48), 'hex'), decode(repeat('e4', 12), 'hex'),
-      decode(repeat('e4', 32), 'hex'), kdf, sha256(decode(repeat('ab', 32), 'hex')));
+    perform * from public.replace_key_backup(decode(repeat('22', 32), 'hex'), decode(repeat('e3', 48), 'hex'), decode(repeat('e3', 12), 'hex'),
+      decode(repeat('e3', 32), 'hex'), kdf, sha256(decode(repeat('ab', 32), 'hex')));
     raise exception 'DEBIA FALLAR';
   exception when others then
-    assert sqlerrm like 'La frase actual no es correcta%', '0053: y a partir de ahi ya exige la prueba, dijo: ' || sqlerrm;
+    assert sqlerrm like 'Este backup no lleva verificador%', '0066: sin verificador no se sustituye, dijo: ' || sqlerrm;
   end;
-  raise notice 'OK · 0053: un backup anterior se actualiza una vez y queda protegido';
+  assert (select key_verifier from public.members where id = 'a1000002-0000-0000-0000-000000000002') is null
+     and (select encrypted_key_blob from public.members where id = 'a1000002-0000-0000-0000-000000000002') = decode(repeat('22', 48), 'hex'),
+    '0066: y el backup sin verificador queda como estaba';
+  raise notice 'OK · 0066: un backup sin verificador ya no se sustituye sin prueba';
 end
 $$;
 

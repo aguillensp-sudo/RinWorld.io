@@ -63,6 +63,13 @@ interface RecoveryRow {
   has_verifier?: boolean | null;
 }
 
+/** Lo que devuelve `replace_key_backup` desde 0066 (F-269). */
+interface ReplaceRow {
+  status: 'ok' | 'wrong_proof' | 'locked';
+  seconds_left: number;
+  attempts_left: number;
+}
+
 function same(a: Uint8Array, b: Uint8Array): boolean {
   if (a.byteLength !== b.byteLength) return false;
   let diff = 0;
@@ -148,9 +155,6 @@ export async function recoverKey(
   const opened = await openOwnBackup(passphrase, memberId, argon2);
   if (opened.kind !== 'opened') return opened;
 
-  // Un backup anterior a 0053 no tiene verificador (F-242). El navegador acaba de demostrar que conoce la
-  // frase: es el momento de subirlo. Se guarda una copia de la privada solo para eso, y se borra.
-  const toUpgrade = opened.hasVerifier ? null : new Uint8Array(opened.privateBytes);
   let pair: SessionKeyPair;
   try {
     pair = await keyPairFromPrivateBytes(opened.privateBytes);
@@ -161,16 +165,6 @@ export async function recoverKey(
   // Si IndexedDB no deja, el llavero de la sesión sirve igual; en la siguiente se pedirá otra vez.
   await saveDeviceKey(memberId, pair);
   adoptKeyring(memberId, pair);
-  if (toUpgrade) {
-    try {
-      await rewrapBackup(toUpgrade, opened.publicKey, null, passphrase, memberId, argon2);
-    } catch {
-      // Mejor esfuerzo: recuperar la clave ya está hecho. Si no sube, queda como estaba y se reintenta en la
-      // próxima recuperación o al cambiar la frase.
-    } finally {
-      toUpgrade.fill(0);
-    }
-  }
   // Acertar NO reinicia el contador (0052): el límite es de 5 peticiones por ventana de 30 minutos, y quien
   // pudiera reiniciarlo a voluntad lo habría vuelto inútil.
   return { kind: 'recovered' };
@@ -195,7 +189,7 @@ export type ChangeOutcome = { kind: 'locked'; secondsLeft: number }
  * Re-cifra la MISMA privada con `newPassphrase` y sustituye el backup. Antes de subir lo abre otra vez con
  * la clave nueva: un backup que no se pudiera abrir sustituiría a uno que sí, y no hay histórico
  * (SET-SEC-01 §3). `oldProof` es la prueba de la frase ANTERIOR (F-242: el servidor la exige si ya tiene
- * verificador); `null` solo para un backup anterior a 0053, que no lo tiene.
+ * verificador); `null` solo si el backup no tiene verificador, y entonces el servidor lo rechaza (0066).
  *
  * **Borra `privateBytes`** salga como salga: quien llame pasa una copia si todavía la necesita.
  */
@@ -206,7 +200,7 @@ async function rewrapBackup(
   newPassphrase: string,
   memberId: string,
   argon2: Argon2Runner,
-): Promise<void> {
+): Promise<ChangeOutcome> {
   let sealed: Awaited<ReturnType<typeof protectPrivateKey>>;
   try {
     const keyPair = await keyPairFromPrivateBytes(privateBytes);
@@ -225,7 +219,7 @@ async function rewrapBackup(
     check.fill(0);
   }
 
-  const { error } = await supabase.rpc('replace_key_backup', {
+  const { data, error } = await supabase.rpc('replace_key_backup', {
     p_public_key: toBytea(payload.publicKey),
     p_encrypted_key_blob: toBytea(payload.encryptedKeyBlob),
     p_key_iv: toBytea(payload.keyIv),
@@ -234,7 +228,15 @@ async function rewrapBackup(
     p_key_verifier: toBytea(payload.keyVerifier),
     p_old_proof: oldProof ? toBytea(oldProof) : null,
   });
-  if (error) throw new Error('No se pudo guardar la nueva frase.');
+  const row = (Array.isArray(data) ? data[0] : data) as ReplaceRow | null | undefined;
+  if (error || !row) throw new Error('No se pudo guardar la nueva frase.');
+  // 0066 (F-269): el servidor cuenta las pruebas malas y contesta con un estado en vez de lanzar.
+  if (row.status === 'locked') return { kind: 'locked', secondsLeft: row.seconds_left };
+  if (row.status === 'wrong_proof') {
+    return { kind: 'wrong', attemptsLeft: row.attempts_left, lockedSeconds: row.attempts_left <= 0 ? row.seconds_left : 0 };
+  }
+  if (row.status !== 'ok') throw new Error('No se pudo guardar la nueva frase.');
+  return { kind: 'changed' };
 }
 
 /**
@@ -251,7 +253,7 @@ export async function changeBackupPassphrase(
   const opened = await openOwnBackup(currentPassphrase, memberId, argon2);
   if (opened.kind !== 'opened') return opened;
   try {
-    await rewrapBackup(
+    return await rewrapBackup(
       opened.privateBytes,
       opened.publicKey,
       opened.hasVerifier ? opened.proof : null,
@@ -263,7 +265,6 @@ export async function changeBackupPassphrase(
     opened.privateBytes.fill(0);
     opened.proof.fill(0);
   }
-  return { kind: 'changed' };
 }
 
 // -----------------------------------------------------------------------------

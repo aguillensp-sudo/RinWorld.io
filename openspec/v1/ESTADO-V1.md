@@ -61,7 +61,7 @@ Empieza por §6 y luego §3.
    La CI de `67cb2b5` está verde (19-oct); mira siempre la del último empuje antes de otro. `F-270` cerrado el 19-oct: `demo-reset.mjs` repone los watchers en cada corrida; si `watchers.spec.ts` cae por «falta el estado …», mira primero si corrió `fixture.setup.ts`.
 2. **Del PO:**
    - **Corriente C:** los 20 parciales «solo SQL», que piden una base.
-   - **`F-269` (cripto, a mano, decisión suya; borrador en `supabase/propuestas/F-269/`, sin aplicar):** `replace_key_backup` sin contador de intentos; `begin_key_recovery` sin pedir la prueba; cerrar la vía «sin prueba, una vez» (propuesta en el hallazgo: contar, migrar o descartar los backups sin verificador, luego migración que la quite).
+   - **`F-269`: aplicada `0066` el 19-oct** (contador en `replace_key_backup`, vía «sin prueba» cerrada, cliente al mismo tiempo). **Queda el §2** del hallazgo: `begin_key_recovery` sin pedir la prueba, que cambia el protocolo de `REC-01` y necesita diseño del PO.
    - **Pruebas a mano de VERA:** el PO las hizo el 15–16-oct en producción (`troxminloxkjwihwfevs`); salieron dos comentarios, ya arreglados. Lo que falle en adelante se convierte en caso del runner.
    - **Casado de referencias (`F-254`):** el PO trae definiciones tras mirar al competidor. **No se toca `search.ts` hasta entonces.**
    - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 en `eu.anthropic.claude-sonnet-5` (cuenta y facturación, gratis). Vertex: solo un caso de soporte de pago lo desbloquearía; **no enviar la reclamación vieja.** Al llegar el cupo (Bedrock o Vertex), cambiar solo el proveedor y repetir una muestra del plan (~20 preguntas, ~1 $, plan §9).
@@ -104,7 +104,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-256`** · VERA sin límite por usuario y hora ni registro de `usage` (el tope de tamaño sí está) | Backlog, antes de terceros |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta lista en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
-| 🟡 | **`F-269`** · tres huecos del servidor tras aceptar el verificador (intentos de `replace_key_backup`, `begin_key_recovery` sin prueba, vía «sin prueba, una vez» de `0053`) | PO; cripto, a mano |
+| 🟡 | **`F-269`** · queda `begin_key_recovery` entregando el blob sin pedir la prueba (`0066` cerró el contador y la vía «sin prueba») | PO; diseño de `REC-01` |
 
 ## 6 · Lo que este fichero NO sabe
 
@@ -118,8 +118,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Por qué una pantalla del arnés con C1–C4 en verde no pasa C5**: el PO vio «variadas diferencias» en la INV-04 del arnés y decidió no detallarlas (`F-261`). No se sabe qué cambiar en la tarea ni en el arnés para que no se repita.
 - **Cuánto se gana con `0047`/`0051`/`0062`**: sin medir con volumen.
 - **Si el filtro de país de VERA aguanta frases reales**: una muestra de cuatro frases, una vez cada una, y sin el segundo turno con el retorno de la herramienta (Islandia, país sin organizaciones).
-- **Si `replace_key_backup` cuenta intentos en alguna capa que no sea su cuerpo** (p. ej. un trigger): solo se leyó el cuerpo; borrador de la migración en `supabase/propuestas/F-269/` (sin aplicar).
-- **Qué hace falta para cerrar `F-269` sin romper `REC-01`**: la propuesta del hallazgo supone que el recuento llega a cero; no está comprobado que los dueños puedan abrir su backup.
 - **Qué decide el PO en las 21 divergencias**: propuesta lista en `propuestas/F-268-divergencias.md` (15 aceptar, 4 corregir código, 2 esperan correo).
 - **Si Argon2id (64 MiB) entra en un móvil modesto**: solo jsdom y el navegador del PO.
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.

@@ -1,7 +1,13 @@
--- BORRADOR · NO APLICAR sin decisión del PO (F-269). Ver README.md de esta carpeta.
--- Cambia replace_key_backup: de `void` a una tabla de estado, para que un intento fallido SE CUENTE
--- (un raise lo revertiría). Misma tabla y ventana de 5 por 30 min que begin_key_recovery (0052).
-
+-- 0066 · F-269 · replace_key_backup cuenta los intentos fallidos y ya no admite un backup sin verificador.
+--
+-- Antes (0053): una prueba mala lanzaba 'La frase actual no es correcta' sin contar, así que con la sesión se
+-- podían probar pruebas sin límite, y un backup sin verificador sustituía sin prueba, una vez.
+-- Ahora: cambia de `void` a una tabla de estado para que el intento fallido SE CUENTE (un raise revierte la
+-- transacción y el contador se perdería). Misma tabla y ventana (5 por 30 min) que begin_key_recovery (0052).
+-- Un acierto NO reinicia el contador. Comprobado el 19-oct con SQL: 5 backups ACTIVE con verificador y 1
+-- CANCELLED sin él (no puede llamar a la función): ningún miembro vivo depende de la vía «sin prueba».
+-- Cambia el tipo de retorno: se despliega junto con el cliente (key-recovery.ts).
+--
 drop function if exists public.replace_key_backup(bytea, bytea, bytea, bytea, jsonb, bytea, bytea);
 
 create function public.replace_key_backup(

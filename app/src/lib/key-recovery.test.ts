@@ -33,6 +33,7 @@ const fast: Argon2Runner = (r) => runArgon2({ ...r, m: 1024, t: 1, p: 1 });
 const rpcCalls: { fn: string; args: Record<string, unknown> | undefined }[] = [];
 let beginResponse: { data: unknown; error: unknown } = { data: null, error: null };
 let otherError: unknown = null;
+let replaceResponse: { data: unknown; error: unknown } = { data: [{ status: 'ok', seconds_left: 0, attempts_left: 4 }], error: null };
 const saved: unknown[] = [];
 
 vi.mock('./supabase', () => ({
@@ -40,6 +41,7 @@ vi.mock('./supabase', () => ({
     rpc: (fn: string, args?: Record<string, unknown>) => {
       rpcCalls.push({ fn, args });
       if (fn === 'begin_key_recovery') return Promise.resolve(beginResponse);
+      if (fn === 'replace_key_backup' && !otherError) return Promise.resolve(replaceResponse);
       return Promise.resolve({ data: null, error: otherError });
     },
   },
@@ -74,6 +76,7 @@ beforeEach(() => {
   rpcCalls.length = 0;
   saved.length = 0;
   otherError = null;
+  replaceResponse = { data: [{ status: 'ok', seconds_left: 0, attempts_left: 4 }], error: null };
   beginResponse = { data: null, error: null };
   clearKeyring();
 });
@@ -208,12 +211,12 @@ describe('changeBackupPassphrase · SET-SEC-01', () => {
     expect((await deriveBackupKeys(NEW_PASSPHRASE, salt, undefined, fast)).proof).not.toEqual(proof);
   });
 
-  it('un backup ANTERIOR a 0053 (sin verificador) se cambia sin prueba, y el nuevo ya lo lleva', async () => {
+  it('un backup sin verificador viaja sin prueba y, si el servidor lo rechaza (0066), lanza', async () => {
     beginResponse = { data: [await backupRow(4, 0, false)], error: null };
-    await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    otherError = { message: 'Este backup no lleva verificador: genera claves nuevas.' };
+    await expect(changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast)).rejects.toThrow();
     const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')?.args as Record<string, string | null>;
     expect(replace.p_old_proof).toBeNull();
-    expect(replace.p_key_verifier).toBeTruthy();
   });
 
   it('con la frase actual mala no sube nada', async () => {
@@ -223,6 +226,36 @@ describe('changeBackupPassphrase · SET-SEC-01', () => {
     expect(rpcCalls.some((c) => c.fn === 'replace_key_backup')).toBe(false);
   });
 
+  it('F-269 · wrong_proof: no es «cambiada», con los intentos que quedan', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    replaceResponse = { data: [{ status: 'wrong_proof', seconds_left: 0, attempts_left: 2 }], error: null };
+    const out = await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    expect(out).toEqual({ kind: 'wrong', attemptsLeft: 2, lockedSeconds: 0 });
+  });
+
+  it('F-269 · wrong_proof con el quinto fallo trae la cuenta atrás del bloqueo', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    replaceResponse = { data: [{ status: 'wrong_proof', seconds_left: 1800, attempts_left: 0 }], error: null };
+    const out = await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    expect(out).toEqual({ kind: 'wrong', attemptsLeft: 0, lockedSeconds: 1800 });
+  });
+
+  it('F-269 · locked: no es «cambiada», con los segundos del bloqueo', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    replaceResponse = { data: [{ status: 'locked', seconds_left: 1500, attempts_left: 0 }], error: null };
+    const out = await changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast);
+    expect(out).toEqual({ kind: 'locked', secondsLeft: 1500 });
+  });
+
+  it('F-269 · una respuesta sin fila o con un estado desconocido lanza (nunca se da por cambiada)', async () => {
+    beginResponse = { data: [await backupRow()], error: null };
+    replaceResponse = { data: null, error: null };
+    await expect(changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast)).rejects.toThrow();
+    beginResponse = { data: [await backupRow()], error: null };
+    replaceResponse = { data: [{ status: 'raro', seconds_left: 0, attempts_left: 0 }], error: null };
+    await expect(changeBackupPassphrase(PASSPHRASE, NEW_PASSPHRASE, MEMBER, fast)).rejects.toThrow();
+  });
+
   it('si el servidor rechaza la sustitución, lanza', async () => {
     beginResponse = { data: [await backupRow()], error: null };
     otherError = { message: 'no' };
@@ -230,27 +263,11 @@ describe('changeBackupPassphrase · SET-SEC-01', () => {
   });
 });
 
-describe('recoverKey · un backup anterior a 0053 sube su verificador al abrirse', () => {
-  it('con la MISMA frase: nuevo blob y verificador, y la privada recuperada es la misma', async () => {
-    const row = await backupRow(4, 0, false);
-    beginResponse = { data: [row], error: null };
-    const out = await recoverKey(PASSPHRASE, MEMBER, fast);
-    expect(out).toEqual({ kind: 'recovered' });
-
-    const replace = rpcCalls.find((c) => c.fn === 'replace_key_backup')?.args as Record<string, string | null>;
-    expect(replace.p_old_proof).toBeNull();
-    expect(replace.p_public_key).toBe(row.public_key);
-    const key = await deriveWrappingKey(PASSPHRASE, fromBytea(replace.p_argon2_salt!), undefined, fast);
-    const bytes = await openPrivateKey(fromBytea(replace.p_encrypted_key_blob!), fromBytea(replace.p_key_iv!), key, MEMBER);
-    expect((await keyPairFromPrivateBytes(bytes)).publicKey).toEqual(fromBytea(row.public_key));
-    const proof = (await deriveBackupKeys(PASSPHRASE, fromBytea(replace.p_argon2_salt!), undefined, fast)).proof;
-    expect(replace.p_key_verifier).toBe(toBytea(await keyVerifierOf(proof)));
-  });
-
-  it('si no se puede subir, la recuperación sale igualmente bien', async () => {
+describe('recoverKey · F-269: ya no sube el verificador de un backup anterior a 0053', () => {
+  it('un backup sin verificador se recupera, pero no se llama a replace_key_backup', async () => {
     beginResponse = { data: [await backupRow(4, 0, false)], error: null };
-    otherError = { message: 'sin red' };
     await expect(recoverKey(PASSPHRASE, MEMBER, fast)).resolves.toEqual({ kind: 'recovered' });
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['begin_key_recovery']);
     expect(currentKeyPair()).not.toBeNull();
   });
 
@@ -258,12 +275,6 @@ describe('recoverKey · un backup anterior a 0053 sube su verificador al abrirse
     beginResponse = { data: [await backupRow(4, 0, true)], error: null };
     await recoverKey(PASSPHRASE, MEMBER, fast);
     expect(rpcCalls.map((c) => c.fn)).toEqual(['begin_key_recovery']);
-  });
-
-  it('con la frase mala no se sube nada', async () => {
-    beginResponse = { data: [await backupRow(3, 0, false)], error: null };
-    await recoverKey('otra frase muy distinta 9', MEMBER, fast);
-    expect(rpcCalls.some((c) => c.fn === 'replace_key_backup')).toBe(false);
   });
 });
 

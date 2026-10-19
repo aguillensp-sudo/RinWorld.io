@@ -93,6 +93,11 @@ migrate postgres
 echo "· fase 1 · smoke test del esquema"
 run "$ROOT/supabase/tests/01_schema_smoke.sql"
 
+# Los parciales «solo SQL» de la matriz de trazabilidad (corriente C). Fixture propia; va después de 01
+# y, si algún día hay un `06_privilegios_asserts.sql` (F-192), después de él: crea un operador y 20 organizaciones.
+echo "· fase 1 · parciales solo SQL"
+run "$ROOT/supabase/tests/07_parciales_sql.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

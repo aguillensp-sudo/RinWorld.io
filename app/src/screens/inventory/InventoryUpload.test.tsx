@@ -85,7 +85,7 @@ describe('INV-01 · subida manual (con onPickFile)', () => {
     fireEvent.change(screen.getByTestId('inventory-file-input'), { target: { files: [pdf] } });
     expect(onPickFile).not.toHaveBeenCalled();
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Formato no admitido. Sube un CSV, XLSX, XLS, TSV o TXT de máx. 50 MB.',
+      'Formato no admitido o archivo demasiado grande. Sube un CSV, XLSX, XLS, TSV o TXT de máx. 50 MB; si lo supera, comprímelo o divídelo en varios archivos.',
     );
   });
 

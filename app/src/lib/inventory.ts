@@ -68,6 +68,14 @@ export function ageLevel(days: number): AgeLevel {
   return 'fresh';
 }
 
+/** Aviso de la spec bajo la antigüedad en la búsqueda; `null` mientras la línea está al día. */
+export function freshnessNote(days: number): string | null {
+  const level = ageLevel(days);
+  if (level === 'critical') return 'Stock posiblemente desactualizado - verificar disponibilidad';
+  if (level === 'stale') return `Datos de hace ${days} días - confirmar disponibilidad antes de contactar`;
+  return null;
+}
+
 export function ageLabel(days: number): string {
   if (days <= 0) return 'Hoy';
   if (days === 1) return 'Hace 1 día';

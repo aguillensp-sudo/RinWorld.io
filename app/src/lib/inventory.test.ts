@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  freshnessNote,
   ageLabel,
   ageLevel,
   CRITICAL_DAYS,
@@ -61,6 +62,20 @@ describe('ageLevel', () => {
 
   it('recién subida es fresca', () => {
     expect(ageLevel(0)).toBe('fresh');
+  });
+});
+
+describe('freshnessNote', () => {
+  it('sin aviso hasta los 7 días inclusive', () => {
+    expect(freshnessNote(0)).toBeNull();
+    expect(freshnessNote(7)).toBeNull();
+  });
+  it('a los 8 días: datos de hace X días', () => {
+    expect(freshnessNote(8)).toBe('Datos de hace 8 días - confirmar disponibilidad antes de contactar');
+  });
+  it('a los 30 todavía es el aviso de 7; a los 31, stock posiblemente desactualizado', () => {
+    expect(freshnessNote(30)).toContain('Datos de hace 30 días');
+    expect(freshnessNote(31)).toBe('Stock posiblemente desactualizado - verificar disponibilidad');
   });
 });
 

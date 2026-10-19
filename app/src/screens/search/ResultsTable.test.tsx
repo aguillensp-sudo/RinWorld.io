@@ -166,6 +166,13 @@ describe('SRCH-01 · una fila', () => {
     const vieja = within(filas()[1]!).getByText(ageLabel(8));
     expect(vieja.className).not.toBe(fresca.className);
   });
+
+  it('data-freshness: a los 8 días el aviso de la spec, a los 31 el crítico, y al día no hay aviso', () => {
+    pintar([row({ id: 'a', lastUploadAt: hace(3) }), row({ id: 'b', lastUploadAt: hace(8) }), row({ id: 'c', lastUploadAt: hace(31) })]);
+    expect(within(filas()[0]!).queryByText(/confirmar disponibilidad|verificar disponibilidad/)).toBeNull();
+    expect(within(filas()[1]!).getByText('Datos de hace 8 días - confirmar disponibilidad antes de contactar')).toBeInTheDocument();
+    expect(within(filas()[2]!).getByText('Stock posiblemente desactualizado - verificar disponibilidad')).toBeInTheDocument();
+  });
 });
 
 describe('SRCH-01 · selección de filas', () => {

@@ -105,7 +105,8 @@ const UPLOAD_EXTENSIONS = [...TEXT_EXTENSIONS, 'xlsx', 'xls'];
 export const UPLOAD_ACCEPT = UPLOAD_EXTENSIONS.map((e) => `.${e}`).join(',');
 
 /** Error de la dropzone de INV-01, verbatim de su HTML aprobado (`#dzErr`). */
-export const UPLOAD_REJECTED = 'Formato no admitido. Sube un CSV, XLSX, XLS, TSV o TXT de máx. 50 MB.';
+export const UPLOAD_REJECTED =
+  'Formato no admitido o archivo demasiado grande. Sube un CSV, XLSX, XLS, TSV o TXT de máx. 50 MB; si lo supera, comprímelo o divídelo en varios archivos.';
 
 export function fileExtension(name: string): string {
   const dot = name.lastIndexOf('.');

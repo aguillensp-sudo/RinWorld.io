@@ -157,7 +157,7 @@ export function capacityDots(members: readonly TeamMember[], invitations: readon
 
 /** El aviso de límite (spec §3), verbatim. */
 export const LIMIT_NOTICE =
-  'Tu organización ha alcanzado el límite de 5 usuarios, contando las invitaciones pendientes. Para añadir uno nuevo, elimina un usuario o espera a que caduque una invitación.';
+  'Tu organización ha alcanzado el límite de 5 usuarios, contando las invitaciones pendientes. Para añadir uno nuevo, elimina un usuario o espera a que caduque una invitación. Para ampliar el límite, contacta con soporte.';
 
 // -----------------------------------------------------------------------------
 // Etiquetas

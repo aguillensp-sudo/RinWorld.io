@@ -158,7 +158,7 @@ describe('INVT-01 · Invitations · la cabecera y la capacidad', () => {
     await mountLoaded();
     expect(
       screen.getByText(
-        'Tu organización ha alcanzado el límite de 5 usuarios, contando las invitaciones pendientes. Para añadir uno nuevo, elimina un usuario o espera a que caduque una invitación.',
+        'Tu organización ha alcanzado el límite de 5 usuarios, contando las invitaciones pendientes. Para añadir uno nuevo, elimina un usuario o espera a que caduque una invitación. Para ampliar el límite, contacta con soporte.',
       ),
     ).toBeInTheDocument();
     expect(campo()).toBeDisabled();

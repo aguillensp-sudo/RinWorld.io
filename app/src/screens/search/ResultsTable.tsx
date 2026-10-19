@@ -1,5 +1,7 @@
 import {
   ageLabel,
+  ageLevel,
+  freshnessNote,
   countryName,
   daysSince,
   leadTimeLabel,
@@ -168,7 +170,8 @@ export function ResultsTable({
                     <span className={styles.countryBadge}>{countryName(row.country)}</span>
                   </td>
                   <td className={styles.td}>
-                    <span className={`${styles.age} ${days > 7 ? styles.stale : ''}`}>{ageLabel(days)}</span>
+                    <span className={`${styles.age} ${days > 7 ? styles.stale : ''} ${ageLevel(days) === 'critical' ? styles.critical : ''}`}>{ageLabel(days)}</span>
+                    {freshnessNote(days) && <span className={styles.ageNote}>{freshnessNote(days)}</span>}
                   </td>
                   <td className={styles.td}>
                     {/* F-038: el estado de favorito se distingue por aria-pressed,

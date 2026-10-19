@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { ageLabel, ageLevel, daysSince, type AgeLevel } from './inventory';
+import { ageLabel, ageLevel, daysSince, freshnessNote, type AgeLevel } from './inventory';
 
 /**
  * Capa de datos de SRCH-01 · Panel de Resultados de Búsqueda.
@@ -19,7 +19,7 @@ import { ageLabel, ageLevel, daysSince, type AgeLevel } from './inventory';
  * discrepancia costó F-026.
  */
 
-export { ageLabel, ageLevel, daysSince };
+export { ageLabel, ageLevel, daysSince, freshnessNote };
 export type { AgeLevel };
 
 // -----------------------------------------------------------------------------

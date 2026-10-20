@@ -486,25 +486,54 @@ end
 $$;
 
 -- thread-and-reply-creation #3 · la identidad interna queda registrada y no se muestra a otros miembros.
--- La base la GUARDA (author_member_id) y las vistas no la exponen; pero la tabla forum_posts concede SELECT de tabla entera
--- a authenticated (0029:252) y cualquier miembro activo la lee: el uuid del autor es legible por la API desde otra organización.
--- Se aserta lo que hace la base. El uuid no se resuelve a un nombre fuera de la propia organización (members solo se lee en la
--- propia); lo que permite es CORRELACIONAR publicaciones de una misma persona. Registrado en F-272 para decisión del PO.
+-- La base la GUARDA (author_member_id) y las vistas no la exponen. Hasta 0070 la tabla daba SELECT de tabla entera a
+-- authenticated y otra organización leía el uuid del autor por la API (F-272). Desde 0070 el SELECT es por columna y
+-- author_member_id no está: nadie lo lee con su sesión, ni de otra organización ni de la propia. El fixture de arriba
+-- prueba que publicar sigue funcionando (el INSERT del miembro 50, con RLS y sin privilegio sobre esa columna).
 do $$
-declare visto uuid; n int;
+declare n int; bloqueado boolean;
 begin
   assert (select author_member_id from public.forum_posts where id = '7c000000-0000-4000-8000-000000000001') = public.t7_mem(50),
     'thread-and-reply-creation#3: la base guarda qué usuario concreto escribió la publicación';
   assert not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name in ('forum_post_detail', 'forum_thread_list')
                         and column_name like '%member%'),
     'thread-and-reply-creation#3: las vistas del foro no exponen ninguna columna de persona';
+  assert not has_column_privilege('authenticated', 'public.forum_posts', 'author_member_id', 'select')
+     and not has_column_privilege('authenticated', 'public.forum_threads', 'author_member_id', 'select'),
+    'thread-and-reply-creation#3 (F-272): authenticated no tiene SELECT sobre author_member_id';
+
+  -- Control positivo: otra organización lee la publicación (sin la persona) por la tabla y por la vista.
   perform public.t7_como(51);
-  select author_member_id into visto from public.forum_posts where id = '7c000000-0000-4000-8000-000000000001';
-  select count(*) into n from public.members where id = public.t7_mem(50);
+  select count(*) into n from (select id, body, author_org_id from public.forum_posts where id = '7c000000-0000-4000-8000-000000000001') x;
+  assert n = 1, 'thread-and-reply-creation#3: la publicación sigue legible para otra organización, sin la persona';
+  select count(*) into n from public.forum_post_detail where id = '7c000000-0000-4000-8000-000000000001';
+  assert n = 1, 'thread-and-reply-creation#3: y por la vista de FORO-03';
+
+  -- La columna de la persona: permiso denegado, para otra organización…
+  begin
+    perform author_member_id from public.forum_posts where id = '7c000000-0000-4000-8000-000000000001';
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'thread-and-reply-creation#3 (F-272): otra organización ya no lee author_member_id';
+  begin
+    perform author_member_id from public.forum_threads limit 1;
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'thread-and-reply-creation#3 (F-272): ni el del hilo';
   reset role;
-  assert visto = public.t7_mem(50), 'thread-and-reply-creation#3 (F-272): otra organización lee author_member_id por la API';
-  assert n = 0, 'thread-and-reply-creation#3: pero no puede resolverlo a una persona: members no se lee fuera de la organización';
-  raise notice 'OK · thread-and-reply-creation#3: autoría guardada; el uuid del autor es legible cross-org pero no resoluble (F-272)';
+
+  -- …y para la propia (la spec dice «otros miembros», y un compañero también lo es).
+  perform public.t7_como(50);
+  begin
+    perform author_member_id from public.forum_posts where id = '7c000000-0000-4000-8000-000000000001';
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  reset role;
+  assert bloqueado, 'thread-and-reply-creation#3 (F-272): tampoco se lee desde la propia organización';
+  raise notice 'OK · thread-and-reply-creation#3: autoría guardada; el uuid del autor no se lee con sesión (F-272 cerrado, 0070)';
 end
 $$;
 

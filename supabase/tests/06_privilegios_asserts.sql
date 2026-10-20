@@ -1,15 +1,15 @@
 -- =============================================================================
--- 06 · Invariantes de privilegios en `public` (F-192) — PROPUESTA, va con 0065
+-- 06 · Invariantes de privilegios en `public` (F-192, va con 0071)
 -- =============================================================================
--- Destino: `supabase/tests/06_privilegios_asserts.sql`, llamado desde run.sh
--- justo después de 01_schema_smoke.sql (fase 1, base `postgres`).
+-- Llamado desde run.sh justo después de 01_schema_smoke.sql (fase 1, base `postgres`).
+-- El stub (`00_auth_stub.sql`) da a las tablas nuevas lo mismo que la plataforma.
 --
 -- No enumera tablas: mide REGLAS, así que una tabla nueva que nazca abierta lo
 -- hace fallar sin que nadie se acuerde de añadirla aquí (F-136: una evidencia
 -- que depende de que alguien se acuerde no es evidencia).
 --
 --   A. `anon` no tiene nada en ninguna tabla, vista, columna ni secuencia.
---   B. `authenticated` no tiene TRUNCATE, REFERENCES ni TRIGGER en nada.
+--   B. `authenticated` no tiene TRUNCATE, REFERENCES, TRIGGER ni MAINTAIN (Postgres 17) en nada.
 --   C. Cada SELECT/INSERT/UPDATE/DELETE de `authenticated` sobre una tabla
 --      (también por columna) lo usa al menos una política suya o de `public`
 --      con ese comando o con ALL. Un privilegio sin política está muerto: o
@@ -18,6 +18,7 @@
 --   E. Todas las tablas tienen RLS activa.
 --   F. Las DEFAULT PRIVILEGES de `postgres` en `public` no regalan tablas ni
 --      secuencias a `anon` ni a `authenticated`.
+--   G. `anon` no ejecuta ninguna función de `public` (tampoco a través de PUBLIC).
 --
 -- Se lee de `relacl`/`attacl`/`pg_default_acl` y no de information_schema, que
 -- filtra por los roles del que pregunta (F-146: privilegios, contra el catálogo).
@@ -43,7 +44,7 @@ begin
       fallos := fallos || format('A: anon tiene %s en %s', r.priv, r.relname);
     elsif r.relkind = 'S' then
       fallos := fallos || format('A: authenticated tiene %s en la secuencia %s', r.priv, r.relname);
-    elsif r.priv in ('TRUNCATE', 'REFERENCES', 'TRIGGER') then
+    elsif r.priv in ('TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN') then
       fallos := fallos || format('B: authenticated tiene %s en %s', r.priv, r.relname);
     elsif r.relkind in ('v', 'm') then
       if r.priv <> 'SELECT' then
@@ -112,6 +113,20 @@ begin
   loop
     fallos := fallos || format('F: las %s nuevas nacen con %s para %s',
                                case r.tipo when 'r' then 'tablas' else 'secuencias' end, r.priv, r.grantee);
+  end loop;
+
+  -- G: anon no ejecuta nada de public (has_function_privilege cuenta también PUBLIC)
+  for r in
+    select p.oid::regprocedure::text as fn
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE')
+      -- Las de una extensión no son nuestras (en el banco `pgcrypto` cae en public; en Supabase, en
+      -- `extensions`), y `expect_fail`/`expect_denied` son ayudas de 01_schema_smoke.sql, sin migración.
+      and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass
+                        and d.objid = p.oid and d.deptype = 'e')
+      and p.proname not in ('expect_fail', 'expect_denied')
+  loop
+    fallos := fallos || format('G: anon ejecuta %s', r.fn);
   end loop;
 
   if cardinality(fallos) > 0 then

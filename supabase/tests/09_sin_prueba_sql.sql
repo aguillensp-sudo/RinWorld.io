@@ -181,21 +181,32 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
--- 3 · automatic-suspension#2 y active-account-access#2 · lo que ven LOS DEMÁS de una suspendida
+-- 3 · automatic-suspension#2 y active-account-access#2 · la suspensión, también en la base (F-275, 0069)
 -- -----------------------------------------------------------------------------
--- La 1 sigue SUSPENDED desde el bloque 1 y tiene una línea PUBLISHED. Quien mira es el miembro
--- de la 3 (APPROVED, ACTIVE). La pantalla de suspensión del propio miembro es del cliente
--- (`session.suspension.escenarios.test.ts`); aquí, solo la visibilidad.
+-- La 1 sigue SUSPENDED desde el bloque 1 y tiene una línea PUBLISHED. Quien mira desde fuera es el
+-- miembro de la 3 (APPROVED, ACTIVE). Hasta 0069 lo único que ocultaba el inventario era el cruce con
+-- `organizations` de la búsqueda, y el miembro de la suspendida conservaba sus permisos por la API.
+-- La pantalla de suspensión del propio miembro es del cliente (`session.suspension.escenarios.test.ts`);
+-- aquí, que la base corta lo mismo y que lo que esa pantalla necesita leer sigue abierto.
+-- Al final el operador reactiva la 1 y todo vuelve tal cual (automatic-suspension#3 y reactivación).
 do $$
 declare
-  n int;
+  n int; bloqueado boolean; nombre text; pais text; antes record; despues record; estado text;
 begin
+  -- El miembro de la 1 pasa a ADMIN, para probar también `app.is_org_admin()`. La huella, después.
+  update public.members set role = 'ADMIN' where id = public.t9_mem(1);
+  select * into antes from public.t9_huella(public.t9_org(1));
+
   insert into public.forum_threads (id, category_id, title, author_member_id, author_org_id)
   select '9e000000-0000-4000-8000-000000000001', c.id, 'Hilo de una suspendida', public.t9_mem(1), public.t9_org(1)
     from public.forum_categories c order by c.position limit 1;
   insert into public.forum_posts (thread_id, author_member_id, author_org_id, body)
   values ('9e000000-0000-4000-8000-000000000001', public.t9_mem(1), public.t9_org(1), 'Publicado antes de la suspensión');
+  -- Control positivo de visibilidad: una línea PUBLISHED de la 4, que sigue APPROVED.
+  insert into public.inventory_lines (org_id, part_number, brand, quantity, location_country, product_family, status)
+  values (public.t9_org(4), '6204-2RS', 'SKF', 7, 'FR', 'RIGIDO_BOLAS', 'PUBLISHED');
 
+  -- 3a · Lo que ven LOS DEMÁS ---------------------------------------------------------------
   perform set_config('request.jwt.claim.sub', public.t9_mem(3)::text, true);
   set local role authenticated;
 
@@ -204,20 +215,109 @@ begin
     from public.inventory_lines l join public.organizations o on o.id = l.org_id
    where l.org_id = public.t9_org(1) and l.status = 'PUBLISHED';
   assert n = 0, format('automatic-suspension#2: el inventario de una suspendida no sale en la búsqueda de otros (salen %s)', n);
-
-  -- Control: la línea existe y la RLS de `inventory_lines` sola la deja leer. Lo que la oculta es
-  -- `organizations_select_approved` en el cruce, no la política del inventario (F-275).
-  select count(*) into n from public.inventory_lines where org_id = public.t9_org(1) and status = 'PUBLISHED';
-  assert n = 1, format('09 · control: la línea PUBLISHED de la suspendida existe (%s)', n);
+  -- Sin el cruce (API directa, `fetchOrgLines` del hilo) tampoco: lo cierra la RLS (F-275).
+  select count(*) into n from public.inventory_lines where org_id = public.t9_org(1);
+  assert n = 0, format('F-275: el inventario de una suspendida no se lee ni sin el cruce (salen %s)', n);
+  -- Control: la de una APPROVED sí se lee, sin cruce.
+  select count(*) into n from public.inventory_lines where org_id = public.t9_org(4) and status = 'PUBLISHED';
+  assert n = 1, format('09 · control: la línea PUBLISHED de una APPROVED se lee sin el cruce (%s)', n);
 
   select count(*) into n from public.forum_posts where author_org_id = public.t9_org(1);
   assert n = 1, format('active-account-access#2: lo publicado por la suspendida sigue visible para los demás (%s)', n);
-  select count(*) into n from public.forum_thread_list where author_org_id = public.t9_org(1);
+  select count(*), max(author_org_name) into n, nombre from public.forum_thread_list where author_org_id = public.t9_org(1);
   assert n = 1, format('active-account-access#2: su hilo sigue en la lista del foro (%s)', n);
-  select count(*) into n from public.forum_post_detail where author_org_id = public.t9_org(1);
+  assert nombre = 'Nueve 1', format('F-275: la lista del foro dice qué organización lo publicó (%s)', nombre);
+  select count(*) into n from public.forum_thread_list
+   where author_org_id = public.t9_org(1) and category_slug is not null and category_name is not null;
+  assert n = 1, 'F-275: la lista trae la categoría, que es lo que lee «Hilos recientes»';
+  select count(*), max(author_org_name), max(author_org_country) into n, nombre, pais
+    from public.forum_post_detail where author_org_id = public.t9_org(1);
   assert n = 1, format('active-account-access#2: su publicación sigue en el detalle del hilo (%s)', n);
-
+  assert nombre = 'Nueve 1' and pais = 'FR', format('F-275: el detalle dice organización y país autores (%s, %s)', nombre, pais);
+  -- No es un directorio de suspendidas: la fila de la organización sigue oculta, y la función no
+  -- nombra a una organización que no ha publicado en el foro (la 2, también suspendida).
+  select count(*) into n from public.organizations where id = public.t9_org(1);
+  assert n = 0, format('F-275: la organización suspendida sigue sin leerse fuera del foro (%s)', n);
+  select count(*) into n from app.forum_author_org(public.t9_org(2));
+  assert n = 0, 'F-275: app.forum_author_org no nombra a quien no ha publicado en el foro';
   reset role;
-  raise notice 'OK · automatic-suspension#2 y active-account-access#2: inventario fuera de la búsqueda, foro visible';
+
+  -- 3b · Lo que puede EL MIEMBRO DE LA SUSPENDIDA -------------------------------------------
+  perform set_config('request.jwt.claim.sub', public.t9_mem(1)::text, true);
+  set local role authenticated;
+  assert not app.is_active_member(), 'F-275: un miembro de una suspendida no es miembro activo';
+  assert not app.is_org_admin(), 'F-275: ni administrador';
+
+  select count(*) into n from public.inventory_lines where org_id = public.t9_org(1);
+  assert n = 0, format('F-275: no lee su propio inventario por la API (%s)', n);
+  select count(*) into n from public.threads;
+  assert n = 0, format('F-275: ni sus hilos (%s)', n);
+  select count(*) into n from public.favorite_distributors;
+  assert n = 0, format('F-275: ni sus favoritos (%s)', n);
+  select count(*) into n from public.forum_posts;
+  assert n = 0, format('F-275: ni el foro (%s)', n);
+
+  begin
+    insert into public.inventory_lines (org_id, part_number, brand, quantity, location_country, product_family, status)
+    values (public.t9_org(1), 'X-1', 'SKF', 1, 'FR', 'RIGIDO_BOLAS', 'PUBLISHED');
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'F-275: no sube inventario por la API';
+  begin
+    insert into public.forum_posts (thread_id, body) values ('9e000000-0000-4000-8000-000000000001', 'Escrito ya suspendida');
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'F-275: no publica en el foro';
+  begin
+    insert into public.inventory_exclusions (owner_org_id, excluded_country) values (public.t9_org(1), 'DE');
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'F-275: no toca las exclusiones (era ADMIN)';
+  update public.organizations set inventory_visibility_mode = 'VISIBLE_TODOS' where id = public.t9_org(1);
+  get diagnostics n = row_count;
+  assert n = 0, 'F-275: no cambia la visibilidad de su organización';
+
+  -- Lo que la pantalla de suspensión necesita (`loadProfile`): su fila y su organización, con el estado.
+  select count(*) into n from public.members where id = public.t9_mem(1);
+  assert n = 1, 'F-275: sigue leyendo su propia fila de members (pantalla de suspensión)';
+  select status into estado from public.organizations where id = public.t9_org(1);
+  assert estado = 'SUSPENDED', format('F-275: y su organización, con el estado SUSPENDED (%s)', estado);
+  reset role;
+
+  -- 3c · El operador (sin organización) sigue igual, y reactiva --------------------------------
+  perform set_config('request.jwt.claim.sub', public.t9_mem(9)::text, true);
+  set local role authenticated;
+  assert app.is_platform_operator() and not app.is_active_member(), '09 · el operador lo es, sin ser miembro';
+  select count(*) into n from public.billing_org_status where org_id = public.t9_org(1);
+  assert n = 1, 'ADMIN-02: el operador ve la suspendida';
+  perform public.billing_confirm_payment(public.t9_org(1), current_date, 'Pago de prueba del banco');
+  reset role;
+  assert (select status from public.organizations where id = public.t9_org(1)) = 'APPROVED', '09 · reactivada';
+
+  -- 3d · Reactivada, todo vuelve tal cual -------------------------------------------------------
+  select * into despues from public.t9_huella(public.t9_org(1));
+  assert despues = antes, 'automatic-suspension#3: suspender y reactivar no toca inventario, claves, mensajería ni favoritos';
+
+  perform set_config('request.jwt.claim.sub', public.t9_mem(1)::text, true);
+  set local role authenticated;
+  assert app.is_active_member() and app.is_org_admin(), 'reactivación: vuelve a ser miembro activo y administrador';
+  select count(*) into n from public.inventory_lines where org_id = public.t9_org(1);
+  assert n = 3, format('reactivación: vuelve a leer sus 3 líneas (%s)', n);
+  select count(*) into n from public.threads;
+  assert n = 1, format('reactivación: y su hilo (%s)', n);
+  reset role;
+
+  perform set_config('request.jwt.claim.sub', public.t9_mem(3)::text, true);
+  set local role authenticated;
+  select count(*) into n
+    from public.inventory_lines l join public.organizations o on o.id = l.org_id
+   where l.org_id = public.t9_org(1) and l.status = 'PUBLISHED';
+  assert n = 1, format('reactivación: su línea PUBLISHED vuelve a la búsqueda de los demás (%s)', n);
+  reset role;
+
+  raise notice 'OK · automatic-suspension#2 y active-account-access#2: la base corta a la suspendida (F-275), el foro la nombra, el operador reactiva y todo vuelve';
 end
 $$;

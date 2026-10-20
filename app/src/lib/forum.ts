@@ -175,19 +175,25 @@ export function toRecentThread(raw: RecentThreadRaw): RecentThread {
   };
 }
 
-const RECENT_COLUMNS =
-  'id, title, last_post_at, ' +
-  'forum_categories!forum_threads_category_id_fkey(slug, name), ' +
-  'organizations!forum_threads_author_org_id_fkey(name)';
+const RECENT_COLUMNS = 'id, title, last_post_at, category_slug, category_name, author_org_name';
+
+interface RecentThreadListRow {
+  id: string;
+  title: string;
+  last_post_at: string;
+  category_slug: string | null;
+  category_name: string | null;
+  author_org_name: string | null;
+}
 
 /**
  * *"Los últimos 5 hilos con actividad reciente de cualquier categoría"*.
  *
- * Las dos claves ajenas van **nombradas** en el `select`, aunque hoy no haya
- * ambigüedad: es la decisión viva de `F-020`. El día que `forum_threads` gane una
- * segunda referencia a `organizations` -- por ejemplo, la organización que
- * modera -- esto seguirá funcionando en vez de devolver `PGRST201` y dejar la
- * sección en blanco.
+ * Lee de `forum_thread_list` y no cruza él mismo con `organizations`: la RLS de
+ * `organizations` no deja leer una organización suspendida, y la spec pide el
+ * nombre de la organización autora **siempre** (`F-275`). La vista lo saca de
+ * `app.forum_author_org` (0069). Las filas se devuelven con la forma de antes
+ * para que `toRecentThread` no cambie.
  *
  * *"Esta sección es opcional y se oculta si no hay actividad reciente (foro
  * recién lanzado)"*: aquí eso es una lista vacía, y quien decide ocultarla es la
@@ -195,14 +201,23 @@ const RECENT_COLUMNS =
  */
 export async function fetchRecentThreads(limit: number = RECENT_LIMIT): Promise<RecentThread[]> {
   const { data, error } = await supabase
-    .from('forum_threads')
+    .from('forum_thread_list')
     .select(RECENT_COLUMNS)
     .order('last_post_at', { ascending: false })
     .order('id', { ascending: true })
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []).map((r) => toRecentThread(r as unknown as RecentThreadRaw));
+  return (data ?? []).map((row) => {
+    const r = row as unknown as RecentThreadListRow;
+    return toRecentThread({
+      id: r.id,
+      title: r.title,
+      last_post_at: r.last_post_at,
+      forum_categories: r.category_slug != null ? { slug: r.category_slug, name: r.category_name ?? '' } : null,
+      organizations: r.author_org_name != null ? { name: r.author_org_name } : null,
+    });
+  });
 }
 
 // -----------------------------------------------------------------------------

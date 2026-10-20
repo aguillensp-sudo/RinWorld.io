@@ -96,6 +96,46 @@ test.describe('SRCH-02 · búsqueda por lotes real (ALPHA)', () => {
     expect(lineas[2]).toBe(`${SIN_STOCK},0,,`);
   });
 
+  /**
+   * `conversational-search/batch-search#1` · 50 referencias pegadas en formato mixto, contra la base real, en
+   * menos de 5 s (de «Buscar» a la última tarjeta). El unit (`batch.parciales.test.ts`) prueba que se
+   * interpretan; esto, el tiempo, que solo existe con la red y la RLS de verdad. Las 50 son de la siembra
+   * (`catalog_demo.sql`) y van separadas por comas, tabulaciones, saltos de línea y punto y coma.
+   * La duración se anota en el informe de cada corrida (F-259).
+   *
+   * ⚠ **El tope de 5 s NO se cumple hoy y por eso no se aserta (`F-274`)**: medido el 20-oct contra
+   * `bearingworld-e2e`, 13,1 s y 7,1 s con `BATCH_CONCURRENCY = 5`, y 7,5 s y >15 s con 10; la base contesta en
+   * ~100 ms, así que la causa no está localizada. Cuando `F-274` se cierre, se aserta `duracion < 5_000`.
+   */
+  test('batch-search#1 · 50 referencias en formato mixto se interpretan todas y se resuelven contra la base real', async ({ page }) => {
+    test.setTimeout(90_000);
+    const refs = [
+      '22205', '22206', '22207', '22208', '22209', '22210', '22215', '22216', '30204', '30205',
+      '30206', '30207', '30208', '30209', '30210', '30211', '30212', '32004', '32005', '32006',
+      '32007', '32008', '32010X', '32011X', '32012X', '51104', '51105', '51106', '51108', '51110',
+      '51208', '6004-2RS', '6005-2RS', '6006-ZZ', '6008-2RS', '6010-C3', '6204-2RS', '6205-2RS', '6206-2RS', '6206-ZZ',
+      '6207-2RS', '6207-ZZ', '6208-2RS', '6208-ZZ', '6209-2RS', '6210-C3', '6305-2RS', '6306-2RS', '6307-ZZ', '6308-2RS',
+    ];
+    expect(new Set(refs).size).toBe(50);
+    const seps = [', ', '\t', '\n', '; '];
+    const texto = refs.map((r, i) => (i === 0 ? r : seps[i % seps.length] + r)).join('');
+
+    await page.getByLabel('Lista de referencias').fill(texto);
+    await expect(page.getByTestId('reference-counter')).toHaveText('50 / 50 referencias');
+
+    const inicio = Date.now();
+    await page.getByRole('button', { name: 'Buscar' }).click();
+    await expect(page.getByText(/^50 referencias · \d+ con stock · \d+ sin resultados$/)).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByRole('article')).toHaveCount(50);
+    const duracion = Date.now() - inicio;
+    test.info().annotations.push({ type: 'batch-search#1', description: `50 referencias en ${duracion} ms (tope de la spec: 5000, F-274)` });
+
+    // Nada se quedó a medias ni falló, y la siembra tiene stock de casi todas: la búsqueda fue de verdad.
+    await expect(page.getByText('No se pudo consultar')).toHaveCount(0);
+    const resumen = (await page.getByText(/^50 referencias · /).textContent()) ?? '';
+    expect(Number(/(\d+) con stock/.exec(resumen)?.[1] ?? 0)).toBeGreaterThanOrEqual(40);
+  });
+
   test('volver a Comprando desde otro ítem lleva a la búsqueda de siempre, no a los lotes', async ({ page }) => {
     await topNav(page).getByRole('button', { name: 'Panel' }).click();
     await topNav(page).getByRole('button', { name: 'Comprando' }).click();

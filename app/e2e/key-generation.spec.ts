@@ -258,6 +258,90 @@ test.describe('REG-07 · generar las claves y guardar el backup · ADMIN en REGI
     expect(servidor.confirmaciones).toHaveLength(1);
   });
 
+  /**
+   * `e2ee-key-management/key-generation#2` · Argon2id real (m = 64 MiB) sin bloquear el hilo principal.
+   *
+   * El ANCLA prueba que hay un Worker; esto prueba lo que pide la spec, que la UI no se congela. Se mide con
+   * dos sondas instaladas antes de cargar la página: las `longtask` de Chromium (> 50 ms en el hilo principal)
+   * y el hueco más largo entre dos `requestAnimationFrame`. Argon2id con estos parámetros tarda segundos: si
+   * corriera en el hilo principal, saldría como una tarea larga de ese orden. El umbral (200 ms) deja sitio a
+   * los renders de React entre pasos y está muy por debajo de eso. Control positivo al final: un bucle de 300 ms
+   * en el hilo principal SÍ sale en las dos sondas, así que un detector roto no pasa por verde (F-066).
+   */
+  test('key-generation#2 · Argon2id real no bloquea el hilo principal mientras se generan las claves', async ({ page }) => {
+    await montarServidor(page);
+    await page.addInitScript(() => {
+      const w = window as unknown as { __hilo: { largas: number[]; huecoMax: number; ultimo: number } };
+      w.__hilo = { largas: [], huecoMax: 0, ultimo: 0 };
+      new PerformanceObserver((lista) => {
+        for (const e of lista.getEntries()) w.__hilo.largas.push(Math.round(e.duration));
+      }).observe({ type: 'longtask', buffered: false });
+      const vuelta = (t: number) => {
+        if (w.__hilo.ultimo) w.__hilo.huecoMax = Math.max(w.__hilo.huecoMax, t - w.__hilo.ultimo);
+        w.__hilo.ultimo = t;
+        requestAnimationFrame(vuelta);
+      };
+      requestAnimationFrame(vuelta);
+    });
+    const leer = () =>
+      page.evaluate(() => {
+        const h = (window as unknown as { __hilo: { largas: number[]; huecoMax: number } }).__hilo;
+        return { largas: [...h.largas], huecoMax: Math.round(h.huecoMax) };
+      });
+    const reiniciar = () =>
+      page.evaluate(() => {
+        const h = (window as unknown as { __hilo: { largas: number[]; huecoMax: number; ultimo: number } }).__hilo;
+        h.largas = [];
+        h.huecoMax = 0;
+        h.ultimo = 0;
+      });
+
+    await signIn(page, ALPHA);
+    await page.getByRole('button', { name: 'Entendido, crear mi frase de seguridad' }).click();
+    await page.getByLabel('Backup passphrase', { exact: true }).fill(FRASE);
+    await expect(page.getByTestId('strength-label')).toHaveText(/^(Fuerte|Muy fuerte)$/);
+    await page.getByLabel('Repetir backup passphrase', { exact: true }).fill(FRASE);
+    await page.getByRole('checkbox', { name: CASILLA }).check();
+
+    // Se mide desde el clic que arranca la generación hasta el «¡Todo listo!».
+    await reiniciar();
+    const inicio = Date.now();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: TITULO })).toBeVisible();
+    await expect(page.getByText(LISTO)).toBeVisible({ timeout: 30_000 });
+    const duracion = Date.now() - inicio;
+    const medida = await leer();
+    test.info().annotations.push({
+      type: 'key-generation#2',
+      description: `generación ${duracion} ms · tareas largas ${JSON.stringify(medida.largas)} ms · hueco rAF máx ${medida.huecoMax} ms`,
+    });
+
+    // Si Argon2id corriera en el hilo principal, una sola tarea larga ocuparía casi toda la generación (medido el
+    // 20-oct: la generación entera tarda ~260 ms en local). Por eso el tope es relativo —ninguna pausa llega a la
+    // mitad de lo que dura generar— y además absoluto, 200 ms, para cuando la máquina sea lenta.
+    const tope = Math.min(200, duracion / 2);
+    expect(Math.max(0, ...medida.largas)).toBeLessThan(tope);
+    expect(medida.huecoMax).toBeLessThan(tope);
+
+    // CONTROL POSITIVO: 300 ms de trabajo en el hilo principal salen en las dos sondas.
+    await reiniciar();
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => {
+            const fin = performance.now() + 300;
+            while (performance.now() < fin) {
+              /* bloquea a propósito */
+            }
+            setTimeout(resolve, 200);
+          }),
+        ),
+    );
+    const control = await leer();
+    expect(Math.max(0, ...control.largas)).toBeGreaterThanOrEqual(250);
+    expect(control.huecoMax).toBeGreaterThanOrEqual(250);
+  });
+
   test('la pantalla tiene scroll propio: en una ventana baja «Continuar» se alcanza con la rueda', async ({ page }) => {
     await montarServidor(page);
     await page.setViewportSize({ width: 1280, height: 480 });

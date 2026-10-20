@@ -15,6 +15,7 @@ import { AdminBilling } from './screens/admin/AdminBilling';
 import { Directory } from './screens/directory/Directory';
 import { OrganizationProfile } from './screens/directory/OrganizationProfile';
 import { NotAvailable } from './screens/NotAvailable';
+import { Suspended } from './screens/Suspended';
 import { Invitations } from './screens/onboarding/Invitations';
 import { Welcome } from './screens/onboarding/Welcome';
 import { KeysIntro } from './screens/onboarding/KeysIntro';
@@ -646,6 +647,12 @@ export function App() {
         error={`La cuenta ${state.email} existe pero no está asignada a ninguna organización. Habla con el operador.`}
       />
     );
+  }
+
+  // Organización SUSPENDED (billing-subscription/automatic-suspension#2): la pantalla de
+  // suspensión EN LUGAR del shell, y con él del foro (community-forum/active-account-access#2).
+  if (state.status === 'suspended') {
+    return <Suspended orgName={state.profile.orgName} onSignOut={() => void signOut()} />;
   }
 
   const onInventory = nav === INVENTORY_NAV;

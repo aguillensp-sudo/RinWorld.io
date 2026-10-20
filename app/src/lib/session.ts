@@ -83,6 +83,15 @@ export function isRevoked(state: string): boolean {
   return REVOKED_STATES.has(state);
 }
 
+/**
+ * ¿La organización está suspendida? (`billing-subscription/automatic-suspension#2`). Solo
+ * `organizations.status = 'SUSPENDED'`: el billing reusa esa palabra (`0034`), no tiene un estado
+ * propio. Un miembro revocado no llega aquí: su caso manda y sale por `isRevoked`.
+ */
+export function isOrgSuspended(orgStatus: string | null | undefined): boolean {
+  return orgStatus === 'SUSPENDED';
+}
+
 export const REVOKED_MESSAGE =
   'Tu acceso a Bearingworld.io ha sido revocado. Si crees que es un error, habla con el administrador de tu organización.';
 
@@ -102,7 +111,9 @@ type State =
   /** Operador de Plataforma: sin organización a propósito. Ver `OperatorProfile`. */
   | { status: 'operator'; profile: OperatorProfile }
   /** Autenticado en Auth pero sin fila en `members`: cuenta a medio provisionar. */
-  | { status: 'orphan'; email: string };
+  | { status: 'orphan'; email: string }
+  /** Miembro de una organización `SUSPENDED`: ve la pantalla de suspensión, no el shell. */
+  | { status: 'suspended'; profile: MemberProfile };
 
 /**
  * ¿El que entra es Operador de Plataforma?
@@ -156,7 +167,7 @@ export async function loadProfile(userId: string, email: string): Promise<State>
   const { data, error } = await supabase
     .from('members')
     .select(
-      'id, email, full_name, role, state, org_id, organizations!members_org_id_fkey(name, country)',
+      'id, email, full_name, role, state, org_id, organizations!members_org_id_fkey(name, country, status)',
     )
     .eq('id', userId)
     .maybeSingle();
@@ -170,9 +181,12 @@ export async function loadProfile(userId: string, email: string): Promise<State>
   // el mensaje *"habla con el operador"*. Dicho al operador.
   if (!data) return (await loadOperator(userId, email)) ?? { status: 'orphan', email };
 
-  const org = data.organizations as unknown as { name: string; country: string } | null;
+  // `status` de la propia organización: `organizations_select_approved` deja leerla aunque no
+  // sea APPROVED (`id = app.current_org_id()`), justo para esto.
+  const org = data.organizations as unknown as { name: string; country: string; status?: string } | null;
+  const suspended = isOrgSuspended(org?.status) && !isRevoked(data.state as string);
   return {
-    status: 'authenticated',
+    status: suspended ? 'suspended' : 'authenticated',
     profile: {
       id: data.id as string,
       email: data.email as string,

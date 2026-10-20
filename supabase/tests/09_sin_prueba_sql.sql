@@ -179,3 +179,45 @@ begin
   raise notice 'OK · inventory-line-lifecycle#3: el tope de 500.000 PUBLISHED bloquea la subida y la publicación';
 end
 $$;
+
+-- -----------------------------------------------------------------------------
+-- 3 · automatic-suspension#2 y active-account-access#2 · lo que ven LOS DEMÁS de una suspendida
+-- -----------------------------------------------------------------------------
+-- La 1 sigue SUSPENDED desde el bloque 1 y tiene una línea PUBLISHED. Quien mira es el miembro
+-- de la 3 (APPROVED, ACTIVE). La pantalla de suspensión del propio miembro es del cliente
+-- (`session.suspension.escenarios.test.ts`); aquí, solo la visibilidad.
+do $$
+declare
+  n int;
+begin
+  insert into public.forum_threads (id, category_id, title, author_member_id, author_org_id)
+  select '9e000000-0000-4000-8000-000000000001', c.id, 'Hilo de una suspendida', public.t9_mem(1), public.t9_org(1)
+    from public.forum_categories c order by c.position limit 1;
+  insert into public.forum_posts (thread_id, author_member_id, author_org_id, body)
+  values ('9e000000-0000-4000-8000-000000000001', public.t9_mem(1), public.t9_org(1), 'Publicado antes de la suspensión');
+
+  perform set_config('request.jwt.claim.sub', public.t9_mem(3)::text, true);
+  set local role authenticated;
+
+  -- La búsqueda (`search.ts`) cruza con `organizations` con `!inner`: este es el mismo cruce.
+  select count(*) into n
+    from public.inventory_lines l join public.organizations o on o.id = l.org_id
+   where l.org_id = public.t9_org(1) and l.status = 'PUBLISHED';
+  assert n = 0, format('automatic-suspension#2: el inventario de una suspendida no sale en la búsqueda de otros (salen %s)', n);
+
+  -- Control: la línea existe y la RLS de `inventory_lines` sola la deja leer. Lo que la oculta es
+  -- `organizations_select_approved` en el cruce, no la política del inventario (F-275).
+  select count(*) into n from public.inventory_lines where org_id = public.t9_org(1) and status = 'PUBLISHED';
+  assert n = 1, format('09 · control: la línea PUBLISHED de la suspendida existe (%s)', n);
+
+  select count(*) into n from public.forum_posts where author_org_id = public.t9_org(1);
+  assert n = 1, format('active-account-access#2: lo publicado por la suspendida sigue visible para los demás (%s)', n);
+  select count(*) into n from public.forum_thread_list where author_org_id = public.t9_org(1);
+  assert n = 1, format('active-account-access#2: su hilo sigue en la lista del foro (%s)', n);
+  select count(*) into n from public.forum_post_detail where author_org_id = public.t9_org(1);
+  assert n = 1, format('active-account-access#2: su publicación sigue en el detalle del hilo (%s)', n);
+
+  reset role;
+  raise notice 'OK · automatic-suspension#2 y active-account-access#2: inventario fuera de la búsqueda, foro visible';
+end
+$$;

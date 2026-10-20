@@ -1,0 +1,65 @@
+/* Pantalla de suspensión — tarjeta centrada sobre el azul de marca, como LOGIN-01. Sin shell. */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bw-deep-steel-darkest);
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--bw-pad-panel);
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  box-sizing: border-box;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-eyebrow);
+  letter-spacing: var(--bw-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--bw-brass);
+}
+
+.title {
+  margin: 6px 0 16px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  line-height: 1.2;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.text {
+  margin: 0 0 12px;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-body);
+  line-height: 1.6;
+  color: var(--bw-text-secondary);
+}
+
+.signOut {
+  width: 100%;
+  margin-top: 16px;
+  padding: var(--bw-pad-input);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 600;
+  color: var(--bw-warm-cream);
+  background: var(--bw-calibration-blue);
+  border: 1px solid var(--bw-calibration-blue);
+  border-radius: var(--bw-radius);
+  cursor: pointer;
+}
+
+.signOut:hover {
+  background: var(--bw-primary-dark);
+}

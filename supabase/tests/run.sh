@@ -101,6 +101,9 @@ run "$ROOT/supabase/tests/07_parciales_sql.sql"
 echo "· fase 1 · uso y cupo de VERA (0068)"
 run "$ROOT/supabase/tests/08_vera_uso.sql"
 
+echo "· fase 1 · SIN_PRUEBA de la matriz que solo prueba la base"
+run "$ROOT/supabase/tests/09_sin_prueba_sql.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

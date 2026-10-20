@@ -815,3 +815,20 @@ describe('VERA · no repite lo que la pantalla ya enseña', () => {
     expect(prompt).toContain('listar_mis_hilos no mueve la pantalla');
   });
 });
+
+/**
+ * Los dos SIN_PRUEBA de `vera-agent` en la matriz (corriente C). Prueban que la regla está escrita; que el
+ * modelo la cumpla solo lo prueba una llamada real, así que en la matriz quedan PARCIAL «solo modelo real».
+ */
+describe('VERA · tono y tope de opciones (matriz de trazabilidad)', () => {
+  it('vera-agent/agent-identity#2 · el prompt pide un tono directo y breve, sin adornos ni relleno', () => {
+    expect(prompt).toContain('CÓMO ESCRIBES:');
+    expect(prompt).toContain('Directa y breve');
+    expect(prompt).toContain('No adornas, no rellenas');
+  });
+
+  it('vera-agent/ambiguity-handling#2 · ante más de tres lecturas pregunta, y nunca ofrece más de tres opciones', () => {
+    expect(prompt).toContain('Si caben más de tres lecturas distintas de lo que te piden, pregunta antes de actuar');
+    expect(prompt).toContain('nunca ofrezcas más de tres a la vez');
+  });
+});

@@ -53,3 +53,30 @@ del día 44. Se propusieron cuatro líneas sin dependencias y el PO eligió dos 
   10:10–10:23 UTC), sin nada de código detrás.
 - **`6b9a34e` verde (run `39407772750`) y desplegado**, comprobado en el bundle de producción por contenido. Dos e2e (`forum-thread`, `organization-profile`) pasaron al reintento: la instancia sigue inestable (`F-259`).
 - **Sin probar en un navegador con una cuenta suspendida**: no se suspendió ninguna organización real.
+
+## Tarde-noche · F-275, F-272 y F-192 en una tarea de permisos (sesión lanzada desde la principal)
+
+- **Lo pedido:** cerrar los tres juntos (PO, 20-oct: «lo que me propones parece sensato y estoy de acuerdo»), con
+  suspensiones manuales inminentes (Cuscinetti Padana a 0 días). Hecho en `859f5a5`.
+- **Diagnóstico contra el catálogo de producción antes de escribir nada.** Las políticas coincidían con la propuesta de
+  F-192 del 14-oct, pero había envejecido en tres cosas: Postgres 17 da `MAINTAIN` a `anon` y `authenticated` (el
+  banco es 16 y no lo conoce), tres funciones de `public` (`billing_confirm_payment`, `billing_suspend_organization`,
+  `forum_rate_limit_status`) las ejecutaba `anon` por PUBLIC, y dos tablas nuevas ya nacieron cerradas.
+- **`0069` (F-275).** `is_active_member` e `is_org_admin` exigen la organización `APPROVED`; el inventario ajeno solo
+  de `APPROVED`. Lo que la pantalla de suspensión lee no pasa por esas funciones. El foro nombra a la autora con
+  `app.forum_author_org` (definer, solo de organizaciones que han publicado), y «Hilos recientes» lee de
+  `forum_thread_list`, que gana dos columnas de categoría al final: único cambio de cliente.
+- **El banco cazó dos cosas en la primera corrida:** el aserto de `0064` compara la visibilidad por conjunto con la
+  antigua por fila (`can_view_inventory_of`), así que esa también recibe la regla; y la regla G nueva de `06` saltaba
+  con las funciones de `pgcrypto`, que en el banco caen en `public`. Se excluyen las de extensión.
+- **`0070` (F-272)** y **`0071` (F-192)** como estaban propuestos, más lo de arriba. Ancla negativa de `06`: sin
+  `0070`/`0071` falla con 185 (los 182 del 14-oct más 3 de G). `supabase/propuestas/F-192/` se borra.
+- **`bearingworld-e2e` estaba desfasada (`F-277`)**: le faltaban `0063`, `0064` y `0068`. Se le aplicaron `0064` y
+  `0068` antes que lo nuevo. La CI llevaba días probando la política de inventario por fila que producción ya no tiene.
+- **e2e local contra `bearingworld-e2e`:** 161 verdes y 5 rojos en una corrida de **2,4 h** (la CI tarda ~8 min);
+  los 5 repetidos aislados, 11 de 11 en 1,5 min. La CI de `57fe972` (solo docs) ya había salido roja en cuatro specs
+  de la instancia (`messages`, `session`, `visibility`, `zz-h5`): inestabilidad de la instancia, no de esto.
+- **Visto de paso:** `forum_reactions.member_id` es legible entre organizaciones (`F-276`, mismo patrón que F-272; pide
+  reescribir `reacted_by_me`). `vera_abrir_turno` no mira la suspensión (residual en F-275).
+- **`859f5a5` verde entera (run `39461082451`) y desplegada**: el bundle `index-CAzFNqcA.js` lleva la consulta nueva de
+  «Hilos recientes» y no el cruce viejo. Ninguna organización real se suspendió para probar: todo en el banco.

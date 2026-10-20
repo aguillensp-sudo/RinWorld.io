@@ -73,7 +73,7 @@ Empieza por §6 y luego §3.
    - INV-04 se queda con la versión hecha a mano; `exp/inv-04-fabrica` es solo evidencia (`F-261`).
 5. **`INV-04`:** sin código pendiente. **~12-nov: comprobar que `inbox/` ya no conserva los primeros correos.**
 6. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero (con otra sesión corriendo tests, `--maxWorkers=50%`), el banco si se tocó `supabase/` más allá de una función, la suite e2e si se tocó un e2e o el arnés (`F-230`) y `py -m harness.tests.test_checks` si se tocó el contrato de una tarea (`F-251`). **Mira la CI del push anterior antes de empujar otro. Un solo commit con `[skip ci]` salta la CI de todo su empuje**: va en un empuje aparte. Nunca `vitest` con un e2e en marcha.
-7. Deuda sin fecha y sus disparadores: `BACKLOG-V1.md` (límite por hora de VERA `F-256`, auditoría `F-257`).
+7. Deuda sin fecha y sus disparadores: `BACKLOG-V1.md` (auditoría de VERA `F-257`). **`F-256` cerrado el 20-oct con `0068`**: cupo de 150 llamadas/usuario/hora (número de Claude Code, no del PO) y `usage` en `vera_usage`.
 
 ## 4 · Decisiones vivas
 
@@ -102,7 +102,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-272`** · el uuid del autor del foro es legible entre organizaciones | Junto con otra tarea de permisos (`F-192`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
-| 🟡 | **`F-256`** · VERA sin límite por usuario y hora ni registro de `usage` (el tope de tamaño sí está) | Backlog, antes de terceros |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta lista en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
 
@@ -111,7 +110,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si VERA contesta igual de bien con usuarios reales**: la prueba fue con preguntas escritas por el plan y una vez (tres en las trampas). No se sabe cómo pregunta un comprador de verdad, ni con frases mal escritas.
 - **Si VERA mantiene el idioma en conversaciones largas o mezcladas**: medido con seis preguntas; cambiar a mitad falla 1 de 2 (`F-264`).
 - **Si el control de B2 acierta con frases reales**: probado con «ahora de FAG» y «vuelve a ponerme Europa»; no con peticiones ambiguas («y en Europa también»).
-- **Cuánto cuesta VERA por pregunta en uso real**: en la prueba, ~0,008 $ con la caché caliente; nadie registra `usage` en producción (`F-256`).
+- **Cuánto cuesta VERA por pregunta en uso real**: en la prueba, ~0,008 $ con la caché caliente. Desde el 20-oct `vera_usage` lo registra (`0068`), pero **no hay aún ninguna fila de uso real** ni se ha visto al proxy desplegado escribir una.
 - **Si 15 s por aserción bastan siempre en `bearingworld-e2e`**: el máximo visto fue 13,5 s (`F-259`).
 - **Qué ve el EDITOR `REGISTERED` al entrar**: REG-09 «Activa tu cuenta» dentro del shell (`F-260`); sin comprobar si el menú le deja salir de ahí.
 - **Si Inventario adopta bien el filtro que deja VERA**: nadie lo ha mirado en un navegador.

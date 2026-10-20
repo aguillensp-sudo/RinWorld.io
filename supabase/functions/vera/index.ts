@@ -1,12 +1,18 @@
 import Anthropic from 'npm:@anthropic-ai/sdk';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import HERRAMIENTAS from './tools.json' with { type: 'json' };
 
 /**
  * VERA · Edge Function proxy.
  *
- * ⚠ **ESTA FUNCIÓN NO TOCA LA BASE DE DATOS, Y ESO ES LA DECISIÓN, NO UN
+ * ⚠ **ESTA FUNCIÓN NO LEE DATOS DE LA BASE, Y ESO ES LA DECISIÓN, NO UN
  * DESCUIDO** (D-09-05). Su única responsabilidad es guardar la clave de Sonnet,
  * que `CLAUDE.md` §4 declara punto no negociable: nunca llega al navegador.
+ *
+ * Desde `0068` (F-256) toca la base para UNA cosa: abrir y cerrar su turno en
+ * `vera_usage` (cupo por hora y `usage` de cada llamada). Lo hace con el JWT del
+ * usuario y la clave anónima, **nunca con la de servicio**: con eso solo puede
+ * escribir filas del propio usuario, así que lo de abajo sigue siendo cierto.
  *
  * Las cuatro herramientas se EJECUTAN EN EL CLIENTE, contra `search.ts`,
  * `inventory.ts` y `threads.ts`, con el JWT del usuario. Así el
@@ -276,6 +282,16 @@ function mensajesValidos(mensajes: unknown[]): boolean {
   });
 }
 
+/**
+ * ¿Es una pregunta nueva o una vuelta de herramienta? Solo para medir el coste por pregunta (`0068`): el cupo
+ * cuenta llamadas, porque esto lo escribe el cliente y no decide nada.
+ */
+function esPregunta(mensajes: unknown[]): boolean {
+  const ultimo = mensajes[mensajes.length - 1] as { content?: unknown };
+  if (typeof ultimo.content === 'string') return true;
+  return !(ultimo.content as Array<{ type?: unknown }>).some((b) => b?.type === 'tool_result');
+}
+
 /** Un texto del contexto, recortado: va al prompt, y el cliente no decide cuánto ocupa. */
 function corto(v: unknown): string {
   return typeof v === 'string' ? v.slice(0, MAX_CONTEXTO) : '';
@@ -291,7 +307,8 @@ Deno.serve(async (peticion: Request) => {
    * actúa como un usuario concreto no debe depender de un ajuste de despliegue
    * que alguien puede cambiar por el panel sin tocar este fichero.
    */
-  if (!peticion.headers.get('Authorization')) {
+  const autorizacion = peticion.headers.get('Authorization');
+  if (!autorizacion) {
     return json({ error: 'Falta la sesión.' }, 401);
   }
 
@@ -323,6 +340,72 @@ Deno.serve(async (peticion: Request) => {
   // mandaría a buscar el fallo a otro sitio.
   if (entrada.messages.length > MAX_MENSAJES || JSON.stringify(entrada.messages).length > MAX_CARACTERES) {
     return json({ error: 'La conversación con VERA es demasiado larga. Recarga la página para empezar una nueva.' }, 413);
+  }
+
+  /*
+   * Cupo por usuario y hora (`0068`, F-256). Se comprueba DESPUÉS de validar la forma —una petición mal formada no
+   * gasta cupo— y ANTES de llamar al modelo, que es lo que cuesta. Si la base no contesta, VERA no contesta: un
+   * cupo que se abre cuando falla la comprobación no es un cupo.
+   */
+  const urlSupabase = Deno.env.get('SUPABASE_URL');
+  const claveAnonima = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!urlSupabase || !claveAnonima) {
+    return json({ error: 'VERA no está configurada: faltan SUPABASE_URL o SUPABASE_ANON_KEY.' }, 503);
+  }
+  const comoUsuario = createClient(urlSupabase, claveAnonima, {
+    global: { headers: { Authorization: autorizacion } },
+    auth: { persistSession: false },
+  });
+  const { data: cupo, error: errorCupo } = await comoUsuario.rpc('vera_abrir_turno', {
+    p_es_pregunta: esPregunta(entrada.messages),
+  });
+  if (errorCupo || !cupo) {
+    console.error('VERA · no se pudo abrir el turno:', errorCupo);
+    return json({ error: 'VERA no puede comprobar tu cupo ahora mismo. Inténtalo en unos minutos.' }, 503);
+  }
+  const turno = cupo as { permitido: boolean; turno?: string; cupo: number; reintentar_en_s?: number };
+  if (!turno.permitido) {
+    const minutos = Math.max(1, Math.ceil((turno.reintentar_en_s ?? 60) / 60));
+    return json(
+      {
+        error: `Has llegado al límite de VERA (${turno.cupo} consultas por hora). Vuelve a intentarlo en ${minutos} min.`,
+        reintentar_en_s: turno.reintentar_en_s,
+      },
+      429,
+    );
+  }
+
+  /** Cierra el turno con el `usage` del modelo. Si falla, se registra y la respuesta sale igual. */
+  async function cerrarTurno(
+    ok: boolean,
+    r?: {
+      stop_reason?: string | null;
+      usage?: {
+        input_tokens?: number | null;
+        output_tokens?: number | null;
+        cache_creation_input_tokens?: number | null;
+        cache_read_input_tokens?: number | null;
+      };
+    },
+  ): Promise<void> {
+    const u = r?.usage;
+    try {
+      const { data, error } = await comoUsuario.rpc('vera_cerrar_turno', {
+        p_turno: turno.turno,
+        p_ok: ok,
+        p_model: MODELO,
+        p_stop_reason: r?.stop_reason ?? null,
+        p_input: u?.input_tokens ?? null,
+        p_output: u?.output_tokens ?? null,
+        p_cache_write: u?.cache_creation_input_tokens ?? null,
+        p_cache_read: u?.cache_read_input_tokens ?? null,
+      });
+      // `false` = el turno ya estaba cerrado: alguien lo cerró antes que el proxy (cabecera de `0068`, punto 2).
+      if (error || data !== true) console.error('VERA · no se pudo cerrar el turno', turno.turno, error ?? 'ya cerrado');
+    } catch (e) {
+      // Nunca tumba la respuesta: el modelo ya contestó y ya se pagó.
+      console.error('VERA · no se pudo cerrar el turno', turno.turno, e);
+    }
   }
 
   const anthropic = new Anthropic({ apiKey: clave });
@@ -381,6 +464,7 @@ Deno.serve(async (peticion: Request) => {
       tools: HERRAMIENTAS,
       messages: entrada.messages,
     });
+    await cerrarTurno(true, respuesta);
 
     // Se devuelve la vuelta tal cual, más `usage`: sin `usage` no hay forma de
     // saber si la caché está funcionando o solo está declarada.
@@ -396,6 +480,7 @@ Deno.serve(async (peticion: Request) => {
     // El mensaje del proveedor puede llevar detalles de la petición; se registra
     // en el log de la función y al cliente le llega el hecho, no el detalle.
     console.error('VERA · fallo llamando al modelo:', e);
+    await cerrarTurno(false);
     return json({ error: 'VERA no ha podido responder ahora mismo.' }, 502);
   }
 });

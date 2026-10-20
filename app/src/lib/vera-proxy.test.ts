@@ -50,6 +50,41 @@ describe('la clave de VERA no llega al navegador', () => {
   });
 });
 
+/**
+ * `0068` (F-256): cupo por usuario y hora y `usage` de cada llamada. El comportamiento del cupo lo prueba el
+ * banco (`supabase/tests/08_vera_uso.sql`); aquí, que la función lo usa y en qué orden.
+ */
+describe('el cupo por hora y el registro de usage (F-256)', () => {
+  const abrir = fuente.indexOf("rpc('vera_abrir_turno'");
+  const modelo = fuente.indexOf('anthropic.messages.create(');
+
+  it('abre el turno ANTES de llamar al modelo, que es lo que cuesta', () => {
+    expect(abrir).toBeGreaterThan(0);
+    expect(modelo).toBeGreaterThan(abrir);
+  });
+
+  it('sin cupo contesta 429 con el motivo, y si la base no contesta, VERA no contesta', () => {
+    expect(fuente).toMatch(/if \(!turno\.permitido\)[\s\S]{0,400}429/);
+    expect(fuente).toMatch(/if \(errorCupo \|\| !cupo\)[\s\S]{0,300}503/);
+  });
+
+  it('cierra el turno con el usage, tanto si el modelo contesta como si falla', () => {
+    expect(fuente).toContain("rpc('vera_cerrar_turno'");
+    expect(fuente).toContain('await cerrarTurno(true, respuesta);');
+    expect(fuente).toContain('await cerrarTurno(false);');
+  });
+
+  it('va a la base con el JWT del usuario y la clave anónima, nunca con la de servicio (D-09-05)', () => {
+    expect(fuente).toContain("Deno.env.get('SUPABASE_ANON_KEY')");
+    expect(fuente).toMatch(/global: \{ headers: \{ Authorization: autorizacion \} \}/);
+    expect(fuente).not.toMatch(/SERVICE_ROLE|SERVICE_KEY|service_role/);
+  });
+
+  it('CONTROL POSITIVO de F-066: el detector SÍ marca la clave de servicio', () => {
+    expect("Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')").toMatch(/SERVICE_ROLE|SERVICE_KEY|service_role/);
+  });
+});
+
 // QA-A00-06 fijaba Sonnet 4.6 en el MVP; la decisión de V1 es Sonnet 5, aplicada el 14-oct-2026 (PO).
 describe('el modelo está fijo en la función', () => {
   it('es Sonnet 5, con el identificador exacto, y ya no Sonnet 4.6', () => {

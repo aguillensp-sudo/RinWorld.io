@@ -98,6 +98,9 @@ run "$ROOT/supabase/tests/01_schema_smoke.sql"
 echo "· fase 1 · parciales solo SQL"
 run "$ROOT/supabase/tests/07_parciales_sql.sql"
 
+echo "· fase 1 · uso y cupo de VERA (0068)"
+run "$ROOT/supabase/tests/08_vera_uso.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

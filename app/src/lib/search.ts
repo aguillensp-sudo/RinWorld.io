@@ -425,6 +425,12 @@ export interface SearchQuery {
    * máximo —el resumen de Búsqueda por lotes y VERA—, donde cortar por antigüedad podría dejarlo fuera.
    */
   orden?: 'reciente' | 'cantidad';
+  /**
+   * Los favoritos de `memberId`, ya pedidos. No dependen de la búsqueda, así que quien busca muchas veces
+   * seguidas —Búsqueda por lotes— los pide una vez y los pasa aquí (`F-274`: eran 50 peticiones idénticas por
+   * lote). Sin esto, `fetchResults` los pide ella.
+   */
+  favoritos?: Promise<Set<string>>;
 }
 
 /**
@@ -452,7 +458,13 @@ export interface SearchQuery {
  * chip "Europa" la corte (`guion-demo-y-siembra.md` §3), mientras que
  * `location_country` dice dónde está la mercancía, que puede no ser la sede.
  */
-export async function fetchResults({ orgId, memberId, criteria, orden = 'reciente' }: SearchQuery): Promise<SearchPage> {
+export async function fetchResults({
+  orgId,
+  memberId,
+  criteria,
+  orden = 'reciente',
+  favoritos: favoritosYaPedidos,
+}: SearchQuery): Promise<SearchPage> {
   let q = supabase
     .from('inventory_lines')
     .select(COLUMNS, { count: 'exact' })
@@ -481,7 +493,7 @@ export async function fetchResults({ orgId, memberId, criteria, orden = 'recient
 
   const rows = (data ?? []) as unknown as Row[];
   const [favoritos, consultadas] = await Promise.all([
-    fetchFavoriteOrgIds(memberId),
+    favoritosYaPedidos ?? fetchFavoriteOrgIds(memberId),
     fetchConsultedLineIds(orgId, rows.map((r) => r.id)),
   ]);
 

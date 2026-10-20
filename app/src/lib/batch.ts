@@ -1,4 +1,12 @@
-import { countryName, fetchResults, quantityLabel, type SearchPage, type SearchResultRow, EMPTY_CRITERIA } from './search';
+import {
+  countryName,
+  fetchFavoriteOrgIds,
+  fetchResults,
+  quantityLabel,
+  type SearchPage,
+  type SearchResultRow,
+  EMPTY_CRITERIA,
+} from './search';
 
 /**
  * Capa de datos de SRCH-02 (Panel Consolidado de Búsqueda por Lotes), escrita a
@@ -167,19 +175,28 @@ export function summaryFileName(now: Date = new Date()): string {
 // Red
 // -----------------------------------------------------------------------------
 
-/** Cuántas referencias se consultan a la vez: cada una son tres llamadas. */
+/** Cuántas referencias se consultan a la vez: cada una son dos llamadas, más una de favoritos por lote. */
 export const BATCH_CONCURRENCY = 5;
 
 /**
  * Busca cada referencia con `fetchResults`, con concurrencia acotada y **en el
  * orden de la lista**. Un fallo en una referencia no tumba las demás: queda en su
  * `error`, y la pantalla lo enseña en su tarjeta.
+ *
+ * Los favoritos del miembro se piden **una vez por lote** y se reparten (`F-274`): antes
+ * cada referencia volvía a pedir la misma lista. Si esa petición falla, falla en cada
+ * referencia como fallaba antes, y la tarjeta lo dice.
  */
 export async function fetchBatchResults(
   refs: string[],
   ctx: { orgId: string; memberId: string },
 ): Promise<BatchResult[]> {
   const out: BatchResult[] = new Array(refs.length);
+  if (refs.length === 0) return out;
+  const favoritos = fetchFavoriteOrgIds(ctx.memberId);
+  // Cada referencia lo espera por su cuenta, después de su consulta: sin esto, un fallo temprano
+  // se vería como «promesa rechazada sin manejar» antes de que la primera llegue a esperarlo.
+  favoritos.catch(() => {});
   let next = 0;
   async function worker() {
     while (next < refs.length) {
@@ -187,7 +204,12 @@ export async function fetchBatchResults(
       const reference = refs[i]!;
       try {
         // Por cantidad: el «Máx» de la tarjeta tiene que estar entre las filas que llegan aunque haya más de 200.
-        const page = await fetchResults({ ...ctx, criteria: { ...EMPTY_CRITERIA, partNumber: reference }, orden: 'cantidad' });
+        const page = await fetchResults({
+          ...ctx,
+          criteria: { ...EMPTY_CRITERIA, partNumber: reference },
+          orden: 'cantidad',
+          favoritos,
+        });
         out[i] = { reference, page, error: null };
       } catch (e) {
         out[i] = { reference, page: null, error: (e as { message?: string })?.message ?? String(e) };

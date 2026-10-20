@@ -19,6 +19,7 @@ const fetchResults = vi.fn<(q: SearchQuery) => Promise<SearchPage>>();
 vi.mock('./search', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./search')>()),
   fetchResults: (q: SearchQuery) => fetchResults(q),
+  fetchFavoriteOrgIds: async () => new Set<string>(),
 }));
 
 const { parseReferences, fetchBatchResults, MAX_BATCH } = await import('./batch');

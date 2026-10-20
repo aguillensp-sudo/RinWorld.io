@@ -5,6 +5,7 @@ const fetchResults = vi.fn();
 vi.mock('./search', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./search')>()),
   fetchResults: (q: unknown) => fetchResults(q),
+  fetchFavoriteOrgIds: async () => new Set<string>(),
 }));
 
 const {

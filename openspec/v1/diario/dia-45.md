@@ -30,3 +30,26 @@ del día 44. Se propusieron cuatro líneas sin dependencias y el PO eligió dos 
 - **La suite e2e local de la mañana** dio 164 verdes y 9 rojos, todos búsquedas colgadas en «Buscando...» en
   `bearingworld-e2e`, también sin el lote corriendo. La CI de los mismos commits salió verde.
 - **No se tocó** Vertex, AWS, `search.ts` para `F-254`, ni las cuentas reales de JULSA. Sin llamadas al runner de VERA.
+
+## Tarde · pantalla de suspensión (sesión lanzada desde la principal)
+
+- **Lo pedido:** cerrar `billing-subscription/automatic-suspension#2` y `community-forum/active-account-access#2`, que
+  la decisión del PO de hoy (suspensión manual desde ADMIN-02) deja a la vista: un miembro de una suspendida entraba
+  al shell.
+- **Cliente.** `loadProfile` pide `status` en el mismo embed de `organizations` (la política
+  `organizations_select_approved` deja leer la propia aunque no sea APPROVED, comprobado en `pg_policies`). Con
+  `SUSPENDED` y un miembro no revocado, el estado es `suspended` y `App` pinta `screens/Suspended.tsx` en lugar del
+  shell: sin menú, sin VERA, sin foro. Un revocado sigue saliendo por `isRevoked`. El Operador no tiene organización.
+  No va a `cabeceras.test.ts` / `padding.test.ts` ni a `veraScreenName`: es una pantalla fuera del shell, como el login.
+- **La «RLS que oculta el inventario» no era la RLS (`F-275`).** `app.visible_inventory_owner_ids()` no mira
+  `organizations.status`; lo que lo saca de la búsqueda es el `!inner` de `search.ts` con `organizations`. El banco
+  (`09` §3) lo fija con control: con el cruce, 0 filas; sin él, 1. Fuera de la búsqueda se lee, los miembros de la
+  suspendida conservan permisos en la base, y en el foro sus publicaciones salen sin nombre de organización.
+  Propuesta en el hallazgo, para la tarea de permisos con `F-192`/`F-272`. No se aplicó nada en la base.
+- **Pruebas, a mano:** `session.suspension.escenarios.test.ts` (la puerta y su consulta) y
+  `App.suspension.escenarios.test.tsx` (la pantalla sustituye al shell, control con la org activa). Banco verde en
+  local. La matriz queda en 108 CUBIERTO y 38 NO_IMPLEMENTADO.
+- **La CI de `b4a97e3` (solo docs) salió roja** en dos e2e de la instancia (`batch-search` y `zz-h5-negociacion`,
+  10:10–10:23 UTC), sin nada de código detrás.
+- **`6b9a34e` verde (run `39407772750`) y desplegado**, comprobado en el bundle de producción por contenido. Dos e2e (`forum-thread`, `organization-profile`) pasaron al reintento: la instancia sigue inestable (`F-259`).
+- **Sin probar en un navegador con una cuenta suspendida**: no se suspendió ninguna organización real.

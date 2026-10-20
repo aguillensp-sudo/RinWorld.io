@@ -12,7 +12,7 @@ sobrescribe al cierre de cada día con el ritual de `CLAUDE.md` §11. Historia e
 Empieza por §6 y luego §3.
 ---
 
-**Día 45 de V1 · 20-oct-2026, cierre a las 09:40 UTC · Estado: CERRADO.** Una sesión: `F-256` cerrado (`0068`), los 4 SIN_PRUEBA de la matriz a prueba, dos e2e nuevos y `F-274` (lote de 50 en más de 5 s) localizado y aceptado como divergencia. Detalle en `diario/dia-45.md`.
+**Día 45 de V1 · 20-oct-2026, cierre a las 10:40 UTC · Estado: CERRADO.** Mañana: `F-256` cerrado (`0068`), los 4 SIN_PRUEBA a prueba, dos e2e y `F-274` aceptado como divergencia. Tarde: pantalla de suspensión (`automatic-suspension#2` y `active-account-access#2` CUBIERTO) y `F-275`. Detalle en `diario/dia-45.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -26,9 +26,15 @@ Empieza por §6 y luego §3.
 | `vera` desplegada con cupo y tope de opciones | `get_edge_function` (v45) | Contiene `vera_abrir_turno`, `vera_cerrar_turno`, `SUPABASE_ANON_KEY`, ninguna clave de servicio, y «nunca ofrezcas más de tres a la vez» |
 | App desplegada con los favoritos por lote | Bundle de `rin-world-io.vercel.app` (`index-HYJ-5EFd.js`) | `favoritos:` aparece 2 veces (destructurado y llamada) |
 | Banco con `08_vera_uso.sql` y `09_sin_prueba_sql.sql` | `supabase/tests/run.sh` en Docker, local | ESQUEMA, CATÁLOGO y FRESCURA en verde |
-| **Matriz** | `cut -d';' -f5 … \| uniq -c` y `harness.core.trazabilidad.problemas()` vacío | 106 CUBIERTO, 21 DIVERGE, 40 NO_IMPLEMENTADO, 15 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185 |
+| **Matriz** | `harness.core.trazabilidad.resumen()` y `problemas()` vacío | 108 CUBIERTO, 21 DIVERGE, 38 NO_IMPLEMENTADO, 15 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185 |
+| **Miembro de una org SUSPENDED → pantalla de suspensión** | `session.suspension.escenarios.test.ts`, `App.suspension.escenarios.test.tsx` | `loadProfile` da `suspended`; `App` pinta `Suspended.tsx` en lugar del shell (sin foro ni VERA) |
+| Pantalla de suspensión desplegada | Bundle de `rin-world-io.vercel.app` (`index-CAk8-7IE.js`) | «Organización suspendida», `org-suspended` y el texto del operador presentes; «Rinworld» 0 veces |
+| La propia org se lee aunque no sea APPROVED | `pg_policies` (`organizations_select_approved`) | `status = 'APPROVED' or id = app.current_org_id()` |
+| **Qué oculta el inventario de una suspendida (`F-275`)** | `pg_policies` + `pg_get_functiondef(visible_inventory_owner_ids)`; banco `09` §3 | No la RLS de `inventory_lines` (no mira `organizations.status`): el `!inner` de la búsqueda. Sin cruce se lee |
+| Foro de una suspendida | Banco `09` §3; `pg_get_viewdef` de `forum_thread_list`/`forum_post_detail` | Visible para los demás, por `LEFT JOIN`: sin nombre de la organización autora |
+| `tsc` y `vitest` (pantalla de suspensión) | Local | `tsc` limpio; 2854 verdes, 135 saltadas. Banco en Docker verde |
 | `tsc` y `vitest` del último código (`3c24417`) | Local | `tsc` limpio; 2847 verdes, 135 saltadas |
-| CI del día | `gh run list` | `cdefbe9`, `76b09ba`, `9eab663`, `3c24417` verdes con despliegue; **`4f4f8a7` roja** en `zz-h5-negociacion` por colisión con un A/B local (`F-262`, ver §6); `31e0fb1` (run `39401138058`) verde con despliegue |
+| CI del día | `gh run list` | `cdefbe9`, `76b09ba`, `9eab663`, `3c24417` verdes con despliegue; **`4f4f8a7` roja** en `zz-h5-negociacion` por colisión con un A/B local (`F-262`, ver §6); `31e0fb1` (run `39401138058`) verde con despliegue; **`b4a97e3` (solo docs) roja** en dos e2e de la instancia (`batch-search`, `zz-h5`); **`6b9a34e` (run `39407772750`) verde con despliegue**, con `forum-thread` y `organization-profile` verdes al reintento |
 | Argon2id no bloquea el hilo (`key-generation#2`) | e2e en Chromium contra `bearingworld-e2e`, tres corridas | 260–411 ms de generación, ninguna `longtask`, 17 ms de hueco máximo de rAF; el control de 300 ms salta |
 | Dónde se va el tiempo del lote (`F-274`) | Traza de Playwright + `edge_logs` de `bearingworld-e2e`, 08:57 UTC | Base 20–45 ms por petición; navegador 125–185 ms; dos viajes seguidos por referencia; paradas de hasta 3,7 s |
 | Favoritos una vez por lote | Traza de las 6 corridas del A/B | `favorite_distributors`: 52 → 2 por lote. Tiempo: sin mejora demostrable (solo el par 3 está limpio) |
@@ -40,7 +46,7 @@ Empieza por §6 y luego §3.
 - **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado.** Vertex: los 3 cupos pedidos el 14-oct fueron **denegados** el 16-oct (`vera-vertex-eu-migracion.md` §7). Alternativa: Bedrock UE, con Sonnet 4.6 funcionando y Sonnet 5 **sin acceso ni cupo** (`vera-bedrock-eu-plan.md`). **El modelo ya está cambiado**, solo queda el proveedor.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. Medida contra Sonnet 5 (`F-258`): bien en guía, trampas, memoria y pantalla; falla un recuento (B7) y el cambio de idioma a mitad (`F-264`). **Desde el 20-oct:** cupo de 150 llamadas por usuario y hora, `usage` de cada llamada en `vera_usage` (`0068`, `F-256`) y, si caben más de tres lecturas, ofrece tres opciones como mucho.
 - **Corriente B · Fábrica — EN MARCHA, sin cambios desde el 17-oct.** `INV-04` del arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4, **C5 NO del PO** (`F-261`). Cifras 7 y 8 cerradas. La próxima serie parte del prompt con `_nota*` (`F-263`) y no es comparable con la 7 y la 8.
-- **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **106 de 185 con prueba que los ejerce y corre en CI**, 15 parciales, 40 NO implementados, 21 divergencias (20 aceptadas y 1 aplazada, `F-272`), **0 sin prueba**, 3 fuera. Nivel 2 hecho (`F-266`). **Lo de hoy:** `09_sin_prueba_sql.sql` (suspensión sin purga, CUBIERTO; tope de 500.000 líneas, DIVERGE aceptada el 20-oct: sin aviso al administrador), reglas de tono y de opciones en el prompt (PARCIAL «solo modelo real»), `key-generation#2` CUBIERTO por e2e y `batch-search#1` DIVERGE aceptada (`F-274`). Quedan 4 «solo e2e» que necesitan llamadas reales, un correo real o escribir en cuentas reales (§3.3). Niveles 4 y 5 aparcados.
+- **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **108 de 185 con prueba que los ejerce y corre en CI**, 15 parciales, 38 NO implementados, 21 divergencias (20 aceptadas y 1 aplazada, `F-272`), **0 sin prueba**, 3 fuera. Nivel 2 hecho (`F-266`). **Lo de hoy:** pantalla de suspensión (`automatic-suspension#2`, `active-account-access#2` CUBIERTO), `09_sin_prueba_sql.sql` (suspensión sin purga, CUBIERTO; tope de 500.000 líneas, DIVERGE aceptada el 20-oct: sin aviso al administrador), reglas de tono y de opciones en el prompt (PARCIAL «solo modelo real»), `key-generation#2` CUBIERTO por e2e y `batch-search#1` DIVERGE aceptada (`F-274`). Quedan 4 «solo e2e» que necesitan llamadas reales, un correo real o escribir en cuentas reales (§3.3). Niveles 4 y 5 aparcados.
 
 ## 3 · Qué toca, en este orden
 
@@ -50,6 +56,7 @@ Empieza por §6 y luego §3.
    - **`F-272`** se hace junto con otra tarea de permisos, p. ej. `F-192` (`BACKLOG-V1.md`). **`F-269` §2** queda para después del arranque.
    - **Casado de referencias (`F-254`):** el PO trae definiciones y avisa. **No se toca `search.ts` para eso hasta entonces.**
    - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 (`eu.anthropic.claude-sonnet-5`). Vertex: solo con un caso de soporte de pago; **no enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir ~20 preguntas (~1 $, plan §9).
+   - **Pantalla de suspensión (`Suspended.tsx`):** no hay HTML aprobado; el texto es mío (organización suspendida, datos conservados, contactar con el operador, cerrar sesión). Revisarlo cuando prepare el frontend. Y decidir con `F-275` si la suspensión se aplica también en la base.
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción cuando se acerquen datos reales o terceros (`F-067`).
 3. **Los 4 «solo e2e» que quedan en la matriz**, cada uno con su permiso: `single-reference-search#3` y los de VERA, con llamadas reales al runner (visto bueno y tope de gasto del PO); `inventory-upload-channels#3`, con un correo real del PO desde un remitente autorizado; `dual-entry-routes#2` y `user-revocation#1`, que escriben en cuentas reales.
 4. **VERA, próxima pasada del runner** (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, `VERA_REAL_TOPE_USD`): B7, A24, L6 (`F-264`) y un caso de «más de tres lecturas» para la regla nueva. Toda llamada real, con el visto bueno del PO.
@@ -86,6 +93,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-272`** · el uuid del autor del foro es legible entre organizaciones | Junto con otra tarea de permisos (`F-192`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
+| 🟡 | **`F-275`** · el inventario de una suspendida lo oculta el cruce de la búsqueda, no la RLS; sus miembros conservan permisos en la base | Junto con `F-192`/`F-272` |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
 
@@ -104,6 +112,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Cuánto se gana con `0047`/`0051`/`0062`** con volumen, y cómo se comporta la búsqueda cruzada con volumen real en Supabase.
 - **Si Argon2id (64 MiB) entra en un móvil modesto**: en un escritorio tarda ~400 ms y no bloquea; en un móvil, sin medir.
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.
+- **Cómo se ve la pantalla de suspensión con una cuenta real**, y qué ve un miembro que ya tenía la sesión abierta al suspenderse su organización: la puerta solo se evalúa al cargar la sesión.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
 - **Qué permisos tiene la clave de AWS de `ingest-email`**, si el MFA y el SSO de AWS están bien, y si un cliente real puede enviar sin DMARC ni DKIM (`F-252`).
 

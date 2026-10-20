@@ -104,8 +104,8 @@ test.describe('SRCH-02 · búsqueda por lotes real (ALPHA)', () => {
    * La duración se anota en el informe de cada corrida (F-259).
    *
    * ⚠ **El tope de 5 s NO se cumple hoy y por eso no se aserta (`F-274`)**: medido el 20-oct contra
-   * `bearingworld-e2e`, 13,1 s y 7,1 s con `BATCH_CONCURRENCY = 5`, y 7,5 s y >15 s con 10; la base contesta en
-   * ~100 ms, así que la causa no está localizada. Cuando `F-274` se cierre, se aserta `duracion < 5_000`.
+   * `bearingworld-e2e`, 13,1 s y 7,1 s con `BATCH_CONCURRENCY = 5`, y 7,5 s y >15 s con 10; la traza lo pone en
+   * la latencia (dos viajes por referencia) más paradas de la instancia. Cuando `F-274` se cierre, se aserta `duracion < 5_000`.
    */
   test('batch-search#1 · 50 referencias en formato mixto se interpretan todas y se resuelven contra la base real', async ({ page }) => {
     test.setTimeout(90_000);

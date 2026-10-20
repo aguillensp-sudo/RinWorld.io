@@ -101,7 +101,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; Vertex denegado (16-oct); Bedrock UE: 4.6 sí, Sonnet 5 sin acceso | AWS + PO |
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-272`** · el uuid del autor del foro es legible entre organizaciones | Junto con otra tarea de permisos (`F-192`) |
-| 🟡 | **`F-274`** · el lote de 50 referencias tarda 7–33 s (spec: 5 s); la base contesta en ~100 ms, causa sin localizar | Claude Code: medir con la traza; después el PO |
+| 🟡 | **`F-274`** · el lote de 50 referencias tarda 7–33 s (spec: 5 s); la traza: dos viajes por referencia (~400 ms de latencia) más paradas de la instancia; la base trabaja 20–45 ms | PO: aceptar, quitar el viaje redundante o RPC de lote |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta lista en `supabase/propuestas/F-192/` | PO |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |

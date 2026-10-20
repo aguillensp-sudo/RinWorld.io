@@ -26,7 +26,7 @@ Empieza por §6 y luego §3.
 | `vera` desplegada con cupo y tope de opciones | `get_edge_function` (v45) | Contiene `vera_abrir_turno`, `vera_cerrar_turno`, `SUPABASE_ANON_KEY`, ninguna clave de servicio, y «nunca ofrezcas más de tres a la vez» |
 | App desplegada con los favoritos por lote | Bundle de `rin-world-io.vercel.app` (`index-HYJ-5EFd.js`) | `favoritos:` aparece 2 veces (destructurado y llamada) |
 | Banco con `08_vera_uso.sql` y `09_sin_prueba_sql.sql` | `supabase/tests/run.sh` en Docker, local | ESQUEMA, CATÁLOGO y FRESCURA en verde |
-| **Matriz** | `cut -d';' -f5 … \| uniq -c` y `harness.core.trazabilidad.problemas()` vacío | 106 CUBIERTO, 20 DIVERGE, 40 NO_IMPLEMENTADO, 16 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185 |
+| **Matriz** | `cut -d';' -f5 … \| uniq -c` y `harness.core.trazabilidad.problemas()` vacío | 106 CUBIERTO, 21 DIVERGE, 40 NO_IMPLEMENTADO, 15 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185 |
 | `tsc` y `vitest` del último código (`3c24417`) | Local | `tsc` limpio; 2847 verdes, 135 saltadas |
 | CI del día | `gh run list` | `cdefbe9`, `76b09ba`, `9eab663`, `3c24417` verdes con despliegue; **`4f4f8a7` roja** en `zz-h5-negociacion` por colisión con un A/B local (`F-262`, ver §6); `31e0fb1` (run `39401138058`) verde con despliegue |
 | Argon2id no bloquea el hilo (`key-generation#2`) | e2e en Chromium contra `bearingworld-e2e`, tres corridas | 260–411 ms de generación, ninguna `longtask`, 17 ms de hueco máximo de rAF; el control de 300 ms salta |
@@ -40,16 +40,13 @@ Empieza por §6 y luego §3.
 - **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado.** Vertex: los 3 cupos pedidos el 14-oct fueron **denegados** el 16-oct (`vera-vertex-eu-migracion.md` §7). Alternativa: Bedrock UE, con Sonnet 4.6 funcionando y Sonnet 5 **sin acceso ni cupo** (`vera-bedrock-eu-plan.md`). **El modelo ya está cambiado**, solo queda el proveedor.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. Medida contra Sonnet 5 (`F-258`): bien en guía, trampas, memoria y pantalla; falla un recuento (B7) y el cambio de idioma a mitad (`F-264`). **Desde el 20-oct:** cupo de 150 llamadas por usuario y hora, `usage` de cada llamada en `vera_usage` (`0068`, `F-256`) y, si caben más de tres lecturas, ofrece tres opciones como mucho.
 - **Corriente B · Fábrica — EN MARCHA, sin cambios desde el 17-oct.** `INV-04` del arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4, **C5 NO del PO** (`F-261`). Cifras 7 y 8 cerradas. La próxima serie parte del prompt con `_nota*` (`F-263`) y no es comparable con la 7 y la 8.
-- **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **106 de 185 con prueba que los ejerce y corre en CI**, 16 parciales, 40 NO implementados, 20 divergencias (19 aceptadas y 1 aplazada, `F-272`), **0 sin prueba**, 3 fuera. Nivel 2 hecho (`F-266`). **Lo de hoy:** `09_sin_prueba_sql.sql` (suspensión sin purga, CUBIERTO; tope de 500.000 líneas, PARCIAL porque falta el aviso al administrador), reglas de tono y de opciones en el prompt (PARCIAL «solo modelo real»), `key-generation#2` CUBIERTO por e2e y `batch-search#1` DIVERGE aceptada (`F-274`). Quedan 4 «solo e2e» que necesitan llamadas reales, un correo real o escribir en cuentas reales (§3.3). Niveles 4 y 5 aparcados.
+- **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **106 de 185 con prueba que los ejerce y corre en CI**, 15 parciales, 40 NO implementados, 21 divergencias (20 aceptadas y 1 aplazada, `F-272`), **0 sin prueba**, 3 fuera. Nivel 2 hecho (`F-266`). **Lo de hoy:** `09_sin_prueba_sql.sql` (suspensión sin purga, CUBIERTO; tope de 500.000 líneas, DIVERGE aceptada el 20-oct: sin aviso al administrador), reglas de tono y de opciones en el prompt (PARCIAL «solo modelo real»), `key-generation#2` CUBIERTO por e2e y `batch-search#1` DIVERGE aceptada (`F-274`). Quedan 4 «solo e2e» que necesitan llamadas reales, un correo real o escribir en cuentas reales (§3.3). Niveles 4 y 5 aparcados.
 
 ## 3 · Qué toca, en este orden
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de CADA corrida contra `bearingworld-e2e`** (Playwright o arnés): `gh run list --branch mvp/bootstrap --status in_progress`, en ese momento y no una vez por sesión, y avisar a las demás sesiones vivas. **Tu propio push lanza el e2e de la CI** (~8 min): o esperas a que acabe o no tocas la instancia. Así se rompió `4f4f8a7` el 20-oct (`F-262`). Si `watchers.spec.ts` cae por «falta el estado …», mira primero si corrió `fixture.setup.ts` (`F-270`).
 2. **Del PO:**
-   - **`inventory-line-lifecycle#3`:** la base bloquea la línea 500.001 con el motivo, pero no hay aviso al administrador (no hay notificaciones, `0056`). Aceptar como divergencia o pedir el aviso.
-   - **Cuscinetti Padana, 0 días hoy y sin barrido automático:** nada la suspende sola. Decidir si se engancha `app.billing_evaluate_expirations()` a `pg_cron` o se deja manual (ADMIN-02). **No se toca sin decisión.**
-   - **El cupo de VERA (150/h) lo puso Claude Code**, no el PO: confirmarlo o cambiarlo en `vera_cupo_por_hora()`.
    - **`F-272`** se hace junto con otra tarea de permisos, p. ej. `F-192` (`BACKLOG-V1.md`). **`F-269` §2** queda para después del arranque.
    - **Casado de referencias (`F-254`):** el PO trae definiciones y avisa. **No se toca `search.ts` para eso hasta entonces.**
    - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 (`eu.anthropic.claude-sonnet-5`). Vertex: solo con un caso de soporte de pago; **no enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir ~20 preguntas (~1 $, plan §9).
@@ -90,7 +87,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-272`** · el uuid del autor del foro es legible entre organizaciones | Junto con otra tarea de permisos (`F-192`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
 | 🟡 | **`F-192` · riesgo aceptado**, privilegios por defecto anchos; propuesta en `supabase/propuestas/F-192/` | PO |
-| 🟡 | **Sin barrido automático de vencimientos**: `billing_evaluate_expirations` no está en `pg_cron` | PO (§3.2) |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
 
 ## 6 · Lo que este fichero NO sabe

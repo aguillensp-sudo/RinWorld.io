@@ -74,3 +74,6 @@ concreta hizo algo en el foro.
 - **No se toca el código:** `retries: 1` y 15 s ya estaban desde `F-259`, y `F-259` dejó escrito que no se subía otra
   vez el número. Pregunta al PO en el relevo §3.2: comprobar el «Disk IO balance», no correr e2e en pushes de solo
   docs, o pasar a Pro (≈ 35 $/mes con producción incluida).
+- **Después, con el PO en el panel** (*Settings → Infrastructure* de `bearingworld-e2e`): Disk IO balance 99 %
+  (mínimo de 7 días), CPU 16 %, memoria 58 %. **La hipótesis del disco cae**: las paradas no las provoca nuestra
+  carga, sino el entorno compartido de Free. Pasar a Pro deja de ser una apuesta segura; (b) no depende de la causa.

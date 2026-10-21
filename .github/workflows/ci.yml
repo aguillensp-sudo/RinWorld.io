@@ -80,10 +80,58 @@ jobs:
           # dos bases). El script no lo imprime.
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
+  # F-278 (decisión del PO, 21-oct): un push que solo trae documentación no corre el
+  # e2e ni despliega. `bearingworld-e2e` es una instancia Free que se para hasta 56 s
+  # por el entorno compartido (no por nuestra carga), y el 20-oct tumbó tres commits
+  # de solo docs. El bundle y las funciones no cambian con un `.md`, así que no hay
+  # nada que probar contra la base ni que desplegar.
+  #
+  # Se compara contra el último run VERDE de la rama, no contra `github.event.before`:
+  # si un push de código se cancela (cancel-in-progress) o sale rojo y detrás viene uno
+  # de docs, el diff incluye el código y el e2e y el despliegue corren. Ante cualquier
+  # duda (sin run verde, historia reescrita, error de la API) el resultado es "false":
+  # se corre todo. Esquema, app, migraciones y arnés corren siempre.
+  cambios:
+    name: ¿Solo documentación? (F-278)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      solo_docs: ${{ steps.mira.outputs.solo_docs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: mira
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          solo=false
+          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF" = refs/heads/mvp/bootstrap ]; then
+            base=$(gh run list --workflow ci.yml --branch mvp/bootstrap --event push --status success \
+              --limit 1 --json headSha -q '.[0].headSha' 2>/dev/null || true)
+            if [ -n "$base" ] && git merge-base --is-ancestor "$base" "$GITHUB_SHA" 2>/dev/null; then
+              git diff --name-only "$base" "$GITHUB_SHA" > cambiados.txt
+              echo "Desde el último run verde ($base):"; cat cambiados.txt
+              # Documentación = openspec/, docs/ o un .md de la raíz. Nada de app/,
+              # supabase/, harness/ ni .github/.
+              if [ -s cambiados.txt ] && ! grep -qvE '^(openspec/|docs/|[^/]+\.md$)' cambiados.txt; then
+                solo=true
+              fi
+            else
+              echo "Sin run verde previo alcanzable desde $GITHUB_SHA: se corre todo."
+            fi
+          fi
+          echo "solo_docs=$solo"
+          echo "solo_docs=$solo" >> "$GITHUB_OUTPUT"
+
   e2e:
     name: Playwright · puerta de las dos cuentas
     runs-on: ubuntu-latest
-    needs: [app, migraciones]
+    needs: [app, migraciones, cambios]
+    # Si e2e se salta, los dos despliegues también (dependen de él): F-278.
+    if: needs.cambios.outputs.solo_docs != 'true'
     # Entregable 1 de Fundación V1 (entornos como código): este job corre
     # contra el proyecto Supabase aislado (`bearingworld-e2e`), no contra
     # producción -- ver openspec/v1/entornos.md.

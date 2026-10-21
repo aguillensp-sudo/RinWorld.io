@@ -123,6 +123,22 @@ antes, el *job* sale rojo con `FALTA en …` y no se despliega nada, que es lo q
 `node app/scripts/paridad-migraciones.mjs --de-fichero registradas.json`, con
 `{ "produccion": [{version,name}…], "e2e": […] }`.
 
+## Un push de solo documentación no corre el e2e ni despliega (21-oct-2026, `F-278`)
+
+`bearingworld-e2e` es una instancia Free (Nano) que se para hasta 56 s por el entorno compartido, no por
+nuestra carga (Disk IO balance 99 % en el panel). El 20-oct eso tumbó tres commits de solo docs. Decisión
+del PO: esos pushes no tocan la instancia.
+
+**El mecanismo:** el *job* `cambios` de `ci.yml` saca la lista de ficheros desde el **último run verde** de
+`mvp/bootstrap` hasta el commit del push. Si todos están en `openspec/`, en `docs/` o son un `.md` de la raíz,
+`e2e` se salta, y con él `deploy` y `deploy-app`, que dependen de él. Esquema, app, migraciones y arnés corren
+siempre. El run queda en verde.
+
+Por qué el último verde y no el commit anterior: si un push de código se cancela (`cancel-in-progress`) o sale
+rojo y detrás viene uno de docs, el diff incluye el código y se corre todo. Así, un run verde siempre deja
+desplegado lo que hay en su commit. Ante cualquier duda (sin run verde, historia reescrita, error de la API)
+se corre todo. En PRs y en otras ramas, todo.
+
 ## Scripts nuevos (7-sep-2026)
 
 - `app/scripts/demo-reset-e2e-project.mjs` — resiembra los cinco hilos congelados del

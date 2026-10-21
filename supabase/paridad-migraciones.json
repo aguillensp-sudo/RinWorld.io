@@ -1,0 +1,29 @@
+{
+  "_que_es": "Diferencias conocidas entre supabase/migrations/ y lo registrado en producción y bearingworld-e2e (F-277). Las lee app/scripts/paridad-migraciones.mjs. Cada una lleva su motivo, comprobado contra el catálogo el día que se escribió. Una excepción que deja de darse hace fallar la comprobación: se quita, no se deja.",
+  "excepciones": [
+    {
+      "tipo": "falta",
+      "base": "produccion",
+      "migracion": "0016_reanchor_needs_a_where",
+      "motivo": "Se corrió como SQL suelto el día 15 y no quedó registrada. Su efecto está: demo_reanchor_freshness lleva WHERE en producción (pg_get_functiondef, 21-oct-2026), y 0059 la reescribió después."
+    },
+    {
+      "tipo": "sobra",
+      "base": "produccion",
+      "migracion": "sp3_spike_messages_realtime",
+      "motivo": "Spike SP-3 del 5-ago-2026, anterior al repo de migraciones. La tabla spike_messages ya no existe en producción (pg_class, 21-oct-2026)."
+    },
+    {
+      "tipo": "sobra",
+      "base": "produccion",
+      "migracion": "mvp_0011a_realtime_publication_portable",
+      "motivo": "Variante portable de 0011 aplicada solo en producción el 11-ago-2026; no tiene fichero. Lo que hace (threads y thread_items en supabase_realtime) está igual en las dos bases (pg_publication_tables, 21-oct-2026)."
+    },
+    {
+      "tipo": "sobra",
+      "base": "e2e",
+      "migracion": "0035b_watchers_revoke_table_defaults",
+      "motivo": "Revocaciones sobre watchers y watcher_list aplicadas solo en bearingworld-e2e el 24-sep-2026, sin fichero. 0071 deja los privilegios de tabla iguales en las dos bases (relacl de public idéntico, 21-oct-2026)."
+    }
+  ]
+}

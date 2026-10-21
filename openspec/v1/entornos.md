@@ -95,6 +95,34 @@ generará su preview.
 Con esto, `F-151`/entregable 1 quedan completos: producción por CI, preview por Git
 integration, sin duplicar el despliegue de producción.
 
+## Paridad de migraciones entre producción y ensayo (21-oct-2026, `F-277`)
+
+Las dos bases se migran **a mano, por el MCP** (`apply_migration`), migración a migración: la CI no
+corre `supabase db push` a propósito (CLAUDE.md §10.2). Eso dejó a `bearingworld-e2e` sin `0061`–`0064`
+ni `0068` durante días, con la CI en verde contra un esquema que no era el de producción.
+
+**El mecanismo:** el *job* `migraciones` de `ci.yml` corre en cada push y PR, y `e2e`, `deploy` y
+`deploy-app` dependen de él. Ejecuta `app/scripts/paridad-migraciones.mjs`, que compara:
+
+1. los ficheros de `supabase/migrations/`,
+2. `supabase_migrations.schema_migrations` de producción (`troxminloxkjwihwfevs`),
+3. la misma tabla de `bearingworld-e2e` (`ogdhyzgjjbbikjbkhxmu`),
+
+leídas por la Management API con el secreto `SUPABASE_TOKEN` (el mismo de la CD). **Solo compara, no
+aplica nada.** Falla con una línea por diferencia que dice la migración y la base (`FALTA en e2e …`,
+`SIN FICHERO en produccion …`).
+
+**Qué hacer cuando falla:** aplicar la migración que falta en la base que se nombra, por el MCP y con el SQL
+del fichero; o, si la diferencia es histórica y está comprobada, añadirla a `supabase/paridad-migraciones.json`
+con su motivo. Una excepción que deja de darse también hace fallar el *job*: se quita.
+
+**Orden al añadir una migración:** aplicarla a las dos bases **antes** de empujar su fichero. Si se empuja
+antes, el *job* sale rojo con `FALTA en …` y no se despliega nada, que es lo que tiene que pasar.
+
+**Sin token** (en local), la misma comparación sobre listas sacadas por el MCP:
+`node app/scripts/paridad-migraciones.mjs --de-fichero registradas.json`, con
+`{ "produccion": [{version,name}…], "e2e": […] }`.
+
 ## Scripts nuevos (7-sep-2026)
 
 - `app/scripts/demo-reset-e2e-project.mjs` — resiembra los cinco hilos congelados del

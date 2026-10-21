@@ -56,10 +56,34 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
 
+  # F-277 (21-oct-2026): `bearingworld-e2e` llevaba sin `0061`–`0064` ni `0068`, que
+  # producción sí tenía, y la suite pasaba contra un esquema que no era el real. Las
+  # dos bases se migran a mano por el MCP y nadie comparaba las listas. Este job compara
+  # `supabase/migrations/` con lo registrado en las dos, y `e2e` depende de él: un verde
+  # contra una base desfasada no significa nada.
+  #
+  # SOLO COMPARA, no aplica nada (CLAUDE.md §10.2). Sin `npm ci`: el script solo usa
+  # `node:` y `fetch`. Las diferencias históricas aceptadas, con su motivo, en
+  # `supabase/paridad-migraciones.json`.
+  migraciones:
+    name: Paridad de migraciones · repo, producción y e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Comparar migraciones
+        run: node app/scripts/paridad-migraciones.mjs
+        env:
+          # El mismo token de CI que despliega las funciones (scopeado a la org de las
+          # dos bases). El script no lo imprime.
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
+
   e2e:
     name: Playwright · puerta de las dos cuentas
     runs-on: ubuntu-latest
-    needs: app
+    needs: [app, migraciones]
     # Entregable 1 de Fundación V1 (entornos como código): este job corre
     # contra el proyecto Supabase aislado (`bearingworld-e2e`), no contra
     # producción -- ver openspec/v1/entornos.md.
@@ -194,7 +218,7 @@ jobs:
     # arrastra al otro. El orden VERA-primero de abajo ya no hace falta.
     name: Despliegue continuo · VERA (Supabase)
     runs-on: ubuntu-latest
-    needs: [schema, app, e2e, arnes]
+    needs: [schema, app, migraciones, e2e, arnes]
     if: github.event_name == 'push' && github.ref == 'refs/heads/mvp/bootstrap'
     # Entregable 1 de Fundación V1 (entornos como código) -- ver
     # openspec/v1/entornos.md. `staging` (el job `e2e`) tiene su propio proyecto
@@ -252,7 +276,7 @@ jobs:
   deploy-app:
     name: Despliegue continuo · app (Vercel)
     runs-on: ubuntu-latest
-    needs: [schema, app, e2e, arnes]
+    needs: [schema, app, migraciones, e2e, arnes]
     if: github.event_name == 'push' && github.ref == 'refs/heads/mvp/bootstrap'
     environment: production
     defaults:

@@ -139,8 +139,11 @@ describe('community-forum/reactions', () => {
     expect(tabla).not.toMatch(/org/i);
     expect(todo).not.toMatch(/unique[^;]*forum_reactions[^;]*org|forum_reactions[^;]*unique[^;]*org/i);
 
-    const vistaDetalle = todo.match(/create view public\.forum_post_detail[\s\S]*?;/i)?.[0] ?? '';
-    expect(vistaDetalle).toMatch(/count\(r\.member_id\)/i);
+    // La definición vigente es la última. Desde 0072 (F-276) cuenta filas por `post_id` en vez de
+    // `member_id` (que authenticated ya no lee): con la clave (post, miembro), una fila es un miembro.
+    const detalles = todo.match(/create (?:or replace )?view public\.forum_post_detail[\s\S]*?;/gi) ?? [];
+    const vistaDetalle = detalles[detalles.length - 1] ?? '';
+    expect(vistaDetalle).toMatch(/count\(r\.(?:member_id|post_id)\)/i);
     expect(vistaDetalle).not.toMatch(/count\(distinct[^)]*org/i);
   });
 

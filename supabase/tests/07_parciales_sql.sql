@@ -553,6 +553,72 @@ begin
 end
 $$;
 
+-- F-276 · quién reaccionó no se lee con sesión (0072), y reaccionar, contar y quitar la propia siguen funcionando.
+-- Hasta 0072 forum_reactions daba SELECT de tabla entera y otra organización leía member_id. Ahora el SELECT es
+-- solo de post_id y reacted_by_me sale de app.forum_reacted_by_me, que responde por quien llama.
+do $$
+declare n bigint; mia boolean; bloqueado boolean;
+        post constant uuid := '7c000000-0000-4000-8000-000000000001';
+begin
+  assert not has_column_privilege('authenticated', 'public.forum_reactions', 'member_id', 'select'),
+    'F-276: authenticated no tiene SELECT sobre forum_reactions.member_id';
+  assert not has_function_privilege('anon', 'app.forum_reacted_by_me(uuid)', 'execute'),
+    'F-276: anon no ejecuta app.forum_reacted_by_me';
+
+  -- Control positivo: el miembro 52 (reaccionó en reactions#2) ve su reacción marcada y el recuento entero.
+  perform public.t7_como(52);
+  select reaction_count, reacted_by_me into n, mia from public.forum_post_detail where id = post;
+  assert n = 2 and mia, 'F-276: quien reaccionó ve su reacción marcada y el recuento (2), ve ' || n || '/' || mia;
+  reset role;
+
+  -- Otra organización (51, no reaccionó): mismo recuento, no marcada, y member_id denegado por tabla y por filtro.
+  perform public.t7_como(51);
+  select reaction_count, reacted_by_me into n, mia from public.forum_post_detail where id = post;
+  assert n = 2 and not mia, 'F-276: otra organización ve el recuento (2) y no la marca como suya, ve ' || n || '/' || mia;
+  select count(*) into n from public.forum_reactions where post_id = post;
+  assert n = 2, 'F-276: otra organización sigue contando las filas de la tabla por post_id';
+  begin
+    perform member_id from public.forum_reactions where post_id = post;
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'F-276: otra organización ya no lee member_id';
+  begin
+    perform 1 from public.forum_reactions where member_id = public.t7_mem(52);
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'F-276: ni filtra por member_id para adivinarlo';
+  -- Su DELETE no toca reacciones ajenas.
+  delete from public.forum_reactions where post_id = post;
+  reset role;
+  assert (select count(*) from public.forum_reactions where post_id = post) = 2,
+    'F-276: el DELETE de otra organización no borra reacciones ajenas';
+
+  -- La propia organización tampoco lee a su compañero (la spec dice «otros miembros»).
+  perform public.t7_como(53);
+  begin
+    perform member_id from public.forum_reactions where post_id = post;
+    bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true;
+  end;
+  assert bloqueado, 'F-276: tampoco se lee desde la propia organización';
+
+  -- Quitar la propia: sin filtrar por persona, solo cae la de quien llama, y la marca y el recuento lo reflejan.
+  delete from public.forum_reactions where post_id = post;
+  select reaction_count, reacted_by_me into n, mia from public.forum_post_detail where id = post;
+  assert n = 1 and not mia, 'F-276: al quitar la propia queda 1 y ya no está marcada, ve ' || n || '/' || mia;
+  -- Y volver a reaccionar sin decir quién: la firma la pone la base.
+  insert into public.forum_reactions (post_id) values (post);
+  select reaction_count, reacted_by_me into n, mia from public.forum_post_detail where id = post;
+  assert n = 2 and mia, 'F-276: reaccionar otra vez vuelve a 2 y marcada, ve ' || n || '/' || mia;
+  reset role;
+  assert (select count(*) from public.forum_reactions where post_id = post and member_id in (public.t7_mem(52), public.t7_mem(53))) = 2,
+    'F-276: las dos reacciones guardadas son de las dos personas que reaccionaron';
+  raise notice 'OK · F-276: recuentos y reacción propia intactos; member_id no se lee con sesión (0072)';
+end
+$$;
+
 -- not-e2ee-content #1 · el servidor lee el cuerpo en texto plano y la tabla no tiene columnas de cifrado.
 do $$
 declare cuerpo text;

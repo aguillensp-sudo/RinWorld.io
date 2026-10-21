@@ -28,6 +28,9 @@
   minutos y el mismo esquema de por medio, y los tests que fallaron no tocan lo que faltaba.
 - **Lista previa:** `tsc` limpio; `vitest` entero 2862 verdes, 135 saltadas. Banco y e2e no: no se tocó ni
   `supabase/migrations/` ni un e2e.
+- **En la CI real:** `bf14b90`, run `39661281919`: el job «Paridad de migraciones» verde a la primera. `SUPABASE_TOKEN`
+  lee las dos bases por `database/migrations` (72 y 72), así que no hizo falta un secreto nuevo. El resto del run
+  lo canceló el empuje de `522e2e1`; su run (`39661497466`) salió verde entero, con el job nuevo delante del e2e.
 
 ## F-276 · quién reaccionó en el foro (sesión de Claude Code, en paralelo con la de `F-277`)
 

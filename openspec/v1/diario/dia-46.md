@@ -57,3 +57,20 @@ concreta hizo algo en el foro.
   `52d2801` pasó (`F-278`).
 - La matriz no cambia: ningún escenario cambia de estado (`reactions#2` y `thread-and-reply-creation#3` siguen
   CUBIERTO).
+
+## F-278 · por qué salieron rojos los commits de solo docs del 20-oct (~20:55–21:05 UTC)
+
+- **Sin gasto y sin tocar la instancia:** los logs del 20-oct seguían en `bearingworld-e2e`, así que no hizo falta
+  reproducir (ninguna corrida de Playwright contra e2e).
+- **Concurrencia descartada:** en los `edge_logs` de cada ventana hay una sola IP cliente, del runner de GitHub. El
+  único solape del día fue el de `4f4f8a7` a las 09:07–09:14 con un local (`F-262`, ya sabido).
+- **Paradas de la instancia, confirmadas por las dos puntas:** el servidor (`origin_time` hasta 24,8, 29,7 y 13,3 s
+  en el minuto de cada caída) y el navegador (trazas del reintento: login sin respuesta en 15 s en
+  `backup-passphrase`; cinco lecturas colgadas en `zz-h5`).
+- **El 20-oct fue un día malo:** 9–22 peticiones de más de 10 s por hora y máx. 55,8 s; la suite tardó hasta
+  14,7 min. El 21-oct, con una carga por hora parecida, 1 petición de más de 4 s y la suite en ~5 min. El plan de la
+  organización es `free` (Nano). Encaja con el presupuesto diario de E/S de disco, sin comprobar: esa métrica solo
+  está en el panel.
+- **No se toca el código:** `retries: 1` y 15 s ya estaban desde `F-259`, y `F-259` dejó escrito que no se subía otra
+  vez el número. Pregunta al PO en el relevo §3.2: comprobar el «Disk IO balance», no correr e2e en pushes de solo
+  docs, o pasar a Pro (≈ 35 $/mes con producción incluida).

@@ -28,3 +28,29 @@
   minutos y el mismo esquema de por medio, y los tests que fallaron no tocan lo que faltaba.
 - **Lista previa:** `tsc` limpio; `vitest` entero 2862 verdes, 135 saltadas. Banco y e2e no: no se tocó ni
   `supabase/migrations/` ni un e2e.
+
+## F-276 · quién reaccionó en el foro (sesión de Claude Code, en paralelo con la de `F-277`)
+
+El PO aprobó cerrar `F-276` «siguiendo el mismo razonamiento» que `F-272`: otra organización no debe saber qué persona
+concreta hizo algo en el foro.
+
+- **Diagnóstico contra el catálogo de las dos bases.** `forum_reactions` daba SELECT de tabla entera a
+  `authenticated` (`relacl` = `ard`) y la política de SELECT deja leer a cualquier miembro activo: `member_id` se leía
+  desde otra organización. Lo único que lo necesitaba era `forum_post_detail.reacted_by_me` (`security_invoker`). El
+  cliente nunca lee la tabla: reacciona con INSERT y quita con DELETE por `post_id`.
+- **`0072_reacciones_del_foro_sin_persona.sql`.** SELECT solo de `post_id`; `reacted_by_me` desde
+  `app.forum_reacted_by_me(post_id)`, `SECURITY DEFINER`, que solo responde por `auth.uid()`; las dos vistas cuentan
+  `count(r.post_id)` (con la clave `(post_id, member_id)`, una fila es una persona). Mismas columnas y tipos: el
+  cliente no cambia. Las tres políticas de la tabla se reescriben con `(select …)`.
+- **Hallazgo de paso:** en `bearingworld-e2e` esas tres políticas estaban a pelo, sin lo de `0062`. Se dejó la nota a la
+  sesión de `F-277`, que compara las migraciones de las dos bases.
+- **Orden:** banco en Docker con el bloque nuevo de `07_parciales_sql.sql` → `apply_migration` en e2e → catálogo y
+  sesión simulada → e2e del foro local (18/18) → producción → catálogo y sesión simulada otra vez. Mismo md5 de las
+  vistas en las dos bases.
+- **Unitario:** `reactions#2` de `forum.parciales.test.ts` miraba la primera definición de la vista (`0033`); ahora la
+  última, y acepta `count(r.post_id)`.
+- **Commit `52d2801`**, CI `39659841898` verde entera con despliegue. El bundle desplegado no lee `forum_reactions`.
+- **La CI anterior (`d9c6344`, solo docs) salió roja** en `backup-passphrase.spec.ts:94` con 2 flaky más; la de
+  `52d2801` pasó (`F-278`).
+- La matriz no cambia: ningún escenario cambia de estado (`reactions#2` y `thread-and-reply-creation#3` siguen
+  CUBIERTO).

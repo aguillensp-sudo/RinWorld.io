@@ -77,3 +77,7 @@ concreta hizo algo en el foro.
 - **Después, con el PO en el panel** (*Settings → Infrastructure* de `bearingworld-e2e`): Disk IO balance 99 %
   (mínimo de 7 días), CPU 16 %, memoria 58 %. **La hipótesis del disco cae**: las paradas no las provoca nuestra
   carga, sino el entorno compartido de Free. Pasar a Pro deja de ser una apuesta segura; (b) no depende de la causa.
+- **El PO elige la (b).** `c0407d0`: job `cambios` en `ci.yml`. Compara contra el último run verde y no contra el
+  commit anterior, para que un push de docs detrás de uno de código cancelado o rojo no se salte el despliegue.
+  Clasificador probado en local con 10 casos (docs de `openspec/`, `docs/` y `.md` de la raíz, sí; `app/README.md`,
+  `harness/*.md`, `index.html`, `.github/`, vacío, no).

@@ -12,7 +12,7 @@ sobrescribe al cierre de cada día con el ritual de `CLAUDE.md` §11. Historia e
 Empieza por §6 y luego §3.
 ---
 
-**Día 46 de V1 · 21-oct-2026, ~21:05 UTC · Estado: CERRADO (F-277; F-278 con causa).** `F-278`: los rojos de solo docs del 20-oct fueron paradas de la instancia Free, no concurrencia; pregunta al PO en §3.2. `F-277` cerrado: job `migraciones` en la CI compara repo, producción y `bearingworld-e2e` antes del e2e; e2e tenía además sin `0061`–`0063` (aplicadas). `F-276` cerrado por su sesión (`0072`, `52d2801`). Detalle en `diario/dia-46.md`; lo del 20-oct, en `diario/dia-45.md`.
+**Día 46 de V1 · 21-oct-2026, ~22:10 UTC · Estado: CERRADO (F-277; F-278 mitigado).** `F-278`: los rojos de solo docs del 20-oct fueron paradas del entorno compartido de la instancia Free; desde `c0407d0` un push de solo docs no corre e2e ni despliega. `F-277` cerrado: job `migraciones` en la CI compara repo, producción y `bearingworld-e2e` antes del e2e; e2e tenía además sin `0061`–`0063` (aplicadas). `F-276` cerrado por su sesión (`0072`, `52d2801`). Detalle en `diario/dia-46.md`; lo del 20-oct, en `diario/dia-45.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -21,6 +21,7 @@ Empieza por §6 y luego §3.
 |---|---|---|
 | **Paridad de migraciones (`F-277`)** | `schema_migrations` de las dos bases por el MCP + `node app/scripts/paridad-migraciones.mjs --de-fichero` | 19:20 UTC roja (`0072` en e2e sin fichero, sesión de `F-276` en curso); tras `52d2801`, **verde**: 71 ficheros, 4 diferencias aceptadas (`supabase/paridad-migraciones.json`), 0 pendientes. **En la CI real (run `39661281919`, `bf14b90`) verde**: `SUPABASE_TOKEN` lee las dos bases por `database/migrations`; run `39661497466` (`522e2e1`) verde entero con el job delante del e2e |
 | **Causa de los rojos de solo docs del 20-oct (`F-278`)** | `edge_logs` de `bearingworld-e2e` por el MCP (por minuto y por hora, IP y ASN del cliente); trazas de Playwright del reintento de los runs `39405401498`, `39435623708`, `39463116694`; `gh run view --log` de los runs del 14 al 21-oct; `get_organization` | Una sola IP (el runner) en cada ventana: **sin solape**. Servidor parado al caer cada test (máx. 24,8 / 29,7 / 13,3 s); en el navegador, login sin respuesta en 15 s y cinco lecturas colgadas. 20-oct: 9–22 peticiones > 10 s por hora, máx. 55,8 s; 21-oct 19 h: 1 > 4 s, máx. 5,7 s. Organización en plan **free** (Nano). Panel (PO): Disk IO balance 99 % (mínimo de 7 días), CPU 16 %, memoria 58 % |
+| **`cambios` en la CI (`F-278`, opción b)** | Run `39683062624` (`c0407d0`, toca `ci.yml`) | Último verde hallado (`d9a00ca`), `solo_docs=false`: e2e (170 verdes) y los dos despliegues corrieron. El camino de solo docs se comprueba con el push de este relevo |
 | `bearingworld-e2e` = producción en `public`/`app` | Huella de `pg_policies`, `pg_proc` (cuerpo sin comentarios + ACL), `information_schema.columns`, `relacl`, `pg_indexes`, `pg_publication_tables` | Iguales tras aplicar `0061`, `0062` y `0063` a e2e; solo las tildes de dos mensajes de error difieren |
 | Tests de la comparación, `tsc`, `vitest` | Local | 8/8 de `paridad-migraciones.test.mjs`; `tsc` limpio; 2862 verdes, 135 saltadas |
 | **`0072` en `bearingworld-e2e` y en producción** (`F-276`) | `has_column_privilege`, `relacl`/`attacl`, `pg_policies`, `pg_proc`, `pg_get_viewdef` en las dos bases | `authenticated` sin SELECT de `forum_reactions.member_id` (solo `post_id`); `relacl` = `ad`; `app.forum_reacted_by_me` `SECURITY DEFINER`, sin `EXECUTE` para `anon`; 3 políticas con `(select …)`; vistas con el mismo md5 en las dos; 5 reacciones = suma de la vista |
@@ -63,7 +64,7 @@ Empieza por §6 y luego §3.
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de CADA corrida contra `bearingworld-e2e`** (Playwright o arnés): `gh run list --branch mvp/bootstrap --status in_progress`, en ese momento y no una vez por sesión, y avisar a las demás sesiones vivas. **Tu propio push lanza el e2e de la CI** (~8 min): o esperas a que acabe o no tocas la instancia. Así se rompió `4f4f8a7` el 20-oct (`F-262`). Si `watchers.spec.ts` cae por «falta el estado …», mira primero si corrió `fixture.setup.ts` (`F-270`).
 2. **Del PO:**
-   - **`F-278` (e2e de la CI, plan Free):** las paradas de `bearingworld-e2e` tumbaron tres runs de solo docs el 20-oct; `retries: 1` y 15 s ya estaban y no bastaron. **(a) hecha:** Disk IO balance 99 % (mínimo de 7 días): no es el disco ni nuestro consumo, es el entorno compartido de Free. Elegir: **(b)** que un push de solo docs no corra e2e ni despliegue (gratis; no arregla los de código); **(c)** organización a Pro: 25 $/mes, y producción y e2e a Micro ≈ **35 $/mes** en total (producción está en la misma organización); Micro también es compartida, **sin garantía de mejora**. No se ha tocado nada.
+   - **`F-278` (e2e de la CI, plan Free):** las paradas de `bearingworld-e2e` tumbaron tres runs de solo docs el 20-oct; `retries: 1` y 15 s ya estaban y no bastaron. El PO eligió **(b)** el 21-oct: un push de solo docs ya no corre e2e ni despliega (`c0407d0`, `entornos.md`). Queda **(c)**, Pro ≈ 35 $/mes con producción incluida y sin garantía de mejora, solo si un run con código vuelve a caer por una parada.
    - **`F-269` §2** queda para después del arranque.
    - **Casado de referencias (`F-254`):** el PO trae definiciones y avisa. **No se toca `search.ts` para eso hasta entonces.**
    - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 (`eu.anthropic.claude-sonnet-5`). Vertex: solo con un caso de soporte de pago; **no enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir ~20 preguntas (~1 $, plan §9).
@@ -104,7 +105,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; Vertex denegado (16-oct); Bedrock UE: 4.6 sí, Sonnet 5 sin acceso | AWS + PO |
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
-| 🟡 | **`F-278`** · paradas de la instancia Free de e2e (hasta 56 s) dejan rojos sin causa en el código; no es concurrencia | PO (§3.2: a, b o c) |
+| 🟡 | **`F-278`** · paradas de la instancia Free de e2e (hasta 56 s); mitigado para los pushes de solo docs, no para los de código | PO (§3.2, opción c) si vuelve a caer un run con código |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
 
 ## 6 · Lo que este fichero NO sabe

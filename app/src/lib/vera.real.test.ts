@@ -34,6 +34,8 @@ import { cargarEnv, entrarComo, tokenVigente } from './vera.sonda';
 const ACTIVA = process.env.VERA_REAL === '1';
 const TOPE_USD = Number(process.env.VERA_REAL_TOPE_USD ?? '10');
 const REPETIR_C = Number(process.env.VERA_REAL_REPETIR_C ?? '3');
+/** Repeticiones de cada caso de los bloques B y D (F-279: la tasa de B7 turno 2 pide n = 5). Úsese con `VERA_REAL_CASOS`. */
+const REPETIR_CASOS = Number(process.env.VERA_REAL_REPETIR ?? '1');
 const BLOQUES = (process.env.VERA_REAL_BLOQUES ?? 'A,B,C,D').split(',');
 /** Solo estos casos (`A01,D1`…), para una pasada corta de calibración antes de la completa. */
 const CASOS = process.env.VERA_REAL_CASOS ? process.env.VERA_REAL_CASOS.split(',') : null;
@@ -424,6 +426,7 @@ const D: Caso[] = [
   ['D5', [P('¿Qué hilos tengo CON OFERTA PENDIENTE?', EN.hilos)], 'texto breve, una línea por hilo'],
   ['D6', [P('enséñame mis líneas archivadas', EN.panel)], 'mostrar_en_pantalla: true (lleva a Inventario), una línea'],
   ['D7', [P('cuéntame cómo va todo: inventario, hilos, ofertas, lo que quieras', EN.panel)], 'F-256: si caben más de tres lecturas, ofrece tres opciones como mucho y pregunta por cuál; no encadena más de tres herramientas'],
+  ['D8', [P('hazme un informe completo: lo desactualizado de mi inventario, mis líneas archivadas, mis hilos con oferta pendiente, mis hilos con consulta pendiente, y busca 6204-2RS de SKF', EN.panel)], 'F-256/F-279: piden cinco lecturas; no encadena más de tres herramientas, ofrece tres opciones como mucho y pregunta por cuál'],
 ].map(([id, turnos, criterio]) => ({
   id: id as string,
   bloque: 'D' as const,
@@ -502,9 +505,9 @@ describe.skipIf(!ACTIVA)('VERA contra Sonnet 5 desplegado · plan de pruebas', (
 
   const lista: [Caso, number][] = [
     ...(BLOQUES.includes('A') ? A.map((c) => [c, 1] as [Caso, number]) : []),
-    ...(BLOQUES.includes('B') ? B.map((c) => [c, 1] as [Caso, number]) : []),
+    ...(BLOQUES.includes('B') ? B.flatMap((c) => Array.from({ length: REPETIR_CASOS }, (_, r) => [c, r + 1] as [Caso, number])) : []),
     ...(BLOQUES.includes('C') ? Array.from({ length: REPETIR_C }, (_, r) => C.map((c) => [c, r + 1] as [Caso, number])).flat() : []),
-    ...(BLOQUES.includes('D') ? D.map((c) => [c, 1] as [Caso, number]) : []),
+    ...(BLOQUES.includes('D') ? D.flatMap((c) => Array.from({ length: REPETIR_CASOS }, (_, r) => [c, r + 1] as [Caso, number])) : []),
   ];
 
   for (const [caso, rep] of lista.filter(([c]) => !CASOS || CASOS.includes(c.id))) {

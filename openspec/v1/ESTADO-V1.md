@@ -70,7 +70,7 @@ Empieza por §6 y luego §3.
    - **Suspensión:** desde `0069` la base corta a la suspendida igual que la pantalla. Residual en `F-275`: `vera_abrir_turno` no mira la suspensión (el cliente no enseña VERA y las herramientas no leen nada).
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción cuando se acerquen datos reales o terceros (`F-067`).
 3. **Los 4 «solo e2e» que quedan en la matriz**, cada uno con su permiso: `single-reference-search#3` y los de VERA, con llamadas reales al runner (visto bueno y tope de gasto del PO); `inventory-upload-channels#3`, con un correo real del PO desde un remitente autorizado; `dual-entry-routes#2` y `user-revocation#1`, que escriben en cuentas reales.
-4. **VERA, próxima pasada del runner** (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, `VERA_REAL_TOPE_USD`): B7, A24, L6 (`F-264`) y un caso de «más de tres lecturas» para la regla nueva. Toda llamada real, con el visto bueno del PO.
+4. **VERA, siguiente pasada del runner** (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_OUT` fuera del repo, `VERA_REAL_TOPE_USD`): repetir B7 turno 2 con n = 5 (`F-279`: dijo «más fresca» a la fila de 16 días con una de 8 en el retorno) y un caso que de verdad encadene más de tres lecturas (D7 solo hizo dos). Hecha el 22-oct: A24, L6 y B7 turno 1 bien, 0,127 $. Toda llamada real, con el visto bueno del PO.
 5. **Frontend:** el PO prepara cambios por su cuenta. **El plan móvil NO se propone hasta que él lo pida** (`BACKLOG-V1.md`). INV-04 se queda con la versión a mano (`F-261`).
 6. **~12-nov:** comprobar que `inbox/` de S3 ya no conserva los primeros correos (borrado a 30 días).
 7. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero (`--maxWorkers=50%` si hay otra sesión con tests), el banco si se tocó `supabase/` más allá de una función, la suite e2e si se tocó un e2e o el arnés (`F-230`), y `py -m harness.tests.test_checks` si se tocó una tarea o la matriz (`F-251`). **Mira la CI del push anterior antes de empujar otro.** Un commit con `[skip ci]` salta la CI de todo su empuje: va en un empuje aparte. Nunca `vitest` con un e2e en marcha. **Una migración nueva se aplica por el MCP a las dos bases antes de empujar su fichero**: si no, el job `migraciones` sale rojo y no se despliega (`F-277`, `entornos.md`).
@@ -110,7 +110,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 - **Cuánto cuesta VERA por pregunta en uso real**: una sola pregunta medida (≈ 0,014 $ con caché caliente, dos llamadas). `vera_usage` ya lo registra; hacen falta más preguntas y más usuarios.
 - **Si el cupo de 150 llamadas/hora molesta a un usuario de verdad**: nadie se ha acercado; una pregunta gasta de 1 a 7 llamadas.
-- **Si VERA cumple la regla nueva de tres opciones**: está en el prompt, sin probar con el modelo.
+- **Si VERA cumple la regla nueva de tres opciones**: está en el prompt; D7 (22-oct) no la ejercitó (dos lecturas).
 - **Si VERA contesta igual de bien con usuarios reales**, mantiene el idioma en conversaciones largas (`F-264`) y acierta el control de B2 con peticiones ambiguas.
 - **Por qué el lote de 50 dispersa tanto (6–39 s)**: la traza lo pone en paradas de la instancia, pero solo hay una corrida trazada limpia; 4 de las 6 del A/B coincidieron con la CI. No se ha medido en producción.
 - **Por qué la suite local de la mañana dejó 9 búsquedas colgadas en «Buscando...»** en `bearingworld-e2e` mientras la CI salía verde: no se investigó más allá de los logs (paradas de 4–9 s, `F-259`).

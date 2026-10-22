@@ -105,8 +105,8 @@ Se reparte por **coste del fallo**, no por dificultad.
   ver `openspec/mvp/findings-register.md` F-001).
 - **VERA en producción** → **Claude Sonnet 5** (`claude-sonnet-5`, desde el 14-oct-2026, PO).
   Es la decisión de V1 (`DECISIONES-V1.md`, «VERA en producción») y sustituye al Sonnet 4.6
-  del MVP (QA-A00-06). Hoy por `api.anthropic.com`; el paso a Vertex UE (entregable 6) cambia
-  el proveedor, no el modelo. No se cambia por decisiones de testing/caching.
+  del MVP (QA-A00-06). Hoy por `api.anthropic.com`; el paso a Vertex/Bedrock UE (entregable 6)
+  está **en stand-by por decisión del PO (22-oct): no se propone ni se pregunta por él**. No se cambia por decisiones de testing/caching.
 
 **Regla de integridad, innegociable:** **el Coder nunca escribe los tests que lo evalúan.**
 El test es el contrato entre Planner y Coder; si el mismo modelo escribe prueba y código,

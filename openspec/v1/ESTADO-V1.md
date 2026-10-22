@@ -54,7 +54,7 @@ Empieza por §6 y luego §3.
 ## 2 · Dónde estamos, por corriente
 
 - **Corriente A · Núcleo — CERRADA el 14-oct.** Su único cabo, `F-192`, cerrado el 20-oct con `0071` (privilegios mínimos en `public`). El foro ya no deja leer la persona ni en publicaciones (`0070`) ni en reacciones (`0072`, 21-oct).
-- **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) sigue bloqueado.** Vertex: los 3 cupos pedidos el 14-oct fueron **denegados** el 16-oct (`vera-vertex-eu-migracion.md` §7). Alternativa: Bedrock UE, con Sonnet 4.6 funcionando y Sonnet 5 **sin acceso ni cupo** (`vera-bedrock-eu-plan.md`). **El modelo ya está cambiado**, solo queda el proveedor.
+- **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) está en stand-by por decisión del PO (22-oct): no bloquea nada y no se trae a pendientes ni se pregunta por él** (`DECISIONES-V1.md`, `BACKLOG-V1.md`). VERA sigue en `api.anthropic.com` con Sonnet 5.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas. Medida contra Sonnet 5 (`F-258`): bien en guía, trampas, memoria y pantalla; falla un recuento (B7) y el cambio de idioma a mitad (`F-264`). **Desde el 20-oct:** cupo de 150 llamadas por usuario y hora, `usage` de cada llamada en `vera_usage` (`0068`, `F-256`) y, si caben más de tres lecturas, ofrece tres opciones como mucho.
 - **Corriente B · Fábrica — EN MARCHA, sin cambios desde el 17-oct.** `INV-04` del arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4, **C5 NO del PO** (`F-261`). Cifras 7 y 8 cerradas. La próxima serie parte del prompt con `_nota*` (`F-263`) y no es comparable con la 7 y la 8.
 - **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **109 de 185 con prueba que los ejerce y corre en CI**, 15 parciales, 38 NO implementados, 20 divergencias (todas aceptadas; `thread-and-reply-creation#3` pasó a CUBIERTO con `0070`), **0 sin prueba**, 3 fuera. Nivel 2 hecho (`F-266`). **Lo de hoy:** pantalla de suspensión (`automatic-suspension#2`, `active-account-access#2` CUBIERTO), `09_sin_prueba_sql.sql` (suspensión sin purga, CUBIERTO; tope de 500.000 líneas, DIVERGE aceptada el 20-oct: sin aviso al administrador), reglas de tono y de opciones en el prompt (PARCIAL «solo modelo real»), `key-generation#2` CUBIERTO por e2e y `batch-search#1` DIVERGE aceptada (`F-274`). Quedan 4 «solo e2e» que necesitan llamadas reales, un correo real o escribir en cuentas reales (§3.3). Niveles 4 y 5 aparcados.
@@ -67,7 +67,6 @@ Empieza por §6 y luego §3.
    - **`F-278` (e2e de la CI, plan Free):** las paradas de `bearingworld-e2e` tumbaron tres runs de solo docs el 20-oct; `retries: 1` y 15 s ya estaban y no bastaron. El PO eligió **(b)** el 21-oct: un push de solo docs ya no corre e2e ni despliega (`c0407d0`, `entornos.md`). Queda **(c)**, Pro ≈ 35 $/mes con producción incluida y sin garantía de mejora, solo si un run con código vuelve a caer por una parada.
    - **`F-269` §2** queda para después del arranque.
    - **Casado de referencias (`F-254`):** el PO trae definiciones y avisa. **No se toca `search.ts` para eso hasta entonces.**
-   - **Bedrock:** decidir el modelo (`vera-bedrock-eu-plan.md` §2) y pedir a AWS acceso o cupo para Sonnet 5 (`eu.anthropic.claude-sonnet-5`). Vertex: solo con un caso de soporte de pago; **no enviar la reclamación vieja.** Al llegar el cupo, cambiar solo el proveedor y repetir ~20 preguntas (~1 $, plan §9).
    - **Suspensión:** desde `0069` la base corta a la suspendida igual que la pantalla. Residual en `F-275`: `vera_abrir_turno` no mira la suspensión (el cliente no enseña VERA y las herramientas no leen nada).
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción cuando se acerquen datos reales o terceros (`F-067`).
 3. **Los 4 «solo e2e» que quedan en la matriz**, cada uno con su permiso: `single-reference-search#3` y los de VERA, con llamadas reales al runner (visto bueno y tope de gasto del PO); `inventory-upload-channels#3`, con un correo real del PO desde un remitente autorizado; `dual-entry-routes#2` y `user-revocation#1`, que escriben en cuentas reales.
@@ -81,7 +80,7 @@ Empieza por §6 y luego §3.
 
 Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
-- **VERA es Sonnet 5** (`claude-sonnet-5`); Vertex o Bedrock cambiarán solo el proveedor. La spec de `vera-agent` dice 4.6 y no se toca.
+- **VERA es Sonnet 5** (`claude-sonnet-5`) por la API directa; la residencia UE está en stand-by (PO, 22-oct) y no se propone. La spec de `vera-agent` dice 4.6 y no se toca.
 - **El proxy de VERA no lee datos; solo abre y cierra su turno en `vera_usage`, con el JWT del usuario y la clave anónima, nunca con la de servicio** (D-09-05 matizada, `F-256`). El cupo cuenta llamadas, no preguntas.
 - **VERA: memoria de 20 intercambios, solo texto; los datos se vuelven a consultar; la pantalla manda sobre lo recordado.**
 - **VERA no repite lo que la pantalla enseña**: tras buscar, una línea; Inventario se mueve solo con una lista; Hilos, texto breve.
@@ -102,7 +101,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟠 | **Entregable 6** · VERA sigue en `api.anthropic.com`; Vertex denegado (16-oct); Bedrock UE: 4.6 sí, Sonnet 5 sin acceso | AWS + PO |
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
 | 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
 | 🟡 | **`F-278`** · paradas de la instancia Free de e2e (hasta 56 s); mitigado para los pushes de solo docs, no para los de código | PO (§3.2, opción c) si vuelve a caer un run con código |

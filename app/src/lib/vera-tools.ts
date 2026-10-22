@@ -372,12 +372,14 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
     orden: 'cantidad',
   });
 
-  const filas = page.rows.slice(0, MAX_FILAS).map((r) =>
+  const vistas = page.rows.slice(0, MAX_FILAS);
+  const filas = vistas.map((r) =>
     [
       r.partNumber,
       r.brand,
       `${quantityLabel(r.quantity)} u`,
-      leadTimeLabel(r.leadTimeDays),
+      // «plazo»: sin la palabra, «6 días» junto a «actualizada hace 16 días» se leía como frescura (`F-279`, B7).
+      `plazo ${leadTimeLabel(r.leadTimeDays)}`,
       countryName(r.country),
       r.orgName,
       // Los dos campos que ya venían en la fila y no llegaban al modelo.
@@ -385,6 +387,24 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
       ...(r.consulted ? ['YA CONSULTADA por tu organización'] : []),
     ].join(' · '),
   );
+
+  /*
+   * «¿Cuál es la más fresca?» (`F-279`, B7 turno 2): con el retorno correcto delante —nueve días las de JULSA,
+   * dieciséis la de Rhône—, Sonnet 5 invertía la comparación 3 de 6 veces. Se le da la comparación hecha, sobre
+   * las filas que ve; ordenar o razonar sobre «hace N días» ya no depende de él.
+   */
+  const edades = vistas.map((r) => ({ org: r.orgName, dias: daysSince(r.lastUploadAt) }));
+  const masFresca = Math.min(...edades.map((e) => e.dias));
+  const masAntigua = Math.max(...edades.map((e) => e.dias));
+  const orgsCon = (d: number) => [...new Set(edades.filter((e) => e.dias === d).map((e) => e.org))].join(', ');
+  const resumenFrescura =
+    edades.length < 2
+      ? []
+      : [
+          masFresca === masAntigua
+            ? `Frescura: todas estas filas se actualizaron ${ageLabel(masFresca).toLowerCase()}.`
+            : `Frescura: la más reciente es la de ${orgsCon(masFresca)} (${ageLabel(masFresca).toLowerCase()}) y la más antigua la de ${orgsCon(masAntigua)} (${ageLabel(masAntigua).toLowerCase()}). Menos días = más fresca.`,
+        ];
 
   const cabecera = recorte(filas.length, page.total, 'coincidencia', 'coincidencias');
   return {
@@ -394,6 +414,7 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
     content: [
       cabecera,
       ...filas,
+      ...resumenFrescura,
       'Ninguna de estas filas incluye condiciones económicas: eso se negocia cifrado dentro de un hilo.',
       'Las filas que no llevan «YA CONSULTADA» son las que tu organización todavía no ha consultado.',
       'Este orden no es un ranking de idoneidad. Si eliges unas cuantas para recomendar, di cuántas había y con qué criterio has elegido.',

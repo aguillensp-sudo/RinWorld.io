@@ -539,6 +539,32 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
       expect(r.content).not.toContain('al día');
     });
 
+    it('dice cuál es la más reciente y cuál la más antigua, y el plazo no se confunde con la frescura (F-279, B7)', async () => {
+      const fila = (id: string, orgName: string, dias: number, plazo: number) => ({
+        id,
+        partNumber: '22210',
+        brand: 'FAG',
+        quantity: 100,
+        leadTimeDays: plazo,
+        orgId: `org-${id}`,
+        orgName,
+        country: 'ES',
+        lastUploadAt: haceDias(dias),
+        favoriteCount: 0,
+        isFavorite: false,
+        consulted: false,
+      });
+      fetchResults.mockResolvedValueOnce({
+        rows: [fila('a', 'JULSA INDUSTRIAL S.A', 9, 0), fila('b', 'Roulements Rhône', 16, 6)],
+        total: 2,
+        capped: false,
+      });
+      const r = await runTool('buscar_en_catalogo', {}, contexto());
+      expect(r.content).toContain('la más reciente es la de JULSA INDUSTRIAL S.A (hace 9 días)');
+      expect(r.content).toContain('la más antigua la de Roulements Rhône (hace 16 días)');
+      expect(r.content).toContain('plazo 6 días');
+    });
+
     it('marca la fila ya consultada Y explica qué significa que otra no lo lleve', async () => {
       fetchResults.mockResolvedValueOnce({
         rows: [

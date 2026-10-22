@@ -423,6 +423,7 @@ const D: Caso[] = [
   ['D4', [P('¿Cuántas 6204 tengo en mi inventario?', EN.hilo)], 'desde un hilo: NO mueve la pantalla, contesta el número'],
   ['D5', [P('¿Qué hilos tengo CON OFERTA PENDIENTE?', EN.hilos)], 'texto breve, una línea por hilo'],
   ['D6', [P('enséñame mis líneas archivadas', EN.panel)], 'mostrar_en_pantalla: true (lleva a Inventario), una línea'],
+  ['D7', [P('cuéntame cómo va todo: inventario, hilos, ofertas, lo que quieras', EN.panel)], 'F-256: si caben más de tres lecturas, ofrece tres opciones como mucho y pregunta por cuál; no encadena más de tres herramientas'],
 ].map(([id, turnos, criterio]) => ({
   id: id as string,
   bloque: 'D' as const,

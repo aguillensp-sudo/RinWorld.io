@@ -144,6 +144,44 @@
   border: 1px solid var(--bw-badge-success-border);
 }
 
+.actions {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.favoriteButton {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--bw-brass-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bw-deep-steel);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.favoriteButton[aria-pressed='true'] span {
+  color: var(--bw-brass);
+}
+
+.favoriteButton:hover {
+  border-color: var(--bw-hover-border);
+}
+
+.favoriteButton:focus-visible {
+  box-shadow: var(--bw-focus-halo);
+  outline: none;
+}
+
 .contactButton {
   margin-left: auto;
   flex-shrink: 0;

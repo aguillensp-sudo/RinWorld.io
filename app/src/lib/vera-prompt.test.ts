@@ -600,12 +600,16 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     expect(tablaDirectorio).toMatch(/onClick=\{\(\) => onOpenOrganization\(row\.id\)\}/);
   });
 
-  it('Ficha: Contactar abre el hilo existente o el primer mensaje, apagado en la propia organización; sin botón de favorito', () => {
+  it('Ficha: Contactar abre el hilo existente o el primer mensaje, apagado en la propia organización; favorito solo en la de otra organización, con confirmación', () => {
     expect(ficha).toMatch(/if \(threadId !== null\) onOpenThread\(threadId\);\s*else setComposing\(true\);/);
     expect(ficha).toContain('const canContact = !own &&');
     expect(ficha).toMatch(/disabled=\{!canContact\}/);
     expect(ficha).toContain('orDash(');
-    expect(ficha).not.toMatch(/Añadir a favoritos|Marcar como favorita|toggleFavorite/);
+    // 24-oct-2026 (PO): la ficha de otra organización SÍ lleva el botón, con confirmación, y la propia no.
+    expect(ficha).toContain('Añadir a favoritos');
+    expect(ficha).toContain('Quitar de favoritos');
+    expect(ficha).toMatch(/\{!own && isFavorite !== null && \(/);
+    expect(ficha).toContain('FavoriteConfirmDialog');
     expect(ficha).toMatch(/onClick=\{onBack\}/);
   });
 
@@ -725,9 +729,11 @@ describe('VERA · memoria de la conversación (F-101)', () => {
 describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', () => {
   const fuente = (rel: string) => readFileSync(resolve(process.cwd(), 'src', rel), 'utf8');
 
-  it('A05: en el Directorio la estrella solo cuenta; la favorita se marca en Comprando', () => {
+  it('A05: en el Directorio la estrella solo cuenta; la favorita se marca en Comprando o en la ficha, con confirmación', () => {
     expect(prompt).toContain('desde el Directorio no se marca ni se quita ninguna');
-    expect(prompt).toContain('se marca con la estrella de Resultados de búsqueda, en Comprando');
+    expect(prompt).toContain('con la estrella de la tabla de Resultados de búsqueda, en Comprando, o con el botón de la ficha de la empresa, siempre con confirmación');
+    expect(prompt).toContain('en la ficha de la propia organización no aparece');
+    expect(prompt).toContain('no cambia nada hasta que se confirma');
     expect(fuente('screens/directory/DirectoryTable.tsx')).toContain('La estrella es decorativa');
     expect(fuente('screens/directory/DirectoryTable.tsx')).not.toContain('onToggleFavorite');
     expect(fuente('screens/search/ResultsTable.tsx')).toContain('onToggleFavorite');

@@ -7,8 +7,10 @@ import {
   telHref,
   type OrganizationProfile as OrganizationProfileData,
 } from '../../lib/organization';
+import { fetchFavoriteOrgIds, toggleFavorite } from '../../lib/search';
 import { contactOrganization } from '../../lib/thread-detail';
 import { errorMessage, type MemberProfile } from '../../lib/session';
+import { FavoriteConfirmDialog } from '../../components/FavoriteConfirmDialog';
 import styles from './OrganizationProfile.module.css';
 
 interface Props {
@@ -76,6 +78,11 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
   const [sendError, setSendError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** ¿La tengo en favoritos? `null` hasta saberlo (o si la consulta falla): sin saberlo no se ofrece ninguna acción. */
+  const [isFavorite, setIsFavorite] = useState<boolean | null>(null);
+  const [confirmingFavorite, setConfirmingFavorite] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,6 +96,9 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
     setComposing(false);
     setDraft('');
     setSendError(null);
+    setIsFavorite(null);
+    setConfirmingFavorite(false);
+    setFavoriteError(null);
 
     fetchOrganizationAdminName(organizationId).then((name) => {
       if (!cancelled) setAdminName(name);
@@ -114,6 +124,14 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
      * otra, la búsqueda del hilo arranca ya, en paralelo con la ficha.
      */
     if (organizationId !== profile.orgId) {
+      // Los favoritos son del miembro (ADMIN o EDITOR por igual): no dependen del perfil ni de la organización.
+      fetchFavoriteOrgIds(profile.id)
+        .then((ids) => {
+          if (!cancelled) setIsFavorite(ids.has(organizationId));
+        })
+        .catch(() => {
+          if (!cancelled) setIsFavorite(null);
+        });
       fetchThreadWithOrg(profile.orgId, organizationId)
         .then((id) => {
           if (cancelled) return;
@@ -132,7 +150,7 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
     return () => {
       cancelled = true;
     };
-  }, [organizationId, profile.orgId]);
+  }, [organizationId, profile.orgId, profile.id]);
 
   // Sin hilo y pedido por `Contactar` de la búsqueda: el cuadro ya abierto. Solo reacciona al llegar la
   // respuesta del hilo, así que «Cancelar» lo cierra y no vuelve a abrirse.
@@ -183,6 +201,25 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
   const canContact = !own && (threadId !== null || threadChecked);
   const contactTitle = own ? OWN_ORG_TITLE : CHECKING_THREAD_TITLE;
 
+  /** Confirmado el diálogo: escribe, y relee la ficha para que el recuento sea el que dice la base. */
+  const confirmFavorite = async () => {
+    if (isFavorite === null) return;
+    setFavoriteBusy(true);
+    setFavoriteError(null);
+    try {
+      await toggleFavorite(profile.id, organizationId, !isFavorite);
+      // Botón y recuento cambian a la vez: primero se relee la ficha, después se pinta todo junto.
+      const fresh = await fetchOrganizationProfile(organizationId).catch(() => null);
+      if (fresh) setData(fresh);
+      setIsFavorite(!isFavorite);
+      setConfirmingFavorite(false);
+    } catch (err: unknown) {
+      setFavoriteError(errorMessage(err instanceof Error ? err : new Error(String(err))));
+    } finally {
+      setFavoriteBusy(false);
+    }
+  };
+
   const sendFirstMessage = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (sending || draft.trim() === '') return;
@@ -227,20 +264,51 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
           </div>
         </div>
 
-        <button
-          type="button"
-          className={styles.contactButton}
-          disabled={!canContact}
-          title={canContact ? undefined : contactTitle}
-          onClick={() => {
-            if (threadId !== null) onOpenThread(threadId);
-            else setComposing(true);
-          }}
-        >
-          <i className="ti ti-message-circle" aria-hidden="true" />
-          Contactar
-        </button>
+        <div className={styles.actions}>
+          {/* Ni en la ficha de la propia organización —sea quien sea quien la mira— ni sin saber el estado. */}
+          {!own && isFavorite !== null && (
+            <button
+              type="button"
+              className={styles.favoriteButton}
+              aria-pressed={isFavorite}
+              onClick={() => {
+                setFavoriteError(null);
+                setConfirmingFavorite(true);
+              }}
+            >
+              <span aria-hidden="true">{isFavorite ? '★' : '☆'}</span>
+              {isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            </button>
+          )}
+          <button
+            type="button"
+            className={styles.contactButton}
+            disabled={!canContact}
+            title={canContact ? undefined : contactTitle}
+            onClick={() => {
+              if (threadId !== null) onOpenThread(threadId);
+              else setComposing(true);
+            }}
+          >
+            <i className="ti ti-message-circle" aria-hidden="true" />
+            Contactar
+          </button>
+        </div>
       </header>
+
+      {confirmingFavorite && isFavorite !== null && (
+        <FavoriteConfirmDialog
+          orgName={data.name}
+          adding={!isFavorite}
+          busy={favoriteBusy}
+          error={favoriteError}
+          onConfirm={() => void confirmFavorite()}
+          onCancel={() => {
+            setConfirmingFavorite(false);
+            setFavoriteError(null);
+          }}
+        />
+      )}
 
       {composing && threadId === null && (
         <form className={styles.composer} onSubmit={sendFirstMessage} aria-label="Nuevo hilo">

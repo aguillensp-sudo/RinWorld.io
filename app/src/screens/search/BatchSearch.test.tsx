@@ -241,6 +241,11 @@ describe('BatchSearch · la tabla de cada tarjeta', () => {
     const botones = screen.getAllByRole('button', { name: 'Marcar favorito de Cuscinetti Padana' });
     expect(botones).toHaveLength(2);
     await userEvent.click(botones[0]!);
+    // La estrella solo abre la confirmación (PO, 24-oct-2026): hasta confirmar no se escribe nada.
+    expect(toggleFavorite).not.toHaveBeenCalled();
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('¿Añadir a Cuscinetti Padana a tus favoritos?')).toBeInTheDocument();
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Añadir a favoritos' }));
     await waitFor(() => expect(toggleFavorite).toHaveBeenCalledWith('m-1', 'o3', true));
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Quitar favorito de Cuscinetti Padana' })).toHaveLength(2));
   });

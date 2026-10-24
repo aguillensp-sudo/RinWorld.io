@@ -18,6 +18,7 @@ import {
 } from '../../lib/search';
 import { INQUIRY_FORM_TEXTS, type InquiryDraft } from '../../lib/inquiry-form';
 import { sendInquiries, type InquiryOutcome } from '../../lib/thread-detail';
+import { FavoriteConfirmDialog } from '../../components/FavoriteConfirmDialog';
 import { InquiryFormModal } from '../messages/InquiryFormModal';
 import { FilterChips } from './FilterChips';
 import { ResultsTable } from './ResultsTable';
@@ -82,6 +83,10 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
   const [page, setPage] = useState<SearchPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  /** La confirmación de favorito abierta (`null` = cerrada). */
+  const [favoritePending, setFavoritePending] = useState<{ orgId: string; orgName: string; adding: boolean } | null>(null);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
   /** El resultado de la última tanda de "Consultar seleccionados" (GAP-004).
    *  `null` = no se ha lanzado ninguna todavía en esta pantalla. */
   const [consultBanner, setConsultBanner] = useState<string | null>(null);
@@ -157,21 +162,37 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
     });
   }, []);
 
+  /**
+   * La estrella ya no escribe: abre la confirmación (PO, 24-oct-2026). Marcar y desmarcar piden un segundo
+   * paso, porque un clic suelto sobre la estrella de una fila quitaba el favorito sin avisar.
+   */
   const handleToggleFavorite = useCallback(
-    async (orgId: string) => {
+    (orgId: string) => {
       const row = page?.rows.find((r) => r.orgId === orgId);
       if (!row) return;
-      try {
-        // El recuento agregado lo mantiene el trigger de la base; al volver a
-        // consultar vemos el número nuevo.
-        await toggleFavorite(profile.id, orgId, !row.isFavorite);
-        await load(criteria);
-      } catch {
-        setError(true);
-      }
+      setFavoriteError(null);
+      setFavoritePending({ orgId, orgName: row.orgName, adding: !row.isFavorite });
     },
-    [page, profile.id, criteria, load],
+    [page],
   );
+
+  const confirmFavorite = useCallback(async () => {
+    if (!favoritePending) return;
+    setFavoriteBusy(true);
+    setFavoriteError(null);
+    try {
+      // El recuento agregado lo mantiene el trigger de la base; al volver a
+      // consultar vemos el número nuevo.
+      await toggleFavorite(profile.id, favoritePending.orgId, favoritePending.adding);
+      await load(criteria);
+      setFavoritePending(null);
+    } catch (err: unknown) {
+      // El error se dice dentro del diálogo y la tabla se queda como está.
+      setFavoriteError(errorMessage(err instanceof Error ? err : new Error(String(err))));
+    } finally {
+      setFavoriteBusy(false);
+    }
+  }, [favoritePending, profile.id, criteria, load]);
 
   // El destino de estos dos callbacks (abrir tarjeta de consulta / crear hilo)
   // es la fila del día 10 del Plan §3 (GAP-004). Hoy solo avisan, y el aviso lo
@@ -408,6 +429,20 @@ export function SearchResults({ profile, now, veraCriteria, onOpenWatchers, onOp
             </div>
           )}
         </>
+      )}
+
+      {favoritePending && (
+        <FavoriteConfirmDialog
+          orgName={favoritePending.orgName}
+          adding={favoritePending.adding}
+          busy={favoriteBusy}
+          error={favoriteError}
+          onConfirm={() => void confirmFavorite()}
+          onCancel={() => {
+            setFavoritePending(null);
+            setFavoriteError(null);
+          }}
+        />
       )}
 
       {/* Un formulario por fila marcada, en cola (MSG-03 §3.2, F-249). La clave por fila hace que cada uno arranque vacío. */}

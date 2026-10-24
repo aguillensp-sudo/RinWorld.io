@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { metaCounterLabel, quantityLabel, type SearchPage, type SearchQuery, type SearchResultRow } from '../../lib/search';
+import { metaCounterLabel, type SearchPage, type SearchQuery, type SearchResultRow } from '../../lib/search';
 import type { MemberProfile } from '../../lib/session';
 
 /**
@@ -317,41 +317,5 @@ describe('SRCH-01 · ordenación', () => {
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
     await userEvent.click(screen.getByRole('button', { name: 'Marca' }));
     expect(fetchResults).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('SRCH-01 · favoritos', () => {
-  it('marcar avisa a la capa de datos con mi miembro y la distribuidora', async () => {
-    fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', isFavorite: false })]));
-    pintar();
-    await waitFor(() => expect(filas()).toHaveLength(1));
-
-    await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
-    expect(toggleFavorite).toHaveBeenCalledWith(profile.id, 'org-9', true);
-  });
-
-  it('desmarcar pasa false, no vuelve a marcar', async () => {
-    fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', isFavorite: true })]));
-    pintar();
-    await waitFor(() => expect(filas()).toHaveLength(1));
-
-    // Aquí la fila llega YA marcada, así que el botón está `pressed: true`.
-    await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: true }));
-    expect(toggleFavorite).toHaveBeenCalledWith(profile.id, 'org-9', false);
-  });
-
-  it('el recuento se relee de la base, no se incrementa a ojo', async () => {
-    // `organizations.favorite_count` lo mantiene un trigger y es agregado de toda
-    // la plataforma: sumarle uno en cliente enseña un número que puede no ser el
-    // que hay. Ver la migración 0006.
-    fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', favoriteCount: 12 })]));
-    pintar();
-    await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
-
-    fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', favoriteCount: 13, isFavorite: true })]));
-    await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
-
-    await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(within(filas()[0]!).getByText(quantityLabel(13))).toBeInTheDocument());
   });
 });

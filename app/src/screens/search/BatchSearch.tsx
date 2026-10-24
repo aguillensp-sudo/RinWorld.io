@@ -20,6 +20,7 @@ import {
   type Sort,
   type SortColumn,
 } from '../../lib/search';
+import { FavoriteConfirmDialog } from '../../components/FavoriteConfirmDialog';
 import { BatchCard } from './BatchCard';
 import styles from './BatchSearch.module.css';
 
@@ -53,6 +54,10 @@ export function BatchSearch({ profile, now, onContactOrganization }: Props) {
   const [pending, setPending] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** La confirmación de favorito abierta (`null` = cerrada). */
+  const [favoritePending, setFavoritePending] = useState<{ orgId: string; orgName: string; adding: boolean } | null>(null);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
   /** Referencias expandidas: solo la primera arranca expandida, cada una se abre y se cierra por su cuenta. */
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set<string>());
   /** Un `Sort | null` por referencia; todas arrancan en `null`. */
@@ -141,37 +146,50 @@ export function BatchSearch({ profile, now, onContactOrganization }: Props) {
    * TODAS las tarjetas, porque es la misma organización.
    */
   const handleToggleFavorite = useCallback(
-    async (orgId: string) => {
+    (orgId: string) => {
       const filas = (results ?? []).flatMap((r) => r.page?.rows ?? []);
       const fila = filas.find((r) => r.orgId === orgId);
       if (!fila) return;
-      const next = !fila.isFavorite;
-      try {
-        await toggleFavorite(profile.id, orgId, next);
-      } catch {
-        // Un favorito que no se pudo guardar no cambia nada en pantalla.
-        return;
-      }
-      setResults((prev) => {
-        if (!prev) return prev;
-        return prev.map((r) => {
-          if (r.page === null) return r;
-          let changed = false;
-          const rows = r.page.rows.map((row): SearchResultRow => {
-            if (row.orgId !== orgId) return row;
-            changed = true;
-            return {
-              ...row,
-              isFavorite: next,
-              favoriteCount: Math.max(0, row.favoriteCount + (next ? 1 : -1)),
-            };
-          });
-          return changed ? { ...r, page: { ...r.page, rows } } : r;
-        });
-      });
+      // Como en SRCH-01 (PO, 24-oct-2026): la estrella solo abre la confirmación; escribe `confirmFavorite`.
+      setFavoriteError(null);
+      setFavoritePending({ orgId, orgName: fila.orgName, adding: !fila.isFavorite });
     },
-    [results, profile.id],
+    [results],
   );
+
+  const confirmFavorite = useCallback(async () => {
+    if (!favoritePending) return;
+    const { orgId, adding: next } = favoritePending;
+    setFavoriteBusy(true);
+    setFavoriteError(null);
+    try {
+      await toggleFavorite(profile.id, orgId, next);
+    } catch (err: unknown) {
+      // Un favorito que no se pudo guardar no cambia nada en pantalla; el error se dice en el diálogo.
+      setFavoriteError(errorMessage(err instanceof Error ? err : new Error(String(err))));
+      setFavoriteBusy(false);
+      return;
+    }
+    setResults((prev) => {
+      if (!prev) return prev;
+      return prev.map((r) => {
+        if (r.page === null) return r;
+        let changed = false;
+        const rows = r.page.rows.map((row): SearchResultRow => {
+          if (row.orgId !== orgId) return row;
+          changed = true;
+          return {
+            ...row,
+            isFavorite: next,
+            favoriteCount: Math.max(0, row.favoriteCount + (next ? 1 : -1)),
+          };
+        });
+        return changed ? { ...r, page: { ...r.page, rows } } : r;
+      });
+    });
+    setFavoriteBusy(false);
+    setFavoritePending(null);
+  }, [favoritePending, profile.id]);
 
   /**
    * Exportar resumen (spec §3): solo CSV — el PDF necesita una dependencia que
@@ -298,7 +316,7 @@ export function BatchSearch({ profile, now, onContactOrganization }: Props) {
                     onSort={(column) => handleSort(result.reference, column)}
                     onToggleRow={handleToggleRow}
                     onToggleFavorite={(orgId) => {
-                      void handleToggleFavorite(orgId);
+                      handleToggleFavorite(orgId);
                     }}
                     onConsult={handleConsult}
                     onContact={handleContact}
@@ -310,6 +328,20 @@ export function BatchSearch({ profile, now, onContactOrganization }: Props) {
           </>
         )}
       </div>
+
+      {favoritePending && (
+        <FavoriteConfirmDialog
+          orgName={favoritePending.orgName}
+          adding={favoritePending.adding}
+          busy={favoriteBusy}
+          error={favoriteError}
+          onConfirm={() => void confirmFavorite()}
+          onCancel={() => {
+            setFavoritePending(null);
+            setFavoriteError(null);
+          }}
+        />
+      )}
     </div>
   );
 }

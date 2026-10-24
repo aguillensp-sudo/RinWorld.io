@@ -54,12 +54,13 @@ describe('conversational-search/favorites-system', () => {
     expect(inicioToggle).toBeGreaterThan(-1);
     for (const m of search.matchAll(patronEscritura)) expect(m.index!).toBeGreaterThan(inicioToggle);
 
-    // ...y `toggleFavorite` solo se invoca desde el manejador del clic del usuario.
+    // ...y `toggleFavorite` solo se invoca desde el manejador de la CONFIRMACIÓN del usuario (24-oct-2026: el clic
+    // en la estrella o en el botón de la ficha solo abre el diálogo, no escribe).
     const llamadas = fuentesApp.flatMap((f) => {
       const t = readFileSync(f, 'utf8');
       return [...t.matchAll(/\btoggleFavorite\(/g)]
         .filter((m) => !t.slice(Math.max(0, m.index! - 40), m.index!).includes('function '))
-        .map((m) => ({ f: rel(f), enManejador: t.slice(0, m.index!).lastIndexOf('handleToggleFavorite = useCallback') > -1 }));
+        .map((m) => ({ f: rel(f), enManejador: t.slice(0, m.index!).lastIndexOf('confirmFavorite = ') > -1 }));
     });
     expect(llamadas.length).toBeGreaterThan(0);
     expect(llamadas.filter((l) => !l.enManejador)).toEqual([]);

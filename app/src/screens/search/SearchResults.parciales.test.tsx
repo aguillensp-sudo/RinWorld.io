@@ -149,6 +149,8 @@ describe('conversational-search/favorites-system', () => {
     // el MÁS favorito de todos, y aun así no puede cambiar de sitio.
     fetchResults.mockResolvedValue(pagina([A, B, { ...C, favoriteCount: 10, isFavorite: true }]));
     await userEvent.click(screen.getByRole('button', { name: 'Marcar favorito de Distribuidora c' }));
+    // (Cambio del PO, 24-oct-2026: marcar pide confirmación; el clic en la estrella solo abre el diálogo.)
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Añadir a favoritos' }));
 
     // THEN: la acción se hizo sobre esa organización...
     await waitFor(() => expect(toggleFavorite).toHaveBeenCalledWith('member-alpha', 'org-c', true));

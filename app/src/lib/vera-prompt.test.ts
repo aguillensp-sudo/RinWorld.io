@@ -734,6 +734,9 @@ describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', ()
     expect(prompt).toContain('con la estrella de la tabla de Resultados de búsqueda, en Comprando, o con el botón de la ficha de la empresa, siempre con confirmación');
     expect(prompt).toContain('en la ficha de la propia organización no aparece');
     expect(prompt).toContain('no cambia nada hasta que se confirma');
+    // El favorito es del usuario y el recuento cuenta usuarios, no organizaciones distintas (PO, 24-oct-2026).
+    expect(prompt).toContain('cuántos usuarios tienen a esa empresa como favorita');
+    expect(prompt).not.toContain('cuántas organizaciones tienen a esa empresa como favorita');
     expect(fuente('screens/directory/DirectoryTable.tsx')).toContain('La estrella es decorativa');
     expect(fuente('screens/directory/DirectoryTable.tsx')).not.toContain('onToggleFavorite');
     expect(fuente('screens/search/ResultsTable.tsx')).toContain('onToggleFavorite');

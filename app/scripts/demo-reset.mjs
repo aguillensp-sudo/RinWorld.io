@@ -188,10 +188,15 @@ async function reponerInvitaciones(db, log) {
     'borrando las invitaciones de demo',
     await db.from('member_invitations').delete().eq('org_id', ORG_NORDWALZ),
   );
-  orLanza(
-    'reponiendo al Editor de Nordwälz a ACTIVE',
-    await db.from('members').update({ state: 'ACTIVE' }).eq('email', EMAIL_EDITOR_NORDWALZ),
-  );
+  const editor = await db.from('members').update({ state: 'ACTIVE' }).eq('email', EMAIL_EDITOR_NORDWALZ).select('id');
+  orLanza('reponiendo al Editor de Nordwälz a ACTIVE', editor);
+  // `ban-revoked-member` pone `banned_until` en Auth y `state = ACTIVE` no lo quita: sin esto, un ensayo o un
+  // e2e (`user-revocation.spec.ts`) que se cayera entre el bloqueo y la reposición dejaría al Editor sin poder
+  // iniciar sesión, y la siguiente corrida fallaría en el login de otro test (`members.id` es el id de Auth).
+  for (const { id } of editor.data ?? []) {
+    const { error } = await db.auth.admin.updateUserById(id, { ban_duration: 'none' });
+    if (error) throw new Error(`quitando el bloqueo de Auth al Editor de Nordwälz: ${error.message}`);
+  }
   orLanza(
     'sembrando las invitaciones de demo',
     await db.from('member_invitations').insert([

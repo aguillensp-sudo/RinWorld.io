@@ -98,7 +98,7 @@ export async function buscarReferencia(page: Page, ref: string, opts: { zona?: s
   if (opts.zona !== undefined || opts.contiene !== undefined) {
     const filtros = page.getByRole('checkbox', { name: 'Filtros', exact: true });
     if (!(await filtros.isChecked())) await filtros.check();
-    if (opts.zona !== undefined) await page.getByLabel('Zona').selectOption({ label: opts.zona });
+    if (opts.zona !== undefined) await page.getByRole('combobox', { name: 'Zona', exact: true }).selectOption({ label: opts.zona });
     if (opts.contiene !== undefined) await page.getByRole('checkbox', { name: 'Contiene' }).setChecked(opts.contiene);
   }
   await page.getByRole('searchbox', { name: 'Referencia' }).fill(ref);

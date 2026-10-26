@@ -1142,7 +1142,8 @@ def test_el_guardia_cruza_tarea_y_contrato():
     # Y la deteccion de verdad: un espia ASERTADO que la tarea no nombra.
     falsa = {
         # F-249: los tests que asertan `sendInquiries` viven ahora fuera del contrato de SRCH-01, y es ahi donde se prueba el detector.
-        "acceptance": {"unit": ["app/src/screens/search/SearchResults.fuera-de-contrato.test.tsx"]},
+        # Desde el 26-oct-2026 en el fichero de PartSearch: SearchResults se retiro con la busqueda en dos fases.
+        "acceptance": {"unit": ["app/src/screens/search/PartSearch.consultas.fuera-de-contrato.test.tsx"]},
         "inputs": {}, "component_api": {},
     }
     errores, _ = cruzar_con_el_contrato(falsa)

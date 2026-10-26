@@ -86,13 +86,13 @@ modelo nuevo en tipos, pero no se han vuelto a ejecutar.
       referencias, marca él, no sumar designaciones) y la entrada de Comprando de la GUÍA VERIFICADA, reescritas para la
       pantalla nueva. `vera-prompt.test.ts` apunta a `PartSearch`, `PartSearchForm`, `Pager`, `part-search.ts` y `0076`.
       `vera-screen.ts` llama a la pantalla «Búsqueda de referencias».
-- [ ] 4.4 Correr `vera.real.test.ts` (bloques B y D, F-258 y F-279) contra la función ya desplegada, y anotar el resultado en
-      `F-254`. **Primera pasada 26-oct-2026** (A–D, 1,06 $; registro fuera del repo): la búsqueda en dos fases sale bien
+- [x] 4.4 Correr `vera.real.test.ts` (bloques B y D, F-258 y F-279) contra la función ya desplegada, y anotar el resultado en
+      `F-254`. **Hecha 26-oct-2026: anotada en `F-254` («Verificación con Sonnet 5»).** **Primera pasada 26-oct-2026** (A–D, 1,06 $; registro fuera del repo): la búsqueda en dos fases sale bien
       (filtros acumulados, F-258 respetado con la guarda, caso 1.3 bien contado, cifras cuadran salvo C17). Cortada por el
       límite de 150 consultas/hora: 27 turnos sin respuesta (C reps 2–3 y **todo D**, incluido el caso 1.4). Fallan B5
       (no prepara la consulta y nombra designaciones con guion que ningún retorno trae), C17 (recuento por empresa) e
       idioma L3/L4/L6; dudosos B7, C04, C08, C09, C16. Pendiente: repetir D y C 2–3 tras la hora, y quitar «quítame el
-      plazo» del prompt (`index.ts:88`). Sin anotar aún en `F-254`.
+      plazo» del prompt (`index.ts:88`).
       **Segunda pasada 26-oct-2026** (C ×3 y D, 0,74 $, 0 errores): C17 ya no falla (3/3), C09 navega 3/3, D2 (caso 1.4)
       pasa sin inventar. Siguen: C16 remite a un «soporte» que no existe (2/3), C04 no dice cuánto no vio (3/3), C08
       pregunta en vez de navegar (1/3), D1 en tres frases y sin nombrar el recorte a «6204», D7 cuenta 5 hilos abiertos con
@@ -110,7 +110,8 @@ modelo nuevo en tipos, pero no se han vuelto a ejecutar.
         «No hay ninguna 6204-2RS de SKF con más de 500 unidades; recortando a 6204 sale solo 6204ZZ, con 1 oferta.»
         Queda uno nuevo en B5: 2 de 3 vuelven a llamar a buscar_en_catalogo desde el hilo antes de preparar la consulta, y
         eso saca al usuario del hilo a Comprando. Corregido en el prompt: con «de esa» no se vuelve a buscar antes de
-        preparar_consulta.
+        preparar_consulta. Desplegado en `96ec6ea`; B5 ×3 (0,13 $): 3/3 llaman solo a preparar_consulta (6205, 300) y
+        no mueven la pantalla.
 
 ## 5. Lo que arrastra
 Hecho el 25-oct-2026. Typecheck, Vitest entero (2.960) y build en verde.

@@ -294,7 +294,9 @@ describe('buscar_en_catalogo · la lista previa (F-254)', () => {
     fetchPartKeys.mockResolvedValueOnce(lista({ matchedRef: '62042R', truncated: true, keys: [{ key: '62042RS', offers: 11 }], totalKeys: 1, totalOffers: 11 }));
     const r = await runTool('buscar_en_catalogo', { referencia: '6204-2RX' }, contexto());
     expect(r.content).toContain('NO hay ninguna referencia que empiece por «62042RX»');
-    expect(r.content).toContain('con «62042R»');
+    // Nombra a qué se recortó, y le pide decir las dos (`vera.real` D1, 26-oct-2026).
+    expect(r.content).toContain('se ha recortado por el final a «62042R»');
+    expect(r.content).toContain('nombrando las dos');
     expect(fetchOffers).not.toHaveBeenCalled();
   });
 
@@ -328,6 +330,8 @@ describe('buscar_en_catalogo · las ofertas, solo de la referencia exacta', () =
     expect(r.content.indexOf('Mucha SA')).toBeLessThan(r.content.indexOf('Poca SL'));
     expect(r.content).toContain('Estas filas te llegan ordenadas por cantidad');
     expect(r.content).toContain('El usuario todavía no las ve');
+    // Lo que no ve, con su número (`vera.real` C04, 26-oct-2026): 40 ofertas en 5 referencias, 11 de la exacta.
+    expect(r.content).toContain('Además hay 29 ofertas de las otras 4 referencias de la lista que NO se te muestran');
   });
 
   it('con más de 25 ofertas de la exacta, le dice cuántas no ve y le prohíbe suponerlas', async () => {
@@ -341,11 +345,13 @@ describe('buscar_en_catalogo · las ofertas, solo de la referencia exacta', () =
     expect(r.content).toContain('30 ofertas, y AQUÍ SOLO VES 25');
   });
 
-  it('si la exacta no está, no pide ofertas y le dice que no tiene ninguna', async () => {
+  it('si la exacta no está, no pide ofertas, y deja claro que eso no es que no haya stock', async () => {
     const r = await runTool('buscar_en_catalogo', { referencia: '620' }, contexto());
     expect(fetchOffers).not.toHaveBeenCalled();
-    expect(r.content).toContain('No hay ninguna referencia que sea exactamente «620»');
-    expect(r.content).toContain('no tienes ofertas de ninguna');
+    expect(r.content).toContain('no hay ninguna referencia que sea exactamente «620»');
+    // «no tienes ofertas de ninguna» se leía como «no hay stock» (`vera.real` D1, 26-oct-2026).
+    expect(r.content).not.toContain('no tienes ofertas');
+    expect(r.content).toContain('Eso NO quiere decir que no haya stock');
   });
 });
 

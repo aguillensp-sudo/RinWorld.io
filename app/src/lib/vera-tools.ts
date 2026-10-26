@@ -428,8 +428,10 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
   // Caso 1.3: se encontró recortando por el final.
   if (claves.truncated && claves.matchedRef) {
     lineas.push(
-      `NO hay ninguna referencia que ${criteria.contains ? 'contenga' : 'empiece por'} «${buscada}». ` +
-        `Se ha buscado recortando por el final, con «${claves.matchedRef}», y la pantalla se lo avisa al usuario: díselo tú también.`,
+      // Nombrar las dos claves (`vera.real` D1, 26-oct-2026): con solo «al recortar» no decía a qué.
+      `Con estos filtros NO hay ninguna referencia que ${criteria.contains ? 'contenga' : 'empiece por'} «${buscada}». ` +
+        `La búsqueda se ha recortado por el final a «${claves.matchedRef}»: lo de abajo es lo que ${criteria.contains ? 'contiene' : 'empieza por'} «${claves.matchedRef}», ` +
+        `y la pantalla se lo avisa al usuario. Díselo tú también en tu línea, nombrando las dos: lo que pidió y a qué se ha recortado.`,
     );
   }
   lineas.push(cabeza);
@@ -476,6 +478,17 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
       '',
       `Ofertas de la referencia exacta ${exacta.key} (SOLO de esa; las de las demás referencias de la lista NO se te muestran): ` +
         recorte(vistas.length, ofertas.total, 'oferta', 'ofertas'),
+      /*
+       * Lo que no ve, con su número (`vera.real` C04, 26-oct-2026): sin esta línea daba las marcas de la exacta
+       * como si fueran las de toda la búsqueda.
+       */
+      ...(claves.totalKeys > 1
+        ? [
+            `Además hay ${claves.totalOffers - exacta.offers === 1 ? '1 oferta' : `${quantityLabel(claves.totalOffers - exacta.offers)} ofertas`} ` +
+              `de las otras ${claves.totalKeys - 1 === 1 ? 'referencia' : `${quantityLabel(claves.totalKeys - 1)} referencias`} de la lista que NO se te muestran. ` +
+              'Si hablas de marcas, empresas o cantidades, di que son solo de la referencia exacta y cuántas ofertas no has visto.',
+          ]
+        : []),
       ...vistas.map((r) =>
         [
           r.partNumber,
@@ -516,8 +529,13 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
     );
   } else {
     lineas.push(
-      `No hay ninguna referencia que sea exactamente «${buscada}»${claves.truncated ? '' : ' entre las que ves'}: ` +
-        'no tienes ofertas de ninguna. Si te preguntan quién tiene stock, cantidades o empresas, di que hay que marcar la referencia en la lista para verlas, o búscala exacta.',
+      /*
+       * «no tienes ofertas de ninguna» se leía como «no hay stock» (`vera.real` D1, 26-oct-2026): lo que falta es
+       * que la herramienta se las pase, no que existan.
+       */
+      `Con estos filtros no hay ninguna referencia que sea exactamente «${buscada}»${claves.truncated ? '' : ' entre las que ves'}, ` +
+        'así que aquí no se te muestra ninguna oferta. Eso NO quiere decir que no haya stock: las ofertas de la lista existen, pero solo las ve el usuario al marcar la referencia. ' +
+        'Si te preguntan quién tiene stock, cantidades o empresas, di que hay que marcar la referencia en la lista para verlas, o búscala exacta.',
     );
   }
 

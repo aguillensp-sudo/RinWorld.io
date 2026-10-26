@@ -87,7 +87,26 @@ modelo nuevo en tipos, pero no se han vuelto a ejecutar.
       pantalla nueva. `vera-prompt.test.ts` apunta a `PartSearch`, `PartSearchForm`, `Pager`, `part-search.ts` y `0076`.
       `vera-screen.ts` llama a la pantalla «Búsqueda de referencias».
 - [ ] 4.4 Correr `vera.real.test.ts` (bloques B y D, F-258 y F-279) contra la función ya desplegada, y anotar el resultado en
-      `F-254`.
+      `F-254`. **Primera pasada 26-oct-2026** (A–D, 1,06 $; registro fuera del repo): la búsqueda en dos fases sale bien
+      (filtros acumulados, F-258 respetado con la guarda, caso 1.3 bien contado, cifras cuadran salvo C17). Cortada por el
+      límite de 150 consultas/hora: 27 turnos sin respuesta (C reps 2–3 y **todo D**, incluido el caso 1.4). Fallan B5
+      (no prepara la consulta y nombra designaciones con guion que ningún retorno trae), C17 (recuento por empresa) e
+      idioma L3/L4/L6; dudosos B7, C04, C08, C09, C16. Pendiente: repetir D y C 2–3 tras la hora, y quitar «quítame el
+      plazo» del prompt (`index.ts:88`). Sin anotar aún en `F-254`.
+      **Segunda pasada 26-oct-2026** (C ×3 y D, 0,74 $, 0 errores): C17 ya no falla (3/3), C09 navega 3/3, D2 (caso 1.4)
+      pasa sin inventar. Siguen: C16 remite a un «soporte» que no existe (2/3), C04 no dice cuánto no vio (3/3), C08
+      pregunta en vez de navegar (1/3), D1 en tres frases y sin nombrar el recorte a «6204», D7 cuenta 5 hilos abiertos con
+      uno cerrado, D8 encadena 4 herramientas sin preguntar (el prompt no tiene ese tope). En el retorno de
+      `buscarEnCatalogo` (`vera-tools.ts:519`) la frase «no tienes ofertas de ninguna» se lee como si el usuario no
+      tuviera stock: reescribir.
+      **Correcciones 26-oct-2026, sin desplegar:**
+      - Prompt (`index.ts`): «quítame la marca» en vez de «quítame el plazo»; una línea es una frase, y el recorte se nombra
+        (lo pedido y a qué se recortó); las referencias se escriben como llegan; se dice cuántas ofertas no se vieron (C04);
+        «de esa» es la referencia buscada si existe tal cual (B5); `navegar` sin preguntar a la entrada (C08); sin
+        herramienta de suscripción ni cuenta, y sin mandar a «soporte» ni a nada fuera de la guía (C16).
+      - Retorno (`vera-tools.ts`): el aviso 1.3 nombra la clave recortada; con la exacta, cuántas ofertas de otras
+        referencias no ve; sin exacta, «no quiere decir que no haya stock» en lugar de «no tienes ofertas de ninguna».
+      - Pendiente: desplegar (push) y repetir `vera.real` B5, C04, C08, C16, D1 con `VERA_REAL_CASOS`.
 
 ## 5. Lo que arrastra
 Hecho el 25-oct-2026. Typecheck, Vitest entero (2.960) y build en verde.

@@ -106,7 +106,11 @@ modelo nuevo en tipos, pero no se han vuelto a ejecutar.
         herramienta de suscripción ni cuenta, y sin mandar a «soporte» ni a nada fuera de la guía (C16).
       - Retorno (`vera-tools.ts`): el aviso 1.3 nombra la clave recortada; con la exacta, cuántas ofertas de otras
         referencias no ve; sin exacta, «no quiere decir que no haya stock» en lugar de «no tienes ofertas de ninguna».
-      - Pendiente: desplegar (push) y repetir `vera.real` B5, C04, C08, C16, D1 con `VERA_REAL_CASOS`.
+      - Desplegado en `f49b05e`; `vera.real` B5, C04, C08, C16, D1 ×3 (0,31 $, 0 errores): pasan los cinco 3/3. D1 dice
+        «No hay ninguna 6204-2RS de SKF con más de 500 unidades; recortando a 6204 sale solo 6204ZZ, con 1 oferta.»
+        Queda uno nuevo en B5: 2 de 3 vuelven a llamar a buscar_en_catalogo desde el hilo antes de preparar la consulta, y
+        eso saca al usuario del hilo a Comprando. Corregido en el prompt: con «de esa» no se vuelve a buscar antes de
+        preparar_consulta.
 
 ## 5. Lo que arrastra
 Hecho el 25-oct-2026. Typecheck, Vitest entero (2.960) y build en verde.

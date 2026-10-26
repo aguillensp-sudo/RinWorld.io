@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './VeraPanel.module.css';
 import { ask, historyExpired, type Exchange, type ProxyCall } from '../lib/vera';
 import type { DirectoryView, DraftRequest, InventoryView, RemovedFilter, Screen } from '../lib/vera-tools';
-import type { SearchCriteria } from '../lib/search';
+import type { PartSearchCriteria } from '../lib/part-search';
 import { errorMessage, type MemberProfile } from '../lib/session';
 
 interface Message {
@@ -43,7 +43,7 @@ const SIN_RESPUESTA = 'No he podido terminar de responder. Vuelve a preguntárme
 export interface VeraAgent {
   profile: MemberProfile;
   navigate: (screen: Screen) => void;
-  setCriteria: (criteria: SearchCriteria) => void;
+  setCriteria: (criteria: PartSearchCriteria) => void;
   /** Hay un hilo abierto en pantalla (sin él VERA no puede preparar consultas ni ofertas). */
   threadOpen: boolean;
   /** Abre en el hilo el formulario con lo que VERA ha preparado; lo revisa y lo envía el usuario. */

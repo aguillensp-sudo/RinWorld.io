@@ -1,0 +1,108 @@
+/* Formulario de SRCH-01 en dos líneas (`search-form`). Mismos tokens que FilterChips y SearchField. */
+
+.form {
+  margin-bottom: 14px;
+}
+
+/* Línea 1: REF + Filtros + chips, siempre a la vista. Los chips se van a la derecha y bajan si no caben. */
+.lineOne {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lineOne > div:last-child {
+  margin-bottom: 0;
+}
+
+.ref {
+  flex: 0 1 280px;
+  min-width: 180px;
+  display: flex;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+
+.refError {
+  margin: 6px 0 0;
+  font-size: var(--bw-size-hint);
+  color: var(--bw-error-text);
+}
+
+/* Línea 2: el resto de campos, a todo el ancho y solo con Filtros marcada. */
+.lineTwo {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.lineTwo > .toggle {
+  height: 32px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--bw-ls-label);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+}
+
+.input {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  background: var(--bw-warm-cream);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.narrow {
+  max-width: 120px;
+}

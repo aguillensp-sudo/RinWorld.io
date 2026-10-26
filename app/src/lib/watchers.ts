@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { countryName, EMPTY_CRITERIA, ZONE_LABELS, ZONES, type SearchCriteria, type Zone } from './search';
+import { countryName, ZONE_LABELS, ZONES, type Zone } from './search';
+import { initialPartCriteria, type PartSearchCriteria } from './part-search';
 
 /**
  * Capa de datos de SRCH-03 (Gestión de Watchers), escrita a mano por Claude Code
@@ -150,15 +151,26 @@ export function triggeredLabel(row: WatcherRow): string | null {
   return `Stock detectado el ${watcherDateLabel(row.triggeredAt)} — ${partes.join(' · ')}`;
 }
 
-/** Los criterios con los que «Ver resultados» precarga SRCH-01. */
-export function watcherToCriteria(row: Pick<WatcherRow, 'partNumber' | 'brand' | 'minQuantity' | 'zone' | 'country'>): SearchCriteria {
+/**
+ * Los criterios con los que «Ver resultados» abre SRCH-01 en la lista previa (`amend-srch01-busqueda-en-dos-fases`,
+ * tarea 5.2). Zona y país son un solo filtro en pantalla (ARE): si el watcher tiene los dos, gana el país, que es lo
+ * más concreto y lo que el formulario del watcher deja editar. Lo que el watcher no guarda («contiene», incluir,
+ * excluir) arranca vacío.
+ */
+export function watcherToCriteria(
+  row: Pick<WatcherRow, 'partNumber' | 'brand' | 'minQuantity' | 'zone' | 'country'>,
+): PartSearchCriteria {
+  const country = (row.country ?? '').trim().toUpperCase();
   return {
-    ...EMPTY_CRITERIA,
-    partNumber: row.partNumber,
+    ...initialPartCriteria(null),
+    ref: row.partNumber,
     brand: row.brand ?? '',
     minQuantity: row.minQuantity,
-    zone: row.zone,
-    country: row.country ?? '',
+    area: /^[A-Z]{2}$/.test(country)
+      ? { kind: 'country', country }
+      : row.zone
+        ? { kind: 'zone', zone: row.zone }
+        : null,
   };
 }
 

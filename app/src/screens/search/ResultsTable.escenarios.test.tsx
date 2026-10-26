@@ -45,11 +45,19 @@ function cadena(tabla: string): unknown {
   return api;
 }
 
+// Las ofertas llegan por la RPC `search_offers` (`0076`, búsqueda en dos fases): devuelve lo que haya en `tablas.ofertas`.
 vi.mock('../../lib/supabase', () => ({
-  supabase: { from: (tabla: string) => cadena(tabla) },
+  supabase: {
+    from: (tabla: string) => cadena(tabla),
+    rpc: (fn: string, args: unknown) => {
+      llamadas.push({ tabla: `rpc:${fn}`, metodo: 'rpc', args: [args] });
+      return Promise.resolve({ data: fn === 'search_offers' ? (tablas['ofertas'] ?? []) : [], error: null });
+    },
+  },
 }));
 
-import { fetchResults, EMPTY_CRITERIA, type SearchResultRow } from '../../lib/search';
+import { fetchOffers, initialPartCriteria } from '../../lib/part-search';
+import type { SearchResultRow } from '../../lib/search';
 import { ResultsTable } from './ResultsTable';
 
 const COMPRADOR_ORG = 'a1000000-0000-4000-8000-000000000001';
@@ -59,19 +67,33 @@ const LINEA_ANTIGUA = '10000000-0000-4000-8000-0000000000aa';
 const LINEA_NUEVA = '10000000-0000-4000-8000-0000000000bb';
 
 function lineaPublicada(id: string) {
-  // Misma referencia, marca y cantidad: lo único que cambia es el ID interno.
+  // Misma referencia, marca y cantidad: lo único que cambia es el ID interno. Es la fila de `search_offers`.
   return {
     id,
     part_number: '6205-2RS',
+    part_key: '62052RS',
     brand: 'SKF',
     quantity: 850,
-    location_country: 'DE',
     lead_time_days: 3,
+    location_country: 'DE',
     last_upload_at: '2026-10-10T12:00:00Z',
     org_id: DISTRIBUIDOR,
-    organizations: { id: DISTRIBUIDOR, name: 'Nordwälz Lager', country: 'DE', continent: 'EU', favorite_count: 1 },
+    org_name: 'Nordwälz Lager',
+    org_country: 'DE',
+    org_continent: 'EU',
+    favorite_count: 1,
+    total: 1,
   };
 }
+
+/** Las ofertas de la referencia, como las pide la tabla de ofertas de SRCH-01 (fase C). */
+const verOfertas = () =>
+  fetchOffers({
+    orgId: COMPRADOR_ORG,
+    memberId: COMPRADOR_MIEMBRO,
+    criteria: initialPartCriteria(null),
+    selection: { kind: 'keys', keys: ['62052RS'] },
+  });
 
 beforeEach(() => {
   llamadas = [];
@@ -116,17 +138,17 @@ describe('messaging-and-negotiation/inquiry-card', () => {
     tablas['thread_items'] = [{ inventory_line_id: LINEA_ANTIGUA }];
 
     // Control (antes del reemplazo): la línea antigua sigue publicada y está marcada.
-    tablas['inventory_lines'] = [lineaPublicada(LINEA_ANTIGUA)];
-    const antes = await fetchResults({ orgId: COMPRADOR_ORG, memberId: COMPRADOR_MIEMBRO, criteria: EMPTY_CRITERIA });
+    tablas['ofertas'] = [lineaPublicada(LINEA_ANTIGUA)];
+    const antes = await verOfertas();
     expect(antes.rows).toHaveLength(1);
     expect(antes.rows[0]!.consulted).toBe(true);
 
     // GIVEN el reemplazo total: la antigua deja de estar publicada y entra una con otro ID.
-    tablas['inventory_lines'] = [lineaPublicada(LINEA_NUEVA)];
+    tablas['ofertas'] = [lineaPublicada(LINEA_NUEVA)];
     llamadas = [];
 
     // WHEN el comprador visualiza la referencia tras el reemplazo.
-    const despues = await fetchResults({ orgId: COMPRADOR_ORG, memberId: COMPRADOR_MIEMBRO, criteria: EMPTY_CRITERIA });
+    const despues = await verOfertas();
 
     // THEN la nueva línea es la misma referencia y NO está consultada.
     const nueva = despues.rows[0]!;

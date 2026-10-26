@@ -1,38 +1,44 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SearchPage, SearchQuery, SearchResultRow } from '../../lib/search';
+import type { OffersPage, OffersQuery, PartKeysPage, PartSearchCriteria } from '../../lib/part-search';
+import { type SearchResultRow } from '../../lib/search';
 import type { MemberProfile } from '../../lib/session';
 
 /**
- * FUERA DE CONTRATO · SRCH-01 · lo que añadió F-249 (12-oct-2026). Escrito a mano.
+ * FUERA DE CONTRATO · SRCH-01 · «Consultar» abre un formulario por fila, en cola (F-249, MSG-03 §3.2).
  *
- * El contrato de aceptación de SRCH-01 (`SearchResults.test.tsx`) es el de la tarea del arnés y no se toca para
- * otra cosa (`F-116`): un contrato que pide nombres que la tarea no declara se detecta como incongruente. Aquí
- * vive lo que SRCH-01 no pedía: `Consultar` abre un formulario por fila (MSG-03 §3.2), y las cargas que
- * llegan desordenadas no se pisan. El arnés no puntúa este fichero.
- *
- * Se mockean **solo** las funciones que tocan red; la lógica pura de `lib/search` sigue siendo la de verdad.
+ * Los cuerpos vienen de los tests de `SearchResults.tsx`, retirada el 25-oct-2026 con la búsqueda en dos fases
+ * (`amend-srch01-busqueda-en-dos-fases`, tarea 5.3): `PartSearch` copia de ella las acciones de la tabla de ofertas
+ * y estos tests las siguen midiendo. Cambia solo la preparación (`pintar` busca y abre la tabla de ofertas) y
+ * `fetchResults` es ahora el doble de `fetchOffers`, que es quien lee la tabla. Escrito por Claude Code.
  */
 
-const fetchResults = vi.fn<(q: SearchQuery) => Promise<SearchPage>>();
+const fetchOffers = vi.fn<(q: OffersQuery) => Promise<OffersPage>>();
+const fetchPartKeys = vi.fn<(c: PartSearchCriteria, page?: number) => Promise<PartKeysPage>>();
 const toggleFavorite = vi.fn<(m: string, o: string, n: boolean) => Promise<void>>();
+
+vi.mock('../../lib/part-search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/part-search')>()),
+  fetchPartKeys: (c: PartSearchCriteria, page?: number) => fetchPartKeys(c, page),
+  fetchOffers: (q: OffersQuery) => fetchOffers(q),
+}));
+vi.mock('../../lib/search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/search')>()),
+  toggleFavorite: (m: string, o: string, n: boolean) => toggleFavorite(m, o, n),
+}));
 const sendInquiries =
   vi.fn<(lines: { lineId: string; distributorOrgId: string; quantity: number }[], ownOrgId: string) => Promise<
     { lineId: string; distributorOrgId: string; ok: boolean; error?: string }[]
   >>();
-
-vi.mock('../../lib/search', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../lib/search')>()),
-  fetchResults: (q: SearchQuery) => fetchResults(q),
-  toggleFavorite: (m: string, o: string, n: boolean) => toggleFavorite(m, o, n),
-}));
-
 vi.mock('../../lib/thread-detail', () => ({
   sendInquiries: (lines: unknown, ownOrgId: unknown) => sendInquiries(lines as never, ownOrgId as string),
 }));
 
-const { SearchResults } = await import('./SearchResults');
+const { PartSearch } = await import('./PartSearch');
+
+/** Quien lee la tabla de ofertas. Se llama así para que los cuerpos de los tests viejos digan lo mismo que decían. */
+const fetchResults = fetchOffers;
 
 const NOW = new Date('2026-08-11T12:00:00Z');
 const hace = (dias: number) => new Date(NOW.getTime() - dias * 86_400_000).toISOString();
@@ -66,23 +72,38 @@ function row(over: Partial<SearchResultRow> = {}): SearchResultRow {
   };
 }
 
-function page(rows: SearchResultRow[], over: Partial<SearchPage> = {}): SearchPage {
-  return { rows, total: rows.length, capped: false, ...over };
+function page(rows: SearchResultRow[], over: Partial<OffersPage> = {}): OffersPage {
+  return { rows, total: rows.length, page: 1, pageCount: 1, ...over };
 }
 
 beforeEach(() => {
-  fetchResults.mockReset();
+  fetchOffers.mockReset();
+  fetchPartKeys.mockReset();
   toggleFavorite.mockReset();
-  sendInquiries.mockReset();
-  fetchResults.mockResolvedValue(page([row()]));
+  fetchOffers.mockResolvedValue(page([row()]));
+  fetchPartKeys.mockResolvedValue({
+    keys: [{ key: '62052RS', offers: 1 }],
+    totalKeys: 1,
+    totalOffers: 1,
+    matchedRef: '62052RS',
+    truncated: false,
+    page: 1,
+    pageCount: 1,
+  });
   toggleFavorite.mockResolvedValue();
+  sendInquiries.mockReset();
   sendInquiries.mockImplementation(async (lines) =>
     lines.map((l) => ({ lineId: l.lineId, distributorOrgId: l.distributorOrgId, ok: true })),
   );
 });
 
-function pintar() {
-  return render(<SearchResults profile={profile} now={NOW} />);
+/** Monta SRCH-01, busca una referencia y abre la tabla de ofertas de todas sus claves (fases A y C). */
+async function pintar() {
+  const r = render(<PartSearch profile={profile} now={NOW} />);
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Referencia' }), '6205-2RS');
+  await userEvent.click(screen.getByRole('button', { name: 'Buscar referencia' }));
+  await userEvent.click(await screen.findByRole('button', { name: /Ver ofertas de todas/ }));
+  return r;
 }
 
 const filas = () => screen.getAllByRole('row').slice(1);
@@ -118,7 +139,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
         total: 2,
       }),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -142,7 +163,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
         total: 2,
       }),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -165,7 +186,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
 
   it('el «Consultar» de una fila abre solo el formulario de esa fila', async () => {
     fetchResults.mockResolvedValue(page([row({ id: 'a', partNumber: '6205-2RS' }), row({ id: 'b', partNumber: '22316-E' })], { total: 2 }));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(1);
     await userEvent.click(within(filas()[1]!).getByRole('button', { name: 'Consultar' }));
@@ -188,7 +209,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
         { total: 2 },
       ),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await userEvent.click(screen.getByRole('button', { name: 'Seleccionar todos' }));
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -210,7 +231,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
         { total: 3 },
       ),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(3));
     await userEvent.click(screen.getByRole('button', { name: 'Seleccionar todos' }));
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -225,7 +246,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
     fetchResults.mockResolvedValue(
       page([row({ id: 'a', consulted: true }), row({ id: 'b', consulted: true })], { total: 2 }),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await userEvent.click(screen.getByRole('button', { name: 'Seleccionar todos' }));
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -239,7 +260,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
     fetchResults.mockResolvedValue(
       page([row({ id: 'a', orgId: 'org-mismo' }), row({ id: 'b', orgId: 'org-mismo' })], { total: 2 }),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -265,7 +286,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
           : { lineId: l.lineId, distributorOrgId: l.distributorOrgId, ok: true },
       ),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -293,7 +314,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
         error: 'Ya tienes una consulta pendiente para esta referencia con este distribuidor.',
       },
     ]);
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
     await marcar(0);
     await userEvent.click(within(filas()[0]!).getByRole('button', { name: 'Consultar' }));
@@ -311,7 +332,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
     fetchResults.mockResolvedValue(
       page([row({ id: 'a', orgId: 'org-a' }), row({ id: 'b', orgId: 'org-b' })], { total: 2 }),
     );
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -325,7 +346,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
   });
 
   it('cancelar todos los formularios no envía nada ni deja ningún aviso', async () => {
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
     await marcar(0);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -337,7 +358,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
   });
 
   it('Escape equivale a Cancelar', async () => {
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
     await marcar(0);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -350,7 +371,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
 
   it('el usuario permanece en SRCH-01: al terminar vuelve a leer la tabla, no navega a ningún sitio', async () => {
     fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
-    pintar();
+    await pintar();
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -361,12 +382,12 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
     // La relectura es de dónde sale de verdad "ya consultada" (F-023): una marca puesta a mano en
     // cliente sin volver a la base sería la misma clase de fallo silencioso que ya costó en INV-01.
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(2));
-    expect(screen.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Búsqueda de referencias' })).toBeInTheDocument();
   });
 
   it('la selección se limpia después de enviar', async () => {
     fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -382,7 +403,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
 
   it('una fila cancelada se queda marcada: solo se deselecciona lo enviado', async () => {
     fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
     await userEvent.click(screen.getByRole('button', { name: 'Consultar seleccionados' }));
@@ -399,7 +420,7 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
     let resolver: (v: { lineId: string; distributorOrgId: string; ok: boolean }[]) => void = () => {};
     sendInquiries.mockReturnValue(new Promise((r) => (resolver = r)));
     fetchResults.mockResolvedValue(page([row({ id: 'a' }), row({ id: 'b' })], { total: 2 }));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(2));
     await marcar(0, 1);
 
@@ -415,53 +436,3 @@ describe('SRCH-01 · Consultar abre un formulario por fila (F-249)', () => {
     resolver([]);
   });
 });
-
-describe('SRCH-01 · cargas que llegan desordenadas', () => {
-  /**
-   * Hallado en el e2e de negociación (12-oct-2026): al entrar en `Comprando` y añadir un filtro enseguida
-   * hay DOS cargas en vuelo, y si la inicial (sin filtro) llegaba después, pisaba a la del filtro: el chip
-   * `Ref 32007` sobre 183 resultados sin filtrar. Solo la última carga lanzada puede escribir.
-   */
-  it('una respuesta vieja que llega la última no pisa la de los criterios nuevos', async () => {
-    const { EMPTY_CRITERIA } = await import('../../lib/search');
-    let resolverInicial: (p: SearchPage) => void = () => {};
-    fetchResults
-      .mockReset()
-      .mockReturnValueOnce(new Promise<SearchPage>((r) => (resolverInicial = r)))
-      .mockResolvedValueOnce(page([row({ id: 'filtrada', partNumber: '32007' })]));
-
-    const { rerender } = render(<SearchResults profile={profile} now={NOW} />);
-    await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
-
-    // El filtro llega mientras la carga inicial sigue en vuelo.
-    rerender(<SearchResults profile={profile} now={NOW} veraCriteria={{ ...EMPTY_CRITERIA, partNumber: '32007' }} />);
-    await waitFor(() => expect(filas()).toHaveLength(1));
-    expect(within(filas()[0]!).getByText('32007')).toBeInTheDocument();
-
-    // Ahora llega la inicial, con todo el catálogo: no debe tocar nada.
-    resolverInicial(page([row({ id: 'a' }), row({ id: 'b' }), row({ id: 'c' })], { total: 3 }));
-    await new Promise((r) => setTimeout(r, 30));
-    expect(filas()).toHaveLength(1);
-    expect(within(filas()[0]!).getByText('32007')).toBeInTheDocument();
-  });
-
-  it('un fallo de una carga vieja tampoco pisa los resultados nuevos', async () => {
-    const { EMPTY_CRITERIA } = await import('../../lib/search');
-    let rechazarInicial: (e: Error) => void = () => {};
-    fetchResults
-      .mockReset()
-      .mockReturnValueOnce(new Promise<SearchPage>((_, rej) => (rechazarInicial = rej)))
-      .mockResolvedValueOnce(page([row({ id: 'filtrada' })]));
-
-    const { rerender } = render(<SearchResults profile={profile} now={NOW} />);
-    await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
-    rerender(<SearchResults profile={profile} now={NOW} veraCriteria={{ ...EMPTY_CRITERIA, partNumber: '32007' }} />);
-    await waitFor(() => expect(filas()).toHaveLength(1));
-
-    rechazarInicial(new Error('red'));
-    await new Promise((r) => setTimeout(r, 30));
-    expect(filas()).toHaveLength(1);
-    expect(screen.queryByText('No se pudieron cargar los resultados. Inténtalo de nuevo.')).not.toBeInTheDocument();
-  });
-});
-

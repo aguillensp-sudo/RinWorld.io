@@ -1,6 +1,6 @@
 import './env';
 import { expect, test, type Page } from '@playwright/test';
-import { ALPHA, ALPHA_STORAGE, BETA, haveCreds, signIn, topNav } from './fixtures';
+import { abrirComprando, ALPHA, ALPHA_STORAGE, BETA, buscarReferencia, haveCreds, signIn, verOfertasDeTodas } from './fixtures';
 
 /**
  * SRCH-01 · `Consultar` y `Contactar` de fila, de extremo a extremo (10-oct-2026).
@@ -18,6 +18,9 @@ import { ALPHA, ALPHA_STORAGE, BETA, haveCreds, signIn, topNav } from './fixture
  *   · Contactar sin hilo previo (BETA solo tiene hilo con ALPHA): abre la ficha de la empresa
  *     con el cuadro «Primer mensaje» ya desplegado.
  *
+ * Desde el 26-oct-2026 llega a la tabla por la búsqueda en dos fases (`amend-srch01-busqueda-en-dos-fases`):
+ * busca `6205-2RS`, la referencia con más distribuidoras de la siembra, y abre las ofertas de todas las claves.
+ *
  * Igual que el resto de e2e (F-015): sin credenciales en CI esto es un error duro.
  */
 if (process.env.CI && !haveCreds) {
@@ -26,11 +29,9 @@ if (process.env.CI && !haveCreds) {
 
 /** `yaDentro`: la página ya tiene la sesión abierta (acaba de pasar por `signIn`); recargar la perdería. */
 async function abrirBusqueda(page: Page, yaDentro = false) {
-  if (!yaDentro) await page.goto('/');
-  await topNav(page).getByRole('button', { name: 'Comprando' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
-  // A la tabla, no solo al título: leer filas antes de que llegue la consulta falla por carrera.
-  await expect(page.getByRole('row').nth(1)).toBeVisible();
+  await abrirComprando(page, yaDentro);
+  await buscarReferencia(page, '6205-2RS');
+  await verOfertasDeTodas(page);
 }
 
 /** Las filas de datos, sin la cabecera. */

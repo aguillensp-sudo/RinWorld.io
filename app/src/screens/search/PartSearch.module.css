@@ -1,0 +1,88 @@
+/* Lo que la búsqueda en dos fases añade a `SearchResults.module.css` (que se reutiliza para lo común). */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hint {
+  margin: 24px 0 0;
+  font-size: var(--bw-size-body);
+  color: var(--bw-steel-mist);
+}
+
+.metaBarTop {
+  margin-top: 4px;
+}
+
+/*
+ * El scroll de la lista previa. `.resultsArea` (SearchResults.module.css) ya es una columna flex de alto acotado
+ * (`flex: 1; min-height: 0`, F-088); aquí la rejilla ocupa lo que sobra y desplaza dentro, de modo que la metabarra
+ * queda arriba y el paginador abajo, siempre a la vista. Sin `min-height: 0` la rejilla crecería con su contenido y
+ * el `overflow` no haría nada.
+ */
+.gridScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.empty {
+  margin-top: 12px;
+  padding: 18px 20px;
+  background: white;
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.emptyTitle {
+  margin: 0 0 6px;
+  font-family: var(--bw-font-title);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+}
+
+.emptyText {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--bw-steel-mist);
+}
+
+.emptyActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.back {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+.back:hover {
+  opacity: 0.7;
+}
+
+.sortNote {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+}

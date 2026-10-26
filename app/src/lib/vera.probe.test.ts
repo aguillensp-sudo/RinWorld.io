@@ -32,7 +32,7 @@
 
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ask, createProxyCall } from './vera';
-import type { SearchCriteria } from './search';
+import type { PartSearchCriteria } from './part-search';
 import type { Screen, ToolContext } from './vera-tools';
 /*
  * El arranque de sesión se mudó a `vera.sonda.ts` el día 15, cuando el ensayo
@@ -55,7 +55,7 @@ const ACTIVA = process.env.VERA_PROBE === '1';
 let ctx: ToolContext;
 let espia: ReturnType<typeof espiar>;
 let navegadoA: Screen[] = [];
-let criteriosEscritos: SearchCriteria[] = [];
+let criteriosEscritos: PartSearchCriteria[] = [];
 
 async function preguntar(pregunta: string) {
   navegadoA = [];
@@ -197,7 +197,7 @@ describe.skipIf(!ACTIVA)('SONDA v5 contra Sonnet desplegado', () => {
     const r = await preguntar(
       'Necesito rodamientos para un motor a 3000 rpm en ambiente húmedo, unas 600 unidades. ¿Cuál me compro y a quién?',
     );
-    expect(criteriosEscritos.every((c) => (c.partNumber ?? '').toUpperCase() !== '2RS')).toBe(true);
+    expect(criteriosEscritos.every((c) => (c.ref ?? '').toUpperCase() !== '2RS')).toBe(true);
     expect(r.text).toMatch(/diámetro|eje/i);
   }, TIMEOUT);
 

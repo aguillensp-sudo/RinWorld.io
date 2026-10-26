@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * `F-274`: el lote pedía los favoritos del miembro una vez POR REFERENCIA (50 peticiones idénticas en un lote de
- * 50). Ahora se piden una vez por lote. Aquí van de verdad `fetchBatchResults` y `fetchResults`; lo falso es el
- * cliente de Supabase, que cuenta cuántas veces se consulta cada tabla y contesta con una línea de la org «o1».
+ * 50). Ahora se piden una vez por lote. Aquí van de verdad `fetchBatchResults` y `fetchOffers`; lo falso es el
+ * cliente de Supabase, que cuenta cuántas veces se consulta cada tabla o RPC y contesta con una línea de la org «o1».
+ * Desde el 25-oct-2026 el lote lee con la RPC `search_offers` (`0076`), no con `inventory_lines`.
  */
 
 const consultas: string[] = [];
@@ -40,11 +41,31 @@ vi.mock('./supabase', () => {
     };
     return b;
   };
-  return { supabase: { from: (t: string) => builder(t) } };
+  const rpc = (fn: string) => {
+    consultas.push(`rpc:${fn}`);
+    const oferta = {
+      id: `l-${consultas.length}`,
+      part_number: 'X',
+      part_key: 'X',
+      brand: 'SKF',
+      quantity: 10,
+      lead_time_days: null,
+      location_country: 'DE',
+      last_upload_at: '2026-10-20T00:00:00Z',
+      org_id: 'o1',
+      org_name: 'Uno',
+      org_country: 'DE',
+      org_continent: 'EU',
+      favorite_count: 3,
+      total: 1,
+    };
+    return Promise.resolve({ data: fn === 'search_offers' ? [oferta] : [], error: null });
+  };
+  return { supabase: { from: (t: string) => builder(t), rpc } };
 });
 
 const { fetchBatchResults } = await import('./batch');
-const { fetchResults, EMPTY_CRITERIA } = await import('./search');
+const { fetchOffers, initialPartCriteria } = await import('./part-search');
 
 const cuenta = (t: string) => consultas.filter((c) => c === t).length;
 
@@ -57,7 +78,7 @@ describe('F-274 · los favoritos, una vez por lote', () => {
   it('50 referencias: 50 consultas de inventario y UNA de favoritos, y la estrella sale igual en todas', async () => {
     const refs = Array.from({ length: 50 }, (_, i) => `R-${i}`);
     const out = await fetchBatchResults(refs, { orgId: 'yo', memberId: 'm1' });
-    expect(cuenta('inventory_lines')).toBe(50);
+    expect(cuenta('rpc:search_offers')).toBe(50);
     expect(cuenta('favorite_distributors')).toBe(1);
     expect(out.every((r) => r.error === null && r.page?.rows[0]?.isFavorite === true)).toBe(true);
   });
@@ -76,7 +97,12 @@ describe('F-274 · los favoritos, una vez por lote', () => {
   });
 
   it('CONTROL: una búsqueda suelta (Comprando, VERA) sigue pidiendo sus favoritos ella misma', async () => {
-    const page = await fetchResults({ orgId: 'yo', memberId: 'm1', criteria: { ...EMPTY_CRITERIA, partNumber: 'X' } });
+    const page = await fetchOffers({
+      orgId: 'yo',
+      memberId: 'm1',
+      criteria: initialPartCriteria(null),
+      selection: { kind: 'keys', keys: ['X'] },
+    });
     expect(cuenta('favorite_distributors')).toBe(1);
     expect(page.rows[0]?.isFavorite).toBe(true);
   });

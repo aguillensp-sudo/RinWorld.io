@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { SearchCriteria } from '../../lib/search';
+import type { PartSearchCriteria } from '../../lib/part-search';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   activeCounterLabel,
@@ -49,7 +49,7 @@ interface Props {
   /** Inyectable para que los tests no dependan del reloj (INV-01/SRCH-01/PANEL-01). */
   now?: Date;
   /** «Ver resultados»: abre SRCH-01 con los criterios del watcher precargados. */
-  onViewResults: (criteria: SearchCriteria) => void;
+  onViewResults: (criteria: PartSearchCriteria) => void;
 }
 
 /**

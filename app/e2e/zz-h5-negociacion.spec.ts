@@ -1,6 +1,6 @@
 import './env';
 import { expect, test, type Page } from '@playwright/test';
-import { ALPHA, BETA, canResetFixture, haveCreds, NO_SESSION, signIn, topNav } from './fixtures';
+import { abrirComprando, ALPHA, BETA, buscarReferencia, canResetFixture, haveCreds, NO_SESSION, signIn, topNav, verOfertasDeTodas } from './fixtures';
 
 /**
  * H5 · dos empresas negocian de punta a punta (plan-demo-h5.md, D3).
@@ -111,12 +111,10 @@ test.describe('H5 · negociación de punta a punta', () => {
     try {
       // 1 · BETA busca la referencia y consulta SOLO la línea de ALPHA.
       await signIn(beta, BETA);
-      await topNav(beta).getByRole('button', { name: 'Comprando' }).click();
-      await expect(beta.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
-      await beta.getByRole('button', { name: 'Añadir filtro' }).click();
-      await beta.getByLabel('Campo').selectOption('Ref');
-      await beta.getByLabel('Valor').fill(REFERENCIA);
-      await beta.getByRole('button', { name: 'Añadir', exact: true }).click();
+      // SRCH-01 en dos fases (26-oct-2026): lista previa (una sola clave, 32007) y luego sus ofertas.
+      await abrirComprando(beta, true);
+      await buscarReferencia(beta, REFERENCIA);
+      await verOfertasDeTodas(beta);
       const fila = beta.getByRole('row').filter({ hasText: ALPHA.org });
       await expect(fila).toHaveCount(1);
       await fila.getByRole('checkbox').check();

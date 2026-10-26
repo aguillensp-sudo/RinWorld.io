@@ -1,0 +1,33 @@
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.status {
+  font-size: 12px;
+  color: var(--bw-steel-mist);
+}
+
+.button {
+  height: 28px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bw-deep-steel);
+  cursor: pointer;
+}
+.button:hover:not(:disabled) {
+  border-color: var(--bw-calibration-blue);
+  color: var(--bw-calibration-blue);
+}
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

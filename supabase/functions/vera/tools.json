@@ -1,41 +1,49 @@
 [
   {
     "name": "buscar_en_catalogo",
-    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores, precios de mercado o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco rodamientos SKF en Europa', 'necesito 500 unidades'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Devuelve filas con referencia, marca, cantidad, plazo, país, organización, DE CUÁNDO ES EL DATO (y si eso lo hace poco fiable) y si tu organización YA le ha consultado esa línea a ese proveedor. NO devuelve precios: el precio va cifrado y se negocia en un hilo. NO LA USES para preguntas sobre lo que se ha dicho, ofrecido, pedido o acordado en una negociación ('¿qué precio me han ofrecido?', '¿qué condiciones piden?', 'resume este hilo'): eso es contenido cifrado de un hilo, no lo lee ninguna herramienta, y llamarla aquí además SACA AL USUARIO de la pantalla en la que está. Cada llamada SUSTITUYE todos los filtros de Comprando: para afinar una búsqueda ('ahora solo en Europa'), manda todos los que deben quedar puestos, no solo el nuevo.",
+    "description": "Busca rodamientos en el catálogo de OTRAS organizaciones de la plataforma. Llámala siempre que el usuario pregunte por disponibilidad, stock, proveedores o una referencia concreta ('¿quién tiene 6205-2RS?', 'busco 6204 SKF en Europa', 'necesito 500 unidades de NU214'). No respondas nunca de memoria sobre qué hay en el catálogo: el catálogo cambia y tú no lo tienes. Necesita SIEMPRE una referencia (o el principio de una): sin ella no busca. La búsqueda va en dos pasos, como la pantalla Comprando: primero devuelve la LISTA DE REFERENCIAS distintas que casan, cada una con su número de ofertas (la referencia se compara sin espacios, guiones, puntos ni barras: '6205-2RS' y '6205 2RS' son la misma), y lleva al usuario a esa lista, donde ÉL marca las que quiere ver. Además, si existe la referencia EXACTA que pediste, te devuelve las ofertas de esa referencia (y solo de esa) con marca, cantidad, plazo, país, organización, DE CUÁNDO ES EL DATO y si tu organización YA la ha consultado. No devuelve condiciones económicas: se negocian cifradas en un hilo. NO LA USES para preguntas sobre lo que se ha dicho, ofrecido, pedido o acordado en una negociación ('¿qué me han ofrecido?', '¿qué condiciones piden?', 'resume este hilo'): eso es contenido cifrado de un hilo, no lo lee ninguna herramienta, y llamarla aquí además SACA AL USUARIO de la pantalla en la que está. Cada llamada SUSTITUYE todos los filtros de Comprando: para afinar una búsqueda ('ahora solo en Europa'), manda todos los que deben quedar puestos, no solo el nuevo.",
     "input_schema": {
       "type": "object",
       "properties": {
         "referencia": {
           "type": "string",
-          "description": "Referencia del rodamiento, total o parcial. Ej: '6205-2RS', '6205'. OJO: un sufijo suelto como '2RS' o 'ZZ' NO es una referencia — solo dice el tipo de sellado, y buscar por él mezcla familias de rodamientos con diámetros de eje distintos, así que el resultado no responde a lo que te han preguntado. Si el usuario describe una aplicación pero no te da la referencia, no la deduzcas del sellado: pregúntale el diámetro del eje, o busca por lo que sí tengas (marca, cantidad, zona) y di que has buscado por eso."
+          "description": "Referencia del rodamiento, total o el principio de ella. Ej: '6205-2RS', '6205', 'NU214'. Por defecto se buscan las referencias que EMPIEZAN por esto. OJO: un sufijo suelto como '2RS' o 'ZZ' NO es una referencia — solo dice el tipo de sellado, y buscar por él mezcla familias de rodamientos con diámetros de eje distintos. Si el usuario describe una aplicación pero no te da la referencia, no la deduzcas del sellado: pregúntale el diámetro del eje o la referencia. Sin referencia la herramienta no busca."
+        },
+        "contiene": {
+          "type": "boolean",
+          "description": "true para buscar las referencias que CONTIENEN la cadena en cualquier posición (también con prefijos, como 'S-6204' o 'W6204'), en vez de las que empiezan por ella. Solo si el usuario lo pide o si la búsqueda normal no da lo que busca. Por defecto, false."
         },
         "marca": {
           "type": "string",
           "description": "Marca o fabricante, total o parcial. Ej: 'SKF', 'FAG'."
         },
-        "confirmar_filtros_quitados": {
-          "type": "boolean",
-          "description": "Solo true si el usuario te pide EN SU ÚLTIMO MENSAJE volver a poner un filtro que había quitado a mano en Comprando ('vuelve a ponerme Europa'). Si la herramienta te dice que estás reponiendo un filtro quitado y el usuario no lo ha pedido ahora, repite la búsqueda sin ese filtro; no uses esto para saltarte el aviso."
-        },
         "cantidad_minima": {
           "type": "integer",
           "description": "Unidades mínimas que necesita el usuario. Solo si lo dice."
         },
+        "incluir": {
+          "type": "string",
+          "description": "Texto que la referencia TIENE que contener, por ejemplo un sufijo: 'C3' para quedarse con las de juego C3. Solo si el usuario lo pide."
+        },
+        "excluir": {
+          "type": "string",
+          "description": "Texto que la referencia NO puede contener: 'ZZ' para quitar las blindadas. Solo si el usuario lo pide."
+        },
         "zona": {
           "type": "string",
           "enum": ["AF", "AN", "AS", "EU", "NA", "OC", "SA"],
-          "description": "Continente de la organización vendedora. EU = Europa, AS = Asia, NA = América del Norte, SA = América del Sur, AF = África, OC = Oceanía, AN = Antártida."
+          "description": "Continente de la organización vendedora. EU = Europa, AS = Asia, NA = América del Norte, SA = América del Sur, AF = África, OC = Oceanía, AN = Antártida. Excluyente con pais: manda uno u otro, nunca los dos."
         },
         "pais": {
           "type": "string",
-          "description": "Código ISO-3166-1 alfa-2 de DÓNDE ESTÁ EL STOCK, que puede no ser la sede de la organización. Ej: 'ES', 'DE'."
+          "description": "Código ISO-3166-1 alfa-2 de DÓNDE ESTÁ EL STOCK, que puede no ser la sede de la organización. Ej: 'ES', 'DE'. Excluyente con zona: manda uno u otro, nunca los dos."
         },
-        "plazo_maximo_dias": {
-          "type": "integer",
-          "description": "Plazo de entrega máximo aceptable, en días."
+        "confirmar_filtros_quitados": {
+          "type": "boolean",
+          "description": "Solo true si el usuario te pide EN SU ÚLTIMO MENSAJE volver a poner un filtro que había quitado a mano en Comprando ('vuelve a ponerme Europa'). Si la herramienta te dice que estás reponiendo un filtro quitado y el usuario no lo ha pedido ahora, repite la búsqueda sin ese filtro; no uses esto para saltarte el aviso."
         }
       },
-      "required": []
+      "required": ["referencia"]
     }
   },
   {

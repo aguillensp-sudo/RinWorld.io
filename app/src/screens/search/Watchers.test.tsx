@@ -233,12 +233,13 @@ describe('Watchers · acciones', () => {
     const onView = await montar();
     await userEvent.click(screen.getByRole('button', { name: 'Ver resultados' }));
     expect(onView).toHaveBeenCalledWith({
-      partNumber: 'NU2210-E-TVP2',
+      ref: 'NU2210-E-TVP2',
+      contains: false,
       brand: 'FAG',
       minQuantity: 50,
-      zone: null,
-      country: '',
-      maxLeadTimeDays: null,
+      include: '',
+      exclude: '',
+      area: null,
     });
   });
 });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SearchPage, SearchQuery } from './search';
+import type { OffersPage, OffersQuery } from './part-search';
 
 /**
  * PARCIALES · conversational-search/batch-search#1, escrito desde la spec.
@@ -15,17 +15,20 @@ import type { SearchPage, SearchQuery } from './search';
  * ~ (50 / concurrencia) x latencia de UNA consulta y no 50 x latencia.
  */
 
-const fetchResults = vi.fn<(q: SearchQuery) => Promise<SearchPage>>();
+const fetchOffers = vi.fn<(q: OffersQuery) => Promise<OffersPage>>();
+vi.mock('./part-search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./part-search')>()),
+  fetchOffers: (q: OffersQuery) => fetchOffers(q),
+}));
 vi.mock('./search', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./search')>()),
-  fetchResults: (q: SearchQuery) => fetchResults(q),
   fetchFavoriteOrgIds: async () => new Set<string>(),
 }));
 
 const { parseReferences, fetchBatchResults, MAX_BATCH } = await import('./batch');
 
 beforeEach(() => {
-  fetchResults.mockReset();
+  fetchOffers.mockReset();
 });
 
 describe('conversational-search/batch-search', () => {
@@ -45,12 +48,12 @@ describe('conversational-search/batch-search', () => {
     let enVuelo = 0;
     let maxEnVuelo = 0;
     const LATENCIA_MS = 40;
-    fetchResults.mockImplementation(async () => {
+    fetchOffers.mockImplementation(async () => {
       enVuelo++;
       maxEnVuelo = Math.max(maxEnVuelo, enVuelo);
       await new Promise((r) => setTimeout(r, LATENCIA_MS));
       enVuelo--;
-      return { rows: [], total: 0, capped: false } satisfies SearchPage;
+      return { rows: [], total: 0, page: 1, pageCount: 1 } satisfies OffersPage;
     });
 
     const t0 = Date.now();
@@ -59,7 +62,7 @@ describe('conversational-search/batch-search', () => {
 
     expect(out.map((r) => r.reference)).toEqual(refs);
     expect(out.every((r) => r.error === null && r.page !== null)).toBe(true);
-    expect(fetchResults).toHaveBeenCalledTimes(50);
+    expect(fetchOffers).toHaveBeenCalledTimes(50);
     expect(maxEnVuelo).toBeGreaterThan(1);
     // en serie serían 50 x 40 = 2000 ms; en paralelo acotado, bastante menos
     expect(ms).toBeLessThan(50 * LATENCIA_MS * 0.6);

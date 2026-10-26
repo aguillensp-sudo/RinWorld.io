@@ -1,20 +1,19 @@
-import {
-  countryName,
-  fetchFavoriteOrgIds,
-  fetchResults,
-  quantityLabel,
-  type SearchPage,
-  type SearchResultRow,
-  EMPTY_CRITERIA,
-} from './search';
+import { countryName, fetchFavoriteOrgIds, quantityLabel, type SearchResultRow } from './search';
+import { fetchOffers, initialPartCriteria } from './part-search';
 
 /**
  * Capa de datos de SRCH-02 (Panel Consolidado de Búsqueda por Lotes), escrita a
  * mano por Claude Code ANTES de la tarea del arnés (`UMBRAL-FABRICA-V1.md` §7,
- * paso 2). **SRCH-02 no lleva migración ni consulta nueva**: cada referencia se
- * busca con `fetchResults` de `search.ts` -la misma consulta que SRCH-01, con sus
- * tres filtros silenciosos ya resueltos-, así que aquí no se reimplementa la
- * lectura de inventario ajeno.
+ * paso 2). **SRCH-02 no lleva migración ni consulta propia**: cada referencia se
+ * busca con `fetchOffers` de `part-search.ts` -la fase C de SRCH-01, con la
+ * visibilidad ya resuelta en `search_offers` (`0076`)-, así que aquí no se
+ * reimplementa la lectura de inventario ajeno.
+ *
+ * Desde el 25-oct-2026 cada referencia del lote se busca por su **clave exacta**
+ * (`design.md` §6 del change `amend-srch01-busqueda-en-dos-fases`, PO): quien pega
+ * una lista sabe la designación, y «contiene» o «empieza por» le devolverían
+ * variantes que no pidió. `6205-2RS` y `6205 2RS` siguen siendo la misma, porque la
+ * clave se normaliza en el servidor.
  *
  * La lógica pura (parseo tolerante de la lista, tope de 50, cabeceras de tarjeta,
  * metabarra, CSV) vive aquí para que las dos piezas de la tarea no la
@@ -69,10 +68,19 @@ export function overLimitNotice(count: number): string {
 // El resultado de cada referencia
 // -----------------------------------------------------------------------------
 
+/** Las ofertas de una referencia del lote. */
+export interface BatchPage {
+  rows: SearchResultRow[];
+  /** Cuántas ofertas tiene la clave, aunque lleguen menos (`capped`). */
+  total: number;
+  /** Llegan menos de las que hay: el tope de `search_offers` es 200 por llamada. */
+  capped: boolean;
+}
+
 export interface BatchResult {
   reference: string;
   /** `null` si la consulta de esta referencia falló (`error` lo explica). */
-  page: SearchPage | null;
+  page: BatchPage | null;
   error: string | null;
 }
 
@@ -88,8 +96,8 @@ export interface ReferenceSummary {
 
 /**
  * Lo que resume la cabecera de una tarjeta: distribuidores con stock, cantidad
- * máxima y de quién es. En un empate de cantidad gana la primera fila (para esto la base
- * las entrega por cantidad descendente: `orden: 'cantidad'`).
+ * máxima y de quién es. En un empate de cantidad gana la primera fila (`fetchBatchResults`
+ * las deja por cantidad descendente).
  */
 export function summarizeRows(rows: SearchResultRow[]): ReferenceSummary {
   if (rows.length === 0) return { distributors: 0, maxQuantity: null, maxBrand: null, maxCountry: null };
@@ -178,8 +186,11 @@ export function summaryFileName(now: Date = new Date()): string {
 /** Cuántas referencias se consultan a la vez: cada una son dos llamadas, más una de favoritos por lote. */
 export const BATCH_CONCURRENCY = 5;
 
+/** Una referencia, como mucho, trae esto: el tope de `search_offers` (`0076`). */
+export const BATCH_OFFERS_MAX = 200;
+
 /**
- * Busca cada referencia con `fetchResults`, con concurrencia acotada y **en el
+ * Busca cada referencia por su clave exacta con `fetchOffers`, con concurrencia acotada y **en el
  * orden de la lista**. Un fallo en una referencia no tumba las demás: queda en su
  * `error`, y la pantalla lo enseña en su tarjeta.
  *
@@ -203,14 +214,18 @@ export async function fetchBatchResults(
       const i = next++;
       const reference = refs[i]!;
       try {
-        // Por cantidad: el «Máx» de la tarjeta tiene que estar entre las filas que llegan aunque haya más de 200.
-        const page = await fetchResults({
+        // Sin zona ni filtros: el lote nunca los ha tenido. La clave la normaliza el servidor.
+        const page = await fetchOffers({
           ...ctx,
-          criteria: { ...EMPTY_CRITERIA, partNumber: reference },
-          orden: 'cantidad',
+          criteria: initialPartCriteria(null),
+          selection: { kind: 'keys', keys: [reference] },
+          pageSize: BATCH_OFFERS_MAX,
           favoritos,
         });
-        out[i] = { reference, page, error: null };
+        // ⚠ `search_offers` ordena por fecha. Con más de 200 ofertas de UNA clave (no ha pasado nunca en el
+        // catálogo), el «Máx» saldría de las 200 más recientes: `capped` lo deja dicho.
+        const rows = [...page.rows].sort((a, b) => b.quantity - a.quantity || a.id.localeCompare(b.id));
+        out[i] = { reference, page: { rows, total: page.total, capped: page.total > rows.length }, error: null };
       } catch (e) {
         out[i] = { reference, page: null, error: (e as { message?: string })?.message ?? String(e) };
       }

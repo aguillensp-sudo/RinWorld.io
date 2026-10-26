@@ -10,7 +10,7 @@ import { ALPHA, haveCreds, topNav } from './fixtures';
  * **Esto es lo que los tests de unidad no pueden probar.** `BatchSearch.test.tsx`
  * mockea `fetchBatchResults`, así que pasaría entero aunque cada referencia se
  * buscase mal contra el inventario ajeno (los tres filtros silenciosos de
- * `fetchResults`: sin el `.neq` propio, sin `PUBLISHED`, sin el embed nombrado),
+ * `search_offers`, `0076`: sin excluir la organización propia, sin `PUBLISHED`, sin la visibilidad),
  * aunque la RLS dejase ver stock de quien nos ha excluido, o aunque la tabla
  * expandida no se llenase.
  *
@@ -140,6 +140,6 @@ test.describe('SRCH-02 · búsqueda por lotes real (ALPHA)', () => {
   test('volver a Comprando desde otro ítem lleva a la búsqueda de siempre, no a los lotes', async ({ page }) => {
     await topNav(page).getByRole('button', { name: 'Panel' }).click();
     await topNav(page).getByRole('button', { name: 'Comprando' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Búsqueda de referencias' })).toBeVisible();
   });
 });

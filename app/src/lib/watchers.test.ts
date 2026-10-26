@@ -172,19 +172,24 @@ describe('etiquetas', () => {
 });
 
 describe('«Ver resultados»: los criterios que precarga SRCH-01', () => {
-  it('lleva referencia, marca, cantidad mínima, zona y país', () => {
+  it('lleva referencia, marca, cantidad mínima y país, en el modelo de la búsqueda en dos fases', () => {
     expect(watcherToCriteria(EJEMPLO[3]!)).toEqual({
-      partNumber: '7210-BECBP',
+      ref: '7210-BECBP',
+      contains: false,
       brand: 'SKF',
       minQuantity: 10,
-      zone: null,
-      country: 'ES',
-      maxLeadTimeDays: null,
+      include: '',
+      exclude: '',
+      area: { kind: 'country', country: 'ES' },
     });
   });
 
-  it('lo que el watcher no fija queda vacío, no `null` disfrazado de texto', () => {
-    expect(watcherToCriteria(EJEMPLO[0]!)).toMatchObject({ brand: '', country: '', zone: 'EU' });
+  it('lo que el watcher no fija queda vacío, no `null` disfrazado de texto; sin país, la zona', () => {
+    expect(watcherToCriteria(EJEMPLO[0]!)).toMatchObject({ brand: '', area: { kind: 'zone', zone: 'EU' } });
+  });
+
+  it('con zona y país a la vez gana el país: en Comprando son un solo filtro', () => {
+    expect(watcherToCriteria({ ...EJEMPLO[0]!, zone: 'EU', country: 'de' }).area).toEqual({ kind: 'country', country: 'DE' });
   });
 });
 

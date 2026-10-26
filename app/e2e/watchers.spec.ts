@@ -127,18 +127,26 @@ test.describe('SRCH-03 · watchers reales (ALPHA)', () => {
     await expect(page.getByRole('article', { name: `Watcher ${ref}` })).toHaveAttribute('data-state', 'ACTIVE');
   });
 
-  test('Ver resultados lleva a SRCH-01 con la referencia del watcher precargada', async ({ page }) => {
+  /*
+   * Desde el 26-oct-2026 (búsqueda en dos fases) «Ver resultados» lanza la búsqueda con los criterios del
+   * watcher y deja la lista previa a la vista: la referencia sale en el chip Ref, que no se puede quitar.
+   */
+  test('Ver resultados lleva a SRCH-01 con la referencia del watcher ya buscada', async ({ page }) => {
     const trig = page.locator('article[data-state="TRIGGERED"]').first();
     const ref = ((await trig.getAttribute('aria-label')) ?? '').replace('Watcher ', '');
     await trig.getByRole('button', { name: 'Ver resultados' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
-    await expect(page.getByText(ref, { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Búsqueda de referencias' })).toBeVisible();
+    await expect(page.getByLabel('Filtros activos').getByText(ref, { exact: true })).toBeVisible();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(
+      page.getByRole('list', { name: 'Referencias encontradas' }).or(page.getByText(/^No hay coincidencias para/)),
+    ).toBeVisible();
   });
 
   test('volver a Comprando desde otro ítem lleva a la búsqueda, no a la lista de watchers', async ({ page }) => {
     await topNav(page).getByRole('button', { name: 'Panel' }).click();
     await topNav(page).getByRole('button', { name: 'Comprando' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Búsqueda de referencias' })).toBeVisible();
   });
 });
 

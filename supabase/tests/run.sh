@@ -107,6 +107,12 @@ run "$ROOT/supabase/tests/08_vera_uso.sql"
 echo "· fase 1 · SIN_PRUEBA de la matriz que solo prueba la base"
 run "$ROOT/supabase/tests/09_sin_prueba_sql.sql"
 
+echo "· fase 1 · clave normalizada de la referencia (0073-0075)"
+run "$ROOT/supabase/tests/10_clave_normalizada.sql"
+
+echo "· fase 1 · búsqueda en dos fases (0076)"
+run "$ROOT/supabase/tests/11_busqueda_dos_fases.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

@@ -1,29 +1,26 @@
 import './env';
-import { expect, test } from '@playwright/test';
-import { ALPHA, ALPHA_STORAGE, haveCreds, topNav } from './fixtures';
+import { expect, test, type Page } from '@playwright/test';
+import { abrirComprando, ALPHA, ALPHA_STORAGE, buscarReferencia, haveCreds, verOfertasDeTodas } from './fixtures';
 
 /**
- * CONTRATO DE ACEPTACIÓN · SRCH-01 · contra el Supabase real.
+ * CONTRATO DE ACEPTACIÓN · SRCH-01 en dos fases · contra el Supabase real.
  *
- * Escrito antes que el código y por Claude Code (`Plan §6`). El Coder no lo ve.
+ * Reescrito el 26-oct-2026 por Claude Code para la búsqueda en dos fases (`amend-srch01-busqueda-en-dos-fases`):
+ * lista previa de claves normalizadas → el usuario elige → tabla de ofertas paginada. La versión anterior
+ * probaba la pantalla de una sola tabla (`SearchResults`), retirada el 25-oct-2026.
  *
- * **Esto es lo que los tests de unidad no pueden probar, y por eso existe.**
- * `SearchResults.test.tsx` mockea `fetchResults`, así que pasaría entero con:
+ * **Esto es lo que los tests de unidad no pueden probar, y por eso existe.** `PartSearch.test.tsx` mockea
+ * `fetchPartKeys` y `fetchOffers`, así que pasaría entero con:
  *
- *   · una consulta sin `.neq('org_id', …)` — y `inventory_lines` tiene DOS
- *     políticas de lectura permisivas que se suman, así que la pantalla me
- *     enseñaría MI PROPIO inventario entre los proveedores. No falla nada: sale
- *     una tabla plausible donde me estoy comprando a mí mismo;
- *   · un embed sin la clave ajena nombrada, o un `!inner` contra una tabla que
- *     RLS no deja leer — la columna Empresa saldría a "—" en todas las filas, o
- *     la tabla saldría vacía sin error (F-020);
- *   · un chip de zona que no corta: Anadolu Rulman lleva `continent = 'AS'`
- *     justamente para que "Europa" la deje fuera (`guion-demo-y-siembra.md` §3).
- *     Un filtro que no filtra devuelve resultados de más y parece correcto.
+ *   · unas RPC (`search_part_keys`, `search_offers`, `0076`) que se olvidaran de `app.current_org_id()`: la
+ *     pantalla me enseñaría MI PROPIO inventario entre los proveedores, y ALPHA tiene `6205-2RS` publicada;
+ *   · una zona que no corta: Anadolu Rulman lleva `continent = 'AS'` justamente para que "Europa" la deje fuera
+ *     (`guion-demo-y-siembra.md` §3). Un filtro que no filtra devuelve resultados de más y parece correcto;
+ *   · una `part_key` que no funde grafías: `32011-X` (Nordwälz) y `32011X` (Łożyska) son la misma clave;
+ *   · un recorte del caso 1.3 que no llegara a la base.
  *
- * Igual que en el resto de e2e (F-015): si faltan credenciales en CI, esto es un
- * error duro. Un test que se salta la puerta y dice "passed" es peor que no
- * tenerlo.
+ * Igual que en el resto de e2e (F-015): si faltan credenciales en CI, esto es un error duro. Un test que se
+ * salta la puerta y dice "passed" es peor que no tenerlo.
  */
 if (process.env.CI && !haveCreds) {
   throw new Error(
@@ -42,8 +39,11 @@ const INVENTADAS = [
   'Timken Europe GmbH',
 ];
 
+/** La referencia con más ofertas de la siembra, y que ALPHA también publica. */
+const CON_STOCK = '6205-2RS';
+
 /** La columna 6 de todas las filas visibles. */
-async function empresas(page: import('@playwright/test').Page): Promise<string[]> {
+async function empresas(page: Page): Promise<string[]> {
   const filas = page.getByRole('row');
   const n = await filas.count();
   const out: string[] = [];
@@ -54,17 +54,14 @@ async function empresas(page: import('@playwright/test').Page): Promise<string[]
   return out;
 }
 
-test.describe('SRCH-01 · resultados reales', () => {
+test.describe('SRCH-01 · tabla de ofertas real', () => {
   test.skip(!haveCreds, 'sin credenciales E2E_*');
   test.use({ storageState: ALPHA_STORAGE });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await topNav(page).getByRole('button', { name: 'Comprando' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
-    // Se espera a la tabla, no solo al título: leer filas antes de que llegue la
-    // consulta encuentra cero y falla por carrera, no por defecto.
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    await abrirComprando(page);
+    await buscarReferencia(page, CON_STOCK);
+    await verOfertasDeTodas(page);
   });
 
   test('pinta stock de la base, no los datos de ejemplo del mock', async ({ page }) => {
@@ -75,17 +72,14 @@ test.describe('SRCH-01 · resultados reales', () => {
   });
 
   test('NUNCA enseña mi propio inventario: no me compro a mí mismo', async ({ page }) => {
-    // El invariante de la pantalla. Es el espejo del `.eq('org_id')` de INV-01 y
-    // la única forma de cazarlo es esta.
+    // El invariante de la pantalla, y ALPHA publica dos líneas de 6205-2RS: si las RPC no excluyeran la
+    // organización propia, saldrían aquí.
     const vistas = await empresas(page);
     expect(vistas.length).toBeGreaterThan(0);
     expect(vistas).not.toContain(ALPHA.org);
   });
 
   test('la columna Empresa viene resuelta: ni un guion en toda la tabla', async ({ page }) => {
-    // Un "—" en todas las filas es la firma de un embed roto (F-020) o de un
-    // `!inner` contra una tabla que RLS esconde. Con la pantalla en blanco se ve;
-    // con una columna a guiones, no.
     const vistas = await empresas(page);
     for (const e of vistas) {
       expect(e).not.toBe('—');
@@ -107,178 +101,141 @@ test.describe('SRCH-01 · resultados reales', () => {
     await expect(page.getByText('€')).toHaveCount(0);
   });
 
-  /**
-   * ⚠ LOS DOS BOTONES DE ESTE FORMULARIO SE BUSCAN CON CUIDADO, Y NO ES CELO.
-   *
-   * `FilterChips.tsx` pone `aria-label="Añadir filtro"` al botón que **abre** el
-   * formulario, y el que lo **envía** dice `Añadir`. Un `aria-label` tapa el texto
-   * interno, así que el visible `+ Filtro` no es el nombre accesible de nada.
-   *
-   * Y en Playwright el `name` en cadena casa **por subcadena** e insensible a
-   * mayúsculas — al revés que Testing Library, que casa exacto —, de modo que
-   * `'Añadir'` a secas resuelve a los DOS botones y aborta por strict mode. De ahí
-   * el `exact: true` en el submit: es obligatorio, no estilo.
-   *
-   * Los dos defectos estaban aquí desde el día 6 y ninguno se vio, porque la suite
-   * no arrancaba (F-050). El primero era `/Filtro/` con mayúscula, que no casaba
-   * con nada; arreglarlo destapó el segundo tres líneas más abajo. Es F-048 otra
-   * vez y el corolario de F-052: **una suite que no corre deja de cubrirse a sí
-   * misma.**
-   */
-  test('el chip de zona Europa deja fuera a la distribuidora turca', async ({ page }) => {
-    // `guion-demo-y-siembra.md` §3: Anadolu Rulman lleva `continent = 'AS'` por el
-    // geoscheme de la ONU, precisamente para que este chip corte.
-    await page.getByRole('button', { name: 'Añadir filtro' }).click();
-    await page.getByLabel('Campo').selectOption('Zona');
-    await page.getByLabel('Valor').selectOption('Europa');
-    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
-
-    await expect(page.getByText('Anadolu Rulman')).toHaveCount(0);
-    // Y sigue habiendo resultados: el chip filtra, no vacía la tabla.
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
-  });
-
-  test('el chip de referencia filtra de verdad contra la base', async ({ page }) => {
-    await page.getByRole('button', { name: 'Añadir filtro' }).click();
-    await page.getByLabel('Campo').selectOption('Ref');
-    await page.getByLabel('Valor').fill('6205-2RS');
-    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
-
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+  test('todas las filas son de la referencia buscada', async ({ page }) => {
     const filas = page.getByRole('row');
     const n = await filas.count();
     for (let i = 1; i < n; i++) {
-      await expect(filas.nth(i).getByRole('cell').nth(1)).toContainText('6205-2RS');
+      await expect(filas.nth(i).getByRole('cell').nth(1)).toContainText(CON_STOCK);
     }
+  });
+});
+
+test.describe('SRCH-01 · lista previa y filtros contra la base', () => {
+  test.skip(!haveCreds, 'sin credenciales E2E_*');
+  test.use({ storageState: ALPHA_STORAGE });
+
+  test.beforeEach(async ({ page }) => abrirComprando(page));
+
+  test('la lista previa enseña la clave normalizada, escriba como escriba el usuario', async ({ page }) => {
+    // Espacios y minúsculas: la clave es la misma que la de «6205-2RS».
+    const lista = await buscarReferencia(page, '6205 2rs');
+    await expect(lista.getByRole('checkbox', { name: /^62052RS\b/ })).toBeVisible();
+    // Ninguna celda con la grafía de un distribuidor (`design.md` §6).
+    await expect(lista.getByText('6205-2RS')).toHaveCount(0);
+  });
+
+  /*
+   * Con zona por defecto (Europa, el continente de ALPHA) Anadolu no sale; quitando la zona, sí. Las dos
+   * mitades juntas: la primera sola la pasa una búsqueda que no traiga nunca a Anadolu.
+   */
+  test('la zona por defecto (Europa) deja fuera a la distribuidora turca, y sin zona aparece', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Quitar filtro Zona' })).toBeVisible();
+    await buscarReferencia(page, CON_STOCK);
+    await verOfertasDeTodas(page);
+    await expect(page.getByText('Anadolu Rulman')).toHaveCount(0);
+
+    await page.getByRole('button', { name: '‹ Volver a la lista de referencias' }).click();
+    await buscarReferencia(page, CON_STOCK, { zona: 'Cualquiera' });
+    await verOfertasDeTodas(page);
+    await expect(page.getByText('Anadolu Rulman').first()).toBeVisible();
   });
 
   /**
-   * ⚠ ESTE TEST PEDÍA EL ESTADO VACÍO Y SU PREMISA ERA FALSA. Decía: *"la
-   * referencia 32011X de Anadolu está ARCHIVED"*, y filtraba por `32011X`
-   * esperando cero filas. Pero el catálogo sembrado tiene **tres** referencias que
-   * casan con `32011`, no una:
+   * El catálogo sembrado tiene tres líneas que casan con `32011X`:
    *
    *   32011-X · SKF · PUBLISHED · Nordwälz Lager  (EU)
-   *   32011X  · NTN · ARCHIVED  · Anadolu Rulman  (AS)   <- la que el test conocía
-   *   32011X  · NSK · PUBLISHED · Łożyska Wschód  (EU)   <- la que no
+   *   32011X  · NTN · ARCHIVED  · Anadolu Rulman  (AS)
+   *   32011X  · NSK · PUBLISHED · Łożyska Wschód  (EU)
    *
-   * Así que `32011X` devuelve UNA fila legítima y el estado vacío no llega nunca.
-   *
-   * Y el test era **débil** además de falso: esperar cero filas también lo pasa una
-   * búsqueda rota que no devuelva nada jamás. Con una referencia publicada y otra
-   * archivada compartiendo literal, se puede probar lo que el nombre promete —que
-   * el filtro de `status` corta— **y** que la búsqueda sigue trayendo lo que debe.
-   * Ese par de assertions juntos no los pasa ninguna de las dos averías.
-   *
-   * El estado vacío se prueba aparte, abajo, con una referencia que no existe.
+   * Sin zona, para que el corte de Anadolu no lo haga el continente. Prueba a la vez que `status` corta y que
+   * las dos grafías publicadas son UNA clave: esperar cero filas lo pasaría también una búsqueda rota.
    */
-  test('no trae líneas que no estén publicadas', async ({ page }) => {
-    await page.getByRole('button', { name: 'Añadir filtro' }).click();
-    await page.getByLabel('Campo').selectOption('Ref');
-    await page.getByLabel('Valor').fill('32011X');
-    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
+  test('no trae líneas que no estén publicadas, y funde 32011-X con 32011X', async ({ page }) => {
+    const lista = await buscarReferencia(page, '32011X', { zona: 'Cualquiera' });
+    await expect(lista.getByRole('listitem')).toHaveCount(1);
+    await verOfertasDeTodas(page);
 
-    // La PUBLISHED de Łożyska sí sale: la búsqueda no está simplemente rota.
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
-    // Y la ARCHIVED de Anadolu no aparece, que es el invariante.
+    await expect(page.getByText('Łożyska Wschód')).toBeVisible();
+    await expect(page.getByText('Nordwälz Lager')).toBeVisible();
     await expect(page.getByText('Anadolu Rulman')).toHaveCount(0);
   });
 
-  test('sin resultados sale el estado vacío, no una tabla en blanco', async ({ page }) => {
-    await page.getByRole('button', { name: 'Añadir filtro' }).click();
-    await page.getByLabel('Campo').selectOption('Ref');
-    await page.getByLabel('Valor').fill('ZZ-NO-EXISTE-9999');
-    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
-
-    await expect(page.getByText('No hemos encontrado stock con estos filtros.')).toBeVisible();
+  test('caso 1.3: sin coincidencia exacta recorta por el final y lo avisa', async ({ page }) => {
+    const lista = await buscarReferencia(page, '6205-2RSXYZ');
+    await expect(
+      page.getByText('No hay ninguna referencia que empiece por «62052RSXYZ». Se muestran las que empiezan por «62052RS».'),
+    ).toBeVisible();
+    await expect(lista.getByRole('checkbox', { name: /^62052RS\b/ })).toBeVisible();
   });
 
-  test('el watcher no promete nada: deshabilitado y sin toast', async ({ page }) => {
-    const boton = page.getByRole('button', { name: /Crear watcher/i });
-    await expect(boton).toBeDisabled();
+  test('caso 1.4: sin ninguna coincidencia sale el aviso, y el watcher no promete nada', async ({ page }) => {
+    await buscarReferencia(page, 'ZZ-NO-EXISTE-9999');
+    await expect(page.getByText('No hay coincidencias para «ZZNOEXISTE9999».')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Crear watcher/i })).toBeDisabled();
     await expect(page.getByText(/te avisaremos/i)).toHaveCount(0);
   });
 });
 
 /**
- * F-088 · LA TABLA TIENE QUE PODER DESPLAZARSE, Y ESTO SOLO SE VE EN NAVEGADOR.
+ * F-088 · LO QUE NO CABE TIENE QUE PODER DESPLAZARSE, Y ESTO SOLO SE VE EN NAVEGADOR.
  *
- * Ningún test de unidad puede cazarlo: jsdom no calcula layout, así que
- * `SearchResults.test.tsx` pinta las 200 filas y las encuentra todas aunque en
- * un navegador de verdad la mitad quede fuera del contenedor recortado. Ningún
- * check del arnés lo mira tampoco —C2 mira comportamiento, C3 color, C4 es
- * mecánico—, y el resto de e2e corre en el viewport por defecto, que es lo
- * bastante alto como para que el desbordamiento no llegue a ocurrir.
+ * jsdom no calcula layout: los tests de unidad encuentran todas las filas aunque en un navegador de verdad la
+ * mitad quede fuera de un contenedor recortado. De ahí el viewport bajo a propósito. Álvaro lo encontró dos
+ * veces: en la tabla vieja (sesión 1) y en la lista previa nueva (25-oct-2026, sin scroll ni paginador visible).
  *
- * De ahí el viewport bajo a propósito: es la única forma de que el defecto
- * exista dentro del test. Álvaro lo encontró en la sesión 1 con una ventana
- * normal y "Seleccionar todos", sin saber si había más filas debajo.
+ * ⚠ No vale `scrollIntoViewIfNeeded()` + `toBeInViewport()`: `overflow: hidden` sigue siendo un contenedor de
+ * scroll por script, así que Playwright llegaría donde una persona no puede. Se comprueba la CADENA DE
+ * CONTENEDORES en sus dos mitades:
  *
- * El aserto es "la última fila se puede llegar a ver", no "existe un elemento
- * con overflow": lo segundo lo pasa cualquier `overflow-y: auto` puesto en el
- * sitio equivocado.
+ *   · negativa — ningún ancestro recorta con `overflow: hidden` contenido que le desborda;
+ *   · positiva — y alguno desborda con `auto`/`scroll`: el scroll existe y no es que todo quepa.
  */
-test.describe('SRCH-01 · la tabla se desplaza en una ventana baja (F-088)', () => {
+async function cadenaDeScroll(page: Page, selector: string) {
+  return page.evaluate((sel) => {
+    const ultima = document.querySelector(sel);
+    if (!ultima) return { error: 'sin elementos', recortan: [] as string[], desplazables: [] as string[] };
+    const recortan: string[] = [];
+    const desplazables: string[] = [];
+    let el: Element | null = ultima;
+    while (el) {
+      const h = el as HTMLElement;
+      const overflowY = getComputedStyle(h).overflowY;
+      // +1 de tolerancia: los redondeos subpíxel no son desbordamiento de nada.
+      if (h.scrollHeight > h.clientHeight + 1) {
+        const nombre = `${el.tagName}.${String(el.className).slice(0, 30)}`;
+        if (overflowY === 'hidden') recortan.push(nombre);
+        if (overflowY === 'auto' || overflowY === 'scroll') desplazables.push(nombre);
+      }
+      el = el.parentElement;
+    }
+    return { error: null, recortan, desplazables };
+  }, selector);
+}
+
+test.describe('SRCH-01 · todo se puede desplazar en una ventana baja (F-088)', () => {
   test.skip(!haveCreds, 'sin credenciales E2E_*');
   test.use({ storageState: ALPHA_STORAGE, viewport: { width: 1280, height: 480 } });
 
-  /**
-   * ⚠ EL PRIMER INTENTO DE ESTE TEST PASABA CON EL DEFECTO PUESTO, Y LA RAZÓN
-   * MERECE QUEDAR ESCRITA.
-   *
-   * Decía `scrollIntoViewIfNeeded()` y luego `toBeInViewport()`, que es lo que
-   * uno escribe sin pensarlo. Pero **`overflow: hidden` sigue siendo un
-   * contenedor de scroll**: lo que quita es la barra y el gesto del usuario, no
-   * la capacidad de desplazarlo por script. Así que Playwright desplazaba
-   * `.bwcnt` a mano, la fila entraba en el viewport y el aserto se ponía verde
-   * sobre contenido al que una persona no puede llegar de ninguna manera.
-   *
-   * Medido con el defecto puesto: `.page` ocupa 11521px dentro de un `.bwcnt` de
-   * 384px, y la última de las 186 filas cae a y=11555. Nada en la cadena tiene
-   * `overflow-y: auto`.
-   *
-   * De ahí que lo que se compruebe sea la CADENA DE CONTENEDORES, que es lo que
-   * el hallazgo nombra, y en sus dos mitades:
-   *
-   *   · negativa — ningún ancestro puede estar recortando con `overflow: hidden`
-   *     contenido que le desborda: eso es contenido inalcanzable, por definición;
-   *   · positiva — y alguno tiene que desbordar con `auto`/`scroll`, o sea, el
-   *     scroll existe de verdad y no es que la tabla quepa entera.
-   *
-   * Las dos juntas: la primera sola la pasaría una tabla que cupiera en pantalla,
-   * y la segunda sola no dice nada de lo que se recorta más arriba.
-   */
-  test('ningún contenedor recorta filas sin dejar cómo llegar a ellas', async ({ page }) => {
-    await page.goto('/');
-    await topNav(page).getByRole('button', { name: 'Comprando' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resultados de búsqueda' })).toBeVisible();
-    await expect(page.getByRole('row').nth(1)).toBeVisible();
+  test.beforeEach(async ({ page }) => abrirComprando(page));
 
-    // Con 480px de alto tiene que sobrar tabla; si no sobrara, este test no
-    // estaría probando nada y hay que enterarse.
+  test('la lista previa: ninguna celda queda recortada sin cómo llegar a ella', async ({ page }) => {
+    // Prefijo «6» y sin zona: unas treinta claves, ocho filas de rejilla en 480px.
+    const lista = await buscarReferencia(page, '6', { zona: 'Cualquiera' });
+    expect(await lista.getByRole('listitem').count()).toBeGreaterThan(20);
+
+    const cadena = await cadenaDeScroll(page, 'ul[aria-label="Referencias encontradas"] > li:last-child');
+    expect(cadena.error).toBeNull();
+    expect(cadena.recortan).toEqual([]);
+    expect(cadena.desplazables.length).toBeGreaterThan(0);
+  });
+
+  test('la tabla de ofertas: ninguna fila queda recortada sin cómo llegar a ella', async ({ page }) => {
+    await buscarReferencia(page, '6');
+    await verOfertasDeTodas(page);
+    // Con 480px de alto tiene que sobrar tabla; si no sobrara, este test no probaría nada.
     expect(await page.getByRole('row').count()).toBeGreaterThan(20);
 
-    const cadena = await page.evaluate(() => {
-      const ultima = document.querySelector('tbody tr:last-child');
-      if (!ultima) return { error: 'sin filas', recortan: [], desplazables: [] };
-      const recortan: string[] = [];
-      const desplazables: string[] = [];
-      let el: Element | null = ultima;
-      while (el) {
-        const h = el as HTMLElement;
-        const overflowY = getComputedStyle(h).overflowY;
-        // +1 de tolerancia: los redondeos subpíxel del navegador producen
-        // diferencias de una unidad que no son desbordamiento de nada.
-        if (h.scrollHeight > h.clientHeight + 1) {
-          const nombre = `${el.tagName}.${String(el.className).slice(0, 30)}`;
-          if (overflowY === 'hidden') recortan.push(nombre);
-          if (overflowY === 'auto' || overflowY === 'scroll') desplazables.push(nombre);
-        }
-        el = el.parentElement;
-      }
-      return { error: null, recortan, desplazables };
-    });
-
+    const cadena = await cadenaDeScroll(page, 'tbody tr:last-child');
     expect(cadena.error).toBeNull();
     expect(cadena.recortan).toEqual([]);
     expect(cadena.desplazables.length).toBeGreaterThan(0);

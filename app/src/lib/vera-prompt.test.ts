@@ -135,7 +135,7 @@ describe('VERA · prepara consultas y ofertas sin inventar', () => {
   const pie = src('messages/ThreadComposer.tsx');
   const selector = src('messages/InquiryLinePicker.tsx');
   const oferta = src('messages/OfferCounterForm.tsx');
-  const resultados = src('search/SearchResults.tsx');
+  const resultados = src('search/PartSearch.tsx');
   const tabla = src('search/ResultsTable.tsx');
   const textosForm = readFileSync(resolve(process.cwd(), 'src/lib/inquiry-form.ts'), 'utf8');
 
@@ -208,10 +208,12 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
 
   const ofertasEnviadas = screen('selling/SentOffers.tsx') + screen('selling/SentOffersTable.tsx');
   const libOfertasEnviadas = lib('sent-offers.ts');
-  const resultados = screen('search/SearchResults.tsx');
+  // SRCH-01 en dos fases (`amend-srch01-busqueda-en-dos-fases`, 25-oct-2026).
+  const resultados = screen('search/PartSearch.tsx');
+  const formulario = screen('search/PartSearchForm.tsx');
+  const paginador = screen('search/Pager.tsx');
   const tablaResultados = screen('search/ResultsTable.tsx');
-  const chips = screen('search/FilterChips.tsx');
-  const libBusqueda = lib('search.ts');
+  const libBusqueda = lib('part-search.ts');
   const lotes = screen('search/BatchSearch.tsx');
   const tarjetaLote = screen('search/BatchCard.tsx');
   const libLotes = lib('batch.ts');
@@ -242,19 +244,22 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['Buscar por referencia u organización…', libOfertasEnviadas],
     ['Ver acuerdo', libOfertasEnviadas],
     ['Ver hilo', libOfertasEnviadas],
-    // Comprando: resultados
-    ['Resultados de búsqueda', resultados],
-    ['Ref', libBusqueda],
-    ['Marca', libBusqueda],
-    ['Qty mín', libBusqueda],
-    ['Zona', libBusqueda],
-    ['Lead time máx', libBusqueda],
-    ['Filtro', chips],
-    // F-229 (14-oct): al elegir Zona en «Filtro» sale además el país, y con solo país el chip se llama País.
-    ['País (opcional)', chips],
-    ['Añadir', chips],
+    // Comprando: búsqueda de referencias (dos fases)
+    ['Búsqueda de referencias', resultados],
+    ['Filtros', formulario],
+    ['Contiene', formulario],
+    ['Marca', formulario],
+    ['Cantidad ≥', formulario],
+    ['Incluir', formulario],
+    ['Excluir', formulario],
+    ['Zona', formulario],
+    ['Anterior', paginador],
+    ['Siguiente', paginador],
+    ['Seleccionar las de esta página', resultados],
+    ['No hay coincidencias', resultados],
+    ['Buscar en todas las zonas', resultados],
+    ['‹ Volver a la lista de referencias', resultados],
     ['Seleccionar todos', resultados],
-    ['Deseleccionar todos', resultados],
     ['Cantidad', tablaResultados],
     ['Plazo', tablaResultados],
     ['Empresa', tablaResultados],
@@ -375,9 +380,17 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     expect(prompt).toContain('"N / 50 watchers activos"');
     expect(libWatchers).toMatch(/WATCHER_LIMIT = 50/);
     expect(libWatchers).toContain('${activeWatcherCount(rows)} / ${WATCHER_LIMIT} watchers activos');
-    expect(libBusqueda).toContain('con stock ≥');
-    expect(resultados).toContain('Mostrando los primeros 200 resultados');
-    expect(libBusqueda).toMatch(/MAX_RESULTS = 200/);
+    // Comprando en dos fases: los recuentos y los botones con número, y el tamaño de las páginas.
+    expect(prompt).toContain('"N referencias · M ofertas"');
+    expect(resultados).toContain('referencias`} ·');
+    expect(prompt).toContain('"Ver ofertas de las seleccionadas (N)"');
+    expect(resultados).toContain('Ver ofertas de las seleccionadas ({selectedKeys.size})');
+    expect(prompt).toContain('"Ver ofertas de todas (N)"');
+    expect(resultados).toContain('Ver ofertas de todas ({quantityLabel(keysPage.totalKeys)})');
+    expect(prompt).toContain('en páginas de 50');
+    expect(libBusqueda).toMatch(/OFFERS_PAGE_SIZE = 50/);
+    expect(prompt).toContain('en cuatro columnas');
+    expect(screen('search/PartKeyGrid.module.css')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))');
   });
 
   // Vendiendo: una sola acción por fila, y ninguna de las que la guía dice que no existen.
@@ -391,7 +404,7 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     expect(app).toMatch(/<SentOffers[\s\S]{0,200}setNav\(MESSAGES_NAV\);[\s\S]{0,60}setOpenThreadId\(threadId\)/);
     expect(app).toMatch(/onOpenDirectory=\{\(\) => \{[\s\S]{0,120}setNav\(EMPRESAS_NAV\)/);
     expect(app).toMatch(/const contactFromSearch[\s\S]{0,700}setNav\(MESSAGES_NAV\)[\s\S]{0,300}setNav\(EMPRESAS_NAV\)/);
-    expect(app).toMatch(/onViewResults=\{\(criteria\) => \{[\s\S]{0,80}setVeraCriteria\(criteria\)/);
+    expect(app).toMatch(/onViewResults=\{\(criteria\) => \{[\s\S]{0,200}setVeraCriteria\(criteria\)/);
   });
 
   // Comprando: lo que ordena, y lo que la guía dice que no hace nada.
@@ -675,15 +688,19 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
   });
 });
 
-describe('VERA · la guía del chip de país (F-229) sigue siendo cierta', () => {
-  const libBusqueda = readFileSync(resolve(process.cwd(), 'src/lib/search.ts'), 'utf8');
-  const chips = readFileSync(resolve(process.cwd(), 'src/screens/search/FilterChips.tsx'), 'utf8');
+describe('VERA · la guía de la zona de Comprando (F-229, ARE) sigue siendo cierta', () => {
+  const libBusqueda = readFileSync(resolve(process.cwd(), 'src/lib/part-search.ts'), 'utf8');
+  const migracion = readFileSync(resolve(process.cwd(), '../supabase/migrations/0076_busqueda_en_dos_fases.sql'), 'utf8');
 
-  it('con solo país, el chip se llama País; y se puede añadir sin zona', () => {
-    expect(prompt).toContain('que se llama "País" cuando solo hay país');
-    expect(libBusqueda).toContain("c.zone ? CHIP_LABELS.zone : 'País'");
-    expect(prompt).toContain('se puede poner solo el país');
-    expect(chips).toContain("!(field === 'zone' && country)");
+  it('continente por la sede, país por el stock, uno u otro; y la zona arranca en el continente propio', () => {
+    expect(prompt).toContain('el continente filtra por la sede de la empresa y el país por dónde está el stock');
+    expect(migracion).toContain("format(' and o.continent = %L', v_zone)");
+    expect(migracion).toContain("format(' and l.location_country = %L', v_ctry)");
+    expect(migracion).toContain('Zona y país son excluyentes');
+    expect(prompt).toContain('la zona arranca en el continente de la propia empresa');
+    expect(libBusqueda).toContain("area: isZone(orgContinent) ? { kind: 'zone', zone: orgContinent } : null");
+    // Un país filtra por dónde está el stock, así que su chip no se llama «Zona».
+    expect(libBusqueda).toContain("c.area.kind === 'zone' ? PART_CHIP_LABELS.area : 'País'");
   });
 });
 
@@ -731,7 +748,7 @@ describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', ()
 
   it('A05: en el Directorio la estrella solo cuenta; la favorita se marca en Comprando o en la ficha, con confirmación', () => {
     expect(prompt).toContain('desde el Directorio no se marca ni se quita ninguna');
-    expect(prompt).toContain('con la estrella de la tabla de Resultados de búsqueda, en Comprando, o con el botón de la ficha de la empresa, siempre con confirmación');
+    expect(prompt).toContain('con la estrella de la tabla de ofertas de Comprando, o con el botón de la ficha de la empresa, siempre con confirmación');
     expect(prompt).toContain('en la ficha de la propia organización no aparece');
     expect(prompt).toContain('no cambia nada hasta que se confirma');
     // El favorito es del usuario y el recuento cuenta usuarios, no organizaciones distintas (PO, 24-oct-2026).
@@ -780,11 +797,13 @@ describe('VERA · los huecos que destapó la prueba contra Sonnet 5 (F-258)', ()
 
 // Comentarios del PO tras probar VERA a mano (16-oct-2026).
 describe('VERA · lo que salió de las pruebas a mano del PO (16-oct)', () => {
-  const libBusqueda = readFileSync(resolve(process.cwd(), 'src/lib/search.ts'), 'utf8');
+  const migracion = readFileSync(resolve(process.cwd(), '../supabase/migrations/0076_busqueda_en_dos_fases.sql'), 'utf8');
 
-  it('la guía dice el orden por defecto de Resultados de búsqueda, y es el del código', () => {
-    expect(prompt).toContain('Por defecto salen ordenados por antigüedad, los más recientes arriba');
-    expect(libBusqueda).toContain("export const DEFAULT_SORT: Sort = { column: 'age', direction: 'asc' };");
+  it('la guía dice el orden de la lista de referencias y el de las ofertas, y son los de la base', () => {
+    expect(prompt).toContain('de la que más ofertas tiene a la que menos');
+    expect(migracion).toContain('order by k.offers desc, k.part_key');
+    expect(prompt).toContain('mezcladas y de la más reciente a la más antigua');
+    expect(migracion).toContain('order by l.last_upload_at desc, l.id');
   });
 
   it('contesta en el idioma del último mensaje, aunque todo lo demás esté en español', () => {
@@ -809,7 +828,8 @@ describe('VERA · lo que salió de las pruebas a mano del PO (16-oct)', () => {
 describe('VERA · no repite lo que la pantalla ya enseña', () => {
   it('tras buscar en el catálogo, una línea; y solo dos cosas sin que se las pidan', () => {
     expect(prompt).toContain('CUANDO LA PANTALLA YA ENSEÑA LA RESPUESTA, NO LA REPITAS');
-    expect(prompt).toContain('No repitas las filas');
+    expect(prompt).toContain('No repitas la lista ni hagas listas de empresas, marcas o cantidades');
+    expect(prompt).toContain('tú no eliges ni marcas por él');
     expect(prompt).toContain('contesta esa pregunta en una o dos frases, y nada más');
     expect(prompt).toContain('que no hay ningún resultado —y entonces propones qué filtro quitar');
   });

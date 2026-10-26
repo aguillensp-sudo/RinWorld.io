@@ -25,7 +25,7 @@ import { afterAll, beforeAll, describe, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { ask, createProxyCall, type Exchange, type ProxyCall, type ProxyUsage } from './vera';
-import type { SearchCriteria } from './search';
+import type { PartSearchCriteria } from './part-search';
 import type { MemberProfile } from './session';
 import { describeCriteria, describeManualChanges, removedFilters, type DraftRequest, type InventoryView, type Screen, type ToolContext } from './vera-tools';
 import { veraScreenName, type NavLabel, type ScreenState } from './vera-screen';
@@ -50,9 +50,9 @@ type Cuenta = 'ALPHA' | 'BETA' | 'EDITOR';
 interface Estado {
   nav: NavLabel;
   sub: Partial<ScreenState>;
-  vivos: SearchCriteria | null;
+  vivos: PartSearchCriteria | null;
   /** Los últimos filtros que puso VERA (`veraCriteria` de App), para calcular lo cambiado a mano. */
-  vera: SearchCriteria | null;
+  vera: PartSearchCriteria | null;
 }
 
 interface Turno {
@@ -60,7 +60,7 @@ interface Turno {
   /** Pone la App en este sitio antes de preguntar (si no, sigue donde la dejó el turno anterior). */
   en?: { nav: NavLabel; sub?: Partial<ScreenState> };
   /** Cambia a mano los filtros vivos antes de preguntar, como si el usuario quitara un chip. */
-  tocarFiltros?: (c: SearchCriteria) => SearchCriteria;
+  tocarFiltros?: (c: PartSearchCriteria) => PartSearchCriteria;
 }
 
 interface Caso {
@@ -215,7 +215,7 @@ async function correr(caso: Caso, repeticion: number) {
         estado.nav = SCREEN_A_NAV[s];
         estado.sub = {};
       },
-      setCriteria: (c: SearchCriteria) => {
+      setCriteria: (c: PartSearchCriteria) => {
         efectos.push(`filtros → ${describeCriteria(c)} (y lleva a Comprando)`);
         estado.vivos = c;
         estado.vera = c;
@@ -375,9 +375,9 @@ const B: Caso[] = [
   { id: 'B1', bloque: 'B', cuenta: 'ALPHA', criterio: 'Cada turno, una búsqueda con todos los filtros acumulados y el quitado fuera; datos siempre de una herramienta de ese turno.',
     turnos: [P('busca 6204-2RS', EN.panel), P('solo en Europa'), P('de SKF'), P('más de 500 unidades'), P('quítame la marca')] },
   { id: 'B2', bloque: 'B', cuenta: 'ALPHA', criterio: 'Tras quitar Zona a mano, parte de referencia=6204 SIN zona.',
-    turnos: [P('busca 6204 en Europa', EN.panel), { pregunta: 'ahora de FAG', tocarFiltros: (c) => ({ ...c, zone: null }) }] },
+    turnos: [P('busca 6204 en Europa', EN.panel), { pregunta: 'ahora de FAG', tocarFiltros: (c) => ({ ...c, area: null }) }] },
   { id: 'B9', bloque: 'B', cuenta: 'ALPHA', criterio: 'El opuesto de B2 (15-oct): quitada la Zona a mano, el usuario PIDE recuperarla; repone zona=EU con confirmar_filtros_quitados y añade FAG.',
-    turnos: [P('busca 6204 en Europa', EN.panel), { pregunta: 'vuelve a ponerme Europa y añade FAG', tocarFiltros: (c) => ({ ...c, zone: null }) }] },
+    turnos: [P('busca 6204 en Europa', EN.panel), { pregunta: 'vuelve a ponerme Europa y añade FAG', tocarFiltros: (c) => ({ ...c, area: null }) }] },
   { id: 'B3', bloque: 'B', cuenta: 'ALPHA', criterio: 'Sin regla de producto (F-254): pasa si DICE qué filtros ha mantenido. Se anota qué hace.',
     turnos: [P('busca 6204-2RS en Europa con más de 500 unidades', EN.panel), P('ahora busca 6304')] },
   { id: 'B4', bloque: 'B', cuenta: 'ALPHA', criterio: 'Vuelve a llamar a la herramienta en el segundo turno (no copia la cifra). Sin cambio de datos: solo se mira la llamada.',

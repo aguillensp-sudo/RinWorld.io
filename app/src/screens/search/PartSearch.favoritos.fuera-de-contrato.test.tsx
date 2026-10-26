@@ -1,27 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { quantityLabel, type SearchPage, type SearchQuery, type SearchResultRow } from '../../lib/search';
+import type { OffersPage, OffersQuery, PartKeysPage, PartSearchCriteria } from '../../lib/part-search';
+import { quantityLabel, type SearchResultRow } from '../../lib/search';
 import type { MemberProfile } from '../../lib/session';
 
 /**
- * FUERA DE CONTRATO · SRCH-01 · favoritos con confirmación (PO, 24-oct-2026, `F-280`). Escrito a mano.
+ * FUERA DE CONTRATO · SRCH-01 · favoritos con confirmación (PO, 24-oct-2026, `F-280`).
  *
- * El contrato de aceptación (`SearchResults.test.tsx`) fijaba «pulsar la estrella marca o quita»; ya no es así: la
- * estrella solo abre una confirmación y escribe `confirmFavorite` al confirmar. Sus tres pruebas salieron del
- * contrato (mismo criterio que `e371d3c` con las de F-249) y la decisión nueva vive aquí.
+ * Los cuerpos vienen de los tests de `SearchResults.tsx`, retirada el 25-oct-2026 con la búsqueda en dos fases
+ * (`amend-srch01-busqueda-en-dos-fases`, tarea 5.3): `PartSearch` copia de ella las acciones de la tabla de ofertas
+ * y estos tests las siguen midiendo. Cambia solo la preparación (`pintar` busca y abre la tabla de ofertas) y
+ * `fetchResults` es ahora el doble de `fetchOffers`, que es quien lee la tabla. Escrito por Claude Code.
  */
 
-const fetchResults = vi.fn<(q: SearchQuery) => Promise<SearchPage>>();
+const fetchOffers = vi.fn<(q: OffersQuery) => Promise<OffersPage>>();
+const fetchPartKeys = vi.fn<(c: PartSearchCriteria, page?: number) => Promise<PartKeysPage>>();
 const toggleFavorite = vi.fn<(m: string, o: string, n: boolean) => Promise<void>>();
 
+vi.mock('../../lib/part-search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/part-search')>()),
+  fetchPartKeys: (c: PartSearchCriteria, page?: number) => fetchPartKeys(c, page),
+  fetchOffers: (q: OffersQuery) => fetchOffers(q),
+}));
 vi.mock('../../lib/search', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/search')>()),
-  fetchResults: (q: SearchQuery) => fetchResults(q),
   toggleFavorite: (m: string, o: string, n: boolean) => toggleFavorite(m, o, n),
 }));
 
-const { SearchResults } = await import('./SearchResults');
+const { PartSearch } = await import('./PartSearch');
+
+/** Quien lee la tabla de ofertas. Se llama así para que los cuerpos de los tests viejos digan lo mismo que decían. */
+const fetchResults = fetchOffers;
 
 const NOW = new Date('2026-08-11T12:00:00Z');
 const hace = (dias: number) => new Date(NOW.getTime() - dias * 86_400_000).toISOString();
@@ -55,19 +65,34 @@ function row(over: Partial<SearchResultRow> = {}): SearchResultRow {
   };
 }
 
-function page(rows: SearchResultRow[], over: Partial<SearchPage> = {}): SearchPage {
-  return { rows, total: rows.length, capped: false, ...over };
+function page(rows: SearchResultRow[], over: Partial<OffersPage> = {}): OffersPage {
+  return { rows, total: rows.length, page: 1, pageCount: 1, ...over };
 }
 
 beforeEach(() => {
-  fetchResults.mockReset();
+  fetchOffers.mockReset();
+  fetchPartKeys.mockReset();
   toggleFavorite.mockReset();
-  fetchResults.mockResolvedValue(page([row()]));
+  fetchOffers.mockResolvedValue(page([row()]));
+  fetchPartKeys.mockResolvedValue({
+    keys: [{ key: '62052RS', offers: 1 }],
+    totalKeys: 1,
+    totalOffers: 1,
+    matchedRef: '62052RS',
+    truncated: false,
+    page: 1,
+    pageCount: 1,
+  });
   toggleFavorite.mockResolvedValue();
 });
 
-function pintar() {
-  return render(<SearchResults profile={profile} now={NOW} />);
+/** Monta SRCH-01, busca una referencia y abre la tabla de ofertas de todas sus claves (fases A y C). */
+async function pintar() {
+  const r = render(<PartSearch profile={profile} now={NOW} />);
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Referencia' }), '6205-2RS');
+  await userEvent.click(screen.getByRole('button', { name: 'Buscar referencia' }));
+  await userEvent.click(await screen.findByRole('button', { name: /Ver ofertas de todas/ }));
+  return r;
 }
 
 const filas = () => screen.getAllByRole('row').slice(1);
@@ -80,7 +105,7 @@ describe('SRCH-01 · favoritos', () => {
 
   it('la estrella NO escribe: abre una confirmación que nombra a la organización', async () => {
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', orgName: 'Rey Transmisiones', isFavorite: false })]));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
     await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
@@ -91,7 +116,7 @@ describe('SRCH-01 · favoritos', () => {
 
   it('Cancelar cierra el diálogo y no escribe nada', async () => {
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', isFavorite: false })]));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
     await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
@@ -103,7 +128,7 @@ describe('SRCH-01 · favoritos', () => {
 
   it('confirmar marcar avisa a la capa de datos con mi miembro y la distribuidora', async () => {
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', isFavorite: false })]));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
     await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
@@ -115,7 +140,7 @@ describe('SRCH-01 · favoritos', () => {
 
   it('quitar también pide confirmación, con su propio texto, y pasa false, no vuelve a marcar', async () => {
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', orgName: 'Rey Transmisiones', isFavorite: true })]));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
     // Aquí la fila llega YA marcada, así que el botón está `pressed: true`.
@@ -131,7 +156,7 @@ describe('SRCH-01 · favoritos', () => {
   it('si la escritura falla, el error se dice dentro del diálogo y la tabla sigue ahí', async () => {
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', isFavorite: false })]));
     toggleFavorite.mockRejectedValueOnce(new Error('boom'));
-    pintar();
+    await pintar();
     await waitFor(() => expect(filas()).toHaveLength(1));
 
     await userEvent.click(within(filas()[0]!).getByRole('button', { pressed: false }));
@@ -146,7 +171,7 @@ describe('SRCH-01 · favoritos', () => {
     // la plataforma: sumarle uno en cliente enseña un número que puede no ser el
     // que hay. Ver la migración 0006.
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', favoriteCount: 12 })]));
-    pintar();
+    await pintar();
     await waitFor(() => expect(fetchResults).toHaveBeenCalledTimes(1));
 
     fetchResults.mockResolvedValue(page([row({ orgId: 'org-9', favoriteCount: 13, isFavorite: true })]));

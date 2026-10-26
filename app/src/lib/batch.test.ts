@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SearchPage, SearchResultRow } from './search';
+import type { SearchResultRow } from './search';
 
-const fetchResults = vi.fn();
+const fetchOffers = vi.fn();
+vi.mock('./part-search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./part-search')>()),
+  fetchOffers: (q: unknown) => fetchOffers(q),
+}));
 vi.mock('./search', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./search')>()),
-  fetchResults: (q: unknown) => fetchResults(q),
   fetchFavoriteOrgIds: async () => new Set<string>(),
 }));
+
+/** La referencia que pidió cada llamada: el lote busca por clave exacta (`selection.keys`). */
+const clave = (q: { selection: { keys: string[] } }) => q.selection.keys[0]!;
 
 const {
   batchMetaLabel,
@@ -26,10 +32,11 @@ const {
   SUMMARY_CSV_HEADER,
 } = await import('./batch');
 type BatchResult = import('./batch').BatchResult;
+type BatchPage = import('./batch').BatchPage;
 
 /**
  * La lógica pura de SRCH-02, y la orquestación de `fetchBatchResults` con
- * `fetchResults` mockeado. Esta capa la escribe Claude Code, no el Coder
+ * `fetchOffers` mockeado. Esta capa la escribe Claude Code, no el Coder
  * (`CLAUDE.md` §3): estos tests **no son el contrato del arnés**.
  */
 
@@ -51,7 +58,7 @@ function fila(over: Partial<SearchResultRow>): SearchResultRow {
   };
 }
 
-const pagina = (rows: SearchResultRow[]): SearchPage => ({ rows, total: rows.length, capped: false });
+const pagina = (rows: SearchResultRow[]): BatchPage => ({ rows, total: rows.length, capped: false });
 const res = (reference: string, rows: SearchResultRow[] | null, error: string | null = null): BatchResult => ({
   reference,
   page: rows ? pagina(rows) : null,
@@ -182,20 +189,46 @@ describe('Exportar resumen (CSV)', () => {
 });
 
 describe('fetchBatchResults', () => {
-  it('busca cada referencia por su part_number, en el orden de la lista', async () => {
-    fetchResults.mockReset().mockImplementation(async (q: { criteria: { partNumber: string } }) =>
-      pagina([fila({ partNumber: q.criteria.partNumber })]),
+  it('busca cada referencia por su clave exacta, en el orden de la lista', async () => {
+    fetchOffers.mockReset().mockImplementation(async (q: { selection: { keys: string[] } }) =>
+      pagina([fila({ partNumber: clave(q) })]),
     );
     const out = await fetchBatchResults(['A1', 'B2', 'C3'], { orgId: 'me', memberId: 'm1' });
     expect(out.map((r) => r.reference)).toEqual(['A1', 'B2', 'C3']);
-    expect(fetchResults).toHaveBeenCalledTimes(3);
-    expect(fetchResults.mock.calls.map((c) => c[0].criteria.partNumber).sort()).toEqual(['A1', 'B2', 'C3']);
-    expect(fetchResults.mock.calls[0]![0]).toMatchObject({ orgId: 'me', memberId: 'm1' });
+    expect(fetchOffers).toHaveBeenCalledTimes(3);
+    expect(fetchOffers.mock.calls.map((c) => clave(c[0])).sort()).toEqual(['A1', 'B2', 'C3']);
+    expect(fetchOffers.mock.calls[0]![0]).toMatchObject({ orgId: 'me', memberId: 'm1' });
+  });
+
+  /**
+   * PO, 25-oct-2026 (`design.md` §6): quien pega una lista sabe la designación. Por clave exacta, nunca «empieza
+   * por» ni «contiene», sin zona ni filtros (el lote nunca los ha tenido), y hasta el tope de la RPC.
+   */
+  it('por clave exacta, sin zona ni filtros, hasta 200, y deja las filas por cantidad para el «Máx»', async () => {
+    fetchOffers.mockReset().mockResolvedValue({
+      rows: [fila({ id: 'a', quantity: 5 }), fila({ id: 'b', quantity: 900 }), fila({ id: 'c', quantity: 40 })],
+      total: 3,
+      page: 1,
+      pageCount: 1,
+    });
+    const [r] = await fetchBatchResults(['6205-2RS'], { orgId: 'me', memberId: 'm1' });
+    const q = fetchOffers.mock.calls[0]![0];
+    expect(q.selection).toEqual({ kind: 'keys', keys: ['6205-2RS'] });
+    expect(q.pageSize).toBe(200);
+    expect(q.criteria).toMatchObject({ contains: false, brand: '', minQuantity: null, include: '', exclude: '', area: null });
+    expect(r!.page!.rows.map((x) => x.quantity)).toEqual([900, 40, 5]);
+    expect(r!.page).toMatchObject({ total: 3, capped: false });
+  });
+
+  it('si la clave tiene más ofertas de las que llegan, lo deja dicho (capped)', async () => {
+    fetchOffers.mockReset().mockResolvedValue({ rows: [fila({})], total: 340, page: 1, pageCount: 2 });
+    const [r] = await fetchBatchResults(['6204'], { orgId: 'me', memberId: 'm1' });
+    expect(r!.page).toMatchObject({ total: 340, capped: true });
   });
 
   it('un fallo en una referencia no tumba las demás', async () => {
-    fetchResults.mockReset().mockImplementation(async (q: { criteria: { partNumber: string } }) => {
-      if (q.criteria.partNumber === 'B2') throw new Error('boom');
+    fetchOffers.mockReset().mockImplementation(async (q: { selection: { keys: string[] } }) => {
+      if (clave(q) === 'B2') throw new Error('boom');
       return pagina([]);
     });
     const out = await fetchBatchResults(['A1', 'B2', 'C3'], { orgId: 'me', memberId: 'm1' });
@@ -207,7 +240,7 @@ describe('fetchBatchResults', () => {
   it('respeta la concurrencia máxima', async () => {
     let vivas = 0;
     let pico = 0;
-    fetchResults.mockReset().mockImplementation(async () => {
+    fetchOffers.mockReset().mockImplementation(async () => {
       vivas++;
       pico = Math.max(pico, vivas);
       await new Promise((r) => setTimeout(r, 5));
@@ -220,8 +253,8 @@ describe('fetchBatchResults', () => {
   });
 
   it('sin referencias no llama a nada', async () => {
-    fetchResults.mockReset();
+    fetchOffers.mockReset();
     expect(await fetchBatchResults([], { orgId: 'me', memberId: 'm1' })).toEqual([]);
-    expect(fetchResults).not.toHaveBeenCalled();
+    expect(fetchOffers).not.toHaveBeenCalled();
   });
 });

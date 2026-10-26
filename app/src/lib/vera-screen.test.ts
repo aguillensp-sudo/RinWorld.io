@@ -42,7 +42,7 @@ describe('VERA · sabe en qué pantalla está el usuario', () => {
   it('distingue las subpantallas, con los nombres de la guía verificada', () => {
     expect(en({ nav: 'Comprando', watchersOpen: true })).toContain('Mis watchers');
     expect(en({ nav: 'Comprando', batchOpen: true })).toContain('Búsqueda por lotes');
-    expect(en({ nav: 'Comprando' })).toContain('Resultados de búsqueda');
+    expect(en({ nav: 'Comprando' })).toContain('Búsqueda de referencias');
     expect(en({ nav: 'Inventario', visibilityOpen: true })).toContain('Visibilidad del inventario');
     expect(en({ nav: 'Inventario', ingestOpen: true })).toContain('Canal de ingestión por email');
     expect(en({ nav: 'Empresas', orgProfileOpen: true })).toContain('ficha de una empresa');

@@ -1,21 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
-  activeChips,
   consultSummary,
   countryName,
   DEFAULT_SORT,
-  EMPTY_CRITERIA,
   leadTimeLabel,
   meetsMinQuantity,
-  metaCounterLabel,
   nextSort,
   quantityLabel,
   sanitizeSearch,
   SORTABLE_COLUMNS,
   sortRows,
-  withoutChip,
-  ZONE_LABELS,
-  type SearchCriteria,
   type SearchResultRow,
 } from './search';
 
@@ -47,10 +41,6 @@ function row(over: Partial<SearchResultRow> = {}): SearchResultRow {
     consulted: false,
     ...over,
   };
-}
-
-function criteria(over: Partial<SearchCriteria> = {}): SearchCriteria {
-  return { ...EMPTY_CRITERIA, ...over };
 }
 
 // -----------------------------------------------------------------------------
@@ -107,17 +97,6 @@ describe('leadTimeLabel', () => {
   });
 });
 
-describe('metaCounterLabel', () => {
-  it('lleva el umbral solo si hay chip de cantidad mínima', () => {
-    expect(metaCounterLabel(5, 4, 500)).toBe('5 resultados · 4 con stock ≥ 500 u');
-    expect(metaCounterLabel(5, 5, null)).toBe('5 resultados');
-  });
-
-  it('concuerda en singular', () => {
-    expect(metaCounterLabel(1, 1, null)).toBe('1 resultado');
-  });
-});
-
 describe('meetsMinQuantity · el color de la columna 4', () => {
   it('sin mínimo, ninguna fila está por debajo', () => {
     expect(meetsMinQuantity(20, null)).toBe(true);
@@ -127,60 +106,6 @@ describe('meetsMinQuantity · el color de la columna 4', () => {
     // La metabarra dice "con stock ≥ 500 u": 500 exactas cuentan.
     expect(meetsMinQuantity(500, 500)).toBe(true);
     expect(meetsMinQuantity(499, 500)).toBe(false);
-  });
-});
-
-// -----------------------------------------------------------------------------
-
-describe('activeChips · derivados de los criterios, no estado propio', () => {
-  it('sin filtros no hay chips', () => {
-    expect(activeChips(EMPTY_CRITERIA)).toEqual([]);
-  });
-
-  it('el ejemplo de la spec §3, en el orden de su tabla', () => {
-    const chips = activeChips(criteria({ partNumber: '6205-2RS', minQuantity: 500, zone: 'EU' }));
-    expect(chips.map((c) => `${c.label}: ${c.value}`)).toEqual([
-      'Ref: 6205-2RS',
-      'Qty mín: 500 u',
-      'Zona: Europa',
-    ]);
-  });
-
-  it('zona y país comparten un solo chip', () => {
-    const chips = activeChips(criteria({ zone: 'EU', country: 'ES' }));
-    expect(chips).toHaveLength(1);
-    expect(chips[0]!.value).toBe('Europa · España');
-  });
-
-  it('un país sin zona también pinta el chip', () => {
-    expect(activeChips(criteria({ country: 'IT' }))[0]!.value).toBe('Italia');
-  });
-
-  it('una cantidad mínima de cero es un filtro, no la ausencia de uno', () => {
-    // `0` es falsy y es justo donde un `if (c.minQuantity)` perdería el chip
-    // dejando el filtro aplicado en la consulta: la tabla filtraría por algo que
-    // no se ve. El campo es `number | null` por esto.
-    expect(activeChips(criteria({ minQuantity: 0 }))).toHaveLength(1);
-  });
-
-  it('las etiquetas de zona cubren los siete continentes del CHECK', () => {
-    expect(Object.keys(ZONE_LABELS)).toHaveLength(7);
-    expect(ZONE_LABELS.AS).toBe('Asia');
-  });
-});
-
-describe('withoutChip', () => {
-  it('quitar el chip de zona se lleva zona y país, que son el mismo chip', () => {
-    const c = withoutChip(criteria({ zone: 'EU', country: 'ES', brand: 'SKF' }), 'zone');
-    expect(c.zone).toBeNull();
-    expect(c.country).toBe('');
-    expect(c.brand).toBe('SKF');
-  });
-
-  it('no muta los criterios de entrada', () => {
-    const antes = criteria({ brand: 'SKF' });
-    withoutChip(antes, 'brand');
-    expect(antes.brand).toBe('SKF');
   });
 });
 

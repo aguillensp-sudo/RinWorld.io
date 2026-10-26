@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MemberProfile } from './session';
-import type { SearchCriteria } from './search';
+import type { PartKeysPage, PartSearchCriteria } from './part-search';
+import { normalizeRef } from './part-search';
 import { NAV_ITEMS } from '../shell/AppShell';
 import {
   SCREENS,
@@ -43,14 +44,25 @@ const PERFIL: MemberProfile = {
   orgCountry: 'ES',
 };
 
-const fetchResults = vi.fn();
+const fetchOffers = vi.fn();
+const fetchPartKeys = vi.fn();
 const fetchPage = vi.fn();
 const fetchThreadPage = vi.fn();
 
-vi.mock('./search', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./search')>()),
-  fetchResults: (...a: unknown[]) => fetchResults(...a),
+vi.mock('./part-search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./part-search')>()),
+  fetchPartKeys: (...a: unknown[]) => fetchPartKeys(...a),
+  fetchOffers: (...a: unknown[]) => fetchOffers(...a),
 }));
+
+/**
+ * La lista previa por defecto: una sola clave, la EXACTA de lo pedido. Así `buscar_en_catalogo` pide sus ofertas
+ * (`fetchOffers`) y los tests de las filas siguen probando lo mismo que con la búsqueda plana de antes.
+ */
+function listaPreviaExacta(c: PartSearchCriteria): PartKeysPage {
+  const key = normalizeRef(c.ref);
+  return { keys: [{ key, offers: 1 }], totalKeys: 1, totalOffers: 1, matchedRef: key, truncated: false, page: 1, pageCount: 1 };
+}
 vi.mock('./inventory', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./inventory')>()),
   fetchPage: (...a: unknown[]) => fetchPage(...a),
@@ -61,7 +73,7 @@ vi.mock('./threads', async (importOriginal) => ({
 }));
 
 let navegadoA: Screen[] = [];
-let criteriosEscritos: SearchCriteria[] = [];
+let criteriosEscritos: PartSearchCriteria[] = [];
 let hiloAbierto = false;
 let borradores: DraftRequest[] = [];
 
@@ -80,11 +92,12 @@ beforeEach(() => {
   criteriosEscritos = [];
   hiloAbierto = false;
   borradores = [];
-  fetchResults.mockReset();
+  fetchOffers.mockReset();
+  fetchPartKeys.mockReset().mockImplementation(async (c: PartSearchCriteria) => listaPreviaExacta(c));
   fetchPage.mockReset();
   fetchThreadPage.mockReset();
 
-  fetchResults.mockResolvedValue({
+  fetchOffers.mockResolvedValue({
     rows: [
       {
         id: 'line-1',
@@ -192,8 +205,8 @@ describe('una herramienta que no existe', () => {
 describe('buscar_en_catalogo', () => {
   it('consulta con la organización y el miembro del perfil, nunca con otros', async () => {
     await runTool('buscar_en_catalogo', { referencia: '6205-2RS' }, contexto());
-    expect(fetchResults).toHaveBeenCalledTimes(1);
-    const [arg] = fetchResults.mock.calls[0] as [{ orgId: string; memberId: string }];
+    expect(fetchOffers).toHaveBeenCalledTimes(1);
+    const [arg] = fetchOffers.mock.calls[0] as [{ orgId: string; memberId: string }];
     expect(arg.orgId).toBe(PERFIL.orgId);
     expect(arg.memberId).toBe(PERFIL.id);
   });
@@ -201,33 +214,38 @@ describe('buscar_en_catalogo', () => {
   it('traduce la entrada del modelo a criterios de SRCH-01', () => {
     const c = criteriaFromInput({
       referencia: '6205-2RS',
+      contiene: true,
       marca: 'SKF',
       cantidad_minima: 500,
-      zona: 'EU',
+      incluir: 'C3',
+      excluir: 'ZZ',
       pais: 'de',
-      plazo_maximo_dias: 7,
     });
-    expect(c.partNumber).toBe('6205-2RS');
-    expect(c.brand).toBe('SKF');
-    expect(c.minQuantity).toBe(500);
-    expect(c.zone).toBe('EU');
-    expect(c.country).toBe('DE');
-    expect(c.maxLeadTimeDays).toBe(7);
+    expect(c).toEqual({
+      ref: '6205-2RS',
+      contains: true,
+      brand: 'SKF',
+      minQuantity: 500,
+      include: 'C3',
+      exclude: 'ZZ',
+      area: { kind: 'country', country: 'DE' },
+    });
+    expect(criteriaFromInput({ referencia: '6205', zona: 'eu' }).area).toEqual({ kind: 'zone', zone: 'EU' });
   });
 
-  it('un campo ausente es null, no cero ni cadena "undefined"', () => {
-    const c = criteriaFromInput({ referencia: '6205' });
+  it('un campo ausente es null, no cero ni cadena "undefined"; «contiene» solo con el booleano', () => {
+    const c = criteriaFromInput({ referencia: '6205', contiene: 'true' });
     expect(c.minQuantity).toBeNull();
-    expect(c.maxLeadTimeDays).toBeNull();
-    expect(c.zone).toBeNull();
+    expect(c.area).toBeNull();
     expect(c.brand).toBe('');
+    expect(c.contains).toBe(false);
   });
 
   it('escribe los criterios en la pantalla — VERA escribe criterios, no chips', async () => {
     await runTool('buscar_en_catalogo', { referencia: '6205-2RS', zona: 'EU' }, contexto());
     expect(criteriosEscritos).toHaveLength(1);
-    expect(criteriosEscritos[0]?.partNumber).toBe('6205-2RS');
-    expect(criteriosEscritos[0]?.zone).toBe('EU');
+    expect(criteriosEscritos[0]?.ref).toBe('6205-2RS');
+    expect(criteriosEscritos[0]?.area).toEqual({ kind: 'zone', zone: 'EU' });
   });
 
   it('devuelve al modelo la referencia, la cantidad y la contraparte', async () => {
@@ -514,7 +532,7 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
     it('una línea de 12 días sale como desactualizada, no como una fecha suelta', async () => {
       // El umbral (>7 naranja, >30 rojo) es del proyecto. Sin él, "hace 12 días"
       // obliga al modelo a decidir por su cuenta si eso es mucho.
-      fetchResults.mockResolvedValueOnce({
+      fetchOffers.mockResolvedValueOnce({
         rows: [
           {
             id: 'line-1',
@@ -534,7 +552,7 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
         total: 1,
         capped: false,
       });
-      const r = await runTool('buscar_en_catalogo', {}, contexto());
+      const r = await runTool('buscar_en_catalogo', { referencia: '6205-2RS' }, contexto());
       expect(r.content).toContain('desactualizada');
       expect(r.content).not.toContain('al día');
     });
@@ -554,19 +572,19 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
         isFavorite: false,
         consulted: false,
       });
-      fetchResults.mockResolvedValueOnce({
+      fetchOffers.mockResolvedValueOnce({
         rows: [fila('a', 'JULSA INDUSTRIAL S.A', 9, 0), fila('b', 'Roulements Rhône', 16, 6)],
         total: 2,
         capped: false,
       });
-      const r = await runTool('buscar_en_catalogo', {}, contexto());
+      const r = await runTool('buscar_en_catalogo', { referencia: '22210' }, contexto());
       expect(r.content).toContain('la más reciente es la de JULSA INDUSTRIAL S.A (hace 9 días)');
       expect(r.content).toContain('la más antigua la de Roulements Rhône (hace 16 días)');
       expect(r.content).toContain('plazo 6 días');
     });
 
     it('marca la fila ya consultada Y explica qué significa que otra no lo lleve', async () => {
-      fetchResults.mockResolvedValueOnce({
+      fetchOffers.mockResolvedValueOnce({
         rows: [
           {
             id: 'line-1',
@@ -586,7 +604,7 @@ describe('los huecos de las otras tres herramientas (revisión de F-102)', () =>
         total: 1,
         capped: false,
       });
-      const r = await runTool('buscar_en_catalogo', {}, contexto());
+      const r = await runTool('buscar_en_catalogo', { referencia: '6205-2RS' }, contexto());
       expect(r.content).toContain('YA CONSULTADA');
       // La leyenda importa tanto como la marca: sin ella, la AUSENCIA de la
       // marca no dice nada y el modelo la interpretaría como quisiera.

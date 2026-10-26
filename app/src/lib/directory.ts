@@ -195,7 +195,7 @@ const COLUMNS = 'id, name, country, contact_phone, contact_email, favorite_count
  * número de favoritos, que es mucho más probable -- pueden salir en distinto
  * orden en dos peticiones seguidas, y con paginación en servidor eso significa
  * **la misma fila en dos páginas y otra en ninguna**. Es el mismo desempate que
- * usa `fetchResults`.
+ * usa `search_offers` (`0076`).
  *
  * El nombre se lava con `sanitizeSearch` antes del `ilike` por la misma razón
  * que en SRCH-01: la sintaxis de filtros de PostgREST usa comas y paréntesis, y

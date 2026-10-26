@@ -13,6 +13,12 @@ export interface MemberProfile {
   orgId: string;
   orgName: string;
   orgCountry: string;
+  /**
+   * El continente de la sede (`organizations.continent`). Es la zona por defecto de SRCH-01
+   * (`initialPartCriteria`, `part-search.ts`). Opcional para no obligar a cada perfil de prueba a traerlo:
+   * sin él, la búsqueda arranca en «Cualquiera» y no en un continente inventado.
+   */
+  orgContinent?: string;
 }
 
 /**
@@ -167,7 +173,7 @@ export async function loadProfile(userId: string, email: string): Promise<State>
   const { data, error } = await supabase
     .from('members')
     .select(
-      'id, email, full_name, role, state, org_id, organizations!members_org_id_fkey(name, country, status)',
+      'id, email, full_name, role, state, org_id, organizations!members_org_id_fkey(name, country, continent, status)',
     )
     .eq('id', userId)
     .maybeSingle();
@@ -183,7 +189,12 @@ export async function loadProfile(userId: string, email: string): Promise<State>
 
   // `status` de la propia organización: `organizations_select_approved` deja leerla aunque no
   // sea APPROVED (`id = app.current_org_id()`), justo para esto.
-  const org = data.organizations as unknown as { name: string; country: string; status?: string } | null;
+  const org = data.organizations as unknown as {
+    name: string;
+    country: string;
+    continent?: string;
+    status?: string;
+  } | null;
   const suspended = isOrgSuspended(org?.status) && !isRevoked(data.state as string);
   return {
     status: suspended ? 'suspended' : 'authenticated',
@@ -196,6 +207,7 @@ export async function loadProfile(userId: string, email: string): Promise<State>
       orgId: data.org_id as string,
       orgName: org?.name ?? '—',
       orgCountry: org?.country ?? '—',
+      ...(org?.continent ? { orgContinent: org.continent } : {}),
     },
   };
 }

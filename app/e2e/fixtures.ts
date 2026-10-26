@@ -1,6 +1,6 @@
 // Primero el entorno: este módulo lee process.env en cuanto se evalúa.
 import './env';
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /**
  * Credenciales de las dos cuentas de desarrollo. Entran por entorno; en CI van en
@@ -77,6 +77,47 @@ export const sidebar = (page: Page) =>
 
 export const topNav = (page: Page) =>
   page.getByRole('navigation', { name: 'Navegación principal' });
+
+/**
+ * SRCH-01 en dos fases (`amend-srch01-busqueda-en-dos-fases`, 25-oct-2026). Comprando ya no carga nada al
+ * entrar: hasta que se busca una referencia solo hay el formulario. `yaDentro`: la página ya tiene la sesión
+ * abierta (acaba de pasar por `signIn`); recargar la perdería.
+ */
+export async function abrirComprando(page: Page, yaDentro = false) {
+  if (!yaDentro) await page.goto('/');
+  await topNav(page).getByRole('button', { name: 'Comprando' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Búsqueda de referencias' })).toBeVisible();
+}
+
+/**
+ * Busca `ref` (fase A) y espera a la lista previa. `zona` es el texto de una opción del desplegable Zona;
+ * sin ella se queda la de por defecto, el continente de la organización (Europa para ALPHA y BETA).
+ * Devuelve la lista para que el test lea las claves.
+ */
+export async function buscarReferencia(page: Page, ref: string, opts: { zona?: string; contiene?: boolean } = {}) {
+  if (opts.zona !== undefined || opts.contiene !== undefined) {
+    const filtros = page.getByRole('checkbox', { name: 'Filtros', exact: true });
+    if (!(await filtros.isChecked())) await filtros.check();
+    if (opts.zona !== undefined) await page.getByLabel('Zona').selectOption({ label: opts.zona });
+    if (opts.contiene !== undefined) await page.getByRole('checkbox', { name: 'Contiene' }).setChecked(opts.contiene);
+  }
+  await page.getByRole('searchbox', { name: 'Referencia' }).fill(ref);
+  await page.getByRole('button', { name: 'Buscar referencia' }).click();
+  // Mientras carga sigue a la vista la lista de la búsqueda anterior: hay que esperar a que acabe
+  // (`aria-busy`) y luego a la lista o al aviso de «sin coincidencias». Leer antes falla por carrera.
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+  await expect(
+    page.getByRole('list', { name: 'Referencias encontradas' }).or(page.getByText(/^No hay coincidencias para/)),
+  ).toBeVisible();
+  return page.getByRole('list', { name: 'Referencias encontradas' });
+}
+
+/** Fase C con todas las claves de la lista previa, y espera a la primera fila de la tabla de ofertas. */
+export async function verOfertasDeTodas(page: Page) {
+  await page.getByRole('button', { name: /^Ver ofertas de todas/ }).click();
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+  await expect(page.getByRole('row').nth(1)).toBeVisible();
+}
 
 export async function signIn(page: Page, who: { email: string; password: string }) {
   await page.goto('/');

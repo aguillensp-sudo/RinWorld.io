@@ -21,14 +21,25 @@ import { ask, type Exchange, type ProxyRequest, type ProxyTurn } from './vera';
 const aqui = dirname(fileURLToPath(import.meta.url));
 const TOOLS_JSON = resolve(aqui, '../../../supabase/functions/vera/tools.json');
 
-const fetchResults = vi.fn();
+const fetchOffers = vi.fn();
 const fetchPage = vi.fn();
 const fetchThreadPage = vi.fn();
+const fetchPartKeys = vi.fn();
+vi.mock('./part-search', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./part-search')>();
+  return {
+    ...original,
+    fetchPartKeys: (...a: unknown[]) => fetchPartKeys(...a),
+    fetchOffers: (...a: unknown[]) => fetchOffers(...a),
+  };
+});
 
-vi.mock('./search', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./search')>()),
-  fetchResults: (...a: unknown[]) => fetchResults(...a),
-}));
+/** Lista previa con una sola clave, la exacta de lo pedido: así la herramienta pide sus ofertas. */
+async function listaPreviaExacta(c: { ref: string }) {
+  const { normalizeRef } = await import('./part-search');
+  const key = normalizeRef(c.ref);
+  return { keys: [{ key, offers: 1 }], totalKeys: 1, totalOffers: 1, matchedRef: key, truncated: false, page: 1, pageCount: 1 };
+}
 vi.mock('./inventory', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./inventory')>()),
   fetchPage: (...a: unknown[]) => fetchPage(...a),
@@ -142,7 +153,8 @@ function filaAjena(quantity: number) {
 
 beforeEach(() => {
   efectos = [];
-  fetchResults.mockReset();
+  fetchOffers.mockReset();
+  fetchPartKeys.mockReset().mockImplementation(listaPreviaExacta);
   fetchPage.mockReset();
   fetchThreadPage.mockReset();
 });
@@ -191,7 +203,7 @@ describe('non-negotiable-limits · disponibilidad de stock siempre verificada en
   // THEN  consulta el índice de búsqueda en tiempo real antes de responder
   // AND   nunca da por buena información de disponibilidad basada solo en memoria de conversación previa
   it('non-negotiable-limits#3 · cada pregunta por una referencia vuelve a consultar el catálogo y lleva el stock de AHORA', async () => {
-    fetchResults.mockResolvedValueOnce(filaAjena(1200)).mockResolvedValueOnce(filaAjena(30));
+    fetchOffers.mockResolvedValueOnce(filaAjena(1200)).mockResolvedValueOnce(filaAjena(30));
 
     const primera = modelo('buscar_en_catalogo', { referencia: '6205-2RS' });
     await ask('¿Quién tiene 6205-2RS?', contexto(), primera.call);
@@ -201,12 +213,12 @@ describe('non-negotiable-limits · disponibilidad de stock siempre verificada en
     const segunda = modelo('buscar_en_catalogo', { referencia: '6205-2RS' });
     await ask('¿Sigue habiendo de 6205-2RS?', contexto(), segunda.call, historial);
 
-    expect(fetchResults).toHaveBeenCalledTimes(2);
+    expect(fetchOffers).toHaveBeenCalledTimes(2);
     const r2 = ultimoResultado(segunda.peticiones);
     expect(r2.content).toContain('30');
     expect(r2.content).not.toContain('1200');
     // La consulta es del índice de verdad: lleva la referencia pedida.
-    expect(JSON.stringify(fetchResults.mock.calls[1])).toContain('6205-2RS');
+    expect(JSON.stringify(fetchOffers.mock.calls[1])).toContain('6205-2RS');
   });
 });
 

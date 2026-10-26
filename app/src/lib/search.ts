@@ -2,7 +2,9 @@ import { supabase } from './supabase';
 import { ageLabel, ageLevel, daysSince, freshnessNote, type AgeLevel } from './inventory';
 
 /**
- * Capa de datos de SRCH-01 · Panel de Resultados de Búsqueda.
+ * Lo común de SRCH-01, SRCH-02 y los watchers: formato, orden de la tabla de ofertas, favoritos y consultadas.
+ * La búsqueda en dos fases (criterios, chips, lista previa y ofertas) vive en `part-search.ts` desde el
+ * 25-oct-2026; el modelo de una sola tabla (`SearchCriteria`, `fetchResults`) se retiró con `SearchResults.tsx`.
  *
  * Mismo reparto que `inventory.ts` y `threads.ts`: la lógica pura se exporta
  * suelta para poder probarla sin base ni React, y lo que toca red son las
@@ -23,7 +25,7 @@ export { ageLabel, ageLevel, daysSince, freshnessNote };
 export type { AgeLevel };
 
 // -----------------------------------------------------------------------------
-// Criterios de búsqueda · los chips de la spec §3
+// Zonas · los continentes de ARE y de los watchers
 // -----------------------------------------------------------------------------
 
 /** Los siete continentes del CHECK de `organizations_continent_chk` (0001). */
@@ -38,32 +40,6 @@ export const ZONE_LABELS: Record<Zone, string> = {
   NA: 'América del Norte',
   OC: 'Oceanía',
   SA: 'América del Sur',
-};
-
-/**
- * Los cinco filtros de la spec §3, tal cual los enumera la tabla de chips:
- * Ref · Marca · Qty mín · Zona/País · Lead time máx.
- *
- * `zone` y `country` son un solo chip en pantalla (`Europa · España`) y dos
- * campos aquí porque filtran **cosas distintas**: ver `fetchResults`.
- */
-export interface SearchCriteria {
-  partNumber: string;
-  brand: string;
-  minQuantity: number | null;
-  zone: Zone | null;
-  /** ISO-3166-1 alfa-2, como `organizations.country` y `location_country`. */
-  country: string;
-  maxLeadTimeDays: number | null;
-}
-
-export const EMPTY_CRITERIA: SearchCriteria = {
-  partNumber: '',
-  brand: '',
-  minQuantity: null,
-  zone: null,
-  country: '',
-  maxLeadTimeDays: null,
 };
 
 // -----------------------------------------------------------------------------
@@ -107,86 +83,6 @@ export function quantityLabel(n: number): string {
 export function leadTimeLabel(days: number | null): string {
   if (days === null) return '—';
   return days === 1 ? '1 día' : `${days} días`;
-}
-
-/**
- * El contador de la metabarra: `X resultados · Y con stock ≥ [qty mín]`.
- *
- * La segunda mitad **solo existe si hay chip de cantidad mínima**. Sin él, "Y con
- * stock ≥ " no tiene umbral que citar y el mock lo enseña siempre porque su
- * ejemplo siempre lo tiene.
- */
-export function metaCounterLabel(total: number, withStock: number, minQuantity: number | null): string {
-  const cabeza = total === 1 ? '1 resultado' : `${quantityLabel(total)} resultados`;
-  if (minQuantity === null) return cabeza;
-  return `${cabeza} · ${withStock} con stock ≥ ${quantityLabel(minQuantity)} u`;
-}
-
-// -----------------------------------------------------------------------------
-// Chips
-// -----------------------------------------------------------------------------
-
-export type ChipKey = 'partNumber' | 'brand' | 'minQuantity' | 'zone' | 'maxLeadTimeDays';
-
-export interface Chip {
-  key: ChipKey;
-  /** La etiqueta pequeña del chip: `Ref`, `Marca`, … */
-  label: string;
-  /** El valor ya formateado y listo para pintar. */
-  value: string;
-}
-
-export const CHIP_LABELS: Record<ChipKey, string> = {
-  partNumber: 'Ref',
-  brand: 'Marca',
-  minQuantity: 'Qty mín',
-  zone: 'Zona',
-  maxLeadTimeDays: 'Lead time máx',
-};
-
-/**
- * Los chips activos, en el orden fijo de la tabla de la spec §3.
- *
- * Es una **función pura derivada de los criterios**, no una lista con estado
- * propio. Si los chips fueran su propio estado habría dos verdades sobre qué se
- * está filtrando —la lista pintada y la consulta lanzada— y acabarían separándose
- * en cuanto VERA escriba sobre una de las dos el día 9. Quitar un chip es
- * blanquear su campo en los criterios, y la lista se recalcula sola.
- *
- * `zone` y `country` comparten chip: `Europa · España`.
- */
-export function activeChips(c: SearchCriteria): Chip[] {
-  const out: Chip[] = [];
-  if (c.partNumber) out.push({ key: 'partNumber', label: CHIP_LABELS.partNumber, value: c.partNumber });
-  if (c.brand) out.push({ key: 'brand', label: CHIP_LABELS.brand, value: c.brand });
-  if (c.minQuantity !== null) {
-    out.push({ key: 'minQuantity', label: CHIP_LABELS.minQuantity, value: `${quantityLabel(c.minQuantity)} u` });
-  }
-  if (c.zone || c.country) {
-    const partes = [c.zone ? ZONE_LABELS[c.zone] : '', c.country ? countryName(c.country) : ''].filter(Boolean);
-    // Solo país: "Zona España" mentiría, porque el país filtra por dónde está el stock.
-    out.push({ key: 'zone', label: c.zone ? CHIP_LABELS.zone : 'País', value: partes.join(' · ') });
-  }
-  if (c.maxLeadTimeDays !== null) {
-    out.push({ key: 'maxLeadTimeDays', label: CHIP_LABELS.maxLeadTimeDays, value: leadTimeLabel(c.maxLeadTimeDays) });
-  }
-  return out;
-}
-
-/** Quitar un chip. El de zona se lleva por delante zona y país: es un solo chip. */
-export function withoutChip(c: SearchCriteria, key: ChipKey): SearchCriteria {
-  switch (key) {
-    case 'partNumber':
-      return { ...c, partNumber: '' };
-    case 'brand':
-      return { ...c, brand: '' };
-    case 'minQuantity':
-      return { ...c, minQuantity: null };
-    case 'zone':
-      return { ...c, zone: null, country: '' };
-    case 'maxLeadTimeDays':
-      return { ...c, maxLeadTimeDays: null };
-  }
 }
 
 // -----------------------------------------------------------------------------
@@ -361,161 +257,6 @@ export interface SearchResultRow {
   isFavorite: boolean;
   /** Ya consultada por mi organización. Spec §3, "Estado de fila ya consultada". */
   consulted: boolean;
-}
-
-/**
- * SRCH-01 **no pagina** — su spec §3 no tiene paginador, a diferencia de INV-01.
- * El resultado se trae entero y se ordena en cliente, que es lo único que hace
- * correcta la ordenación por cabecera: ordenar una página de un conjunto
- * paginado reordena 50 filas y miente sobre las demás.
- *
- * El tope existe porque "entero" sin límite es una promesa que no se puede
- * cumplir. Si se alcanza, la pantalla **lo dice** (`capped`) en vez de enseñar
- * 200 filas como si fueran todas: un recorte silencioso es el patrón de F-023.
- */
-export const MAX_RESULTS = 200;
-
-/**
- * El embed **no lleva alias**, y es deliberado. Con alias, el filtro de zona
- * tendría que escribirse contra el alias (`org.continent`) y no contra la tabla;
- * un filtro sobre un embed mal nombrado no es un error de sintaxis, es un filtro
- * que PostgREST ignora — y un chip "Europa" que no corta nada devuelve Turquía
- * en una búsqueda europea sin que nada falle. Se deja el nombre real para que la
- * ruta del filtro y la del embed sean la misma cadena.
- *
- * `organizations` es legible: `organizations_select_approved` permite
- * `status = 'APPROVED'`, y las seis distribuidoras del guion lo están. Si no lo
- * fuera, el `!inner` haría desaparecer filas de inventario perfectamente
- * visibles — de ahí que se compruebe en el e2e y no solo aquí.
- */
-const COLUMNS =
-  'id, part_number, brand, quantity, location_country, lead_time_days, last_upload_at, org_id, ' +
-  'organizations!inventory_lines_org_id_fkey!inner(id, name, country, continent, favorite_count)';
-
-interface Row {
-  id: string;
-  part_number: string;
-  brand: string;
-  quantity: number;
-  location_country: string;
-  lead_time_days: number | null;
-  last_upload_at: string;
-  org_id: string;
-  organizations: { id: string; name: string; country: string; continent: string; favorite_count: number } | null;
-}
-
-export interface SearchPage {
-  rows: SearchResultRow[];
-  /** Cuántas cumplen los filtros en total, con tope o sin él. */
-  total: number;
-  /** `total > MAX_RESULTS`: lo que se ve es un recorte y hay que decirlo. */
-  capped: boolean;
-}
-
-export interface SearchQuery {
-  /** Mi organización: la que NO se busca. */
-  orgId: string;
-  /** Mi miembro: los favoritos son suyos, no de la organización. */
-  memberId: string;
-  criteria: SearchCriteria;
-  /**
-   * Qué filas se quedan cuando hay más de `MAX_RESULTS`. Por defecto `reciente`, el mismo orden con que las
-   * pinta la pantalla (`DEFAULT_SORT`): si la base cortara por cantidad y la pantalla ordenara por antigüedad,
-   * «lo más reciente» sería lo más reciente de entre lo de más stock. `cantidad` es para quien busca el
-   * máximo —el resumen de Búsqueda por lotes y VERA—, donde cortar por antigüedad podría dejarlo fuera.
-   */
-  orden?: 'reciente' | 'cantidad';
-  /**
-   * Los favoritos de `memberId`, ya pedidos. No dependen de la búsqueda, así que quien busca muchas veces
-   * seguidas —Búsqueda por lotes— los pide una vez y los pasa aquí (`F-274`: eran 50 peticiones idénticas por
-   * lote). Sin esto, `fetchResults` los pide ella.
-   */
-  favoritos?: Promise<Set<string>>;
-}
-
-/**
- * Los resultados de búsqueda: inventario **de las demás organizaciones**.
- *
- * ⚠ TRES COSAS QUE NO SON REDUNDANTES, Y LAS TRES SON SILENCIOSAS SI FALTAN.
- *
- * 1. **`.neq('org_id', orgId)`** — es el espejo exacto del `.eq` de INV-01
- *    (F de `inventory.ts`): `inventory_lines` tiene DOS políticas de lectura
- *    permisivas que **se suman**, y `inventory_select_own` devuelve todo mi
- *    inventario en cualquier estado. Sin este filtro, "busco 6205-2RS" me
- *    encuentra a mí mismo entre los proveedores. No falla nada; sale una fila
- *    plausible y absurda delante del socio.
- * 2. **`.eq('status','PUBLISHED')`** — RLS ya lo impone para las ajenas, pero no
- *    para las propias; y el catálogo sembrado tiene líneas `DRAFT`, `ARCHIVED` y
- *    `DELETED` a propósito.
- * 3. **El embed va con la clave ajena nombrada** aunque `inventory_lines` solo
- *    tenga una FK hacia `organizations`. Es la decisión viva de F-020, y el
- *    día que alguien añada una segunda FK esto seguirá funcionando en vez de
- *    devolver `PGRST201` con la pantalla en blanco.
- *
- * Y una que sí es sutil: **la zona filtra por el continente de la ORGANIZACIÓN,
- * el país por dónde está el STOCK.** Son cosas distintas y el guion de demo
- * depende de ello: Anadolu Rulman lleva `continent = 'AS'` justamente para que el
- * chip "Europa" la corte (`guion-demo-y-siembra.md` §3), mientras que
- * `location_country` dice dónde está la mercancía, que puede no ser la sede.
- */
-export async function fetchResults({
-  orgId,
-  memberId,
-  criteria,
-  orden = 'reciente',
-  favoritos: favoritosYaPedidos,
-}: SearchQuery): Promise<SearchPage> {
-  let q = supabase
-    .from('inventory_lines')
-    .select(COLUMNS, { count: 'exact' })
-    .eq('status', 'PUBLISHED')
-    .neq('org_id', orgId);
-
-  const ref = sanitizeSearch(criteria.partNumber);
-  if (ref) q = q.ilike('part_number', `%${ref}%`);
-
-  const brand = sanitizeSearch(criteria.brand);
-  if (brand) q = q.ilike('brand', `%${brand}%`);
-
-  if (criteria.minQuantity !== null) q = q.gte('quantity', criteria.minQuantity);
-  if (criteria.maxLeadTimeDays !== null) q = q.lte('lead_time_days', criteria.maxLeadTimeDays);
-  if (criteria.country) q = q.eq('location_country', criteria.country.toUpperCase());
-  if (criteria.zone) q = q.eq('organizations.continent', criteria.zone);
-
-  const { data, error, count } = await (orden === 'cantidad'
-    ? q.order('quantity', { ascending: false })
-    : q.order('last_upload_at', { ascending: false })
-  )
-    .order('id', { ascending: true })
-    .range(0, MAX_RESULTS - 1);
-
-  if (error) throw error;
-
-  const rows = (data ?? []) as unknown as Row[];
-  const [favoritos, consultadas] = await Promise.all([
-    favoritosYaPedidos ?? fetchFavoriteOrgIds(memberId),
-    fetchConsultedLineIds(orgId, rows.map((r) => r.id)),
-  ]);
-
-  const total = count ?? rows.length;
-  return {
-    rows: rows.map((r) => ({
-      id: r.id,
-      partNumber: r.part_number,
-      brand: r.brand,
-      quantity: r.quantity,
-      leadTimeDays: r.lead_time_days,
-      orgId: r.org_id,
-      orgName: r.organizations?.name ?? '—',
-      country: r.location_country,
-      lastUploadAt: r.last_upload_at,
-      favoriteCount: r.organizations?.favorite_count ?? 0,
-      isFavorite: favoritos.has(r.org_id),
-      consulted: consultadas.has(r.id),
-    })),
-    total,
-    capped: total > MAX_RESULTS,
-  };
 }
 
 /**

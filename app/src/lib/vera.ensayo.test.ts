@@ -40,7 +40,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { writeFileSync } from 'node:fs';
 import { ask, createProxyCall } from './vera';
-import type { SearchCriteria } from './search';
+import type { PartSearchCriteria } from './part-search';
 import type { MemberProfile } from './session';
 import type { Screen, ToolContext } from './vera-tools';
 import {
@@ -86,7 +86,7 @@ async function preguntar(
   opciones: { hiloAbierto?: boolean } = {},
 ): Promise<Anotacion> {
   const navegoA: Screen[] = [];
-  const criterios: SearchCriteria[] = [];
+  const criterios: PartSearchCriteria[] = [];
   const ctx: ToolContext = {
     profile: perfil,
     navigate: (s) => navegoA.push(s),

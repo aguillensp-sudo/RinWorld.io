@@ -30,11 +30,23 @@ const PERFIL: MemberProfile = {
   orgCountry: 'ES',
 };
 
-const fetchResults = vi.fn();
-vi.mock('./search', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./search')>()),
-  fetchResults: (...a: unknown[]) => fetchResults(...a),
-}));
+const fetchOffers = vi.fn();
+const fetchPartKeys = vi.fn();
+vi.mock('./part-search', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./part-search')>();
+  return {
+    ...original,
+    fetchPartKeys: (...a: unknown[]) => fetchPartKeys(...a),
+    fetchOffers: (...a: unknown[]) => fetchOffers(...a),
+  };
+});
+
+/** Lista previa con una sola clave, la exacta de lo pedido: así la herramienta pide sus ofertas. */
+async function listaPreviaExacta(c: { ref: string }) {
+  const { normalizeRef } = await import('./part-search');
+  const key = normalizeRef(c.ref);
+  return { keys: [{ key, offers: 1 }], totalKeys: 1, totalOffers: 1, matchedRef: key, truncated: false, page: 1, pageCount: 1 };
+}
 
 const { runTool } = await import('./vera-tools');
 
@@ -47,12 +59,14 @@ const ctx = (): ToolContext => ({
 });
 
 beforeEach(() => {
-  fetchResults.mockReset();
+  fetchOffers.mockReset();
+  fetchPartKeys.mockReset().mockImplementation(listaPreviaExacta);
 });
 
 describe('conversational-search/single-reference-search', () => {
   it('conversational-search/single-reference-search#3 · sin filas, lo que recibe VERA dice que no hay nada Y le manda proponer qué filtro quitar', async () => {
-    fetchResults.mockResolvedValue({ rows: [], total: 0, capped: false });
+    // Caso 1.4 de la búsqueda en dos fases (25-oct-2026): ninguna clave.
+    fetchPartKeys.mockResolvedValue({ keys: [], totalKeys: 0, totalOffers: 0, matchedRef: null, truncated: false, page: 1, pageCount: 1 });
 
     const r = await runTool(
       'buscar_en_catalogo',
@@ -62,9 +76,10 @@ describe('conversational-search/single-reference-search', () => {
 
     expect(r.isError).toBe(false);
     // dice la ausencia con todas las letras (no devuelve un vacío ambiguo)...
-    expect(r.content).toMatch(/^Ninguna coincidencia\./m);
+    expect(r.content).toMatch(/^Ninguna referencia empieza por «6204ZZ» con estos filtros: no hay ofertas que enseñar\./m);
     // ...y no deja a VERA con solo eso: la instrucción de alternativa va en el mismo retorno
-    expect(r.content).toMatch(/no hay resultados \(entonces propón qué filtro quitar\)/);
+    expect(r.content).toContain('propón qué cambiar: quitar la zona o el país, quitar otros filtros si los hay, o revisar la referencia');
+    expect(fetchOffers).not.toHaveBeenCalled();
     // los filtros que causaron el vacío le llegan, para que pueda decir cuál relajar
     expect(r.content).toContain('6204-ZZ');
     expect(r.content).toContain('Timken');

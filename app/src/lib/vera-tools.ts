@@ -1,15 +1,14 @@
 import type { MemberProfile } from './session';
+import { ZONES, countryName, leadTimeLabel, quantityLabel, type Zone } from './search';
 import {
-  EMPTY_CRITERIA,
-  MAX_RESULTS,
-  ZONES,
-  countryName,
-  fetchResults,
-  leadTimeLabel,
-  quantityLabel,
-  type SearchCriteria,
-  type Zone,
-} from './search';
+  PART_KEYS_PAGE_SIZE,
+  canSearch,
+  fetchOffers,
+  fetchPartKeys,
+  normalizeRef,
+  type Area,
+  type PartSearchCriteria,
+} from './part-search';
 import {
   FILTERS,
   ageLabel,
@@ -97,7 +96,8 @@ export interface DirectoryView {
 export interface ToolContext {
   profile: MemberProfile;
   navigate: (screen: Screen) => void;
-  setCriteria: (criteria: SearchCriteria) => void;
+  /** Pone los criterios en Comprando y lleva allí; la pantalla lanza la fase A (lista previa). */
+  setCriteria: (criteria: PartSearchCriteria) => void;
   /** Hay un hilo abierto en pantalla: sin él no hay formulario donde preparar nada. */
   threadOpen: boolean;
   prepareDraft: (draft: DraftRequest) => void;
@@ -195,17 +195,30 @@ function entero(input: unknown, clave: string): number | null {
   return null;
 }
 
-export function criteriaFromInput(input: unknown): SearchCriteria {
+/**
+ * La entrada del modelo puesta en los criterios de SRCH-01 en dos fases (`part-search.ts`).
+ *
+ * Zona (continente de la sede) y país (dónde está el stock) son un solo filtro en pantalla, ARE: uno u otro,
+ * nunca los dos. Si llegan los dos, aquí gana el país —lo más concreto—, pero `buscar_en_catalogo` ni siquiera
+ * llega a llamar a esto: lo rechaza antes y se lo dice al modelo, para que no crea que ha filtrado por ambos.
+ */
+export function criteriaFromInput(input: unknown): PartSearchCriteria {
   const zonaCruda = texto(input, 'zona').toUpperCase();
   const zona = (ZONES as readonly string[]).includes(zonaCruda) ? (zonaCruda as Zone) : null;
+  const pais = texto(input, 'pais').toUpperCase();
+  const area: Area = /^[A-Z]{2}$/.test(pais)
+    ? { kind: 'country', country: pais }
+    : zona
+      ? { kind: 'zone', zone: zona }
+      : null;
   return {
-    ...EMPTY_CRITERIA,
-    partNumber: texto(input, 'referencia'),
+    ref: texto(input, 'referencia'),
+    contains: campo(input, 'contiene') === true,
     brand: texto(input, 'marca'),
     minQuantity: entero(input, 'cantidad_minima'),
-    zone: zona,
-    country: texto(input, 'pais').toUpperCase(),
-    maxLeadTimeDays: entero(input, 'plazo_maximo_dias'),
+    include: texto(input, 'incluir'),
+    exclude: texto(input, 'excluir'),
+    area,
   };
 }
 
@@ -214,15 +227,9 @@ export function criteriaFromInput(input: unknown): SearchCriteria {
  * (`F-101`). Con los nombres de los chips tendría que traducir «Europa · España» de vuelta a `EU` y
  * `ES` para afinar la búsqueda; así los copia tal cual. Y no depende de cómo se pinten los chips.
  */
-export function describeCriteria(c: SearchCriteria): string {
-  const partes = [
-    c.partNumber ? `referencia=${c.partNumber}` : '',
-    c.brand ? `marca=${c.brand}` : '',
-    c.minQuantity !== null ? `cantidad_minima=${c.minQuantity}` : '',
-    c.zone ? `zona=${c.zone}` : '',
-    c.country ? `pais=${c.country}` : '',
-    c.maxLeadTimeDays !== null ? `plazo_maximo_dias=${c.maxLeadTimeDays}` : '',
-  ].filter(Boolean);
+export function describeCriteria(c: PartSearchCriteria): string {
+  const p = comoParametros(c);
+  const partes = PARAMETROS.filter((k) => p[k] !== '').map((k) => `${k}=${p[k]}`);
   return partes.length ? partes.join(' · ') : 'ninguno';
 }
 
@@ -234,21 +241,24 @@ export function describeCriteria(c: SearchCriteria): string {
  * La diferencia, dicha como un hecho («quitó zona=EU»), no se puede leer de otra manera.
  */
 /** Los criterios con los nombres de los parámetros de `buscar_en_catalogo`, en su orden; vacío si no hay. */
-const PARAMETROS = ['referencia', 'marca', 'cantidad_minima', 'zona', 'pais', 'plazo_maximo_dias'] as const;
+const PARAMETROS = ['referencia', 'contiene', 'marca', 'cantidad_minima', 'incluir', 'excluir', 'zona', 'pais'] as const;
 type Parametro = (typeof PARAMETROS)[number];
 
-function comoParametros(c: SearchCriteria): Record<Parametro, string> {
+function comoParametros(c: PartSearchCriteria): Record<Parametro, string> {
   return {
-    referencia: c.partNumber,
-    marca: c.brand,
+    referencia: c.ref.trim(),
+    // «contiene» es un booleano: puesto se dice `true`, y desmarcado es «no puesto», como un filtro vacío.
+    contiene: c.contains ? 'true' : '',
+    marca: c.brand.trim(),
     cantidad_minima: c.minQuantity === null ? '' : String(c.minQuantity),
-    zona: c.zone ?? '',
-    pais: c.country,
-    plazo_maximo_dias: c.maxLeadTimeDays === null ? '' : String(c.maxLeadTimeDays),
+    incluir: c.include.trim(),
+    excluir: c.exclude.trim(),
+    zona: c.area?.kind === 'zone' ? c.area.zone : '',
+    pais: c.area?.kind === 'country' ? c.area.country : '',
   };
 }
 
-export function describeManualChanges(vera: SearchCriteria | null, vivos: SearchCriteria | null): string | null {
+export function describeManualChanges(vera: PartSearchCriteria | null, vivos: PartSearchCriteria | null): string | null {
   if (!vera || !vivos) return null;
   const antes = comoParametros(vera);
   const ahora = comoParametros(vivos);
@@ -269,7 +279,7 @@ export interface RemovedFilter {
  * Es la versión estructurada de `describeManualChanges`, para que `buscar_en_catalogo` pueda comprobar,
  * sin interpretar nada, si el modelo intenta volver a ponerlos.
  */
-export function removedFilters(vera: SearchCriteria | null, vivos: SearchCriteria | null): RemovedFilter[] {
+export function removedFilters(vera: PartSearchCriteria | null, vivos: PartSearchCriteria | null): RemovedFilter[] {
   if (!vera || !vivos) return [];
   const antes = comoParametros(vera);
   const ahora = comoParametros(vivos);
@@ -331,7 +341,33 @@ function frescura(iso: string): string {
 // -----------------------------------------------------------------------------
 
 async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolResult> {
+  /*
+   * ZONA Y PAÍS A LA VEZ NO SE PUEDE: en Comprando son un solo desplegable (ARE, `SRCH-01_cambios.md` §4).
+   * Se rechaza en vez de quedarse con uno en silencio, porque el modelo contaría que ha filtrado por los dos.
+   */
+  if (texto(input, 'zona') && texto(input, 'pais')) {
+    return {
+      content:
+        'NO se ha buscado: zona y pais son excluyentes, Comprando filtra por uno o por otro. ' +
+        'zona es el continente de la sede de la empresa que vende; pais, dónde está el stock. Repite la búsqueda con el que corresponda a lo que te han pedido.',
+      isError: true,
+    };
+  }
+
   const criteria = criteriaFromInput(input);
+
+  /*
+   * LA REFERENCIA ES OBLIGATORIA (`single-reference-search`, 25-oct-2026): Comprando no busca sin ella. Hasta
+   * entonces VERA podía buscar solo por marca o zona; ya no hay pantalla que enseñe eso.
+   */
+  if (!canSearch(criteria)) {
+    return {
+      content:
+        'NO se ha buscado: buscar_en_catalogo necesita una referencia (o el principio de una), y no me has pasado ninguna que sirva. ' +
+        'No la deduzcas: pregúntale al usuario qué referencia busca.',
+      isError: true,
+    };
+  }
 
   /*
    * ⚠ EL FILTRO QUE EL USUARIO QUITÓ A MANO NO SE REPONE SIN QUE LO DIGA (`F-258`, B2; PO, 15-oct-2026).
@@ -354,97 +390,139 @@ async function buscarEnCatalogo(input: unknown, ctx: ToolContext): Promise<ToolR
   }
 
   /*
-   * Escribe CRITERIOS, no chips. `search.ts:154` lo dejó dicho el día 6: los
-   * chips son una función pura de los criterios, y si VERA escribiera sobre la
-   * lista pintada habría dos verdades sobre qué se está filtrando.
+   * Escribe CRITERIOS, no chips, y lleva a Comprando: la pantalla lanza ella la fase A y enseña la lista previa.
+   * La herramienta pide la misma página 1 para saber qué ve el usuario.
    */
   ctx.setCriteria(criteria);
+  const claves = await fetchPartKeys(criteria, 1);
+
+  const buscada = normalizeRef(criteria.ref);
+  /** «Ninguna referencia EMPIEZA POR…» (singular) y «NO hay ninguna que EMPIECE POR…» (subjuntivo). */
+  const modo = criteria.contains ? 'contiene' : 'empieza por';
+  const filtros = describeCriteria(criteria);
+  const pantalla =
+    `Esta búsqueda ha llevado al usuario a Comprando con estos filtros puestos: ${filtros}. ` +
+    'Allí ve la LISTA DE REFERENCIAS (una casilla por referencia con su número de ofertas) y él marca cuáles quiere para ver sus ofertas: ' +
+    'tú no las marcas ni las eliges por él. NO repitas la lista. Si solo pidió la búsqueda, contesta en una línea con los filtros, ' +
+    'cuántas referencias y cuántas ofertas hay, y que marque las que le interesen; si además preguntó algo, contesta solo eso.';
+
+  // Caso 1.4: ni el primer carácter casa con nada visible.
+  if (claves.totalKeys === 0) {
+    return {
+      content: [
+        `Ninguna referencia ${modo} «${buscada}» con estos filtros: no hay ofertas que enseñar.`,
+        pantalla,
+        'Dile que no hay coincidencias y propón qué cambiar: ' +
+          (criteria.area ? 'quitar la zona o el país, ' : '') +
+          'quitar otros filtros si los hay, o revisar la referencia. No sugieras una referencia que no te haya devuelto ninguna herramienta.',
+      ].join('\n'),
+      isError: false,
+    };
+  }
+
+  const lineas: string[] = [];
+  const cabeza =
+    `${claves.totalKeys === 1 ? '1 referencia distinta' : `${claves.totalKeys} referencias distintas`} ` +
+    `con ${claves.totalOffers === 1 ? '1 oferta' : `${claves.totalOffers} ofertas`} en total.`;
+
+  // Caso 1.3: se encontró recortando por el final.
+  if (claves.truncated && claves.matchedRef) {
+    lineas.push(
+      `NO hay ninguna referencia que ${criteria.contains ? 'contenga' : 'empiece por'} «${buscada}». ` +
+        `Se ha buscado recortando por el final, con «${claves.matchedRef}», y la pantalla se lo avisa al usuario: díselo tú también.`,
+    );
+  }
+  lineas.push(cabeza);
 
   /*
-   * Por cantidad, como se midió contra Sonnet 5 (`F-258`): con más de 25 filas, «¿quién tiene más stock?»
-   * solo se contesta bien si las de más stock están entre las que ve. La pantalla del usuario ordena por
-   * antigüedad (`DEFAULT_SORT`, 16-oct), y eso se le dice en el retorno.
+   * Cada clave es una DESIGNACIÓN distinta (`F-254`): «6204» trae 6204, 6204-2RS, 6204-ZZ, 6204-C3… que
+   * comparten medidas pero no son intercambiables. Se le dan separadas y se le prohíbe juntarlas.
    */
-  const page = await fetchResults({
-    orgId: ctx.profile.orgId,
-    memberId: ctx.profile.id,
-    criteria,
-    orden: 'cantidad',
-  });
-
-  const vistas = page.rows.slice(0, MAX_FILAS);
-  const filas = vistas.map((r) =>
-    [
-      r.partNumber,
-      r.brand,
-      `${quantityLabel(r.quantity)} u`,
-      // «plazo»: sin la palabra, «6 días» junto a «actualizada hace 16 días» se leía como frescura (`F-279`, B7).
-      `plazo ${leadTimeLabel(r.leadTimeDays)}`,
-      countryName(r.country),
-      r.orgName,
-      // Los dos campos que ya venían en la fila y no llegaban al modelo.
-      `actualizada ${frescura(r.lastUploadAt)}`,
-      ...(r.consulted ? ['YA CONSULTADA por tu organización'] : []),
-    ].join(' · '),
+  lineas.push(
+    ...claves.keys.map((k) => `${k.key} · ${k.offers === 1 ? '1 oferta' : `${quantityLabel(k.offers)} ofertas`}`),
+  );
+  if (claves.totalKeys > claves.keys.length) {
+    const ocultas = claves.totalKeys - claves.keys.length;
+    lineas.push(
+      `AQUÍ SOLO VES las ${claves.keys.length} referencias con más ofertas; las otras ${ocultas} NO se te han mostrado y no puedes decir nada de ellas. ` +
+        `La pantalla del usuario las enseña todas, en páginas de ${PART_KEYS_PAGE_SIZE}.`,
+    );
+  }
+  lineas.push(
+    'Cada referencia de esta lista es una designación DISTINTA (cambia la protección, el juego, la jaula o el material): ' +
+      'no las sumes ni las presentes como un solo producto, y no digas que una sustituye a otra.',
   );
 
   /*
-   * «¿Cuál es la más fresca?» (`F-279`, B7 turno 2): con el retorno correcto delante —nueve días las de JULSA,
-   * dieciséis la de Rhône—, Sonnet 5 invertía la comparación 3 de 6 veces. Se le da la comparación hecha, sobre
-   * las filas que ve; ordenar o razonar sobre «hace N días» ya no depende de él.
+   * La referencia EXACTA que pidió, si existe: sus ofertas, para que «¿quién tiene más stock de 6205-2RS?» se
+   * pueda contestar sin mezclar variantes. Solo esa clave, nunca las demás, y solo si no hubo recorte.
    */
-  const edades = vistas.map((r) => ({ org: r.orgName, dias: daysSince(r.lastUploadAt) }));
-  const masFresca = Math.min(...edades.map((e) => e.dias));
-  const masAntigua = Math.max(...edades.map((e) => e.dias));
-  const orgsCon = (d: number) => [...new Set(edades.filter((e) => e.dias === d).map((e) => e.org))].join(', ');
-  const resumenFrescura =
-    edades.length < 2
-      ? []
-      : [
-          masFresca === masAntigua
-            ? `Frescura: todas estas filas se actualizaron ${ageLabel(masFresca).toLowerCase()}.`
-            : `Frescura: la más reciente es la de ${orgsCon(masFresca)} (${ageLabel(masFresca).toLowerCase()}) y la más antigua la de ${orgsCon(masAntigua)} (${ageLabel(masAntigua).toLowerCase()}). Menos días = más fresca.`,
-        ];
+  const exacta = !claves.truncated ? claves.keys.find((k) => k.key === buscada) : undefined;
+  if (exacta) {
+    const ofertas = await fetchOffers({
+      orgId: ctx.profile.orgId,
+      memberId: ctx.profile.id,
+      criteria,
+      selection: { kind: 'keys', keys: [exacta.key] },
+      pageSize: 200,
+    });
+    /*
+     * Por cantidad, como se midió contra Sonnet 5 (`F-258`): con más de 25 filas, «¿quién tiene más stock?» solo
+     * se contesta bien si las de más stock están entre las que ve.
+     */
+    const porCantidad = [...ofertas.rows].sort((a, b) => b.quantity - a.quantity || a.id.localeCompare(b.id));
+    const vistas = porCantidad.slice(0, MAX_FILAS);
+    lineas.push(
+      '',
+      `Ofertas de la referencia exacta ${exacta.key} (SOLO de esa; las de las demás referencias de la lista NO se te muestran): ` +
+        recorte(vistas.length, ofertas.total, 'oferta', 'ofertas'),
+      ...vistas.map((r) =>
+        [
+          r.partNumber,
+          r.brand,
+          `${quantityLabel(r.quantity)} u`,
+          // «plazo»: sin la palabra, «6 días» junto a «actualizada hace 16 días» se leía como frescura (`F-279`, B7).
+          `plazo ${leadTimeLabel(r.leadTimeDays)}`,
+          countryName(r.country),
+          r.orgName,
+          `actualizada ${frescura(r.lastUploadAt)}`,
+          ...(r.consulted ? ['YA CONSULTADA por tu organización'] : []),
+        ].join(' · '),
+      ),
+    );
 
-  const cabecera = recorte(filas.length, page.total, 'coincidencia', 'coincidencias');
-  return {
-    // Los avisos finales no son de cortesía: sin ellos, el modelo lee la ausencia
-    // de una columna como un hecho —"es gratis", "nadie ha preguntado", "estas
-    // son las mejores"— y lo dice con aplomo.
-    content: [
-      cabecera,
-      ...filas,
-      ...resumenFrescura,
+    /*
+     * «¿Cuál es la más fresca?» (`F-279`, B7 turno 2): con el retorno correcto delante, Sonnet 5 invertía la
+     * comparación 3 de 6 veces. Se le da la comparación hecha, sobre las filas que ve.
+     */
+    const edades = vistas.map((r) => ({ org: r.orgName, dias: daysSince(r.lastUploadAt) }));
+    if (edades.length >= 2) {
+      const masFresca = Math.min(...edades.map((e) => e.dias));
+      const masAntigua = Math.max(...edades.map((e) => e.dias));
+      const orgsCon = (d: number) => [...new Set(edades.filter((e) => e.dias === d).map((e) => e.org))].join(', ');
+      lineas.push(
+        masFresca === masAntigua
+          ? `Frescura: todas estas filas se actualizaron ${ageLabel(masFresca).toLowerCase()}.`
+          : `Frescura: la más reciente es la de ${orgsCon(masFresca)} (${ageLabel(masFresca).toLowerCase()}) y la más antigua la de ${orgsCon(masAntigua)} (${ageLabel(masAntigua).toLowerCase()}). Menos días = más fresca.`,
+      );
+    }
+    lineas.push(
+      // Los avisos finales no son de cortesía: sin ellos, el modelo lee la ausencia de una columna como un hecho
+      // —«es gratis», «nadie ha preguntado», «estas son las mejores»— y lo dice con aplomo.
       'Ninguna de estas filas incluye condiciones económicas: eso se negocia cifrado dentro de un hilo.',
       'Las filas que no llevan «YA CONSULTADA» son las que tu organización todavía no ha consultado.',
       'Este orden no es un ranking de idoneidad. Si eliges unas cuantas para recomendar, di cuántas había y con qué criterio has elegido.',
-      // 16-oct-2026: la tabla del usuario ordena por antigüedad por defecto; estas filas, por cantidad.
-      'Estas filas te llegan ordenadas por cantidad, de más a menos. La tabla del usuario las ordena por antigüedad, las más recientes arriba: no le hables de «la primera» o «la de arriba» como si vierais el mismo orden.',
-      /*
-       * El límite de 25 (`MAX_FILAS`) es de lo que ve el MODELO, no de la pantalla. En la prueba contra
-       * Sonnet 5 (`F-258`) contestó seis veces «91 resultados, se muestran 25»: falso, la tabla enseña
-       * todas hasta el tope de 200. Se le dice aquí, que es donde ve el 25.
-       */
-      ...(page.total > filas.length
-        ? [`La tabla de Comprando le enseña al usuario TODAS estas coincidencias${page.capped ? ` hasta las ${MAX_RESULTS} primeras` : ''}: el límite de ${MAX_FILAS} es solo lo que ves TÚ. No le digas que en pantalla se muestran ${MAX_FILAS}.`]
-        : []),
-      // El tope de SRCH-01 (`MAX_RESULTS`): la pantalla lo avisa, y la línea de VERA no puede dar
-      // un recuento que parezca el de la tabla.
-      ...(page.capped
-        ? [`La pantalla Comprando solo enseña los ${MAX_RESULTS} primeros de estos ${page.total}: si das el recuento, dilo.`]
-        : []),
-      /*
-       * La herramienta MUEVE al usuario (`App.tsx`, `setCriteria` navega a Comprando) y él ya está viendo
-       * la tabla. Hasta el 14-oct se le pedía que lo dijera; desde ese día, además, que no repita lo que
-       * la pantalla enseña: gastaba salida y duplicaba en dos sitios lo que puede discrepar (`F-075`,
-       * `F-105`). Decisión del PO, `DECISIONES-V1.md`.
-       */
-      `Esta búsqueda ha llevado al usuario a la pantalla Comprando con estos filtros puestos: ${describeCriteria(criteria)}. ` +
-        'Él ya ve la tabla, los filtros y el recuento: NO repitas las filas. Si solo pidió la búsqueda, contesta en una línea con los filtros y el recuento; ' +
-        'si además preguntó algo, contesta solo eso. Añade algo más únicamente si una parte de lo que pidió no se ha podido poner como filtro, o si no hay resultados (entonces propón qué filtro quitar).',
-    ].join('\n'),
-    isError: false,
-  };
+      'Estas filas te llegan ordenadas por cantidad, de más a menos. El usuario todavía no las ve: verá las ofertas cuando marque la referencia en la lista, y entonces irán de la más reciente a la más antigua.',
+    );
+  } else {
+    lineas.push(
+      `No hay ninguna referencia que sea exactamente «${buscada}»${claves.truncated ? '' : ' entre las que ves'}: ` +
+        'no tienes ofertas de ninguna. Si te preguntan quién tiene stock, cantidades o empresas, di que hay que marcar la referencia en la lista para verlas, o búscala exacta.',
+    );
+  }
+
+  lineas.push('', pantalla);
+  return { content: lineas.join('\n'), isError: false };
 }
 
 async function consultarMiInventario(input: unknown, ctx: ToolContext): Promise<ToolResult> {

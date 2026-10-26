@@ -4027,6 +4027,15 @@ drop function public.f146_canaria();
 --     función definer es su DUEÑO, no quien llama, así que el bypass de
 --     siembra se activaba siempre. Cazado por la prueba de abajo, antes de
 --     tocar las bases reales.)
+--   · `search_part_keys`, `search_offers` y su ayudante `app.search_where` (0076, búsqueda en
+--     dos fases de SRCH-01) — leen `inventory_lines` y `organizations` bajo RLS y SÍ montan SQL
+--     dinámico (con `format('%L')`, para que el planificador vea el patrón y use los índices de
+--     0073). Auditadas a mano el 25-oct-2026 contra el criterio de F-155: su resultado ES la
+--     respuesta a quien llama, no un guardia. Que la RLS oculte filas es lo que tiene que pasar
+--     -una búsqueda solo enseña lo visible-, y lo único que «decide» con una lectura vacía es el
+--     recorte del caso 1.3, que por contrato se hace sobre lo visible. No escriben nada. El WHERE
+--     repite además los predicados de `inventory_select_cross_org` (0064), y
+--     `11_busqueda_dos_fases.sql` lo prueba como miembro, no como superusuario.
 create or replace function app.f155_detector() returns text
   language sql security definer set search_path to 'pg_catalog','public' as $detector$
   select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname)
@@ -4045,7 +4054,10 @@ create or replace function app.f155_detector() returns text
            'public.demo_state',
            'public.demo_reanchor_freshness',
            'app.guard_member_privileges',
-           'app.guard_forum_rate_limit')
+           'app.guard_forum_rate_limit',
+           'app.search_where',
+           'public.search_part_keys',
+           'public.search_offers')
      and exists (
            select 1
              from pg_class c
@@ -4108,6 +4120,8 @@ begin
      and p.prokind = 'f'
      and not p.prosecdef
      and p.proname not in ('expect_fail','expect_denied','f146_canaria')
+     -- 0076: auditadas a mano, ver la lista de F-155 de arriba
+     and n.nspname || '.' || p.proname not in ('public.search_part_keys', 'public.search_offers')
      and p.prosrc ~* '\yexecute\y';
 
   assert dinamicas is null,

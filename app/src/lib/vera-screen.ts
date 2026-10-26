@@ -41,7 +41,7 @@ export function veraScreenName(s: ScreenState): string {
     case 'Comprando':
       if (s.watchersOpen) return 'Mis watchers (dentro de Comprando)';
       if (s.batchOpen) return 'Búsqueda por lotes (dentro de Comprando)';
-      return 'Comprando (Resultados de búsqueda)';
+      return 'Comprando (Búsqueda de referencias)';
     case 'Vendiendo':
       return 'Vendiendo (Mis ofertas)';
     case 'Inventario':

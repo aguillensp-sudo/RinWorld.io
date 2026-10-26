@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
 import { describeCriteria, describeManualChanges, removedFilters, type DirectoryView, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
 import { veraScreenName } from './lib/vera-screen';
-import type { SearchCriteria } from './lib/search';
+import type { PartSearchCriteria } from './lib/part-search';
 import type { VeraAgent } from './shell/VeraPanel';
 import { AppShell, NAV_ITEMS, navIndexOf } from './shell/AppShell';
 import { OPERATOR_NAV_ITEMS, OperatorShell, operatorNavIndexOf } from './shell/OperatorShell';
@@ -67,7 +67,7 @@ import { importExampleFromHash } from './lib/import-result';
 import type { ImportSummary } from './lib/import-result';
 import { Messages } from './screens/messages/Messages';
 import { Thread } from './screens/messages/Thread';
-import { SearchResults } from './screens/search/SearchResults';
+import { PartSearch } from './screens/search/PartSearch';
 import { Watchers } from './screens/search/Watchers';
 import { BatchSearch } from './screens/search/BatchSearch';
 import { SentOffers } from './screens/selling/SentOffers';
@@ -187,14 +187,14 @@ export function App() {
    * ha escrito nada. Vive aquí y no en SRCH-01 porque VERA puede escribirlo
    * estando el usuario en otra pantalla — y entonces hay que llevarle a ella.
    */
-  const [veraCriteria, setVeraCriteria] = useState<SearchCriteria | null>(null);
+  const [veraCriteria, setVeraCriteria] = useState<PartSearchCriteria | null>(null);
 
   /**
    * Los criterios que SRCH-01 tiene puestos de verdad, incluidos los que el usuario cambió a mano
    * (`F-101`). Van a VERA en cada pregunta hecha desde Resultados de búsqueda: si quitó un chip, lo que
    * el modelo recuerda de la conversación ya no es lo que hay en pantalla, y manda la pantalla.
    */
-  const [liveCriteria, setLiveCriteria] = useState<SearchCriteria | null>(null);
+  const [liveCriteria, setLiveCriteria] = useState<PartSearchCriteria | null>(null);
 
   /**
    * Lo que VERA deja puesto en INV-01 cuando contesta con una lista de líneas (decisión del PO,
@@ -727,7 +727,7 @@ export function App() {
      * pedido una búsqueda y no vería pasar nada, con los resultados cargados en
      * una pantalla que no está mirando. Pedir una búsqueda es pedir verla.
      */
-    setCriteria: (criteria: SearchCriteria) => {
+    setCriteria: (criteria: PartSearchCriteria) => {
       setVeraCriteria(criteria);
       navigate(SEARCH_NAV);
     },
@@ -1048,7 +1048,9 @@ export function App() {
            * que SRCH-01: la columna Antigüedad de sus tablas es relativa al reloj. */
           <BatchSearch profile={state.profile} now={new Date()} onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)} />
         ) : (
-          <SearchResults
+          /* SRCH-01 en dos fases (`amend-srch01-busqueda-en-dos-fases`, 25-oct-2026). Sustituyó a `SearchResults`,
+           * la pantalla de una sola tabla, que se retiró entera cuando VERA, los lotes y los watchers dejaron de usarla. */
+          <PartSearch
             profile={state.profile}
             now={new Date()}
             veraCriteria={veraCriteria}

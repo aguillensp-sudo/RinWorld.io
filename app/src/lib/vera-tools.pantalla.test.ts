@@ -3,20 +3,23 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MemberProfile } from './session';
-import { EMPTY_CRITERIA, MAX_RESULTS, type SearchCriteria } from './search';
+import { initialPartCriteria, type PartKeysPage, type PartSearchCriteria } from './part-search';
 import { describeCriteria, describeManualChanges, removedFilters, runTool, type InventoryView, type ToolContext } from './vera-tools';
 
 /**
  * Cuando la pantalla ya enseña la respuesta, VERA no la repite (decisiones del PO del 14-oct-2026,
  * `DECISIONES-V1.md`). Aquí se prueba lo que le dicen las herramientas al modelo y qué pantalla mueven;
  * si el modelo hace caso solo lo dice una llamada real. La capa de datos va mockeada (`CLAUDE.md` §5).
+ *
+ * Desde el 25-oct-2026 `buscar_en_catalogo` va en dos fases (`amend-srch01-busqueda-en-dos-fases`): devuelve la
+ * lista previa de claves y, si existe la referencia exacta, sus ofertas.
  */
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const tools = JSON.parse(readFileSync(resolve(aqui, '../../../supabase/functions/vera/tools.json'), 'utf8')) as {
   name: string;
   description: string;
-  input_schema: { properties: Record<string, { type: string; description: string }> };
+  input_schema: { properties: Record<string, { type: string; description: string }>; required?: string[] };
 }[];
 
 const PERFIL: MemberProfile = {
@@ -30,13 +33,15 @@ const PERFIL: MemberProfile = {
   orgCountry: 'ES',
 };
 
-const fetchResults = vi.fn();
+const fetchPartKeys = vi.fn();
+const fetchOffers = vi.fn();
 const fetchPage = vi.fn();
 const fetchThreadPage = vi.fn();
 
-vi.mock('./search', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./search')>()),
-  fetchResults: (...a: unknown[]) => fetchResults(...a),
+vi.mock('./part-search', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./part-search')>()),
+  fetchPartKeys: (...a: unknown[]) => fetchPartKeys(...a),
+  fetchOffers: (...a: unknown[]) => fetchOffers(...a),
 }));
 vi.mock('./inventory', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./inventory')>()),
@@ -48,12 +53,13 @@ vi.mock('./threads', async (importOriginal) => ({
 }));
 
 let vistas: InventoryView[] = [];
+let criterios: PartSearchCriteria[] = [];
 
 function contexto(conInventario = true): ToolContext {
   return {
     profile: PERFIL,
     navigate: () => {},
-    setCriteria: () => {},
+    setCriteria: (c) => criterios.push(c),
     threadOpen: false,
     prepareDraft: () => {},
     ...(conInventario ? { showInventory: (v: InventoryView) => vistas.push(v) } : {}),
@@ -84,44 +90,72 @@ const LINEA = {
   lastUploadAt: '2026-09-01T10:00:00Z',
 };
 
+/** La lista previa de «6204» en producción el 25-oct-2026 (como ALPHA), recortada a cinco claves. */
+function lista(over: Partial<PartKeysPage> = {}): PartKeysPage {
+  return {
+    keys: [
+      { key: '62042RS', offers: 11 },
+      { key: '6204', offers: 8 },
+      { key: '6204ZZ', offers: 8 },
+      { key: '6204C3', offers: 7 },
+      { key: '6204C4', offers: 6 },
+    ],
+    totalKeys: 5,
+    totalOffers: 40,
+    matchedRef: '6204',
+    truncated: false,
+    page: 1,
+    pageCount: 1,
+    ...over,
+  };
+}
+
 beforeEach(() => {
   vistas = [];
-  fetchResults.mockReset();
-  fetchPage.mockReset();
-  fetchThreadPage.mockReset();
-  fetchResults.mockResolvedValue({ rows: [FILA], total: 1, capped: false });
-  fetchPage.mockResolvedValue({ lines: [LINEA], total: 1 });
-  fetchThreadPage.mockResolvedValue({ threads: [], total: 0 });
+  criterios = [];
+  fetchPartKeys.mockReset().mockResolvedValue(lista());
+  fetchOffers.mockReset().mockResolvedValue({ rows: [FILA], total: 1, page: 1, pageCount: 1 });
+  fetchPage.mockReset().mockResolvedValue({ lines: [LINEA], total: 1 });
+  fetchThreadPage.mockReset().mockResolvedValue({ threads: [], total: 0 });
 });
+
+const vacio = (over: Partial<PartSearchCriteria> = {}): PartSearchCriteria => ({ ...initialPartCriteria(null), ...over });
 
 describe('describeCriteria · los filtros de Comprando dichos con los nombres de los parámetros', () => {
   it('sin filtros dice "ninguno"', () => {
-    expect(describeCriteria(EMPTY_CRITERIA)).toBe('ninguno');
+    expect(describeCriteria(vacio())).toBe('ninguno');
   });
 
   it('con todos, en el orden de la herramienta y con los códigos que ella acepta', () => {
     expect(
       describeCriteria({
-        partNumber: '6204-2RS',
+        ref: '6204-2RS',
+        contains: true,
         brand: 'SKF',
         minQuantity: 500,
-        zone: 'EU',
-        country: 'ES',
-        maxLeadTimeDays: 14,
+        include: 'C3',
+        exclude: 'ZZ',
+        area: { kind: 'zone', zone: 'EU' },
       }),
-    ).toBe('referencia=6204-2RS · marca=SKF · cantidad_minima=500 · zona=EU · pais=ES · plazo_maximo_dias=14');
+    ).toBe('referencia=6204-2RS · contiene=true · marca=SKF · cantidad_minima=500 · incluir=C3 · excluir=ZZ · zona=EU');
+    expect(describeCriteria(vacio({ ref: '6204', area: { kind: 'country', country: 'ES' } }))).toBe('referencia=6204 · pais=ES');
   });
 
-  it('cada nombre que usa es un parámetro real de buscar_en_catalogo', () => {
+  it('cada nombre que usa es un parámetro real de buscar_en_catalogo, y el plazo ya no lo es', () => {
     const props = Object.keys(tools.find((t) => t.name === 'buscar_en_catalogo')!.input_schema.properties);
-    for (const p of ['referencia', 'marca', 'cantidad_minima', 'zona', 'pais', 'plazo_maximo_dias']) {
+    for (const p of ['referencia', 'contiene', 'marca', 'cantidad_minima', 'incluir', 'excluir', 'zona', 'pais']) {
       expect(props).toContain(p);
     }
+    expect(props).not.toContain('plazo_maximo_dias');
+  });
+
+  it('tools.json declara la referencia como obligatoria', () => {
+    expect(tools.find((t) => t.name === 'buscar_en_catalogo')!.input_schema.required).toEqual(['referencia']);
   });
 });
 
 describe('describeManualChanges · lo que el usuario tocó a mano (F-258, B2)', () => {
-  const vera = { ...EMPTY_CRITERIA, partNumber: '6204', zone: 'EU' as const, brand: 'SKF' };
+  const vera = vacio({ ref: '6204', area: { kind: 'zone', zone: 'EU' }, brand: 'SKF' });
 
   it('sin cambios, o sin una de las dos, no dice nada', () => {
     expect(describeManualChanges(vera, { ...vera })).toBeNull();
@@ -130,21 +164,18 @@ describe('describeManualChanges · lo que el usuario tocó a mano (F-258, B2)', 
   });
 
   it('distingue quitado, añadido y cambiado, con los nombres y en el orden de los parámetros', () => {
-    expect(describeManualChanges(vera, { ...vera, zone: null, brand: 'FAG', minQuantity: 500 })).toBe(
-      'cambió marca=SKF por marca=FAG; añadió cantidad_minima=500; quitó zona=EU',
+    expect(describeManualChanges(vera, { ...vera, area: null, brand: 'FAG', minQuantity: 500, contains: true })).toBe(
+      'añadió contiene=true; cambió marca=SKF por marca=FAG; añadió cantidad_minima=500; quitó zona=EU',
     );
   });
 });
 
 describe('buscar_en_catalogo · no repone un filtro que el usuario quitó a mano (F-258, B2; PO, 15-oct)', () => {
-  const vera: SearchCriteria = { ...EMPTY_CRITERIA, partNumber: '6204', zone: 'EU', brand: 'SKF' };
-  const conQuitados = (vivos: SearchCriteria): ToolContext => {
-    const criterios: unknown[] = [];
-    return { ...contexto(), setCriteria: (c) => criterios.push(c), removedFilters: removedFilters(vera, vivos), _criterios: criterios } as ToolContext;
-  };
+  const vera = vacio({ ref: '6204', area: { kind: 'zone', zone: 'EU' }, brand: 'SKF' });
+  const conQuitados = (vivos: PartSearchCriteria): ToolContext => ({ ...contexto(), removedFilters: removedFilters(vera, vivos) });
 
   it('removedFilters: lo quitado y lo sustituido, con el valor que ya no quiere; lo añadido no', () => {
-    expect(removedFilters(vera, { ...vera, zone: null, brand: 'FAG', minQuantity: 500 })).toEqual([
+    expect(removedFilters(vera, { ...vera, area: null, brand: 'FAG', minQuantity: 500 })).toEqual([
       { param: 'marca', value: 'SKF' },
       { param: 'zona', value: 'EU' },
     ]);
@@ -152,39 +183,43 @@ describe('buscar_en_catalogo · no repone un filtro que el usuario quitó a mano
     expect(removedFilters(null, vera)).toEqual([]);
   });
 
+  it('«contiene» desmarcado a mano cuenta como quitado', () => {
+    const conContiene = { ...vera, contains: true };
+    expect(removedFilters(conContiene, vera)).toEqual([{ param: 'contiene', value: 'true' }]);
+  });
+
   it('si vuelve a poner la zona quitada, NO busca ni mueve la pantalla, y dice qué hacer', async () => {
-    const ctx = conQuitados({ ...vera, zone: null });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', marca: 'FAG' }, ctx);
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', marca: 'FAG' }, conQuitados({ ...vera, area: null }));
     expect(r.isError).toBe(true);
     expect(r.content).toContain('NO se ha buscado: vuelves a poner zona=EU');
     expect(r.content).toContain('confirmar_filtros_quitados: true');
-    expect((ctx as unknown as { _criterios: unknown[] })._criterios).toEqual([]);
-    expect(fetchResults).not.toHaveBeenCalled();
+    expect(criterios).toEqual([]);
+    expect(fetchPartKeys).not.toHaveBeenCalled();
   });
 
   it('sin ese filtro, busca con normalidad', async () => {
-    const ctx = conQuitados({ ...vera, zone: null });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204', marca: 'FAG' }, ctx);
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', marca: 'FAG' }, conQuitados({ ...vera, area: null }));
     expect(r.isError).toBe(false);
-    expect(fetchResults).toHaveBeenCalledTimes(1);
+    expect(fetchPartKeys).toHaveBeenCalledTimes(1);
   });
 
   it('con confirmar_filtros_quitados (el usuario lo pidió), lo repone', async () => {
-    const ctx = conQuitados({ ...vera, zone: null });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', confirmar_filtros_quitados: true }, ctx);
+    const r = await runTool(
+      'buscar_en_catalogo',
+      { referencia: '6204', zona: 'EU', confirmar_filtros_quitados: true },
+      conQuitados({ ...vera, area: null }),
+    );
     expect(r.isError).toBe(false);
     expect(r.content).toContain('filtros puestos: referencia=6204 · zona=EU');
   });
 
   it('otra zona distinta de la quitada no es reponer: busca', async () => {
-    const ctx = conQuitados({ ...vera, zone: null });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'AS' }, ctx);
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'AS' }, conQuitados({ ...vera, area: null }));
     expect(r.isError).toBe(false);
   });
 
   it('una marca sustituida a mano tampoco se repone sin confirmar, aunque cambie la mayúscula', async () => {
-    const ctx = conQuitados({ ...vera, brand: 'FAG' });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', marca: 'skf' }, ctx);
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', marca: 'skf' }, conQuitados({ ...vera, brand: 'FAG' }));
     expect(r.isError).toBe(true);
     expect(r.content).toContain('marca=SKF');
   });
@@ -196,55 +231,121 @@ describe('buscar_en_catalogo · no repone un filtro que el usuario quitó a mano
   });
 });
 
-describe('buscar_en_catalogo · la pantalla es la respuesta', () => {
-  it('le dice qué filtros ha puesto y que NO repita las filas', async () => {
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204-2RS', zona: 'EU' }, contexto());
+describe('buscar_en_catalogo · lo que no busca', () => {
+  it('sin referencia no busca, no mueve la pantalla y pide que la pregunte', async () => {
+    const r = await runTool('buscar_en_catalogo', { marca: 'SKF', zona: 'EU' }, contexto());
+    expect(r.isError).toBe(true);
+    expect(r.content).toContain('necesita una referencia');
+    expect(r.content).toContain('pregúntale');
+    expect(criterios).toEqual([]);
+    expect(fetchPartKeys).not.toHaveBeenCalled();
+  });
+
+  it('una referencia que queda vacía al normalizar tampoco', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: ' -/- ' }, contexto());
+    expect(r.isError).toBe(true);
+    expect(criterios).toEqual([]);
+  });
+
+  it('zona y país a la vez no: son un solo filtro en pantalla', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU', pais: 'DE' }, contexto());
+    expect(r.isError).toBe(true);
+    expect(r.content).toContain('zona y pais son excluyentes');
+    expect(criterios).toEqual([]);
+    expect(fetchPartKeys).not.toHaveBeenCalled();
+  });
+});
+
+describe('buscar_en_catalogo · la lista previa (F-254)', () => {
+  it('pone los criterios en Comprando y devuelve las claves con su número de ofertas, separadas', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU' }, contexto());
     expect(r.isError).toBe(false);
-    expect(r.content).toContain('filtros puestos: referencia=6204-2RS · zona=EU');
-    expect(r.content).toContain('NO repitas las filas');
-    // Las filas siguen llegando: las necesita si el usuario pregunta por ellas después.
-    expect(r.content).toContain('NSK Europe Ltd');
+    expect(criterios).toEqual([vacio({ ref: '6204', area: { kind: 'zone', zone: 'EU' } })]);
+    expect(fetchPartKeys).toHaveBeenCalledWith(criterios[0], 1);
+    expect(r.content).toContain('5 referencias distintas con 40 ofertas en total.');
+    expect(r.content).toContain('62042RS · 11 ofertas');
+    expect(r.content).toContain('6204C4 · 6 ofertas');
+    expect(r.content).toContain('designación DISTINTA');
+    expect(r.content).toContain('no las sumes ni las presentes como un solo producto');
   });
 
-  // 16-oct-2026: la pantalla ordena por antigüedad; VERA sigue pidiendo por cantidad y se le dice.
-  it('pide las filas por cantidad y le avisa de que la tabla del usuario va por antigüedad', async () => {
+  it('le dice que el usuario está en la lista, que la marca él, y que NO la repita', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204', zona: 'EU' }, contexto());
+    expect(r.content).toContain('filtros puestos: referencia=6204 · zona=EU');
+    expect(r.content).toContain('LISTA DE REFERENCIAS');
+    expect(r.content).toContain('tú no las marcas ni las eliges por él');
+    expect(r.content).toContain('NO repitas la lista');
+  });
+
+  it('con más claves de las que ve, le prohíbe hablar de las demás', async () => {
+    fetchPartKeys.mockResolvedValueOnce(lista({ totalKeys: 94, pageCount: 2 }));
+    const r = await runTool('buscar_en_catalogo', { referencia: '6' }, contexto());
+    expect(r.content).toContain('las otras 89 NO se te han mostrado');
+    expect(r.content).toContain('en páginas de 60');
+  });
+
+  it('sin recorte de claves, no lo menciona', async () => {
     const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
-    expect(fetchResults).toHaveBeenCalledWith(expect.objectContaining({ orden: 'cantidad' }));
+    expect(r.content).toContain('referencias distintas');
+    expect(r.content).not.toContain('NO se te han mostrado');
+  });
+
+  it('caso 1.3: le dice que no hubo coincidencia completa y con qué se buscó, y no le da ofertas', async () => {
+    fetchPartKeys.mockResolvedValueOnce(lista({ matchedRef: '62042R', truncated: true, keys: [{ key: '62042RS', offers: 11 }], totalKeys: 1, totalOffers: 11 }));
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204-2RX' }, contexto());
+    expect(r.content).toContain('NO hay ninguna referencia que empiece por «62042RX»');
+    expect(r.content).toContain('con «62042R»');
+    expect(fetchOffers).not.toHaveBeenCalled();
+  });
+
+  it('caso 1.4: sin coincidencias lo dice, propone quitar la zona y no inventa referencias', async () => {
+    fetchPartKeys.mockResolvedValueOnce(lista({ keys: [], totalKeys: 0, totalOffers: 0, matchedRef: null }));
+    const r = await runTool('buscar_en_catalogo', { referencia: 'XQXQ', zona: 'EU' }, contexto());
+    expect(r.isError).toBe(false);
+    expect(r.content).toContain('Ninguna referencia empieza por «XQXQ» con estos filtros');
+    expect(r.content).toContain('quitar la zona o el país');
+    expect(r.content).toContain('No sugieras una referencia que no te haya devuelto ninguna herramienta');
+    expect(fetchOffers).not.toHaveBeenCalled();
+  });
+});
+
+describe('buscar_en_catalogo · las ofertas, solo de la referencia exacta', () => {
+  it('si la exacta está en la lista, pide sus ofertas (y solo las suyas), hasta 200, y se las da por cantidad', async () => {
+    fetchOffers.mockResolvedValueOnce({
+      rows: [
+        { ...FILA, id: 'a', quantity: 10, orgName: 'Poca SL' },
+        { ...FILA, id: 'b', quantity: 900, orgName: 'Mucha SA' },
+      ],
+      total: 2,
+      page: 1,
+      pageCount: 1,
+    });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204-2RS' }, contexto());
+    expect(fetchOffers).toHaveBeenCalledWith(
+      expect.objectContaining({ selection: { kind: 'keys', keys: ['62042RS'] }, pageSize: 200, orgId: PERFIL.orgId, memberId: PERFIL.id }),
+    );
+    expect(r.content).toContain('Ofertas de la referencia exacta 62042RS (SOLO de esa');
+    expect(r.content.indexOf('Mucha SA')).toBeLessThan(r.content.indexOf('Poca SL'));
     expect(r.content).toContain('Estas filas te llegan ordenadas por cantidad');
-    expect(r.content).toContain('La tabla del usuario las ordena por antigüedad');
+    expect(r.content).toContain('El usuario todavía no las ve');
   });
 
-  it('ya no le pide que cuente la búsqueda (la regla vieja, sustituida el 14-oct)', async () => {
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
-    expect(r.content).toContain('ha llevado al usuario a la pantalla Comprando');
-    expect(r.content).not.toContain('dilo en tu respuesta, porque acaba de cambiar de pantalla');
+  it('con más de 25 ofertas de la exacta, le dice cuántas no ve y le prohíbe suponerlas', async () => {
+    fetchOffers.mockResolvedValueOnce({
+      rows: Array.from({ length: 30 }, (_, i) => ({ ...FILA, id: `l${String(i).padStart(2, '0')}` })),
+      total: 30,
+      page: 1,
+      pageCount: 1,
+    });
+    const r = await runTool('buscar_en_catalogo', { referencia: '6204-2RS' }, contexto());
+    expect(r.content).toContain('30 ofertas, y AQUÍ SOLO VES 25');
   });
 
-  it(`con más de ${MAX_RESULTS}, le dice que la pantalla solo enseña los primeros`, async () => {
-    fetchResults.mockResolvedValueOnce({ rows: [FILA], total: 640, capped: true });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
-    expect(r.content).toContain(`solo enseña los ${MAX_RESULTS} primeros de estos 640`);
-  });
-
-  // F-258: contestó seis veces «91 resultados, se muestran 25», y la tabla los enseña todos.
-  it('con más filas de las que ve el modelo, le dice que la tabla las enseña todas', async () => {
-    fetchResults.mockResolvedValueOnce({ rows: Array.from({ length: 30 }, (_, i) => ({ ...FILA, id: `l${i}` })), total: 91, capped: false });
-    const r = await runTool('buscar_en_catalogo', { referencia: '6205' }, contexto());
-    expect(r.content).toContain('La tabla de Comprando le enseña al usuario TODAS estas coincidencias');
-    expect(r.content).toContain('No le digas que en pantalla se muestran 25');
-  });
-
-  it('si ve todas las filas, no añade esa aclaración', async () => {
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
-    expect(r.content).toContain('ha llevado al usuario');
-    expect(r.content).not.toContain('le enseña al usuario TODAS');
-  });
-
-  it('sin recorte, no lo menciona', async () => {
-    const r = await runTool('buscar_en_catalogo', { referencia: '6204' }, contexto());
-    // Ancla positiva en el mismo `it` (F-074).
-    expect(r.content).toContain('ha llevado al usuario');
-    expect(r.content).not.toContain('solo enseña los');
+  it('si la exacta no está, no pide ofertas y le dice que no tiene ninguna', async () => {
+    const r = await runTool('buscar_en_catalogo', { referencia: '620' }, contexto());
+    expect(fetchOffers).not.toHaveBeenCalled();
+    expect(r.content).toContain('No hay ninguna referencia que sea exactamente «620»');
+    expect(r.content).toContain('no tienes ofertas de ninguna');
   });
 });
 

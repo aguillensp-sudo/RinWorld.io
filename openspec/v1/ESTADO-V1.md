@@ -13,7 +13,7 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 49 de V1 · 27-oct-2026, ~11:55 UTC · Estado: CERRADO.** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: SRCH-01 en dos fases con sus pruebas e2e completas (tareas 0.3, 6.2–6.4 del change); `F-254` cerrado y `F-281` abierto. Detalle en `diario/dia-49.md`.
+**Día 49 de V1 · 27-oct-2026, ~16:00 UTC · Estado: CERRADO.** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: SRCH-01 en dos fases con sus pruebas e2e completas (tareas 0.3, 6.2–6.4 del change); `F-254` cerrado y `F-281` abierto; `F-280` cerrado (Mis favoritos + Favoritos recibidos, `0077`). Detalle en `diario/dia-49.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -31,7 +31,7 @@ Empieza por §6 y luego §3.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas, cupo de 150 llamadas por usuario y hora y `usage` en `vera_usage` (`0068`, `F-256`). `buscar_en_catalogo` devuelve ahora la frescura comparada y el plazo rotulado (`F-279`). La guía de pantallas dice que la ficha lleva botón de favorito y que el recuento cuenta usuarios.
 - **Corriente B · Fábrica — EN MARCHA, sin cambios desde el 17-oct.** `INV-04` del arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4, **C5 NO del PO** (`F-261`). La próxima serie parte del prompt con `_nota*` (`F-263`).
 - **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **110 de 185 con prueba que corre en CI**, 13 parciales, 38 NO implementados, 21 divergencias (todas aceptadas; la nueva, `favorites-system#1`, 24-oct), **0 sin prueba**, 3 fuera. `dual-entry-routes#2` y `user-revocation#1` CUBIERTO por e2e de suite. Quedan 2 «solo e2e» que no pueden estar en CI: modelo real y SES. Niveles 4 y 5 aparcados.
-- **Favoritos.** Tabla `favorite_distributors` por miembro (`PK member_id + distributor_org_id`), recuento por trigger. Estrella con confirmación en Comprando y Búsqueda por lotes; botón con confirmación en la ficha de otra organización; ninguno en la propia. Producción: 0 favoritos.
+- **Favoritos.** Tabla `favorite_distributors` por miembro (`PK member_id + distributor_org_id`), recuento por trigger. Estrella con confirmación en Comprando y Búsqueda por lotes; botón con confirmación en la ficha de otra organización; ninguno en la propia. «Mis favoritos» es un botón de Comprando (cualquier miembro) y «Favoritos recibidos» del Panel cuenta usuarios del mes por `favorites_received_this_month()` (`0077`, aplicada a las dos bases). Producción: 0 favoritos.
 
 ## 3 · Qué toca, en este orden
 
@@ -43,7 +43,7 @@ Empieza por §6 y luego §3.
    - **Equivalencias de sufijos entre fabricantes (`F-281`; `F-254` cerrado el 27-oct):** el PO trae definiciones y avisa. **No se toca `part_key` ni `search.ts` para eso hasta entonces.**
    - **Suspensión:** residual en `F-275`: `vera_abrir_turno` no mira la suspensión.
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción cuando se acerquen datos reales o terceros (`F-067`).
-   - **Favoritos (`F-280`):** faltan «Mis favoritos» (Ajustes → Asistente VERA, `preference-learning`, NO_IMPLEMENTADO) y la tarjeta «Favoritos recibidos» del Panel (siempre «—»; su texto dice «organizaciones» y contará usuarios). La base no impide marcar la propia organización; lo impide la interfaz.
+   - **Favoritos (`F-280`):** la base no impide marcar la propia organización; lo impide la interfaz. Si prefieres «Mis favoritos» en otro sitio que no sea el botón de Comprando, es mover el botón.
 3. **VERA, D8: CERRADO por el PO (24-oct). No abrir el tema ni proponer cambios al prompt por esa ambigüedad:** él la prueba a mano. Toda llamada real, con su visto bueno (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_REPETIR`, `VERA_REAL_OUT` fuera del repo, `VERA_REAL_TOPE_USD`).
 4. **Frontend:** el PO prepara cambios por su cuenta. **El plan móvil NO se propone hasta que él lo pida** (`BACKLOG-V1.md`). INV-04 se queda con la versión a mano (`F-261`).
 5. **~12-nov:** comprobar que `inbox/` de S3 ya no conserva los primeros correos (borrado a 30 días).
@@ -80,7 +80,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | 🟡 | **`F-281`** · los sufijos de fabricante (2RS/DDU/LLU, 2Z/ZZ) no se reconocen como equivalentes; la lista previa deja elegir entre variantes | PO (definiciones) |
 | 🟡 | **`F-278`** · paradas de la instancia Free de e2e (hasta 56 s); mitigado para los pushes de solo docs, no para los de código | PO (§3.2, opción c) si vuelve a caer un run con código |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
-| 🟡 | **`F-280`** · «Mis favoritos» y «Favoritos recibidos» sin construir; la propia organización solo se bloquea en la interfaz | PO |
+| 🟡 | **`F-280`** · la propia organización solo se bloquea en la interfaz, no en la base | PO |
 
 ## 6 · Lo que este fichero NO sabe
 
@@ -98,7 +98,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.
 - **Cómo se ve la pantalla de suspensión con una cuenta real**: nadie ha suspendido una organización real; la base ya la corta (`0069`), la pantalla solo se evalúa al cargar la sesión.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
-- **Cómo se ve en un navegador el diálogo de favoritos y el botón de la ficha**: el PO aún no los ha visto; solo hay pruebas de comportamiento, ninguna comprobación de diseño.
+- **Cómo se ve en un navegador el diálogo de favoritos, el botón de la ficha y «Mis favoritos»**: el PO aún no los ha visto; solo hay pruebas de comportamiento, ninguna comprobación de diseño.
 - **Si los favoritos de un miembro revocado siguen sumando al recuento**: deducido del código (`remove_member` solo cambia el estado), no probado.
 - **Qué permisos tiene la clave de AWS de `ingest-email`**, si el MFA y el SSO de AWS están bien, y si un cliente real puede enviar sin DMARC ni DKIM (`F-252`).
 

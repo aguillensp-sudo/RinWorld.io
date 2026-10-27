@@ -70,6 +70,7 @@ import { Thread } from './screens/messages/Thread';
 import { PartSearch } from './screens/search/PartSearch';
 import { Watchers } from './screens/search/Watchers';
 import { BatchSearch } from './screens/search/BatchSearch';
+import { MyFavorites } from './screens/search/MyFavorites';
 import { SentOffers } from './screens/selling/SentOffers';
 
 /**
@@ -229,6 +230,12 @@ export function App() {
    * Se limpia al cambiar de ítem de nav.
    */
   const [batchOpen, setBatchOpen] = useState(false);
+
+  /**
+   * `Mis favoritos` (F-280) abierta. Comparte ítem de nav con SRCH-01/02/03 (`Comprando`), con el mismo
+   * criterio que `watchersOpen`. Se limpia al cambiar de ítem de nav.
+   */
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
 
   /**
    * INV-07 (`Visibilidad`) abierta. Comparte ítem de nav con INV-01 (`Inventario`,
@@ -523,6 +530,7 @@ export function App() {
       .then((threadId) => {
         setWatchersOpen(false);
         setBatchOpen(false);
+        setFavoritesOpen(false);
         if (threadId) {
           setNav(MESSAGES_NAV);
           setOpenThreadId(threadId);
@@ -541,6 +549,7 @@ export function App() {
     setForumThreadId(null);
     setWatchersOpen(false);
     setBatchOpen(false);
+    setFavoritesOpen(false);
     setVisibilityOpen(false);
     setIngestOpen(false);
     setImportSummary(null);
@@ -687,7 +696,7 @@ export function App() {
     threadOpen: openThreadId !== null,
 
     // F-258 (B2): lo que el usuario quitó a mano en Resultados de búsqueda; fuera de ella, al volver se reponen los de VERA.
-    removedFilters: onSearch && !watchersOpen && !batchOpen ? removedFilters(veraCriteria, liveCriteria) : [],
+    removedFilters: onSearch && !watchersOpen && !batchOpen && !favoritesOpen ? removedFilters(veraCriteria, liveCriteria) : [],
 
     /*
      * Primero navegar —que limpia `veraInventoryView` con todo lo demás— y después escribir la vista: las dos
@@ -761,6 +770,7 @@ export function App() {
           threadOpen: openThreadId !== null,
           watchersOpen,
           batchOpen,
+          favoritesOpen,
           importSummary: importSummary !== null,
           importDraft: importDraft !== null,
           visibilityOpen,
@@ -1043,6 +1053,17 @@ export function App() {
               setWatchersOpen(false);
             }}
           />
+        ) : favoritesOpen ? (
+          /* F-280. Sin `now`: nada de su lista es relativo al reloj. Abrir una ficha lleva a Empresas, como
+           * `Contactar` sin hilo previo, pero sin abrir el cuadro de mensaje. */
+          <MyFavorites
+            profile={state.profile}
+            onOpenOrganization={(orgId) => {
+              setFavoritesOpen(false);
+              setNav(EMPRESAS_NAV);
+              setOrgProfileId(orgId);
+            }}
+          />
         ) : batchOpen ? (
           /* SRCH-02. `now` explícito y construido en el render, mismo criterio
            * que SRCH-01: la columna Antigüedad de sus tablas es relativa al reloj. */
@@ -1057,6 +1078,7 @@ export function App() {
             onCriteriaChange={setLiveCriteria}
             onOpenWatchers={() => setWatchersOpen(true)}
             onOpenBatch={() => setBatchOpen(true)}
+            onOpenFavorites={() => setFavoritesOpen(true)}
             onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)}
           />
         )

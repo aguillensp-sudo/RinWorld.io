@@ -216,7 +216,7 @@ export function Panel({ profile, now, onNavigate }: Props) {
 
             {/* ── Favoritos recibidos: DIR-01/DIR-02 no existen en el MVP
                 (Plan §9 "Fuera"), así que esta tarjeta no navega a ninguna
-                parte. ── */}
+                parte. El número cuenta USUARIOS (F-280, 0077), no organizaciones. ── */}
             <button
               type="button"
               className={styles.card}
@@ -232,7 +232,7 @@ export function Panel({ profile, now, onNavigate }: Props) {
                 {metricLabel(summary.favorites.monthly)}
               </span>
               <span className={styles.label}>
-                organizaciones te añadieron a favoritos este mes
+                usuarios te añadieron a favoritos este mes
               </span>
             </button>
           </div>

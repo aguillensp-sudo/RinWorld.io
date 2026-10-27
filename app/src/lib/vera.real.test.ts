@@ -131,6 +131,7 @@ const BASE: ScreenState = {
   threadOpen: false,
   watchersOpen: false,
   batchOpen: false,
+  favoritesOpen: false,
   importSummary: false,
   importDraft: false,
   visibilityOpen: false,

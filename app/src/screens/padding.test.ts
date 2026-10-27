@@ -27,6 +27,7 @@ const RAICES: [string, string][] = [
   ['panel/Panel', 'body'],
   ['search/SearchResults', 'page'],
   ['search/BatchSearch', 'screen'],
+  ['search/MyFavorites', 'screen'],
   ['search/Watchers', 'screen'],
   ['selling/SentOffers', 'content'],
   ['settings/ChangePassphrase', 'screen'],

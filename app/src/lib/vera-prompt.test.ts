@@ -218,6 +218,8 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
   const tarjetaLote = screen('search/BatchCard.tsx');
   const libLotes = lib('batch.ts');
   const watchers = screen('search/Watchers.tsx');
+  const favoritos = screen('search/MyFavorites.tsx');
+  const confirmarFavorito = screen('../components/FavoriteConfirmDialog.tsx');
   const tarjetaWatcher = screen('search/WatcherCard.tsx');
   const formWatcher = screen('search/WatcherEditForm.tsx');
   const borrarWatcher = screen('search/DeleteWatcherModal.tsx');
@@ -269,6 +271,7 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['Contactar', tablaResultados],
     ['Búsqueda por lotes', resultados],
     ['Mis watchers', resultados],
+    ['Mis favoritos', resultados],
     // Comprando: búsqueda por lotes
     ['Búsqueda por lotes', lotes],
     ['Lista de referencias', lotes],
@@ -279,6 +282,11 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['Exportar resumen', lotes],
     ['Sin resultados', libLotes],
     ['No se pudo consultar', libLotes],
+    // Comprando: mis favoritos
+    ['Mis favoritos', favoritos],
+    ['Quitar', favoritos],
+    ['Quitar de favoritos', confirmarFavorito],
+    ['Todavía no has marcado ninguna distribuidora.', favoritos],
     // Comprando: watchers
     ['Mis watchers', watchers],
     ['Todos', libWatchers],
@@ -565,7 +573,7 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     mismo('Ofertas Realizadas', panel),
     mismo('Consultas Realizadas', panel),
     mismo('Favoritos recibidos', panel),
-    mismo('organizaciones te añadieron a favoritos este mes', panel),
+    mismo('usuarios te añadieron a favoritos este mes', panel),
     ['visitas de 30 días', 'visitas (30d)', panel],
     // Configuración y Seguridad
     mismo('Configuración', shell),

@@ -622,6 +622,41 @@ begin;
     'cliente escribiendo favorite_count a mano');
 commit;
 
+-- 0077 · «Favoritos recibidos» (F-280): un número, el de la propia organización, sin filas ajenas.
+begin;
+  select set_config('request.jwt.claim.sub', '0b000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert public.favorites_received_this_month() = 2,
+      'Beta ve cuántos usuarios la añadieron este mes (2), aunque no vea las filas';
+    assert (select count(*) from public.favorite_distributors) = 0,
+      'y sigue sin ver quién (favorites_select_own)';
+    raise notice 'OK · 0077: favoritos recibidos del mes, solo el número';
+  end
+  $$;
+commit;
+begin;
+  select set_config('request.jwt.claim.sub', '0a000001-0000-0000-0000-000000000001', true);
+  set local role authenticated;
+  do $$
+  begin
+    assert public.favorites_received_this_month() = 0,
+      'Alpha no recibió ninguno: 0 de verdad, no el de otra organización';
+  end
+  $$;
+commit;
+begin;
+  set local role anon;
+  do $$
+  begin
+    perform public.favorites_received_this_month();
+    raise exception 'anon ejecutó favorites_received_this_month';
+  exception when insufficient_privilege then null;
+  end
+  $$;
+commit;
+
 -- Y baja al quitar el favorito.
 delete from public.favorite_distributors
   where member_id = '0c000001-0000-0000-0000-000000000001';

@@ -10,14 +10,14 @@ import { fetchSentOffers, sentAtLabel } from './sent-offers';
  *
  * ⚠ **LO MÁS IMPORTANTE DE ESTE FICHERO ES LO QUE DEVUELVE `null`.**
  *
- * De los diez números que pide el spec, **tres no tienen fuente de datos**, y se
+ * De los diez números que pide el spec, **tres no tenían fuente de datos** (los favoritos ya la tienen), y se
  * comprobó contra el esquema antes de escribir una línea:
  *
  * | Métrica | Por qué no existe |
  * |---|---|
  * | Visitas (30d), §4.3 | **No hay ninguna tabla de visitas.** INV-01 ya lo resolvió igual el día 3 |
  * | Hilos sin leer, §4.4 | **No hay ningún registro de lectura.** Es F-027 (a), aplazado por el PO |
- * | Favoritos del mes, §4.6 | `favorite_distributors.created_at` existe, pero `favorites_select_own` (`0005:67`) restringe a `member_id = auth.uid()`: **la consulta devolvería 0 en silencio**, no un error |
+ * | Favoritos del mes, §4.6 | **Ya tiene fuente (F-280, `0077`).** `favorites_select_own` (`0005:67`) restringe `favorite_distributors` a `member_id = auth.uid()`, así que un conteo desde el cliente devolvería 0 en silencio; la RPC `favorites_received_this_month` devuelve solo el número. Si falla o no hay sesión, `null` |
  *
  * Las tres devuelven `null`, y el tipo lo dice —`visits: null`, no `number`— para
  * que no se pueda pintar un cero por descuido. **Un cero aquí sería una mentira
@@ -59,8 +59,8 @@ export interface PanelSummary {
   };
   month: { acceptedOffers: number; madeOffers: number; receivedQueries: number };
   favorites: {
-    /** Sin fuente por RLS. Ver la cabecera. */
-    monthly: null;
+    /** Usuarios que añadieron a la organización este mes. `null` si no se pudo medir: nunca un 0 falso. */
+    monthly: number | null;
   };
 }
 
@@ -244,17 +244,33 @@ export async function fetchMonth(orgId: string, now: Date): Promise<PanelSummary
 }
 
 /**
+ * Favoritos recibidos en el mes natural (F-280): UN número, vía `favorites_received_this_month`
+ * (`0077`), que cuenta usuarios y no expone quién. **Nunca lanza**: si la RPC falla o devuelve
+ * `null` (sin miembro activo), la tarjeta se queda en «—», porque un 0 afirmaría que se miró.
+ */
+export async function fetchFavoritesReceived(): Promise<number | null> {
+  try {
+    const { data, error } = await supabase.rpc('favorites_received_this_month');
+    if (error || typeof data !== 'number') return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Todo el panel de una vez.
  *
  * Las cuatro consultas van en paralelo porque son independientes: en serie, el
  * dashboard de entrada tardaría la suma de las cuatro.
  */
 export async function fetchPanelSummary({ orgId, now = new Date() }: PanelQuery): Promise<PanelSummary> {
-  const [ofertas, consultas, inventario, mes] = await Promise.all([
+  const [ofertas, consultas, inventario, mes, favoritos] = await Promise.all([
     fetchSentOffers(orgId),
     fetchPendingQueries(orgId),
     fetchStats(orgId, now),
     fetchMonth(orgId, now),
+    fetchFavoritesReceived(),
   ]);
 
   /*
@@ -284,6 +300,6 @@ export async function fetchPanelSummary({ orgId, now = new Date() }: PanelQuery)
     },
     threads: { unread: null, latest: null },
     month: mes,
-    favorites: { monthly: null },
+    favorites: { monthly: favoritos },
   };
 }

@@ -1,0 +1,155 @@
+/* Mis favoritos (F-280). Ningún color literal: todo sale de los tokens `--bw-*` del design system. */
+
+/* Raíz hija DIRECTA de `.bwcnt` (`overflow: hidden`): scroll propio (F-186/F-189/F-190). */
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--bw-screen-pad);
+  background: var(--bw-cold-white);
+}
+
+.eyebrow {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--bw-steel-mist);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin: 0 0 14px;
+  max-width: 580px;
+}
+
+.notice {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-success-dark);
+  background: var(--bw-badge-success-bg);
+  border: 1px solid var(--bw-badge-success-border);
+  border-radius: var(--bw-radius);
+  padding: 8px 12px;
+  margin: 0 0 12px;
+}
+
+.alert {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.5;
+  color: var(--bw-error-text);
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  padding: 8px 12px;
+  margin: 0 0 12px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+}
+
+.orgLink {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-body);
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.orgLink:hover {
+  text-decoration: underline;
+}
+
+.country {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+.remove {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-label);
+  font-weight: 500;
+  padding: 5px 13px;
+  border-radius: var(--bw-radius);
+  cursor: pointer;
+  color: var(--bw-steel-mist);
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel-strong);
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.remove:hover {
+  border-color: var(--bw-hover-border);
+}
+
+.remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: var(--bw-radius);
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  max-width: 720px;
+}
+
+.emptyTitle {
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-body);
+  font-weight: 700;
+  color: var(--bw-deep-steel);
+  margin: 0 0 6px;
+}
+
+.emptyHint {
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.6;
+  color: var(--bw-steel-mist);
+  margin: 0;
+}

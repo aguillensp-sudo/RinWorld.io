@@ -23,6 +23,7 @@ export interface ScreenState {
   threadOpen: boolean;
   watchersOpen: boolean;
   batchOpen: boolean;
+  favoritesOpen: boolean;
   importSummary: boolean;
   importDraft: boolean;
   visibilityOpen: boolean;
@@ -41,6 +42,7 @@ export function veraScreenName(s: ScreenState): string {
     case 'Comprando':
       if (s.watchersOpen) return 'Mis watchers (dentro de Comprando)';
       if (s.batchOpen) return 'Búsqueda por lotes (dentro de Comprando)';
+      if (s.favoritesOpen) return 'Mis favoritos (dentro de Comprando)';
       return 'Comprando (Búsqueda de referencias)';
     case 'Vendiendo':
       return 'Vendiendo (Mis ofertas)';

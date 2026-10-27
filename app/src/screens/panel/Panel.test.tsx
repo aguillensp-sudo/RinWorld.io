@@ -235,17 +235,32 @@ describe('caja Resumen mes · §4.5', () => {
 
 describe('caja Favoritos recibidos · §4.6', () => {
   /**
-   * `favorite_distributors` tiene `created_at`, pero `favorites_select_own`
-   * (`0005:67`) restringe a `member_id = auth.uid()`: la consulta devolvería
-   * cero filas EN SILENCIO. Un `0` aquí sería el peor de los tres casos, porque
-   * parecería un dato consultado.
+   * F-280 / `0077`: el número sale de una RPC que cuenta USUARIOS. Si no se pudo medir
+   * (`monthly: null`) va con guion: un `0` parecería un dato consultado.
    */
-  it('va con GUION, y el título sigue estando', async () => {
+  it('sin medir va con GUION, y el título sigue estando', async () => {
     pintar();
     const titulo = await screen.findByText('Favoritos recibidos');
     expect(titulo).toBeInTheDocument();
     const caja = titulo.closest('button') ?? titulo.parentElement;
     expect(caja?.textContent ?? '').toContain('—');
+  });
+
+  it('medido, enseña el número y habla de usuarios, no de organizaciones', async () => {
+    fetchPanelSummary.mockResolvedValue({ ...RESUMEN, favorites: { monthly: 4 } });
+    pintar();
+    const etiqueta = await screen.findByText('usuarios te añadieron a favoritos este mes');
+    const caja = etiqueta.closest('button');
+    expect(caja).not.toBeNull();
+    if (!caja) return;
+    expect(within(caja).getByTestId('favorites-count').textContent).toBe('4');
+    expect(screen.queryByText(/organizaciones te añadieron/)).toBeNull();
+  });
+
+  it('un cero medido es 0, no guion', async () => {
+    fetchPanelSummary.mockResolvedValue({ ...RESUMEN, favorites: { monthly: 0 } });
+    pintar();
+    expect((await screen.findByTestId('favorites-count')).textContent).toBe('0');
   });
 });
 

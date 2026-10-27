@@ -47,6 +47,7 @@ interface Props {
   veraCriteria?: PartSearchCriteria | null;
   onOpenWatchers?: () => void;
   onOpenBatch?: () => void;
+  onOpenFavorites?: () => void;
   onContactOrganization?: (orgId: string) => void;
   /** Lo que hay en pantalla, para la pregunta siguiente de VERA (`F-101`) y para `F-258` (lo quitado a mano). */
   onCriteriaChange?: (criteria: PartSearchCriteria) => void;
@@ -78,6 +79,7 @@ export function PartSearch({
   veraCriteria,
   onOpenWatchers,
   onOpenBatch,
+  onOpenFavorites,
   onContactOrganization,
   onCriteriaChange,
 }: Props) {
@@ -378,6 +380,12 @@ export function PartSearch({
             <button type="button" className={base.watcher} onClick={onOpenBatch}>
               <i className="ti ti-list-search" aria-hidden="true" />
               Búsqueda por lotes
+            </button>
+          )}
+          {onOpenFavorites && (
+            <button type="button" className={base.watcher} onClick={onOpenFavorites}>
+              <i className="ti ti-star" aria-hidden="true" />
+              Mis favoritos
             </button>
           )}
           {onOpenWatchers && (

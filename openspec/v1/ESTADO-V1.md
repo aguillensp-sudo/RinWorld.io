@@ -13,21 +13,16 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 48 de V1 · 24-oct-2026, ~07:10 UTC · Estado: CERRADO.** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: B7 arreglado en la herramienta, dos «solo e2e» a CUBIERTO y Favoritos con confirmación (`F-280`). CI verde hasta `cc57d1f`. Detalle en `diario/dia-48.md`.
+**Día 49 de V1 · 27-oct-2026, ~11:55 UTC · Estado: CERRADO.** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: SRCH-01 en dos fases con sus pruebas e2e completas (tareas 0.3, 6.2–6.4 del change); `F-254` cerrado y `F-281` abierto. Detalle en `diario/dia-49.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| **B7 turno 2 de VERA tras el arreglo (`F-279`)**, 22-oct tarde | `vera.real.test.ts` B7 ×5 con Sonnet 5 real, registro fuera del repo | Antes: 5/5 abrían mal, 3 de 6 finales falsas. **Después: 5/5 correctas, 0 rectificaciones** (0,182 $). n = 5: baja la tasa, no prueba que sea cero |
-| `registration-request-queue.spec.ts` y `user-revocation.spec.ts` | Playwright local contra `bearingworld-e2e` + `execute_sql` en esa base | 9/9 con `admin-requests` detrás; sin filas `zz.*`, sin usuarios `zz.*`, 0 baneados, 3 solicitudes de siembra |
-| **El paso de la CI que despliega a `bearingworld-e2e`** | Run `40066149290` (`359f482`), `gh run view` | Verde entera en 9m41s: `SUPABASE_TOKEN` llega a `ogdhyzgjjbbikjbkhxmu` |
-| **Favoritos en la base de producción** | `execute_sql` en `troxminloxkjwihwfevs` | 0 filas, trigger `favorite_distributors_sync_count` presente, 0 recuentos descuadrados; `authenticated` solo SELECT/INSERT/DELETE; 3 políticas por miembro |
-| **Favoritos con confirmación** (`F-280`) | `tsc`; `vitest` entero (2875 verdes, 137 saltadas); `py -m harness.tests.test_checks`; `e2e/favorites.spec.ts` y `organization-profile.spec.ts` contra `bearingworld-e2e` | Todo en verde; el e2e añade y quita desde la ficha, el recuento sube y baja, la propia no tiene botón |
-| Despliegue de `457223a` y `cc57d1f` | Runs `40070398202` y `40071662683` (8 jobs en verde); bundle de `rin-world-io.vercel.app` (`index-DFc3_bym.js`); `get_edge_function` de `vera` (v56) | Bundle con «Añadir a favoritos», «Quitar de favoritos» y «tus favoritos»; `vera` con «cuántos usuarios tienen a esa empresa como favorita» y sin la frase vieja de la ficha |
-| **`localhost:5173` no mostraba los cambios** | Proceso del puerto (`vite` de la carpeta raíz) y `git -C <raíz> log` | La raíz estaba en `c18ee16`, 5 por detrás; adelantada a `457223a` con `--ff-only` y comprobado por contenido el fuente servido. **Su `app/.env` apunta a producción** |
-| **Matriz** | `harness.core.trazabilidad.resumen()` y `problemas()` vacío | 110 CUBIERTO, 21 DIVERGE, 38 NO_IMPLEMENTADO, 13 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185 |
+| **e2e de SRCH-01 en dos fases** | Playwright local contra `bearingworld-e2e` (`run-e2e-against-e2e-project.mjs`), sin CI en curso (`gh run list --status in_progress` vacío) | `search.spec.ts` + `batch-search.spec.ts`: **26/26** (con setup y teardown). Nuevos: «Contiene», claves sueltas (y volver con la selección) y paginar las ofertas. Un primer intento con `6204` falló: la siembra tiene 1 clave; se usa el prefijo `6` |
+| **Zona Anadolu (AS) frente a EU del guion de demo** | El mismo `search.spec.ts` («la zona por defecto (Europa) deja fuera a la distribuidora turca, y sin zona aparece») | Pasa |
+| **Matriz** | `harness.core.trazabilidad.resumen()` y `problemas()` vacío | 110 CUBIERTO, 21 DIVERGE, 38 NO_IMPLEMENTADO, 13 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185. Sin cambios: los 24 escenarios nuevos del change no caben en el CSV hasta archivar (`changes/amend-srch01-busqueda-en-dos-fases/matriz.md`: 23 CUBIERTO, 1 PARCIAL) |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -45,7 +40,7 @@ Empieza por §6 y luego §3.
 2. **Del PO:**
    - **`F-278` (e2e de la CI, plan Free):** un push de solo docs ya no corre e2e ni despliega (`c0407d0`). Queda **(c)**, Pro ≈ 35 $/mes, solo si un run con código vuelve a caer por una parada de la instancia.
    - **`F-269` §2** queda para después del arranque.
-   - **Casado de referencias (`F-254`):** el PO trae definiciones y avisa. **No se toca `search.ts` para eso hasta entonces.**
+   - **Equivalencias de sufijos entre fabricantes (`F-281`; `F-254` cerrado el 27-oct):** el PO trae definiciones y avisa. **No se toca `part_key` ni `search.ts` para eso hasta entonces.**
    - **Suspensión:** residual en `F-275`: `vera_abrir_turno` no mira la suspensión.
    - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción cuando se acerquen datos reales o terceros (`F-067`).
    - **Favoritos (`F-280`):** faltan «Mis favoritos» (Ajustes → Asistente VERA, `preference-learning`, NO_IMPLEMENTADO) y la tarjeta «Favoritos recibidos» del Panel (siempre «—»; su texto dice «organizaciones» y contará usuarios). La base no impide marcar la propia organización; lo impide la interfaz.
@@ -82,7 +77,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 | | Qué | Quién lo quita |
 |---|---|---|
 | 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
-| 🟡 | **`F-254`** · la búsqueda casa por «contiene»; los sufijos de fabricante no se reconocen | PO (definiciones) |
+| 🟡 | **`F-281`** · los sufijos de fabricante (2RS/DDU/LLU, 2Z/ZZ) no se reconocen como equivalentes; la lista previa deja elegir entre variantes | PO (definiciones) |
 | 🟡 | **`F-278`** · paradas de la instancia Free de e2e (hasta 56 s); mitigado para los pushes de solo docs, no para los de código | PO (§3.2, opción c) si vuelve a caer un run con código |
 | 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
 | 🟡 | **`F-280`** · «Mis favoritos» y «Favoritos recibidos» sin construir; la propia organización solo se bloquea en la interfaz | PO |
@@ -109,4 +104,4 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 ---
 
-*Cierre del Día 48 · 24-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cierre del Día 49 · 27-oct-2026 · Dirección Técnica, Nortex Systems*

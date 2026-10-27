@@ -3,7 +3,7 @@
 ## 0. Decisiones y documentos
 - [x] 0.1 Fila en `DECISIONES-V1.md` (25-oct-2026) con las cuatro precisiones aceptadas por el PO.
 - [x] 0.2 El PO responde las dos preguntas de `design.md` §6 (25-oct-2026): SRCH-02 por clave exacta; la celda muestra la clave.
-- [ ] 0.3 Cerrar `F-254` en lo que toca a coincidencia y agrupado. Abrir hallazgo nuevo para las equivalencias de sufijos.
+- [x] 0.3 `F-254` cerrado en lo que toca a coincidencia y agrupado (27-oct-2026); equivalencias de sufijos en `F-281`.
 
 ## 1. Base de datos
 - [x] 1.1 `0073_clave_normalizada_de_referencia.sql`: columna generada `part_key` y los dos índices parciales.
@@ -138,9 +138,9 @@ Hecho el 25-oct-2026. Typecheck, Vitest entero (2.960) y build en verde.
 
 ## 6. Pruebas
 - [ ] 6.1 Unitarios: normalización, chips, criterios y paginación.
-- [ ] 6.2 e2e de Comprando: casos 1.1 a 1.4, «contiene», filtros, zona por defecto, las tres formas de seleccionar y la tabla
+- [x] 6.2 e2e de Comprando (hecho 27-oct-2026, `search.spec.ts` y `batch-search.spec.ts` 26/26 contra `bearingworld-e2e`, con los 3 nuevos; la lista previa sigue sin e2e de paginación): casos 1.1 a 1.4, «contiene», filtros, zona por defecto, las tres formas de seleccionar y la tabla
       paginada. Hechos con 3.6: 1.1, 1.3, 1.4, zona por defecto y normalización. Faltan «contiene», seleccionar claves
       sueltas y entre páginas, y pasar de página (la lista previa no llega a 60 claves en la siembra e2e; las ofertas del prefijo «6» sí dan dos
       páginas).
-- [ ] 6.3 Volver a pasar `app/e2e/batch-search.spec.ts` y el guion de demo (Anadolu `AS` frente a ARE en EU).
-- [ ] 6.4 `trazabilidad.csv`: escenarios nuevos y estado de cada uno.
+- [x] 6.3 (27-oct-2026: `batch-search` y `search` 26/26 en local; la zona Anadolu/EU del guion la cubre `search.spec.ts`) Volver a pasar `app/e2e/batch-search.spec.ts` y el guion de demo (Anadolu `AS` frente a ARE en EU).
+- [x] 6.4 Escenarios nuevos y estado de cada uno: `matriz.md` (no caben en `trazabilidad.csv` hasta archivar el change).

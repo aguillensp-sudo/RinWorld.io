@@ -160,6 +160,58 @@ test.describe('SRCH-01 · lista previa y filtros contra la base', () => {
     await expect(page.getByText('Anadolu Rulman')).toHaveCount(0);
   });
 
+  /*
+   * «Contiene»: «2RS» no es el principio de ninguna referencia que acabe en 2RS, pero sí está dentro de
+   * `62052RS`. Las dos mitades juntas: la segunda sola la pasa un «contiene» que siempre está activo.
+   */
+  test('«Contiene» casa en cualquier parte de la clave; sin él, solo por el principio', async ({ page }) => {
+    const sinContiene = await buscarReferencia(page, '2RS', { zona: 'Cualquiera', contiene: false });
+    await expect(sinContiene.getByRole('checkbox', { name: /^62052RS\b/ })).toHaveCount(0);
+
+    const conContiene = await buscarReferencia(page, '2RS', { contiene: true });
+    await expect(conContiene.getByRole('checkbox', { name: /^62052RS\b/ })).toBeVisible();
+  });
+
+  test('se pueden elegir claves sueltas y solo se piden las ofertas de esas', async ({ page }) => {
+    const lista = await buscarReferencia(page, '6', { zona: 'Cualquiera' });
+    const casillas = lista.getByRole('checkbox');
+    expect(await casillas.count()).toBeGreaterThanOrEqual(2);
+
+    await expect(page.getByRole('button', { name: /^Ver ofertas de las seleccionadas \(0\)/ })).toBeDisabled();
+    await casillas.nth(0).check();
+    await casillas.nth(1).check();
+    const ver = page.getByRole('button', { name: /^Ver ofertas de las seleccionadas \(2\)/ });
+    await expect(ver).toBeEnabled();
+    await ver.click();
+
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    await expect(page.getByText(/ofertas? de 2 referencias/)).toBeVisible();
+
+    // Al volver, la selección sigue marcada.
+    await page.getByRole('button', { name: '‹ Volver a la lista de referencias' }).click();
+    await expect(page.getByRole('list', { name: 'Referencias encontradas' }).getByRole('checkbox', { checked: true })).toHaveCount(2);
+  });
+
+  test('la tabla de ofertas se pagina: siguiente y anterior', async ({ page }) => {
+    // El prefijo «6» da más de 50 ofertas (dos páginas); la lista previa de la siembra no llega a 60 claves.
+    await buscarReferencia(page, '6', { zona: 'Cualquiera' });
+    await verOfertasDeTodas(page);
+
+    const pager = page.getByRole('navigation', { name: 'Páginas de ofertas' });
+    await expect(pager.getByText(/^Página 1 de \d+$/)).toBeVisible();
+    await expect(pager.getByRole('button', { name: /Anterior/ })).toBeDisabled();
+
+    await pager.getByRole('button', { name: /Siguiente/ }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(pager.getByText(/^Página 2 de \d+$/)).toBeVisible();
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+
+    await pager.getByRole('button', { name: /Anterior/ }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(pager.getByText(/^Página 1 de \d+$/)).toBeVisible();
+  });
+
   test('caso 1.3: sin coincidencia exacta recorta por el final y lo avisa', async ({ page }) => {
     const lista = await buscarReferencia(page, '6205-2RSXYZ');
     await expect(

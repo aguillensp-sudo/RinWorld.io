@@ -233,8 +233,8 @@
   margin-left: auto;
 }
 
-/* Editar y Eliminar: apagados y con su motivo en el `title`. Nunca un enlace,
-   nunca una acción que no exista todavía. */
+/* Editar y Eliminar (own-content-editing, 0078). Eliminar se apaga, con su motivo
+   en el `title`, en la inicial de un hilo con respuestas. */
 .postAction {
   padding: 4px 8px;
   border: none;
@@ -242,8 +242,28 @@
   font-family: var(--bw-font-body);
   font-size: var(--bw-size-label);
   font-weight: 500;
+  color: var(--bw-calibration-blue);
+  cursor: pointer;
+}
+
+.postAction:not(:disabled):hover {
+  color: var(--bw-brass);
+}
+
+.postAction:disabled {
   color: var(--bw-hint-steel);
   cursor: not-allowed;
+}
+
+/* Edición en línea de una publicación propia. */
+.editForm {
+  margin: 8px 0;
+}
+
+.editButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ── Contador de respuestas y hilo sin respuestas ────────────────────────── */

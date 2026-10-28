@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { Category, ThreadPage, ThreadQuery } from '../../lib/forum';
+import type { Category, ForumRateLimitStatus, ThreadPage, ThreadQuery } from '../../lib/forum';
 import type { MemberProfile } from '../../lib/session';
 
 /**
@@ -18,11 +18,13 @@ import type { MemberProfile } from '../../lib/session';
 
 const fetchCategory = vi.fn<(slug: string) => Promise<Category | null>>();
 const fetchThreads = vi.fn<(q: ThreadQuery) => Promise<ThreadPage>>();
+const fetchForumRateLimitStatus = vi.fn<() => Promise<ForumRateLimitStatus>>();
 
 vi.mock('../../lib/forum', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/forum')>()),
   fetchCategory: (slug: string) => fetchCategory(slug),
   fetchThreads: (q: ThreadQuery) => fetchThreads(q),
+  fetchForumRateLimitStatus: () => fetchForumRateLimitStatus(),
 }));
 
 const { ForumCategory } = await import('./ForumCategory');
@@ -67,19 +69,21 @@ const PAGINA: ThreadPage = {
 
 const VACIA: ThreadPage = { rows: [], total: 0, page: 1, pageCount: 1 };
 
-const CREAR_TITLE = 'El formulario de creación de hilo (FL-FORO-01) llega en una próxima versión.';
+const LIMITE_OK: ForumRateLimitStatus = { used: 2, limit: 10, secondsUntilReset: 1800 };
+const LIMITE_ALCANZADO: ForumRateLimitStatus = { used: 10, limit: 10, secondsUntilReset: 600 };
 
-function montar(onBack = vi.fn(), onOpenThread = vi.fn()) {
+function montar(onBack = vi.fn(), onOpenThread = vi.fn(), onCreateThread = vi.fn()) {
   render(
     <ForumCategory
       profile={profile}
       slug="referencias-tecnicas"
       onBack={onBack}
       onOpenThread={onOpenThread}
+      onCreateThread={onCreateThread}
       now={NOW}
     />,
   );
-  return { onBack, onOpenThread };
+  return { onBack, onOpenThread, onCreateThread };
 }
 
 /** Espera a que la lista haya llegado: leer antes encuentra cero filas (F-159). */
@@ -90,8 +94,10 @@ async function listo() {
 beforeEach(() => {
   fetchCategory.mockReset();
   fetchThreads.mockReset();
+  fetchForumRateLimitStatus.mockReset();
   fetchCategory.mockResolvedValue(CATEGORIA);
   fetchThreads.mockResolvedValue(PAGINA);
+  fetchForumRateLimitStatus.mockResolvedValue(LIMITE_OK);
 });
 
 describe('FORO-02 · al montar', () => {
@@ -145,12 +151,35 @@ describe('FORO-02 · cabecera (spec §3)', () => {
     );
   });
 
-  it('"Crear hilo" está apagado -FL-FORO-01 no existe todavía- y lo dice', async () => {
-    montar();
+  it('"Crear hilo" abre el formulario de hilo nuevo (FL-FORO-01)', async () => {
+    const { onCreateThread } = montar();
     await listo();
     const crear = screen.getByRole('button', { name: 'Crear hilo' });
-    expect(crear).toBeDisabled();
-    expect(crear).toHaveAttribute('title', CREAR_TITLE);
+    expect(crear).toBeEnabled();
+    fireEvent.click(crear);
+    await waitFor(() => expect(onCreateThread).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/límite de 10 publicaciones/)).not.toBeInTheDocument();
+  });
+
+  it('con el límite de RNG-FORO-06 alcanzado, "Crear hilo" NO abre el formulario y lo dice con los minutos', async () => {
+    fetchForumRateLimitStatus.mockResolvedValue(LIMITE_ALCANZADO);
+    const { onCreateThread } = montar();
+    await listo();
+    fireEvent.click(screen.getByRole('button', { name: 'Crear hilo' }));
+    expect(
+      await screen.findByText(
+        'Tu organización ha alcanzado el límite de 10 publicaciones por hora. Podrás crear un nuevo hilo en 10 minutos.',
+      ),
+    ).toBeInTheDocument();
+    expect(onCreateThread).not.toHaveBeenCalled();
+  });
+
+  it('si no se puede saber el límite, abre el formulario: la base corta la publicación 11 de todos modos', async () => {
+    fetchForumRateLimitStatus.mockRejectedValue(new Error('red'));
+    const { onCreateThread } = montar();
+    await listo();
+    fireEvent.click(screen.getByRole('button', { name: 'Crear hilo' }));
+    await waitFor(() => expect(onCreateThread).toHaveBeenCalledTimes(1));
   });
 });
 

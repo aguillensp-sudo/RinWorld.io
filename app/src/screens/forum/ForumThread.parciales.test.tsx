@@ -226,7 +226,7 @@ describe('community-forum/no-active-moderation', () => {
       total: 1, page: 1, pageCount: 1,
     });
     const cat = render(
-      <ForumCategory profile={profile} slug="referencias-tecnicas" onBack={vi.fn()} onOpenThread={vi.fn()} now={NOW} />,
+      <ForumCategory profile={profile} slug="referencias-tecnicas" onBack={vi.fn()} onOpenThread={vi.fn()} onCreateThread={vi.fn()} now={NOW} />,
     );
     await screen.findByRole('button', { name: 'Equivalencia FAG 6205-2RS' });
     const enCategoria = controles(cat.container);

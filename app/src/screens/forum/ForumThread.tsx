@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import {
+  deletePost,
+  editPost,
   fetchForumRateLimitStatus,
   fetchThread,
   fetchThreadPosts,
@@ -16,6 +18,7 @@ import {
   type ThreadHeader,
 } from '../../lib/forum';
 import { errorMessage, type MemberProfile } from '../../lib/session';
+import { ForumDeleteDialog } from './ForumDeleteDialog';
 import styles from './ForumThread.module.css';
 
 interface Props {
@@ -67,10 +70,11 @@ function snapshot(list: ForumPost[]): ForumPost[] {
  *   pueda desincronizarse del servidor con dos reacciones simultáneas).
  * - No cuenta publicaciones para RNG-FORO-06: el límite lo dice el servidor
  *   (`fetchForumRateLimitStatus`), nunca un contador local de lo que se ve.
- * - No construye la edición ni el borrado de publicaciones: `0029` no tiene
- *   políticas de UPDATE ni DELETE en `forum_posts`. Los dos botones se pintan
- *   apagados y con su motivo, y SOLO en las publicaciones de la propia
- *   organización (CA-FORO-06); en las ajenas no existen en el DOM.
+ * - Editar y Eliminar (own-content-editing, 0078) SOLO existen en las
+ *   publicaciones de la propia organización (CA-FORO-06); en las ajenas no
+ *   existen en el DOM. Editar abre un textarea en línea; Eliminar pregunta antes
+ *   y es irreversible. La inicial de un hilo con respuestas se puede editar pero
+ *   no eliminar (la base se niega, y aquí el botón se apaga con su motivo).
  * - No construye el modo creación de hilo (FL-FORO-01): FORO-03 se abre siempre
  *   sobre un hilo ya creado, el único camino de entrada es el título de una fila
  *   de FORO-02.
@@ -99,6 +103,17 @@ export function ForumThread({
   const [submitting, setSubmitting] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
 
+  /** Edición en línea: una sola publicación a la vez. */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  /** Eliminación: el id que espera confirmación, y su propio estado. */
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   /**
    * La cabecera del hilo, y --solo si existe-- sus publicaciones y el estado del
    * límite de RNG-FORO-06, las dos a la vez y sin esperar una de la otra.
@@ -116,6 +131,10 @@ export function ForumThread({
     setDraft('');
     setReplyError(null);
     setSubmitting(false);
+    setEditingId(null);
+    setEditError(null);
+    setDeleteTargetId(null);
+    setDeleteError(null);
     setLoadingThread(true);
     setLoadingPosts(false);
     setLoadingRate(false);
@@ -238,6 +257,85 @@ export function ForumThread({
     }
   }
 
+  /** Abrir la edición en línea con el texto actual. Cancelar no guarda nada. */
+  function startEdit(post: ForumPost) {
+    setEditingId(post.id);
+    setEditDraft(post.body);
+    setEditError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditError(null);
+  }
+
+  /**
+   * Guardar el cambio (own-content-editing#1). El cambio «se refleja
+   * inmediatamente para todos»: se vuelve a pedir la lista a la base, no se
+   * pinta el texto local. Si falla, el borrador se queda abierto.
+   */
+  async function handleSaveEdit() {
+    const body = editDraft.trim();
+    if (editingId === null || body === '' || savingEdit) return;
+
+    setSavingEdit(true);
+    setEditError(null);
+
+    try {
+      await editPost(editingId, body);
+    } catch (err: unknown) {
+      setEditError(errorMessage(asError(err)));
+      setSavingEdit(false);
+      return;
+    }
+
+    setSavingEdit(false);
+    setEditingId(null);
+
+    try {
+      const list = await fetchThreadPosts(threadId);
+      setPosts(snapshot(list));
+    } catch (err: unknown) {
+      setError(errorMessage(asError(err)));
+    }
+  }
+
+  /**
+   * Eliminar tras la confirmación (own-content-editing#2). Si era la única
+   * publicación, la base elimina también el hilo: no queda nada que enseñar y
+   * se vuelve a la categoría.
+   */
+  async function handleConfirmDelete() {
+    if (deleteTargetId === null || deleting) return;
+    const onlyPost = posts !== null && posts.length === 1;
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deletePost(deleteTargetId);
+    } catch (err: unknown) {
+      setDeleteError(errorMessage(asError(err)));
+      setDeleting(false);
+      return;
+    }
+
+    setDeleting(false);
+    setDeleteTargetId(null);
+
+    if (onlyPost) {
+      onBackToCategory();
+      return;
+    }
+
+    try {
+      const list = await fetchThreadPosts(threadId);
+      setPosts(snapshot(list));
+    } catch (err: unknown) {
+      setError(errorMessage(asError(err)));
+    }
+  }
+
   const threadKnown = thread !== null && thread !== undefined;
 
   /**
@@ -324,7 +422,37 @@ export function ForumThread({
                     <span className={styles.postTime}>{relativeShort(post.createdAt, now)}</span>
                   </div>
 
-                  <p className={styles.postBody}>{post.body}</p>
+                  {editingId === post.id ? (
+                    <div className={styles.editForm}>
+                      <textarea
+                        className={styles.replyInput}
+                        aria-label="Editar publicación"
+                        value={editDraft}
+                        rows={4}
+                        onChange={(event) => setEditDraft(event.target.value)}
+                      />
+                      {editError !== null && (
+                        <p className={styles.replyError} role="alert">
+                          {editError}
+                        </p>
+                      )}
+                      <div className={styles.editButtons}>
+                        <button
+                          type="button"
+                          className={styles.replySubmit}
+                          disabled={editDraft.trim() === '' || savingEdit}
+                          onClick={() => void handleSaveEdit()}
+                        >
+                          Guardar cambios
+                        </button>
+                        <button type="button" className={styles.postAction} disabled={savingEdit} onClick={cancelEdit}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className={styles.postBody}>{post.body}</p>
+                  )}
 
                   <div className={styles.postActions}>
                     <button
@@ -337,23 +465,26 @@ export function ForumThread({
                     </button>
 
                     {/* Editar y Eliminar SOLO en las publicaciones de la propia
-                        organización (CA-FORO-06), y siempre apagados: `0029` no
-                        tiene políticas de UPDATE ni DELETE en `forum_posts`. */}
-                    {post.authorOrgId === profile.orgId && (
+                        organización (CA-FORO-06). La inicial de un hilo con
+                        respuestas no se elimina (0078): botón apagado, con su motivo. */}
+                    {post.authorOrgId === profile.orgId && editingId !== post.id && (
                       <span className={styles.ownActions}>
-                        <button
-                          type="button"
-                          className={styles.postAction}
-                          disabled
-                          title="Editar todavía no está disponible: el esquema no permite modificar publicaciones."
-                        >
+                        <button type="button" className={styles.postAction} onClick={() => startEdit(post)}>
                           Editar
                         </button>
                         <button
                           type="button"
                           className={styles.postAction}
-                          disabled
-                          title="Eliminar todavía no está disponible: el esquema no permite borrar publicaciones."
+                          disabled={index === 0 && posts.length > 1}
+                          title={
+                            index === 0 && posts.length > 1
+                              ? 'La publicación inicial no se puede eliminar mientras el hilo tenga respuestas.'
+                              : undefined
+                          }
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleteTargetId(post.id);
+                          }}
                         >
                           Eliminar
                         </button>
@@ -404,6 +535,18 @@ export function ForumThread({
               Publicar respuesta
             </button>
           </div>
+
+          {deleteTargetId !== null && (
+            <ForumDeleteDialog
+              busy={deleting}
+              error={deleteError}
+              onConfirm={() => void handleConfirmDelete()}
+              onCancel={() => {
+                setDeleteTargetId(null);
+                setDeleteError(null);
+              }}
+            />
+          )}
         </>
       ) : null}
     </div>

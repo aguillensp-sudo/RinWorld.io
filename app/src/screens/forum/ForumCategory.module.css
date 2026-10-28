@@ -125,7 +125,7 @@
 /* El campo de búsqueda (input + lupa + "x") vive en el componente compartido
    `components/SearchField`, no aquí (decisión del PO, 18-sep-2026). */
 
-/* FL-FORO-01 no existe: apagado, con su motivo en el `title`. */
+/* FL-FORO-01: `Crear hilo` abre el formulario (ForumNewThread). */
 .createButton {
   height: 36px;
   padding: 0 18px;
@@ -137,9 +137,20 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--bw-warm-cream);
-  cursor: not-allowed;
-  opacity: 0.6;
+  cursor: pointer;
   white-space: nowrap;
+}
+
+.createButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* RNG-FORO-06: un aviso, no un error del usuario: ámbar y no rojo. */
+.createLimit {
+  margin: 0 0 14px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-warning-dark);
 }
 
 /* ── Cuerpo: estados excluyentes ────────────────────────────────────────── */

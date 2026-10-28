@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import {
   fetchCategory,
+  fetchForumRateLimitStatus,
   fetchThreads,
+  rateLimitMinutesLabel,
+  rateLimitReached,
   reactionLabel,
   relativeShort,
   replyCountLabel,
   type Category,
+  type ForumRateLimitStatus,
   type ThreadPage,
 } from '../../lib/forum';
 import { errorMessage, type MemberProfile } from '../../lib/session';
@@ -18,6 +22,8 @@ interface Props {
   onBack: () => void;
   /** FORO-03: abre el hilo por su id, al pulsar el título de una fila. */
   onOpenThread: (threadId: string) => void;
+  /** FORO-03 en modo creación (FL-FORO-01): abre el formulario de hilo nuevo en esta categoría. */
+  onCreateThread: () => void;
   now?: Date;
 }
 
@@ -42,8 +48,12 @@ interface Props {
  * El foro es común a todos los miembros: el perfil no decide nada aquí, pero va
  * en la firma porque el shell lo inyecta en todas las pantallas (como FORO-01).
  */
-export function ForumCategory({ profile, slug, onBack, onOpenThread, now = new Date() }: Props) {
+export function ForumCategory({ profile, slug, onBack, onOpenThread, onCreateThread, now = new Date() }: Props) {
   void profile;
+
+  /** Se llena solo al pulsar `Crear hilo` con el límite de RNG-FORO-06 alcanzado (spec §6). */
+  const [createLimit, setCreateLimit] = useState<ForumRateLimitStatus | null>(null);
+  const [checkingCreate, setCheckingCreate] = useState(false);
 
   const [category, setCategory] = useState<Category | null | undefined>(undefined);
   const [result, setResult] = useState<ThreadPage | null>(null);
@@ -144,6 +154,32 @@ export function ForumCategory({ profile, slug, onBack, onOpenThread, now = new D
   }
 
   /**
+   * `Crear hilo` (FL-FORO-01). Con el límite alcanzado no abre el formulario y
+   * enseña el aviso inline (spec §6). Si no se puede saber el estado, se abre: el
+   * formulario lo vuelve a comprobar y la base corta la publicación 11 de todos modos.
+   */
+  async function handleCreate() {
+    if (checkingCreate) return;
+    setCheckingCreate(true);
+    setCreateLimit(null);
+
+    let status: ForumRateLimitStatus | null = null;
+    try {
+      status = await fetchForumRateLimitStatus();
+    } catch {
+      status = null;
+    }
+
+    setCheckingCreate(false);
+
+    if (status !== null && rateLimitReached(status)) {
+      setCreateLimit(status);
+      return;
+    }
+    onCreateThread();
+  }
+
+  /**
    * La página que se marca como actual es la que devolvió la capa (`result.page`),
    * ya encajada en el rango: si se pidió la 3 y solo hay 2, la capa devuelve la 2
    * y la navegación no puede seguir diciendo 3.
@@ -211,17 +247,24 @@ export function ForumCategory({ profile, slug, onBack, onOpenThread, now = new D
           submitLabel="Buscar"
         />
 
-        {/* FL-FORO-01 no existe todavía: el control se pinta apagado con su
-            motivo, nunca como si llevara a un formulario. */}
+        {/* FL-FORO-01. Con el límite alcanzado el botón NO abre el formulario
+            (spec §6): el estado lo dice el servidor, y se pregunta al pulsar para
+            que la cifra no esté rancia. */}
         <button
           type="button"
           className={styles.createButton}
-          disabled
-          title="El formulario de creación de hilo (FL-FORO-01) llega en una próxima versión."
+          disabled={checkingCreate}
+          onClick={() => void handleCreate()}
         >
           Crear hilo
         </button>
       </div>
+
+      {createLimit !== null && (
+        <p className={styles.createLimit} role="status">
+          {`Tu organización ha alcanzado el límite de 10 publicaciones por hora. Podrás crear un nuevo hilo en ${rateLimitMinutesLabel(createLimit.secondsUntilReset)}.`}
+        </p>
+      )}
 
       {loading ? (
         <p className={styles.loading} aria-busy="true">

@@ -806,3 +806,129 @@ begin
   raise notice 'OK · deletion-after-prolonged-suspension#3: el pago cancela la candidatura y reinicia los 6 meses';
 end
 $$;
+
+-- ===========================================================================
+-- community-forum: thread-and-reply-creation#1, own-content-editing#1 y #2 (0078)
+-- ===========================================================================
+do $$
+declare cat uuid := (select id from public.forum_categories where slug = 'general');
+        th uuid; th2 uuid; n int; bloqueado boolean; inicial uuid; resp uuid; resp2 uuid;
+begin
+  perform public.t7_alta(70, 'ES'); perform public.t7_alta(71, 'FR');
+  insert into auth.users (id, email) values (public.t7_mem(72), 'm72@siete.test');
+  insert into public.members (id, org_id, email, role, state) values (public.t7_mem(72), public.t7_org(70), 'm72@siete.test', 'EDITOR', 'PENDING_REVIEW');
+  update public.members set state = 'ACTIVE' where id = public.t7_mem(72);
+
+  -- thread-and-reply-creation#1 · el hilo y su publicación inicial nacen juntos, a nombre de la organización.
+  perform public.t7_como(70);
+  th := public.forum_create_thread(cat, '  Equivalencia 6205-2RS  ', 'Busco la equivalencia entre marcas para el 6205-2RS.');
+  reset role;
+  assert (select count(*) from public.forum_threads where id = th) = 1, 'thread-and-reply-creation#1: el hilo existe';
+  assert (select title from public.forum_threads where id = th) = 'Equivalencia 6205-2RS', 'thread-and-reply-creation#1: el título se guarda sin espacios sobrantes';
+  assert (select count(*) from public.forum_posts where thread_id = th) = 1, 'thread-and-reply-creation#1: nace con su publicación inicial';
+  assert (select author_org_id from public.forum_threads where id = th) = public.t7_org(70)
+     and (select author_org_id from public.forum_posts where thread_id = th) = public.t7_org(70)
+     and (select author_member_id from public.forum_posts where thread_id = th) = public.t7_mem(70),
+    'thread-and-reply-creation#1: la firma la pone la base, a nombre de la organización del miembro';
+  -- Visible para otra organización, con el nombre de la organización y sin la persona.
+  perform public.t7_como(71);
+  select count(*) into n from public.forum_post_detail where thread_id = th and author_org_name = 'Siete 70';
+  reset role;
+  assert n = 1, 'thread-and-reply-creation#1: otra organización lo ve de inmediato, con la organización autora';
+
+  -- Mínimos de FORO-03: título 5 y cuerpo 10. Y sin hilo huérfano si falla.
+  perform public.t7_como(70);
+  begin perform public.forum_create_thread(cat, 'abcd', 'Cuerpo suficientemente largo'); bloqueado := false;
+  exception when others then bloqueado := true; end;
+  assert bloqueado, 'thread-and-reply-creation#1: un título de 4 caracteres se rechaza';
+  begin perform public.forum_create_thread(cat, 'Titulo valido', 'corto'); bloqueado := false;
+  exception when others then bloqueado := true; end;
+  assert bloqueado, 'thread-and-reply-creation#1: un cuerpo de 5 caracteres se rechaza';
+  reset role;
+  assert (select count(*) from public.forum_threads where title = 'Titulo valido') = 0, 'thread-and-reply-creation#1: lo rechazado no deja hilo';
+
+  -- anon no ejecuta la función.
+  assert not has_function_privilege('anon', 'public.forum_create_thread(uuid, text, text)', 'execute'),
+    'thread-and-reply-creation#1: anon no ejecuta forum_create_thread';
+
+  -- own-content-editing#1 · editar la propia (también por un COMPAÑERO de la misma organización) y solo el cuerpo.
+  select id into inicial from public.forum_posts where thread_id = th;
+  -- Todo el bloque DO comparte `now()`: la inicial se fecha antes para que sea la primera sin desempate por id.
+  update public.forum_posts set created_at = now() - interval '1 hour' where id = inicial;
+  perform public.t7_como(72);
+  update public.forum_posts set body = 'Cuerpo corregido por un compañero de la organización.' where id = inicial;
+  get diagnostics n = row_count;
+  reset role;
+  assert n = 1 and (select body from public.forum_posts where id = inicial) = 'Cuerpo corregido por un compañero de la organización.',
+    'own-content-editing#1: cualquier usuario de la organización autora edita, y el cambio queda en la base';
+  -- Otra organización: la política no le deja ninguna fila.
+  perform public.t7_como(71);
+  update public.forum_posts set body = 'Intento ajeno que no debe entrar' where id = inicial;
+  get diagnostics n = row_count;
+  reset role;
+  assert n = 0 and (select body from public.forum_posts where id = inicial) like 'Cuerpo corregido%',
+    'own-content-editing#1: otra organización no edita (0 filas)';
+  -- Solo `body`: ni cambiar de hilo ni de firma ni de fecha.
+  perform public.t7_como(70);
+  begin update public.forum_posts set author_org_id = public.t7_org(71) where id = inicial; bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true; end;
+  assert bloqueado, 'own-content-editing#1: la firma no se puede cambiar (UPDATE por columna)';
+  begin update public.forum_posts set created_at = now() + interval '1 day' where id = inicial; bloqueado := false;
+  exception when insufficient_privilege then bloqueado := true; end;
+  assert bloqueado, 'own-content-editing#1: ni la fecha';
+  begin update public.forum_posts set body = '' where id = inicial; bloqueado := false;
+  exception when check_violation then bloqueado := true; end;
+  assert bloqueado, 'own-content-editing#1: el CHECK del cuerpo sigue valiendo al editar';
+  reset role;
+
+  -- own-content-editing#2 · eliminar.
+  -- Dos respuestas: una de la organización 71 y otra de la 70.
+  perform public.t7_como(71);
+  insert into public.forum_posts (thread_id, body) values (th, 'Respuesta de la otra organización') returning id into resp;
+  reset role;
+  perform public.t7_como(70);
+  insert into public.forum_posts (thread_id, body) values (th, 'Respuesta propia') returning id into resp2;
+  reset role;
+  update public.forum_posts set created_at = now() + interval '2 minutes' where id = resp2;
+  update public.forum_threads set last_post_at = now() + interval '2 minutes' where id = th;
+
+  -- La ajena no se borra (0 filas)…
+  perform public.t7_como(70);
+  delete from public.forum_posts where id = resp;
+  get diagnostics n = row_count;
+  reset role;
+  assert n = 0 and exists (select 1 from public.forum_posts where id = resp), 'own-content-editing#2: otra organización no puede eliminar la publicación ajena';
+  -- …la inicial con respuestas tampoco, ni siquiera la propia…
+  perform public.t7_como(70);
+  begin delete from public.forum_posts where id = inicial; bloqueado := false;
+  exception when others then bloqueado := true; end;
+  reset role;
+  assert bloqueado and exists (select 1 from public.forum_posts where id = inicial),
+    'own-content-editing#2: la inicial de un hilo con respuestas no se elimina';
+  -- …y una respuesta propia sí, irreversible, llevándose sus reacciones y devolviendo la actividad a la última que queda.
+  perform public.t7_como(71);
+  insert into public.forum_reactions (post_id, member_id) values (resp2, public.t7_mem(71));
+  reset role;
+  perform public.t7_como(72);
+  delete from public.forum_posts where id = resp2;
+  get diagnostics n = row_count;
+  reset role;
+  assert n = 1 and not exists (select 1 from public.forum_posts where id = resp2), 'own-content-editing#2: la respuesta propia se elimina';
+  assert not exists (select 1 from public.forum_reactions where post_id = resp2), 'own-content-editing#2: y sus reacciones con ella';
+  assert (select last_post_at from public.forum_threads where id = th) = (select max(created_at) from public.forum_posts where thread_id = th),
+    'own-content-editing#2: la actividad reciente del hilo vuelve a la última publicación que queda';
+  assert (select reply_count from public.forum_thread_list where id = th) = 1, 'own-content-editing#2: la lista cuenta una respuesta, la ajena';
+
+  -- La inicial de un hilo SIN respuestas se elimina y se lleva el hilo.
+  perform public.t7_como(71);
+  th2 := public.forum_create_thread(cat, 'Hilo para borrar entero', 'Cuerpo del hilo que se va a eliminar entero.');
+  delete from public.forum_posts where thread_id = th2;
+  get diagnostics n = row_count;
+  reset role;
+  assert n = 1 and not exists (select 1 from public.forum_threads where id = th2), 'own-content-editing#2: eliminar la inicial de un hilo sin respuestas elimina el hilo';
+  -- Lo ajeno intacto.
+  assert exists (select 1 from public.forum_threads where id = th) and exists (select 1 from public.forum_posts where id = resp),
+    'own-content-editing#2: el otro hilo y la respuesta ajena siguen';
+  raise notice 'OK · thread-and-reply-creation#1, own-content-editing#1 y #2: crear hilo atómico, editar solo el cuerpo de la propia organización, eliminar con sus reglas (0078)';
+end
+$$;

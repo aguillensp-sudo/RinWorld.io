@@ -501,6 +501,67 @@ export async function postReply(threadId: string, body: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Límites del formulario de hilo nuevo (FORO-03, modo creación). Los mismos que valida `forum_create_thread` (0078). */
+export const NEW_THREAD_TITLE_MIN = 5;
+export const NEW_THREAD_TITLE_MAX = 150;
+export const NEW_THREAD_BODY_MIN = 10;
+export const NEW_THREAD_BODY_MAX = 10000;
+
+/** `true` cuando título y cuerpo (sin espacios en los extremos) caben en los límites de un hilo nuevo. */
+export function newThreadValid(title: string, body: string): boolean {
+  const t = title.trim().length;
+  const b = body.trim().length;
+  return (
+    t >= NEW_THREAD_TITLE_MIN &&
+    t <= NEW_THREAD_TITLE_MAX &&
+    b >= NEW_THREAD_BODY_MIN &&
+    b <= NEW_THREAD_BODY_MAX
+  );
+}
+
+/**
+ * Crear un hilo con su publicación inicial (FL-FORO-01). Una sola llamada a la
+ * base (`forum_create_thread`, 0078): título e inicial entran en la misma
+ * transacción, así que si el límite de RNG-FORO-06 corta no queda un hilo
+ * vacío. Devuelve el id del hilo.
+ */
+export async function createThread(categoryId: string, title: string, body: string): Promise<string> {
+  const { data, error } = await supabase.rpc('forum_create_thread', {
+    p_category_id: categoryId,
+    p_title: title,
+    p_body: body,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+/**
+ * Editar el cuerpo de una publicación de la propia organización (own-content-editing#1).
+ * Solo `body`: el UPDATE de la base es por columna. Si la política no deja ninguna fila (la
+ * publicación es de otra organización, o ya no existe) no hay error de la API, así que se
+ * pide la fila de vuelta y se falla en voz alta en vez de pintar un cambio que no se guardó.
+ */
+export async function editPost(postId: string, body: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('forum_posts')
+    .update({ body })
+    .eq('id', postId)
+    .select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error('No se ha podido guardar el cambio: la publicación ya no existe o no es de tu organización.');
+}
+
+/**
+ * Eliminar una publicación de la propia organización (own-content-editing#2). Irreversible; la
+ * confirmación es de la pantalla. La base se niega a eliminar la inicial de un hilo con
+ * respuestas (0078) y elimina el hilo con su única publicación.
+ */
+export async function deletePost(postId: string): Promise<void> {
+  const { data, error } = await supabase.from('forum_posts').delete().eq('id', postId).select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error('No se ha podido eliminar: la publicación ya no existe o no es de tu organización.');
+}
+
 /** Reaccionar a una publicación (spec §3, `👍`). La firma la pone la base (`0030`). */
 export async function reactToPost(postId: string): Promise<void> {
   const { error } = await supabase.from('forum_reactions').insert({ post_id: postId });

@@ -39,6 +39,7 @@ import { invitationTokenFromHash } from './lib/invitation-link';
 import { activateOwnMembership } from './lib/onboarding';
 import { Forum } from './screens/forum/Forum';
 import { ForumCategory } from './screens/forum/ForumCategory';
+import { ForumNewThread } from './screens/forum/ForumNewThread';
 import { ForumThread } from './screens/forum/ForumThread';
 import { Inventory } from './screens/inventory/Inventory';
 import { Visibility } from './screens/inventory/Visibility';
@@ -182,6 +183,12 @@ export function App() {
    * que estaba abierto.
    */
   const [forumThreadId, setForumThreadId] = useState<string | null>(null);
+
+  /**
+   * FORO-03 en modo creación (FL-FORO-01): se abre desde `Crear hilo` de FORO-02, sobre
+   * `forumCategorySlug`. Se limpia con la categoría, con el hilo y al cambiar de ítem de nav.
+   */
+  const [forumCreating, setForumCreating] = useState(false);
 
   /**
    * Lo último que VERA ha escrito como criterios de búsqueda, o `null` si aún no
@@ -547,6 +554,7 @@ export function App() {
     setOpenThreadId(null);
     setForumCategorySlug(null);
     setForumThreadId(null);
+    setForumCreating(false);
     setWatchersOpen(false);
     setBatchOpen(false);
     setFavoritesOpen(false);
@@ -1188,6 +1196,22 @@ export function App() {
               onBackToCategory={() => setForumThreadId(null)}
               now={new Date()}
             />
+          ) : forumCreating ? (
+            /* FORO-03 en modo creación (FL-FORO-01). `Cancelar` y el enlace de
+             * la categoría vuelven a FORO-02; al publicar, abre el hilo nuevo. */
+            <ForumNewThread
+              profile={state.profile}
+              slug={forumCategorySlug}
+              onCancel={() => setForumCreating(false)}
+              onBackToForum={() => {
+                setForumCreating(false);
+                setForumCategorySlug(null);
+              }}
+              onCreated={(threadId) => {
+                setForumCreating(false);
+                setForumThreadId(threadId);
+              }}
+            />
           ) : (
             /* FORO-02. Se abre desde una tarjeta de FORO-01 y vuelve con el
              * enlace "Foros" del breadcrumb. */
@@ -1196,6 +1220,7 @@ export function App() {
               slug={forumCategorySlug}
               onBack={() => setForumCategorySlug(null)}
               onOpenThread={setForumThreadId}
+              onCreateThread={() => setForumCreating(true)}
               now={new Date()}
             />
           )

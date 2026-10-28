@@ -1,0 +1,93 @@
+/* Confirmación de eliminación de FORO-03. Sin un color literal; mismos tokens y
+   mismo aspecto que la de INVT-01 (RemoveMemberDialog).
+   Nota de tokens que faltan: no hay token de blanco puro, el fondo del diálogo y
+   el texto sobre el botón rojo usan `--bw-warm-cream`, el más claro de la paleta. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bw-sidebar-overlay);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  padding: 28px;
+  background: var(--bw-warm-cream);
+  border-radius: 6px;
+  box-shadow: 0 20px 60px var(--bw-sidebar-overlay);
+  font-family: var(--bw-font-body);
+  color: var(--bw-deep-steel);
+}
+
+.title {
+  margin: 0 0 18px;
+  font-family: var(--bw-font-title);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--bw-deep-steel);
+}
+
+.error {
+  margin: 0 0 14px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancel {
+  flex: 1;
+  padding: 10px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cancel:hover:not(:disabled) {
+  background: var(--bw-cold-white);
+}
+
+.cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirm {
+  flex: 1;
+  padding: 10px;
+  background: var(--bw-danger);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-warm-cream);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.confirm:hover:not(:disabled) {
+  background: var(--bw-sensitive-text);
+}
+
+.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clampThreadPage,
+  createThread,
+  deletePost,
+  editPost,
   fetchCategory,
   fetchForumRateLimitStatus,
   fetchThread,
   fetchThreadPosts,
   fetchThreads,
+  newThreadValid,
   postReply,
   rateLimitMinutesLabel,
   rateLimitReached,
@@ -336,6 +340,76 @@ describe('fetchThreadPosts', () => {
   it('un error de la base se lanza', async () => {
     respuestas = [{ data: null, error: { message: 'boom' } }];
     await expect(fetchThreadPosts(HILO)).rejects.toEqual({ message: 'boom' });
+  });
+});
+
+describe('newThreadValid', () => {
+  it('título 5-150 y cuerpo 10-10.000, sin contar los espacios de los extremos', () => {
+    expect(newThreadValid('abcde', '0123456789')).toBe(true);
+    expect(newThreadValid('abcd', '0123456789')).toBe(false);
+    expect(newThreadValid('abcde', '012345678')).toBe(false);
+    expect(newThreadValid('  abcd  ', '0123456789')).toBe(false);
+    expect(newThreadValid('a'.repeat(150), 'x'.repeat(10000))).toBe(true);
+    expect(newThreadValid('a'.repeat(151), 'x'.repeat(10))).toBe(false);
+    expect(newThreadValid('abcde', 'x'.repeat(10001))).toBe(false);
+  });
+});
+
+describe('createThread', () => {
+  it('es UNA llamada a forum_create_thread -- el hilo y su inicial entran juntos -- y devuelve el id', async () => {
+    respuestaRpc = { data: 'hilo-nuevo', error: null };
+    const id = await createThread('cat-1', 'Un título', 'Un cuerpo largo');
+    expect(id).toBe('hilo-nuevo');
+    expect(seLlamo('rpc', 'forum_create_thread', { p_category_id: 'cat-1', p_title: 'Un título', p_body: 'Un cuerpo largo' })).toBe(true);
+    expect(seLlamo('from')).toBe(false); // ni forum_threads ni forum_posts por separado
+  });
+
+  it('un error de la base se lanza, no se traga', async () => {
+    respuestaRpc = { data: null, error: { message: 'RNG-FORO-06' } };
+    await expect(createThread('cat-1', 'Un título', 'Un cuerpo largo')).rejects.toEqual({ message: 'RNG-FORO-06' });
+  });
+});
+
+describe('editPost', () => {
+  it('actualiza SOLO body, filtra por id y pide la fila de vuelta', async () => {
+    respuestas = [{ data: [{ id: 'p1' }], error: null }];
+    await editPost('p1', 'Nuevo texto');
+    expect(seLlamo('from', 'forum_posts')).toBe(true);
+    expect(seLlamo('update', { body: 'Nuevo texto' })).toBe(true);
+    expect(seLlamo('eq', 'id', 'p1')).toBe(true);
+    expect(seLlamo('select', 'id')).toBe(true);
+  });
+
+  it('si la política no deja ninguna fila (otra organización), falla en voz alta en vez de fingir', async () => {
+    respuestas = [{ data: [], error: null }];
+    await expect(editPost('p1', 'x')).rejects.toThrow(/no es de tu organización/);
+  });
+
+  it('un error de la base se lanza', async () => {
+    respuestas = [{ data: null, error: { message: 'boom' } }];
+    await expect(editPost('p1', 'x')).rejects.toEqual({ message: 'boom' });
+  });
+});
+
+describe('deletePost', () => {
+  it('borra por id y pide la fila de vuelta', async () => {
+    respuestas = [{ data: [{ id: 'p1' }], error: null }];
+    await deletePost('p1');
+    expect(seLlamo('from', 'forum_posts')).toBe(true);
+    expect(seLlamo('delete')).toBe(true);
+    expect(seLlamo('eq', 'id', 'p1')).toBe(true);
+  });
+
+  it('si no borró ninguna fila (ajena o ya no existe), falla en voz alta', async () => {
+    respuestas = [{ data: [], error: null }];
+    await expect(deletePost('p1')).rejects.toThrow(/no es de tu organización/);
+  });
+
+  it('el rechazo de la base a eliminar la inicial de un hilo con respuestas se lanza tal cual', async () => {
+    respuestas = [{ data: null, error: { message: 'La publicacion inicial de un hilo con respuestas no se puede eliminar.' } }];
+    await expect(deletePost('p1')).rejects.toEqual({
+      message: 'La publicacion inicial de un hilo con respuestas no se puede eliminar.',
+    });
   });
 });
 

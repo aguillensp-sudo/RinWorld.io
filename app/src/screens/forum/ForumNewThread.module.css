@@ -1,0 +1,234 @@
+/* FORO-03 · modo creación de hilo (FL-FORO-01).
+   Todos los colores salen de los tokens de app/src/styles/tokens.css: en este
+   fichero no hay ningún literal. La cabecera, el aviso y los estados son los de
+   ForumThread.module.css; el formulario, el de su campo de respuesta. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Scroll propio (F-088, F-093, F-186): `.bwcnt` es `overflow: hidden`. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--bw-screen-pad);
+  background: var(--bw-cold-white);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-eyebrow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-eyebrow);
+  color: var(--bw-steel-mist);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-label);
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.breadcrumbLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.breadcrumbLink:hover {
+  color: var(--bw-brass);
+}
+
+.breadcrumbSeparator {
+  color: var(--bw-input-placeholder);
+}
+
+.title {
+  margin: 0 0 14px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-title);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: var(--bw-ls-title);
+  color: var(--bw-deep-steel);
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: var(--bw-radius);
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 16px;
+  color: var(--bw-brass);
+}
+
+.noticeText {
+  flex: 1;
+  margin: 0;
+  font-size: var(--bw-size-label);
+  line-height: 1.55;
+  color: var(--bw-steel-mist);
+}
+
+.noticeText strong {
+  color: var(--bw-brass);
+}
+
+.loading,
+.empty {
+  margin: 0;
+  padding: 18px 0;
+  font-size: var(--bw-size-input);
+  color: var(--bw-steel-mist);
+}
+
+.error {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--bw-sensitive-bg);
+  border: 1px solid var(--bw-badge-danger-border);
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-input);
+  color: var(--bw-error-text);
+}
+
+/* ── Formulario ──────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+}
+
+.label {
+  margin: 0 0 6px;
+  font-family: var(--bw-font-title);
+  font-size: var(--bw-size-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--bw-ls-divider);
+  color: var(--bw-steel-mist);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--bw-pad-input);
+  background: none;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  line-height: 1.6;
+  color: var(--bw-input-text);
+}
+
+.textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.hint {
+  margin: 6px 0 16px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-steel-mist);
+}
+
+/* RNG-FORO-06: un aviso, no un error del usuario: ámbar y no rojo. */
+.limit {
+  margin: 0 0 10px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-warning-dark);
+}
+
+.submitError {
+  margin: 0 0 10px;
+  font-size: var(--bw-size-label);
+  color: var(--bw-error-text);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.submit {
+  height: 34px;
+  padding: 0 18px;
+  background: var(--bw-calibration-blue);
+  border: none;
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-cold-white);
+  cursor: pointer;
+}
+
+.submit:not(:disabled):hover {
+  background: var(--bw-primary-dark);
+}
+
+.submit:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+/* `Cancelar` es texto plano (spec §6). */
+.cancel {
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  font-weight: 500;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+}
+
+.cancel:not(:disabled):hover {
+  color: var(--bw-brass);
+}
+
+.cancel:disabled {
+  cursor: not-allowed;
+}

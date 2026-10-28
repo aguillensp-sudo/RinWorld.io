@@ -3029,11 +3029,20 @@ begin
    where grantee in ('authenticated','anon')
      and table_schema = 'public'
      and table_name in ('forum_categories','forum_threads','forum_posts','forum_category_stats')
-     and (grantee = 'anon' or privilege_type in ('UPDATE','DELETE','TRUNCATE'));
+     and (grantee = 'anon' or privilege_type in ('UPDATE','DELETE','TRUNCATE'))
+     -- 0078: la publicacion propia se elimina (DELETE) y se edita (UPDATE solo de `body`, por columna: no sale
+     -- aqui). Hilos y categorias siguen sin UPDATE ni DELETE para nadie.
+     and not (grantee = 'authenticated' and table_name = 'forum_posts' and privilege_type = 'DELETE');
 
   assert sobran is null,
     '0029: privilegios que no deberia haber en el foro: ' || coalesce(sobran, '');
-  raise notice 'OK · 0029: nadie edita ni borra en el foro, y anon no tiene nada';
+  assert not has_table_privilege('authenticated', 'public.forum_posts', 'UPDATE'),
+    '0078: el UPDATE de forum_posts es por columna, nunca de tabla entera';
+  assert has_column_privilege('authenticated', 'public.forum_posts', 'body', 'UPDATE')
+     and not has_column_privilege('authenticated', 'public.forum_posts', 'author_org_id', 'UPDATE')
+     and not has_column_privilege('authenticated', 'public.forum_posts', 'created_at', 'UPDATE'),
+    '0078: solo `body` se puede actualizar';
+  raise notice 'OK · 0029/0078: nadie borra ni edita en el foro salvo la publicacion propia (solo su cuerpo), y anon no tiene nada';
 end
 $$;
 
@@ -4071,6 +4080,16 @@ drop function public.f146_canaria();
 --     recorte del caso 1.3, que por contrato se hace sobre lo visible. No escriben nada. El WHERE
 --     repite además los predicados de `inventory_select_cross_org` (0064), y
 --     `11_busqueda_dos_fases.sql` lo prueba como miembro, no como superusuario.
+--   · `forum_create_thread` (0078, FL-FORO-01) — solo ESCRIBE `forum_threads` y `forum_posts`; no
+--     lee ninguna fila para decidir nada. Es invoker a propósito para que la RLS, la firma de
+--     `guard_forum_author` y el límite de `guard_forum_rate_limit` se apliquen a quien llama; lo
+--     único que valida es el largo de dos textos que recibe. Auditada a mano el 28-oct-2026.
+--   · `guard_forum_post_delete` (0078) — SÍ lee `forum_posts` para decidir si bloquea (la inicial
+--     de un hilo con respuestas no se elimina). Entra por la misma razón que `guard_forum_rate_limit`:
+--     `forum_posts_select_member` no restringe por organización, así que quien borra ve el hilo
+--     entero y no hay conjunto oculto que un invoker pueda ver de menos. Es invoker por el mismo
+--     motivo que aquel: en una función definer `current_user` sería el dueño y el bypass de
+--     `service_role` se activaría siempre. Auditada a mano el 28-oct-2026.
 create or replace function app.f155_detector() returns text
   language sql security definer set search_path to 'pg_catalog','public' as $detector$
   select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname)
@@ -4092,7 +4111,9 @@ create or replace function app.f155_detector() returns text
            'app.guard_forum_rate_limit',
            'app.search_where',
            'public.search_part_keys',
-           'public.search_offers')
+           'public.search_offers',
+           'public.forum_create_thread',
+           'app.guard_forum_post_delete')
      and exists (
            select 1
              from pg_class c

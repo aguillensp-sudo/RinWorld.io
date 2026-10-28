@@ -562,6 +562,7 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     mismo('Foros', hiloForo),
     mismo('Escribe tu respuesta...', hiloForo),
     mismo('Publicar respuesta', hiloForo),
+    mismo('Guardar cambios', hiloForo),
     ['10 veces por hora', '10 publicaciones por hora', hiloForo],
     // Panel
     mismo('Mi Panel', panel),
@@ -634,22 +635,25 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     expect(ficha).toMatch(/onClick=\{onBack\}/);
   });
 
-  it('Foro: «Actividad reciente» no abre nada, la categoría sí, y «Crear hilo» está apagado', () => {
+  it('Foro: «Actividad reciente» no abre nada, la categoría sí, y «Crear hilo» abre el formulario', () => {
     expect(foro).toMatch(/className=\{styles\.recentItem\}[\s\S]{0,200}\bdisabled\b/);
     expect(foro).toMatch(/threads\.length > 0 && \(/);
     expect(foro).toMatch(/onClick=\{onOpenCategory \? \(\) => onOpenCategory\(category\.slug\) : undefined\}/);
     expect(foro).toContain('lastActivityAt !== null');
-    expect(categoria).toMatch(/className=\{styles\.createButton\}\s*disabled/);
+    // 28-oct-2026 (0078): «Crear hilo» ya no está apagado por su cuenta; solo mientras comprueba el límite.
+    expect(categoria).toMatch(/className=\{styles\.createButton\}\s*disabled=\{checkingCreate\}\s*onClick=\{\(\) => void handleCreate\(\)\}/);
     expect(categoria).toMatch(/onClick=\{\(\) => onOpenThread\(row\.id\)\}/);
     expect(categoria).toContain('pageCount > 1 &&');
     expect(categoria).toMatch(/onSubmit=\{runSearch\}/);
   });
 
-  it('Foro: el hilo alterna la reacción, Editar y Eliminar siempre apagados, y el límite apaga «Publicar respuesta»', () => {
+  it('Foro: el hilo alterna la reacción, Editar y Eliminar son de la propia organización, y el límite apaga «Publicar respuesta»', () => {
     expect(hiloForo).toMatch(/if \(post\.reactedByMe\) \{\s*await unreactToPost\(post\.id\);\s*\} else \{\s*await reactToPost\(post\.id\);/);
-    expect(hiloForo).toMatch(/post\.authorOrgId === profile\.orgId && \(/);
-    expect(hiloForo).toMatch(/disabled\s*title="Editar todavía no está disponible/);
-    expect(hiloForo).toMatch(/disabled\s*title="Eliminar todavía no está disponible/);
+    expect(hiloForo).toMatch(/post\.authorOrgId === profile\.orgId && editingId !== post\.id && \(/);
+    // 28-oct-2026 (0078): Editar y Eliminar funcionan; Eliminar se apaga solo en la inicial de un hilo con respuestas.
+    expect(hiloForo).toContain('onClick={() => startEdit(post)}');
+    expect(hiloForo).toContain('disabled={index === 0 && posts.length > 1}');
+    expect(hiloForo).toContain('Guardar cambios');
     expect(hiloForo).toContain("disabled={draft.trim() === '' || rateLimitReached(rateStatus) || submitting}");
     expect(libForo).toContain('`👍 ${n}`');
   });

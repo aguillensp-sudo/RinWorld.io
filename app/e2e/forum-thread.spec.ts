@@ -20,14 +20,12 @@ import { ALPHA_STORAGE, haveCreds, topNav } from './fixtures';
  *                 reaccionar, precisamente por eso)
  *   3           · Nordwälz Lager · DE · 👍 0
  *
- * ⚠ **PUBLICAR UNA RESPUESTA NO SE PRUEBA AQUÍ, y es a propósito, mismo
- * criterio que `ADMIN-01` (F-169).** `forum_posts` no tiene ningún `DELETE` ni
- * `UPDATE` (`0029`) y `resetDemo` no toca el foro: una respuesta real
- * publicada por esta suite se quedaría para siempre, y además consumiría el
- * cupo de `RNG-FORO-06` de la organización de `ALPHA`, hasta dejar sin
- * publicaciones disponibles a una corrida futura dentro de la misma hora. El
- * camino de escritura de "Publicar respuesta" está cubierto con mocks en
- * `ForumThread.test.tsx`.
+ * ⚠ **AQUÍ NO SE ESCRIBE NADA SOBRE ESTE HILO SEMBRADO**, mismo criterio que
+ * `ADMIN-01` (F-169): `resetDemo` no toca el foro, así que una respuesta o una
+ * edición sobre el hilo `c003` se quedaría para siempre y desordenaría las
+ * cifras de las otras suites. Publicar, editar y eliminar se prueban de verdad
+ * (desde 0078 se pueden deshacer) sobre un hilo propio y efímero en
+ * `forum-write.spec.ts`.
  *
  * **Reaccionar SÍ se prueba, porque es autolimpiable**: el test reacciona y
  * quita la reacción en la misma corrida, dejando el recuento exactamente como
@@ -82,14 +80,17 @@ test.describe('FORO-03 · vista de un hilo real', () => {
     await expect(page.getByText('3 respuestas')).toBeVisible();
   });
 
-  test('Editar/Eliminar solo aparecen, apagados, en las publicaciones de la propia organización', async ({ page }) => {
+  // Solo se MIRA que aparezcan (no se pulsan: editar o eliminar aquí tocaría la siembra). Editar y eliminar
+  // de verdad se prueban sobre un hilo propio y efímero en `forum-write.spec.ts`.
+  test('Editar/Eliminar solo aparecen en las publicaciones de la propia organización', async ({ page }) => {
     const filas = page.locator(`[data-testid^="${P1}"]`);
     const propia = filas.nth(1); // Rodamientos Ibéricos == ALPHA
-    await expect(propia.getByRole('button', { name: 'Editar' })).toBeDisabled();
-    await expect(propia.getByRole('button', { name: 'Eliminar' })).toBeDisabled();
+    await expect(propia.getByRole('button', { name: 'Editar' })).toBeEnabled();
+    await expect(propia.getByRole('button', { name: 'Eliminar' })).toBeEnabled();
 
     const ajena = filas.nth(0); // Nordwälz Lager
     await expect(ajena.getByRole('button', { name: 'Editar' })).toHaveCount(0);
+    await expect(ajena.getByRole('button', { name: 'Eliminar' })).toHaveCount(0);
   });
 
   test('reaccionar y quitar la reacción se refleja de inmediato y no deja residuo', async ({ page }) => {

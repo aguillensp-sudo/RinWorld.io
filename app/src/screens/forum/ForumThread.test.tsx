@@ -24,9 +24,13 @@ const postReply = vi.fn<(id: string, body: string) => Promise<void>>();
 const reactToPost = vi.fn<(id: string) => Promise<void>>();
 const unreactToPost = vi.fn<(id: string) => Promise<void>>();
 const fetchForumRateLimitStatus = vi.fn<() => Promise<ForumRateLimitStatus>>();
+const editPost = vi.fn<(id: string, body: string) => Promise<void>>();
+const deletePost = vi.fn<(id: string) => Promise<void>>();
 
 vi.mock('../../lib/forum', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/forum')>()),
+  editPost: (id: string, body: string) => editPost(id, body),
+  deletePost: (id: string) => deletePost(id),
   fetchThread: (id: string) => fetchThread(id),
   fetchThreadPosts: (id: string) => fetchThreadPosts(id),
   postReply: (id: string, body: string) => postReply(id, body),
@@ -130,7 +134,11 @@ beforeEach(() => {
   reactToPost.mockReset();
   unreactToPost.mockReset();
   fetchForumRateLimitStatus.mockReset();
+  editPost.mockReset();
+  deletePost.mockReset();
 
+  editPost.mockResolvedValue(undefined);
+  deletePost.mockResolvedValue(undefined);
   fetchThread.mockResolvedValue(CABECERA);
   fetchThreadPosts.mockResolvedValue(TRES_PUBLICACIONES);
   fetchForumRateLimitStatus.mockResolvedValue(RATE_LIMIT_OK);
@@ -234,16 +242,133 @@ describe('FORO-03 · las publicaciones', () => {
     expect(screen.getByText('2 respuestas')).toBeInTheDocument();
   });
 
-  it('Editar/Eliminar SOLO en las publicaciones de la propia organización, y apagados', async () => {
+  it('Editar/Eliminar SOLO en las publicaciones de la propia organización', async () => {
     montar();
     await listo();
     const propia = screen.getByTestId('forum-post-p2'); // ORG_A === profile.orgId
-    expect(within(propia).getByRole('button', { name: 'Editar' })).toBeDisabled();
-    expect(within(propia).getByRole('button', { name: 'Eliminar' })).toBeDisabled();
+    expect(within(propia).getByRole('button', { name: 'Editar' })).toBeEnabled();
+    expect(within(propia).getByRole('button', { name: 'Eliminar' })).toBeEnabled();
 
     const ajena = screen.getByTestId('forum-post-p1'); // ORG_B
     expect(within(ajena).queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
     expect(within(ajena).queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument();
+  });
+});
+
+describe('FORO-03 · editar la publicación propia (own-content-editing#1)', () => {
+  it('Editar abre un textarea en línea con el texto actual; Guardar cambios llama a editPost con el id y el texto nuevo, y vuelve a pedir la lista', async () => {
+    montar();
+    await listo();
+    const propia = screen.getByTestId('forum-post-p2');
+    fireEvent.click(within(propia).getByRole('button', { name: 'Editar' }));
+
+    const area = within(propia).getByRole('textbox', { name: 'Editar publicación' });
+    expect(area).toHaveValue('Montado en dos bombas el año pasado. Sin incidencias.');
+    fireEvent.change(area, { target: { value: '  Montado en tres bombas. Sin incidencias.  ' } });
+
+    const antes = fetchThreadPosts.mock.calls.length;
+    fireEvent.click(within(propia).getByRole('button', { name: 'Guardar cambios' }));
+    await waitFor(() => expect(editPost).toHaveBeenCalledWith('p2', 'Montado en tres bombas. Sin incidencias.'));
+    await waitFor(() => expect(fetchThreadPosts.mock.calls.length).toBe(antes + 1));
+    expect(within(propia).queryByRole('textbox', { name: 'Editar publicación' })).not.toBeInTheDocument();
+  });
+
+  it('Cancelar cierra la edición sin guardar nada', async () => {
+    montar();
+    await listo();
+    const propia = screen.getByTestId('forum-post-p2');
+    fireEvent.click(within(propia).getByRole('button', { name: 'Editar' }));
+    fireEvent.change(within(propia).getByRole('textbox', { name: 'Editar publicación' }), { target: { value: 'otra cosa' } });
+    fireEvent.click(within(propia).getByRole('button', { name: 'Cancelar' }));
+    expect(editPost).not.toHaveBeenCalled();
+    expect(within(propia).getByText('Montado en dos bombas el año pasado. Sin incidencias.')).toBeInTheDocument();
+  });
+
+  it('con el texto vacío, Guardar cambios está apagado', async () => {
+    montar();
+    await listo();
+    const propia = screen.getByTestId('forum-post-p2');
+    fireEvent.click(within(propia).getByRole('button', { name: 'Editar' }));
+    fireEvent.change(within(propia).getByRole('textbox', { name: 'Editar publicación' }), { target: { value: '   ' } });
+    expect(within(propia).getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
+  });
+
+  it('si falla, el error se dice y el borrador se queda abierto', async () => {
+    editPost.mockRejectedValue(new Error('No se ha podido guardar el cambio'));
+    montar();
+    await listo();
+    const propia = screen.getByTestId('forum-post-p2');
+    fireEvent.click(within(propia).getByRole('button', { name: 'Editar' }));
+    fireEvent.change(within(propia).getByRole('textbox', { name: 'Editar publicación' }), { target: { value: 'Texto nuevo' } });
+    fireEvent.click(within(propia).getByRole('button', { name: 'Guardar cambios' }));
+    expect(await within(propia).findByRole('alert')).toHaveTextContent('No se ha podido guardar el cambio');
+    expect(within(propia).getByRole('textbox', { name: 'Editar publicación' })).toHaveValue('Texto nuevo');
+  });
+});
+
+describe('FORO-03 · eliminar la publicación propia (own-content-editing#2)', () => {
+  it('Eliminar pregunta antes y no llama a deletePost hasta confirmar', async () => {
+    montar();
+    await listo();
+    const propia = screen.getByTestId('forum-post-p2');
+    fireEvent.click(within(propia).getByRole('button', { name: 'Eliminar' }));
+
+    const dialogo = screen.getByRole('dialog');
+    expect(within(dialogo).getByText('¿Eliminar esta publicación? Esta acción es irreversible.')).toBeInTheDocument();
+    expect(deletePost).not.toHaveBeenCalled();
+
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(deletePost).not.toHaveBeenCalled();
+  });
+
+  it('confirmar llama a deletePost con el id de ESA publicación y vuelve a pedir la lista', async () => {
+    montar();
+    await listo();
+    fireEvent.click(within(screen.getByTestId('forum-post-p2')).getByRole('button', { name: 'Eliminar' }));
+    const antes = fetchThreadPosts.mock.calls.length;
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Eliminar' }));
+
+    await waitFor(() => expect(deletePost).toHaveBeenCalledWith('p2'));
+    await waitFor(() => expect(fetchThreadPosts.mock.calls.length).toBe(antes + 1));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('si falla, el diálogo se queda abierto con el motivo', async () => {
+    deletePost.mockRejectedValue(new Error('No se ha podido eliminar'));
+    montar();
+    await listo();
+    fireEvent.click(within(screen.getByTestId('forum-post-p2')).getByRole('button', { name: 'Eliminar' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Eliminar' }));
+    expect(await within(screen.getByRole('dialog')).findByRole('alert')).toHaveTextContent('No se ha podido eliminar');
+  });
+
+  it('la inicial propia de un hilo con respuestas se puede editar pero no eliminar, y dice por qué', async () => {
+    fetchThreadPosts.mockResolvedValue([
+      publicacion({ id: 'p1', authorOrgId: ORG_A, authorOrgName: 'Rodamientos Ibéricos', authorOrgCountry: 'ES' }),
+      publicacion({ id: 'p2', authorOrgId: ORG_B }),
+    ]);
+    montar();
+    await listo();
+    const inicial = screen.getByTestId('forum-post-p1');
+    expect(within(inicial).getByRole('button', { name: 'Editar' })).toBeEnabled();
+    const eliminar = within(inicial).getByRole('button', { name: 'Eliminar' });
+    expect(eliminar).toBeDisabled();
+    expect(eliminar).toHaveAttribute('title', 'La publicación inicial no se puede eliminar mientras el hilo tenga respuestas.');
+  });
+
+  it('la inicial propia de un hilo SIN respuestas sí se elimina, y al confirmar vuelve a la categoría', async () => {
+    fetchThreadPosts.mockResolvedValue([
+      publicacion({ id: 'p1', authorOrgId: ORG_A, authorOrgName: 'Rodamientos Ibéricos', authorOrgCountry: 'ES' }),
+    ]);
+    const { onBackToCategory } = montar();
+    await listo();
+    const eliminar = within(screen.getByTestId('forum-post-p1')).getByRole('button', { name: 'Eliminar' });
+    expect(eliminar).toBeEnabled();
+    fireEvent.click(eliminar);
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Eliminar' }));
+    await waitFor(() => expect(deletePost).toHaveBeenCalledWith('p1'));
+    await waitFor(() => expect(onBackToCategory).toHaveBeenCalledTimes(1));
   });
 });
 

@@ -299,16 +299,42 @@ export async function protectPrivateKey(
 // Paso 3 · subir
 // -----------------------------------------------------------------------------
 
-export async function uploadKeyBackup(payload: KeyBackupPayload): Promise<void> {
-  const { error } = await supabase.rpc('store_key_backup', {
-    p_public_key: toBytea(payload.publicKey),
-    p_encrypted_key_blob: toBytea(payload.encryptedKeyBlob),
-    p_key_iv: toBytea(payload.keyIv),
-    p_argon2_salt: toBytea(payload.argon2Salt),
-    p_kdf_params: payload.kdfParams,
-    p_key_verifier: toBytea(payload.keyVerifier),
-  });
-  if (error) throw new Error('No se pudo guardar el backup de la clave.');
+/** Esperas entre los tres reintentos automáticos del paso 3 (spec `backup-upload-retry`). */
+export const UPLOAD_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
+
+const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Un fallo transitorio es el de la red (supabase-js lo devuelve sin código de Postgres) o un 5xx. Un rechazo
+ * del servidor (la cuenta ya no está pendiente, permisos) lleva código y reintentarlo no lo arregla.
+ */
+function isTransientUploadError(error: { code?: string | null }, status?: number): boolean {
+  if (typeof status === 'number' && status >= 500) return true;
+  return !error.code;
+}
+
+/**
+ * Sube el backup. Ante un fallo transitorio reintenta solo, tres veces, tras 1 s, 2 s y 4 s, con la MISMA
+ * carga ya sellada: la frase se consumió en el paso 2 y no hace falta para reintentar. Agotados, lanza el
+ * error y la pantalla ofrece «Reintentar» a mano.
+ */
+export async function uploadKeyBackup(payload: KeyBackupPayload, sleep: (ms: number) => Promise<void> = realSleep): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    const { error, status } = await supabase.rpc('store_key_backup', {
+      p_public_key: toBytea(payload.publicKey),
+      p_encrypted_key_blob: toBytea(payload.encryptedKeyBlob),
+      p_key_iv: toBytea(payload.keyIv),
+      p_argon2_salt: toBytea(payload.argon2Salt),
+      p_kdf_params: payload.kdfParams,
+      p_key_verifier: toBytea(payload.keyVerifier),
+    });
+    if (!error) return;
+    const delay = UPLOAD_RETRY_DELAYS_MS[attempt];
+    if (delay === undefined || !isTransientUploadError(error, status)) {
+      throw new Error('No se pudo guardar el backup de la clave.');
+    }
+    await sleep(delay);
+  }
 }
 
 // -----------------------------------------------------------------------------

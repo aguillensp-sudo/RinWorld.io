@@ -35,6 +35,8 @@ const fast: Argon2Runner = (r) => runArgon2({ ...r, m: 1024, t: 1, p: 1 });
 
 const rpcCalls: { fn: string; args: Record<string, unknown> }[] = [];
 let rpcError: unknown = null;
+/** Errores a devolver, uno por llamada, antes de caer en `rpcError`. */
+const rpcErrorQueue: unknown[] = [];
 let storedRow: Record<string, unknown> | null = null;
 
 vi.mock('./supabase', () => ({
@@ -45,7 +47,7 @@ vi.mock('./supabase', () => ({
       if (fn === 'read_pending_key_backup') {
         return Promise.resolve({ data: storedRow ? [storedRow] : [], error: null });
       }
-      return Promise.resolve({ data: null, error: rpcError });
+      return Promise.resolve({ data: null, error: rpcErrorQueue.length ? rpcErrorQueue.shift() : rpcError });
     },
   },
 }));
@@ -53,6 +55,7 @@ vi.mock('./supabase', () => ({
 beforeEach(() => {
   rpcCalls.length = 0;
   rpcError = null;
+  rpcErrorQueue.length = 0;
   storedRow = null;
 });
 
@@ -218,8 +221,32 @@ describe('paso 3 · a la red van los cinco campos y el verificador, y nada más'
 
   it('un rechazo del servidor lanza un error genérico', async () => {
     const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, await createKeyPair(), fast);
-    rpcError = { message: 'Tu cuenta no está pendiente de generar claves.' };
+    rpcError = { message: 'Tu cuenta no está pendiente de generar claves.', code: 'P0001' };
     await expect(uploadKeyBackup(payload)).rejects.toThrow('No se pudo guardar el backup de la clave.');
+    // un rechazo del servidor no se reintenta
+    expect(rpcCalls.filter((c) => c.fn === 'store_key_backup')).toHaveLength(1);
+  });
+
+  it('fallo de red transitorio: reintenta solo tras 1 s, 2 s y 4 s y sube con el mismo payload', async () => {
+    const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, await createKeyPair(), fast);
+    rpcErrorQueue.push({ message: 'TypeError: Failed to fetch', code: '' }, { message: 'TypeError: Failed to fetch', code: '' });
+    const waits: number[] = [];
+    await uploadKeyBackup(payload, async (ms) => void waits.push(ms));
+    const calls = rpcCalls.filter((c) => c.fn === 'store_key_backup');
+    expect(calls).toHaveLength(3);
+    expect(waits).toEqual([1000, 2000]);
+    expect(calls[2]?.args).toEqual(calls[0]?.args);
+  });
+
+  it('fallo persistente: tres reintentos esperando 1 s, 2 s y 4 s y entonces lanza el error', async () => {
+    const { payload } = await protectPrivateKey(PASSPHRASE, MEMBER, await createKeyPair(), fast);
+    rpcError = { message: 'TypeError: Failed to fetch', code: '' };
+    const waits: number[] = [];
+    await expect(uploadKeyBackup(payload, async (ms) => void waits.push(ms))).rejects.toThrow(
+      'No se pudo guardar el backup de la clave.',
+    );
+    expect(rpcCalls.filter((c) => c.fn === 'store_key_backup')).toHaveLength(4);
+    expect(waits).toEqual([1000, 2000, 4000]);
   });
 });
 

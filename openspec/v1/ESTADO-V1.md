@@ -40,13 +40,7 @@ Empieza por §6 y luego §3.
 
 0. **JULSA es el primer miembro `ACTIVE` con ADR-001 completo.** Su privada vive SOLO en el navegador del PO: no borrar sus datos del sitio y **no pulsar «Generar nuevas claves» con esa cuenta**. Cada «Desbloquear» de `REC-01` y cada cambio de `SET-SEC-01` **cuenta una petición** (5 por 30 min, `0052`).
 1. **Antes de CADA corrida contra `bearingworld-e2e`** (Playwright o arnés): `gh run list --branch mvp/bootstrap --status in_progress`, en ese momento y no una vez por sesión, y avisar a las demás sesiones vivas. **Tu propio push lanza el e2e de la CI** (~10 min): o esperas a que acabe o no tocas la instancia (`F-262`). Si `watchers.spec.ts` cae por «falta el estado …», mira primero si corrió `fixture.setup.ts` (`F-270`).
-2. **Del PO:**
-   - **`F-278` (e2e de la CI, plan Free):** un push de solo docs ya no corre e2e ni despliega (`c0407d0`). Queda **(c)**, Pro ≈ 35 $/mes, solo si un run con código vuelve a caer por una parada de la instancia.
-   - **`F-269` §2** queda para después del arranque.
-   - **Equivalencias de sufijos entre fabricantes (`F-281`; `F-254` cerrado el 27-oct):** el PO trae definiciones y avisa. **No se toca `part_key` ni `search.ts` para eso hasta entonces.**
-   - **Suspensión:** residual en `F-275`: `vera_abrir_turno` no mira la suspensión.
-   - **Semilla de demo:** quitar `VITE_DEMO_KEY_SEED` de Vercel de producción cuando se acerquen datos reales o terceros (`F-067`).
-   - **Favoritos (`F-280`):** la base no impide marcar la propia organización; lo impide la interfaz. Si prefieres «Mis favoritos» en otro sitio que no sea el botón de Comprando, es mover el botón.
+2. **Sin decisiones pendientes del PO.** Lo que se vigila aquí (disparadores de `F-067`, `F-269` §2, `F-278`, `F-275` residual) lo controlan los agentes y no se le presenta al PO hasta que proceda.
 3. **VERA, D8: CERRADO por el PO (24-oct). No abrir el tema ni proponer cambios al prompt por esa ambigüedad:** él la prueba a mano. Toda llamada real, con su visto bueno (`VERA_REAL=1`, `VERA_REAL_CASOS`, `VERA_REAL_REPETIR`, `VERA_REAL_OUT` fuera del repo, `VERA_REAL_TOPE_USD`).
 4. **Frontend:** el PO prepara cambios por su cuenta. **El plan móvil NO se propone hasta que él lo pida** (`BACKLOG-V1.md`). INV-04 se queda con la versión a mano (`F-261`).
 5. **~12-nov:** comprobar que `inbox/` de S3 ya no conserva los primeros correos (borrado a 30 días).
@@ -79,11 +73,7 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 
 | | Qué | Quién lo quita |
 |---|---|---|
-| 🟡 | **`F-067`** · la semilla de demo va en el JS de producción | PO (disparador en `BACKLOG-V1.md`) |
-| 🟡 | **`F-281`** · los sufijos de fabricante (2RS/DDU/LLU, 2Z/ZZ) no se reconocen como equivalentes; la lista previa deja elegir entre variantes | PO (definiciones) |
-| 🟡 | **`F-278`** · paradas de la instancia Free de e2e (hasta 56 s); mitigado para los pushes de solo docs, no para los de código | PO (§3.2, opción c) si vuelve a caer un run con código |
-| 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Mirar ~12-nov |
-| 🟡 | **`F-280`** · la propia organización solo se bloquea en la interfaz, no en la base | PO |
+| 🟡 | **Borrado a 30 días de S3** sin ver ejecutarse | Agentes, ~12-nov (§3.5) |
 
 ## 6 · Lo que este fichero NO sabe
 

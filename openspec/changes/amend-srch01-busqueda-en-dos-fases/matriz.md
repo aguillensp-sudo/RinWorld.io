@@ -26,7 +26,7 @@ Rutas: `ps` = `app/src/screens/search/PartSearch.test.tsx` · `lib` = `app/src/l
 | reference-normalization | grafías distintas de la misma referencia | CUBIERTO | sql10 + lib «lee la tabla de casos del test SQL» (paridad); e2e «funde 32011-X con 32011X» |
 | reference-normalization | barra de diámetro | CUBIERTO | sql10 (`630/82RS` frente a `63082RS`), misma paridad en lib |
 | reference-normalization | decimal entre dígitos | CUBIERTO | sql10 (`FRM12.5/140`), misma paridad en lib |
-| reference-normalization | clave con sufijo distinto | CUBIERTO | sql10; ps «pinta las claves en el orden de la RPC». **No dice que 2RS y DDU sean equivalentes: eso es `F-281`** |
+| reference-normalization | clave con sufijo distinto | CUBIERTO | sql10; ps «pinta las claves en el orden de la RPC». **No dice que 2RS y DDU sean equivalentes: `F-281`, desestimado el 29-oct (sin tabla de equivalencias)** |
 | preliminary-list | orden y lectura | CUBIERTO | ps «pinta las claves en el orden de la RPC»; sql11 (orden) |
 | preliminary-list | paginación de la lista previa | PARCIAL | ps «pagina la lista previa» (unidad). **Sin e2e: la siembra no llega a 60 claves** |
 | preliminary-list | seleccionar las de esta página | CUBIERTO | ps «Seleccionar las de esta página marca todas»; e2e «se pueden elegir claves sueltas» (sueltas) |

@@ -3,7 +3,7 @@
 ## 0. Decisiones y documentos
 - [x] 0.1 Fila en `DECISIONES-V1.md` (25-oct-2026) con las cuatro precisiones aceptadas por el PO.
 - [x] 0.2 El PO responde las dos preguntas de `design.md` §6 (25-oct-2026): SRCH-02 por clave exacta; la celda muestra la clave.
-- [x] 0.3 `F-254` cerrado en lo que toca a coincidencia y agrupado (27-oct-2026); equivalencias de sufijos en `F-281`.
+- [x] 0.3 `F-254` cerrado en lo que toca a coincidencia y agrupado (27-oct-2026); equivalencias de sufijos desestimadas (`F-281`, 29-oct-2026).
 
 ## 1. Base de datos
 - [x] 1.1 `0073_clave_normalizada_de_referencia.sql`: columna generada `part_key` y los dos índices parciales.

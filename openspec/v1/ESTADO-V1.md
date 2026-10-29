@@ -83,7 +83,6 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Por qué el lote de 50 dispersa tanto (6–39 s)**: la traza lo pone en paradas de la instancia, pero solo hay una corrida trazada limpia; 4 de las 6 del A/B coincidieron con la CI. No se ha medido en producción.
 - **Por qué la suite local de la mañana dejó 9 búsquedas colgadas en «Buscando...»** en `bearingworld-e2e` mientras la CI salía verde: no se investigó más allá de los logs (paradas de 4–9 s, `F-259`).
 - **Por qué la suite e2e local tardó 2,4 h** contra `bearingworld-e2e` (la CI, ~8 min) y si la paridad de `0061`–`0064` (`F-277`) estabiliza la instancia: sin medir. **De dónde salen las paradas de `F-278`**: el disco no (balance 99 %) ni nuestra carga; si Micro las quita, solo se sabe probándolo.
-- **Cómo se ve en un navegador el foro nuevo** (crear hilo, edición en línea, diálogo de eliminar): solo hay pruebas de comportamiento. Y **si el reintento automático del backup se nota bien en pantalla** (hasta 7 s antes de ver el error).
 - **Qué ve el EDITOR `REGISTERED` al entrar** (`F-260`), y **si Inventario adopta bien el filtro que deja VERA**: nadie lo ha mirado en un navegador.
 - **Por qué una pantalla del arnés con C1–C4 en verde no pasa C5** (`F-261`).
 - **Si la pantalla de subida enseña el motivo del tope de 500.000 líneas**: la base lo da; la pantalla, sin comprobar.

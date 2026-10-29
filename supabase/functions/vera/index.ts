@@ -368,7 +368,11 @@ Deno.serve(async (peticion: Request) => {
     console.error('VERA · no se pudo abrir el turno:', errorCupo);
     return json({ error: 'VERA no puede comprobar tu cupo ahora mismo. Inténtalo en unos minutos.' }, 503);
   }
-  const turno = cupo as { permitido: boolean; turno?: string; cupo: number; reintentar_en_s?: number };
+  const turno = cupo as { permitido: boolean; turno?: string; cupo: number; reintentar_en_s?: number; motivo?: string };
+  // Organización suspendida (`0079`, F-275): no es un límite de cupo, y no se dice que vuelva a intentarlo.
+  if (!turno.permitido && turno.motivo === 'organizacion_no_activa') {
+    return json({ error: 'Tu organización no está activa, así que VERA no está disponible.' }, 403);
+  }
   if (!turno.permitido) {
     const minutos = Math.max(1, Math.ceil((turno.reintentar_en_s ?? 60) / 60));
     return json(

@@ -164,3 +164,31 @@ begin
   raise notice 'OK · 0068: sin sesión y anon, fuera';
 end
 $$;
+
+-- -----------------------------------------------------------------------------
+-- 5 · 0079: una organización suspendida no abre turno ni gasta cupo; al reactivarla, sí
+-- -----------------------------------------------------------------------------
+do $$
+declare r jsonb; antes int;
+begin
+  select count(*) into antes from public.vera_usage where user_id = public.t8_mem(2);
+  update public.organizations set status = 'SUSPENDED' where id = public.t8_org(2);
+
+  perform set_config('request.jwt.claim.sub', public.t8_mem(2)::text, true);
+  set local role authenticated;
+  r := public.vera_abrir_turno(true);
+  reset role;
+  assert not (r->>'permitido')::boolean, '0079: suspendida, vera_abrir_turno no permite';
+  assert r->>'motivo' = 'organizacion_no_activa', '0079: suspendida, motivo organizacion_no_activa';
+  assert (select count(*) from public.vera_usage where user_id = public.t8_mem(2)) = antes,
+    '0079: el rechazo no deja fila ni gasta cupo';
+
+  update public.organizations set status = 'APPROVED' where id = public.t8_org(2);
+  perform set_config('request.jwt.claim.sub', public.t8_mem(2)::text, true);
+  set local role authenticated;
+  r := public.vera_abrir_turno(true);
+  reset role;
+  assert (r->>'permitido')::boolean, '0079: reactivada, vuelve a abrir turno (control positivo)';
+  raise notice 'OK · 0079: organización suspendida fuera de VERA, reactivada dentro';
+end
+$$;

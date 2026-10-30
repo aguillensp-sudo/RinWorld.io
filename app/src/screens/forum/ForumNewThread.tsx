@@ -25,6 +25,8 @@ interface Props {
   onBackToForum: () => void;
   /** El hilo ya existe: abre FORO-03 sobre él. */
   onCreated: (threadId: string) => void;
+  /** Borrador que VERA deja en el formulario (`preparar_hilo_foro`). Lo rellena; no publica. */
+  draft?: { title: string; body: string; nonce: number } | null;
 }
 
 /** El `catch` de la casa: de aquí nunca sale un `unknown` sin ser un `Error`. */
@@ -45,7 +47,7 @@ function asError(e: unknown): Error {
  * y aunque el botón lo respete, la carrera entre pintar y pulsar la gana la base, que
  * rechaza la publicación 11 sin dejar un hilo vacío (`forum_create_thread`, 0078).
  */
-export function ForumNewThread({ profile, slug, onCancel, onBackToForum, onCreated }: Props) {
+export function ForumNewThread({ profile, slug, onCancel, onBackToForum, onCreated, draft }: Props) {
   void profile;
 
   const [category, setCategory] = useState<Category | null | undefined>(undefined);
@@ -87,6 +89,15 @@ export function ForumNewThread({ profile, slug, onCancel, onBackToForum, onCreat
       cancelled = true;
     };
   }, [slug]);
+
+  // El borrador de VERA se aplica DESPUÉS del reinicio de arriba, que corre con el montaje y con cada categoría.
+  useEffect(() => {
+    if (!draft) return;
+    setTitle(draft.title);
+    setBody(draft.body);
+    // Por `nonce`: pedir el mismo borrador dos veces vuelve a rellenar el formulario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.nonce]);
 
   const limitReached = rateStatus !== null && rateLimitReached(rateStatus);
   const canSubmit =

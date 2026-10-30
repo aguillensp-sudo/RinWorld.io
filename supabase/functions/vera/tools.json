@@ -178,5 +178,32 @@
       },
       "required": []
     }
+  },
+  {
+    "name": "resumir_hilo_foro",
+    "description": "Devuelve el texto de las publicaciones del hilo del Foro que el usuario tiene ABIERTO en pantalla, para que lo resumas. Solo llámala si el usuario lo pide EXPLÍCITAMENTE ('resume este hilo', 'de qué va esta discusión'); nunca por iniciativa propia. El foro NO está cifrado: es texto plano visible para todos los miembros. Si no hay un hilo abierto en pantalla, no la llames: dile que abra el hilo primero. No leas ni resumas hilos de la mensajería cifrada: esos no se pueden leer desde aquí.",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "preparar_hilo_foro",
+    "description": "Abre el formulario de HILO NUEVO en la categoría del Foro que el usuario tiene abierta, con el título y el cuerpo que has redactado a partir de lo que pidió, para que lo revise y lo publique él ('redáctame un hilo sobre juntas de eje en la categoría de Rodamientos'). NO PUBLICA NADA: el hilo no se crea hasta que el usuario pulsa «Publicar hilo». Solo funciona con una categoría del Foro abierta en pantalla; si no la hay, no la llames y dile que abra la categoría. Redacta con el mismo tono que el usuario y sin inventar datos: si el tema no está claro, pregúntale antes.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "titulo": {
+          "type": "string",
+          "description": "Título del hilo, entre 5 y 150 caracteres."
+        },
+        "cuerpo": {
+          "type": "string",
+          "description": "Cuerpo del hilo, entre 10 y 10.000 caracteres."
+        }
+      },
+      "required": ["titulo", "cuerpo"]
+    }
   }
 ]

@@ -19,6 +19,7 @@ import {
   type Filter,
 } from './inventory';
 import { fetchThreadPage } from './threads';
+import { newThreadValid, NEW_THREAD_BODY_MAX, NEW_THREAD_BODY_MIN, NEW_THREAD_TITLE_MAX, NEW_THREAD_TITLE_MIN } from './forum';
 import { fetchDirectoryCountries } from './directory';
 import { NOTES_MAX } from './inquiry-form';
 
@@ -44,6 +45,8 @@ export const TOOL_NAMES = [
   'navegar',
   'preparar_consulta',
   'preparar_oferta',
+  'resumir_hilo_foro',
+  'preparar_hilo_foro',
 ] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
 
@@ -116,7 +119,31 @@ export interface ToolContext {
    * calculado al enviar la pregunta. `buscar_en_catalogo` no los repone sin confirmación (`F-258`, B2).
    */
   removedFilters?: readonly RemovedFilter[];
+  /** Categoría del Foro abierta en pantalla, o `null` fuera del Foro: sin ella no hay dónde abrir un hilo nuevo. */
+  forumCategorySlug?: string | null;
+  /** Hilo del Foro abierto en pantalla, si lo hay. Solo el foro: los hilos de negociación van por `threadOpen`. */
+  forumThreadId?: string | null;
+  /** Abre el formulario de hilo nuevo con este borrador. NO publica: lo hace el usuario. */
+  prepareForumDraft?: (draft: ForumDraft) => void;
+  /** Lee un hilo del Foro (título y publicaciones) para que VERA lo resuma. El foro no está cifrado. */
+  readForumThread?: (threadId: string) => Promise<ForumThreadText>;
 }
+
+/** Un borrador de hilo del Foro que VERA deja en el formulario de hilo nuevo. */
+export interface ForumDraft {
+  title: string;
+  body: string;
+}
+
+/** El texto de un hilo del Foro, tal como lo ve cualquier miembro: no hay nada cifrado que leer aquí. */
+export interface ForumThreadText {
+  title: string;
+  posts: { author: string; date: string; body: string }[];
+}
+
+/** Cuántas publicaciones y caracteres como máximo se le pasan al modelo para resumir un hilo. */
+const FORUM_POSTS_MAX = 40;
+const FORUM_TEXT_MAX = 12_000;
 
 /** Un borrador ya pedido, con un número que cambia en cada petición: la misma petición dos veces tiene que reabrir el formulario. */
 export type VeraDraft = DraftRequest & { nonce: number };
@@ -732,6 +759,62 @@ function prepararConsulta(input: unknown, ctx: ToolContext): ToolResult {
   };
 }
 
+/**
+ * Resumir: VERA recibe el texto del hilo abierto y lo resume SOLO si el usuario lo pidió. El foro es texto
+ * plano visible para todos los miembros (spec `vera-drafting-and-summary`), así que no hay nada que descifrar
+ * ni que ocultar; el límite es de tamaño, no de privacidad.
+ */
+async function resumirHiloForo(ctx: ToolContext): Promise<ToolResult> {
+  if (!ctx.forumThreadId || !ctx.readForumThread) {
+    return {
+      content: 'No hay ningún hilo del Foro abierto en pantalla. Pídele que abra el hilo que quiere resumir.',
+      isError: true,
+    };
+  }
+  const hilo = await ctx.readForumThread(ctx.forumThreadId);
+  const lineas = hilo.posts.slice(0, FORUM_POSTS_MAX).map((p) => `[${p.author} · ${p.date}] ${p.body}`);
+  let texto = lineas.join('\n\n');
+  if (texto.length > FORUM_TEXT_MAX) texto = texto.slice(0, FORUM_TEXT_MAX) + '\n\n[texto recortado por longitud]';
+  const recortadas = hilo.posts.length > FORUM_POSTS_MAX ? ` Solo se incluyen las primeras ${FORUM_POSTS_MAX}.` : '';
+  return {
+    content: `Hilo «${hilo.title}», ${hilo.posts.length} publicaciones.${recortadas} Resume solo lo que pidió el usuario:\n\n${texto}`,
+    isError: false,
+  };
+}
+
+/**
+ * Redactar: VERA deja un borrador en el formulario de hilo nuevo de la categoría abierta. No publica nada;
+ * el usuario lo revisa y pulsa «Publicar hilo» (spec: el hilo no se crea hasta la confirmación explícita).
+ */
+function prepararHiloForo(input: unknown, ctx: ToolContext): ToolResult {
+  if (!ctx.forumCategorySlug || !ctx.prepareForumDraft) {
+    return {
+      content:
+        'No hay una categoría del Foro abierta en pantalla. Pídele que abra la categoría donde quiere publicar y vuelve a pedírselo.',
+      isError: true,
+    };
+  }
+  const titulo = texto(input, 'titulo');
+  const cuerpo = texto(input, 'cuerpo');
+  if (!newThreadValid(titulo, cuerpo)) {
+    return {
+      content:
+        `El título tiene que tener entre ${NEW_THREAD_TITLE_MIN} y ${NEW_THREAD_TITLE_MAX} caracteres y el cuerpo ` +
+        `entre ${NEW_THREAD_BODY_MIN} y ${NEW_THREAD_BODY_MAX}. Corrígelo antes de preparar el hilo.`,
+      isError: true,
+    };
+  }
+  ctx.prepareForumDraft({ title: titulo, body: cuerpo });
+  return {
+    content: [
+      `Formulario de hilo nuevo abierto con el título «${titulo}» y el cuerpo redactado.`,
+      'NO está publicado: el usuario tiene que revisarlo y pulsar «Publicar hilo».',
+      'Díselo en una frase y pídele que lo revise antes de publicar. No digas que lo has publicado.',
+    ].join('\n'),
+    isError: false,
+  };
+}
+
 function prepararOferta(input: unknown, ctx: ToolContext): ToolResult {
   if (!ctx.threadOpen) return SIN_HILO;
 
@@ -888,6 +971,10 @@ export async function runTool(
         return prepararConsulta(input, ctx);
       case 'preparar_oferta':
         return prepararOferta(input, ctx);
+      case 'resumir_hilo_foro':
+        return await resumirHiloForo(ctx);
+      case 'preparar_hilo_foro':
+        return prepararHiloForo(input, ctx);
       default:
         /*
          * Un nombre que no existe se dice tal cual. La tentación es responder

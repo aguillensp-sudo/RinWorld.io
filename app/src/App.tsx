@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from './lib/session';
 import { supabase } from './lib/supabase';
 import { createProxyCall } from './lib/vera';
-import { describeCriteria, describeManualChanges, removedFilters, type DirectoryView, type DraftRequest, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
+import { describeCriteria, describeManualChanges, removedFilters, type DirectoryView, type DraftRequest, type ForumDraft, type ForumThreadText, type InventoryView, type Screen, type VeraDraft } from './lib/vera-tools';
+import { fetchThread, fetchThreadPosts } from './lib/forum';
 import { veraScreenName } from './lib/vera-screen';
 import type { PartSearchCriteria } from './lib/part-search';
 import type { VeraAgent } from './shell/VeraPanel';
@@ -189,6 +190,9 @@ export function App() {
    * `forumCategorySlug`. Se limpia con la categoría, con el hilo y al cambiar de ítem de nav.
    */
   const [forumCreating, setForumCreating] = useState(false);
+  /** Borrador de hilo nuevo que VERA deja en el formulario (`preparar_hilo_foro`). Con `nonce`, la misma petición reabre el formulario. */
+  const [forumDraft, setForumDraft] = useState<(ForumDraft & { nonce: number }) | null>(null);
+  const forumDraftSeq = useRef(0);
 
   /**
    * Lo último que VERA ha escrito como criterios de búsqueda, o `null` si aún no
@@ -736,6 +740,23 @@ export function App() {
       setVeraDraft({ ...draft, nonce: veraDraftSeq.current });
     },
 
+    // VERA solo redacta dentro de una categoría: el formulario de hilo nuevo vive ahí. No publica.
+    forumCategorySlug,
+    forumThreadId,
+    prepareForumDraft: (draft: ForumDraft) => {
+      forumDraftSeq.current += 1;
+      setForumDraft({ ...draft, nonce: forumDraftSeq.current });
+      setForumCreating(true);
+    },
+    readForumThread: async (threadId: string): Promise<ForumThreadText> => {
+      const cabecera = await fetchThread(threadId);
+      const publicaciones = await fetchThreadPosts(threadId);
+      return {
+        title: cabecera?.title ?? '',
+        posts: publicaciones.map((p) => ({ author: p.authorOrgName, date: p.createdAt, body: p.body })),
+      };
+    },
+
     /*
      * Escribir criterios LLEVA a Comprando, además de escribirlos.
      *
@@ -1202,6 +1223,7 @@ export function App() {
             <ForumNewThread
               profile={state.profile}
               slug={forumCategorySlug}
+              draft={forumDraft}
               onCancel={() => setForumCreating(false)}
               onBackToForum={() => {
                 setForumCreating(false);

@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './VeraPanel.module.css';
 import { ask, historyExpired, type Exchange, type ProxyCall } from '../lib/vera';
-import type { DirectoryView, DraftRequest, InventoryView, RemovedFilter, Screen } from '../lib/vera-tools';
+import type {
+  DirectoryView,
+  DraftRequest,
+  ForumDraft,
+  ForumThreadText,
+  InventoryView,
+  RemovedFilter,
+  Screen,
+} from '../lib/vera-tools';
 import type { PartSearchCriteria } from '../lib/part-search';
 import { errorMessage, type MemberProfile } from '../lib/session';
 
@@ -54,6 +62,14 @@ export interface VeraAgent {
   showDirectory?: (view: DirectoryView) => void;
   /** Lo que el usuario quitó a mano en Comprando (`F-258`, B2): la búsqueda no lo repone sin confirmación. */
   removedFilters?: readonly RemovedFilter[];
+  /** Categoría del Foro abierta en pantalla, o `null` fuera del Foro (`preparar_hilo_foro`). */
+  forumCategorySlug?: string | null;
+  /** Hilo del Foro abierto en pantalla (`resumir_hilo_foro`). */
+  forumThreadId?: string | null;
+  /** Abre el formulario de hilo nuevo con el borrador de VERA. No publica. */
+  prepareForumDraft?: (draft: ForumDraft) => void;
+  /** Lee el hilo del Foro para resumirlo. */
+  readForumThread?: (threadId: string) => Promise<ForumThreadText>;
   /**
    * Cuándo empezó la sesión (ms), para purgar la memoria a las 24 h (`session-context-layer`). Un getter
    * y no un valor: se mira en cada pregunta. Sin él, la memoria solo se pierde al cerrar sesión o recargar.
@@ -182,6 +198,10 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
           ...(agent.showInventory ? { showInventory: agent.showInventory } : {}),
           ...(agent.showDirectory ? { showDirectory: agent.showDirectory } : {}),
           ...(agent.removedFilters ? { removedFilters: agent.removedFilters } : {}),
+          forumCategorySlug: agent.forumCategorySlug ?? null,
+          forumThreadId: agent.forumThreadId ?? null,
+          ...(agent.prepareForumDraft ? { prepareForumDraft: agent.prepareForumDraft } : {}),
+          ...(agent.readForumThread ? { readForumThread: agent.readForumThread } : {}),
         },
         agent.call,
         previo,

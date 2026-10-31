@@ -13,18 +13,19 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 50 de V1 · 29-oct-2026, ~09:00 UTC · Estado: CERRADO.** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: foro con crear hilo, editar y eliminar (`0078`, `5e4d696`); regla de la publicación inicial aprobada por el PO; reintentos automáticos de subida del backup (`backup-upload-retry`). Detalle en `diario/dia-50.md`.
+**Día 51 de V1 · 31-oct-2026, ~19:30 UTC · Estado: EN CURSO (no cerrado).** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: e2e de los reintentos del backup y del borrador de VERA en el foro, matriz al día, bloque E del arnés real. Detalle del 29-oct en `diario/dia-50.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
 
 | Afirmación | Verificado contra | Resultado |
 |---|---|---|
-| **CI de `5e4d696` (foro + `0078`)** | `gh run list --branch mvp/bootstrap` | Verde, 9 min 43 s |
-| **`0078` en las dos bases** | Catálogo por el MCP en `troxminloxkjwihwfevs` y `bearingworld-e2e` (políticas, privilegios, funciones) | Iguales |
-| **Foro, e2e** | Playwright local contra `bearingworld-e2e`, sin CI en curso | 19/19, con `forum-write.spec.ts` nuevo (crea, edita, responde y elimina un hilo propio; no deja residuo) |
-| **Reintentos de subida del backup** | `vitest` (`key-backup.test.ts`, reloj inyectado) + `tsc --noEmit` + `vitest` entero | 2957 tests verdes (218 ficheros). **Sin e2e** de los reintentos: ni la CI ni la suite local los ejercitan con una caída de red real |
-| **Matriz** | `harness.core.trazabilidad.resumen()` y `problemas()` vacío | 115 CUBIERTO, 21 DIVERGE, 33 NO_IMPLEMENTADO, 13 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185 |
+| **CI de `e5cda40` y `228192a`** | `gh run view` | **Rojas**: el e2e viejo de `key-generation.spec.ts` esperaba el aviso con un solo fallo y los reintentos ya estaban en el código |
+| **CI de `6b6160a` y `3645846`** | `gh run view` por jobs | Verdes, con los dos despliegues (app y `vera`). `6b6160a` reescribe el e2e en dos escenarios (reintento silencioso y aviso tras agotarlos) |
+| **Borrador de VERA en el foro, e2e** | `forum-vera-draft.spec.ts` contra `bearingworld-e2e` y en la CI | Verde. Proxy de VERA interceptado: prueba la interfaz y que no publica, no que el modelo llame a la herramienta |
+| **VERA y el foro con Sonnet 5 real** | Bloque E de `vera.real.test.ts`, n = 5, 0,29 $, registro fuera del repo | Resume solo al pedirlo (5/5), no sin pedirlo (E2, E3 0 llamadas en 5/5), no resume sin hilo abierto, redacta con categoría abierta (5/5) y no sin ella. El texto de las respuestas lo juzga el PO |
+| **Producción tras un reseteo accidental** | SQL por el MCP | Los cinco `HILO_IDS` de demo, uno por estado y con 1 elemento. Se lanzó `npx playwright test` con el `.env` de producción: **los e2e van por `run-e2e-against-e2e-project.mjs`, nunca a secas** |
+| **Matriz** | `harness.core.trazabilidad.resumen()` y `problemas()` vacío | 116 CUBIERTO, 21 DIVERGE, 31 NO_IMPLEMENTADO, 14 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185. Todas las filas con 8 campos |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -32,8 +33,8 @@ Empieza por §6 y luego §3.
 - **Fundación V1.** Entregables 1 a 5 hechos. **El 6 (residencia UE) está en stand-by (PO, 22-oct): no se trae a pendientes ni se pregunta** (`DECISIONES-V1.md`, `BACKLOG-V1.md`). VERA sigue en `api.anthropic.com`.
 - **VERA.** `claude-sonnet-5` por `api.anthropic.com` (PO, 14-oct). Memoria de 20 intercambios (`F-101`), contexto de pantalla y rol, una línea tras buscar, `navegar` a siete pantallas, cupo de 150 llamadas por usuario y hora y `usage` en `vera_usage` (`0068`, `F-256`). `buscar_en_catalogo` devuelve ahora la frescura comparada y el plazo rotulado (`F-279`). La guía de pantallas dice que la ficha lleva botón de favorito y que el recuento cuenta usuarios.
 - **Corriente B · Fábrica — EN MARCHA, sin cambios desde el 17-oct.** `INV-04` del arnés en `exp/inv-04-fabrica` (no se fusiona): verde en C1–C4, **C5 NO del PO** (`F-261`). La próxima serie parte del prompt con `_nota*` (`F-263`).
-- **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **115 de 185 con prueba que corre en CI**, 13 parciales, 33 NO implementados, 21 divergencias (todas aceptadas; la nueva, `favorites-system#1`, 24-oct), **0 sin prueba**, 3 fuera. `dual-entry-routes#2` y `user-revocation#1` CUBIERTO por e2e de suite. Quedan 2 «solo e2e» que no pueden estar en CI: modelo real y SES. Niveles 4 y 5 aparcados.
-- **Foro.** Crear hilo, editar y eliminar la publicación propia (`0078`, PO 29-oct): la inicial de un hilo con respuestas no se elimina, la de un hilo sin respuestas se lleva el hilo; sin «(editado)» ni registro de borrado. Quedan los 2 escenarios de VERA (`vera-drafting-and-summary`).
+- **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **116 de 185 con prueba que corre en CI**, 14 parciales, 31 NO implementados, 21 divergencias (todas aceptadas; la nueva, `favorites-system#1`, 24-oct), **0 sin prueba**, 3 fuera. `dual-entry-routes#2` y `user-revocation#1` CUBIERTO por e2e de suite. Quedan 2 «solo e2e» que no pueden estar en CI: modelo real y SES. Niveles 4 y 5 aparcados.
+- **Foro.** Crear hilo, editar y eliminar la publicación propia (`0078`, PO 29-oct): la inicial de un hilo con respuestas no se elimina, la de un hilo sin respuestas se lleva el hilo; sin «(editado)» ni registro de borrado. VERA redacta un borrador de hilo (`preparar_hilo_foro`, CUBIERTO por e2e) y resume el hilo abierto a petición (`resumir_hilo_foro`, PARCIAL: la medida con modelo real no puede correr en CI).
 - **Favoritos.** Tabla `favorite_distributors` por miembro (`PK member_id + distributor_org_id`), recuento por trigger. Estrella con confirmación en Comprando y Búsqueda por lotes; botón con confirmación en la ficha de otra organización; ninguno en la propia. «Mis favoritos» es un botón de Comprando (cualquier miembro) y «Favoritos recibidos» del Panel cuenta usuarios del mes por `favorites_received_this_month()` (`0077`, aplicada a las dos bases). Producción: 0 favoritos. **Revisión visual en localhost hecha por el PO (30-oct): OK.**
 
 ## 3 · Qué toca, en este orden
@@ -45,7 +46,7 @@ Empieza por §6 y luego §3.
 4. **Frontend:** el PO prepara cambios por su cuenta. **El plan móvil NO se propone hasta que él lo pida** (`BACKLOG-V1.md`). INV-04 se queda con la versión a mano (`F-261`).
 5. **~12-nov:** comprobar que `inbox/` de S3 ya no conserva los primeros correos (borrado a 30 días).
 6. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero (`--maxWorkers=50%` si hay otra sesión con tests), el banco si se tocó `supabase/` más allá de una función, la suite e2e si se tocó un e2e o el arnés (`F-230`), y `py -m harness.tests.test_checks` si se tocó una tarea, la matriz o un test de contrato (`F-251`, `F-125`). **Mira la CI del push anterior antes de empujar otro.** Un commit con `[skip ci]` salta la CI de todo su empuje: va en un empuje aparte. Nunca `vitest` con un e2e en marcha. **Una migración nueva se aplica por el MCP a las dos bases antes de empujar su fichero** (`F-277`, `entornos.md`).
-7. **La matriz se edita con `harness.core.trazabilidad.leer_csv`/`escribir_csv`, y ninguna nota lleva `;`**: un `;` suelto parte la fila y la reescritura pierde la cola.
+7. **La matriz se edita con `harness.core.trazabilidad.leer_csv`/`escribir_csv`, y ninguna nota lleva `;`**: un `;` suelto parte la fila y la reescritura pierde la cola. Desde el 31-oct no queda ninguna fila con `;` suelto.
 8. **El `localhost` del PO sirve la carpeta RAÍZ, no un worktree:** tras empujar, adelantarla con `git -C <raíz> merge --ff-only origin/mvp/bootstrap`, o el PO no ve nada. Su `app/.env` apunta a producción: lo que marque o escriba allí es real.
 
 ## 4 · Decisiones vivas
@@ -91,10 +92,11 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si el umbral de zxcvbn (≥ 3) basta** contra un ataque offline al blob: es juicio, no medida.
 - **Cómo se ve la pantalla de suspensión con una cuenta real**: nadie ha suspendido una organización real; la base ya la corta (`0069`), la pantalla solo se evalúa al cargar la sesión.
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
-- **Cómo se ve en un navegador el diálogo de favoritos, el botón de la ficha y «Mis favoritos»**: el PO aún no los ha visto; solo hay pruebas de comportamiento, ninguna comprobación de diseño.
 - **Si los favoritos de un miembro revocado siguen sumando al recuento**: deducido del código (`remove_member` solo cambia el estado), no probado.
+- **Si los reintentos del backup aguantan una caída de red real**: el e2e simula los fallos con un servidor falso, no con una red caída.
+- **Si el tono de las respuestas de VERA en el foro es el que quiere el PO**: la medida es mecánica (qué herramienta llamó). En E5 sugirió categorías por nombre sin tener la lista; nadie ha mirado si coinciden.
 - **Qué permisos tiene la clave de AWS de `ingest-email`**, si el MFA y el SSO de AWS están bien, y si un cliente real puede enviar sin DMARC ni DKIM (`F-252`).
 
 ---
 
-*Cierre del Día 50 · 29-oct-2026 · Dirección Técnica, Nortex Systems*
+*En curso, Día 51 · 31-oct-2026 · Dirección Técnica, Nortex Systems*

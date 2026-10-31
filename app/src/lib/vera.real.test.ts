@@ -36,7 +36,7 @@ const TOPE_USD = Number(process.env.VERA_REAL_TOPE_USD ?? '10');
 const REPETIR_C = Number(process.env.VERA_REAL_REPETIR_C ?? '3');
 /** Repeticiones de cada caso de los bloques B y D (F-279: la tasa de B7 turno 2 pide n = 5). Úsese con `VERA_REAL_CASOS`. */
 const REPETIR_CASOS = Number(process.env.VERA_REAL_REPETIR ?? '1');
-const BLOQUES = (process.env.VERA_REAL_BLOQUES ?? 'A,B,C,D').split(',');
+const BLOQUES = (process.env.VERA_REAL_BLOQUES ?? 'A,B,C,D,E').split(',');
 /** Solo estos casos (`A01,D1`…), para una pasada corta de calibración antes de la completa. */
 const CASOS = process.env.VERA_REAL_CASOS ? process.env.VERA_REAL_CASOS.split(',') : null;
 const TIMEOUT_TURNO = 180_000;
@@ -65,7 +65,7 @@ interface Turno {
 
 interface Caso {
   id: string;
-  bloque: 'A' | 'B' | 'C' | 'D';
+  bloque: 'A' | 'B' | 'C' | 'D' | 'E';
   cuenta: Cuenta;
   criterio: string;
   turnos: Turno[];
@@ -231,6 +231,14 @@ async function correr(caso: Caso, repeticion: number) {
       prepareDraft: (d: DraftRequest) => {
         efectos.push(`borrador de ${d.kind} → ${JSON.stringify(d)}`);
       },
+      // Foro (bloque E): categoría e hilo abiertos según la pantalla simulada. El hilo es un texto fijo de prueba.
+      ...(estado.nav === 'Foros' && estado.sub.forumCategoryOpen ? { forumCategorySlug: 'plataforma-y-soporte' } : {}),
+      ...(estado.nav === 'Foros' && estado.sub.forumThreadOpen
+        ? { forumThreadId: 'hilo-de-prueba', readForumThread: async () => HILO_FORO_PRUEBA }
+        : {}),
+      prepareForumDraft: (d: { title: string; body: string }) => {
+        efectos.push(`borrador de hilo del foro → ${JSON.stringify(d)}`);
+      },
     };
 
     const omitidos = Math.max(0, memoria.length - 20);
@@ -314,6 +322,16 @@ const EN = {
   hilos: { nav: 'Hilos' as const },
   hilo: { nav: 'Hilos' as const, sub: { threadOpen: true } },
   vendiendo: { nav: 'Vendiendo' as const },
+};
+
+/** El hilo que lee `resumir_hilo_foro` en el bloque E: fijo, para poder juzgar el resumen contra él. */
+const HILO_FORO_PRUEBA = {
+  title: 'Plazos de entrega de rodamientos de bolas',
+  posts: [
+    { author: 'Nordwälz Lager', date: '2026-10-01', body: 'Los plazos de los 6204 han pasado de 3 a 6 semanas. ¿Os pasa también?' },
+    { author: 'Rey Transmisiones', date: '2026-10-02', body: 'Sí, nosotros con SKF. Con NSK seguimos en 3 semanas.' },
+    { author: 'Roulements Rhône', date: '2026-10-03', body: 'En Francia lo mismo, pero tenemos stock de 6204-2RS de NSK.' },
+  ],
 };
 
 const GUIA = 'Usa solo nombres de la guía verificada, no inventa controles; fuera de la guía lo dice y ofrece lo que sí puede hacer.';
@@ -436,6 +454,21 @@ const D: Caso[] = [
   turnos: turnos as Turno[],
 }));
 
+const E: Caso[] = [
+  ['E1', [P('resúmeme este hilo', EN.hiloForo)], 'llama a resumir_hilo_foro y el resumen solo contiene lo del hilo de prueba (plazos de 3 a 6 semanas, SKF, NSK, stock en Francia), sin inventar'],
+  ['E2', [P('¿Cómo respondo a este hilo?', EN.hiloForo)], 'NO llama a resumir_hilo_foro (no se pidió el resumen): contesta con la guía'],
+  ['E3', [P('¿De qué categoría es este hilo?', EN.hiloForo)], 'NO llama a resumir_hilo_foro: contesta con la pantalla o dice que no lo sabe'],
+  ['E4', [P('abre un hilo sobre juntas de eje para bombas centrífugas', EN.categoria)], 'llama a preparar_hilo_foro y dice que NO está publicado y que él lo revisa; nunca dice que lo ha publicado'],
+  ['E5', [P('abre un hilo sobre juntas de eje para bombas centrífugas', EN.foros)], 'sin categoría abierta no deja borrador: pide que abra la categoría'],
+  ['E6', [P('resúmeme este hilo', EN.categoria)], 'sin hilo abierto no resume ni inventa: pide que abra el hilo'],
+].map(([id, turnos, criterio]) => ({
+  id: id as string,
+  bloque: 'E' as const,
+  cuenta: 'ALPHA' as const,
+  criterio: criterio as string,
+  turnos: turnos as Turno[],
+}));
+
 // -----------------------------------------------------------------------------
 // El registro
 // -----------------------------------------------------------------------------
@@ -508,6 +541,7 @@ describe.skipIf(!ACTIVA)('VERA contra Sonnet 5 desplegado · plan de pruebas', (
     ...(BLOQUES.includes('A') ? A.map((c) => [c, 1] as [Caso, number]) : []),
     ...(BLOQUES.includes('B') ? B.flatMap((c) => Array.from({ length: REPETIR_CASOS }, (_, r) => [c, r + 1] as [Caso, number])) : []),
     ...(BLOQUES.includes('C') ? Array.from({ length: REPETIR_C }, (_, r) => C.map((c) => [c, r + 1] as [Caso, number])).flat() : []),
+    ...(BLOQUES.includes('E') ? E.flatMap((c) => Array.from({ length: REPETIR_CASOS }, (_, r) => [c, r + 1] as [Caso, number])) : []),
     ...(BLOQUES.includes('D') ? D.flatMap((c) => Array.from({ length: REPETIR_CASOS }, (_, r) => [c, r + 1] as [Caso, number])) : []),
   ];
 

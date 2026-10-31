@@ -240,21 +240,36 @@ test.describe('REG-07 · generar las claves y guardar el backup · ADMIN en REGI
     await expect(page.getByText(/ya está activa/)).toBeVisible();
   });
 
-  test('un fallo de red en el paso 3: el aviso de la spec, y «Reintentar» sube el MISMO backup', async ({ page }) => {
+  test('backup-upload-retry · un fallo transitorio se reintenta solo, sin aviso, con el MISMO backup', async ({ page }) => {
     const servidor = await montarServidor(page, 1);
+    await hastaReg07(page);
+
+    await expect(page.getByText(LISTO)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(servidor.subidas).toHaveLength(2);
+    expect(servidor.subidas[1]).toEqual(servidor.subidas[0]);
+    expect(servidor.confirmaciones).toHaveLength(1);
+  });
+
+  test('backup-upload-retry · agotados los tres reintentos automáticos, aparece el aviso y «Reintentar» sube el MISMO backup', async ({
+    page,
+  }) => {
+    // 1 intento + 3 reintentos automáticos (1 s, 2 s, 4 s) = 4 fallos seguidos antes de mostrar el aviso.
+    const servidor = await montarServidor(page, 4);
     await hastaReg07(page);
 
     await expect(page.getByRole('alert')).toContainText(
       'No hemos podido guardar el backup. Comprueba tu conexión e inténtalo de nuevo.',
-      { timeout: 30_000 },
+      { timeout: 60_000 },
     );
     await expect(page.getByText('Error de conexión')).toBeVisible();
+    expect(servidor.subidas).toHaveLength(4);
     expect(servidor.confirmaciones).toHaveLength(0);
 
     await page.getByRole('button', { name: 'Reintentar' }).click();
     await expect(page.getByText(LISTO)).toBeVisible({ timeout: 30_000 });
-    expect(servidor.subidas).toHaveLength(2);
-    expect(servidor.subidas[1]).toEqual(servidor.subidas[0]);
+    expect(servidor.subidas).toHaveLength(5);
+    expect(servidor.subidas[4]).toEqual(servidor.subidas[0]);
     expect(servidor.confirmaciones).toHaveLength(1);
   });
 

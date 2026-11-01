@@ -30,6 +30,12 @@ describe('VERA · no inventa la interfaz', () => {
     expect(tools).not.toContain('NO están construidas');
   });
 
+  // F-283: VERA no ve la lista de categorías del Foro y sugirió «la de Rodamientos», que no existe.
+  it('el prompt prohíbe nombrar o sugerir categorías del Foro', () => {
+    expect(prompt).toContain('No conoces la lista de categorías del Foro');
+    expect(prompt).toContain('SIN nombrar ni sugerir ninguna ni dar ejemplos');
+  });
+
   // 14-oct-2026, decisión del PO: navegar lleva también a Empresas y Foros.
   it('el prompt y tools.json dicen que navegar abre siete pantallas, a su entrada, y que Contacto no existe', () => {
     expect(prompt).toContain('una de las siete que acepta la herramienta navegar (Panel, Vendiendo, Comprando, Hilos, Inventario, Empresas, Foros)');

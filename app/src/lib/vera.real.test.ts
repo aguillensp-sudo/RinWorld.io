@@ -273,6 +273,11 @@ async function correr(caso: Caso, repeticion: number) {
       error,
       criterio: caso.criterio,
     });
+    // F-283: en la lista de categorías VERA no tiene los nombres; si sugiere alguno, lo inventa. Lo real son
+    // las cuatro de la migración 0029 y ella no las ve, así que no debe citar ninguna ni dar ejemplos.
+    if (caso.id === 'E5' && /por ejemplo|la de|la que trate/i.test(respuesta)) {
+      throw new Error(`F-283: E5 sugiere categorías por nombre sin tener la lista: «${respuesta}»`);
+    }
   }
 }
 

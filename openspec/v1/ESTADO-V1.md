@@ -13,7 +13,7 @@ Empieza por §6 y luego §3.
 
 ---
 
-**Día 51 de V1 · 31-oct-2026, ~19:30 UTC · Estado: EN CURSO (no cerrado).** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hoy: e2e de los reintentos del backup y del borrador de VERA en el foro, matriz al día, bloque E del arnés real. Detalle del 29-oct en `diario/dia-50.md`.
+**Día 51 de V1 · cerrado el 3-nov-2026, 18:56 UTC (trabajo del 31-oct al 1-nov).** Entregable 6 (residencia UE) en stand-by indefinido por el PO: no se propone ni se pregunta. **VERA, D8: cerrado por el PO, no se toca.** Hecho: e2e de los reintentos del backup y del borrador de VERA en el foro, matriz al día, bloque E del arnés real, `F-283` (VERA inventaba categorías del Foro) y la base compartida poblada con hilos simulados. Detalle en `diario/dia-51.md`.
 ---
 
 ## 1 · Qué se ha comprobado hoy, y contra qué
@@ -26,6 +26,8 @@ Empieza por §6 y luego §3.
 | **VERA y el foro con Sonnet 5 real** | Bloque E de `vera.real.test.ts`, n = 5, 0,29 $, registro fuera del repo | Resume solo al pedirlo (5/5), no sin pedirlo (E2, E3 0 llamadas en 5/5), no resume sin hilo abierto, redacta con categoría abierta (5/5) y no sin ella. El texto de las respuestas lo juzga el PO |
 | **Producción tras un reseteo accidental** | SQL por el MCP | Los cinco `HILO_IDS` de demo, uno por estado y con 1 elemento. Se lanzó `npx playwright test` con el `.env` de producción: **los e2e van por `run-e2e-against-e2e-project.mjs`, nunca a secas** |
 | **Matriz** | `harness.core.trazabilidad.resumen()` y `problemas()` vacío | 116 CUBIERTO, 21 DIVERGE, 31 NO_IMPLEMENTADO, 14 PARCIAL, 0 SIN_PRUEBA, 3 FUERA = 185. Todas las filas con 8 campos |
+| **`F-283` (E5 sugería categorías que no existen)** | `foro-e-n5-31oct.md` contra `forum_categories` de `0029` (4 reales); CI de `ac82fe5` con `gh run view` por jobs | 2 de 5 respuestas citaban «Rodamientos» o «mantenimiento». Prompt corregido y E5 con `expect`. CI verde con los dos despliegues; **el prompt nuevo en vivo no se ha comprobado por contenido** y E5 no se ha remedido con modelo real |
+| **Base compartida poblada** | SQL por el MCP a `troxminloxkjwihwfevs`, después de cargar | 29 hilos, 604 elementos; 580 simulados (420 consultas, 160 ofertas) y 1.496 claves en 21 hilos; 60 consultas enviadas por cada una de las 7 organizaciones; Levante con 20 líneas publicadas. Hilos simulados: 9 `CON CONSULTA PENDIENTE`, 9 `CON OFERTA PENDIENTE`, 3 `CERRADO SIN ACUERDO` |
 
 ## 2 · Dónde estamos, por corriente
 
@@ -36,6 +38,8 @@ Empieza por §6 y luego §3.
 - **Corriente C · Verificación — ABIERTA.** Nivel 1 (`trazabilidad.csv`): **116 de 185 con prueba que corre en CI**, 14 parciales, 31 NO implementados, 21 divergencias (todas aceptadas; la nueva, `favorites-system#1`, 24-oct), **0 sin prueba**, 3 fuera. `dual-entry-routes#2` y `user-revocation#1` CUBIERTO por e2e de suite. Quedan 2 «solo e2e» que no pueden estar en CI: modelo real y SES. Niveles 4 y 5 aparcados.
 - **Foro.** Crear hilo, editar y eliminar la publicación propia (`0078`, PO 29-oct): la inicial de un hilo con respuestas no se elimina, la de un hilo sin respuestas se lleva el hilo; sin «(editado)» ni registro de borrado. VERA redacta un borrador de hilo (`preparar_hilo_foro`, CUBIERTO por e2e) y resume el hilo abierto a petición (`resumir_hilo_foro`, PARCIAL: la medida con modelo real no puede correr en CI).
 - **Favoritos.** Tabla `favorite_distributors` por miembro (`PK member_id + distributor_org_id`), recuento por trigger. Estrella con confirmación en Comprando y Búsqueda por lotes; botón con confirmación en la ficha de otra organización; ninguno en la propia. «Mis favoritos» es un botón de Comprando (cualquier miembro) y «Favoritos recibidos» del Panel cuenta usuarios del mes por `favorites_received_this_month()` (`0077`, aplicada a las dos bases). Producción: 0 favoritos. **Revisión visual en localhost hecha por el PO (30-oct): OK.**
+
+- **Siembra simulada (PO, 1-nov: «opción 1, solo demo»).** `supabase/seed/poblar-simulacion.mjs` carga en la base compartida (la misma de demo, producción y `localhost`) 21 hilos entre Ibéricos, Nordwälz, Cuscinetti, Łożyska, Rhône, Anadolu y Levante, con contenido cifrado con la semilla de demo (`F-067`). Todo lo creado lleva id `5eed000N-`; `supabase/seed/retirar_simulacion.sql` lo borra por el MCP. JULSA, Fulano, Nakishita, Rey y Jose Bearings **no** se tocan. Hay 5 miembros nuevos `sim-*@bearingworld.test` con contraseña aleatoria descartada.
 
 ## 3 · Qué toca, en este orden
 
@@ -48,6 +52,8 @@ Empieza por §6 y luego §3.
 6. **Lista previa a empujar:** `tsc --noEmit`, `vitest` entero (`--maxWorkers=50%` si hay otra sesión con tests), el banco si se tocó `supabase/` más allá de una función, la suite e2e si se tocó un e2e o el arnés (`F-230`), y `py -m harness.tests.test_checks` si se tocó una tarea, la matriz o un test de contrato (`F-251`, `F-125`). **Mira la CI del push anterior antes de empujar otro.** Un commit con `[skip ci]` salta la CI de todo su empuje: va en un empuje aparte. Nunca `vitest` con un e2e en marcha. **Una migración nueva se aplica por el MCP a las dos bases antes de empujar su fichero** (`F-277`, `entornos.md`).
 7. **La matriz se edita con `harness.core.trazabilidad.leer_csv`/`escribir_csv`, y ninguna nota lleva `;`**: un `;` suelto parte la fila y la reescritura pierde la cola. Desde el 31-oct no queda ninguna fila con `;` suelto.
 8. **El `localhost` del PO sirve la carpeta RAÍZ, no un worktree:** tras empujar, adelantarla con `git -C <raíz> merge --ff-only origin/mvp/bootstrap`, o el PO no ve nada. Su `app/.env` apunta a producción: lo que marque o escriba allí es real.
+9. **Los elementos simulados de los 5 hilos de demo (`HILO_IDS`) los borra `demo:reset` y `fixture.setup.ts` al arrancar** (la base solo admite un hilo por pareja, `threads_pair_uniq`, así que viven dentro de ellos). Se reponen con `node supabase/seed/poblar-simulacion.mjs --apply --solo-hilos-existentes`; el script aborta si ya hay elementos simulados sin ese flag. **Los 21 hilos cambian el estado de los de demo** (p. ej. Anadolu deja de estar cerrado) hasta el siguiente `demo:reset`.
+10. **Remedir E5 con Sonnet 5 real** (n = 5, ≈ 0,04 $) cuando el PO dé su visto bueno a una llamada real (§3.3). Antes, comprobar por contenido que `vera` en producción lleva «No conoces la lista de categorías del Foro».
 
 ## 4 · Decisiones vivas
 
@@ -94,9 +100,11 @@ Todas en `DECISIONES-V1.md`. Las que más muerden al trabajar:
 - **Si `billing_confirm_payment`, `billing_suspend_organization` y los verbos de `watcher_*` funcionan desde la pantalla con un cliente real.**
 - **Si los favoritos de un miembro revocado siguen sumando al recuento**: deducido del código (`remove_member` solo cambia el estado), no probado.
 - **Si los reintentos del backup aguantan una caída de red real**: el e2e simula los fallos con un servidor falso, no con una red caída.
-- **Si el tono de las respuestas de VERA en el foro es el que quiere el PO**: la medida es mecánica (qué herramienta llamó). En E5 sugirió categorías por nombre sin tener la lista; nadie ha mirado si coinciden.
+- **Si el tono de las respuestas de VERA en el foro es el que quiere el PO**: la medida es mecánica (qué herramienta llamó). **Si el arreglo de `F-283` funciona con modelo real**: solo lo cubre un test de texto, sin remedir.
+- **Cómo se encuentran las cosas con 21 hilos y ~600 elementos en el frontend** (lista de Hilos, filtros, búsqueda): el PO lo va a mirar; nadie lo ha abierto en un navegador. **Si las cuentas de JULSA y de Ibéricos con dominio propio abren lo cifrado para ellas**: la clave pública se usó para envolver, pero no se puede comprobar sin su privada.
+- **Si `demo:reset` o el e2e rompen algo al coincidir con elementos simulados** en los 5 hilos de demo: deducido de que solo borran sus cinco ids, no probado.
 - **Qué permisos tiene la clave de AWS de `ingest-email`**, si el MFA y el SSO de AWS están bien, y si un cliente real puede enviar sin DMARC ni DKIM (`F-252`).
 
 ---
 
-*En curso, Día 51 · 31-oct-2026 · Dirección Técnica, Nortex Systems*
+*Cerrado, Día 51 · 3-nov-2026 · Dirección Técnica, Nortex Systems*

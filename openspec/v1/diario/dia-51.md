@@ -1,0 +1,13 @@
+# Día 51 · 31-oct al 1-nov-2026 (cerrado el 3-nov)
+
+- **Reintentos del backup (`6b6160a`):** el e2e de `key-generation.spec.ts` se reescribió en dos escenarios (reintento silencioso y aviso tras agotar los tres). Las CI de `228192a` y `e5cda40` habían quedado rojas sin que el relevo lo dijera. Detalle en `F-282`.
+- **Incidente `F-282`:** un `npx playwright test` a secas corrió el reseteo de la siembra contra producción (el `.env` apunta allí). Abortó en su comprobación final y producción quedó con los cinco `HILO_IDS` intactos. Regla: los e2e van por `scripts/run-e2e-against-e2e-project.mjs`.
+- **Borrador de VERA en el foro (`3645846`):** e2e con el proxy interceptado; prueba la interfaz y que no publica.
+- **Bloque E del arnés real (`e9dbefb`):** n = 5 con Sonnet 5, 0,29 $. Resume solo al pedirlo y sin hilo abierto no resume. `vera-drafting-and-summary#2` sigue PARCIAL porque la prueba con modelo real no puede correr en CI.
+- **`F-283`:** leyendo el registro de E5 se vio que 2 de 5 respuestas sugerían «la de Rodamientos» o «mantenimiento/sellado»; las categorías reales (migración `0029`) son General, Referencias técnicas, Logística y aduanas, y Plataforma y soporte. Arreglo (`ac82fe5`): una frase en el prompt de `vera/index.ts`, un test en `vera-prompt.test.ts` y un `expect` en E5 que falla con «por ejemplo», «la de» o «la que trate». Sin remedir con modelo real.
+- **Base compartida poblada (`e9a9a05`, PO: «opción 1, solo demo»).** El PO quiere volumen para evaluar la usabilidad de la búsqueda y de la lista de hilos. Se midió primero el proyecto equivocado (`bearingworld-e2e`, que es el de los tests): el `localhost` del PO usa `troxminloxkjwihwfevs`, que es también la demo y producción, con 14 organizaciones, 34.609 líneas publicadas y cuentas reales (JULSA, Fulano, Nakishita, Rey). Alcance acordado: solo las 7 organizaciones de demo.
+  - Descubierto en la carga: la base admite un hilo por pareja (`threads_pair_uniq`) y 5 de las 21 parejas ya tenían el hilo de demo; los elementos simulados van dentro de ellos.
+  - Todo cifrado con la semilla de demo; se comprobó el descifrado en 1.324 casos con un par derivado de nuevo.
+  - Los estados salieron casi todos «oferta pendiente» (la base no deriva «acuerdo alcanzado» con elementos pendientes), así que se repartieron a mano en los 16 hilos nuevos (SQL por el MCP).
+  - `localhost`: ya corría `vite` de esta carpeta en el 5173; se abrió en el panel del navegador.
+- **Pendiente de otras manos:** `docs/Cambios_Frontend_Hilos.md` (del PO, sin seguimiento; plantilla de cambios de UI/UX) y `DESCRIPCION.xlsx` quedan sin comitear: no son de esta sesión.

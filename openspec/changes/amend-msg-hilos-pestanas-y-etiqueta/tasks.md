@@ -10,14 +10,19 @@ Reparto según `design.md` §9 y CLAUDE.md §3. El Coder nunca escribe los tests
       lo de abajo** (la ruta ya admite `?tab=`, `design.md` §4).
 
 ## 1. Base de datos (a mano)
-- [ ] 1.1 `supabase/tests/12_etiqueta_mensaje.sql`, en rojo antes de la migración: los siete casos de `design.md` §8.
-- [ ] 1.2 `0080_etiqueta_de_referencia_en_mensajes.sql`:
+- [x] 1.1 `supabase/tests/12_etiqueta_mensaje.sql`: los casos de `design.md` §8 más cinco de forma (otro hilo, otra
+      marca, mayúsculas, solo una de las dos columnas, etiqueta con cantidad) y la siembra con etiqueta inventada.
+      Comprobado en rojo antes de la migración (15-nov-2026): lo rechazaba `thread_items_shape_chk`.
+- [x] 1.2 `0080_etiqueta_de_referencia_en_mensajes.sql`:
       `thread_items_shape_chk` (rama `MENSAJE`: los dos o ninguno), trigger `app.validate_message_tag()` y excepción en
       `app.guard_thread_item_integrity()` solo para la organización emisora de un `MENSAJE`.
-- [ ] 1.3 Verde en el banco. Añadir `validate_message_tag` a la superficie auditada de `01_schema_smoke.sql`.
-- [ ] 1.4 Aplicar por el MCP en `bearingworld-e2e` y después en producción.
-- [ ] 1.5 Comprobar contra el catálogo (`pg_trigger`, `pg_get_functiondef`, `pg_constraint`), en los dos entornos.
-      Ningún mensaje existente rompe la constraint nueva (todos llevan la etiqueta a `NULL`).
+- [x] 1.3 Verde en el banco (`run.sh` completo, 15-nov-2026: esquema, privilegios, catálogo y frescura). No entra en la
+      superficie auditada de F-155: `validate_message_tag` es `security definer`, y esa superficie es la de las
+      funciones `invoker`.
+- [x] 1.4 Aplicada por el MCP en `bearingworld-e2e` y en producción (15-nov-2026).
+- [x] 1.5 Comprobado contra el catálogo en los dos entornos (15-nov-2026): `0080` es la última migración, constraint
+      nueva, trigger `BEFORE INSERT OR UPDATE OF part_number, brand`, función `security definer` sin `EXECUTE` para
+      `anon`, guardia con el bloque de `0080`. Ningún mensaje lleva etiqueta (producción, 0 de 5; e2e, 0 de 2).
 
 ## 2. Lógica (`app/src/lib/negotiation-tables.ts`, a mano)
 - [ ] 2.1 Unitarios en rojo (`negotiation-tables.test.ts`), los de `design.md` §8.

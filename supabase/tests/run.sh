@@ -113,6 +113,9 @@ run "$ROOT/supabase/tests/10_clave_normalizada.sql"
 echo "· fase 1 · búsqueda en dos fases (0076)"
 run "$ROOT/supabase/tests/11_busqueda_dos_fases.sql"
 
+echo "· fase 1 · etiqueta de referencia en los mensajes (0080)"
+run "$ROOT/supabase/tests/12_etiqueta_mensaje.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

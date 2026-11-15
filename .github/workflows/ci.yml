@@ -155,8 +155,8 @@ jobs:
       # dos proyectos). `bearingworld-e2e` = `ogdhyzgjjbbikjbkhxmu` (`entornos.md`).
       - name: Desplegar las funciones que la suite ejerce (bearingworld-e2e)
         run: |
-          npx supabase functions deploy ban-revoked-member --project-ref ogdhyzgjjbbikjbkhxmu
-          npx supabase functions deploy access-request --no-verify-jwt --project-ref ogdhyzgjjbbikjbkhxmu
+          npx --yes supabase@2.122.0 functions deploy ban-revoked-member --project-ref ogdhyzgjjbbikjbkhxmu
+          npx --yes supabase@2.122.0 functions deploy access-request --no-verify-jwt --project-ref ogdhyzgjjbbikjbkhxmu
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
       - name: Playwright
@@ -303,32 +303,32 @@ jobs:
         # no deja renombrar secretos. Token nuevo, scopeado para CI -- no pasa
         # por el login local de la CLI, que sigue en la cuenta equivocada
         # (F-073). Por eso este paso no hereda ese bloqueo.
-        run: npx supabase functions deploy vera --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy vera --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
       - name: Desplegar la función ban-revoked-member (F-214)
-        run: npx supabase functions deploy ban-revoked-member --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy ban-revoked-member --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
       - name: Desplegar la función register-additional-member (FRU)
-        run: npx supabase functions deploy register-additional-member --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy register-additional-member --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
       - name: Desplegar la función access-request (REG-00, sin sesión)
-        run: npx supabase functions deploy access-request --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy access-request --no-verify-jwt --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
       - name: Desplegar la función register-organization (REG-01, sin sesión)
-        run: npx supabase functions deploy register-organization --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy register-organization --no-verify-jwt --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
       - name: Desplegar la función accept-invitation (INVT-02, sin sesión)
-        run: npx supabase functions deploy accept-invitation --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy accept-invitation --no-verify-jwt --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}
 
@@ -421,6 +421,6 @@ jobs:
           echo "producción sirve la app: $js ($(wc -c < bundle-produccion.js) bytes)"
 
       - name: Desplegar la función ingest-email (INV-04, sin sesión; la firma de SNS es su autenticación)
-        run: npx supabase functions deploy ingest-email --no-verify-jwt --project-ref troxminloxkjwihwfevs
+        run: npx --yes supabase@2.122.0 functions deploy ingest-email --no-verify-jwt --project-ref troxminloxkjwihwfevs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_TOKEN }}

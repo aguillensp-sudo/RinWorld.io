@@ -55,7 +55,6 @@ dicen de qué referencia hablan: la base lo impide (`thread_items_shape_chk`, `0
 - **El HTML aprobado de MSG-02 y MSG-03.** No se edita (§1.3). Si hace falta prototipo nuevo, va aparte.
 - **VERA.** Su prompt y sus herramientas nombran Consultas y Ofertas; se adaptan en una tarea propia, sin cambiar
   qué datos devuelve.
-- **«Ver lo que ve el servidor».** Hoy vive en el historial; dónde queda se decide en `design.md`.
 
 ## Resuelto (PO, 15-nov-2026)
 

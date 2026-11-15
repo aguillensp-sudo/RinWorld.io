@@ -57,9 +57,11 @@ dicen de qué referencia hablan: la base lo impide (`thread_items_shape_chk`, `0
   qué datos devuelve.
 - **«Ver lo que ve el servidor».** Hoy vive en el historial; dónde queda se decide en `design.md`.
 
-## Preguntas abiertas
+## Resuelto (PO, 15-nov-2026)
 
-1. ¿El ítem de navegación sigue diciendo «Hilos», o pasa a «Conversación»?
-2. ¿Qué pestaña del hilo sale al entrar desde cada acceso? Hoy la tabla del PO dice «el hilo de esa empresa» sin
-   pestaña. Propuesta: Soy cliente desde Comprando, Soy proveedor desde Vendiendo, Mensajes desde Empresas.
-3. Cuando VERA prepara una consulta o una oferta dentro del hilo, ¿qué pestaña se abre?
+- El ítem de navegación sigue siendo **Hilos**.
+- Los accesos son los de la tabla del PO: se abre el hilo de esa empresa, por su primera pestaña (Mensajes).
+
+## Pendiente
+
+- Cuando VERA prepara una consulta o una oferta dentro del hilo, qué pestaña se abre. Pendiente por decisión del PO.

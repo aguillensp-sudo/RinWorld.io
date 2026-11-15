@@ -51,7 +51,11 @@ empresa correspondiente cuando se entra desde una acción sobre esa empresa.
 - GIVEN un miembro con un hilo existente con la empresa X
 - WHEN pulsa Ver hilo o Ver acuerdo en Vendiendo, Contactar en Comprando, o la tarjeta o
   Contactar de X en Empresas
-- THEN se abre el hilo con X, sin pasar por CONVERSACIÓN
+- THEN se abre el hilo con X en la pestaña Mensajes, sin pasar por CONVERSACIÓN
+
+#### Scenario: el menú
+- GIVEN un miembro autenticado
+- THEN el ítem de navegación se llama Hilos
 
 ### Requirement: thread-role-tabs
 El sistema SHALL presentar el hilo de una empresa en tres pestañas, de izquierda a

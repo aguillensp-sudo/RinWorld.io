@@ -114,6 +114,17 @@ export interface ThreadItem {
    *  quién puede *actuar* sobre una oferta lo decide `offerActions`. */
   isOwn: boolean;
   createdAt: string;
+  /**
+   * Último cambio de `estado_oferta` o `estado_consulta` (`touch_item_estado`). La
+   * columna Fecha de Soy cliente y Soy proveedor es la del último movimiento de la
+   * negociación, y aceptar o rechazar es un movimiento. Opcional para no tocar los
+   * fixtures; `null` en los mensajes.
+   */
+  estadoChangedAt?: string | null;
+  /**
+   * Referencia de la tarjeta, o etiqueta del mensaje (0080): `null` = conversación
+   * general.
+   */
   partNumber: string | null;
   brand: string | null;
   /**
@@ -404,6 +415,7 @@ interface ItemRow {
   item_type: ItemType;
   sender_org_id: string;
   created_at: string;
+  estado_changed_at: string | null;
   part_number: string | null;
   brand: string | null;
   estado_oferta: OfferState | null;
@@ -429,7 +441,7 @@ interface ItemRow {
  * la diferencia es real: allí hay tres FK hacia `organizations` (F-020).
  */
 const ITEM_COLUMNS =
-  'id, item_type, sender_org_id, created_at, part_number, brand, ' +
+  'id, item_type, sender_org_id, created_at, estado_changed_at, part_number, brand, ' +
   'estado_oferta, estado_consulta, responds_to_item_id, superseded_by_item_id, ' +
   'content_ciphertext, content_iv, ' +
   'thread_item_keys(wrapped_cek, wrap_iv, ephemeral_pubkey), ' +
@@ -475,6 +487,7 @@ export async function fetchThreadItems(threadId: string, orgId: string): Promise
       senderOrgId: r.sender_org_id,
       isOwn: r.sender_org_id === orgId,
       createdAt: r.created_at,
+      estadoChangedAt: r.estado_changed_at,
       partNumber: r.part_number,
       brand: r.brand,
       locationCountry: r.inventory_lines?.location_country ?? null,
@@ -542,7 +555,16 @@ function toWrapped(filas: ItemRow['thread_item_keys']): WrappedForMe | null {
  *    elemento sin claves, que es ilegible para siempre y no se puede reparar
  *    (0012 §5).
  */
-export async function sendMessage(threadId: string, text: string): Promise<void> {
+export async function sendMessage(
+  threadId: string,
+  text: string,
+  /**
+   * La etiqueta «Sobre:» (0080, 0081): una referencia del hilo, o `null` = conversación
+   * general. La base rechaza una referencia que no esté en ninguna consulta ni oferta
+   * del hilo. Por defecto `null`, que es lo que hacía esta función antes de la etiqueta.
+   */
+  tag: { partNumber: string; brand: string } | null = null,
+): Promise<void> {
   const cuerpo = text.trim();
   if (!cuerpo) throw new Error('El mensaje está vacío.');
 
@@ -589,7 +611,28 @@ export async function sendMessage(threadId: string, text: string): Promise<void>
     p_ciphertext: toHex(ciphertext),
     p_iv: toHex(iv),
     p_keys: claves,
+    p_part_number: tag?.partNumber ?? null,
+    p_brand: tag?.brand ?? null,
   });
+  if (error) throw error;
+}
+
+/**
+ * Cambia la etiqueta de un mensaje propio (o la quita, con `null`).
+ *
+ * Es un `update` directo: el texto no cambia, así que no hay nada que cifrar. Lo que se
+ * puede y lo que no lo decide la base (0080): solo la organización que envió el mensaje,
+ * solo una referencia del hilo, y nada más del mensaje se reescribe.
+ */
+export async function retagMessage(
+  itemId: string,
+  tag: { partNumber: string; brand: string } | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('thread_items')
+    .update({ part_number: tag?.partNumber ?? null, brand: tag?.brand ?? null })
+    .eq('id', itemId)
+    .eq('item_type', 'MENSAJE');
   if (error) throw error;
 }
 

@@ -89,13 +89,21 @@ El estado se deduce del último elemento de la cadena, de quién lo envió y del
 | `CONSULTA` · Sin stock | SIN STOCK | SIN STOCK |
 | `OFERTA` del proveedor · Pendiente | POR DECIDIR → Aceptar · Contra-ofertar · Rechazar | ESPERANDO AL CLIENTE |
 | `OFERTA` del cliente · Pendiente | CONTRAOFERTA ENVIADA | CONTRAOFERTA RECIBIDA → Aceptar · Contra-ofertar · Rechazar |
-| `OFERTA` Pendiente con `valid_until` pasado | EXPIRADA → Aceptar igualmente (si la oferta es del proveedor) | EXPIRADA |
+| `OFERTA` Pendiente con `valid_until` pasado | EXPIRADA → Aceptar igualmente · Rechazar, si la recibe el cliente | EXPIRADA → Aceptar igualmente · Rechazar, si es una contraoferta del cliente |
 | `OFERTA` · Aceptada | ACEPTADA | ACEPTADA |
 | `OFERTA` · Rechazada | RECHAZADA | RECHAZADA |
 
 - Las acciones de oferta siguen saliendo de `offerActions` (F-051, F-056): esta tabla solo decide **qué se pinta**,
   no qué es legal. Las de consulta, como hoy (`0055`: solo el receptor, una vez).
+- **Expirada:** se aplica la regla de MSG-03 §4.1, que este change no sustituye. Expirar cambia `Aceptar` por
+  `Aceptar igualmente` y quita `Contra-ofertar`, pero no quita `Rechazar`. Vale para quien recibe la oferta, sea
+  cliente o proveedor: una contraoferta del cliente que expira sigue pudiéndose aceptar.
 - `Superada por contraoferta` nunca es el último elemento de una cadena, así que deja de verse como estado.
+- **Cómo se arma la cadena** (comprobado en `create_offer` y `counter_offer`, 15-nov-2026): la oferta que responde a
+  una consulta lleva `responds_to_item_id` = la consulta; la contraoferta hereda ese mismo `responds_to_item_id`, y la
+  oferta anterior pasa a apuntarle con `superseded_by_item_id`. Se agrupa por esas dos relaciones.
+- Código: `app/src/lib/negotiation-rows.ts`. Es un módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las
+  tablas de hoy hasta que la pantalla nueva las sustituya (tarea 2.9).
 - Sin contenido descifrado no se puede saber si ha expirado. La fila no se da por expirada y las cifras salen como
   `Cifrado`, como hoy.
 

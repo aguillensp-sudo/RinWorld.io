@@ -74,7 +74,9 @@ export type BadgeTone =
   | 'aceptada'
   | 'rechazada'
   | 'superada'
-  | 'expirada';
+  | 'expirada'
+  /** Le toca a la otra parte (`negotiation-rows.ts`: Esperando oferta, Contraoferta enviada…). */
+  | 'espera';
 
 export interface RowBadge {
   label: string;

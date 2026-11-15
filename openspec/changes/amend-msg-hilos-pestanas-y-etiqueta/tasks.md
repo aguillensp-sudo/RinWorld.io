@@ -29,16 +29,21 @@ Reparto según `design.md` §9 y CLAUDE.md §3. El Coder nunca escribe los tests
       Aplicada en e2e y producción el 15-nov-2026; en el catálogo de los dos queda una sola firma, de siete
       argumentos, `invoker`, con `EXECUTE` para `authenticated` y no para `anon`.
 
-## 2. Lógica (`app/src/lib/negotiation-tables.ts`, a mano)
-- [ ] 2.1 Unitarios en rojo (`negotiation-tables.test.ts`), los de `design.md` §8.
-- [ ] 2.2 Cadenas (`design.md` §2.1): raíz, papel y último elemento.
-- [ ] 2.3 Filas por `(part_number, brand, papel)`, con la cadena del último movimiento (§2.2).
-- [ ] 2.4 Estado y acciones según la tabla de §2.3, con las acciones sacadas de `offerActions`.
-- [ ] 2.5 Valores para pintar y valores para filtrar y ordenar; fecha `12 nov 2026` (§3).
-- [ ] 2.6 Filtros combinables y orden (§3), como funciones puras que reciben las filas.
-- [ ] 2.7 Referencias del hilo para «Sobre:» y para el buscador, con la coincidencia de §5.
-- [ ] 2.8 Escritura de la etiqueta: insertar `MENSAJE` con `part_number`/`brand` y cambiarla después (en
-      `thread-detail.ts`, junto al envío de mensajes de hoy).
+## 2. Lógica (`app/src/lib/negotiation-rows.ts`, a mano)
+Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de hoy hasta 2.9 (`design.md` §2.3).
+- [x] 2.1 Unitarios (`negotiation-rows.test.ts`, 37 casos), escritos antes que el código (15-nov-2026). No se corrieron
+      en rojo por separado: el módulo no existía.
+- [x] 2.2 Cadenas (`design.md` §2.1): raíz, papel y último elemento, agrupando por `responds_to_item_id` y
+      `superseded_by_item_id`.
+- [x] 2.3 Filas por `(part_number, brand, papel)`, con la cadena del último movimiento (§2.2).
+- [x] 2.4 Estado y acciones según la tabla de §2.3, con las acciones sacadas de `offerActions`.
+- [x] 2.5 Valores para pintar y valores para filtrar y ordenar; fecha `12 nov 2026` (§3). `ThreadItem` lleva
+      `estadoChangedAt` y `fetchThreadItems` trae `estado_changed_at`.
+- [x] 2.6 Filtros combinables y orden (§3), como funciones puras que reciben las filas.
+- [x] 2.7 Referencias del hilo para «Sobre:» y para el buscador, con la coincidencia de §5, y la línea de tiempo de
+      Mensajes (`messageTimeline`).
+- [x] 2.8 Escritura de la etiqueta en `thread-detail.ts`: `sendMessage(threadId, text, tag)` (por `0081`) y
+      `retagMessage(itemId, tag)`.
 - [ ] 2.9 Retirar `inquiryRows`, `offerRows` y los textos de las tablas de MSG-03 v1.2 cuando nada los use.
 
 ## 3. Contrato de aceptación (a mano, antes del Coder)

@@ -86,6 +86,14 @@ async function vaciarHiloDeSiembra() {
   if (!res.ok) throw new Error(`No se pudo vaciar el hilo de siembra (HTTP ${res.status}).`);
 }
 
+/** Una pestaña del hilo (`amend-msg-hilos-pestanas-y-etiqueta`). */
+const pestana = (page: Page, nombre: 'Mensajes' | 'Soy cliente' | 'Soy proveedor') =>
+  page.getByRole('tab', { name: nombre, exact: true });
+
+/** La fila de la referencia consultada, en la pestaña que esté abierta. */
+const filaNegociacion = (page: Page) =>
+  page.getByRole('tabpanel').getByTestId('negotiation-row').filter({ hasText: REFERENCIA });
+
 /** Entra en Hilos y abre el hilo con esa organización. */
 async function abrirHilo(page: Page, org: string) {
   await topNav(page).getByRole('button', { name: 'Hilos' }).click();
@@ -129,30 +137,34 @@ test.describe('H5 · negociación de punta a punta', () => {
       // 2 · ALPHA ve la consulta y responde con una oferta.
       await signIn(alpha, ALPHA);
       await abrirHilo(alpha, BETA.org);
+      // `amend-msg-hilos-pestanas-y-etiqueta`: la consulta que me hacen está en Soy proveedor.
+      await pestana(alpha, 'Soy proveedor').click();
       await expect(alpha.getByRole('button', { name: 'Responder con oferta' })).toBeVisible();
       await alpha.getByRole('button', { name: 'Responder con oferta' }).click();
       const dialogoAlpha = alpha.getByRole('dialog');
       await dialogoAlpha.getByLabel('Precio unitario').fill('12,50');
       await dialogoAlpha.getByRole('button', { name: 'Enviar oferta' }).click();
       await expect(dialogoAlpha).toBeHidden();
-      // MSG-03 v1.2: el estado es el badge de la tabla de consultas.
-      await expect(alpha.getByTestId('badge').filter({ hasText: 'RESPONDIDA' })).toBeVisible();
+      // La misma fila se llena con la oferta y pasa a esperar al cliente.
+      await expect(filaNegociacion(alpha).getByTestId('badge')).toHaveText('ESPERANDO AL CLIENTE');
 
-      // 3 · BETA ve la oferta y contraoferta.
+      // 3 · BETA ve la oferta en Soy cliente y contraoferta.
       await topNav(beta).getByRole('button', { name: 'Panel' }).click();
       await abrirHilo(beta, ALPHA.org);
+      await pestana(beta, 'Soy cliente').click();
       await expect(beta.getByRole('button', { name: 'Contra-ofertar' })).toBeVisible();
       await beta.getByRole('button', { name: 'Contra-ofertar' }).click();
       const dialogoBeta = beta.getByRole('dialog');
       await dialogoBeta.getByLabel('Precio unitario').fill('11,80');
       await dialogoBeta.getByRole('button', { name: 'Enviar contraoferta' }).click();
       await expect(dialogoBeta).toBeHidden();
-      await expect(beta.getByTestId('badge').filter({ hasText: 'SUPERADA' })).toBeVisible();
+      await expect(filaNegociacion(beta).getByTestId('badge')).toHaveText('CONTRAOFERTA ENVIADA');
 
-      // 4 · ALPHA acepta la contraoferta; el hilo pasa a ACUERDO ALCANZADO.
+      // 4 · ALPHA ve la contraoferta en su Soy proveedor y la acepta; el hilo pasa a ACUERDO ALCANZADO.
       await topNav(alpha).getByRole('button', { name: 'Panel' }).click();
       await abrirHilo(alpha, BETA.org);
-      // MSG-03 v1.2: `Aceptar`, como el HTML aprobado.
+      await pestana(alpha, 'Soy proveedor').click();
+      await expect(filaNegociacion(alpha).getByTestId('badge')).toHaveText('CONTRAOFERTA RECIBIDA');
       await expect(alpha.getByRole('button', { name: 'Aceptar', exact: true })).toBeVisible();
       await alpha.getByRole('button', { name: 'Aceptar', exact: true }).click();
       await expect(alpha.getByText('ACUERDO ALCANZADO').first()).toBeVisible();
@@ -183,7 +195,10 @@ test.describe('H5 · negociación de punta a punta', () => {
       await formularioNuevo.getByLabel('Notas adicionales').fill('Segunda consulta, tras la oferta aceptada');
       await formularioNuevo.getByRole('button', { name: 'Enviar consulta' }).click();
       await expect(formularioNuevo).toBeHidden();
-      await expect(beta.getByTestId('inquiry-row').filter({ hasText: 'PENDIENTE' })).toHaveCount(1);
+      // Una fila por referencia: la de 32007 enseña ahora la negociación nueva, la del último movimiento.
+      await pestana(beta, 'Soy cliente').click();
+      await expect(filaNegociacion(beta)).toHaveCount(1);
+      await expect(filaNegociacion(beta).getByTestId('badge')).toHaveText('ESPERANDO OFERTA');
 
       const segunda = await elegirLinea();
       await expect(segunda.linea).toBeDisabled();

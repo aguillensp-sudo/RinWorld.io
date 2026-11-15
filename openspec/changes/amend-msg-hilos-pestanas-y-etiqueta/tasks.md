@@ -47,11 +47,16 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
 - [ ] 2.9 Retirar `inquiryRows`, `offerRows` y los textos de las tablas de MSG-03 v1.2 cuando nada los use.
 
 ## 3. Contrato de aceptación (a mano, antes del Coder)
-- [ ] 3.1 `app/e2e/thread-tabs.spec.ts`: un escenario por requirement nuevo de la spec (accesos, pestañas, tablas por
-      papel, etiqueta, búsqueda), con Alpha y Beta. Commit en rojo con `[skip ci]` (CLAUDE.md §1.6).
-- [ ] 3.2 Ajustar `messages.spec.ts`: lo que hoy prueba las dos tablas y el historial ascendente pasa a lo nuevo o se
-      borra. Comprobar que `fixture.setup.ts` siembra lo que necesitan los escenarios (consulta sin responder, oferta
-      directa, contraoferta, sin stock, una referencia en las dos tablas).
+- [x] 3.1 `app/e2e/thread-tabs.spec.ts` (15-nov-2026): 17 escenarios con Alpha y Beta, uno o más por requirement
+      (accesos, pestañas, tablas por papel, filtro y orden, etiqueta, búsqueda, vista del servidor). Fija los
+      selectores que la pantalla tiene que dar (cabecera del fichero). Añade por clave de servicio una segunda
+      referencia al hilo Alpha–Nordwälz y la quita al acabar.
+- [x] 3.2 `messages.spec.ts`: la oferta se lee en Soy cliente y el panel del servidor pasa a `thread-tabs.spec.ts`.
+      `zz-h5-negociacion.spec.ts`: cada paso en su pestaña, con los estados nuevos. La siembra no cambia.
+- [x] 3.3 Rojo comprobado contra `bearingworld-e2e` con la pantalla de hoy: 16 de los 17 de `thread-tabs.spec.ts` y los 2
+      adaptados de `messages.spec.ts` fallan porque no hay pestañas, tabla nueva ni buscador; el del menú y los que no dependen de la
+      pantalla nueva siguen verdes. Una primera corrida tardó 3,3 h (equipo suspendido) y caducó la sesión guardada:
+      se repitió y se descartó. `zz-h5-negociacion.spec.ts` no se corrió en local: escribe en el hilo y tarda ~4 min.
 
 ## 4. Pantalla (Coder, por el arnés)
 - [ ] 4.1 `Thread.tsx` con pestañas, `?tab=` y `?ref=` (`design.md` §4).

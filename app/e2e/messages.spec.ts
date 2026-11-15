@@ -198,57 +198,25 @@ test.describe('MSG-02 · un hilo real', () => {
     await expect(page.getByText('Alemania', { exact: true })).toHaveCount(0);
   });
 
-  test('⚠ el historial trae elementos y NO se escapa un byte cifrado al DOM', async ({ page }) => {
+  test('⚠ la oferta se lee descifrada en Soy cliente y NO se escapa un byte cifrado al DOM', async ({ page }) => {
+    // Desde `amend-msg-hilos-pestanas-y-etiqueta` la oferta ya no va en el historial: va en la
+    // tabla de Soy cliente (Alpha la recibe de Nordwälz). Las cifras y las notas descifradas
+    // son la mitad «cliente» del zero-knowledge; la otra mitad, en `thread-tabs.spec.ts`.
     await abrirHilo(page, 'Nordwälz Lager');
-    await expect(page.getByTestId('thread-item').first()).toBeVisible();
-
-    // ANCLA · el contenido se descifra de verdad. Sin esto, los dos asertos de
-    // abajo los cumpliría una pantalla que no pinta nada — que es exactamente lo
-    // que pasaba hasta el día 7, y por eso este test decía otra cosa.
-    // El texto sale del blob cifrado: no existe en ninguna columna en claro.
-    await expect(page.getByText('Precio por unidad para el lote completo.')).toBeVisible();
-    // MSG-03 v1.2: el precio sale en la tabla de ofertas, con el ISO detrás.
-    await expect(page.getByText('4,82 EUR').first()).toBeVisible();
+    await page.getByRole('tab', { name: 'Soy cliente', exact: true }).click();
+    const fila = page.getByTestId('negotiation-row').filter({ hasText: '6205-2RS · NSK' });
+    await expect(fila).toContainText('4,82 EUR');
+    await expect(fila).toHaveAttribute('title', /Precio por unidad para el lote completo\./);
 
     const html = await page.content();
-    // El blob viaja como cadena hex `\x…` por PostgREST. Que el contenido se lea
-    // ARRIBA y el ciphertext no aparezca por ningún lado es la frontera del
-    // zero-knowledge mirada desde donde se ve de verdad — y es la pareja de
-    // pantallas que el panel de vista-servidor del día 11 tiene que enseñar.
     expect(html).not.toContain('content_ciphertext');
     expect(html).not.toMatch(/\\x[0-9a-f]{16,}/i);
-    // Y la CEK envuelta tampoco baja al DOM, aunque la consulta sí la traiga.
     expect(html).not.toContain('wrapped_cek');
   });
 
-  test('⚠ el panel de vista-servidor (Plan §3, día 11): las dos mitades del zero-knowledge en la misma pantalla', async ({
-    page,
-  }) => {
-    // Es la pareja del test de arriba contra la base real, no un mock: prueba
-    // que el toggle que hoy pinta el ciphertext de verdad sigue colapsado por
-    // defecto — el aserto "NO se escapa un byte cifrado" de arriba solo vale
-    // mientras nadie lo haya pulsado — y que al pulsarlo aparecen los dos lados
-    // a la vez, sin que uno tape al otro.
-    await abrirHilo(page, 'Nordwälz Lager');
-    const fila = page.getByTestId('thread-item').filter({ hasText: 'Precio por unidad para el lote completo.' });
-    await expect(fila).toBeVisible();
-
-    expect(await page.content()).not.toMatch(/\\x[0-9a-f]{16,}/i); // ancla: colapsado por defecto
-
-    await fila.getByRole('button', { name: 'Ver lo que ve el servidor' }).click();
-
-    // Arriba, legible: el precio en la tabla de ofertas (MSG-03 v1.2), las notas en la
-    // línea del elemento; abajo, en la misma línea, lo que guarda el servidor.
-    await expect(page.getByText('4,82 EUR').first()).toBeVisible();
-    await expect(fila.getByText('Precio por unidad para el lote completo.')).toBeVisible();
-    // Dos coincidencias a propósito: content_ciphertext Y content_iv son hex de
-    // 16+ caracteres — .first() basta para probar que al menos uno está, sin
-    // fijar cuál.
-    await expect(fila.getByText(/\\x[0-9a-f]{16,}/i).first()).toBeVisible(); // abajo, no
-
-    await fila.getByRole('button', { name: 'Ocultar lo que ve el servidor' }).click();
-    await expect(fila.getByText(/\\x[0-9a-f]{16,}/i)).toHaveCount(0);
-  });
+  // El panel de vista-servidor (Plan §3, día 11) se prueba en `thread-tabs.spec.ts`: desde
+  // `amend-msg-hilos-pestanas-y-etiqueta` es un botón de la pestaña Mensajes que enseña todo el
+  // hilo, no uno por elemento del historial.
 
   test('con la clave de la sesión NO se pinta el indicador de cifrado, y sigue sin haber botón', async ({
     page,
@@ -269,7 +237,8 @@ test.describe('MSG-02 · un hilo real', () => {
      * un aserto que no mide lo que dice.
      */
     await abrirHilo(page, 'Nordwälz Lager');
-    await expect(page.getByText('Precio por unidad para el lote completo.')).toBeVisible(); // ancla
+    await page.getByRole('tab', { name: 'Soy cliente', exact: true }).click();
+    await expect(page.getByTestId('negotiation-row').filter({ hasText: '4,82 EUR' })).toBeVisible(); // ancla
     await expect(
       page.getByText('Contenido cifrado — introduce tu frase de seguridad para ver'),
     ).toHaveCount(0);

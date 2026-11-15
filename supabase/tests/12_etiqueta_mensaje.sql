@@ -246,6 +246,64 @@ select public.t12_falla($q$
           decode('bb','hex'), decode(repeat('05',12),'hex'))$q$,
   'postgres inserta un mensaje con una etiqueta que no es del hilo');
 
+-- -----------------------------------------------------------------------------
+-- 7 · `create_thread_item` (0081): la vía por la que la app envía los mensajes
+-- -----------------------------------------------------------------------------
+create function public.t12_claves() returns jsonb language sql immutable as $$
+  select jsonb_build_array(
+    jsonb_build_object('member_id','12b00000-0000-4000-8000-000000000001',
+                       'wrapped_cek', repeat('11',48), 'wrap_iv', repeat('07',12),
+                       'ephemeral_pubkey', repeat('22',32)),
+    jsonb_build_object('member_id','12b00000-0000-4000-8000-000000000002',
+                       'wrapped_cek', repeat('33',48), 'wrap_iv', repeat('07',12),
+                       'ephemeral_pubkey', repeat('44',32)))
+$$;
+
+select public.t12_como('12b00000-0000-4000-8000-000000000001');
+
+do $$
+declare etiquetado uuid; general uuid;
+begin
+  etiquetado := public.create_thread_item(
+    '12c00000-0000-4000-8000-000000000001', 'MENSAJE', repeat('ab', 48), repeat('07', 12),
+    public.t12_claves(), '6205-2RS', 'SKF');
+  -- Con los cinco argumentos de siempre: la llamada que hace hoy la app sigue valiendo.
+  general := public.create_thread_item(
+    '12c00000-0000-4000-8000-000000000001', 'MENSAJE', repeat('ab', 48), repeat('07', 12),
+    public.t12_claves());
+
+  perform set_config('bw.t12_etiquetado', etiquetado::text, true);
+  perform set_config('bw.t12_general', general::text, true);
+end
+$$;
+
+select public.t12_falla($q$
+  select public.create_thread_item(
+    '12c00000-0000-4000-8000-000000000001', 'MENSAJE', repeat('ab', 48), repeat('07', 12),
+    public.t12_claves(), '6206-ZZ', 'FAG')$q$,
+  'create_thread_item con una etiqueta de otro hilo');
+
+reset role;
+do $$
+begin
+  assert (select (part_number, brand) = ('6205-2RS', 'SKF') from public.thread_items
+           where id = current_setting('bw.t12_etiquetado')::uuid),
+    'create_thread_item no guardó la etiqueta';
+  assert (select part_number is null and brand is null from public.thread_items
+           where id = current_setting('bw.t12_general')::uuid),
+    'create_thread_item sin etiqueta tiene que guardar conversación general';
+  assert not has_function_privilege('anon',
+           'public.create_thread_item(uuid, text, text, text, jsonb, text, text)', 'execute'),
+    'anon no puede ejecutar create_thread_item';
+  assert has_function_privilege('authenticated',
+           'public.create_thread_item(uuid, text, text, text, jsonb, text, text)', 'execute'),
+    'authenticated tiene que poder ejecutar create_thread_item';
+  assert (select count(*) from pg_proc where proname = 'create_thread_item') = 1,
+    'queda más de una create_thread_item: la llamada de cinco argumentos sería ambigua';
+  raise notice 'OK · create_thread_item guarda la etiqueta, sigue valiendo sin ella y no la ejecuta anon';
+end
+$$;
+
 rollback;
 
 \echo 'OK · 12 · etiqueta de referencia en los mensajes'

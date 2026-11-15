@@ -24,6 +24,11 @@ Reparto según `design.md` §9 y CLAUDE.md §3. El Coder nunca escribe los tests
       nueva, trigger `BEFORE INSERT OR UPDATE OF part_number, brand`, función `security definer` sin `EXECUTE` para
       `anon`, guardia con el bloque de `0080`. Ningún mensaje lleva etiqueta (producción, 0 de 5; e2e, 0 de 2).
 
+- [x] 1.6 `0081_create_thread_item_con_etiqueta.sql`: la RPC con la que la app envía mensajes acepta la etiqueta
+      (`p_part_number`, `p_brand`, `default null`). Casos en `12_etiqueta_mensaje.sql` §7, rojo y después verde.
+      Aplicada en e2e y producción el 15-nov-2026; en el catálogo de los dos queda una sola firma, de siete
+      argumentos, `invoker`, con `EXECUTE` para `authenticated` y no para `anon`.
+
 ## 2. Lógica (`app/src/lib/negotiation-tables.ts`, a mano)
 - [ ] 2.1 Unitarios en rojo (`negotiation-tables.test.ts`), los de `design.md` §8.
 - [ ] 2.2 Cadenas (`design.md` §2.1): raíz, papel y último elemento.

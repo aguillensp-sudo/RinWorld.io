@@ -11,9 +11,10 @@ Estado de la base comprobado el 15-nov-2026 por el MCP (`pg_policies`, `pg_trigg
 - `app.guard_thread_item_integrity()` (trigger `BEFORE INSERT OR UPDATE`): en un `UPDATE` hecho por
   `authenticated`, `part_number` y `brand` son de solo lectura para **todos** los tipos. Este trigger es el que
   impide que el autor cambie la etiqueta, y no aparecía en la proposal.
-- Los mensajes se insertan directamente en la tabla (`thread_items_insert_own`), no por RPC. `authenticated` tiene
-  `INSERT` y `UPDATE` sobre todas las columnas; la política `thread_items_update_participant` deja actualizar a
-  cualquiera de las dos partes.
+- La app crea los mensajes con la RPC `create_thread_item` (0012 §5: el elemento y sus claves en la misma
+  transacción), que no aceptaba referencia. `0081` le añade `p_part_number` y `p_brand` con `default null`.
+- `authenticated` tiene `INSERT` y `UPDATE` sobre todas las columnas, y la política `thread_items_update_participant`
+  deja actualizar a cualquiera de las dos partes. Cambiar la etiqueta es un `update` directo, sin RPC.
 
 ### 1.2 Decisión: se reutilizan `part_number` y `brand`
 

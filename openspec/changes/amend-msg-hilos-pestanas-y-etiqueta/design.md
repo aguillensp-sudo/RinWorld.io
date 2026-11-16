@@ -129,8 +129,10 @@ por teclado. No hay columna Notas.
 
 - `Thread.tsx` pasa a tener cabecera (como hoy) + pestañas + buscador abajo (§5). `ThreadHistory`, `InquiriesTable`
   y `OffersTable` se sustituyen por `MessagesTab` y por un único `NegotiationTable`, que recibe el papel.
-- **Ruta:** `/hilos/:threadId` abre Mensajes. La pestaña va en `?tab=cliente|proveedor`, para que el botón Atrás
-  funcione y para que un acceso pueda abrir otra pestaña más adelante (pendiente de VERA, proposal).
+- **Pestaña:** vive en el estado de `Thread.tsx` y no en la URL. La app no tiene rutas: los accesos abren el hilo
+  montando la pantalla (`setOpenThreadId`), así que siempre arranca en Mensajes. *Corregido el 16-nov-2026: este
+  punto decía `?tab=` en la ruta, y no hay ruta donde ponerlo.* Si VERA tiene que abrir otra pestaña (pendiente
+  del PO), irá como prop de `Thread`.
 - **Accesos** (Vendiendo, Comprando, Empresas): ya navegan a `/hilos/:threadId` o crean el hilo y navegan. Se
   comprueba cada uno y ninguno pone `tab`.
 - **Mensajes:** el campo de escribir y el selector «Sobre:» arriba, y los mensajes debajo, del más reciente al más
@@ -151,7 +153,7 @@ guarda la base. Es la prueba E2EE de todo el hilo, así que no se reparte entre 
 - Al elegir una opción se va a Mensajes con el filtro puesto. Se ven los mensajes con esa etiqueta y, mezclados por
   fecha, las consultas y ofertas de esa referencia (de todas las cadenas, también las antiguas), en una línea
   compacta: «Consulta · 500 ud.», «Oferta · 2,10 EUR · 500 ud.», «Contraoferta · …», con su estado.
-- El filtro va en `?ref=` (la referencia está en claro y no es dato de negociación). La ✕ lo quita.
+- El filtro vive en el estado de `Thread.tsx`, por lo mismo que la pestaña. La ✕ lo quita.
 - Con el filtro puesto, «Sobre:» sale con esa referencia elegida.
 
 ## 6. VERA

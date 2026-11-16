@@ -44,7 +44,9 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       Mensajes (`messageTimeline`).
 - [x] 2.8 Escritura de la etiqueta en `thread-detail.ts`: `sendMessage(threadId, text, tag)` (por `0081`) y
       `retagMessage(itemId, tag)`.
-- [ ] 2.9 Retirar `inquiryRows`, `offerRows` y los textos de las tablas de MSG-03 v1.2 cuando nada los use.
+- [ ] 2.9 Retirar `inquiryRows`, `offerRows` y los textos de las tablas de MSG-03 v1.2. **Espera a 5.2:** la guía de
+      VERA los cita y `vera-prompt.test.ts` comprueba que esas citas existen en `ThreadHistory.tsx` y
+      `negotiation-tables.ts`.
 
 ## 3. Contrato de aceptación (a mano, antes del Coder)
 - [x] 3.1 `app/e2e/thread-tabs.spec.ts` (15-nov-2026): 17 escenarios con Alpha y Beta, uno o más por requirement
@@ -69,9 +71,12 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
         e2e en verde. Al probarla salieron tres errores del contrato, ya corregidos: la tabla vacía tiene que
         pintar sus cabeceras; el e2e contaba las `option` de toda la página y no solo las del buscador; y en
         `zz-h5`, `Crear consulta` está en la pestaña Mensajes.
-- [ ] 4.1 Corrida del arnés: `NegotiationTable`, `MessagesTimeline`, `ThreadSearch` y su CSS.
-- [ ] 4.2 Revisión a mano hasta verde, en un commit aparte.
+- [x] 4.1 Corrida del arnés (16-nov-2026, `corrida-01`): VERDE en el intento 2; 0,075 USD (0,058 + 0,017). El intento
+      1 cayó en C1 y C2 por el panel del servidor. Artefacto tal cual en `a2990ea`, con el trailer del Coder.
+- [x] 4.2 Revisión a mano: 0 líneas tocadas en los seis ficheros (1.187 líneas de artefacto). Fila en
+      `harness-review.csv`. C5, pendiente del PO en producción.
 - [ ] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (ya no los monta nadie).
+      **Espera a 5.2**, por lo mismo que 2.9.
 - [ ] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6). Artefacto del Coder y revisión a mano en
       commits separados.
 

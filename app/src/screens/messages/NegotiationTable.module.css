@@ -1,4 +1,220 @@
-/* MARCADOR: lo sustituye la corrida del arnés (harness/tasks/MSG-HILO-PESTANAS.json). */
-.root {
-  display: block;
+.tableOuter {
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  overflow-x: auto;
+  background: var(--bw-cold-white);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-ink-steel);
+}
+
+.th {
+  text-align: left;
+  font-size: var(--bw-size-label);
+  font-weight: 600;
+  color: var(--bw-steel-mist);
+  background: var(--bw-surface-mist);
+  border-bottom: 1px solid var(--bw-line-steel);
+  padding: 8px 10px;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.sortButton {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sortButton:hover {
+  color: var(--bw-ink-steel);
+}
+
+.sortButton:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+  border-radius: var(--bw-radius);
+}
+
+.td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--bw-divider-mist);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.row:hover {
+  background: var(--bw-row-hover-tint);
+}
+
+.filterRow {
+  background: var(--bw-surface-mist);
+}
+
+.filterCell {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--bw-line-steel);
+  background: var(--bw-surface-mist);
+  vertical-align: top;
+}
+
+.filterCell input,
+.filterCell select {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  padding: 3px 5px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  color: var(--bw-input-text);
+  background: var(--bw-cold-white);
+}
+
+.filterCell input:focus,
+.filterCell select:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.filterRange {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.refButton {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-input);
+  color: var(--bw-deep-steel);
+  cursor: pointer;
+  text-align: left;
+}
+
+.refButton:hover {
+  color: var(--bw-calibration-blue);
+  text-decoration: underline;
+}
+
+.refButton:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+  border-radius: var(--bw-radius);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-hint);
+  font-weight: 600;
+  letter-spacing: var(--bw-ls-hint);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.badgePendiente {
+  color: var(--bw-warning-dark);
+  background: var(--bw-badge-warning-bg);
+  border-color: var(--bw-badge-warning-border);
+}
+
+.badgeRespondida {
+  color: var(--bw-primary-dark);
+  background: var(--bw-chip-active-bg);
+  border-color: var(--bw-chip-active-border);
+}
+
+.badgeSinStock {
+  color: var(--bw-ink-steel-soft);
+  background: var(--bw-badge-neutral-bg);
+  border-color: var(--bw-badge-neutral-border);
+}
+
+.badgeAceptada {
+  color: var(--bw-success-dark);
+  background: var(--bw-badge-success-bg);
+  border-color: var(--bw-badge-success-border);
+}
+
+.badgeRechazada {
+  color: var(--bw-sensitive-text);
+  background: var(--bw-sensitive-bg);
+  border-color: var(--bw-badge-danger-border);
+}
+
+.badgeSuperada {
+  color: var(--bw-ink-steel-soft);
+  background: var(--bw-badge-neutral-bg);
+  border-color: var(--bw-badge-neutral-border);
+}
+
+.badgeExpirada {
+  color: var(--bw-warning);
+  background: var(--bw-badge-warning-bg);
+  border-color: var(--bw-badge-warning-border);
+}
+
+.badgeEspera {
+  color: var(--bw-ink-steel-soft);
+  background: var(--bw-badge-neutral-bg);
+  border-color: var(--bw-badge-neutral-border-soft);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actionButton {
+  border: 1px solid var(--bw-line-steel-strong);
+  background: var(--bw-cold-white);
+  border-radius: var(--bw-radius);
+  padding: 4px 8px;
+  font-family: var(--bw-font-body);
+  font-size: 11px;
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+}
+
+.actionButton:hover:not(:disabled) {
+  background: var(--bw-hover-surface);
+  border-color: var(--bw-hover-border);
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+}
+
+.actionButton:disabled {
+  color: var(--bw-hint-steel);
+  cursor: not-allowed;
+  border-color: var(--bw-line-steel);
+  background: var(--bw-surface-mist);
+}
+
+.emptyCell {
+  text-align: center;
+  color: var(--bw-text-secondary);
+  padding: 16px;
+  white-space: normal;
 }

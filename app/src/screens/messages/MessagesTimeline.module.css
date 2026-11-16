@@ -1,4 +1,216 @@
-/* MARCADOR: lo sustituye la corrida del arnés (harness/tasks/MSG-HILO-PESTANAS.json). */
-.root {
-  display: block;
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 28px;
+  font-family: var(--bw-font-body);
+  color: var(--bw-ink-steel);
+}
+
+.chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--bw-tag-border);
+  background: var(--bw-tag-bg);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-deep-steel);
+}
+
+.clearFilter {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: var(--bw-size-label);
+  line-height: 1;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+}
+
+.clearFilter:hover {
+  color: var(--bw-danger);
+}
+
+.clearFilter:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+}
+
+.serverToggle {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--bw-font-mono);
+  font-size: 11px;
+  color: var(--bw-steel-mist);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.serverToggle:hover {
+  color: var(--bw-ink-steel);
+}
+
+.serverToggle:focus-visible {
+  outline: 2px solid var(--bw-calibration-blue);
+  outline-offset: 1px;
+}
+
+.serverView {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bw-tag-bg);
+  border: 1px solid var(--bw-tag-border);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: 10px;
+  color: var(--bw-ink-steel-soft);
+  word-break: break-all;
+}
+
+.serverItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bw-brass-border-soft);
+}
+
+.serverItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.serverRow {
+  display: flex;
+  gap: 6px;
+}
+
+.serverKey {
+  color: var(--bw-steel-mist);
+}
+
+.serverValue {
+  color: var(--bw-ink-steel-soft);
+  word-break: break-all;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-body);
+  line-height: 1.45;
+}
+
+.bubbleOwn {
+  align-self: flex-end;
+  background: var(--bw-deep-steel);
+  color: var(--bw-warm-cream);
+}
+
+.bubbleOther {
+  align-self: flex-start;
+  background: var(--bw-surface-mist);
+  border: 1px solid var(--bw-line-steel);
+  color: var(--bw-ink-steel);
+}
+
+.cardLine {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--bw-radius);
+  font-size: var(--bw-size-label);
+}
+
+.cardConsulta {
+  background: var(--bw-tint-consulta);
+}
+
+.cardOferta {
+  background: var(--bw-tint-oferta);
+}
+
+.cardSummary {
+  color: var(--bw-ink-steel);
+}
+
+.cardState {
+  color: var(--bw-text-secondary);
+  font-size: var(--bw-size-hint);
+  letter-spacing: var(--bw-ls-hint);
+}
+
+.tag {
+  align-self: flex-start;
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--bw-tag-border);
+  background: var(--bw-tag-bg);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-hint);
+  color: var(--bw-deep-steel);
+}
+
+.retag {
+  align-self: flex-start;
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-hint);
+  padding: 2px 6px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  color: var(--bw-input-text);
+  background: var(--bw-cold-white);
+}
+
+.retag:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.meta {
+  display: flex;
+  gap: 8px;
+  font-size: var(--bw-size-hint);
+  color: var(--bw-text-secondary);
+}
+
+.author {
+  font-weight: 600;
+}
+
+.time {
+  color: var(--bw-text-secondary);
+}
+
+.empty {
+  margin: 0;
+  color: var(--bw-text-secondary);
+  font-size: var(--bw-size-label);
 }

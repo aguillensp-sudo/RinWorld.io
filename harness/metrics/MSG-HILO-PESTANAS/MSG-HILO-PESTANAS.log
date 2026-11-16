@@ -1,0 +1,36 @@
+
+==============================================================================
+· corrida arrancada 2026-11-16 13:36:08 · harness/tasks/MSG-HILO-PESTANAS.json
+==============================================================================
+Log de esta corrida: harness\metrics\MSG-HILO-PESTANAS\MSG-HILO-PESTANAS.log (F-115). Lo escribe ella, no quien la lanza.
+Plazo de pared: 1200s por paso del grafo (F-122).
+[intento 1] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/MessagesTimeline.module.css', 'app/src/screens/messages/MessagesTimeline.tsx', 'app/src/screens/messages/NegotiationTable.module.css', 'app/src/screens/messages/NegotiationTable.tsx', 'app/src/screens/messages/ThreadSearch.module.css', 'app/src/screens/messages/ThreadSearch.tsx']
+  tokens in/out: 22252/36378   cache: 0.0% hit
+  coste real: $0.057810   en frio: $0.057810
+  C1: ROJO
+  C2: ROJO
+  C3: verde
+  C4: verde
+  · intento 1 ya en disco: harness\metrics\MSG-HILO-PESTANAS\attempt_1.json (F-122)
+[intento 2] llamando a deepseek-v4-flash (timeout 300s por llamada) ...
+  ficheros: ['app/src/screens/messages/MessagesTimeline.module.css', 'app/src/screens/messages/MessagesTimeline.tsx', 'app/src/screens/messages/NegotiationTable.module.css', 'app/src/screens/messages/NegotiationTable.tsx', 'app/src/screens/messages/ThreadSearch.module.css', 'app/src/screens/messages/ThreadSearch.tsx']
+  tokens in/out: 32043/9500   cache: 69.11% hit
+  coste real: $0.017206   en frio: $0.026639
+  C1: verde
+  C2: verde
+  C3: verde
+  C4: verde
+  · intento 2 ya en disco: harness\metrics\MSG-HILO-PESTANAS\attempt_2.json (F-122)
+  CSV: 2026-11-16,MSG-HILO-PESTANAS,MSG-02,deepseek-v4-flash,22252,36378,0.057810,1,2.3,app/src/screens/messages/MessagesTimeline.module.css;app/src/screens/messages/MessagesTimeline.tsx;app/src/screens/messages/NegotiationTable.module.css;app/src/screens/messages/NegotiationTable.tsx;app/src/screens/messages/ThreadSearch.module.css;app/src/screens/messages/ThreadSearch.tsx,0.00,no,-,-,-,FALLA 2/4 (verde: C3;C4 / rojo: C1;C2). C5 lo da el PO
+  CSV: 2026-11-16,MSG-HILO-PESTANAS,MSG-02,deepseek-v4-flash,32043,9500,0.017206,2,0.5,app/src/screens/messages/MessagesTimeline.module.css;app/src/screens/messages/MessagesTimeline.tsx;app/src/screens/messages/NegotiationTable.module.css;app/src/screens/messages/NegotiationTable.tsx;app/src/screens/messages/ThreadSearch.module.css;app/src/screens/messages/ThreadSearch.tsx,69.11,no,-,-,no,PASA 4/4 (verde: C1;C2;C3;C4 / rojo: -). C5 lo da el PO
+
+Artefactos de esta corrida:
+  harness\metrics\MSG-HILO-PESTANAS\attempt_1.json
+  harness\metrics\MSG-HILO-PESTANAS\attempt_2.json
+  ⚠ Junto con las filas del CSV son la UNICA evidencia de lo que paso. Comitealos ANTES de descartar el working tree (F-115).
+
+  (Con `--corrida NOMBRE` cada corrida escribe en su propia subcarpeta y deja de pisar a la de al lado.)
+
+VEREDICTO: VERDE en 2 intento(s)
+Quedan C5 (¿lo mantendrias?) y la revision del PO: no los da el grafo.

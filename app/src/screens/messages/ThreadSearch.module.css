@@ -1,4 +1,87 @@
-/* MARCADOR: lo sustituye la corrida del arnés (harness/tasks/MSG-HILO-PESTANAS.json). */
-.root {
-  display: block;
+.search {
+  position: relative;
+  border-top: 1px solid var(--bw-line-steel);
+  padding: 12px 28px;
+  background: var(--bw-cold-white);
+  font-family: var(--bw-font-body);
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 10px;
+  color: var(--bw-steel-mist);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  font-family: var(--bw-font-body);
+  font-size: var(--bw-size-input);
+  color: var(--bw-input-text);
+  background: var(--bw-cold-white);
+}
+
+.input::placeholder {
+  color: var(--bw-input-placeholder);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--bw-calibration-blue);
+  box-shadow: var(--bw-focus-halo);
+}
+
+.dropdown {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: calc(100% + 4px);
+  z-index: 5;
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  background: var(--bw-warm-cream);
+  border: 1px solid var(--bw-line-steel-strong);
+  border-radius: var(--bw-radius);
+  box-shadow: 0 6px 18px var(--bw-sidebar-overlay);
+}
+
+.option {
+  padding: 7px 12px;
+  font-family: var(--bw-font-mono);
+  font-size: var(--bw-size-label);
+  color: var(--bw-ink-steel);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--bw-hover-surface);
+}
+
+.option:focus-visible {
+  outline: none;
+  background: var(--bw-hover-surface);
+}
+
+.noMatches {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  color: var(--bw-text-secondary);
+  font-size: var(--bw-size-label);
 }

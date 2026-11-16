@@ -374,9 +374,9 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
       await irA(page, 'Soy cliente');
       const buscador = page.getByRole('searchbox', { name: AYUDA_BUSCADOR });
       await buscador.fill('620');
-      await expect(page.getByRole('option')).toHaveCount(2);
-      await expect(page.getByRole('option', { name: REF_CONSULTA })).toBeVisible();
-      await page.getByRole('option', { name: REF_OFERTA }).click();
+      await expect(page.getByRole('search').getByRole('option')).toHaveCount(2);
+      await expect(page.getByRole('search').getByRole('option', { name: REF_CONSULTA })).toBeVisible();
+      await page.getByRole('search').getByRole('option', { name: REF_OFERTA }).click();
 
       await expect(pestana(page, 'Mensajes')).toHaveAttribute('aria-selected', 'true');
       await expect(page.getByText(`Referencia: ${REF_OFERTA}`)).toBeVisible();
@@ -396,7 +396,7 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     await abrirHilo(page, 'Nordwälz Lager');
     await page.getByRole('searchbox', { name: AYUDA_BUSCADOR }).fill('NU214');
     await expect(page.getByText('No hay ninguna referencia que coincida con «NU214» en este hilo')).toBeVisible();
-    await expect(page.getByRole('option')).toHaveCount(0);
+    await expect(page.getByRole('search').getByRole('option')).toHaveCount(0);
   });
 
   test('«Ver lo que ve el servidor» enseña todo el hilo cifrado, y fuera del panel no baja un byte', async ({

@@ -157,14 +157,38 @@ export const STATUSES_BY_ROLE: Record<Role, NegotiationStatus[]> = {
   ],
 };
 
+/**
+ * Todo literal que el usuario ve en las pestañas, las tablas, la línea de tiempo y el buscador.
+ * Los de la spec van verbatim (`docs/Cambios_Frontend_Hilos.md`, «Acuerdos»); los demás son de la
+ * casa y se dicen aquí una vez. Los botones de acción siguen en `NEGOTIATION_TEXTS` (MSG-03).
+ */
 export const TAB_TEXTS = {
+  tablistLabel: 'Secciones del hilo',
   messages: 'Mensajes',
   cliente: 'Soy cliente',
   proveedor: 'Soy proveedor',
   headers: ['Referencia', 'Cantidad', 'Precio', 'Estado', 'Fecha', 'Plazo', 'Transporte', 'Válida hasta', 'Acciones'],
+  /** Las columnas que se ordenan, en el orden de `headers` (Acciones no se ordena). */
+  sortKeys: ['reference', 'quantity', 'price', 'status', 'date', 'leadTime', 'shipping', 'validUntil'] as SortKey[],
+  filterReference: 'Filtrar Referencia',
+  filterStatus: 'Filtrar Estado',
+  filterAnyStatus: 'Todos',
+  filterFrom: (col: string) => `Filtrar ${col} desde`,
+  filterTo: (col: string) => `Filtrar ${col} hasta`,
+  priceCurrency: 'Moneda del precio',
+  emptyTable: 'No hay nada en esta tabla.',
+  noFilterMatches: 'Ninguna fila cumple los filtros.',
   tagLabel: 'Sobre:',
+  tagPlaceholder: 'Elige una referencia',
   generalConversation: 'Conversación general',
+  retagLabel: 'Cambiar etiqueta',
+  noMessages: 'Este hilo no tiene mensajes todavía.',
+  noTimelineForReference: 'No hay nada sobre esta referencia en el hilo.',
+  serverViewOpen: 'Ver lo que ve el servidor',
+  serverViewClose: 'Ocultar lo que ve el servidor',
+  clearFilter: 'Quitar filtro de referencia',
   searchPlaceholder: 'Busca una referencia dentro de este hilo sobre la que quieras recuperar el contenido de la conversación',
+  searchResultsLabel: 'Referencias del hilo',
   noMatches: (q: string) => `No hay ninguna referencia que coincida con «${q}» en este hilo`,
   filterChip: (ref: string) => `Referencia: ${ref}`,
 } as const;

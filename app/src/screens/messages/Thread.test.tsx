@@ -7,6 +7,32 @@ import {
   HILO, NOW, detail, ofertaConContenido, ofertaRecibida, profile,
 } from './Thread.fixtures';
 
+/** Un mensaje mío sin etiqueta: para el reloj y para un hilo sin referencias. */
+const mensajeMio: ThreadItem = {
+  ...ofertaRecibida,
+  id: 'msg-1',
+  type: 'MENSAJE',
+  isOwn: true,
+  senderOrgId: profile.orgId,
+  partNumber: null,
+  brand: null,
+  offerState: null,
+  inquiryState: null,
+  content: { kind: 'MENSAJE', text: 'Buenos días' },
+};
+
+/** Una consulta que me hacen sobre otra referencia: el hilo pasa a tener dos. */
+const otraReferencia: ThreadItem = {
+  ...ofertaRecibida,
+  id: 'q-2',
+  type: 'CONSULTA',
+  partNumber: '6206-ZZ',
+  brand: 'FAG',
+  offerState: null,
+  inquiryState: 'Pendiente',
+  content: null,
+};
+
 /**
  * CONTRATO DE ACEPTACIÓN · MSG-02 · la pantalla.
  *
@@ -29,12 +55,14 @@ const rejectOffer = vi.fn<(i: string, o: string) => Promise<unknown>>();
 const closeThreadWithoutAgreement = vi.fn<(t: string) => Promise<void>>();
 const revertAgreement = vi.fn<(t: string) => Promise<void>>();
 const counterOffer = vi.fn<(i: string, t: string, c: unknown) => Promise<void>>();
+const sendMessage = vi.fn<(t: string, x: string, g: unknown) => Promise<void>>();
 
 vi.mock('../../lib/thread-detail', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/thread-detail')>()),
   fetchThreadDetail: (t: string, o: string) => fetchThreadDetail(t, o),
   fetchThreadItems: (t: string, o: string) => fetchThreadItems(t, o),
   counterOffer: (i: string, t: string, c: unknown) => counterOffer(i, t, c),
+  sendMessage: (t: string, x: string, g: unknown) => sendMessage(t, x, g),
 }));
 
 vi.mock('../../lib/offers', async (importOriginal) => ({
@@ -58,7 +86,8 @@ vi.mock('../../lib/realtime', () => ({
 }));
 
 const { Thread } = await import('./Thread');
-const { ENCRYPTED_NOTICE } = await import('../../lib/thread-detail');
+const { NEGOTIATION_TEXTS } = await import('../../lib/negotiation-tables');
+const { TAB_TEXTS } = await import('../../lib/negotiation-rows');
 
 beforeEach(() => {
   for (const m of [
@@ -69,6 +98,7 @@ beforeEach(() => {
     closeThreadWithoutAgreement,
     revertAgreement,
     counterOffer,
+    sendMessage,
   ]) {
     m.mockReset();
   }
@@ -82,9 +112,18 @@ beforeEach(() => {
   closeThreadWithoutAgreement.mockResolvedValue(undefined);
   revertAgreement.mockResolvedValue(undefined);
   counterOffer.mockResolvedValue(undefined);
+  sendMessage.mockResolvedValue(undefined);
 });
 
 const pinta = () => render(<Thread profile={profile} threadId={HILO} now={NOW} />);
+
+/**
+ * `amend-msg-hilos-pestanas-y-etiqueta`: el hilo abre en Mensajes, y las ofertas y sus botones
+ * están en Soy cliente o Soy proveedor. La oferta de los fixtures la recibo yo: Soy cliente.
+ */
+async function abrir(user: ReturnType<typeof userEvent.setup>, pestana: 'Mensajes' | 'Soy cliente' | 'Soy proveedor') {
+  await user.click(await screen.findByRole('tab', { name: pestana }));
+}
 
 describe('carga', () => {
   it('pide el hilo y sus elementos con mi organización', async () => {
@@ -106,7 +145,8 @@ describe('carga', () => {
     expect(await screen.findByText(/more than one relationship/)).toBeInTheDocument();
   });
 
-  it('pinta la cabecera y el historial con lo que trajo', async () => {
+  it('pinta la cabecera y, en Soy cliente, la oferta que trajo', async () => {
+    const user = userEvent.setup();
     pinta();
     // ⚠ POR ROL, NO POR TEXTO, y el fallo era MÍO: la §3 pone el nombre de la
     // contraparte DOS veces —en el breadcrumb `Hilos › NSK Europe Ltd` y como
@@ -115,7 +155,10 @@ describe('carga', () => {
     // MSG-03 v1.2 (11-oct): el nombre sale también en la columna `Organización` de
     // las tablas, y una cifra sin clave dice «Cifrado» con el aviso largo en `title`.
     expect((await screen.findAllByRole('button', { name: 'NSK Europe Ltd' }))[0]).toBeInTheDocument();
-    expect(screen.getAllByTitle(ENCRYPTED_NOTICE).length).toBeGreaterThan(0);
+    // `amend-msg-hilos-pestanas-y-etiqueta`: la oferta va en la tabla de Soy cliente, y sin
+    // clave sus cifras dicen «Cifrado».
+    await abrir(user, 'Soy cliente');
+    expect((await screen.findAllByTestId('negotiation-row'))[0]).toHaveTextContent(NEGOTIATION_TEXTS.encrypted);
   });
 });
 
@@ -208,6 +251,7 @@ describe('decidir una oferta', () => {
   it('aceptar avisa a la base con el id del elemento y mi organización', async () => {
     const user = userEvent.setup();
     pinta();
+    await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: 'Aceptar' }));
     expect(acceptOffer).toHaveBeenCalledWith('of-1', profile.orgId);
     await waitFor(() => expect(fetchThreadItems).toHaveBeenCalledTimes(2));
@@ -216,6 +260,7 @@ describe('decidir una oferta', () => {
   it('rechazar, igual', async () => {
     const user = userEvent.setup();
     pinta();
+    await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: 'Rechazar' }));
     expect(rejectOffer).toHaveBeenCalledWith('of-1', profile.orgId);
   });
@@ -232,6 +277,7 @@ describe('decidir una oferta', () => {
     acceptOffer.mockImplementation(() => new Promise<void>((r) => { resolver = () => r(); }));
 
     pinta();
+    await abrir(user, 'Soy cliente');
     const boton = await screen.findByRole('button', { name: 'Aceptar' });
     await user.click(boton);
     await user.click(boton);
@@ -247,6 +293,7 @@ describe('decidir una oferta', () => {
     const user = userEvent.setup();
     acceptOffer.mockRejectedValue(new Error('La oferta ya no estaba pendiente, o es tuya.'));
     pinta();
+    await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: 'Aceptar' }));
     expect(await screen.findByText(/ya no estaba pendiente/)).toBeInTheDocument();
   });
@@ -258,6 +305,7 @@ describe('contraofertar (Plan §3, día 10)', () => {
     const user = userEvent.setup();
     pinta();
 
+    await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: 'Contra-ofertar' }));
     await user.click(screen.getByRole('button', { name: 'Enviar contraoferta' }));
 
@@ -280,6 +328,7 @@ describe('contraofertar (Plan §3, día 10)', () => {
     counterOffer.mockImplementation(() => new Promise<void>((r) => { resolver = () => r(); }));
 
     pinta();
+    await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: 'Contra-ofertar' }));
     const boton = screen.getByRole('button', { name: 'Enviar contraoferta' });
     await user.click(boton);
@@ -295,6 +344,7 @@ describe('contraofertar (Plan §3, día 10)', () => {
     const user = userEvent.setup();
     pinta();
 
+    await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: 'Contra-ofertar' }));
     await user.click(screen.getByRole('button', { name: 'Enviar contraoferta' }));
 
@@ -307,8 +357,94 @@ describe('el reloj', () => {
     // Mismo criterio que MSG-01 y SRCH-01: `new Date()` en el render, no en un
     // `useState` inicial. Los timestamps relativos del hilo son tan sensibles al
     // reloj como la columna Antigüedad de SRCH-01.
+    // Sale en la línea de tiempo de Mensajes; la Fecha de las tablas es absoluta.
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, mensajeMio]);
     pinta();
-    // Sale en el historial y en la columna `Fecha` de las tablas (MSG-03 v1.2).
     expect((await screen.findAllByText(/hace/i)).length).toBeGreaterThan(0);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// amend-msg-hilos-pestanas-y-etiqueta · el montaje de las pestañas y de «Sobre:»
+// -----------------------------------------------------------------------------
+
+describe('las pestañas', () => {
+  it('Mensajes · Soy cliente · Soy proveedor, en ese orden, y abre en Mensajes', async () => {
+    pinta();
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs.map((t) => t.textContent)).toEqual([TAB_TEXTS.messages, TAB_TEXTS.cliente, TAB_TEXTS.proveedor]);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel', { name: TAB_TEXTS.messages })).toBeInTheDocument();
+    // El campo de escribir está en Mensajes, no en las tablas.
+    expect(screen.getByRole('textbox', { name: 'Escribe un mensaje' })).toBeInTheDocument();
+  });
+
+  it('cambiar de pestaña cambia el panel; el buscador se queda en las tres', async () => {
+    const user = userEvent.setup();
+    pinta();
+    await abrir(user, 'Soy proveedor');
+    expect(screen.getByRole('tab', { name: TAB_TEXTS.proveedor })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel', { name: TAB_TEXTS.proveedor })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Escribe un mensaje' })).toBeNull();
+    expect(screen.getByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder })).toBeInTheDocument();
+  });
+
+  it('pulsar la Referencia de una fila lleva a Mensajes con esa referencia en «Sobre:»', async () => {
+    const user = userEvent.setup();
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
+    pinta();
+    await abrir(user, 'Soy cliente');
+    await user.click(await screen.findByRole('button', { name: '6205-2RS · NSK' }));
+    expect(screen.getByRole('tab', { name: TAB_TEXTS.messages })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('combobox', { name: TAB_TEXTS.tagLabel })).toHaveValue('6205-2RS · NSK');
+  });
+
+  it('elegir una referencia en el buscador lleva a Mensajes filtrado', async () => {
+    const user = userEvent.setup();
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
+    pinta();
+    await abrir(user, 'Soy cliente');
+    await user.type(screen.getByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder }), '6206');
+    await user.click(screen.getByRole('option', { name: '6206-ZZ · FAG' }));
+    expect(screen.getByRole('tab', { name: TAB_TEXTS.messages })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText(TAB_TEXTS.filterChip('6206-ZZ · FAG'))).toBeInTheDocument();
+  });
+});
+
+describe('«Sobre:»', () => {
+  it('con una sola referencia sale elegida, y el mensaje se envía con ella', async () => {
+    const user = userEvent.setup();
+    pinta();
+    const sobre = await screen.findByRole('combobox', { name: TAB_TEXTS.tagLabel });
+    expect(sobre).toHaveValue('6205-2RS · NSK');
+    await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
+    await waitFor(() =>
+      expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', { partNumber: '6205-2RS', brand: 'NSK' }),
+    );
+  });
+
+  it('con varias, no se envía hasta elegir; «Conversación general» envía sin etiqueta', async () => {
+    const user = userEvent.setup();
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
+    pinta();
+    const sobre = await screen.findByRole('combobox', { name: TAB_TEXTS.tagLabel });
+    expect(sobre).toHaveValue('');
+    await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
+    expect(screen.getByRole('button', { name: 'Enviar mensaje' })).toBeDisabled();
+
+    await user.selectOptions(sobre, TAB_TEXTS.generalConversation);
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', null));
+  });
+
+  it('sin ninguna referencia en el hilo, conversación general sin preguntar', async () => {
+    const user = userEvent.setup();
+    fetchThreadItems.mockResolvedValue([mensajeMio]);
+    pinta();
+    expect(await screen.findByRole('combobox', { name: TAB_TEXTS.tagLabel })).toHaveValue(TAB_TEXTS.generalConversation);
+    await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', null));
   });
 });

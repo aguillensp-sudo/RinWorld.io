@@ -58,14 +58,20 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       pantalla nueva siguen verdes. Una primera corrida tardó 3,3 h (equipo suspendido) y caducó la sesión guardada:
       se repitió y se descartó. `zz-h5-negociacion.spec.ts` no se corrió en local: escribe en el hilo y tarda ~4 min.
 
-## 4. Pantalla (Coder, por el arnés)
-- [ ] 4.1 `Thread.tsx` con pestañas, `?tab=` y `?ref=` (`design.md` §4).
-- [ ] 4.2 `MessagesTab`: campo de escribir y «Sobre:» arriba, lista descendente, etiqueta en cada mensaje y cambio de
-      etiqueta para el emisor, «Ver lo que ve el servidor» (§4.1) y vista filtrada por referencia (§5).
-- [ ] 4.3 `NegotiationTable` (una para los dos papeles): columnas, notas en tooltip, filtros por cabecera, orden, y
-      pulsar la Referencia lleva a Mensajes con «Sobre:» elegido.
-- [ ] 4.4 Buscador abajo, en las tres pestañas, con lista de coincidencias y aviso sin coincidencias.
-- [ ] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`.
+## 4. Pantalla (Coder, por el arnés: `harness/tasks/MSG-HILO-PESTANAS.json`)
+- [x] 4.0 Preparación a mano (16-nov-2026), en el commit del contrato:
+      - adenda en `UMBRAL-FABRICA-V1.md` §8, antes de construir;
+      - montaje en `Thread.tsx`: pestañas, «Sobre:», formularios de oferta y contraoferta; `sendBlocked` en
+        `ThreadComposer`; todos los literales en `TAB_TEXTS`;
+      - marcadores de `NegotiationTable`, `MessagesTimeline` y `ThreadSearch` (con su CSS);
+      - contrato de unidad (32 pruebas, rojo total) y `Thread.test.tsx` reescrito al montaje nuevo;
+      - comprobado contra una implementación de referencia desechable, que no se comitea: 277 de unidad y los tres
+        e2e en verde. Al probarla salieron tres errores del contrato, ya corregidos: la tabla vacía tiene que
+        pintar sus cabeceras; el e2e contaba las `option` de toda la página y no solo las del buscador; y en
+        `zz-h5`, `Crear consulta` está en la pestaña Mensajes.
+- [ ] 4.1 Corrida del arnés: `NegotiationTable`, `MessagesTimeline`, `ThreadSearch` y su CSS.
+- [ ] 4.2 Revisión a mano hasta verde, en un commit aparte.
+- [ ] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (ya no los monta nadie).
 - [ ] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6). Artefacto del Coder y revisión a mano en
       commits separados.
 

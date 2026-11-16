@@ -200,6 +200,8 @@ test.describe('H5 · negociación de punta a punta', () => {
       await expect(filaNegociacion(beta)).toHaveCount(1);
       await expect(filaNegociacion(beta).getByTestId('badge')).toHaveText('ESPERANDO OFERTA');
 
+      // `Crear consulta` está en el campo de escribir, que vive en la pestaña Mensajes.
+      await pestana(beta, 'Mensajes').click();
       const segunda = await elegirLinea();
       await expect(segunda.linea).toBeDisabled();
       await segunda.selector.getByRole('button', { name: 'Cancelar' }).click();

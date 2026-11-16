@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import {
   counterOffer,
@@ -6,6 +6,8 @@ import {
   markOutOfStock,
   fetchThreadDetail,
   fetchThreadItems,
+  authorLabel,
+  retagMessage,
   sendInquiries,
   sendMessage,
   type OfferContent,
@@ -27,13 +29,49 @@ import { onThreadChanged } from '../../lib/realtime';
 import type { InquiryDraft } from '../../lib/inquiry-form';
 import type { OrgLine } from '../../lib/search';
 import type { VeraDraft } from '../../lib/vera-tools';
+import {
+  TAB_TEXTS,
+  initialTag,
+  messageTimeline,
+  negotiationRows,
+  referenceLabel,
+  threadReferences,
+  type NegotiationAction,
+  type NegotiationRow,
+  type ThreadReference,
+} from '../../lib/negotiation-rows';
 import { ThreadHeader } from './ThreadHeader';
-import { ThreadHistory } from './ThreadHistory';
 import { ThreadComposer } from './ThreadComposer';
+import { OfferCounterForm } from './OfferCounterForm';
+import { NegotiationTable } from './NegotiationTable';
+import { MessagesTimeline } from './MessagesTimeline';
+import { ThreadSearch } from './ThreadSearch';
 import styles from './Thread.module.css';
 
+/** Las tres pestañas del hilo de una empresa, de izquierda a derecha (spec `thread-role-tabs`). */
+type Tab = 'mensajes' | 'cliente' | 'proveedor';
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'mensajes', label: TAB_TEXTS.messages },
+  { key: 'cliente', label: TAB_TEXTS.cliente },
+  { key: 'proveedor', label: TAB_TEXTS.proveedor },
+];
+
 /**
- * MSG-02 · Vista de un Hilo.
+ * «Sobre:» todavía sin tocar por el miembro: sale lo que toque por defecto (la referencia
+ * sola del hilo, la de la búsqueda activa…). En cuanto elige algo, manda lo que eligió.
+ */
+const SIN_ELEGIR = Symbol('sin-elegir');
+
+/**
+ * MSG-02 · Vista de un Hilo, con las tres pestañas de `amend-msg-hilos-pestanas-y-etiqueta`:
+ * Mensajes · Soy cliente · Soy proveedor, y el buscador de referencias abajo.
+ *
+ * Montaje escrito a mano: qué pestaña está abierta, qué dice «Sobre:», qué filtro tiene
+ * Mensajes y qué formulario se abre con cada acción. Lo que se ve lo calcula
+ * `lib/negotiation-rows.ts` y lo pintan `NegotiationTable`, `MessagesTimeline` y
+ * `ThreadSearch` (del arnés). La pestaña vive en el estado de la pantalla, no en la URL: la
+ * app no tiene rutas y los accesos (Vendiendo, Comprando, Empresas) abren el hilo montándolo,
+ * así que siempre arranca en Mensajes (`thread-access-routing`).
  *
  * La pantalla posee todo el estado: detalle, elementos, carga, error y el
  * diálogo de confirmación de «Cerrar sin acuerdo». Tras cada escritura se
@@ -71,6 +109,15 @@ export function Thread({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>('mensajes');
+  /** La búsqueda del hilo: Mensajes enseña solo esta referencia hasta que se quita. */
+  const [refFilter, setRefFilter] = useState<ThreadReference | null>(null);
+  /** Lo elegido en «Sobre:»: una referencia, o `null` = conversación general. */
+  const [tagChoice, setTagChoice] = useState<ThreadReference | null | typeof SIN_ELEGIR>(SIN_ELEGIR);
+  /** Los formularios de oferta que abren las acciones de las tablas. */
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [counteringId, setCounteringId] = useState<string | null>(null);
+  const tabsId = useId();
 
   /**
    * Cerrojo de reentrada. El artefacto tenía un `busy` de estado que **ponía y
@@ -253,14 +300,82 @@ export function Thread({
    * sin volver a leer se quedaría diciendo `CERRADO SIN ACUERDO` encima de un
    * hilo que acaba de abrirse.
    */
-  const handleSend = useCallback(
-    (text: string) => write(() => sendMessage(threadId, text)),
-    [threadId, write],
-  );
-
   // `now` es inyectable para los tests; por defecto se construye en cada render
   // porque los timestamps relativos son tan sensibles al reloj como SRCH-01.
   const nowDate = now ?? new Date();
+
+  const references = useMemo(() => threadReferences(items), [items]);
+  const tables = negotiationRows(items, { viewerOrgId: profile.orgId, now: nowDate });
+  const timeline = useMemo(() => messageTimeline(items, refFilter), [items, refFilter]);
+
+  /**
+   * Lo que dice «Sobre:». Si el miembro no ha elegido: la referencia de la búsqueda activa; si
+   * no, la única del hilo, o conversación general si no hay ninguna; con varias, sin elegir
+   * (`undefined`), y entonces no se envía (spec `message-reference-tag`).
+   */
+  const tag: ThreadReference | null | undefined =
+    tagChoice !== SIN_ELEGIR ? tagChoice : (refFilter ?? initialTag(references));
+
+  const handleSend = useCallback(
+    (text: string) => {
+      if (tag === undefined) return Promise.resolve(false);
+      return write(() => sendMessage(threadId, text, tag));
+    },
+    [threadId, write, tag],
+  );
+
+  /** Cambiar la etiqueta de un mensaje propio. Lo que es legal lo decide la base (0080). */
+  const handleRetag = useCallback(
+    (itemId: string, next: ThreadReference | null) => {
+      void write(() => retagMessage(itemId, next));
+    },
+    [write],
+  );
+
+  const handleAction = useCallback(
+    (row: NegotiationRow, action: NegotiationAction) => {
+      switch (action) {
+        case 'responder':
+          setRespondingId(row.itemId);
+          return;
+        case 'sin-stock':
+          handleOutOfStock(row.itemId);
+          return;
+        case 'aceptar':
+        case 'aceptar-igualmente':
+          void handleAcceptOffer(row.itemId);
+          return;
+        case 'contraofertar':
+          setCounteringId(row.itemId);
+          return;
+        case 'rechazar':
+          void handleRejectOffer(row.itemId);
+          return;
+      }
+    },
+    [handleOutOfStock, handleAcceptOffer, handleRejectOffer],
+  );
+
+  /** Pulsar la Referencia de una fila: a Mensajes, con esa referencia en «Sobre:». */
+  const handleWrite = useCallback((row: NegotiationRow) => {
+    setTagChoice({ partNumber: row.partNumber, brand: row.brand });
+    setTab('mensajes');
+  }, []);
+
+  /** Elegir una referencia en el buscador: a Mensajes, filtrado, sin pulsar nada más. */
+  const handlePick = useCallback((reference: ThreadReference) => {
+    setRefFilter(reference);
+    setTagChoice({ partNumber: reference.partNumber, brand: reference.brand });
+    setTab('mensajes');
+  }, []);
+
+  const responding = respondingId ? items.find((i) => i.id === respondingId) : undefined;
+  const countering = counteringId ? items.find((i) => i.id === counteringId) : undefined;
+  const counterContent = countering?.content?.kind === 'OFERTA' ? countering.content : null;
+
+  const tabId = (t: Tab) => `${tabsId}-tab-${t}`;
+  const panelId = (t: Tab) => `${tabsId}-panel-${t}`;
+  const tagValue = tag === undefined ? '' : tag === null ? TAB_TEXTS.generalConversation : referenceLabel(tag);
 
   return (
     <div className={styles.screen}>
@@ -287,40 +402,130 @@ export function Thread({
 
         {detail && (
           <>
-            <ThreadHistory
-              items={items}
-              threadId={threadId}
-              viewerOrgId={profile.orgId}
-              ownOrgName={profile.orgName}
-              counterpartyName={detail.counterpartyName}
-              now={nowDate}
-              onAcceptOffer={(itemId) => {
-                void handleAcceptOffer(itemId);
-              }}
-              onRejectOffer={(itemId) => {
-                void handleRejectOffer(itemId);
-              }}
-              onCounterOffer={handleCounterOffer}
-              onRespondWithOffer={handleRespondWithOffer}
-              onOutOfStock={handleOutOfStock}
-              onOpenOrganization={(orgId) => onOpenCounterparty?.(orgId)}
-            />
-            {/* D-07-01: el pie se monta en los cinco estados del hilo, CERRADO
-                SIN ACUERDO incluido. La reapertura ocurre cuando alguien vuelve
-                a escribir (0009), así que el campo no puede desaparecer — y
-                desde hoy (D-08-02) ese "volver a escribir" es real. */}
-            <ThreadComposer
-              onSend={handleSend}
-              onCreateOffer={handleCreateOffer}
-              {...(veraDraft !== undefined ? { veraDraft } : {})}
-              {...(onVeraDraftHandled ? { onVeraDraftHandled } : {})}
-              inquiry={{
-                counterpartyId: detail.counterpartyId,
-                counterpartyName: detail.counterpartyName,
-                ownOrgId: profile.orgId,
-                onSubmit: handleCreateInquiry,
-              }}
-            />
+            <div className={styles.tablist} role="tablist" aria-label={TAB_TEXTS.tablistLabel}>
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  id={tabId(t.key)}
+                  aria-selected={tab === t.key}
+                  aria-controls={panelId(t.key)}
+                  tabIndex={tab === t.key ? 0 : -1}
+                  className={`${styles.tab} ${tab === t.key ? styles.tabActive : ''}`}
+                  onClick={() => setTab(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.panel} role="tabpanel" id={panelId(tab)} aria-labelledby={tabId(tab)}>
+              {tab === 'mensajes' ? (
+                <>
+                  {/* D-07-01: el campo de escribir se monta en los cinco estados del hilo, CERRADO
+                      SIN ACUERDO incluido: escribir es lo que lo reabre (0009). Va ARRIBA, encima
+                      de los mensajes (spec `thread-role-tabs`). */}
+                  <div className={styles.tagRow}>
+                    <label className={styles.tagLabel}>
+                      {TAB_TEXTS.tagLabel}
+                      <select
+                        className={styles.tagSelect}
+                        aria-label={TAB_TEXTS.tagLabel}
+                        value={tagValue}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === TAB_TEXTS.generalConversation) {
+                            setTagChoice(null);
+                            return;
+                          }
+                          const r = references.find((x) => x.label === v);
+                          if (r) setTagChoice({ partNumber: r.partNumber, brand: r.brand });
+                        }}
+                      >
+                        {tag === undefined && (
+                          <option value="" disabled>
+                            {TAB_TEXTS.tagPlaceholder}
+                          </option>
+                        )}
+                        {references.map((r) => (
+                          <option key={r.label} value={r.label}>
+                            {r.label}
+                          </option>
+                        ))}
+                        <option value={TAB_TEXTS.generalConversation}>{TAB_TEXTS.generalConversation}</option>
+                      </select>
+                    </label>
+                  </div>
+                  <ThreadComposer
+                    onSend={handleSend}
+                    sendBlocked={tag === undefined}
+                    onCreateOffer={handleCreateOffer}
+                    {...(veraDraft !== undefined ? { veraDraft } : {})}
+                    {...(onVeraDraftHandled ? { onVeraDraftHandled } : {})}
+                    inquiry={{
+                      counterpartyId: detail.counterpartyId,
+                      counterpartyName: detail.counterpartyName,
+                      ownOrgId: profile.orgId,
+                      onSubmit: handleCreateInquiry,
+                    }}
+                  />
+                  <MessagesTimeline
+                    entries={timeline}
+                    allItems={items}
+                    references={references}
+                    filter={refFilter}
+                    onClearFilter={() => setRefFilter(null)}
+                    onRetag={handleRetag}
+                    authorOf={(item) =>
+                      authorLabel(item, { ownOrgName: profile.orgName, counterpartyName: detail.counterpartyName })
+                    }
+                    now={nowDate}
+                  />
+                </>
+              ) : (
+                <NegotiationTable
+                  key={tab}
+                  role={tab}
+                  rows={tab === 'cliente' ? tables.cliente : tables.proveedor}
+                  onAction={handleAction}
+                  onWrite={handleWrite}
+                />
+              )}
+            </div>
+
+            <ThreadSearch references={references} onPick={handlePick} />
+
+            {responding && (
+              <OfferCounterForm
+                partNumber={responding.partNumber ?? ''}
+                brand={responding.brand ?? ''}
+                title="Responder con oferta"
+                hint="Tu oferta responde a esta consulta y la marca como respondida."
+                submitLabel="Enviar oferta"
+                initialQuantity={responding.content?.kind === 'CONSULTA' ? responding.content.quantity : undefined}
+                onCancel={() => setRespondingId(null)}
+                onSubmit={async (content) => {
+                  const ok = await handleRespondWithOffer(responding.id, content);
+                  if (ok) setRespondingId(null);
+                  return ok;
+                }}
+              />
+            )}
+
+            {countering && counterContent && (
+              <OfferCounterForm
+                partNumber={countering.partNumber ?? ''}
+                brand={countering.brand ?? ''}
+                original={counterContent}
+                onCancel={() => setCounteringId(null)}
+                onSubmit={async (content) => {
+                  const ok = await handleCounterOffer(countering.id, threadId, content);
+                  if (ok) setCounteringId(null);
+                  return ok;
+                }}
+              />
+            )}
           </>
         )}
       </div>

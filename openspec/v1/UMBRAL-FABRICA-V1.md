@@ -413,3 +413,30 @@ cierran con lo medido. No se escribe ningún umbral nuevo ni se reabre ninguno.
 - **Instrumento:** las dos deudas de `F-261` (tarifa de `claude-haiku-5-5` y subagentes en el medidor) se saldaron el 17-oct.
 
 *Cierre escrito el 17-oct-2026, después de medir; no cambia ningún umbral de §3.*
+
+---
+
+**Adenda del 16-nov-2026 — vigesimonovena tarea (`MSG-HILO-PESTANAS`, el hilo con tres pestañas).**
+Orden del PO del 15-nov («Sí, lánzala»), dentro del change `amend-msg-hilos-pestanas-y-etiqueta`
+(DECISIONES-V1, 14-nov-2026). **Elegida antes de construir.** Módulo 04. Lo que mide el arnés son **tres
+componentes presentacionales**: la tabla de Soy cliente / Soy proveedor (`NegotiationTable`), la lista de
+la pestaña Mensajes (`MessagesTimeline`) y el buscador del hilo (`ThreadSearch`), con su CSS.
+
+**Precondición a mano, fuera de la tarea:**
+- la capa de datos `lib/negotiation-rows.ts`: filas, estados, acciones, filtros, orden, referencias del hilo,
+  línea de tiempo y todos los literales en `TAB_TEXTS`;
+- las migraciones `0080` y `0081` (la etiqueta del mensaje);
+- el montaje en `Thread.tsx`: pestañas, «Sobre:», formularios de oferta y contraoferta, y el bloqueo de envío
+  en `ThreadComposer`.
+
+**El contrato de `MSG-02` y `MSG-03` cambia, y se dice:** `Thread.test.tsx`, `messages.spec.ts` y
+`zz-h5-negociacion.spec.ts` pasan a buscar la oferta y sus botones en su pestaña. Se reescriben a mano, antes
+de la corrida, en el commit del contrato. Es la spec la que cambió, no el contrato para otra cosa.
+
+**Primera tarea con el prompt de `F-263`** (adenda del 17-oct): no es comparable con las 28 anteriores, y no
+abre una serie.
+
+**Lo que NO es: un punto limpio de las cifras 7 y 8.** Comparte sesión con la capa de datos, las migraciones
+y el contrato.
+
+*§8 ampliado el 16-nov-2026, antes de lanzar la corrida de `MSG-HILO-PESTANAS`.*

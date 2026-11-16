@@ -178,3 +178,21 @@ describe('lo que el pie NO puede prometer', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe('«Sobre:» sin elegir (amend-msg-hilos-pestanas-y-etiqueta)', () => {
+  it('con `sendBlocked` no se envía, ni con el botón ni con Enter; sin él, sí', async () => {
+    const user = userEvent.setup();
+    const onSend = envioOk();
+    const { rerender } = render(<ThreadComposer onSend={onSend} sendBlocked />);
+    const ta = screen.getByRole('textbox', { name: 'Escribe un mensaje' });
+    await user.type(ta, 'Hola');
+    expect(screen.getByRole('button', { name: 'Enviar mensaje' })).toBeDisabled();
+    await user.type(ta, '{Enter}');
+    expect(onSend).not.toHaveBeenCalled();
+
+    rerender(<ThreadComposer onSend={onSend} />);
+    expect(screen.getByRole('button', { name: 'Enviar mensaje' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
+    expect(onSend).toHaveBeenCalledWith('Hola');
+  });
+});

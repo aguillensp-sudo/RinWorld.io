@@ -99,3 +99,80 @@
   cursor: pointer;
   font-family: var(--bw-font-body);
 }
+
+/* --------------------------------------------------------------------------
+   amend-msg-hilos-pestanas-y-etiqueta · pestañas, panel y «Sobre:» (montaje a mano)
+   -------------------------------------------------------------------------- */
+
+.tablist {
+  display: flex;
+  gap: 4px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--bw-line-steel);
+  flex-shrink: 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 10px 14px;
+  font-family: var(--bw-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bw-text-secondary);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--bw-deep-steel);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--bw-focus-halo);
+  outline-offset: -2px;
+}
+
+.tabActive {
+  color: var(--bw-deep-steel);
+  border-bottom-color: var(--bw-brass);
+}
+
+/* El panel es lo único que hace scroll: la cabecera, las pestañas y el buscador se quedan fijos. */
+.panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tagRow {
+  padding: 12px 28px 0;
+}
+
+.tagLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--bw-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bw-text-secondary);
+}
+
+.tagSelect {
+  font-family: var(--bw-font-mono);
+  font-size: 12px;
+  color: var(--bw-input-text);
+  background: var(--bw-cold-white);
+  border: 1px solid var(--bw-line-steel);
+  border-radius: var(--bw-radius);
+  padding: 4px 8px;
+}
+
+.tagSelect:focus-visible {
+  outline: 2px solid var(--bw-focus-halo);
+  outline-offset: 1px;
+}

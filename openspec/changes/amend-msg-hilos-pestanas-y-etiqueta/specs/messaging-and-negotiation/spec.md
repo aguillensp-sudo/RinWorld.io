@@ -166,8 +166,10 @@ ofertas; el texto del mensaje SHALL seguir cifrado.
 - GIVEN un miembro en la pestaña Mensajes de un hilo con las referencias
   `6205-2RS · SKF` y `6206-ZZ · FAG`
 - WHEN va a escribir
-- THEN junto al campo hay un selector «Sobre:» con esas dos referencias y
-  «Conversación general»
+- THEN junto al campo hay un campo «Sobre:» en el que se escribe
+- AND al entrar en él se despliegan debajo «Conversación general» y esas dos referencias, en orden
+  alfanumérico
+- AND al escribir `6206` solo queda `6206-ZZ · FAG`
 - AND el botón de enviar está deshabilitado hasta que elige una opción
 
 #### Scenario: referencia preelegida

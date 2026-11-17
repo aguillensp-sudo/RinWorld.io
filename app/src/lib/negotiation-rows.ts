@@ -179,7 +179,8 @@ export const TAB_TEXTS = {
   emptyTable: 'No hay nada en esta tabla.',
   noFilterMatches: 'Ninguna fila cumple los filtros.',
   tagLabel: 'Sobre:',
-  tagPlaceholder: 'Elige una referencia',
+  tagPlaceholder: 'Escribe una referencia',
+  tagOptionsLabel: 'Referencias para «Sobre:»',
   generalConversation: 'Conversación general',
   retagLabel: 'Cambiar etiqueta',
   noMessages: 'Este hilo no tiene mensajes todavía.',
@@ -534,22 +535,27 @@ export interface ThreadReferenceOption extends ThreadReference {
   label: string;
 }
 
+/** Orden alfanumérico de las referencias (PO, 17-nov-2026): `6205` antes que `6206` y que `22316`. */
+const REF_ORDER = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
+
 /**
  * Las referencias del hilo: las de sus consultas y ofertas, sin repetir. Son las únicas
- * que puede llevar un mensaje (la base rechaza las demás, `0080`). La más reciente primero.
+ * que puede llevar un mensaje (la base rechaza las demás, `0080`). En orden alfanumérico
+ * por referencia y después por marca (PO, 17-nov-2026), en «Sobre:», en el buscador y en
+ * «Cambiar etiqueta».
  */
 export function threadReferences(items: ThreadItem[]): ThreadReferenceOption[] {
-  const seen = new Map<string, { opt: ThreadReferenceOption; at: number }>();
+  const seen = new Map<string, ThreadReferenceOption>();
   for (const i of items) {
     if ((i.type !== 'CONSULTA' && i.type !== 'OFERTA') || !i.partNumber || !i.brand) continue;
     const k = `${i.partNumber}|${i.brand}`;
-    const at = time(i.createdAt);
-    const prev = seen.get(k);
-    if (!prev || at > prev.at) {
-      seen.set(k, { opt: { partNumber: i.partNumber, brand: i.brand, label: referenceLabel(i as ThreadReference) }, at });
+    if (!seen.has(k)) {
+      seen.set(k, { partNumber: i.partNumber, brand: i.brand, label: referenceLabel({ partNumber: i.partNumber, brand: i.brand }) });
     }
   }
-  return [...seen.values()].sort((a, b) => b.at - a.at).map((x) => x.opt);
+  return [...seen.values()].sort(
+    (a, b) => REF_ORDER.compare(a.partNumber, b.partNumber) || REF_ORDER.compare(a.brand, b.brand),
+  );
 }
 
 /** El buscador del hilo: coincidencias parciales con lo escrito, sin mayúsculas ni separadores. */

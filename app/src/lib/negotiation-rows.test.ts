@@ -344,8 +344,12 @@ describe('negotiation-rows · referencias del hilo', () => {
   ];
   const refs = threadReferences(items);
 
-  it('una por par referencia + marca, sin repetir', () => {
-    expect(refs.map((r) => r.label).sort()).toEqual(['6205-2RS · FAG', '6205-2RS · SKF', '6205-ZZ · SKF', '6206-ZZ · SKF']);
+  it('una por par referencia + marca, sin repetir, en orden alfanumérico (referencia y después marca)', () => {
+    expect(refs.map((r) => r.label)).toEqual(['6205-2RS · FAG', '6205-2RS · SKF', '6205-ZZ · SKF', '6206-ZZ · SKF']);
+  });
+  it('el orden alfanumérico compara los números como números', () => {
+    const r = threadReferences([consulta(A, { partNumber: '22316-E' }), consulta(A, { partNumber: '6205-2RS' }), consulta(A, { partNumber: 'NU214' })]);
+    expect(r.map((x) => x.partNumber)).toEqual(['6205-2RS', '22316-E', 'NU214']);
   });
   it('coincidencias parciales, sin mayúsculas ni separadores', () => {
     expect(matchReferences(refs, '6205').map((r) => r.label).sort()).toEqual([

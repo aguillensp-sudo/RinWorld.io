@@ -34,7 +34,6 @@ import {
   initialTag,
   messageTimeline,
   negotiationRows,
-  referenceLabel,
   threadReferences,
   type NegotiationAction,
   type NegotiationRow,
@@ -46,6 +45,7 @@ import { OfferCounterForm } from './OfferCounterForm';
 import { NegotiationTable } from './NegotiationTable';
 import { MessagesTimeline } from './MessagesTimeline';
 import { ThreadSearch } from './ThreadSearch';
+import { TagCombobox } from './TagCombobox';
 import styles from './Thread.module.css';
 
 /** Las tres pestañas del hilo de una empresa, de izquierda a derecha (spec `thread-role-tabs`). */
@@ -375,7 +375,6 @@ export function Thread({
 
   const tabId = (t: Tab) => `${tabsId}-tab-${t}`;
   const panelId = (t: Tab) => `${tabsId}-panel-${t}`;
-  const tagValue = tag === undefined ? '' : tag === null ? TAB_TEXTS.generalConversation : referenceLabel(tag);
 
   return (
     <div className={styles.screen}>
@@ -426,37 +425,11 @@ export function Thread({
                   {/* D-07-01: el campo de escribir se monta en los cinco estados del hilo, CERRADO
                       SIN ACUERDO incluido: escribir es lo que lo reabre (0009). Va ARRIBA, encima
                       de los mensajes (spec `thread-role-tabs`). */}
-                  <div className={styles.tagRow}>
-                    <label className={styles.tagLabel}>
-                      {TAB_TEXTS.tagLabel}
-                      <select
-                        className={styles.tagSelect}
-                        aria-label={TAB_TEXTS.tagLabel}
-                        value={tagValue}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v === TAB_TEXTS.generalConversation) {
-                            setTagChoice(null);
-                            return;
-                          }
-                          const r = references.find((x) => x.label === v);
-                          if (r) setTagChoice({ partNumber: r.partNumber, brand: r.brand });
-                        }}
-                      >
-                        {tag === undefined && (
-                          <option value="" disabled>
-                            {TAB_TEXTS.tagPlaceholder}
-                          </option>
-                        )}
-                        {references.map((r) => (
-                          <option key={r.label} value={r.label}>
-                            {r.label}
-                          </option>
-                        ))}
-                        <option value={TAB_TEXTS.generalConversation}>{TAB_TEXTS.generalConversation}</option>
-                      </select>
-                    </label>
-                  </div>
+                  <TagCombobox
+                    references={references}
+                    value={tag}
+                    onChange={(next) => setTagChoice(next)}
+                  />
                   <ThreadComposer
                     onSend={handleSend}
                     sendBlocked={tag === undefined}

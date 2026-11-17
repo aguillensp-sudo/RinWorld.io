@@ -97,7 +97,7 @@ Empresas (tarjeta de Empresa/botón Contactar)|Pantalla con el hilo de esa empre
 ### Etiqueta de referencia en los mensajes
 - Cada mensaje queda enlazado a una de las referencias que se negocian en ese hilo, o a ninguna si es conversación general (nulo).
 - La etiqueta no se escribe a mano: se elige entre las referencias que existen en el hilo.
-- Junto al campo de escribir hay un selector «Sobre: [referencia ▼]» con las referencias del hilo y la opción «Conversación general».
+- Junto al campo de escribir hay un campo «Sobre:» en el que se escribe. Al escribir, salen debajo las referencias del hilo que coinciden, en orden alfanumérico, y se elige una; «Conversación general» también se puede elegir. (PO, 17-nov-2026: no es una lista desplegable fija.)
   - Si se escribe desde una fila de Soy cliente o Soy proveedor, sale elegida la referencia de esa fila.
   - Si el hilo tiene una sola referencia, sale elegida esa.
   - Si tiene varias, no se puede enviar sin elegir (aunque sea «Conversación general»).

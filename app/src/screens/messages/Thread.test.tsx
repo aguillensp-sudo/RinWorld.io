@@ -433,7 +433,8 @@ describe('«Sobre:»', () => {
     await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
     expect(screen.getByRole('button', { name: 'Enviar mensaje' })).toBeDisabled();
 
-    await user.selectOptions(sobre, TAB_TEXTS.generalConversation);
+    await user.click(sobre);
+    await user.click(screen.getByRole('option', { name: TAB_TEXTS.generalConversation }));
     await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
     await waitFor(() => expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', null));
   });

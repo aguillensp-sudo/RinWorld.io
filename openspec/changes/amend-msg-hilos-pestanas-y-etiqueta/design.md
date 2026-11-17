@@ -135,9 +135,9 @@ por teclado. No hay columna Notas.
   del PO), irá como prop de `Thread`.
 - **Accesos** (Vendiendo, Comprando, Empresas): ya navegan a `/hilos/:threadId` o crean el hilo y navegan. Se
   comprueba cada uno y ninguno pone `tab`.
-- **Mensajes:** el campo de escribir y el selector «Sobre:» arriba, y los mensajes debajo, del más reciente al más
+- **Mensajes:** el buscador y el campo de escribir arriba, y los mensajes debajo, del más reciente al más
   antiguo. El orden de hoy (ascendente con scroll al final) se invierte.
-- **Escribir desde una fila:** al pulsar la Referencia de una fila se va a Mensajes con «Sobre:» ya elegido. No se
+- **Escribir desde una fila:** al pulsar la Referencia de una fila se va a Mensajes filtrado por ella. No se
   añade ninguna acción a la columna Acciones.
 
 ### 4.1 «Ver lo que ve el servidor»
@@ -154,7 +154,9 @@ guarda la base. Es la prueba E2EE de todo el hilo, así que no se reparte entre 
   fecha, las consultas y ofertas de esa referencia (de todas las cadenas, también las antiguas), en una línea
   compacta: «Consulta · 500 ud.», «Oferta · 2,10 EUR · 500 ud.», «Contraoferta · …», con su estado.
 - El filtro vive en el estado de `Thread.tsx`, por lo mismo que la pestaña. La ✕ lo quita.
-- Con el filtro puesto, «Sobre:» sale con esa referencia elegida.
+- La referencia buscada es también la etiqueta de lo que se escribe; sin búsqueda, conversación general. El
+  buscador va arriba en Mensajes, encima del campo de escribir. (PO, 17-nov-2026: se quitó el selector «Sobre:»
+  porque duplicaba el buscador.)
 
 ## 6. VERA
 

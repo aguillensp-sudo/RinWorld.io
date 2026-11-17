@@ -365,7 +365,9 @@ describe('el reloj', () => {
 });
 
 // -----------------------------------------------------------------------------
-// amend-msg-hilos-pestanas-y-etiqueta · el montaje de las pestañas y de «Sobre:»
+// amend-msg-hilos-pestanas-y-etiqueta · el montaje de las pestañas y del buscador.
+// «Sobre:» se quitó porque duplicaba el buscador (PO, 17-nov-2026): lo que se escribe va
+// etiquetado con la referencia buscada, y sin búsqueda es conversación general.
 // -----------------------------------------------------------------------------
 
 describe('las pestañas', () => {
@@ -375,77 +377,62 @@ describe('las pestañas', () => {
     expect(tabs.map((t) => t.textContent)).toEqual([TAB_TEXTS.messages, TAB_TEXTS.cliente, TAB_TEXTS.proveedor]);
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel', { name: TAB_TEXTS.messages })).toBeInTheDocument();
-    // El campo de escribir está en Mensajes, no en las tablas.
+    // El campo de escribir y el buscador están en Mensajes; «Sobre:» ya no existe.
     expect(screen.getByRole('textbox', { name: 'Escribe un mensaje' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Sobre:' })).toBeNull();
   });
 
-  it('cambiar de pestaña cambia el panel; el buscador se queda en las tres', async () => {
+  it('el buscador va arriba en Mensajes, encima del campo de escribir; no en las tablas', async () => {
     const user = userEvent.setup();
     pinta();
+    const buscador = await screen.findByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder });
+    const campo = screen.getByRole('textbox', { name: 'Escribe un mensaje' });
+    expect(buscador.compareDocumentPosition(campo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await abrir(user, 'Soy proveedor');
     expect(screen.getByRole('tab', { name: TAB_TEXTS.proveedor })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tabpanel', { name: TAB_TEXTS.proveedor })).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'Escribe un mensaje' })).toBeNull();
-    expect(screen.getByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder })).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder })).toBeNull();
   });
 
-  it('pulsar la Referencia de una fila lleva a Mensajes con esa referencia en «Sobre:»', async () => {
+  it('pulsar la Referencia de una fila lleva a Mensajes filtrado por esa referencia', async () => {
     const user = userEvent.setup();
     fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
     pinta();
     await abrir(user, 'Soy cliente');
     await user.click(await screen.findByRole('button', { name: '6205-2RS · NSK' }));
     expect(screen.getByRole('tab', { name: TAB_TEXTS.messages })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('combobox', { name: TAB_TEXTS.tagLabel })).toHaveValue('6205-2RS · NSK');
-  });
-
-  it('elegir una referencia en el buscador lleva a Mensajes filtrado', async () => {
-    const user = userEvent.setup();
-    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
-    pinta();
-    await abrir(user, 'Soy cliente');
-    await user.type(screen.getByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder }), '6206');
-    await user.click(screen.getByRole('option', { name: '6206-ZZ · FAG' }));
-    expect(screen.getByRole('tab', { name: TAB_TEXTS.messages })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText(TAB_TEXTS.filterChip('6206-ZZ · FAG'))).toBeInTheDocument();
+    expect(screen.getByText(TAB_TEXTS.filterChip('6205-2RS · NSK'))).toBeInTheDocument();
   });
 });
 
-describe('«Sobre:»', () => {
-  it('con una sola referencia sale elegida, y el mensaje se envía con ella', async () => {
-    const user = userEvent.setup();
-    pinta();
-    const sobre = await screen.findByRole('combobox', { name: TAB_TEXTS.tagLabel });
-    expect(sobre).toHaveValue('6205-2RS · NSK');
-    await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
-    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
-    await waitFor(() =>
-      expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', { partNumber: '6205-2RS', brand: 'NSK' }),
-    );
-  });
-
-  it('con varias, no se envía hasta elegir; «Conversación general» envía sin etiqueta', async () => {
+describe('lo que se escribe va sobre la referencia buscada', () => {
+  it('sin búsqueda, conversación general', async () => {
     const user = userEvent.setup();
     fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
     pinta();
-    const sobre = await screen.findByRole('combobox', { name: TAB_TEXTS.tagLabel });
-    expect(sobre).toHaveValue('');
-    await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
-    expect(screen.getByRole('button', { name: 'Enviar mensaje' })).toBeDisabled();
-
-    await user.click(sobre);
-    await user.click(screen.getByRole('option', { name: TAB_TEXTS.generalConversation }));
+    await user.type(await screen.findByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
     await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
     await waitFor(() => expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', null));
   });
 
-  it('sin ninguna referencia en el hilo, conversación general sin preguntar', async () => {
+  it('con una referencia buscada, filtra y el mensaje la lleva; la ✕ vuelve a general', async () => {
     const user = userEvent.setup();
-    fetchThreadItems.mockResolvedValue([mensajeMio]);
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
     pinta();
-    expect(await screen.findByRole('combobox', { name: TAB_TEXTS.tagLabel })).toHaveValue(TAB_TEXTS.generalConversation);
+    await user.type(await screen.findByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder }), '6206');
+    await user.click(screen.getByRole('option', { name: '6206-ZZ · FAG' }));
+    expect(screen.getByText(TAB_TEXTS.filterChip('6206-ZZ · FAG'))).toBeInTheDocument();
+
     await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Hola');
     await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
-    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', null));
+    await waitFor(() =>
+      expect(sendMessage).toHaveBeenCalledWith(HILO, 'Hola', { partNumber: '6206-ZZ', brand: 'FAG' }),
+    );
+
+    await user.click(screen.getByRole('button', { name: TAB_TEXTS.clearFilter }));
+    await user.type(screen.getByRole('textbox', { name: 'Escribe un mensaje' }), 'Adiós');
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
+    await waitFor(() => expect(sendMessage).toHaveBeenLastCalledWith(HILO, 'Adiós', null));
   });
 });

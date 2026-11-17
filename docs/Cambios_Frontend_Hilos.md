@@ -97,10 +97,8 @@ Empresas (tarjeta de Empresa/botón Contactar)|Pantalla con el hilo de esa empre
 ### Etiqueta de referencia en los mensajes
 - Cada mensaje queda enlazado a una de las referencias que se negocian en ese hilo, o a ninguna si es conversación general (nulo).
 - La etiqueta no se escribe a mano: se elige entre las referencias que existen en el hilo.
-- Junto al campo de escribir hay un campo «Sobre:» en el que se escribe. Al escribir, salen debajo las referencias del hilo que coinciden, en orden alfanumérico, y se elige una; «Conversación general» también se puede elegir. (PO, 17-nov-2026: no es una lista desplegable fija.)
-  - Si se escribe desde una fila de Soy cliente o Soy proveedor, sale elegida la referencia de esa fila.
-  - Si el hilo tiene una sola referencia, sale elegida esa.
-  - Si tiene varias, no se puede enviar sin elegir (aunque sea «Conversación general»).
+- La etiqueta es la referencia elegida en el buscador, que va justo encima del campo de escribir. Sin ninguna referencia buscada, el mensaje es conversación general. (PO, 17-nov-2026: se quita el campo «Sobre:» porque duplicaba el buscador.)
+  - Si se escribe desde una fila de Soy cliente o Soy proveedor, se abre Mensajes buscando la referencia de esa fila.
 - Cada mensaje enseña su etiqueta (p. ej. 6205-2RS · SKF). Los de conversación general no llevan ninguna.
 - Quien envió el mensaje puede cambiarle la etiqueta después.
 - Los mensajes que ya existen quedan como conversación general; sus autores pueden etiquetarlos.
@@ -108,10 +106,10 @@ Empresas (tarjeta de Empresa/botón Contactar)|Pantalla con el hilo de esa empre
 - Requiere cambiar la base de datos: hoy un mensaje no puede llevar referencia.
 
 ### Búsqueda (Campo &1)
-- Abajo del todo, dentro del hilo, visible en las tres pestañas. Con lupa y el texto de ayuda: «Busca una referencia dentro de este hilo sobre la que quieras recuperar el contenido de la conversación».
+- Arriba en la pestaña Mensajes, justo encima del campo de escribir, donde estaba «Sobre:» (PO, 17-nov-2026). Con lupa y el texto de ayuda: «Busca una referencia dentro de este hilo sobre la que quieras recuperar el contenido de la conversación».
 - Coincidencias parciales: «6205» encuentra 6205-2RS y 6205-ZZ. Cada opción va con su marca (6205-2RS · SKF, 6205-2RS · FAG).
 - La lista se despliega mientras se escribe y solo se puede elegir una. Al elegirla se lanza la búsqueda, sin botón «Buscar».
-- Al elegir, se pasa a la pestaña Mensajes y se ven solo los mensajes etiquetados con esa referencia, junto con sus consultas y ofertas, el más reciente arriba.
+- Al elegir, se ven solo los mensajes etiquetados con esa referencia, junto con sus consultas y ofertas, el más reciente arriba.
 - Arriba aparece la etiqueta «Referencia: 6205-2RS · SKF ✕». La ✕ vuelve a la conversación completa.
 - Los mensajes de conversación general solo se ven en la conversación completa.
 - Sin coincidencias: aviso debajo del buscador «No hay ninguna referencia que coincida con «…» en este hilo».

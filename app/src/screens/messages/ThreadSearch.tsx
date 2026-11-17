@@ -13,7 +13,7 @@ interface ThreadSearchProps {
 }
 
 /**
- * El buscador de referencias del hilo, la barra al pie de las tres pestañas.
+ * El buscador de referencias del hilo, arriba en la pestaña Mensajes.
  *
  * Presentacional: las coincidencias las decide `matchReferences`, no la pieza. Con
  * texto y coincidencias despliega la lista; elegir una lanza `onPick` y vacía el

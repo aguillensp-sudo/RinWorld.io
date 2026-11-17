@@ -51,13 +51,7 @@ export function ThreadComposer({
   inquiry,
   veraDraft,
   onVeraDraftHandled,
-  sendBlocked = false,
 }: {
-  /**
-   * El envío espera a algo que no es el texto: «Sobre:» sin elegir en un hilo con varias
-   * referencias (`amend-msg-hilos-pestanas-y-etiqueta`). Ni el botón ni Enter envían.
-   */
-  sendBlocked?: boolean;
   /** `Crear consulta` (MSG-03 §3.2, F-249). Sin esta prop el botón no se pinta. */
   inquiry?: InquiryCreation;
   /**
@@ -150,7 +144,7 @@ export function ThreadComposer({
   const vacio = texto.trim().length === 0;
 
   const enviar = async () => {
-    if (vacio || enviando || sendBlocked) return;
+    if (vacio || enviando) return;
     setEnviando(true);
     try {
       if (await onSend(texto.trim())) setTexto('');
@@ -194,7 +188,7 @@ export function ThreadComposer({
           type="button"
           className={styles.sendButton}
           aria-label="Enviar mensaje"
-          disabled={vacio || enviando || sendBlocked}
+          disabled={vacio || enviando}
           onClick={() => {
             void enviar();
           }}

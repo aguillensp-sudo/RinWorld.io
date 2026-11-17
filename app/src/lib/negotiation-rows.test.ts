@@ -7,7 +7,6 @@ import type { OfferContent, ThreadItem } from './thread-detail';
 import {
   type NegotiationRow,
   filterRows,
-  initialTag,
   matchReferences,
   messageTimeline,
   negotiationRows,
@@ -332,7 +331,7 @@ describe('negotiation-rows · filtros', () => {
 });
 
 // -----------------------------------------------------------------------------
-// §5 · referencias del hilo, «Sobre:» y la vista filtrada de Mensajes
+// §5 · referencias del hilo, el buscador y la vista filtrada de Mensajes
 // -----------------------------------------------------------------------------
 describe('negotiation-rows · referencias del hilo', () => {
   const items = [
@@ -360,11 +359,6 @@ describe('negotiation-rows · referencias del hilo', () => {
     expect(matchReferences(refs, '6205 2rs')).toHaveLength(2);
     expect(matchReferences(refs, 'NU214')).toEqual([]);
     expect(matchReferences(refs, '  ')).toEqual([]);
-  });
-  it('«Sobre:» preelegido con una sola referencia; sin elegir con varias', () => {
-    expect(initialTag(threadReferences([consulta(A)]))).toEqual({ partNumber: '6205-2RS', brand: 'SKF' });
-    expect(initialTag(refs)).toBeUndefined();
-    expect(initialTag([])).toBeNull();
   });
 });
 

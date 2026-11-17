@@ -75,6 +75,10 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       1 cayó en C1 y C2 por el panel del servidor. Artefacto tal cual en `a2990ea`, con el trailer del Coder.
 - [x] 4.2 Revisión a mano: 0 líneas tocadas en los seis ficheros (1.187 líneas de artefacto). Fila en
       `harness-review.csv`. C5, pendiente del PO en producción.
+- [x] 4.3 C5 del PO (17-nov-2026), a mano: «Sobre:» pasó primero a campo escribible y después se quitó, porque
+      duplicaba el buscador (decisión del PO). El buscador sube a su sitio, arriba en Mensajes, y la etiqueta de lo
+      que se escribe es la referencia buscada; sin búsqueda, conversación general. Fuera `TagCombobox`,
+      `initialTag` y `sendBlocked`.
 - [ ] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (ya no los monta nadie).
       **Espera a 5.2**, por lo mismo que 2.9.
 - [ ] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6). Artefacto del Coder y revisión a mano en

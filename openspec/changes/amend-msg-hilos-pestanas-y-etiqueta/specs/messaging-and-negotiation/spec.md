@@ -162,21 +162,19 @@ ninguna si es conversación general. La etiqueta SHALL ir en claro, como en cons
 ofertas; el texto del mensaje SHALL seguir cifrado.
 [Origen: `docs/Cambios_Frontend_Hilos.md`, «Etiqueta de referencia en los mensajes»]
 
-#### Scenario: selector al escribir
+#### Scenario: la etiqueta es la referencia buscada
 - GIVEN un miembro en la pestaña Mensajes de un hilo con las referencias
   `6205-2RS · SKF` y `6206-ZZ · FAG`
-- WHEN va a escribir
-- THEN junto al campo hay un campo «Sobre:» en el que se escribe
-- AND al entrar en él se despliegan debajo «Conversación general» y esas dos referencias, en orden
-  alfanumérico
-- AND al escribir `6206` solo queda `6206-ZZ · FAG`
-- AND el botón de enviar está deshabilitado hasta que elige una opción
+- WHEN ha elegido `6206-ZZ · FAG` en el buscador y escribe un mensaje
+- THEN el mensaje se envía etiquetado `6206-ZZ · FAG`
+- AND sin ninguna referencia buscada, el mensaje se envía como conversación general
+- AND no hay un selector «Sobre:» aparte: lo quitó el PO el 17-nov-2026 porque duplicaba el
+  buscador
 
-#### Scenario: referencia preelegida
-- GIVEN un miembro que escribe desde una fila de Soy cliente o Soy proveedor, o en un hilo
-  con una sola referencia
-- WHEN se abre el campo de escribir
-- THEN el selector «Sobre:» sale con esa referencia elegida
+#### Scenario: escribir desde una fila
+- GIVEN un miembro en Soy cliente o Soy proveedor
+- WHEN pulsa la Referencia de una fila
+- THEN se abre la pestaña Mensajes filtrada por esa referencia, y lo que escriba la lleva
 
 #### Scenario: solo referencias del hilo
 - GIVEN un mensaje etiquetado con una referencia que no existe en ninguna consulta ni
@@ -195,8 +193,8 @@ ofertas; el texto del mensaje SHALL seguir cifrado.
 - THEN no llevan etiqueta y cuentan como conversación general
 
 ### Requirement: thread-reference-search
-El sistema SHALL ofrecer, abajo de la pantalla del hilo y en las tres pestañas, un campo de
-búsqueda con lupa y el texto de ayuda «Busca una referencia dentro de este hilo sobre la
+El sistema SHALL ofrecer, arriba de la pestaña Mensajes y encima del campo de escribir
+(PO, 17-nov-2026: antes iba abajo y en las tres pestañas), un campo de búsqueda con lupa y el texto de ayuda «Busca una referencia dentro de este hilo sobre la
 que quieras recuperar el contenido de la conversación». La búsqueda SHALL casar con las
 referencias del hilo, no con el texto de los mensajes.
 [Origen: `docs/Cambios_Frontend_Hilos.md`, §2.2 y «Búsqueda (Campo &1)»]
@@ -210,8 +208,7 @@ referencias del hilo, no con el texto de los mensajes.
 #### Scenario: elegir una referencia
 - GIVEN la lista del escenario anterior
 - WHEN el miembro elige `6205-2RS · SKF`
-- THEN se abre la pestaña Mensajes sin pulsar ningún botón más
-- AND se ven solo los mensajes etiquetados con esa referencia y sus consultas y ofertas,
+- THEN, sin pulsar ningún botón más, se ven solo los mensajes etiquetados con esa referencia y sus consultas y ofertas,
   del más reciente al más antiguo
 - AND arriba aparece «Referencia: 6205-2RS · SKF ✕»
 - AND los mensajes de conversación general no aparecen
@@ -220,6 +217,7 @@ referencias del hilo, no con el texto de los mensajes.
 - GIVEN la pestaña Mensajes filtrada por una referencia
 - WHEN el miembro pulsa la ✕
 - THEN se vuelve a ver la conversación completa
+- AND lo que escriba a partir de ahí es conversación general
 
 #### Scenario: sin coincidencias
 - GIVEN un hilo sin ninguna referencia que case con `NU214`

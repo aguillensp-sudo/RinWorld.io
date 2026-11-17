@@ -1,6 +1,7 @@
+/* Arriba en Mensajes, donde estaba «Sobre:» (PO, 17-nov-2026): la lista se abre hacia abajo. */
 .search {
   position: relative;
-  border-top: 1px solid var(--bw-line-steel);
+  border-bottom: 1px solid var(--bw-line-steel);
   padding: 12px 28px;
   background: var(--bw-cold-white);
   font-family: var(--bw-font-body);
@@ -45,7 +46,7 @@
   position: absolute;
   left: 28px;
   right: 28px;
-  bottom: calc(100% + 4px);
+  top: calc(100% - 8px);
   z-index: 5;
 }
 

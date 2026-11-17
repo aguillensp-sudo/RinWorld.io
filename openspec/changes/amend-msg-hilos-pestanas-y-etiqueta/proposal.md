@@ -28,8 +28,8 @@ dicen de qué referencia hablan: la base lo impide (`thread_items_shape_chk`, `0
   combinables por columna, salvo Acciones. Orden por defecto, lo más reciente arriba; reordenable por cabecera.
 - **Estados por papel**, no por tipo de elemento (ver la spec).
 - **Etiqueta de referencia en los mensajes.** Cada `MENSAJE` puede llevar una referencia de las que existen en el
-  hilo, o ninguna (conversación general). Se elige en un selector «Sobre:». No se puede enviar sin elegir si el
-  hilo tiene más de una referencia. El autor puede cambiarla después. Va en claro, como ya va en consultas y
+  hilo, o ninguna (conversación general). Es la referencia elegida en el buscador del hilo; sin búsqueda,
+  conversación general (PO, 17-nov-2026: el selector «Sobre:» se quitó porque duplicaba el buscador). El autor puede cambiarla después. Va en claro, como ya va en consultas y
   ofertas; el texto sigue cifrado.
 - **Búsqueda en el hilo** por etiqueta: lista de referencias del hilo que casan con lo escrito, se elige una, y la
   pestaña Mensajes se filtra a esa referencia hasta que se quita el filtro.

@@ -19,13 +19,14 @@ import { NORDWALZ_MIEMBRO, NORDWALZ_ORG } from '../../supabase/seed/demo-content
  *     `title` de la fila. La Fecha lleva `aria-sort="descending"` al abrir.
  *   · Cada cabecera ordena con un botón que se llama como ella; Referencia filtra con un
  *     campo `Filtrar Referencia`.
- *   · La Referencia de una fila es un botón que lleva a Mensajes con «Sobre:» elegido.
- *   · El campo de escribir (`Escribe un mensaje`) va encima de los mensajes, con un
- *     `combobox` «Sobre:». La etiqueta de un mensaje va en `message-tag`; quien lo envió la
- *     cambia con el `combobox` `Cambiar etiqueta`.
- *   · El buscador es un `searchbox` cuyo nombre es el texto de ayuda de la spec; sus
- *     coincidencias son `option`; el filtro activo, «Referencia: … ✕», con el botón
- *     `Quitar filtro de referencia`.
+ *   · La Referencia de una fila es un botón que lleva a Mensajes filtrado por ella.
+ *   · El campo de escribir (`Escribe un mensaje`) va encima de los mensajes. La etiqueta de un
+ *     mensaje va en `message-tag`; quien lo envió la cambia con el `combobox` `Cambiar etiqueta`.
+ *   · El buscador es un `searchbox` cuyo nombre es el texto de ayuda de la spec, arriba en
+ *     Mensajes (donde estaba «Sobre:», quitado por el PO el 17-nov-2026 porque lo duplicaba);
+ *     sus coincidencias son `option`; el filtro activo, «Referencia: … ✕», con el botón
+ *     `Quitar filtro de referencia`. Lo que se escribe va etiquetado con la referencia buscada;
+ *     sin búsqueda, es conversación general.
  *   · «Ver lo que ve el servidor» es un botón de la pestaña Mensajes que abre
  *     `server-view` con todos los elementos del hilo tal como los guarda la base.
  *   · Lo que ya había en el hilo sigue: la cabecera, `Acciones del hilo`, `Crear consulta`
@@ -119,9 +120,15 @@ async function irA(page: Page, nombre: 'Mensajes' | 'Soy cliente' | 'Soy proveed
 
 const fila = (panel: Locator, ref: string) => panel.getByTestId('negotiation-row').filter({ hasText: ref });
 const escribir = (page: Page) => page.getByRole('textbox', { name: 'Escribe un mensaje' });
-const sobre = (page: Page) => page.getByRole('combobox', { name: 'Sobre:' });
-const opcionesSobre = (page: Page) =>
-  page.getByRole('listbox', { name: 'Referencias para «Sobre:»' }).getByRole('option');
+const buscador = (page: Page) => page.getByRole('searchbox', { name: AYUDA_BUSCADOR });
+const opcionesBuscador = (page: Page) => page.getByRole('search').getByRole('option');
+
+/** Busca una referencia en Mensajes y la elige: filtra y etiqueta lo que se escriba. */
+async function buscar(page: Page, texto: string, ref: string) {
+  await buscador(page).fill(texto);
+  await opcionesBuscador(page).filter({ hasText: ref }).click();
+  await expect(page.getByText(`Referencia: ${ref}`)).toBeVisible();
+}
 
 // -----------------------------------------------------------------------------
 // thread-access-routing
@@ -280,59 +287,52 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     expect(campo && primero && campo.y < primero.y).toBe(true);
   });
 
-  test('con una sola referencia, «Sobre:» sale elegida y el mensaje la lleva; su autor puede quitársela', async ({
+  test('sin búsqueda, el mensaje es conversación general; buscando, lleva la referencia; su autor puede quitársela', async ({
     page,
   }) => {
     await abrirHilo(page, 'Nordwälz Lager');
     await irA(page, 'Mensajes');
-    await expect(sobre(page)).toHaveValue(new RegExp(REF_OFERTA.replace('·', '.')));
+    await expect(page.getByRole('combobox', { name: 'Sobre:' })).toHaveCount(0);
 
+    const general = `General ${Date.now()}`;
+    await escribir(page).fill(general);
+    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+    const m1 = page.getByTestId('thread-item').filter({ hasText: general });
+    await expect(m1).toBeVisible({ timeout: 15_000 });
+    await expect(m1.getByTestId('message-tag')).toHaveCount(0);
+
+    await buscar(page, '6205', REF_OFERTA);
     const texto = `Sobre la oferta ${Date.now()}`;
     await escribir(page).fill(texto);
     await page.getByRole('button', { name: 'Enviar mensaje' }).click();
     const mensaje = page.getByTestId('thread-item').filter({ hasText: texto });
     await expect(mensaje.getByTestId('message-tag')).toHaveText(REF_OFERTA, { timeout: 15_000 });
 
+    await page.getByRole('button', { name: 'Quitar filtro de referencia' }).click();
     await mensaje.getByRole('combobox', { name: 'Cambiar etiqueta' }).selectOption({ label: 'Conversación general' });
     await expect(mensaje.getByTestId('message-tag')).toHaveCount(0);
   });
 
-  test('con varias referencias no se puede enviar sin elegir; se elige y se envía', async ({ page }) => {
-    await anadirConsultaExtra();
-    try {
-      await abrirHilo(page, 'Nordwälz Lager');
-      await irA(page, 'Mensajes');
-      // «Sobre:» es un campo en el que se escribe (PO, 17-nov): al entrar, «Conversación general» y las
-      // referencias del hilo en orden alfanumérico, debajo.
-      await expect(sobre(page)).toHaveValue('');
-      await sobre(page).click();
-      await expect(opcionesSobre(page)).toHaveText(['Conversación general', REF_OFERTA, REF_CONSULTA]);
-      const texto = `Pregunta sobre la consulta ${Date.now()}`;
-      await escribir(page).fill(texto);
-      await expect(page.getByRole('button', { name: 'Enviar mensaje' })).toBeDisabled();
-
-      // Al escribir, solo las que coinciden; se elige una.
-      await sobre(page).fill('6206');
-      await expect(opcionesSobre(page)).toHaveText([REF_CONSULTA]);
-      await opcionesSobre(page).filter({ hasText: REF_CONSULTA }).click();
-      await expect(sobre(page)).toHaveValue(REF_CONSULTA);
-      await page.getByRole('button', { name: 'Enviar mensaje' }).click();
-      await expect(
-        page.getByTestId('thread-item').filter({ hasText: texto }).getByTestId('message-tag'),
-      ).toHaveText(REF_CONSULTA, { timeout: 15_000 });
-    } finally {
-      await borrarConsultaExtra();
+  test('el buscador va arriba en Mensajes, encima del campo de escribir, y no en las tablas', async ({ page }) => {
+    await abrirHilo(page, 'Nordwälz Lager');
+    await irA(page, 'Mensajes');
+    const b = await buscador(page).boundingBox();
+    const campo = await escribir(page).boundingBox();
+    expect(b && campo && b.y < campo.y).toBe(true);
+    for (const nombre of ['Soy cliente', 'Soy proveedor'] as const) {
+      await irA(page, nombre);
+      await expect(buscador(page)).toHaveCount(0);
     }
   });
 
-  test('escribir desde una fila abre Mensajes con su referencia ya elegida', async ({ page }) => {
+  test('escribir desde una fila abre Mensajes filtrado por su referencia', async ({ page }) => {
     await anadirConsultaExtra();
     try {
       await abrirHilo(page, 'Nordwälz Lager');
       const cliente = await irA(page, 'Soy cliente');
       await fila(cliente, REF_OFERTA).getByRole('button', { name: REF_OFERTA }).click();
       await expect(pestana(page, 'Mensajes')).toHaveAttribute('aria-selected', 'true');
-      await expect(sobre(page)).toHaveValue(new RegExp(REF_OFERTA.replace('·', '.')));
+      await expect(page.getByText(`Referencia: ${REF_OFERTA}`)).toBeVisible();
     } finally {
       await borrarConsultaExtra();
     }
@@ -340,6 +340,7 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
 
   test('la otra organización ve la etiqueta pero no puede cambiarla', async ({ page, browser }) => {
     await abrirHilo(page, 'Nordwälz Lager');
+    await buscar(page, '6205', REF_OFERTA);
     const texto = `Etiqueta ajena ${Date.now()}`;
     await escribir(page).fill(texto);
     await page.getByRole('button', { name: 'Enviar mensaje' }).click();
@@ -360,50 +361,38 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     }
   });
 
-  test('el buscador está abajo en las tres pestañas, lista coincidencias y filtra Mensajes hasta quitar el filtro', async ({
+  test('el buscador lista coincidencias en orden alfanumérico y filtra Mensajes hasta quitar el filtro', async ({
     page,
   }) => {
     await anadirConsultaExtra();
     try {
       await abrirHilo(page, 'Nordwälz Lager');
-      const general = `Conversación general ${Date.now()}`;
       await irA(page, 'Mensajes');
-      await sobre(page).click();
-      await opcionesSobre(page).filter({ hasText: 'Conversación general' }).click();
+      const general = `Conversación general ${Date.now()}`;
       await escribir(page).fill(general);
       await page.getByRole('button', { name: 'Enviar mensaje' }).click();
       await expect(page.getByTestId('thread-item').filter({ hasText: general })).toBeVisible({ timeout: 15_000 });
 
-      // Y uno etiquetado con la oferta, y otro con la consulta: al filtrar por la oferta tiene que salir
-      // el primero y no el segundo (PO, 17-nov: «no está filtrando los mensajes de esa etiqueta»).
+      // Uno etiquetado con la oferta y otro con la consulta: al filtrar por la oferta sale el primero y
+      // no el segundo (PO, 17-nov: «no está filtrando los mensajes de esa etiqueta»).
       const etiquetados = [
         { ref: REF_OFERTA, filtro: '6205', texto: `Sobre la oferta ${Date.now()}` },
         { ref: REF_CONSULTA, filtro: '6206', texto: `Sobre la consulta ${Date.now()}` },
       ];
       for (const m of etiquetados) {
-        await sobre(page).fill(m.filtro);
-        await opcionesSobre(page).filter({ hasText: m.ref }).click();
+        await buscar(page, m.filtro, m.ref);
         await escribir(page).fill(m.texto);
         await page.getByRole('button', { name: 'Enviar mensaje' }).click();
         await expect(
           page.getByTestId('thread-item').filter({ hasText: m.texto }).getByTestId('message-tag'),
         ).toHaveText(m.ref, { timeout: 15_000 });
+        await page.getByRole('button', { name: 'Quitar filtro de referencia' }).click();
       }
 
-      for (const nombre of ['Soy cliente', 'Soy proveedor', 'Mensajes'] as const) {
-        await irA(page, nombre);
-        await expect(page.getByRole('searchbox', { name: AYUDA_BUSCADOR })).toBeVisible();
-      }
+      await buscador(page).fill('620');
+      await expect(opcionesBuscador(page)).toHaveText([REF_OFERTA, REF_CONSULTA]);
+      await opcionesBuscador(page).filter({ hasText: REF_OFERTA }).click();
 
-      // Desde Soy cliente: la búsqueda lleva a Mensajes sin pulsar nada más.
-      await irA(page, 'Soy cliente');
-      const buscador = page.getByRole('searchbox', { name: AYUDA_BUSCADOR });
-      await buscador.fill('620');
-      await expect(page.getByRole('search').getByRole('option')).toHaveCount(2);
-      await expect(page.getByRole('search').getByRole('option', { name: REF_CONSULTA })).toBeVisible();
-      await page.getByRole('search').getByRole('option', { name: REF_OFERTA }).click();
-
-      await expect(pestana(page, 'Mensajes')).toHaveAttribute('aria-selected', 'true');
       await expect(page.getByText(`Referencia: ${REF_OFERTA}`)).toBeVisible();
       // La oferta de esa referencia y su mensaje salen en la línea de tiempo; el general y el de la otra
       // referencia, no.

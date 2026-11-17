@@ -31,7 +31,6 @@ import type { OrgLine } from '../../lib/search';
 import type { VeraDraft } from '../../lib/vera-tools';
 import {
   TAB_TEXTS,
-  initialTag,
   messageTimeline,
   negotiationRows,
   threadReferences,
@@ -45,7 +44,6 @@ import { OfferCounterForm } from './OfferCounterForm';
 import { NegotiationTable } from './NegotiationTable';
 import { MessagesTimeline } from './MessagesTimeline';
 import { ThreadSearch } from './ThreadSearch';
-import { TagCombobox } from './TagCombobox';
 import styles from './Thread.module.css';
 
 /** Las tres pestañas del hilo de una empresa, de izquierda a derecha (spec `thread-role-tabs`). */
@@ -57,17 +55,11 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 /**
- * «Sobre:» todavía sin tocar por el miembro: sale lo que toque por defecto (la referencia
- * sola del hilo, la de la búsqueda activa…). En cuanto elige algo, manda lo que eligió.
- */
-const SIN_ELEGIR = Symbol('sin-elegir');
-
-/**
  * MSG-02 · Vista de un Hilo, con las tres pestañas de `amend-msg-hilos-pestanas-y-etiqueta`:
- * Mensajes · Soy cliente · Soy proveedor, y el buscador de referencias abajo.
+ * Mensajes · Soy cliente · Soy proveedor. El buscador de referencias va arriba en Mensajes.
  *
- * Montaje escrito a mano: qué pestaña está abierta, qué dice «Sobre:», qué filtro tiene
- * Mensajes y qué formulario se abre con cada acción. Lo que se ve lo calcula
+ * Montaje escrito a mano: qué pestaña está abierta, qué filtro tiene Mensajes y qué
+ * formulario se abre con cada acción. Lo que se ve lo calcula
  * `lib/negotiation-rows.ts` y lo pintan `NegotiationTable`, `MessagesTimeline` y
  * `ThreadSearch` (del arnés). La pestaña vive en el estado de la pantalla, no en la URL: la
  * app no tiene rutas y los accesos (Vendiendo, Comprando, Empresas) abren el hilo montándolo,
@@ -110,10 +102,12 @@ export function Thread({
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('mensajes');
-  /** La búsqueda del hilo: Mensajes enseña solo esta referencia hasta que se quita. */
+  /**
+   * La búsqueda del hilo: Mensajes enseña solo esta referencia hasta que se quita, y lo que se
+   * escribe va etiquetado con ella; sin búsqueda, conversación general. «Sobre:» se quitó porque
+   * duplicaba el buscador (PO, 17-nov-2026).
+   */
   const [refFilter, setRefFilter] = useState<ThreadReference | null>(null);
-  /** Lo elegido en «Sobre:»: una referencia, o `null` = conversación general. */
-  const [tagChoice, setTagChoice] = useState<ThreadReference | null | typeof SIN_ELEGIR>(SIN_ELEGIR);
   /** Los formularios de oferta que abren las acciones de las tablas. */
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [counteringId, setCounteringId] = useState<string | null>(null);
@@ -308,20 +302,11 @@ export function Thread({
   const tables = negotiationRows(items, { viewerOrgId: profile.orgId, now: nowDate });
   const timeline = useMemo(() => messageTimeline(items, refFilter), [items, refFilter]);
 
-  /**
-   * Lo que dice «Sobre:». Si el miembro no ha elegido: la referencia de la búsqueda activa; si
-   * no, la única del hilo, o conversación general si no hay ninguna; con varias, sin elegir
-   * (`undefined`), y entonces no se envía (spec `message-reference-tag`).
-   */
-  const tag: ThreadReference | null | undefined =
-    tagChoice !== SIN_ELEGIR ? tagChoice : (refFilter ?? initialTag(references));
-
   const handleSend = useCallback(
     (text: string) => {
-      if (tag === undefined) return Promise.resolve(false);
-      return write(() => sendMessage(threadId, text, tag));
+      return write(() => sendMessage(threadId, text, refFilter));
     },
-    [threadId, write, tag],
+    [threadId, write, refFilter],
   );
 
   /** Cambiar la etiqueta de un mensaje propio. Lo que es legal lo decide la base (0080). */
@@ -356,17 +341,15 @@ export function Thread({
     [handleOutOfStock, handleAcceptOffer, handleRejectOffer],
   );
 
-  /** Pulsar la Referencia de una fila: a Mensajes, con esa referencia en «Sobre:». */
+  /** Pulsar la Referencia de una fila: a Mensajes, buscando esa referencia. */
   const handleWrite = useCallback((row: NegotiationRow) => {
-    setTagChoice({ partNumber: row.partNumber, brand: row.brand });
+    setRefFilter({ partNumber: row.partNumber, brand: row.brand });
     setTab('mensajes');
   }, []);
 
-  /** Elegir una referencia en el buscador: a Mensajes, filtrado, sin pulsar nada más. */
+  /** Elegir una referencia en el buscador: Mensajes filtrado, sin pulsar nada más. */
   const handlePick = useCallback((reference: ThreadReference) => {
     setRefFilter(reference);
-    setTagChoice({ partNumber: reference.partNumber, brand: reference.brand });
-    setTab('mensajes');
   }, []);
 
   const responding = respondingId ? items.find((i) => i.id === respondingId) : undefined;
@@ -425,14 +408,9 @@ export function Thread({
                   {/* D-07-01: el campo de escribir se monta en los cinco estados del hilo, CERRADO
                       SIN ACUERDO incluido: escribir es lo que lo reabre (0009). Va ARRIBA, encima
                       de los mensajes (spec `thread-role-tabs`). */}
-                  <TagCombobox
-                    references={references}
-                    value={tag}
-                    onChange={(next) => setTagChoice(next)}
-                  />
+                  <ThreadSearch references={references} onPick={handlePick} />
                   <ThreadComposer
                     onSend={handleSend}
-                    sendBlocked={tag === undefined}
                     onCreateOffer={handleCreateOffer}
                     {...(veraDraft !== undefined ? { veraDraft } : {})}
                     {...(onVeraDraftHandled ? { onVeraDraftHandled } : {})}
@@ -466,8 +444,6 @@ export function Thread({
                 />
               )}
             </div>
-
-            <ThreadSearch references={references} onPick={handlePick} />
 
             {responding && (
               <OfferCounterForm

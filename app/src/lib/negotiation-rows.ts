@@ -178,9 +178,6 @@ export const TAB_TEXTS = {
   priceCurrency: 'Moneda del precio',
   emptyTable: 'No hay nada en esta tabla.',
   noFilterMatches: 'Ninguna fila cumple los filtros.',
-  tagLabel: 'Sobre:',
-  tagPlaceholder: 'Escribe una referencia',
-  tagOptionsLabel: 'Referencias para «Sobre:»',
   generalConversation: 'Conversación general',
   retagLabel: 'Cambiar etiqueta',
   noMessages: 'Este hilo no tiene mensajes todavía.',
@@ -528,7 +525,7 @@ export function sortRows(rows: NegotiationRow[], key: SortKey = 'date', dir: Sor
 }
 
 // -----------------------------------------------------------------------------
-// §5 · Referencias del hilo, «Sobre:» y la vista de Mensajes
+// §5 · Referencias del hilo, el buscador y la vista de Mensajes
 // -----------------------------------------------------------------------------
 
 export interface ThreadReferenceOption extends ThreadReference {
@@ -541,7 +538,7 @@ const REF_ORDER = new Intl.Collator('es', { numeric: true, sensitivity: 'base' }
 /**
  * Las referencias del hilo: las de sus consultas y ofertas, sin repetir. Son las únicas
  * que puede llevar un mensaje (la base rechaza las demás, `0080`). En orden alfanumérico
- * por referencia y después por marca (PO, 17-nov-2026), en «Sobre:», en el buscador y en
+ * por referencia y después por marca (PO, 17-nov-2026), en el buscador y en
  * «Cambiar etiqueta».
  */
 export function threadReferences(items: ThreadItem[]): ThreadReferenceOption[] {
@@ -563,20 +560,6 @@ export function matchReferences(refs: ThreadReferenceOption[], query: string): T
   const q = normalizeRef(query);
   if (!q) return [];
   return refs.filter((r) => normalizeRef(r.partNumber).includes(q) || normalizeRef(r.label).includes(q));
-}
-
-/**
- * Lo que sale elegido en «Sobre:» al abrir el campo de escribir sin venir de una fila.
- * - Una sola referencia en el hilo: esa.
- * - Ninguna: `null`, conversación general (no hay nada que elegir).
- * - Varias: `undefined`, sin elegir; no se puede enviar hasta que se elija una opción,
- *   aunque sea «Conversación general».
- */
-export function initialTag(refs: ThreadReference[]): ThreadReference | null | undefined {
-  if (refs.length === 0) return null;
-  const [only] = refs;
-  if (refs.length === 1 && only) return { partNumber: only.partNumber, brand: only.brand };
-  return undefined;
 }
 
 export function sameReference(a: ThreadReference | null, b: { partNumber: string | null; brand: string | null }): boolean {

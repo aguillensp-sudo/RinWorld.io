@@ -91,8 +91,12 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       commits separados.
 
 ## 5. Accesos y VERA (a mano)
-- [ ] 5.1 Comprobar que Vendiendo (Ver hilo, Ver acuerdo), Comprando (Contactar), Empresas (tarjeta, Contactar),
-      Panel (cajón Hilos) y el menú llevan a donde dice la spec, sin `tab`.
+- [x] 5.1 Comprobar que Vendiendo (Ver hilo, Ver acuerdo), Comprando (Contactar), Empresas (tarjeta, Contactar),
+      Panel (cajón Hilos) y el menú llevan a donde dice la spec, sin `tab` (18-nov-2026, contra `App.tsx`). Vendiendo,
+      Comprando y el Contactar de la ficha de Empresas montan `Thread`, que arranca en Mensajes; Panel y el menú pasan
+      por `navigate`, que cierra el hilo y deja la lista. Ninguno pasa pestaña. **Pendiente del PO:** en Empresas,
+      pulsar una empresa del Directorio abre su ficha y es su Contactar el que abre el hilo; se lee «tarjeta de
+      Empresa/botón Contactar» como la ficha y su botón.
 - [x] 5.2 Revisar las herramientas de VERA que leen el hilo con mensajes etiquetados (`design.md` §6) (18-nov-2026).
       Ninguna filtra por `part_number is null`; la única que lee el hilo, `listar_mis_hilos`, pintaba un `MENSAJE`
       etiquetado como «MENSAJE sobre 6205-2RS», igual que una consulta u oferta. Ahora dice «etiquetado con …
@@ -104,7 +108,12 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       (`Thread.fuera-de-contrato.test.tsx`; rojo comprobado sin el cambio).
 
 ## 6. Cierre
-- [ ] 6.1 CI en verde en el commit de la revisión a mano.
-- [ ] 6.2 Desplegado y comprobado en la URL por contenido (F-168), con Alpha y Beta: una negociación de cada tipo y
-      un mensaje etiquetado y reetiquetado.
+- [x] 6.1 CI en verde en el commit de la revisión a mano: `f92e506` (5.2) y `98ccf07` (2.9 y 4.5), los ocho jobs con
+      el e2e y los dos despliegues (18-nov-2026).
+- [x] 6.2 Desplegado y comprobado en la URL por contenido (F-168), con Alpha y Beta: una negociación de cada tipo y
+      un mensaje etiquetado. Alpha y Beta: `thread-tabs.spec.ts` en la CI de `98ccf07`, contra `bearingworld-e2e`
+      (negociaciones por papel, mensaje etiquetado y la etiqueta vista desde la otra organización). En la URL de
+      producción, el bundle servido lleva las pestañas, el buscador y «Ver lo que ve el servidor», y ya no lleva
+      «Precio/ud.» ni «Cambiar etiqueta»; `vera` en producción (versión 68) lleva la guía nueva. Con sesión en
+      producción lo mira el PO, que es quien hace la C5.
 - [ ] 6.3 Archivar el change en `openspec/specs/` cuando el PO lo dé por bueno.

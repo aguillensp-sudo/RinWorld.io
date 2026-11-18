@@ -233,10 +233,14 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
   const lista = screen('messages/Messages.tsx');
   const hilo = screen('messages/Thread.tsx');
   const cabecera = screen('messages/ThreadHeader.tsx');
-  const historial = screen('messages/ThreadHistory.tsx');
+  // amend-msg-hilos-pestanas-y-etiqueta: tres pestañas, una tabla por papel y el buscador del hilo.
   const pie = screen('messages/ThreadComposer.tsx');
   const formOferta = screen('messages/OfferCounterForm.tsx');
-  const tablas = lib('negotiation-tables.ts');
+  const tablaHilo = screen('messages/NegotiationTable.tsx');
+  const lineaDeTiempo = screen('messages/MessagesTimeline.tsx');
+  const filas = lib('negotiation-rows.ts');
+  /** Los textos de los botones de acción (MSG-03): de dónde los lee `NegotiationTable`. */
+  const textosAcciones = lib('negotiation-tables.ts');
   const libOfertas = lib('offers.ts');
   const libHilo = lib('thread-detail.ts');
   const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
@@ -333,18 +337,29 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['¿Cerrar sin acuerdo?', hilo],
     ['Cancelar', hilo],
     ['Confirmar', hilo],
-    ['Ver lo que ve el servidor', historial],
-    ['Consultas', tablas],
-    ['Ofertas', tablas],
-    ['Cifrado', tablas],
-    ['—', tablas],
-    ['Responder con oferta', tablas],
-    ['Sin stock', tablas],
-    ['Aceptar', tablas],
-    ['Aceptar igualmente', tablas],
-    ['Contra-ofertar', tablas],
-    ['Rechazar', tablas],
-    ['Enviar oferta', historial],
+    ['Mensajes', filas],
+    ['Soy cliente', filas],
+    ['Soy proveedor', filas],
+    ['Referencia', filas],
+    ['Cantidad', filas],
+    ['Precio', filas],
+    ['Estado', filas],
+    ['Fecha', filas],
+    ['Plazo', filas],
+    ['Transporte', filas],
+    ['Válida hasta', filas],
+    ['Acciones', filas],
+    ['Busca una referencia dentro de este hilo sobre la que quieras recuperar el contenido de la conversación', filas],
+    ['Ver lo que ve el servidor', filas],
+    ['Cifrado', textosAcciones],
+    ['—', textosAcciones],
+    ['Responder con oferta', textosAcciones],
+    ['Sin stock', textosAcciones],
+    ['Aceptar', textosAcciones],
+    ['Aceptar igualmente', textosAcciones],
+    ['Contra-ofertar', textosAcciones],
+    ['Rechazar', textosAcciones],
+    ['Enviar oferta', hilo],
     ['Contra-oferta', formOferta],
     ['Enviar contraoferta', formOferta],
     ['Escribe un mensaje...', pie],
@@ -366,13 +381,16 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['TRIGGERED', libWatchers],
     ['PENDIENTE RENOVACIÓN', libWatchers],
     ['EXPIRED', libWatchers],
-    ['PENDIENTE', tablas],
-    ['RESPONDIDA', tablas],
-    ['SIN STOCK', tablas],
-    ['ACEPTADA', tablas],
-    ['RECHAZADA', tablas],
-    ['SUPERADA', tablas],
-    ['EXPIRADA', tablas],
+    ['ESPERANDO OFERTA', filas],
+    ['POR DECIDIR', filas],
+    ['CONTRAOFERTA ENVIADA', filas],
+    ['POR RESPONDER', filas],
+    ['ESPERANDO AL CLIENTE', filas],
+    ['CONTRAOFERTA RECIBIDA', filas],
+    ['SIN STOCK', filas],
+    ['ACEPTADA', filas],
+    ['RECHAZADA', filas],
+    ['EXPIRADA', filas],
     ['CERRADO SIN ACUERDO', libOfertas],
     ['ACUERDO ALCANZADO', libOfertas],
   ])('el estado %s está en la pantalla y en la guía', (nombre, codigo) => {
@@ -495,14 +513,56 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
 
   it('Hilos: quién ve qué botón en las tablas (solo el receptor, solo Pendiente; expirada cambia Aceptar)', () => {
     expect(libOfertas).toMatch(/if \(offer\.state !== 'Pendiente'\) return \[\];\s*if \(offer\.senderOrgId === viewerOrgId\) return \[\];\s*return \['aceptar', 'rechazar', 'contraofertar'\];/);
-    expect(tablas).toMatch(/const decide = !item\.isOwn && state === 'Pendiente';/);
-    expect(tablas).toContain("actions: decide ? ['responder', 'sin-stock'] : [],");
-    expect(tablas).toContain("actions.push(expired ? 'aceptar-igualmente' : 'aceptar')");
-    expect(tablas).toMatch(/base\.includes\('contraofertar'\) && !expired/);
-    expect(tablas).toContain('counterDisabledReason');
-    expect(historial).toContain('title="Responder con oferta"');
+    expect(filas).toContain("state === 'Pendiente' && last.senderOrgId !== ctx.viewerOrgId ? ['responder', 'sin-stock'] : []");
+    expect(filas).toContain("actions.push(expired ? 'aceptar-igualmente' : 'aceptar')");
+    expect(filas).toMatch(/allowed\.includes\('contraofertar'\) && !expired/);
+    expect(filas).toContain('counterDisabledReason');
+    expect(hilo).toContain('title="Responder con oferta"');
     expect(formOferta).toContain("title = 'Contra-oferta'");
     expect(formOferta).toContain('Datos de la oferta original, pre-rellenados.');
+  });
+
+  // amend-msg-hilos-pestanas-y-etiqueta: lo que la guía afirma de las pestañas, la tabla y Mensajes.
+  it('Hilos: el hilo abre en "Mensajes", y VERA prepara ahí (PO, 18-nov-2026)', () => {
+    expect(prompt).toContain('El hilo se abre siempre en "Mensajes".');
+    expect(hilo).toContain("useState<Tab>('mensajes')");
+    expect(prompt).toContain('El formulario se abre en la pestaña "Mensajes" del hilo');
+    expect(hilo).toMatch(/if \(veraDraft\) setTab\('mensajes'\);/);
+  });
+
+  it('Hilos: una fila por referencia, cabeceras que ordenan, filtros salvo Acciones y la referencia lleva a Mensajes', () => {
+    expect(prompt).toContain('una contraoferta no crea una fila nueva');
+    expect(filas).toContain('key: `${role}|${root.partNumber}|${root.brand}`');
+    // Ocho cabeceras ordenables: todas menos Acciones.
+    expect(filas).toMatch(/sortKeys: \['reference', 'quantity', 'price', 'status', 'date', 'leadTime', 'shipping', 'validUntil'\]/);
+    expect(tablaHilo).toContain('onClick={() => handleSort(key)}');
+    expect(tablaHilo).toContain('aria-label={TAB_TEXTS.filterReference}');
+    expect(tablaHilo).toContain('aria-label={TAB_TEXTS.filterStatus}');
+    expect(prompt).toContain('las notas se leen al pasar el ratón por la fila');
+    expect(tablaHilo).toContain('title: row.notes');
+    expect(prompt).toContain('Pulsar la referencia de una fila lleva a "Mensajes" con esa referencia buscada.');
+    expect(tablaHilo).toContain('onClick={() => onWrite(row)}');
+    expect(hilo).toMatch(/const handleWrite = useCallback\(\(row: NegotiationRow\) => \{\s*setRefFilter\([\s\S]{0,60}\);\s*setTab\('mensajes'\);/);
+  });
+
+  it('Hilos: Mensajes enseña los mensajes; con una referencia buscada, también sus consultas y ofertas en una línea', () => {
+    expect(filas).toContain(": items.filter((i) => i.type === 'MENSAJE');");
+    expect(prompt).toContain('"Consulta · …", "Oferta · …" o "Contraoferta · …"');
+    expect(filas).toContain('`Consulta · ${');
+    expect(filas).toContain("`${isCounter ? 'Contraoferta' : 'Oferta'} · ${cifras}`");
+    expect(prompt).toContain('"Referencia: …"');
+    expect(filas).toContain('`Referencia: ${ref}`');
+    expect(lineaDeTiempo).toContain('aria-label={TAB_TEXTS.clearFilter}');
+  });
+
+  it('Hilos: la etiqueta es la referencia buscada y no se cambia después (PO, 17 y 18-nov-2026)', () => {
+    expect(prompt).toContain('Lo que se escribe con una referencia buscada va etiquetado con ella; sin búsqueda es conversación general.');
+    expect(prompt).toContain('La etiqueta no se puede cambiar después.');
+    expect(libHilo).not.toContain('retagMessage');
+    expect(lineaDeTiempo).not.toMatch(/Cambiar etiqueta/);
+    // La guía vieja no puede seguir ahí: hoy sería falsa.
+    expect(prompt).not.toContain('las tablas "Consultas" y "Ofertas"');
+    expect(prompt).not.toContain('SUPERADA');
   });
 
   it('Hilos: el campo de mensaje envía con Intro y salta de línea con Alt o Mayús', () => {

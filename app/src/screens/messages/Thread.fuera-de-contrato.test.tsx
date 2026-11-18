@@ -116,3 +116,44 @@ describe('MSG-02 · la contraparte abre su ficha (DIR-02) — fuera del contrato
     await userEvent.click((await screen.findAllByRole('button', { name: detail().counterpartyName }))[0]!);
   });
 });
+
+/*
+ * PO, 18-nov-2026 (DECISIONES-V1.md): cuando VERA prepara una consulta u oferta dentro del hilo, el hilo
+ * está en Mensajes, que es donde vive el pie que abre el formulario. Sin prop de pestaña: lo decide el
+ * borrador. Si el usuario estaba en Soy cliente, se vuelve a Mensajes y el formulario se abre allí.
+ */
+describe('VERA prepara en la pestaña Mensajes — fuera del contrato del arnés', () => {
+  const oferta = {
+    kind: 'oferta' as const,
+    reference: '6205-2RS',
+    brand: 'SKF',
+    quantity: 500,
+    leadTimeDays: 14,
+    currency: 'EUR',
+    notes: null,
+    nonce: 1,
+  };
+
+  it('el hilo abre en Mensajes y el pie recibe el borrador: el formulario de oferta sale abierto', async () => {
+    render(<Thread profile={profile} threadId={HILO} now={NOW} veraDraft={oferta} />);
+    expect(await screen.findByRole('tab', { name: 'Mensajes' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('dialog', { name: 'Crear oferta' })).toBeInTheDocument();
+  });
+
+  it('con el hilo abierto en Soy cliente, un borrador nuevo vuelve a Mensajes y abre el formulario', async () => {
+    const user = userEvent.setup();
+    const onVeraDraftHandled = vi.fn();
+    const { rerender } = render(
+      <Thread profile={profile} threadId={HILO} now={NOW} veraDraft={null} onVeraDraftHandled={onVeraDraftHandled} />,
+    );
+    await user.click(await screen.findByRole('tab', { name: 'Soy cliente' }));
+    expect(screen.getByRole('tab', { name: 'Soy cliente' })).toHaveAttribute('aria-selected', 'true');
+
+    rerender(
+      <Thread profile={profile} threadId={HILO} now={NOW} veraDraft={oferta} onVeraDraftHandled={onVeraDraftHandled} />,
+    );
+    expect(await screen.findByRole('tab', { name: 'Mensajes' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('dialog', { name: 'Crear oferta' })).toBeInTheDocument();
+    await waitFor(() => expect(onVeraDraftHandled).toHaveBeenCalled());
+  });
+});

@@ -6,8 +6,8 @@ Reparto según `design.md` §9 y CLAUDE.md §3. El Coder nunca escribe los tests
 - [x] 0.1 Acuerdos del PO en `docs/Cambios_Frontend_Hilos.md` y fila en `DECISIONES-V1.md` (14-nov-2026).
 - [x] 0.2 Menú y accesos resueltos por el PO (15-nov-2026, proposal).
 - [x] 0.3 `design.md` escrito (15-nov-2026).
-- [ ] 0.4 Qué pestaña abre VERA al preparar una consulta u oferta en el hilo. **Pendiente del PO; no bloquea nada de
-      lo de abajo** (la ruta ya admite `?tab=`, `design.md` §4).
+- [x] 0.4 Qué pestaña abre VERA al preparar una consulta u oferta en el hilo: **Mensajes** (PO, 18-nov-2026,
+      `DECISIONES-V1.md`). Sin prop de pestaña: `Thread` vuelve a Mensajes cuando llega un borrador (tarea 5.2).
 
 ## 1. Base de datos (a mano)
 - [x] 1.1 `supabase/tests/12_etiqueta_mensaje.sql`: los casos de `design.md` §8 más cinco de forma (otro hilo, otra
@@ -90,8 +90,15 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
 ## 5. Accesos y VERA (a mano)
 - [ ] 5.1 Comprobar que Vendiendo (Ver hilo, Ver acuerdo), Comprando (Contactar), Empresas (tarjeta, Contactar),
       Panel (cajón Hilos) y el menú llevan a donde dice la spec, sin `tab`.
-- [ ] 5.2 Revisar las herramientas de VERA que leen el hilo con mensajes etiquetados (`design.md` §6). Si alguna supone
-      `part_number is null` en un `MENSAJE`, corregirla aquí.
+- [x] 5.2 Revisar las herramientas de VERA que leen el hilo con mensajes etiquetados (`design.md` §6) (18-nov-2026).
+      Ninguna filtra por `part_number is null`; la única que lee el hilo, `listar_mis_hilos`, pintaba un `MENSAJE`
+      etiquetado como «MENSAJE sobre 6205-2RS», igual que una consulta u oferta. Ahora dice «etiquetado con …
+      (conversación sobre esa referencia, no es consulta ni oferta)», y su descripción en `tools.json` lo repite;
+      test con un mensaje etiquetado en `vera-tools.test.ts`. La guía de Hilos del prompt (bloque estático) se
+      reescribe con las tres pestañas, la tabla por papel, el buscador y la etiqueta, y `vera-prompt.test.ts` ata
+      cada cita a `negotiation-rows.ts`, `NegotiationTable`, `MessagesTimeline` y `Thread`. Decisión 0.4: si el
+      usuario está en Soy cliente o Soy proveedor cuando VERA prepara, `Thread` vuelve a Mensajes
+      (`Thread.fuera-de-contrato.test.tsx`; rojo comprobado sin el cambio).
 
 ## 6. Cierre
 - [ ] 6.1 CI en verde en el commit de la revisión a mano.

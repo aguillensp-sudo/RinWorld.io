@@ -112,6 +112,15 @@ export function Thread({
   const [counteringId, setCounteringId] = useState<string | null>(null);
   const tabsId = useId();
 
+  /*
+   * VERA prepara en Mensajes (PO, 18-nov-2026, DECISIONES-V1.md): es donde está el pie que abre el
+   * formulario. Al abrir el hilo ya se está ahí; si el usuario estaba en Soy cliente o Soy proveedor, se
+   * vuelve, y el pie, al montarse, consume el borrador. Sin prop de pestaña: lo decide el borrador.
+   */
+  useEffect(() => {
+    if (veraDraft) setTab('mensajes');
+  }, [veraDraft?.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /**
    * Cerrojo de reentrada. El artefacto tenía un `busy` de estado que **ponía y
    * no leía nadie** —`tsc` lo cazó como TS6133— así que no protegía de nada:

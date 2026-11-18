@@ -352,6 +352,53 @@ describe('listar_mis_hilos es metadata-only, y eso es la mitad del producto', ()
     expect(r.content).toContain('Sin stock');
   });
 
+  // amend-msg-hilos-pestanas-y-etiqueta, tarea 5.2: desde 0080 un MENSAJE puede llevar part_number/brand
+  // como etiqueta. Lleva referencia y NO es una negociación: la fila tiene que decirlo, o VERA cuenta una
+  // consulta u oferta que no existe.
+  it('un MENSAJE etiquetado sale como conversación, no como consulta ni oferta', async () => {
+    fetchThreadPage.mockResolvedValueOnce({
+      threads: [
+        {
+          id: 'thread-9',
+          counterpartyName: 'Anadolu Rulman',
+          counterpartyCountry: 'TR',
+          state: 'CON OFERTA PENDIENTE',
+          lastItemAt: '2026-11-18T10:00:00Z',
+          lastItem: { type: 'MENSAJE', partNumber: '6205-2RS', isOwn: false },
+          referenceMatches: [
+            { type: 'MENSAJE', partNumber: '6205-2RS', brand: 'SKF', isOwn: false, state: null },
+            { type: 'OFERTA', partNumber: '6205-2RS', brand: 'SKF', isOwn: false, state: 'Pendiente' },
+          ],
+        },
+      ],
+      total: 1,
+    });
+    const r = await runTool('listar_mis_hilos', { referencia: '6205' }, contexto());
+    expect(r.content).toContain('último: MENSAJE etiquetado con 6205-2RS (conversación sobre esa referencia, no es consulta ni oferta)');
+    expect(r.content).toContain('MENSAJE etiquetado con 6205-2RS (SKF) (conversación sobre esa referencia, no es consulta ni oferta), lo envió la contraparte');
+    expect(r.content).toContain('OFERTA Pendiente sobre 6205-2RS (SKF), lo envió la contraparte');
+    expect(r.content).not.toMatch(/MENSAJE sobre/);
+    expect(leaksCiphertext(r.content)).toBe(false);
+  });
+
+  it('un MENSAJE sin etiqueta sigue sin referencia (conversación general)', async () => {
+    fetchThreadPage.mockResolvedValueOnce({
+      threads: [
+        {
+          id: 'thread-9',
+          counterpartyName: 'Anadolu Rulman',
+          counterpartyCountry: 'TR',
+          state: 'ABIERTO',
+          lastItemAt: '2026-11-18T10:00:00Z',
+          lastItem: { type: 'MENSAJE', partNumber: null, isOwn: true },
+        },
+      ],
+      total: 1,
+    });
+    const r = await runTool('listar_mis_hilos', {}, contexto());
+    expect(r.content).toContain('último: MENSAJE, lo enviaste tú');
+  });
+
   it('filtra por contraparte cuando el modelo la pasa', async () => {
     await runTool('listar_mis_hilos', { contraparte: 'Anadolu' }, contexto());
     const [arg] = fetchThreadPage.mock.calls[0] as [{ orgId: string; search: string }];

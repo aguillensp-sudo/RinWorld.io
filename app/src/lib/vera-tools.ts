@@ -18,7 +18,10 @@ import {
   type AgeLevel,
   type Filter,
 } from './inventory';
-import { fetchThreadPage } from './threads';
+import { fetchThreadPage, type ItemType } from './threads';
+
+/** Cómo se describe a VERA un MENSAJE con etiqueta de referencia (`0080`). */
+export const MENSAJE_ETIQUETADO = 'conversación sobre esa referencia, no es consulta ni oferta';
 import { newThreadValid, NEW_THREAD_BODY_MAX, NEW_THREAD_BODY_MIN, NEW_THREAD_TITLE_MAX, NEW_THREAD_TITLE_MIN } from './forum';
 import { fetchDirectoryCountries } from './directory';
 import { NOTES_MAX } from './inquiry-form';
@@ -660,10 +663,20 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
    * que había enviado él mismo. Quién envió el último elemento es lo que decide
    * de quién es el turno; el estado, por sí solo, no lo dice.
    */
+  /*
+   * Desde `0080` un MENSAJE puede llevar `part_number`/`brand` como ETIQUETA: dice de qué referencia se
+   * habla, pero no es una consulta ni una oferta. Con «MENSAJE sobre 6205-2RS» a secas el modelo tiene
+   * todo para contar una negociación que no existe (riesgo #1), así que la fila lo dice.
+   */
+  const referenciaDe = (type: ItemType, partNumber: string | null, brand: string | null) => {
+    if (!partNumber) return '';
+    const ref = `${partNumber}${brand ? ` (${brand})` : ''}`;
+    return type === 'MENSAJE' ? ` etiquetado con ${ref} (${MENSAJE_ETIQUETADO})` : ` sobre ${ref}`;
+  };
   const filas = page.threads.slice(0, MAX_FILAS).map((t) => {
     const ultimo = t.lastItem
       ? `último: ${t.lastItem.type}` +
-        `${t.lastItem.partNumber ? ` sobre ${t.lastItem.partNumber}` : ''}` +
+        referenciaDe(t.lastItem.type, t.lastItem.partNumber, null) +
         `, ${t.lastItem.isOwn ? 'lo enviaste tú' : `lo envió ${t.counterpartyName}`}`
       : 'sin elementos';
     const base = [t.counterpartyName, countryName(t.counterpartyCountry), t.state, ultimo].join(' · ');
@@ -673,7 +686,7 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
     const coincidencias = t.referenceMatches
       .map(
         (m) =>
-          `${m.type}${m.state ? ` ${m.state}` : ''} sobre ${m.partNumber ?? '—'}${m.brand ? ` (${m.brand})` : ''}, ${
+          `${m.type}${m.state ? ` ${m.state}` : ''}${referenciaDe(m.type, m.partNumber, m.brand) || ' sobre —'}, ${
             m.isOwn ? 'lo enviaste tú' : 'lo envió la contraparte'
           }`,
       )

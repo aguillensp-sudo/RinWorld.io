@@ -63,4 +63,4 @@ dicen de qué referencia hablan: la base lo impide (`thread_items_shape_chk`, `0
 
 ## Pendiente
 
-- Cuando VERA prepara una consulta o una oferta dentro del hilo, qué pestaña se abre. Pendiente por decisión del PO.
+- ~~Cuando VERA prepara una consulta o una oferta dentro del hilo, qué pestaña se abre.~~ **Decidido (PO, 18-nov-2026): Mensajes**, que es donde está el campo de escribir y donde aparece el borrador de VERA.

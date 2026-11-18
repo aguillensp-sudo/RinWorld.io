@@ -131,8 +131,8 @@ por teclado. No hay columna Notas.
   y `OffersTable` se sustituyen por `MessagesTab` y por un único `NegotiationTable`, que recibe el papel.
 - **Pestaña:** vive en el estado de `Thread.tsx` y no en la URL. La app no tiene rutas: los accesos abren el hilo
   montando la pantalla (`setOpenThreadId`), así que siempre arranca en Mensajes. *Corregido el 16-nov-2026: este
-  punto decía `?tab=` en la ruta, y no hay ruta donde ponerlo.* Si VERA tiene que abrir otra pestaña (pendiente
-  del PO), irá como prop de `Thread`.
+  punto decía `?tab=` en la ruta, y no hay ruta donde ponerlo.* VERA abre el hilo en Mensajes (PO, 18-nov-2026):
+  no hace falta ninguna prop de pestaña.
 - **Accesos** (Vendiendo, Comprando, Empresas): ya navegan a `/hilos/:threadId` o crean el hilo y navegan. Se
   comprueba cada uno y ninguno pone `tab`.
 - **Mensajes:** el buscador y el campo de escribir arriba, y los mensajes debajo, del más reciente al más

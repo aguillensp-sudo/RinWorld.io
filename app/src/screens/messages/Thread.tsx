@@ -30,6 +30,7 @@ import type { OrgLine } from '../../lib/search';
 import type { VeraDraft } from '../../lib/vera-tools';
 import {
   TAB_TEXTS,
+  referenceLabel,
   messageTimeline,
   negotiationRows,
   threadReferences,
@@ -420,6 +421,9 @@ export function Thread({
                   <ThreadSearch references={references} onPick={handlePick} />
                   <ThreadComposer
                     onSend={handleSend}
+                    placeholder={
+                      refFilter ? TAB_TEXTS.writeOnReference(referenceLabel(refFilter)) : TAB_TEXTS.writeGeneral
+                    }
                     onCreateOffer={handleCreateOffer}
                     {...(veraDraft !== undefined ? { veraDraft } : {})}
                     {...(onVeraDraftHandled ? { onVeraDraftHandled } : {})}

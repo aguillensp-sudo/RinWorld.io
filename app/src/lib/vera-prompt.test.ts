@@ -362,7 +362,7 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     ['Enviar oferta', hilo],
     ['Contra-oferta', formOferta],
     ['Enviar contraoferta', formOferta],
-    ['Escribe un mensaje...', pie],
+    ['Inicia una conversación nueva, sin referencia (para escribir sobre una, búscala arriba)', filas],
     ['Enviar mensaje', pie],
     ['Cifrado E2EE antes del envío', pie],
   ])('"%s" está en la pantalla y entrecomillado en la guía', (nombre, codigo) => {
@@ -553,6 +553,12 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
     expect(prompt).toContain('"Referencia: …"');
     expect(filas).toContain('`Referencia: ${ref}`');
     expect(lineaDeTiempo).toContain('aria-label={TAB_TEXTS.clearFilter}');
+  });
+
+  it('Hilos: el texto de ayuda del campo con referencia buscada es el de la pantalla (PO, 18-nov-2026)', () => {
+    expect(prompt).toContain('"Escribe sobre 6205-2RS · SKF: el mensaje irá etiquetado con esta referencia"');
+    expect(filas).toContain('`Escribe sobre ${ref}: el mensaje irá etiquetado con esta referencia`');
+    expect(prompt).not.toContain('"Escribe un mensaje..."');
   });
 
   it('Hilos: la etiqueta es la referencia buscada y no se cambia después (PO, 17 y 18-nov-2026)', () => {

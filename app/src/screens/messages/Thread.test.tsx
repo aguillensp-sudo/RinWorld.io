@@ -434,4 +434,27 @@ describe('lo que se escribe va sobre la referencia buscada', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
     await waitFor(() => expect(sendMessage).toHaveBeenLastCalledWith(HILO, 'Adiós', null));
   });
+
+  /*
+   * PO, 18-nov-2026: si el último mensaje del hilo lleva etiqueta pero no hay referencia buscada, lo que se
+   * escribe va como conversación general, y el usuario podía creer que iba etiquetado. El texto de ayuda del
+   * campo dice cuál de los dos casos es. El nombre accesible no cambia: es el que buscan los e2e.
+   */
+  it('el texto de ayuda del campo dice si se escribe sobre la referencia buscada o se inicia una conversación', async () => {
+    const user = userEvent.setup();
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
+    pinta();
+    const campo = await screen.findByRole('textbox', { name: 'Escribe un mensaje' });
+    expect(campo).toHaveAttribute('placeholder', TAB_TEXTS.writeGeneral);
+
+    await user.type(screen.getByRole('searchbox', { name: TAB_TEXTS.searchPlaceholder }), '6206');
+    await user.click(screen.getByRole('option', { name: '6206-ZZ · FAG' }));
+    expect(screen.getByRole('textbox', { name: 'Escribe un mensaje' })).toHaveAttribute(
+      'placeholder',
+      TAB_TEXTS.writeOnReference('6206-ZZ · FAG'),
+    );
+
+    await user.click(screen.getByRole('button', { name: TAB_TEXTS.clearFilter }));
+    expect(screen.getByRole('textbox', { name: 'Escribe un mensaje' })).toHaveAttribute('placeholder', TAB_TEXTS.writeGeneral);
+  });
 });

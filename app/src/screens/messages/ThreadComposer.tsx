@@ -51,6 +51,7 @@ export function ThreadComposer({
   inquiry,
   veraDraft,
   onVeraDraftHandled,
+  placeholder,
 }: {
   /** `Crear consulta` (MSG-03 §3.2, F-249). Sin esta prop el botón no se pinta. */
   inquiry?: InquiryCreation;
@@ -65,6 +66,8 @@ export function ThreadComposer({
   /** Devuelve si el envío salió bien. El campo solo se vacía cuando sí: perder
    *  lo escrito porque la red falló es la peor forma de gestionar un error. */
   onSend: (text: string) => Promise<boolean>;
+  /** Texto de ayuda del campo. Sin él, el del HTML aprobado. El hilo dice si va sobre una referencia o no. */
+  placeholder?: string;
 }) {
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -161,7 +164,7 @@ export function ThreadComposer({
           className={styles.textarea}
           name="mensaje"
           aria-label="Escribe un mensaje"
-          placeholder="Escribe un mensaje..."
+          placeholder={placeholder ?? 'Escribe un mensaje...'}
           rows={1}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}

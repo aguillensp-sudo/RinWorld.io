@@ -240,6 +240,12 @@ export const TAB_TEXTS = {
   searchResultsLabel: 'Referencias del hilo',
   noMatches: (q: string) => `No hay ninguna referencia que coincida con «${q}» en este hilo`,
   filterChip: (ref: string) => `Referencia: ${ref}`,
+  /**
+   * Texto de ayuda del campo de escribir (PO, 18-nov-2026): con una referencia buscada, lo escrito va
+   * etiquetado con ella; sin búsqueda, es conversación general aunque el último mensaje lleve etiqueta.
+   */
+  writeOnReference: (ref: string) => `Escribe sobre ${ref}: el mensaje irá etiquetado con esta referencia`,
+  writeGeneral: 'Inicia una conversación nueva, sin referencia (para escribir sobre una, búscala arriba)',
 } as const;
 
 // -----------------------------------------------------------------------------

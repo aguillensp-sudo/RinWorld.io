@@ -100,8 +100,8 @@ Empresas (tarjeta de Empresa/botón Contactar)|Pantalla con el hilo de esa empre
 - La etiqueta es la referencia elegida en el buscador, que va justo encima del campo de escribir. Sin ninguna referencia buscada, el mensaje es conversación general. (PO, 17-nov-2026: se quita el campo «Sobre:» porque duplicaba el buscador.)
   - Si se escribe desde una fila de Soy cliente o Soy proveedor, se abre Mensajes buscando la referencia de esa fila.
 - Cada mensaje enseña su etiqueta (p. ej. 6205-2RS · SKF). Los de conversación general no llevan ninguna.
-- Quien envió el mensaje puede cambiarle la etiqueta después.
-- Los mensajes que ya existen quedan como conversación general; sus autores pueden etiquetarlos.
+- La etiqueta no se cambia después: no hay desplegable junto a cada mensaje (PO, 18-nov-2026: no sirve para nada al usuario).
+- Los mensajes que ya existen quedan como conversación general.
 - La referencia va en claro, igual que ya va en consultas y ofertas. El texto del mensaje sigue cifrado.
 - Requiere cambiar la base de datos: hoy un mensaje no puede llevar referencia.
 

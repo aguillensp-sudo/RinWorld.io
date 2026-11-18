@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MessagesTimeline } from './MessagesTimeline';
-import { messageTimeline, TAB_TEXTS, threadReferences, type ThreadReference } from '../../lib/negotiation-rows';
+import { messageTimeline, TAB_TEXTS, type ThreadReference } from '../../lib/negotiation-rows';
 import { ENCRYPTED_NOTICE, type ThreadItem } from '../../lib/thread-detail';
 
 /**
@@ -68,21 +68,18 @@ const cifrado = item({ id: 'm4', senderOrgId: B, isOwn: false, createdAt: '2026-
 const TODOS = [consulta, mioGeneral, mioEtiquetado, suyo, cifrado];
 
 function montar(filter: ThreadReference | null = null) {
-  const onRetag = vi.fn();
   const onClearFilter = vi.fn();
   render(
     <MessagesTimeline
       entries={messageTimeline(TODOS, filter)}
       allItems={TODOS}
-      references={threadReferences(TODOS)}
       filter={filter}
       onClearFilter={onClearFilter}
-      onRetag={onRetag}
       authorOf={(i) => (i.isOwn ? 'Rodamientos Ibéricos' : 'Nordwälz Lager')}
       now={NOW}
     />,
   );
-  return { onRetag, onClearFilter };
+  return { onClearFilter };
 }
 
 const elementos = () => screen.getAllByTestId('thread-item');
@@ -118,10 +115,8 @@ describe('sin filtro', () => {
       <MessagesTimeline
         entries={[]}
         allItems={[]}
-        references={[]}
         filter={null}
         onClearFilter={() => {}}
-        onRetag={() => {}}
         authorOf={() => ''}
         now={NOW}
       />,
@@ -130,26 +125,10 @@ describe('sin filtro', () => {
   });
 });
 
-describe('cambiar la etiqueta', () => {
-  it('solo en mis mensajes: un `Cambiar etiqueta` con las referencias del hilo y conversación general', () => {
+describe('sin selector de etiqueta', () => {
+  it('ningún mensaje lleva un desplegable para cambiar la etiqueta (PO, 18-nov-2026)', () => {
     montar();
-    const select = within(elemento('m2')).getByRole('combobox', { name: TAB_TEXTS.retagLabel });
-    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual([
-      TAB_TEXTS.generalConversation,
-      '6205-2RS · SKF',
-    ]);
-    expect(select).toHaveValue('6205-2RS · SKF');
-    expect(within(elemento('m3')).queryByRole('combobox')).toBeNull();
-    expect(within(elemento('m4')).queryByRole('combobox')).toBeNull();
-  });
-
-  it('elegir avisa con el id y la referencia, o `null` para conversación general', async () => {
-    const user = userEvent.setup();
-    const { onRetag } = montar();
-    await user.selectOptions(within(elemento('m2')).getByRole('combobox', { name: TAB_TEXTS.retagLabel }), TAB_TEXTS.generalConversation);
-    expect(onRetag).toHaveBeenCalledWith('m2', null);
-    await user.selectOptions(within(elemento('m1')).getByRole('combobox', { name: TAB_TEXTS.retagLabel }), '6205-2RS · SKF');
-    expect(onRetag).toHaveBeenLastCalledWith('m1', { partNumber: '6205-2RS', brand: 'SKF' });
+    expect(screen.queryByRole('combobox')).toBeNull();
   });
 });
 

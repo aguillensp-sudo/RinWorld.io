@@ -178,8 +178,6 @@ export const TAB_TEXTS = {
   priceCurrency: 'Moneda del precio',
   emptyTable: 'No hay nada en esta tabla.',
   noFilterMatches: 'Ninguna fila cumple los filtros.',
-  generalConversation: 'Conversación general',
-  retagLabel: 'Cambiar etiqueta',
   noMessages: 'Este hilo no tiene mensajes todavía.',
   noTimelineForReference: 'No hay nada sobre esta referencia en el hilo.',
   serverViewOpen: 'Ver lo que ve el servidor',

@@ -182,11 +182,12 @@ ofertas; el texto del mensaje SHALL seguir cifrado.
 - WHEN se intenta guardar
 - THEN la base lo rechaza
 
-#### Scenario: etiqueta visible y corregible
+#### Scenario: etiqueta visible
 - GIVEN un mensaje etiquetado `6205-2RS · SKF`
 - THEN el mensaje muestra la etiqueta
-- AND solo la organización que lo envió puede cambiarla por otra referencia del hilo o por
-  conversación general
+- AND la pantalla no ofrece cambiarla después (PO, 18-nov-2026: el desplegable «no sirve
+  para nada»). La base sigue dejando que solo la organización que lo envió la cambie (0080),
+  pero ninguna pantalla lo usa
 
 #### Scenario: mensajes anteriores
 - GIVEN los mensajes que existían antes de este cambio

@@ -29,7 +29,7 @@ dicen de qué referencia hablan: la base lo impide (`thread_items_shape_chk`, `0
 - **Estados por papel**, no por tipo de elemento (ver la spec).
 - **Etiqueta de referencia en los mensajes.** Cada `MENSAJE` puede llevar una referencia de las que existen en el
   hilo, o ninguna (conversación general). Es la referencia elegida en el buscador del hilo; sin búsqueda,
-  conversación general (PO, 17-nov-2026: el selector «Sobre:» se quitó porque duplicaba el buscador). El autor puede cambiarla después. Va en claro, como ya va en consultas y
+  conversación general (PO, 17-nov-2026: el selector «Sobre:» se quitó porque duplicaba el buscador). La pantalla no ofrece cambiarla después (PO, 18-nov-2026). Va en claro, como ya va en consultas y
   ofertas; el texto sigue cifrado.
 - **Búsqueda en el hilo** por etiqueta: lista de referencias del hilo que casan con lo escrito, se elige una, y la
   pestaña Mensajes se filtra a esa referencia hasta que se quita el filtro.

@@ -177,23 +177,6 @@
   color: var(--bw-deep-steel);
 }
 
-.retag {
-  align-self: flex-start;
-  font-family: var(--bw-font-body);
-  font-size: var(--bw-size-hint);
-  padding: 2px 6px;
-  border: 1px solid var(--bw-line-steel-strong);
-  border-radius: var(--bw-radius);
-  color: var(--bw-input-text);
-  background: var(--bw-cold-white);
-}
-
-.retag:focus {
-  outline: none;
-  border-color: var(--bw-calibration-blue);
-  box-shadow: var(--bw-focus-halo);
-}
-
 .meta {
   display: flex;
   gap: 8px;

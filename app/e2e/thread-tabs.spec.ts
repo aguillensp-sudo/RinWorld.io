@@ -21,7 +21,7 @@ import { NORDWALZ_MIEMBRO, NORDWALZ_ORG } from '../../supabase/seed/demo-content
  *     campo `Filtrar Referencia`.
  *   · La Referencia de una fila es un botón que lleva a Mensajes filtrado por ella.
  *   · El campo de escribir (`Escribe un mensaje`) va encima de los mensajes. La etiqueta de un
- *     mensaje va en `message-tag`; quien lo envió la cambia con el `combobox` `Cambiar etiqueta`.
+ *     mensaje va en `message-tag`, sin desplegable para cambiarla (PO, 18-nov-2026).
  *   · El buscador es un `searchbox` cuyo nombre es el texto de ayuda de la spec, arriba en
  *     Mensajes (donde estaba «Sobre:», quitado por el PO el 17-nov-2026 porque lo duplicaba);
  *     sus coincidencias son `option`; el filtro activo, «Referencia: … ✕», con el botón
@@ -287,7 +287,7 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     expect(campo && primero && campo.y < primero.y).toBe(true);
   });
 
-  test('sin búsqueda, el mensaje es conversación general; buscando, lleva la referencia; su autor puede quitársela', async ({
+  test('sin búsqueda, el mensaje es conversación general; buscando, lleva la referencia, sin desplegable para cambiarla', async ({
     page,
   }) => {
     await abrirHilo(page, 'Nordwälz Lager');
@@ -308,9 +308,8 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     const mensaje = page.getByTestId('thread-item').filter({ hasText: texto });
     await expect(mensaje.getByTestId('message-tag')).toHaveText(REF_OFERTA, { timeout: 15_000 });
 
-    await page.getByRole('button', { name: 'Quitar filtro de referencia' }).click();
-    await mensaje.getByRole('combobox', { name: 'Cambiar etiqueta' }).selectOption({ label: 'Conversación general' });
-    await expect(mensaje.getByTestId('message-tag')).toHaveCount(0);
+    // Sin desplegable para cambiarla (PO, 18-nov-2026: «no sirve para nada»).
+    await expect(page.getByTestId('thread-body').getByRole('combobox')).toHaveCount(0);
   });
 
   test('el buscador va arriba en Mensajes, encima del campo de escribir, y no en las tablas', async ({ page }) => {
@@ -338,7 +337,7 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     }
   });
 
-  test('la otra organización ve la etiqueta pero no puede cambiarla', async ({ page, browser }) => {
+  test('la otra organización ve la etiqueta',async ({ page, browser }) => {
     await abrirHilo(page, 'Nordwälz Lager');
     await buscar(page, '6205', REF_OFERTA);
     const texto = `Etiqueta ajena ${Date.now()}`;
@@ -355,7 +354,6 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
       await beta.getByRole('button', { name: new RegExp(ALPHA.org) }).click();
       const mensaje = beta.getByTestId('thread-item').filter({ hasText: texto });
       await expect(mensaje.getByTestId('message-tag')).toHaveText(REF_OFERTA, { timeout: 15_000 });
-      await expect(mensaje.getByRole('combobox', { name: 'Cambiar etiqueta' })).toHaveCount(0);
     } finally {
       await ctx.close();
     }

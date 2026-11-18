@@ -3,7 +3,6 @@ import {
   TAB_TEXTS,
   referenceLabel,
   type ThreadReference,
-  type ThreadReferenceOption,
   type TimelineEntry,
 } from '../../lib/negotiation-rows';
 import { ENCRYPTED_NOTICE, type ThreadItem } from '../../lib/thread-detail';
@@ -13,10 +12,8 @@ import styles from './MessagesTimeline.module.css';
 interface MessagesTimelineProps {
   entries: TimelineEntry[];
   allItems: ThreadItem[];
-  references: ThreadReferenceOption[];
   filter: ThreadReference | null;
   onClearFilter: () => void;
-  onRetag: (itemId: string, tag: ThreadReference | null) => void;
   authorOf: (item: ThreadItem) => string;
   now: Date;
 }
@@ -27,8 +24,8 @@ interface MessagesTimelineProps {
  * Presentacional: recibe las entradas ya calculadas por `messageTimeline` y las
  * pinta en el orden en que llegan. El único estado propio es el panel «Ver lo que
  * ve el servidor», cerrado al abrir. Cada mensaje libre muestra su etiqueta de
- * referencia (si la lleva) y, solo si es propio, el selector para cambiarla. El
- * texto del mensaje nunca se recalcula.
+ * referencia (si la lleva). El texto del mensaje nunca se recalcula. (El selector
+ * para cambiar la etiqueta se quitó a mano: PO, 18-nov-2026, «no sirve para nada».)
  *
  * El panel del servidor enseña `raw.ciphertext` y `raw.iv` TAL CUAL llegan, cada
  * uno en su propio nodo de texto: es lo que la base guarda, y el contenido
@@ -37,10 +34,8 @@ interface MessagesTimelineProps {
 export function MessagesTimeline({
   entries,
   allItems,
-  references,
   filter,
   onClearFilter,
-  onRetag,
   authorOf,
   now,
 }: MessagesTimelineProps) {
@@ -115,7 +110,6 @@ export function MessagesTimeline({
               isMessage && item.partNumber && item.brand
                 ? referenceLabel({ partNumber: item.partNumber, brand: item.brand })
                 : null;
-            const currentTag = tag ?? TAB_TEXTS.generalConversation;
 
             return (
               <li
@@ -149,32 +143,6 @@ export function MessagesTimeline({
                   <span data-testid="message-tag" className={styles.tag}>
                     {tag}
                   </span>
-                )}
-
-                {isMessage && item.isOwn && (
-                  <select
-                    aria-label={TAB_TEXTS.retagLabel}
-                    className={styles.retag}
-                    value={currentTag}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === TAB_TEXTS.generalConversation) {
-                        onRetag(item.id, null);
-                        return;
-                      }
-                      const ref = references.find((r) => r.label === value);
-                      if (ref) onRetag(item.id, { partNumber: ref.partNumber, brand: ref.brand });
-                    }}
-                  >
-                    <option value={TAB_TEXTS.generalConversation}>
-                      {TAB_TEXTS.generalConversation}
-                    </option>
-                    {references.map((r) => (
-                      <option key={r.label} value={r.label}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
                 )}
 
                 <div className={styles.meta}>

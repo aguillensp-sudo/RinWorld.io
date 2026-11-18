@@ -79,6 +79,9 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       duplicaba el buscador (decisión del PO). El buscador sube a su sitio, arriba en Mensajes, y la etiqueta de lo
       que se escribe es la referencia buscada; sin búsqueda, conversación general. Fuera `TagCombobox`,
       `initialTag` y `sendBlocked`.
+- [x] 4.4 C5 del PO (18-nov-2026), a mano: fuera el desplegable «Cambiar etiqueta» de cada mensaje propio («no sirve
+      para nada al usuario»), con `retagMessage` y sus textos. La base (0080) sigue permitiendo el cambio a la
+      organización emisora; no se toca, porque quitarlo sería una migración sin necesidad.
 - [ ] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (ya no los monta nadie).
       **Espera a 5.2**, por lo mismo que 2.9.
 - [ ] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6). Artefacto del Coder y revisión a mano en

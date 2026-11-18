@@ -7,7 +7,6 @@ import {
   fetchThreadDetail,
   fetchThreadItems,
   authorLabel,
-  retagMessage,
   sendInquiries,
   sendMessage,
   type OfferContent,
@@ -309,14 +308,6 @@ export function Thread({
     [threadId, write, refFilter],
   );
 
-  /** Cambiar la etiqueta de un mensaje propio. Lo que es legal lo decide la base (0080). */
-  const handleRetag = useCallback(
-    (itemId: string, next: ThreadReference | null) => {
-      void write(() => retagMessage(itemId, next));
-    },
-    [write],
-  );
-
   const handleAction = useCallback(
     (row: NegotiationRow, action: NegotiationAction) => {
       switch (action) {
@@ -424,10 +415,8 @@ export function Thread({
                   <MessagesTimeline
                     entries={timeline}
                     allItems={items}
-                    references={references}
                     filter={refFilter}
                     onClearFilter={() => setRefFilter(null)}
-                    onRetag={handleRetag}
                     authorOf={(item) =>
                       authorLabel(item, { ownOrgName: profile.orgName, counterpartyName: detail.counterpartyName })
                     }

@@ -618,25 +618,6 @@ export async function sendMessage(
 }
 
 /**
- * Cambia la etiqueta de un mensaje propio (o la quita, con `null`).
- *
- * Es un `update` directo: el texto no cambia, así que no hay nada que cifrar. Lo que se
- * puede y lo que no lo decide la base (0080): solo la organización que envió el mensaje,
- * solo una referencia del hilo, y nada más del mensaje se reescribe.
- */
-export async function retagMessage(
-  itemId: string,
-  tag: { partNumber: string; brand: string } | null,
-): Promise<void> {
-  const { error } = await supabase
-    .from('thread_items')
-    .update({ part_number: tag?.partNumber ?? null, brand: tag?.brand ?? null })
-    .eq('id', itemId)
-    .eq('item_type', 'MENSAJE');
-  if (error) throw error;
-}
-
-/**
  * La contraoferta (`Plan §3`, día 10). No está en `offers.ts` a propósito: esa
  * capa es solo metadatos (ver su cabecera) y aquí hay cifras comerciales de
  * verdad — mismo criterio que separa `sendMessage` de `acceptOffer`.

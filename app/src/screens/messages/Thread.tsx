@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { errorMessage, type MemberProfile } from '../../lib/session';
+import { markThreadRead } from '../../lib/thread-reads';
 import {
   counterOffer,
   createOffer,
@@ -159,6 +160,9 @@ export function Thread({
       if (mia !== lastReload.current) return;
       setDetail(nextDetail);
       setItems(nextItems);
+      // F-027 a: lo que se acaba de cargar ya se ha visto. También tras cada evento de Realtime, que
+      // vuelve a pasar por aquí: con el hilo abierto, lo que llega se está leyendo.
+      void markThreadRead(threadId);
     } catch (err) {
       if (mia !== lastReload.current) return;
       setError(errorMessage(err));

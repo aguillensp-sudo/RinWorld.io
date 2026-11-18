@@ -744,6 +744,16 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     expect(lib('panel.ts')).toContain("n === null ? '—' : String(n)");
   });
 
+  it('F-027 a: lo que la guía dice de «sin leer» está en el Panel, la lista y la herramienta', () => {
+    expect(prompt).toContain('"Más reciente:" con la empresa y el estado de ese hilo, o "Todo leído"');
+    expect(lib('panel.ts')).toContain('`Más reciente: ${threads.latest.orgName} — ${threads.latest.state}`');
+    expect(lib('panel.ts')).toContain("'Todo leído'");
+    expect(prompt).toContain('lleva junto a la hora un número en azul');
+    expect(screen('messages/ThreadList.tsx')).toContain('data-testid="unread-count"');
+    expect(screen('messages/Thread.tsx')).toContain('void markThreadRead(threadId)');
+    expect(lib('vera-tools.ts')).toContain('sin leer`');
+  });
+
   it('Configuración: solo es botón para el ADMIN y abre las invitaciones; Seguridad solo con backup de clave', () => {
     expect(app).toMatch(/state\.profile\.role === 'ADMIN'\s*\?\s*\{\s*onOpenSettings:/);
     expect(app).toMatch(/settingsOpen && state\.profile\.role === 'ADMIN' \? \(\s*\/\*[\s\S]*?\*\/\s*<Invitations/);

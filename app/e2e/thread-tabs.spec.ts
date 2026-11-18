@@ -145,6 +145,22 @@ test.describe('Hilos · accesos', () => {
     await expect(page.getByTestId('thread-body')).toHaveCount(0);
   });
 
+  // F-027 a (0082, PO 18-nov-2026): el Panel cuenta los hilos sin leer y abrir uno lo da por leído.
+  test('sin leer: el Panel da un número, no «—», y abrir el hilo lo quita de la lista', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('threads-count')).toHaveText(/^\d+$/);
+    await expect(page.getByTestId('threads-detail')).toHaveText(/^(Más reciente: .+ — .+|Todo leído)$/);
+
+    const marcado = page.waitForResponse((r) => r.url().includes('/rpc/mark_thread_read') && r.ok());
+    await abrirHilo(page, 'Nordwälz Lager');
+    await marcado;
+
+    await page.getByRole('button', { name: 'Hilos', exact: true }).first().click();
+    const filaHilo = page.getByRole('button', { name: /Abrir hilo con Nordwälz Lager/ });
+    await expect(filaHilo).toBeVisible();
+    await expect(filaHilo.getByTestId('unread-count')).toHaveCount(0);
+  });
+
   test('al abrir un hilo se ve la pestaña Mensajes, y las tres pestañas van en orden', async ({ page }) => {
     await abrirHilo(page, 'Nordwälz Lager');
     await expect(page.getByRole('tab')).toHaveText(['Mensajes', 'Soy cliente', 'Soy proveedor']);

@@ -40,6 +40,11 @@ vi.mock('../../lib/realtime', () => ({
   onThreadChanged: (id: string, cb: () => void) => onThreadChanged(id, cb),
 }));
 
+const markThreadRead = vi.fn<(id: string) => Promise<void>>(async () => {});
+vi.mock('../../lib/thread-reads', () => ({
+  markThreadRead: (id: string) => markThreadRead(id),
+}));
+
 const { Thread } = await import('./Thread');
 
 beforeEach(() => {
@@ -71,6 +76,24 @@ describe('MSG-02 · Realtime — fuera del contrato del arnés', () => {
 
     await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalledTimes(2));
     expect(fetchThreadItems).toHaveBeenCalledTimes(2);
+  });
+
+  it('F-027 a: al cargar marca el hilo como leído, y otra vez con cada evento', async () => {
+    markThreadRead.mockClear();
+    pinta();
+    await waitFor(() => expect(markThreadRead).toHaveBeenCalledWith(HILO));
+    expect(markThreadRead).toHaveBeenCalledTimes(1);
+    onThreadChanged.mock.calls[0]![1]!();
+    await waitFor(() => expect(markThreadRead).toHaveBeenCalledTimes(2));
+  });
+
+  it('F-027 a: si la carga falla, no lo marca como leído', async () => {
+    markThreadRead.mockClear();
+    fetchThreadDetail.mockRejectedValue(new Error('red'));
+    pinta();
+    await waitFor(() => expect(fetchThreadDetail).toHaveBeenCalled());
+    await screen.findByText(/red/);
+    expect(markThreadRead).not.toHaveBeenCalled();
   });
 
   it('⚠ se da de baja al desmontar', async () => {

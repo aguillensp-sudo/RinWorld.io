@@ -175,14 +175,20 @@ describe('MSG-01 · ThreadList', () => {
   });
 
   describe('lo que el mock promete y el MVP no tiene', () => {
-    it('no pinta punto ni recuento de no leídos', () => {
-      // El esquema no tiene NINGÚN seguimiento de lectura: ni `read_at`, ni
-      // `last_read_at`, ni tabla de recibos. El "punto azul + recuento" de la
-      // spec §3 no tiene de dónde salir, y un recuento inventado delante del
-      // socio es exactamente F-023 otra vez. Ver F-027.
-      render(<ThreadList threads={[thread()]} now={NOW} onOpen={vi.fn()} />);
+    it('sin el dato de no leídos, o con 0, no pinta recuento', () => {
+      // F-027 a: desde `0082` hay registro de lectura, pero si no se pudo saber
+      // (`unread` ausente) la fila no afirma nada: un recuento inventado
+      // delante del socio sería F-023 otra vez.
+      render(<ThreadList threads={[thread(), thread({ id: 'h-0', unread: 0 })]} now={NOW} onOpen={vi.fn()} />);
       expect(screen.queryByTestId('unread-count')).not.toBeInTheDocument();
       expect(screen.queryByText(/no le[íi]dos?/i)).not.toBeInTheDocument();
+    });
+
+    it('F-027 a: con elementos sin leer, el recuento azul junto a la hora (spec §3, HTML aprobado)', () => {
+      render(<ThreadList threads={[thread({ unread: 2 })]} now={NOW} onOpen={vi.fn()} />);
+      const badge = screen.getByTestId('unread-count');
+      expect(badge).toHaveTextContent('2');
+      expect(badge).toHaveAccessibleName('2 sin leer');
     });
 
     it('no pinta el bloque de passphrase', () => {

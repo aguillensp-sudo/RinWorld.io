@@ -15,8 +15,8 @@ import styles from './ThreadList.module.css';
  * `previewLabel`, que solo usa metadatos en claro (tipo de elemento y
  * referencia) — nunca contenido descifrado (spec §7, F-027).
  *
- * El indicador de no leídos del mock no se pinta: el esquema no tiene ningún
- * seguimiento de lectura y un recuento inventado delante del socio sería F-023.
+ * El indicador de no leídos (spec §3) sale de `thread.unread` (F-027 a, `0082`). Si no
+ * se pudo saber, no se pinta: un recuento inventado delante del socio sería F-023.
  */
 /**
  * El tono → su clase. Va tipado con `| undefined` porque con
@@ -67,7 +67,7 @@ export function ThreadList({
         <li key={thread.id} className={styles.item}>
           <button
             type="button"
-            className={styles.row}
+            className={`${styles.row} ${thread.unread ? (styles.unreadRow ?? '') : ''}`}
             aria-label={`Abrir hilo con ${thread.counterpartyName}`}
             onClick={() => onOpen(thread.id)}
           >
@@ -76,6 +76,16 @@ export function ThreadList({
               <span className={styles.country}>{thread.counterpartyCountry}</span>
             </div>
             <div className={styles.tsRow}>
+              {thread.unread ? (
+                <span
+                  className={styles.unreadBadge}
+                  data-testid="unread-count"
+                  role="status"
+                  aria-label={`${thread.unread} sin leer`}
+                >
+                  {thread.unread}
+                </span>
+              ) : null}
               <span className={styles.ts}>{relativeTime(thread.lastItemAt, now)}</span>
             </div>
             <div className={styles.bot}>

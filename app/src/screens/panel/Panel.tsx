@@ -5,6 +5,7 @@ import {
   fetchPanelSummary,
   latestOfferLine,
   latestQueryLine,
+  latestThreadLine,
   metricLabel,
   subtitleLabel,
   type PanelSummary,
@@ -171,12 +172,11 @@ export function Panel({ profile, now, onNavigate }: Props) {
                 {metricLabel(summary.threads.unread)}
               </span>
               <span className={styles.label}>con mensajes sin leer</span>
-              {/* `threads.latest` es siempre null en el MVP (F-027 a, ver la
-                  cabecera de `lib/panel.ts`): no hay registro de lectura. Se
-                  muestra la ausencia con un guion, igual que el resto de métricas
-                  sin fuente, en vez de inventar un orgName y un estatus que no se
-                  han consultado. */}
-              <span className={styles.detail}>—</span>
+              {/* F-027 a (`0082`): el hilo sin leer más reciente (§4.4). Si no se
+                  pudo medir, guion, igual que el resto de métricas sin fuente. */}
+              <span className={styles.detail} data-testid="threads-detail">
+                {latestThreadLine(summary.threads)}
+              </span>
             </button>
 
             {/* ── Resumen mes (ancho completo) → VND-01 ── */}

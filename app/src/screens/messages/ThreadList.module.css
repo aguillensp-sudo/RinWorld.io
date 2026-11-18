@@ -202,3 +202,28 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/*
+ * F-027 a: hilo con algo sin leer (spec MSG-01 §3, HTML aprobado: `.unread-row` y `.unread-badge`).
+ * El `#FAFBFF` del mock es de un solo uso y design-system.md §1.4 pide su token equivalente: el tinte
+ * azul de fila. El nombre en negrita lo distingue también del hover.
+ */
+.unreadRow {
+  background: var(--bw-row-hover-tint);
+}
+
+.unreadRow .org {
+  font-weight: 700;
+}
+
+.unreadBadge {
+  min-width: 16px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--bw-calibration-blue);
+  color: var(--bw-on-dark-hover);
+  font-size: var(--bw-size-hint);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+}

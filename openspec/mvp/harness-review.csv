@@ -1,5 +1,5 @@
 fecha,tarea,corrida,commit_artefacto,commit_revision,ficheros,lineas_artefacto,lineas_anadidas,lineas_quitadas,ficheros_tocados,ficheros_sin_tocar,nota
-2026-08-09,MSG-01,corrida-03,a31dfe3,ccdbeed,4,695,171,145,4,0,escalado 3/3
+2026-08-09,MSG-01,corrida-03,a31dfe3,ccdbeed,4,695,171,145,4,0,escalado 3/3 | 18-nov-2026: ThreadList.tsx (artefacto) tocado a mano por F-027 a: indicador de no leídos con su CSS. No es de la corrida
 2026-08-10,SRCH-01,corrida-01,3ead525,-,6,1076,0,0,0,6,"escalado 3/3 · sustituida por la corrida 2, sin revision"
 2026-08-10,SRCH-01,corrida-02,548d7b8,9608eae,6,1089,64,13,3,3,escalado 3/3
 2026-08-11,MSG-02,corrida-01,2585caf,c34d473,8,1294,68,55,2,6,escalado 3/3

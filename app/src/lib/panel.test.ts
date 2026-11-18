@@ -124,3 +124,14 @@ describe('monthStart', () => {
     expect(new Date(iso).getDate()).toBe(1);
   });
 });
+
+describe('latestThreadLine · caja Hilos §4.4 (F-027 a)', () => {
+  it('sin dato, guion; medido y vacío, «Todo leído»; con algo, el más reciente', async () => {
+    const { latestThreadLine } = await import('./panel');
+    expect(latestThreadLine({ unread: null, latest: null })).toBe('—');
+    expect(latestThreadLine({ unread: 0, latest: null })).toBe('Todo leído');
+    expect(latestThreadLine({ unread: 3, latest: { orgName: 'Julsa Industrial', state: 'ABIERTO' } })).toBe(
+      'Más reciente: Julsa Industrial — ABIERTO',
+    );
+  });
+});

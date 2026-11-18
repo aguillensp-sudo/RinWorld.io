@@ -33,7 +33,7 @@ Registro de hallazgos del MVP. Clasificación: `SPEC-GAP` · `HARNESS` · `MODEL
 | [F-024](findings/F-024.md) | 2026-08-07 | `HARNESS` | Dos trampas para el Test-runner del día 5, las dos de la misma familia que F-003: comparar contra el mock en vez de contra el spec. | Cerrado |
 | [F-025](findings/F-025.md) | 2026-08-07 | `DESIGN` | El HTML de cada pantalla lleva un shell distinto del shell base aprobado, y eso va a romper el criterio C2 del arnés desde el día 5. | Cerrado |
 | [F-026](findings/F-026.md) | 2026-08-09 | `HARNESS` | El chip decía `Desactualizados (3)` sobre una tabla con dos filas en naranja: la misma regla del spec implementada dos veces, con dos borde... | Cerrado |
-| [F-027](findings/F-027.md) | 2026-08-09 | `SPEC-GAP` | La spec de MSG-01 promete dos cosas que el esquema no puede sostener, y una de ellas se contradice consigo misma dos secciones más abajo. | Abierto |
+| [F-027](findings/F-027.md) | 2026-08-09 | `SPEC-GAP` | La spec de MSG-01 promete dos cosas que el esquema no puede sostener, y una de ellas se contradice consigo misma dos secciones más abajo. | CERRADO 18-nov-2026: (a) registro de lectura en `0082`, Panel y lista de Hilos lo pintan (PO); (b) a favor de la §7 |
 | [F-028](findings/F-028.md) | 2026-08-10 | `HARNESS` | `npm` no se podía ejecutar, y los checks lo reportaron como si el Coder hubiera fallado. | Cerrado |
 | [F-029](findings/F-029.md) | 2026-08-10 | `HARNESS` | C4 suspendió tres veces un componente correctamente tipado. | Cerrado |
 | [F-030](findings/F-030.md) | 2026-08-10 | `HARNESS` | La tarea declaraba `data_layer` y el prompt no lo entregaba. | Cerrado |

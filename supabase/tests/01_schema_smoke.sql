@@ -4090,6 +4090,13 @@ drop function public.f146_canaria();
 --     entero y no hay conjunto oculto que un invoker pueda ver de menos. Es invoker por el mismo
 --     motivo que aquel: en una función definer `current_user` sería el dueño y el bypass de
 --     `service_role` se activaría siempre. Auditada a mano el 28-oct-2026.
+--   · `mark_thread_read` (0082, F-027 a) — solo ESCRIBE `thread_reads` con un upsert; no lee nada
+--     para decidir. Si las políticas no le dejan, falla con error. Auditada a mano el 18-nov-2026.
+--   · `unread_threads` (0082, F-027 a) — lee `thread_items`, `threads`, `organizations`, `members` y
+--     `thread_reads` bajo RLS, y su resultado ES la respuesta a quien llama, no un guardia: que la RLS
+--     oculte elementos (ámbito de visibilidad) es lo que tiene que pasar, porque un miembro no puede
+--     tener «sin leer» lo que no puede ver. No escribe nada. `13_hilos_sin_leer.sql` lo prueba como
+--     miembro. Auditada a mano el 18-nov-2026.
 create or replace function app.f155_detector() returns text
   language sql security definer set search_path to 'pg_catalog','public' as $detector$
   select string_agg(n.nspname || '.' || p.proname, ', ' order by n.nspname || '.' || p.proname)
@@ -4113,7 +4120,9 @@ create or replace function app.f155_detector() returns text
            'public.search_part_keys',
            'public.search_offers',
            'public.forum_create_thread',
-           'app.guard_forum_post_delete')
+           'app.guard_forum_post_delete',
+           'public.mark_thread_read',
+           'public.unread_threads')
      and exists (
            select 1
              from pg_class c

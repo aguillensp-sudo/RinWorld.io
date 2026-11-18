@@ -399,6 +399,28 @@ describe('listar_mis_hilos es metadata-only, y eso es la mitad del producto', ()
     expect(r.content).toContain('último: MENSAJE, lo enviaste tú');
   });
 
+  // F-027 a (0082): la fila dice cuánto hay sin leer; si no se pudo saber, no dice nada.
+  it('F-027 a: cada hilo dice cuánto tiene sin leer, y nada si no se pudo saber', async () => {
+    const hilo = (id: string, nombre: string, unread?: number) => ({
+      id,
+      counterpartyName: nombre,
+      counterpartyCountry: 'ES',
+      state: 'ABIERTO',
+      lastItemAt: '2026-11-18T10:00:00Z',
+      lastItem: { type: 'MENSAJE', partNumber: null, isOwn: false },
+      ...(unread === undefined ? {} : { unread }),
+    });
+    fetchThreadPage.mockResolvedValueOnce({
+      threads: [hilo('t1', 'Levante', 2), hilo('t2', 'Julsa', 0), hilo('t3', 'Anadolu')],
+      total: 3,
+    });
+    const r = await runTool('listar_mis_hilos', {}, contexto());
+    const lineas = r.content.split('\n');
+    expect(lineas.find((l) => l.includes('Levante'))).toContain('· 2 sin leer');
+    expect(lineas.find((l) => l.includes('Julsa'))).toContain('· nada sin leer');
+    expect(lineas.find((l) => l.includes('Anadolu'))).not.toMatch(/sin leer/);
+  });
+
   it('filtra por contraparte cuando el modelo la pasa', async () => {
     await runTool('listar_mis_hilos', { contraparte: 'Anadolu' }, contexto());
     const [arg] = fetchThreadPage.mock.calls[0] as [{ orgId: string; search: string }];

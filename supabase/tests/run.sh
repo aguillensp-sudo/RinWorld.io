@@ -116,6 +116,9 @@ run "$ROOT/supabase/tests/11_busqueda_dos_fases.sql"
 echo "· fase 1 · etiqueta de referencia en los mensajes (0080)"
 run "$ROOT/supabase/tests/12_etiqueta_mensaje.sql"
 
+echo "· fase 1 · hilos sin leer (0082)"
+run "$ROOT/supabase/tests/13_hilos_sin_leer.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

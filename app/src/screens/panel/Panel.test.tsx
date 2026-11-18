@@ -195,17 +195,35 @@ describe('caja Inventario · CA-PANEL-04', () => {
 
 describe('caja Hilos · CA-PANEL-05', () => {
   /**
-   * No existe ningún registro de lectura (F-027 a). El número grande de esta
-   * caja NO se puede calcular, y `RNG-PANEL-02` haría que un `0` afirmara "he
-   * mirado y no tienes ninguno sin leer". Guion.
+   * Si no se pudo medir (F-027 a, `unread: null`), `RNG-PANEL-02` haría que un
+   * `0` afirmara "he mirado y no tienes ninguno sin leer". Guion.
    */
-  it('el recuento de no leídos va con GUION, y la etiqueta sigue estando', async () => {
+  it('sin dato, el recuento de no leídos va con GUION, y la etiqueta sigue estando', async () => {
     pintar();
     const etiqueta = await screen.findByText('con mensajes sin leer');
     expect(etiqueta).toBeInTheDocument();
     const caja = etiqueta.closest('button') ?? etiqueta.parentElement;
     expect(caja?.textContent ?? '').toContain('—');
     expect(caja?.textContent ?? '').not.toMatch(/\b0\b/);
+  });
+
+  it('F-027 a: con hilos sin leer, el número y «Más reciente: {organización} — {estatus}» (§4.4)', async () => {
+    fetchPanelSummary.mockResolvedValue({
+      ...RESUMEN,
+      threads: { unread: 2, latest: { orgName: 'Suministros Industriales Levante', state: 'CON CONSULTA PENDIENTE' } },
+    });
+    pintar();
+    expect(await screen.findByTestId('threads-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('threads-detail')).toHaveTextContent(
+      'Más reciente: Suministros Industriales Levante — CON CONSULTA PENDIENTE',
+    );
+  });
+
+  it('F-027 a: medido y sin nada sin leer, un 0 y «Todo leído»', async () => {
+    fetchPanelSummary.mockResolvedValue({ ...RESUMEN, threads: { unread: 0, latest: null } });
+    pintar();
+    expect(await screen.findByTestId('threads-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('threads-detail')).toHaveTextContent('Todo leído');
   });
 
   it('navega a Hilos al pulsarla', async () => {

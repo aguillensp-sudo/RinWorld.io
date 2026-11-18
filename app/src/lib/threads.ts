@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { fetchUnreadThreads } from './thread-reads';
 
 /**
  * Capa de datos de MSG-01 · Lista de Hilos.
@@ -71,6 +72,11 @@ export interface ThreadSummary {
   /** Solo si se buscó por referencia: los elementos del hilo que la llevan, no
    *  solo el último. Metadatos en claro (`part_number`, `brand`, estados). */
   referenceMatches?: ReferenceMatch[];
+  /**
+   * Elementos sin leer para quien mira (F-027 a, `0082`). `0` si no hay ninguno; ausente si no se
+   * pudo saber, y entonces la lista no pinta indicador en vez de afirmar que está todo leído.
+   */
+  unread?: number;
 }
 
 export interface ReferenceMatch {
@@ -271,7 +277,14 @@ export async function fetchThreadPage({ orgId, search, page, reference }: Thread
   if (error) throw error;
 
   const rows = (data ?? []) as unknown as ThreadRow[];
-  const lastItems = await fetchLastItems(rows.map((r) => r.id), orgId);
+  const [lastItems, unread] = await Promise.all([
+    fetchLastItems(rows.map((r) => r.id), orgId),
+    // F-027 a: si falla, la lista se pinta igual, sin indicador (`null`), en vez de caerse entera.
+    fetchUnreadThreads().then(
+      (list) => new Map(list.map((u) => [u.threadId, u.count])),
+      () => null,
+    ),
+  ]);
 
   return {
     threads: rows.map((r) => {
@@ -284,6 +297,7 @@ export async function fetchThreadPage({ orgId, search, page, reference }: Thread
         lastItemAt: r.last_item_at,
         lastItem: lastItems.get(r.id) ?? null,
         ...(matches ? { referenceMatches: matches.get(r.id) ?? [] } : {}),
+        ...(unread ? { unread: unread.get(r.id) ?? 0 } : {}),
       };
     }),
     total: count ?? 0,

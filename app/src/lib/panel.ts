@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { fetchStats } from './inventory';
 import { fetchSentOffers, sentAtLabel } from './sent-offers';
+import { fetchUnreadThreads } from './thread-reads';
 
 /**
  * Capa de datos de PANEL-01 · Mi Panel (dashboard de inicio).
@@ -16,7 +17,7 @@ import { fetchSentOffers, sentAtLabel } from './sent-offers';
  * | Métrica | Por qué no existe |
  * |---|---|
  * | Visitas (30d), §4.3 | **No hay ninguna tabla de visitas.** INV-01 ya lo resolvió igual el día 3 |
- * | Hilos sin leer, §4.4 | **No hay ningún registro de lectura.** Es F-027 (a), aplazado por el PO |
+ * | Hilos sin leer, §4.4 | **Ya tiene fuente (F-027 a, `0082`, PO 18-nov-2026).** La RPC `unread_threads` cuenta, por miembro, lo que la otra empresa hizo después de su última lectura. Si falla, `null` |
  * | Favoritos del mes, §4.6 | **Ya tiene fuente (F-280, `0077`).** `favorites_select_own` (`0005:67`) restringe `favorite_distributors` a `member_id = auth.uid()`, así que un conteo desde el cliente devolvería 0 en silencio; la RPC `favorites_received_this_month` devuelve solo el número. Si falla o no hay sesión, `null` |
  *
  * Las tres devuelven `null`, y el tipo lo dice —`visits: null`, no `number`— para
@@ -53,9 +54,13 @@ export interface PanelSummary {
     visits: null;
   };
   threads: {
-    /** Sin fuente (F-027 a). Ver la cabecera. */
-    unread: null;
-    latest: null;
+    /**
+     * Hilos con al menos un elemento sin leer (F-027 a, `0082`). `null` si no se pudo medir: nunca
+     * un 0 falso.
+     */
+    unread: number | null;
+    /** El hilo sin leer más reciente (§4.4: «Más reciente: {organización} — {estatus del hilo}»). */
+    latest: { orgName: string; state: string } | null;
   };
   month: { acceptedOffers: number; madeOffers: number; receivedQueries: number };
   favorites: {
@@ -124,6 +129,16 @@ export function dateLabel(iso: string | null): string {
 export function latestOfferLine(h: PanelHighlight | null): string {
   if (!h) return 'Sin ofertas pendientes';
   return `Más reciente: ${h.partNumber ?? '—'} · ${h.orgName} (${dateLabel(h.at)})`;
+}
+
+/**
+ * `Más reciente: {organización} — {estatus del hilo}` (spec §4.4), del hilo sin leer más reciente.
+ * Sin dato, guion; sin nada sin leer, dicho en claro.
+ */
+export function latestThreadLine(threads: PanelSummary['threads']): string {
+  if (threads.unread === null) return '—';
+  if (!threads.latest) return 'Todo leído';
+  return `Más reciente: ${threads.latest.orgName} — ${threads.latest.state}`;
 }
 
 /** `Última consulta: {referencia} · {organización}` (spec §4.2). */
@@ -265,12 +280,14 @@ export async function fetchFavoritesReceived(): Promise<number | null> {
  * dashboard de entrada tardaría la suma de las cuatro.
  */
 export async function fetchPanelSummary({ orgId, now = new Date() }: PanelQuery): Promise<PanelSummary> {
-  const [ofertas, consultas, inventario, mes, favoritos] = await Promise.all([
+  const [ofertas, consultas, inventario, mes, favoritos, sinLeer] = await Promise.all([
     fetchSentOffers(orgId),
     fetchPendingQueries(orgId),
     fetchStats(orgId, now),
     fetchMonth(orgId, now),
     fetchFavoritesReceived(),
+    // F-027 a: si falla, el bloque se queda en «—»; no tumba el panel entero.
+    fetchUnreadThreads().catch(() => null),
   ]);
 
   /*
@@ -298,7 +315,14 @@ export async function fetchPanelSummary({ orgId, now = new Date() }: PanelQuery)
       lastUploadAt: inventario.lastUploadAt,
       visits: null,
     },
-    threads: { unread: null, latest: null },
+    threads:
+      sinLeer === null
+        ? { unread: null, latest: null }
+        : {
+            unread: sinLeer.length,
+            // `unread_threads` ya viene del más reciente al más antiguo.
+            latest: sinLeer[0] ? { orgName: sinLeer[0].counterpartyName, state: sinLeer[0].threadState } : null,
+          },
     month: mes,
     favorites: { monthly: favoritos },
   };

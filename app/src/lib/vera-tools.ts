@@ -684,7 +684,9 @@ async function listarMisHilos(input: unknown, ctx: ToolContext): Promise<ToolRes
         referenciaDe(t.lastItem.type, t.lastItem.partNumber, null) +
         `, ${t.lastItem.isOwn ? 'lo enviaste tú' : `lo envió ${t.counterpartyName}`}`
       : 'sin elementos';
-    const base = [t.counterpartyName, countryName(t.counterpartyCountry), t.state, ultimo].join(' · ');
+    // F-027 a: sin leer para quien pregunta. Si no se pudo saber, no se dice nada (ni «todo leído»).
+    const sinLeer = t.unread === undefined ? [] : [t.unread > 0 ? `${t.unread} sin leer` : 'nada sin leer'];
+    const base = [t.counterpartyName, countryName(t.counterpartyCountry), t.state, ultimo, ...sinLeer].join(' · ');
     if (!t.referenceMatches || t.referenceMatches.length === 0) return base;
     // Búsqueda por referencia: se dicen TODOS los elementos que la llevan, no
     // solo el último (un hilo puede tener varias referencias).

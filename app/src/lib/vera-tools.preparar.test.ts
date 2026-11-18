@@ -80,6 +80,13 @@ describe('preparar_consulta', () => {
     expect(r.content).toContain('No digas que la has enviado');
   });
 
+  it('F-285: el retorno nombra la empresa del hilo que está en pantalla, no la de la conversación', async () => {
+    const r = await runTool('preparar_consulta', { referencia: '6205-2RS', cantidad: 300 }, { ...ctx(), threadCounterparty: 'Suministros Industriales Levante' });
+    expect(r.content).toContain('en el hilo con Suministros Industriales Levante');
+    const o = await runTool('preparar_oferta', { referencia: '6205-2RS' }, { ...ctx(), threadCounterparty: 'Suministros Industriales Levante' });
+    expect(o.content).toContain('en el hilo con Suministros Industriales Levante');
+  });
+
   it('acepta la cantidad escrita como cadena, la marca y las notas, recortadas', async () => {
     await runTool('preparar_consulta', { referencia: ' 22316-E ', marca: 'FAG', cantidad: '40', notas: '  Plazo urgente ' }, ctx());
     expect(borradores).toEqual([{ kind: 'consulta', reference: '22316-E', brand: 'FAG', quantity: 40, notes: 'Plazo urgente' }]);

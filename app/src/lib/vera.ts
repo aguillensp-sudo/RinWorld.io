@@ -214,6 +214,8 @@ export function createProxyCall(
     fullName: string | null;
     pantalla?: string;
     hiloAbierto?: boolean;
+    /** Con quién es el hilo abierto (`F-285`): sin él, VERA nombraba la empresa del hilo del que se habló antes. */
+    hiloCon?: string;
     filtros?: string;
     /** Lo que el usuario cambió a mano desde la última búsqueda de VERA (`F-258`, B2): `describeManualChanges`. */
     cambiosAMano?: string;

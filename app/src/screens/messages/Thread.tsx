@@ -80,6 +80,7 @@ export function Thread({
   onOpenCounterparty,
   veraDraft,
   onVeraDraftHandled,
+  onCounterpartyKnown,
 }: {
   profile: MemberProfile;
   threadId: string;
@@ -94,6 +95,8 @@ export function Thread({
   /** Lo que VERA ha pedido preparar en este hilo (consulta u oferta); se lo pasa al pie y se consume una vez. Opcional. */
   veraDraft?: VeraDraft | null;
   onVeraDraftHandled?: () => void;
+  /** Con quién es este hilo, en cuanto se carga (F-285): el shell se lo dice a VERA. Opcional. */
+  onCounterpartyKnown?: (name: string) => void;
 }) {
   const [detail, setDetail] = useState<ThreadDetail | null>(null);
   const [items, setItems] = useState<ThreadItem[]>([]);
@@ -166,6 +169,12 @@ export function Thread({
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // F-285: VERA solo sabía que había un hilo abierto, no con quién, y nombraba el de la conversación.
+  const counterpartyName = detail?.counterpartyName;
+  useEffect(() => {
+    if (counterpartyName) onCounterpartyKnown?.(counterpartyName);
+  }, [counterpartyName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Realtime (`Plan §3`, día 7). El evento es una **señal para releer**, no una

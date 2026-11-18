@@ -42,6 +42,33 @@ async function preguntar(texto: string) {
 }
 
 describe('VeraPanel con agente', () => {
+  /**
+   * F-285: con el hilo de Levante en pantalla, VERA decía «en el hilo con Julsa», el que recordaba de la
+   * conversación. El nombre del hilo abierto tiene que llegar del agente hasta el retorno de la herramienta.
+   */
+  it('F-285: el retorno de preparar_consulta nombra la empresa del hilo abierto que le pasa el shell', async () => {
+    const peticiones: unknown[][] = [];
+    const call: ProxyCall = async ({ messages }) => {
+      peticiones.push([...messages]);
+      return peticiones.length === 1
+        ? turno({
+            stopReason: 'tool_use',
+            toolUses: [{ id: 'tu_1', name: 'preparar_consulta', input: { referencia: '6205-2RS', cantidad: 300 } }],
+          })
+        : turno({ text: 'Preparada.' });
+    };
+    render(
+      <VeraPanel
+        agent={{ ...agente(call), threadOpen: true, threadCounterparty: 'Suministros Industriales Levante' }}
+      />,
+    );
+
+    await preguntar('prepárame una consulta de 300 6205-2RS');
+
+    expect(await screen.findByText('Preparada.')).toBeInTheDocument();
+    expect(JSON.stringify(peticiones[1]!.at(-1))).toContain('en el hilo con Suministros Industriales Levante');
+  });
+
   it('pinta la respuesta del modelo en el hilo', async () => {
     const call: ProxyCall = async () => turno({ text: 'Tienes 3 negociaciones abiertas.' });
     render(<VeraPanel agent={agente(call)} />);

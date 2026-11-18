@@ -253,6 +253,8 @@ interface Entrada {
     fullName?: string;
     pantalla?: string;
     hiloAbierto?: boolean;
+    /** `F-285`: con quién es el hilo abierto. Sin él, VERA nombraba la empresa del hilo del que se habló antes. */
+    hiloCon?: string;
     /** `F-101`: los filtros de Comprando al escribir la pregunta, con los nombres de los parámetros. */
     filtros?: string;
     /** `F-101`: intercambios anteriores que no caben en la ventana del cliente. */
@@ -442,6 +444,10 @@ Deno.serve(async (peticion: Request) => {
     corto(c.pantalla) ? `Ahora mismo está en la pantalla ${corto(c.pantalla)} (solo sabes su nombre: no lo que muestra ni sus controles).` : '',
     c.hiloAbierto
       ? 'Tiene un hilo de negociación ABIERTO en pantalla, así que cualquier pregunta sobre lo ofrecido, lo pedido o lo acordado se refiere a ese hilo y no al catálogo. En él puedes preparar una consulta o una oferta con preparar_consulta y preparar_oferta; las envía el usuario.'
+      : '',
+    // F-285: con quién es ese hilo. El usuario cambia de hilo sin decírselo a VERA; la pantalla manda.
+    c.hiloAbierto && corto(c.hiloCon)
+      ? `El hilo abierto en pantalla AHORA es el de ${corto(c.hiloCon)}. Eso manda sobre la empresa de la que se hablara antes en la conversación: si antes estaba en otro hilo, lo ha cambiado. Lo que prepares con preparar_consulta o preparar_oferta va a este hilo y a ninguno otro.`
       : '',
     // F-101: lo que hay en la pantalla manda sobre lo que el modelo recuerde de la conversación.
     corto(c.filtros)

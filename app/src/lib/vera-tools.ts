@@ -106,6 +106,11 @@ export interface ToolContext {
   setCriteria: (criteria: PartSearchCriteria) => void;
   /** Hay un hilo abierto en pantalla: sin él no hay formulario donde preparar nada. */
   threadOpen: boolean;
+  /**
+   * Con quién es el hilo abierto (F-285). Sin él, VERA nombraba la empresa del hilo del que se habló antes
+   * en la conversación. `null` mientras el hilo carga.
+   */
+  threadCounterparty?: string | null;
   prepareDraft: (draft: DraftRequest) => void;
   /**
    * Lleva a Inventario con ese filtro y esa búsqueda puestos. Opcional: sin él, la herramienta lo dice
@@ -738,6 +743,14 @@ const SIN_HILO: ToolResult = {
   isError: true,
 };
 
+/** «en el hilo con X» con la empresa que está en pantalla (F-285); sin nombre, sin inventarlo. */
+function enHiloCon(ctx: ToolContext): string {
+  const nombre = ctx.threadCounterparty?.trim();
+  return nombre
+    ? `en el hilo con ${nombre}, que es el que está abierto en pantalla (si en la conversación se habló de otra empresa, manda este)`
+    : 'en el hilo abierto en pantalla';
+}
+
 function prepararConsulta(input: unknown, ctx: ToolContext): ToolResult {
   if (!ctx.threadOpen) return SIN_HILO;
 
@@ -763,7 +776,7 @@ function prepararConsulta(input: unknown, ctx: ToolContext): ToolResult {
   ctx.prepareDraft({ kind: 'consulta', reference: referencia, brand: marca, quantity: cantidad, notes: notas || null });
   return {
     content: [
-      `Formulario de consulta abierto en el hilo con: referencia ${referencia}${marca ? ` (${marca})` : ''}, cantidad ${cantidad}${notas ? ', y notas' : ''}.`,
+      `Formulario de consulta abierto ${enHiloCon(ctx)}: referencia ${referencia}${marca ? ` (${marca})` : ''}, cantidad ${cantidad}${notas ? ', y notas' : ''}.`,
       'NO está enviada: el usuario tiene que revisarla y pulsar «Enviar consulta».',
       'Si la referencia no coincide con una sola línea publicada de esa empresa, antes verá un selector para elegirla: no sabes cuál de los dos casos ha ocurrido, así que no lo afirmes.',
       'Díselo en una o dos frases —qué has rellenado— y pídele que lo revise antes de enviar. No digas que la has enviado.',
@@ -884,7 +897,7 @@ function prepararOferta(input: unknown, ctx: ToolContext): ToolResult {
 
   return {
     content: [
-      `Formulario de oferta abierto en el hilo${rellenado.length ? ` con: ${rellenado.join(', ')}` : ', sin ningún campo rellenado'}.`,
+      `Formulario de oferta abierto ${enHiloCon(ctx)}${rellenado.length ? `. Rellenado: ${rellenado.join(', ')}` : ', sin ningún campo rellenado'}.`,
       'NO está enviada: el usuario tiene que revisarla y pulsar «Enviar oferta».',
       'EL PRECIO UNITARIO ESTÁ VACÍO A PROPÓSITO y lo escribe siempre el usuario: no se rellena desde aquí. ' +
         'Si te lo dijo, repítelo en tu respuesta para que lo teclee; no propongas, sugieras, calcules ni completes ninguna cifra de precio.',

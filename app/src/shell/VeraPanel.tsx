@@ -54,6 +54,8 @@ export interface VeraAgent {
   setCriteria: (criteria: PartSearchCriteria) => void;
   /** Hay un hilo abierto en pantalla (sin él VERA no puede preparar consultas ni ofertas). */
   threadOpen: boolean;
+  /** Con quién es el hilo abierto (F-285); `null` mientras carga. Opcional. */
+  threadCounterparty?: string | null;
   /** Abre en el hilo el formulario con lo que VERA ha preparado; lo revisa y lo envía el usuario. */
   prepareDraft: (draft: DraftRequest) => void;
   /** Lleva a Inventario con un filtro puesto, cuando VERA contesta con una lista de líneas. */
@@ -194,6 +196,7 @@ export function VeraPanel({ subtitle = DEFAULT_SUBTITLE, agent }: VeraProps) {
           navigate: agent.navigate,
           setCriteria: agent.setCriteria,
           threadOpen: agent.threadOpen,
+          threadCounterparty: agent.threadCounterparty ?? null,
           prepareDraft: agent.prepareDraft,
           ...(agent.showInventory ? { showInventory: agent.showInventory } : {}),
           ...(agent.showDirectory ? { showDirectory: agent.showDirectory } : {}),

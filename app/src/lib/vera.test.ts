@@ -110,6 +110,17 @@ describe('createProxyCall · el contexto dice DESDE DÓNDE se pregunta (F-090)',
     expect(cuerpo.contexto?.hiloAbierto).toBe(true);
   });
 
+  it('F-285: con un hilo abierto lleva también CON QUIÉN es, no solo que lo hay', async () => {
+    const cuerpo = await cuerpoEnviado({
+      orgName: 'Alpha Rodamientos',
+      fullName: 'Alpha Uno',
+      pantalla: 'Hilos',
+      hiloAbierto: true,
+      hiloCon: 'Suministros Industriales Levante',
+    });
+    expect((cuerpo.contexto as { hiloCon?: string }).hiloCon).toBe('Suministros Industriales Levante');
+  });
+
   it('fuera de un hilo lo dice también, y no lo omite: `false` no es lo mismo que ausente', async () => {
     const cuerpo = await cuerpoEnviado({
       orgName: 'Alpha Rodamientos',

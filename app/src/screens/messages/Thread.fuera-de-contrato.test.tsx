@@ -118,6 +118,18 @@ describe('MSG-02 · la contraparte abre su ficha (DIR-02) — fuera del contrato
 });
 
 /*
+ * F-285: VERA solo sabía que había un hilo abierto, no con quién, y nombraba la empresa del hilo de antes
+ * (lo que recordaba de la conversación). La pantalla avisa al shell de con quién es el hilo que pinta.
+ */
+describe('VERA sabe con quién es el hilo abierto (F-285) — fuera del contrato del arnés', () => {
+  it('avisa con el nombre de la contraparte en cuanto lo carga', async () => {
+    const onCounterpartyKnown = vi.fn();
+    render(<Thread profile={profile} threadId={HILO} now={NOW} onCounterpartyKnown={onCounterpartyKnown} />);
+    await waitFor(() => expect(onCounterpartyKnown).toHaveBeenCalledWith(detail().counterpartyName));
+  });
+});
+
+/*
  * PO, 18-nov-2026 (DECISIONES-V1.md): cuando VERA prepara una consulta u oferta dentro del hilo, el hilo
  * está en Mensajes, que es donde vive el pie que abre el formulario. Sin prop de pestaña: lo decide el
  * borrador. Si el usuario estaba en Soy cliente, se vuelve a Mensajes y el formulario se abre allí.

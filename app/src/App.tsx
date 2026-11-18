@@ -165,9 +165,13 @@ export function App() {
    * hace media hora en vez de a la lista, con el estado del hilo ya rancio.
    */
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
+  /** Con quién es el hilo abierto, para VERA (F-285). Lo dice `Thread` al cargarlo. */
+  const [openThreadCounterparty, setOpenThreadCounterparty] = useState<string | null>(null);
   // Un borrador de VERA es de UN hilo: al cambiar o cerrar el hilo no puede quedar esperando en el siguiente.
+  // Y el nombre del hilo anterior tampoco: hasta que el nuevo cargue, VERA no sabe con quién es.
   useEffect(() => {
     setVeraDraft(null);
+    setOpenThreadCounterparty(null);
   }, [openThreadId]);
 
   /**
@@ -706,6 +710,7 @@ export function App() {
     navigate: (pantalla: Screen) => navigate(navIndexOf(pantalla)),
 
     threadOpen: openThreadId !== null,
+    threadCounterparty: openThreadId !== null ? openThreadCounterparty : null,
 
     // F-258 (B2): lo que el usuario quitó a mano en Resultados de búsqueda; fuera de ella, al volver se reponen los de VERA.
     removedFilters: onSearch && !watchersOpen && !batchOpen && !favoritesOpen ? removedFilters(veraCriteria, liveCriteria) : [],
@@ -809,6 +814,8 @@ export function App() {
           forumThreadOpen: forumThreadId !== null,
         }),
         hiloAbierto: openThreadId !== null,
+        // F-285: con quién es el hilo abierto; sin él, VERA nombraba el hilo del que se habló antes.
+        ...(openThreadId !== null && openThreadCounterparty ? { hiloCon: openThreadCounterparty } : {}),
         // Solo desde Resultados de búsqueda: fuera de ella, `liveCriteria` es lo último que se vio, no lo que hay.
         ...(onSearch && !watchersOpen && !batchOpen && liveCriteria ? { filtros: describeCriteria(liveCriteria) } : {}),
         // F-258 (B2): lo que el usuario tocó a mano desde la última búsqueda de VERA, dicho como hecho.
@@ -1045,6 +1052,7 @@ export function App() {
             onBack={() => setOpenThreadId(null)}
             veraDraft={veraDraft}
             onVeraDraftHandled={() => setVeraDraft(null)}
+            onCounterpartyKnown={setOpenThreadCounterparty}
             onOpenCounterparty={(orgId) => {
               /* DIR-02 vive en `Empresas`: cambia el ítem de nav además de la pantalla. */
               setOpenThreadId(null);

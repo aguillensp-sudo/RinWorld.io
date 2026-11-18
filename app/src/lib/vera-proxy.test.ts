@@ -177,6 +177,11 @@ describe('el system prompt distingue el contenido de un hilo de una búsqueda (F
     expect(fuente).toContain('c.hiloAbierto');
   });
 
+  it('F-285: el bloque dinámico nombra la empresa del hilo abierto y la pone por encima de la conversación', () => {
+    expect(fuente).toContain('corto(c.hiloCon)');
+    expect(fuente).toContain('manda sobre la empresa de la que se hablara antes');
+  });
+
   it('lo variable NO se ha colado en el bloque cacheado', () => {
     // Ancla estructural: el trozo del prompt que lleva `cache_control` no puede
     // contener interpolaciones del contexto. Si alguien mete `${...}` con datos

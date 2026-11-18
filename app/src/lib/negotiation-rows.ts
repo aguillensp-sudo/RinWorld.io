@@ -2,9 +2,10 @@
  * Soy cliente · Soy proveedor · Mensajes: lo que decide qué se ve en el hilo de una empresa.
  *
  * Change `amend-msg-hilos-pestanas-y-etiqueta` (`design.md` §2, §3 y §5). Sustituye a las
- * dos tablas de MSG-03 v1.2 (`negotiation-tables.ts`, que se retira cuando la pantalla
- * nueva deje de usarla). Escrito a mano antes de que el Coder pinte la pantalla: el
- * componente no calcula nada, pinta lo que sale de aquí.
+ * dos tablas de MSG-03 v1.2 (`negotiation-tables.ts`, retirado en la tarea 2.9 con
+ * `InquiriesTable`, `OffersTable` y `ThreadHistory`; de él solo quedan aquí los textos de
+ * los botones y el formato de las cifras). Escrito a mano antes de que el Coder pinte la
+ * pantalla: el componente no calcula nada, pinta lo que sale de aquí.
  *
  * Tres reglas que no se escriben dos veces:
  *
@@ -17,11 +18,63 @@
  * - **Las cifras van cifradas** (E2EE): filtrar y ordenar se hace aquí, sobre lo
  *   descifrado. Sin contenido, la fila dice `Cifrado` y no cumple ningún rango.
  */
-import { NEGOTIATION_TEXTS, type BadgeTone, type RowBadge, moneyLabel, quantityLabel } from './negotiation-tables';
 import { asOfferCard, validUntilLabel, type ThreadItem } from './thread-detail';
 import { isExpired, offerActions } from './offers';
+import { formatCount } from './format-count';
+
+/**
+ * Los textos de los botones de acción y de las celdas sin dato, verbatim del HTML aprobado de
+ * `MSG-03` (venían de `negotiation-tables.ts`, retirado en la tarea 2.9). Los de las pestañas, las
+ * tablas y el buscador están en `TAB_TEXTS`.
+ */
+export const NEGOTIATION_TEXTS = {
+  respond: 'Responder con oferta',
+  outOfStock: 'Sin stock',
+  accept: 'Aceptar',
+  acceptAnyway: 'Aceptar igualmente',
+  counter: 'Contra-ofertar',
+  reject: 'Rechazar',
+  /** Celda de un dato que va cifrado y no se puede leer en esta sesión. */
+  encrypted: 'Cifrado',
+  /** Dato no informado (MSG-03 §4.1 y §6). */
+  none: '—',
+  /** Sin contenido descifrado no hay con qué prerellenar la contraoferta (D-07-05). */
+  counterDisabledReason: 'No se puede leer esta oferta en esta sesión, así que no se puede contraofertar.',
+} as const;
 
 const T = NEGOTIATION_TEXTS;
+
+/**
+ * El tono del badge. `respondida` y `superada` ya no los pinta ningún estado (eran de las tablas de
+ * MSG-03 v1.2), pero `NegotiationTable` (artefacto del Coder) declara su clase para cada tono y quitarlos
+ * obligaría a tocarlo más de lo que pide la retirada.
+ */
+export type BadgeTone =
+  | 'pendiente'
+  | 'respondida'
+  | 'sin-stock'
+  | 'aceptada'
+  | 'rechazada'
+  | 'superada'
+  | 'expirada'
+  /** Le toca a la otra parte: Esperando oferta, Contraoferta enviada… */
+  | 'espera';
+
+export interface RowBadge {
+  label: string;
+  tone: BadgeTone;
+}
+
+/** `500 ud.`. Millares con punto desde cuatro cifras (F-231): `1.247 ud.`. */
+export function quantityLabel(quantity: number): string {
+  return `${formatCount(quantity)} ud.`;
+}
+
+/** `2,10 EUR`: dos decimales y el código ISO detrás, como el HTML aprobado. */
+export function moneyLabel(amount: number, currency: string): string {
+  const n = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  return `${n} ${currency}`;
+}
 
 // -----------------------------------------------------------------------------
 // Tipos

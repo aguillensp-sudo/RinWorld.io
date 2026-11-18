@@ -16,8 +16,8 @@ import styles from './ThreadComposer.module.css';
  * `ESTADO.md` del día 7 avisa: *"El día 8 se rellena `decryptItem()` y no se
  * toca ningún `.tsx`. Si alguien se encuentra editando un componente, la costura
  * estaba mal puesta"*. **Esa regla es sobre el DESCIFRADO, y se ha cumplido**:
- * `ThreadHistory` no se ha tocado ni una línea y sigue pintando las dos ramas
- * igual que ayer.
+ * `ThreadHistory` no se tocó ni una línea y siguió pintando las dos ramas
+ * igual que el día anterior (se retiró el 18-nov-2026, `amend-msg-hilos-pestanas-y-etiqueta` 4.5).
  *
  * Lo que cambia aquí es otra cosa: **el envío**, que el PO metió en el día 8 con
  * D-08-02 y que el día 7 no existía en ninguna forma. El pie pasó de no tener

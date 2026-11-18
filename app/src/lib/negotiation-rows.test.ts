@@ -9,7 +9,9 @@ import {
   filterRows,
   matchReferences,
   messageTimeline,
+  moneyLabel,
   negotiationRows,
+  quantityLabel,
   sortRows,
   threadReferences,
 } from './negotiation-rows';
@@ -241,6 +243,14 @@ describe('negotiation-rows · expirada, aceptada, rechazada', () => {
       expect(rows(B, [o]).proveedor[0]!).toMatchObject({ status, actions: [] });
     }
   });
+  // offer-card#6 y #7 (venía de ThreadHistory.test.tsx, retirado en la tarea 4.5).
+  it('transporte: informado con su divisa, sin informar, «—» y nunca 0,00', () => {
+    const informado = rows(A, [oferta(B, {}, { shippingCost: 45, shippingCostCurrency: 'USD' })]).cliente[0]!;
+    expect(informado.shipping).toBe('45,00 USD');
+    const sin = rows(A, [oferta(B, {}, { shippingCost: null, shippingCostCurrency: null })]).cliente[0]!;
+    expect(sin.shipping).toBe('—');
+    expect(sin.shipping).not.toContain('0,00');
+  });
   it('sin contenido descifrado no se da por expirada y las cifras salen Cifrado', () => {
     const o = oferta(B, { content: null });
     const f = rows(A, [o]).cliente[0]!;
@@ -389,5 +399,17 @@ describe('negotiation-rows · línea de tiempo de Mensajes', () => {
     expect(t.find((e) => e.item.id === o1.id)?.summary).toBe('Oferta · 2,10 EUR · 500 ud.');
     expect(t.find((e) => e.item.id === c.id)?.summary).toBe('Contraoferta · 1,90 EUR · 500 ud.');
     expect(t.find((e) => e.item.id === m2.id)?.summary).toBeNull();
+  });
+});
+
+// Venían de `negotiation-tables.test.ts` (retirado en la tarea 2.9 con el módulo).
+describe('formato de las cifras', () => {
+  it('cantidad con millares desde cuatro cifras y «ud.»', () => {
+    expect(quantityLabel(500)).toBe('500 ud.');
+    expect(quantityLabel(1247)).toBe('1.247 ud.');
+  });
+  it('importe con dos decimales y el ISO detrás', () => {
+    expect(moneyLabel(2.1, 'EUR')).toBe('2,10 EUR');
+    expect(moneyLabel(0, 'EUR')).toBe('0,00 EUR');
   });
 });

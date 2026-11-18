@@ -2,8 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NegotiationTable } from './NegotiationTable';
-import { negotiationRows, TAB_TEXTS, type NegotiationRow } from '../../lib/negotiation-rows';
-import { NEGOTIATION_TEXTS } from '../../lib/negotiation-tables';
+import { NEGOTIATION_TEXTS, negotiationRows, TAB_TEXTS, type NegotiationRow } from '../../lib/negotiation-rows';
 import type { OfferContent, ThreadItem } from '../../lib/thread-detail';
 
 /**

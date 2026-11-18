@@ -240,7 +240,7 @@ describe('VERA · la guía de Vendiendo, Comprando e Hilos sigue siendo cierta',
   const lineaDeTiempo = screen('messages/MessagesTimeline.tsx');
   const filas = lib('negotiation-rows.ts');
   /** Los textos de los botones de acción (MSG-03): de dónde los lee `NegotiationTable`. */
-  const textosAcciones = lib('negotiation-tables.ts');
+  const textosAcciones = filas;
   const libOfertas = lib('offers.ts');
   const libHilo = lib('thread-detail.ts');
   const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');

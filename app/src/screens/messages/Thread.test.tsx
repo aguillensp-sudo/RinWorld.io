@@ -86,8 +86,7 @@ vi.mock('../../lib/realtime', () => ({
 }));
 
 const { Thread } = await import('./Thread');
-const { NEGOTIATION_TEXTS } = await import('../../lib/negotiation-tables');
-const { TAB_TEXTS } = await import('../../lib/negotiation-rows');
+const { NEGOTIATION_TEXTS, TAB_TEXTS } = await import('../../lib/negotiation-rows');
 
 beforeEach(() => {
   for (const m of [

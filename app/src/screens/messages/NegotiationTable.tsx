@@ -14,7 +14,7 @@ import {
   type SortDir,
   type SortKey,
 } from '../../lib/negotiation-rows';
-import { NEGOTIATION_TEXTS, type BadgeTone } from '../../lib/negotiation-tables';
+import { NEGOTIATION_TEXTS, type BadgeTone } from '../../lib/negotiation-rows';
 import styles from './NegotiationTable.module.css';
 
 /**

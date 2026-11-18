@@ -44,9 +44,11 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       Mensajes (`messageTimeline`).
 - [x] 2.8 Escritura de la etiqueta en `thread-detail.ts`: `sendMessage(threadId, text, tag)` (por `0081`) y
       `retagMessage(itemId, tag)`.
-- [ ] 2.9 Retirar `inquiryRows`, `offerRows` y los textos de las tablas de MSG-03 v1.2. **Espera a 5.2:** la guía de
-      VERA los cita y `vera-prompt.test.ts` comprueba que esas citas existen en `ThreadHistory.tsx` y
-      `negotiation-tables.ts`.
+- [x] 2.9 Retirar `inquiryRows`, `offerRows` y los textos de las tablas de MSG-03 v1.2 (18-nov-2026, después de 5.2):
+      fuera `negotiation-tables.ts` y su test. Lo que seguía vivo (textos de los botones, `Cifrado`, `—`, el motivo
+      de la contraoferta apagada, `BadgeTone`, `quantityLabel`, `moneyLabel`) pasa a `negotiation-rows.ts`, con sus
+      pruebas de formato. Vendiendo (`SentOffers*`) no lo usaba. La matriz re-apunta `e2ee-content-encryption#2` y
+      `offer-card#6`-`#8` a las pruebas nuevas.
 
 ## 3. Contrato de aceptación (a mano, antes del Coder)
 - [x] 3.1 `app/e2e/thread-tabs.spec.ts` (15-nov-2026): 17 escenarios con Alpha y Beta, uno o más por requirement
@@ -82,8 +84,9 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
 - [x] 4.4 C5 del PO (18-nov-2026), a mano: fuera el desplegable «Cambiar etiqueta» de cada mensaje propio («no sirve
       para nada al usuario»), con `retagMessage` y sus textos. La base (0080) sigue permitiendo el cambio a la
       organización emisora; no se toca, porque quitarlo sería una migración sin necesidad.
-- [ ] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (ya no los monta nadie).
-      **Espera a 5.2**, por lo mismo que 2.9.
+- [x] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (18-nov-2026), y
+      `NegotiationTablesCss.test.ts`. `padding.test.ts` mide ahora `MessagesTimeline`. En `NegotiationTable.tsx`
+      (artefacto del Coder) cambia 1 línea de import, anotada en `harness-review.csv` como cambio a mano.
 - [ ] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6). Artefacto del Coder y revisión a mano en
       commits separados.
 

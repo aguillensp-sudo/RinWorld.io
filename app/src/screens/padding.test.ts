@@ -78,10 +78,11 @@ describe('padding de las pantallas del shell · 24 / 28 / 40', () => {
 
   // MSG-02 tiene cabecera, lista con scroll y compositor fijo abajo: no admite un padding único.
   // Arriba, el 24 del estándar; a los lados, 28 en cada una de sus piezas.
-  it('MSG-02: 24px arriba y 28px a los lados en cabecera, lista y compositor', () => {
+  it('MSG-02: 24px arriba y 28px a los lados en cabecera, mensajes y compositor', () => {
     expect(declaracion(css('messages/Thread'), 'screen', 'padding-top')).toBe('24px');
     expect(declaracion(css('messages/ThreadHeader'), 'header', 'padding')).toBe('0 28px 12px');
     expect(declaracion(css('messages/ThreadComposer'), 'composer', 'padding')).toBe('12px 28px');
-    expect(declaracion(css('messages/ThreadHistory'), 'list', 'padding')).toBe('16px 28px');
+    // ThreadHistory se retiró (amend-msg-hilos-pestanas-y-etiqueta, 4.5): la lista es MessagesTimeline.
+    expect(declaracion(css('messages/MessagesTimeline'), 'timeline', 'padding')).toBe('0 28px');
   });
 });

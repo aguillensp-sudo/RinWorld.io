@@ -49,9 +49,17 @@ empresa correspondiente cuando se entra desde una acción sobre esa empresa.
 
 #### Scenario: entrada al hilo de una empresa
 - GIVEN un miembro con un hilo existente con la empresa X
-- WHEN pulsa Ver hilo o Ver acuerdo en Vendiendo, Contactar en Comprando, o la tarjeta o
-  Contactar de X en Empresas
+- WHEN pulsa Ver hilo o Ver acuerdo en Vendiendo, Contactar en Comprando, o Contactar en la
+  ficha de X en Empresas (pulsar X en el Directorio abre su ficha; PO, 20-nov-2026)
 - THEN se abre el hilo con X en la pestaña Mensajes, sin pasar por CONVERSACIÓN
+- AND desde Vendiendo y Comprando, ya filtrada por la referencia de esa fila, que es la
+  etiqueta de lo que escriba (PO, 20-nov-2026)
+
+#### Scenario: Contactar sin hilo previo
+- GIVEN un miembro sin hilo con la empresa X
+- WHEN pulsa Contactar en una línea de X en Comprando
+- THEN se abre la ficha de X con el cuadro «Primer mensaje», y ese primer mensaje sale
+  etiquetado con la referencia de la línea (PO, 20-nov-2026, `0083`)
 
 #### Scenario: el menú
 - GIVEN un miembro autenticado
@@ -156,9 +164,10 @@ contraoferta actualiza la fila y no crea otra.
 - AND pulsar la cabecera de una columna reordena por esa columna
 
 ### Requirement: message-reference-tag
-El sistema SHALL permitir que cada mensaje libre lleve como etiqueta una de las
-referencias (part_number + brand) que existen en consultas u ofertas del mismo hilo, o
-ninguna si es conversación general. La etiqueta SHALL ir en claro, como en consultas y
+El sistema SHALL permitir que cada mensaje libre lleve como etiqueta una referencia
+(part_number + brand) que exista en una consulta, una oferta u otro mensaje del mismo hilo, o
+que sea una línea publicada de la otra empresa del hilo (PO, 20-nov-2026, `0083`), o ninguna
+si es conversación general. La etiqueta SHALL ir en claro, como en consultas y
 ofertas; el texto del mensaje SHALL seguir cifrado.
 [Origen: `docs/Cambios_Frontend_Hilos.md`, «Etiqueta de referencia en los mensajes»]
 
@@ -170,17 +179,23 @@ ofertas; el texto del mensaje SHALL seguir cifrado.
 - AND sin ninguna referencia buscada, el mensaje se envía como conversación general
 - AND no hay un selector «Sobre:» aparte: lo quitó el PO el 17-nov-2026 porque duplicaba el
   buscador
+- AND el texto de ayuda del campo dice cuál de los dos casos es: «Escribe sobre 6206-ZZ · FAG:
+  el mensaje irá etiquetado con esta referencia» o «Inicia una conversación nueva, sin
+  referencia (para escribir sobre una, búscala arriba)» (PO, 18-nov-2026)
 
 #### Scenario: escribir desde una fila
 - GIVEN un miembro en Soy cliente o Soy proveedor
 - WHEN pulsa la Referencia de una fila
 - THEN se abre la pestaña Mensajes filtrada por esa referencia, y lo que escriba la lleva
 
-#### Scenario: solo referencias del hilo
-- GIVEN un mensaje etiquetado con una referencia que no existe en ninguna consulta ni
-  oferta de ese hilo
+#### Scenario: qué referencias valen como etiqueta
+- GIVEN un mensaje etiquetado con una referencia que no está en ninguna consulta, oferta ni
+  mensaje de ese hilo, y que no es una línea publicada de la otra empresa (una del propio
+  inventario, una en borrador, la misma referencia con otra marca)
 - WHEN se intenta guardar
 - THEN la base lo rechaza
+- AND una línea publicada de la otra empresa sí vale, y la otra parte puede contestar con la
+  misma etiqueta aunque la línea deje de estar publicada
 
 #### Scenario: etiqueta visible
 - GIVEN un mensaje etiquetado `6205-2RS · SKF`
@@ -197,7 +212,8 @@ ofertas; el texto del mensaje SHALL seguir cifrado.
 El sistema SHALL ofrecer, arriba de la pestaña Mensajes y encima del campo de escribir
 (PO, 17-nov-2026: antes iba abajo y en las tres pestañas), un campo de búsqueda con lupa y el texto de ayuda «Busca una referencia dentro de este hilo sobre la
 que quieras recuperar el contenido de la conversación». La búsqueda SHALL casar con las
-referencias del hilo, no con el texto de los mensajes.
+referencias del hilo (las de sus consultas, ofertas y mensajes etiquetados), no con el texto de
+los mensajes.
 [Origen: `docs/Cambios_Frontend_Hilos.md`, §2.2 y «Búsqueda (Campo &1)»]
 
 #### Scenario: lista de coincidencias

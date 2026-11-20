@@ -104,7 +104,7 @@ describe('sin filtro', () => {
     expect(elemento('m2')).toHaveTextContent(/hace 3 d/);
   });
 
-  it('la etiqueta en `message-tag`; los de conversación general no llevan', () => {
+  it('la etiqueta en `message-tag`, los de conversación general no llevan', () => {
     montar();
     expect(within(elemento('m2')).getByTestId('message-tag')).toHaveTextContent('6205-2RS · SKF');
     expect(within(elemento('m1')).queryByTestId('message-tag')).toBeNull();

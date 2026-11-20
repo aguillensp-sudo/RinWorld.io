@@ -87,14 +87,14 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
 - [x] 4.5 Retirar `ThreadHistory`, `InquiriesTable` y `OffersTable`, con sus tests y CSS (18-nov-2026), y
       `NegotiationTablesCss.test.ts`. `padding.test.ts` mide ahora `MessagesTimeline`. En `NegotiationTable.tsx`
       (artefacto del Coder) cambia 1 línea de import, anotada en `harness-review.csv` como cambio a mano.
-- [ ] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6). Artefacto del Coder y revisión a mano en
-      commits separados.
+- [x] 4.6 Cada corrida, fila en `harness-metrics.csv` (CLAUDE.md §6): los dos intentos de `corrida-01`, 16-nov-2026.
+      Artefacto del Coder (`a2990ea`) y revisión a mano en commits separados.
 
 ## 5. Accesos y VERA (a mano)
 - [x] 5.1 Comprobar que Vendiendo (Ver hilo, Ver acuerdo), Comprando (Contactar), Empresas (tarjeta, Contactar),
       Panel (cajón Hilos) y el menú llevan a donde dice la spec, sin `tab` (18-nov-2026, contra `App.tsx`). Vendiendo,
       Comprando y el Contactar de la ficha de Empresas montan `Thread`, que arranca en Mensajes; Panel y el menú pasan
-      por `navigate`, que cierra el hilo y deja la lista. Ninguno pasa pestaña. **Pendiente del PO:** en Empresas,
+      por `navigate`, que cierra el hilo y deja la lista. Ninguno pasa pestaña. **Dado por bueno por el PO (20-nov-2026):** en Empresas,
       pulsar una empresa del Directorio abre su ficha y es su Contactar el que abre el hilo; se lee «tarjeta de
       Empresa/botón Contactar» como la ficha y su botón.
 - [x] 5.2 Revisar las herramientas de VERA que leen el hilo con mensajes etiquetados (`design.md` §6) (18-nov-2026).
@@ -116,4 +116,7 @@ Módulo aparte de `negotiation-tables.ts`, que sigue sirviendo a las tablas de h
       producción, el bundle servido lleva las pestañas, el buscador y «Ver lo que ve el servidor», y ya no lleva
       «Precio/ud.» ni «Cambiar etiqueta»; `vera` en producción (versión 68) lleva la guía nueva. Con sesión en
       producción lo mira el PO, que es quien hace la C5.
-- [ ] 6.3 Archivar el change en `openspec/specs/` cuando el PO lo dé por bueno.
+- [x] 6.3 Archivado el 20-nov-2026 con el visto bueno del PO, que da por buena también la lectura de 5.1 (Empresas:
+      la ficha y su Contactar). Antes, el delta se puso al día con lo aprobado del 18 al 20-nov: texto de ayuda del
+      campo, Ver hilo/Ver acuerdo y Contactar filtrados por la referencia de la fila, y la regla de etiquetas de `0083`.
+      La spec vigente llevaba la cabecera de borrador «ADDED Requirements»; pasa a «Requirements» para poder fundir.

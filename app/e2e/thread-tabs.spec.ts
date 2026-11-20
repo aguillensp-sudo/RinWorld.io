@@ -236,7 +236,7 @@ test.describe('Hilos · Soy cliente y Soy proveedor', () => {
     await expect(cliente.getByTestId('negotiation-row')).toHaveCount(0);
   });
 
-  test('orden por Fecha al abrir; pulsar una cabecera reordena; el filtro de Referencia filtra', async ({ page }) => {
+  test('orden por Fecha al abrir, pulsar una cabecera reordena, el filtro de Referencia filtra', async ({ page }) => {
     test.skip(!canResetFixture, 'sin clave de servicio no se puede añadir la segunda referencia');
     await anadirConsultaExtra();
     try {
@@ -305,7 +305,7 @@ test.describe('Hilos · Mensajes, etiqueta y búsqueda', () => {
     expect(campo && primero && campo.y < primero.y).toBe(true);
   });
 
-  test('sin búsqueda, el mensaje es conversación general; buscando, lleva la referencia, sin desplegable para cambiarla', async ({
+  test('sin búsqueda, el mensaje es conversación general, buscando, lleva la referencia, sin desplegable para cambiarla', async ({
     page,
   }) => {
     await abrirHilo(page, 'Nordwälz Lager');

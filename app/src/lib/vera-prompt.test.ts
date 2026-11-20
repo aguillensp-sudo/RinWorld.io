@@ -744,6 +744,13 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     expect(lib('panel.ts')).toContain("n === null ? '—' : String(n)");
   });
 
+  it('Comprando: Contactar abre el hilo filtrado y etiquetado con la referencia de la fila (PO, 20-nov-2026)', () => {
+    expect(prompt).toContain('ya filtrado por la referencia de esa fila, así que lo que se escriba va etiquetado con ella');
+    expect(prompt).toContain('"Primer mensaje", que también sale etiquetado con esa referencia');
+    expect(screen('search/ResultsTable.tsx')).toContain('onContactOrganization(row.orgId, { partNumber: row.partNumber, brand: row.brand })');
+    expect(screen('directory/OrganizationProfile.tsx')).toContain('contactOrganization(organizationId, profile.orgId, draft, composeReference)');
+  });
+
   it('Vendiendo: Ver hilo y Ver acuerdo abren el hilo filtrado por la referencia de la fila (PO, 20-nov-2026)', () => {
     expect(prompt).toContain('en "Mensajes" y ya filtrado por la referencia de esa fila');
     expect(screen('selling/SentOffersTable.tsx')).toContain('offer.partNumber ? { partNumber: offer.partNumber');

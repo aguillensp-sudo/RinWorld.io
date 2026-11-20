@@ -932,6 +932,8 @@ export async function contactOrganization(
   otherOrgId: string,
   ownOrgId: string,
   text: string,
+  /** Etiqueta del primer mensaje: la línea marcada en Comprando (PO, 20-nov-2026, `0083`). */
+  tag?: { partNumber: string; brand: string } | null,
 ): Promise<string> {
   const cuerpo = text.trim();
   if (!cuerpo) throw new Error('El mensaje está vacío.');
@@ -981,6 +983,7 @@ export async function contactOrganization(
     p_ciphertext: toHex(ciphertext),
     p_iv: toHex(iv),
     p_keys: claves,
+    ...(tag ? { p_part_number: tag.partNumber, p_brand: tag.brand } : {}),
   });
   if (error) throw error;
   if (typeof data !== 'string') throw new Error('La base no devolvió el hilo.');

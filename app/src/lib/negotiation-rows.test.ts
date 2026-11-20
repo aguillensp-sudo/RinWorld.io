@@ -356,6 +356,16 @@ describe('negotiation-rows · referencias del hilo', () => {
   it('una por par referencia + marca, sin repetir, en orden alfanumérico (referencia y después marca)', () => {
     expect(refs.map((r) => r.label)).toEqual(['6205-2RS · FAG', '6205-2RS · SKF', '6205-ZZ · SKF', '6206-ZZ · SKF']);
   });
+  // PO, 20-nov-2026 (0083): un mensaje etiquetado con una línea publicada de la otra empresa trae su referencia al hilo.
+  it('la etiqueta de un MENSAJE también es una referencia del hilo, sin repetir', () => {
+    const r = threadReferences([
+      item({ type: 'MENSAJE', senderOrgId: A, partNumber: '7205B', brand: 'NSK' }),
+      item({ type: 'MENSAJE', senderOrgId: B, partNumber: '7205B', brand: 'NSK' }),
+      item({ type: 'MENSAJE', senderOrgId: A }),
+      consulta(A, { partNumber: '6205-2RS', brand: 'SKF' }),
+    ]);
+    expect(r.map((x) => x.label)).toEqual(['6205-2RS · SKF', '7205B · NSK']);
+  });
   it('el orden alfanumérico compara los números como números', () => {
     const r = threadReferences([consulta(A, { partNumber: '22316-E' }), consulta(A, { partNumber: '6205-2RS' }), consulta(A, { partNumber: 'NU214' })]);
     expect(r.map((x) => x.partNumber)).toEqual(['6205-2RS', '22316-E', 'NU214']);

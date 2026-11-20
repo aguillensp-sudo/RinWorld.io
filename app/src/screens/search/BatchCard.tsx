@@ -15,7 +15,7 @@ interface Props {
   onToggleFavorite: (orgId: string) => void;
   onConsult: (lineId: string) => void;
   onContact: (orgId: string) => void;
-  onContactOrganization?: ((orgId: string) => void) | undefined;
+  onContactOrganization?: ((orgId: string, reference?: { partNumber: string; brand: string }) => void) | undefined;
 }
 
 /**

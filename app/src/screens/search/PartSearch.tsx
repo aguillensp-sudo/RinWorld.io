@@ -48,7 +48,7 @@ interface Props {
   onOpenWatchers?: () => void;
   onOpenBatch?: () => void;
   onOpenFavorites?: () => void;
-  onContactOrganization?: (orgId: string) => void;
+  onContactOrganization?: (orgId: string, reference?: { partNumber: string; brand: string }) => void;
   /** Lo que hay en pantalla, para la pregunta siguiente de VERA (`F-101`) y para `F-258` (lo quitado a mano). */
   onCriteriaChange?: (criteria: PartSearchCriteria) => void;
 }

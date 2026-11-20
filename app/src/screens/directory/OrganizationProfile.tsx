@@ -9,6 +9,7 @@ import {
 } from '../../lib/organization';
 import { fetchFavoriteOrgIds, toggleFavorite } from '../../lib/search';
 import { contactOrganization } from '../../lib/thread-detail';
+import { TAB_TEXTS, referenceLabel } from '../../lib/negotiation-rows';
 import { errorMessage, type MemberProfile } from '../../lib/session';
 import { FavoriteConfirmDialog } from '../../components/FavoriteConfirmDialog';
 import styles from './OrganizationProfile.module.css';
@@ -26,6 +27,11 @@ interface Props {
    * búsqueda). Opcional: la ficha abierta desde el directorio no lo usa.
    */
   autoCompose?: boolean;
+  /**
+   * La línea marcada en Comprando (PO, 20-nov-2026, `0083`): el primer mensaje sale etiquetado con ella y
+   * el cuadro lo dice. Opcional: sin ella, conversación general como siempre.
+   */
+  composeReference?: { partNumber: string; brand: string } | null;
 }
 
 /** El botón está deshabilitado porque la ficha es la de la propia organización. */
@@ -65,7 +71,14 @@ function orDash(value: string): string {
  * de carga con la ficha nueva. Sin ella, la ficha de la organización anterior
  * podría aterrizar encima de la nueva.
  */
-export function OrganizationProfile({ profile, organizationId, onBack, onOpenThread, autoCompose = false }: Props) {
+export function OrganizationProfile({
+  profile,
+  organizationId,
+  onBack,
+  onOpenThread,
+  autoCompose = false,
+  composeReference = null,
+}: Props) {
   const [data, setData] = useState<OrganizationProfileData | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   /** La persona administradora (0058). `''` hasta que llega, o si no hay. No bloquea la ficha. */
@@ -225,7 +238,10 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
     if (sending || draft.trim() === '') return;
     setSending(true);
     setSendError(null);
-    contactOrganization(organizationId, profile.orgId, draft)
+    (composeReference
+      ? contactOrganization(organizationId, profile.orgId, draft, composeReference)
+      : contactOrganization(organizationId, profile.orgId, draft)
+    )
       .then((id) => {
         setSending(false);
         onOpenThread(id);
@@ -320,7 +336,11 @@ export function OrganizationProfile({ profile, organizationId, onBack, onOpenThr
             className={styles.composerInput}
             rows={3}
             maxLength={2000}
-            placeholder={COMPOSER_PLACEHOLDER}
+            placeholder={
+              composeReference
+                ? TAB_TEXTS.writeOnReference(referenceLabel(composeReference))
+                : COMPOSER_PLACEHOLDER
+            }
             value={draft}
             disabled={sending}
             onChange={(e) => setDraft(e.target.value)}

@@ -25,7 +25,7 @@ interface Props {
   onConsult: (lineId: string) => void;
   onContact: (orgId: string) => void;
   /** Contactar la empresa de la fila (abre el hilo, o el primer mensaje si no hay). Sin él el botón queda apagado con su motivo. */
-  onContactOrganization?: ((orgId: string) => void) | undefined;
+  onContactOrganization?: ((orgId: string, reference?: { partNumber: string; brand: string }) => void) | undefined;
 }
 
 /**
@@ -223,7 +223,12 @@ export function ResultsTable({
                             ? 'Abre tu hilo con esta empresa'
                             : 'El hilo libre con el proveedor está fuera del alcance de esta versión'
                         }
-                        onClick={() => (onContactOrganization ? onContactOrganization(row.orgId) : onContact(row.orgId))}
+                        onClick={() =>
+                          onContactOrganization
+                            ? // PO, 20-nov-2026: la referencia de la línea etiqueta el hilo que se abre (0083).
+                              onContactOrganization(row.orgId, { partNumber: row.partNumber, brand: row.brand })
+                            : onContact(row.orgId)
+                        }
                       >
                         Contactar
                       </button>

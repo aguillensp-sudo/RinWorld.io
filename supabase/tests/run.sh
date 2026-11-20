@@ -119,6 +119,9 @@ run "$ROOT/supabase/tests/12_etiqueta_mensaje.sql"
 echo "· fase 1 · hilos sin leer (0082)"
 run "$ROOT/supabase/tests/13_hilos_sin_leer.sql"
 
+echo "· fase 1 · etiqueta con una línea publicada de la otra empresa (0083)"
+run "$ROOT/supabase/tests/14_etiqueta_linea_publicada.sql"
+
 echo
 echo "ESQUEMA VERDE"
 

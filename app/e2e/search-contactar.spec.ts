@@ -1,5 +1,5 @@
 import './env';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { abrirComprando, ALPHA, ALPHA_STORAGE, BETA, buscarReferencia, haveCreds, signIn, verOfertasDeTodas } from './fixtures';
 
 /**
@@ -35,6 +35,13 @@ async function abrirBusqueda(page: Page, yaDentro = false) {
 }
 
 /** Las filas de datos, sin la cabecera. */
+/** Referencia y marca de una fila de resultados (columnas 2 y 3: tras la casilla). */
+async function referenciaDe(fila: Locator): Promise<{ ref: string; marca: string }> {
+  const ref = ((await fila.getByRole('cell').nth(1).textContent()) ?? '').trim();
+  const marca = ((await fila.getByRole('cell').nth(2).textContent()) ?? '').trim();
+  return { ref, marca };
+}
+
 const filas = (page: Page) => page.getByRole('row').filter({ has: page.getByRole('button', { name: 'Contactar' }) });
 
 test.describe('SRCH-01 · Consultar y Contactar (ALPHA, con hilo con las demás)', () => {
@@ -70,10 +77,18 @@ test.describe('SRCH-01 · Consultar y Contactar (ALPHA, con hilo con las demás)
   });
 
   test('Contactar con hilo previo abre ese hilo, no la ficha de la empresa', async ({ page }) => {
-    await filas(page).first().getByRole('button', { name: 'Contactar' }).click();
+    const fila = filas(page).first();
+    const { ref, marca } = await referenciaDe(fila);
+    await fila.getByRole('button', { name: 'Contactar' }).click();
     await expect(page.getByTestId('thread-body')).toBeVisible();
     // No se ha quedado en la ficha.
     await expect(page.getByText('Directorio de Organizaciones')).toHaveCount(0);
+    // PO, 20-nov-2026 (0083): filtrado y etiquetado con la referencia de esa fila.
+    await expect(page.getByText(`Referencia: ${ref} · ${marca}`)).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Escribe un mensaje' })).toHaveAttribute(
+      'placeholder',
+      `Escribe sobre ${ref} · ${marca}: el mensaje irá etiquetado con esta referencia`,
+    );
   });
 });
 
@@ -100,8 +115,14 @@ test.describe('SRCH-01 · Contactar sin hilo previo (BETA)', () => {
     }
     expect(fila, 'hace falta alguna fila de una empresa distinta de ALPHA').not.toBeNull();
 
+    const { ref, marca } = await referenciaDe(fila!);
     await fila!.getByRole('button', { name: 'Contactar' }).click();
     await expect(page.getByLabel('Primer mensaje')).toBeVisible();
+    // PO, 20-nov-2026 (0083): el primer mensaje sale etiquetado con la referencia de esa fila.
+    await expect(page.getByLabel('Primer mensaje')).toHaveAttribute(
+      'placeholder',
+      `Escribe sobre ${ref} · ${marca}: el mensaje irá etiquetado con esta referencia`,
+    );
     // Sin enviar nada: no se escribe en la base.
   });
 });

@@ -29,7 +29,7 @@ interface Props {
   /** Inyectable para que los tests no dependan del reloj. */
   now?: Date;
   /** Contactar la empresa de la fila. Opcional: sin él `Contactar` queda apagado. */
-  onContactOrganization?: (orgId: string) => void;
+  onContactOrganization?: (orgId: string, reference?: { partNumber: string; brand: string }) => void;
 }
 
 /**

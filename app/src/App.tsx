@@ -538,6 +538,8 @@ export function App() {
    * `Contactar` de una fila de búsqueda cuando todavía no hay hilo. Solo vale para esa empresa.
    */
   const [composeOrgId, setComposeOrgId] = useState<string | null>(null);
+  /** La línea de Comprando con la que se contactó sin hilo: etiqueta el primer mensaje (PO, 20-nov-2026, `0083`). */
+  const [composeReference, setComposeReference] = useState<{ partNumber: string; brand: string } | null>(null);
 
   /**
    * `Contactar` de una fila de búsqueda (SRCH-01 §6 y §7, `conversational-search`): abre el hilo con esa
@@ -545,7 +547,15 @@ export function App() {
    * (`open_thread`, F-211), así que va a su ficha con el cuadro abierto. Si no se puede saber si hay hilo,
    * se trata como que no: `open_thread` busca-o-crea, y contactar de más es seguro.
    */
-  const contactFromSearch = (ownOrgId: string, orgId: string) => {
+  /*
+   * Con la referencia de la línea (PO, 20-nov-2026, `0083`): con hilo, se abre en Mensajes filtrado y
+   * etiquetado con ella; sin hilo, el primer mensaje sale etiquetado con ella.
+   */
+  const contactFromSearch = (
+    ownOrgId: string,
+    orgId: string,
+    reference?: { partNumber: string; brand: string },
+  ) => {
     void fetchThreadWithOrg(ownOrgId, orgId)
       .catch(() => null)
       .then((threadId) => {
@@ -555,9 +565,11 @@ export function App() {
         if (threadId) {
           setNav(MESSAGES_NAV);
           setOpenThreadId(threadId);
+          setOpenThreadReference(reference ?? null);
         } else {
           setNav(EMPRESAS_NAV);
           setComposeOrgId(orgId);
+          setComposeReference(reference ?? null);
           setOrgProfileId(orgId);
         }
       });
@@ -1111,7 +1123,7 @@ export function App() {
         ) : batchOpen ? (
           /* SRCH-02. `now` explícito y construido en el render, mismo criterio
            * que SRCH-01: la columna Antigüedad de sus tablas es relativa al reloj. */
-          <BatchSearch profile={state.profile} now={new Date()} onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)} />
+          <BatchSearch profile={state.profile} now={new Date()} onContactOrganization={(orgId, reference) => contactFromSearch(state.profile.orgId, orgId, reference)} />
         ) : (
           /* SRCH-01 en dos fases (`amend-srch01-busqueda-en-dos-fases`, 25-oct-2026). Sustituyó a `SearchResults`,
            * la pantalla de una sola tabla, que se retiró entera cuando VERA, los lotes y los watchers dejaron de usarla. */
@@ -1123,7 +1135,7 @@ export function App() {
             onOpenWatchers={() => setWatchersOpen(true)}
             onOpenBatch={() => setBatchOpen(true)}
             onOpenFavorites={() => setFavoritesOpen(true)}
-            onContactOrganization={(orgId) => contactFromSearch(state.profile.orgId, orgId)}
+            onContactOrganization={(orgId, reference) => contactFromSearch(state.profile.orgId, orgId, reference)}
           />
         )
       ) : onSelling ? (
@@ -1198,6 +1210,7 @@ export function App() {
             profile={state.profile}
             organizationId={orgProfileId}
             autoCompose={composeOrgId === orgProfileId}
+            composeReference={composeOrgId === orgProfileId ? composeReference : null}
             onBack={() => {
               setComposeOrgId(null);
               setOrgProfileId(null);

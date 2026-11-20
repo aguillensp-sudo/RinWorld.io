@@ -25,7 +25,7 @@ const fila: SearchResultRow = {
   consulted: false,
 };
 
-function pintar(onContactOrganization?: (orgId: string) => void) {
+function pintar(onContactOrganization?: (orgId: string, reference?: { partNumber: string; brand: string }) => void) {
   render(
     <ResultsTable
       rows={[fila]}
@@ -46,11 +46,12 @@ function pintar(onContactOrganization?: (orgId: string) => void) {
 
 describe('ResultsTable · Contactar → hilo con la empresa', () => {
   it('con onContactOrganization está habilitado y contacta a esa organización', async () => {
-    const abrir = vi.fn<(orgId: string) => void>();
+    const abrir = vi.fn<(orgId: string, reference?: { partNumber: string; brand: string }) => void>();
     const boton = pintar(abrir);
     expect(boton).toBeEnabled();
     await userEvent.click(boton);
-    expect(abrir).toHaveBeenCalledWith(fila.orgId);
+    // PO, 20-nov-2026: con la referencia de la línea, para abrir el hilo etiquetado con ella.
+    expect(abrir).toHaveBeenCalledWith(fila.orgId, { partNumber: '6205-2RS', brand: 'SKF' });
   });
 
   it('sin onContactOrganization sigue apagado y con su motivo', () => {

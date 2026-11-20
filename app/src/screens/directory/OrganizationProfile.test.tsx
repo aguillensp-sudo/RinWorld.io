@@ -23,11 +23,13 @@ import type { MemberProfile } from '../../lib/session';
 
 const fetchOrganizationProfile = vi.fn<(id: string) => Promise<OrganizationProfileData | null>>();
 const fetchThreadWithOrg = vi.fn<(own: string, other: string) => Promise<string | null>>();
-const contactOrganization = vi.fn<(other: string, own: string, text: string) => Promise<string>>();
+const contactOrganization = vi.fn<
+  (other: string, own: string, text: string, tag?: { partNumber: string; brand: string }) => Promise<string>
+>();
 
 vi.mock('../../lib/thread-detail', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/thread-detail')>()),
-  contactOrganization: (other: string, own: string, text: string) => contactOrganization(other, own, text),
+  contactOrganization: (...a: [string, string, string, { partNumber: string; brand: string }?]) => contactOrganization(...a),
 }));
 
 vi.mock('../../lib/organization', async (importOriginal) => ({
@@ -69,7 +71,15 @@ const NSK: OrganizationProfileData = {
 const NOTA =
   'Los datos de contacto son visibles para todos los miembros de la plataforma, independientemente de la configuración de visibilidad de inventario.';
 
-function mount(over: Partial<{ organizationId: string; onBack: () => void; onOpenThread: (id: string) => void }> = {}) {
+function mount(
+  over: Partial<{
+    organizationId: string;
+    onBack: () => void;
+    onOpenThread: (id: string) => void;
+    autoCompose: boolean;
+    composeReference: { partNumber: string; brand: string } | null;
+  }> = {},
+) {
   const props = {
     profile,
     organizationId: 'org-nsk',
@@ -241,6 +251,23 @@ describe('DIR-02 · OrganizationProfile · Contactar', () => {
     await user.click(enviar);
     await waitFor(() => expect(props.onOpenThread).toHaveBeenCalledWith('hilo-nuevo'));
     expect(contactOrganization).toHaveBeenCalledWith(NSK.id, profile.orgId, 'Hola, quiero contactar');
+  });
+
+  // PO, 20-nov-2026 (0083): Contactar desde Comprando sin hilo previo deja el primer mensaje etiquetado.
+  it('con la referencia de Comprando, el primer mensaje lo dice y sale etiquetado con ella', async () => {
+    fetchThreadWithOrg.mockResolvedValue(null);
+    contactOrganization.mockResolvedValue('hilo-nuevo');
+    const { props } = mount({ autoCompose: true, composeReference: { partNumber: '7205B', brand: 'NSK' } });
+    const user = userEvent.setup();
+    const campo = await screen.findByLabelText('Primer mensaje');
+    expect(campo).toHaveAttribute('placeholder', 'Escribe sobre 7205B · NSK: el mensaje irá etiquetado con esta referencia');
+    await user.type(campo, 'Hola, ¿cuántas tenéis?');
+    await user.click(screen.getByRole('button', { name: 'Enviar y abrir el hilo' }));
+    await waitFor(() => expect(props.onOpenThread).toHaveBeenCalledWith('hilo-nuevo'));
+    expect(contactOrganization).toHaveBeenCalledWith(NSK.id, profile.orgId, 'Hola, ¿cuántas tenéis?', {
+      partNumber: '7205B',
+      brand: 'NSK',
+    });
   });
 
   it('si el envío falla se dice con una alerta, se conserva el texto y no se abre ningún hilo', async () => {

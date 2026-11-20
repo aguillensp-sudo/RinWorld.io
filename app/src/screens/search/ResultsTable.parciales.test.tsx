@@ -41,7 +41,7 @@ const FILAS: SearchResultRow[] = [
 
 describe('conversational-search/results-row-actions', () => {
   it('conversational-search/results-row-actions#3 · Contactar está habilitado en toda fila, consultada o no, y abre la organización de ESA fila', async () => {
-    const contactar = vi.fn<(orgId: string) => void>();
+    const contactar = vi.fn<(orgId: string, reference?: { partNumber: string; brand: string }) => void>();
     const consultar = vi.fn();
     render(
       <ResultsTable
@@ -75,7 +75,7 @@ describe('conversational-search/results-row-actions', () => {
     for (const fila of FILAS) {
       const f = filas.find((r) => within(r).queryByText(fila.orgName))!;
       await userEvent.click(within(f).getByRole('button', { name: 'Contactar' }));
-      expect(contactar).toHaveBeenLastCalledWith(fila.orgId);
+      expect(contactar).toHaveBeenLastCalledWith(fila.orgId, { partNumber: fila.partNumber, brand: fila.brand });
     }
     expect(contactar).toHaveBeenCalledTimes(4);
     // Contactar no es una consulta: no dispara el flujo de consultar

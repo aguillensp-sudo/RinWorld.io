@@ -6222,9 +6222,9 @@ $$;
 
 do $$
 begin
-  assert not has_function_privilege('anon', 'public.open_thread(uuid,text,text,jsonb)', 'execute'),
+  assert not has_function_privilege('anon', 'public.open_thread(uuid,text,text,jsonb,text,text)', 'execute'),
     'F-211 (0056): anon no ejecuta open_thread';
-  assert has_function_privilege('authenticated', 'public.open_thread(uuid,text,text,jsonb)', 'execute'),
+  assert has_function_privilege('authenticated', 'public.open_thread(uuid,text,text,jsonb,text,text)', 'execute'),
     'F-211 (0056): authenticated si ejecuta open_thread';
   assert (select count(*) from public.threads where id = public.t56_hilo()) = 0,
     'F-211: antes de contactar no hay hilo Kilo-Mike';

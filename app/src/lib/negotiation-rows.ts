@@ -593,15 +593,17 @@ export interface ThreadReferenceOption extends ThreadReference {
 const REF_ORDER = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
 
 /**
- * Las referencias del hilo: las de sus consultas y ofertas, sin repetir. Son las únicas
- * que puede llevar un mensaje (la base rechaza las demás, `0080`). En orden alfanumérico
- * por referencia y después por marca (PO, 17-nov-2026), en el buscador y en
- * «Cambiar etiqueta».
+ * Las referencias del hilo: las de sus consultas, ofertas y mensajes etiquetados, sin repetir.
+ * Un mensaje puede llevar además una línea publicada de la otra empresa (`0083`), que desde ese
+ * momento es también referencia del hilo. En orden alfanumérico por referencia y después por
+ * marca (PO, 17-nov-2026), en el buscador.
  */
 export function threadReferences(items: ThreadItem[]): ThreadReferenceOption[] {
   const seen = new Map<string, ThreadReferenceOption>();
   for (const i of items) {
-    if ((i.type !== 'CONSULTA' && i.type !== 'OFERTA') || !i.partNumber || !i.brand) continue;
+    // Consultas, ofertas y, desde 0083 (PO, 20-nov-2026), la etiqueta de un mensaje: puede ser una línea
+    // publicada de la otra empresa que aún no tiene consulta ni oferta en el hilo.
+    if (!i.partNumber || !i.brand) continue;
     const k = `${i.partNumber}|${i.brand}`;
     if (!seen.has(k)) {
       seen.set(k, { partNumber: i.partNumber, brand: i.brand, label: referenceLabel({ partNumber: i.partNumber, brand: i.brand }) });

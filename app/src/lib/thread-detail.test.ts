@@ -677,6 +677,15 @@ describe('contactOrganization · "Contactar" sin hilo previo (F-211)', () => {
     expect(args.p_iv).toMatch(/^[0-9a-f]+$/);
   });
 
+  // PO, 20-nov-2026 (0083): Contactar desde Comprando deja el primer mensaje etiquetado con la línea marcada.
+  it('con etiqueta, open_thread la recibe; sin ella, no se manda', async () => {
+    await contactOrganization(OTRA, MI_ORG, 'Hola', { partNumber: '7205B', brand: 'NSK' });
+    expect(rpcLlamadas[0]!.args).toMatchObject({ p_part_number: '7205B', p_brand: 'NSK' });
+    await contactOrganization(OTRA, MI_ORG, 'Hola');
+    expect(rpcLlamadas[1]!.args).not.toHaveProperty('p_part_number');
+    expect(rpcLlamadas[1]!.args).not.toHaveProperty('p_brand');
+  });
+
   it('un mensaje vacío no cifra ni llama a nada', async () => {
     await expect(contactOrganization(OTRA, MI_ORG, '   ')).rejects.toThrow(/vacío/);
     expect(fetchOrgRecipientsMock).not.toHaveBeenCalled();

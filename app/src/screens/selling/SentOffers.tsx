@@ -31,7 +31,8 @@ export function SentOffers({
   onOpenThread,
 }: {
   profile: MemberProfile;
-  onOpenThread?: (threadId: string) => void;
+  /** Abre el hilo; con la referencia de la fila, ya filtrado por ella (PO, 20-nov-2026). */
+  onOpenThread?: (threadId: string, reference: { partNumber: string; brand: string } | null) => void;
 }) {
   const [offers, setOffers] = useState<SentOffer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +77,8 @@ export function SentOffers({
     );
   };
 
-  const handleOpenThread = (threadId: string) => {
-    onOpenThread?.(threadId);
+  const handleOpenThread = (threadId: string, reference: { partNumber: string; brand: string } | null) => {
+    onOpenThread?.(threadId, reference);
   };
 
   const hasQuery = query.trim().length > 0;

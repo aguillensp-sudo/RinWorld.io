@@ -435,6 +435,23 @@ describe('lo que se escribe va sobre la referencia buscada', () => {
     await waitFor(() => expect(sendMessage).toHaveBeenLastCalledWith(HILO, 'Adiós', null));
   });
 
+  // PO, 20-nov-2026: desde Vendiendo («Ver hilo», «Ver acuerdo») el hilo se abre ya filtrado por esa referencia.
+  it('con una referencia inicial abre en Mensajes ya filtrado, y la ✕ vuelve a todo el hilo', async () => {
+    const user = userEvent.setup();
+    fetchThreadItems.mockResolvedValue([ofertaRecibida, otraReferencia]);
+    render(
+      <Thread profile={profile} threadId={HILO} now={NOW} initialReference={{ partNumber: '6206-ZZ', brand: 'FAG' }} />,
+    );
+    expect(await screen.findByText(TAB_TEXTS.filterChip('6206-ZZ · FAG'))).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Mensajes' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Escribe un mensaje' })).toHaveAttribute(
+      'placeholder',
+      TAB_TEXTS.writeOnReference('6206-ZZ · FAG'),
+    );
+    await user.click(screen.getByRole('button', { name: TAB_TEXTS.clearFilter }));
+    expect(screen.queryByText(TAB_TEXTS.filterChip('6206-ZZ · FAG'))).not.toBeInTheDocument();
+  });
+
   /*
    * PO, 18-nov-2026: si el último mensaje del hilo lleva etiqueta pero no hay referencia buscada, lo que se
    * escribe va como conversación general, y el usuario podía creer que iba etiquetado. El texto de ayuda del

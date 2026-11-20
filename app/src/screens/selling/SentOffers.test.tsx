@@ -223,7 +223,18 @@ describe('las acciones · §5.3 recortada por D-07-02 y por el esquema', () => {
     const onOpenThread = pinta();
     await waitFor(() => expect(filas()).toHaveLength(4));
     await user.click(within(filas()[1]!).getByRole('button', { name: 'Ver acuerdo' }));
-    expect(onOpenThread).toHaveBeenCalledWith('h-2');
+    expect(onOpenThread).toHaveBeenCalledWith('h-2', { partNumber: '22316-E', brand: 'Timken' });
+  });
+
+  // PO, 20-nov-2026: «Ver hilo» y «Ver acuerdo» llevan al hilo FILTRADO por la referencia de esa fila.
+  it('Ver hilo y Ver acuerdo pasan la referencia de su fila, para abrir el hilo filtrado', async () => {
+    const user = userEvent.setup();
+    const onOpenThread = pinta();
+    await waitFor(() => expect(filas()).toHaveLength(4));
+    await user.click(within(filas()[0]!).getByRole('button', { name: 'Ver hilo' }));
+    expect(onOpenThread).toHaveBeenLastCalledWith('h-1', { partNumber: '6205-2RS', brand: 'NSK' });
+    await user.click(within(filas()[3]!).getByRole('button', { name: 'Ver hilo' }));
+    expect(onOpenThread).toHaveBeenLastCalledWith('h-4', { partNumber: '6205-2RS', brand: 'SKF' });
   });
 
   it('⚠ D-07-02 · `Retirar oferta` NO se pinta, ni deshabilitado', async () => {

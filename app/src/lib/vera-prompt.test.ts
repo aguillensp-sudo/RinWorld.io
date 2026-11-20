@@ -744,6 +744,12 @@ describe('VERA · la guía de Empresas, Foro, Panel y Configuración sigue siend
     expect(lib('panel.ts')).toContain("n === null ? '—' : String(n)");
   });
 
+  it('Vendiendo: Ver hilo y Ver acuerdo abren el hilo filtrado por la referencia de la fila (PO, 20-nov-2026)', () => {
+    expect(prompt).toContain('en "Mensajes" y ya filtrado por la referencia de esa fila');
+    expect(screen('selling/SentOffersTable.tsx')).toContain('offer.partNumber ? { partNumber: offer.partNumber');
+    expect(screen('messages/Thread.tsx')).toContain('useState<ThreadReference | null>(initialReference ?? null)');
+  });
+
   it('F-027 a: lo que la guía dice de «sin leer» está en el Panel, la lista y la herramienta', () => {
     expect(prompt).toContain('"Más reciente:" con la empresa y el estado de ese hilo, o "Todo leído"');
     expect(lib('panel.ts')).toContain('`Más reciente: ${threads.latest.orgName} — ${threads.latest.state}`');

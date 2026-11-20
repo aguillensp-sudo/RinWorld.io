@@ -167,11 +167,17 @@ export function App() {
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
   /** Con quién es el hilo abierto, para VERA (F-285). Lo dice `Thread` al cargarlo. */
   const [openThreadCounterparty, setOpenThreadCounterparty] = useState<string | null>(null);
+  /**
+   * Referencia con la que abrir el hilo ya filtrado (PO, 20-nov-2026: «Ver hilo» y «Ver acuerdo» de
+   * Vendiendo). `Thread` la lee solo al montarse, así que se vacía en cuanto cambia el hilo abierto.
+   */
+  const [openThreadReference, setOpenThreadReference] = useState<{ partNumber: string; brand: string } | null>(null);
   // Un borrador de VERA es de UN hilo: al cambiar o cerrar el hilo no puede quedar esperando en el siguiente.
   // Y el nombre del hilo anterior tampoco: hasta que el nuevo cargue, VERA no sabe con quién es.
   useEffect(() => {
     setVeraDraft(null);
     setOpenThreadCounterparty(null);
+    setOpenThreadReference(null);
   }, [openThreadId]);
 
   /**
@@ -1053,6 +1059,7 @@ export function App() {
             veraDraft={veraDraft}
             onVeraDraftHandled={() => setVeraDraft(null)}
             onCounterpartyKnown={setOpenThreadCounterparty}
+            initialReference={openThreadReference}
             onOpenCounterparty={(orgId) => {
               /* DIR-02 vive en `Empresas`: cambia el ítem de nav además de la pantalla. */
               setOpenThreadId(null);
@@ -1134,9 +1141,10 @@ export function App() {
          */
         <SentOffers
           profile={state.profile}
-          onOpenThread={(threadId) => {
+          onOpenThread={(threadId, reference) => {
             setNav(MESSAGES_NAV);
             setOpenThreadId(threadId);
+            setOpenThreadReference(reference);
           }}
         />
       ) : onInventory ? (

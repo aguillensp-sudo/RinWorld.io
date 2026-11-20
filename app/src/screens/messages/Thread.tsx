@@ -83,6 +83,7 @@ export function Thread({
   veraDraft,
   onVeraDraftHandled,
   onCounterpartyKnown,
+  initialReference,
 }: {
   profile: MemberProfile;
   threadId: string;
@@ -99,6 +100,11 @@ export function Thread({
   onVeraDraftHandled?: () => void;
   /** Con quién es este hilo, en cuanto se carga (F-285): el shell se lo dice a VERA. Opcional. */
   onCounterpartyKnown?: (name: string) => void;
+  /**
+   * Referencia con la que abrir Mensajes ya filtrado (PO, 20-nov-2026): «Ver hilo» y «Ver acuerdo» de
+   * Vendiendo llevan a lo de esa referencia, no al hilo entero. Se quita con la ✕ como cualquier búsqueda.
+   */
+  initialReference?: ThreadReference | null;
 }) {
   const [detail, setDetail] = useState<ThreadDetail | null>(null);
   const [items, setItems] = useState<ThreadItem[]>([]);
@@ -111,7 +117,7 @@ export function Thread({
    * escribe va etiquetado con ella; sin búsqueda, conversación general. «Sobre:» se quitó porque
    * duplicaba el buscador (PO, 17-nov-2026).
    */
-  const [refFilter, setRefFilter] = useState<ThreadReference | null>(null);
+  const [refFilter, setRefFilter] = useState<ThreadReference | null>(initialReference ?? null);
   /** Los formularios de oferta que abren las acciones de las tablas. */
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [counteringId, setCounteringId] = useState<string | null>(null);

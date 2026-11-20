@@ -175,6 +175,8 @@ test.describe('Hilos · accesos', () => {
     // La contraparte va en la cabecera, fuera de `thread-body` (mismo aserto que `messages.spec.ts`).
     await expect(page.getByRole('button', { name: 'Roulements Rhône' }).first()).toBeVisible();
     await expect(pestana(page, 'Mensajes')).toHaveAttribute('aria-selected', 'true');
+    // PO, 20-nov-2026: ya filtrado por la referencia de la fila, no el hilo entero.
+    await expect(page.getByText(/^Referencia: 22316-E · /)).toBeVisible();
   });
 });
 

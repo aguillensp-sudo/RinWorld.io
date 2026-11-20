@@ -14,7 +14,8 @@ interface SentOffersTableProps {
   offers: SentOffer[];
   sort: { column: SortColumn; direction: SortDirection };
   onSort: (column: SortColumn) => void;
-  onOpenThread: (threadId: string) => void;
+  /** Abre el hilo; con la referencia de la fila, ya filtrado por ella (PO, 20-nov-2026). */
+  onOpenThread: (threadId: string, reference: { partNumber: string; brand: string } | null) => void;
   hasQuery: boolean;
 }
 
@@ -137,7 +138,12 @@ export function SentOffersTable({
                         ? styles.actionPrimary ?? ''
                         : styles.actionGhost ?? ''
                     }
-                    onClick={() => onOpenThread(offer.threadId)}
+                    onClick={() =>
+                      onOpenThread(
+                        offer.threadId,
+                        offer.partNumber ? { partNumber: offer.partNumber, brand: offer.brand ?? '' } : null,
+                      )
+                    }
                   >
                     {rowActionLabel(offer.state)}
                   </button>
